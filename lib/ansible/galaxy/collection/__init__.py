@@ -595,7 +595,7 @@ def build_collection(collection_path, output_path, force):
 
 
 def remove_collections(collections, search_paths, no_deps, force):
-    """Deletes the directories of installed collections that match the requirements list
+    """Delete the directories of installed collections that match the requirements list.
 
     :param collections: A list of collection requirements to find and remove
     :param search_paths: A list of paths to search for the collections
@@ -637,7 +637,7 @@ def remove_collections(collections, search_paths, no_deps, force):
 
 
 def get_matching_collections(requirements, installed_collections, force):
-    """Gets the list of collections that match the requirements list
+    """Get the list of collections that match the requirements list.
 
     :param requirements: A list of collection specifications to look for in the list of collections
     :param installed_collections: A list of CollectionRequirement instances
@@ -671,7 +671,7 @@ def get_matching_collections(requirements, installed_collections, force):
 
 
 def filter_multiple_matches(req, collections, force):
-    """Filter multiple collections found for a requirement by prompting the user
+    """Filter multiple collections found for a requirement by prompting the user.
 
     :param req: The 'namespace.name:version' string for the prompt
     :param collections: A list of CollectionRequirement instances
