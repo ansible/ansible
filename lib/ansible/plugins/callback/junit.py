@@ -199,7 +199,7 @@ class CallbackModule(CallbackBase):
 
         play = self._play_name
 
-        if task._role != None:
+        if task._role is not None:
             role_name = task._role.get_name(include_role_fqcn=True)
         else:
             role_name = None
@@ -243,14 +243,14 @@ class CallbackModule(CallbackBase):
 
         if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
             if self._test_case_ignore_text == '' or \
-                self._test_case_ignore_text not in task_data.name:
+                    self._test_case_ignore_text not in task_data.name:
                 # Only add the task when either test_case_ignore_text is not set or not in the task name
                 task_data.add_host(HostData(host_uuid, host_name, status, result))
 
     def _build_test_case(self, task_data, host_data):
         """ build a TestCase from the given TaskData and HostData """
 
-        if task_data.role_name != None:
+        if task_data.role_name is not None:
             name = '[%s] %s: %s : %s' % (host_data.name, task_data.play, task_data.role_name, task_data.name)
         else:
             name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
