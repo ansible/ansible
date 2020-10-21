@@ -1,7 +1,4 @@
 ---
-#- pause:
-#    seconds: 600
-
 - name: publish collection - {{ test_name }}
   command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
   args:
