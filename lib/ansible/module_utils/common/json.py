@@ -31,7 +31,7 @@ def _preprocess_unsafe_encode(value):
     """
     if _is_unsafe(value):
         value = {'__ansible_unsafe': to_text(value, errors='surrogate_or_strict', nonstring='strict')}
-    elif is_sequence(value) and not _is_vault(value):
+    elif is_sequence(value):
         value = [_preprocess_unsafe_encode(v) for v in value]
     elif isinstance(value, Mapping):
         value = dict((k, _preprocess_unsafe_encode(v)) for k, v in value.items())
