@@ -653,7 +653,9 @@ def get_matching_collections(requirements, installed_collections, force):
         b_req_name = to_bytes(req_name, errors='surrogate_or_strict')
 
         if os.path.isfile(b_req_name) or urlparse(req_name).scheme.lower() in ['http', 'https'] or len(req_name.split('.')) != 2:
+            # TODO: use common method to either identify and skip sources or get the requirement name from a given source
             display.display("Skipping '%s' because it is not a valid collection name. The format namespace.name is expected." % req_name)
+            continue
 
         for installed_collection in installed_collections:
             if to_text(installed_collection) == req_name:
@@ -720,7 +722,9 @@ def get_dependencies(collections, installed_collections):
             b_dep_name = to_bytes(dep_name, errors='surrogate_or_strict')
 
             if os.path.isfile(b_dep_name) or urlparse(dep_name).scheme.lower() in ['http', 'https'] or len(dep_name.split('.')) != 2:
+                # TODO: either skip dependency.source or use dependency.name
                 display.display("Skipping '%s' because it is not a valid collection name. The format namespace.name is expected." % dep_name)
+                continue
 
             for installed_collection in installed_collections:
                 if installed_collection in dependencies:
