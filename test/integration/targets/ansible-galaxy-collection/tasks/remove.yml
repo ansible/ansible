@@ -112,7 +112,7 @@
       - '"namespace1.collection1 (2.0.0) was removed successfully" in result.stdout_lines'
       - '"namespace1.collection2 (2.0.0) was removed successfully" in result.stdout_lines'
 
-- name: test moving the same collection
+- name: test removing the same collection
   command: ansible-galaxy collection remove namespace1.collection1
   register: result
 
