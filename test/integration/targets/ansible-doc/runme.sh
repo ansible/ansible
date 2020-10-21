@@ -52,7 +52,7 @@ test "$current_role_out" == "$expected_role_out"
 output=$(ansible-doc -t role -l --playbook-dir . testns.testcol | wc -l)
 test "$output" -eq 2
 
-# Include normal roles
-output=$(ansible-doc -t role -l --playbook-dir . --roles-path ./roles | wc -l)
+# Include normal roles (no collection filter)
+output=$(ansible-doc -t role -l --playbook-dir . | wc -l)
 test "$output" -eq 3
 )

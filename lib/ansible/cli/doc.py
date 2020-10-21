@@ -555,6 +555,11 @@ class DocCLI(CLI, RoleMixin):
         if basedir:
             AnsibleCollectionConfig.playbook_paths = basedir
 
+            # Add any 'roles' subdir in playbook dir to the roles search path
+            subdir = os.path.join(basedir, "roles")
+            if os.path.isdir(subdir):
+                roles_path = (subdir,) + roles_path
+
         if plugin_type not in TARGET_OPTIONS:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
         elif plugin_type == 'keyword':
