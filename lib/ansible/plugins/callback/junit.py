@@ -201,7 +201,7 @@ class CallbackModule(CallbackBase):
         else:
             role_name = None
 
-        name = task._name
+        name = task.name.strip()
         path = task.get_path()
         action = task.action
 
