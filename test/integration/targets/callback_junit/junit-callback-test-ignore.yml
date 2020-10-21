@@ -1,0 +1,15 @@
+---
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Test tasks
+      import_tasks: tasks/tasks.yml
+
+    - name: A rescue block
+      block:
+        - name: Test tasks in role where a task fails
+          import_role:
+            name: a_failing_role
+      rescue:
+        - debug:
+            msg: "Its all fine actually!"

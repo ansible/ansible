@@ -1,0 +1,13 @@
+---
+- name: "A task in a role"
+  debug:
+    msg: This is a task with no prefix
+
+- name: "JUNIT TASK PREFIX - A task in a role"
+  debug:
+    msg: This is a task with a prefix inside a role
+
+- name: "A task in a role JUNIT IGNORE THIS TASK"
+  fail:
+    msg: "This task fails"
+  when: true

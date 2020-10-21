@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<testsuites disabled="0" errors="0" failures="0" tests="2" >
+        <testsuite disabled="0" errors="0" failures="0" name="junit-callback-test-prefix" skipped="0" tests="2" >
+                <testcase name="[testhost] testhost: JUNIT TASK PREFIX - A task in a file msg=This is a task with a prefix" >
+                        <system-out>{
+    &quot;changed&quot;: false,
+    &quot;msg&quot;: &quot;This is a task with a prefix&quot;
+}</system-out>
+                </testcase>
+                <testcase name="[testhost] testhost: a_role : JUNIT TASK PREFIX - A task in a role msg=This is a task with a prefix" >
+                        <system-out>{
+    &quot;changed&quot;: false,
+    &quot;msg&quot;: &quot;This is a task with a prefix&quot;
+}</system-out>
+                </testcase>
+        </testsuite>
+</testsuites>

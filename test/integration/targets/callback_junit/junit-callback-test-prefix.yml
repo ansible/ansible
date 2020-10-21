@@ -1,0 +1,10 @@
+---
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Test tasks
+      import_tasks: tasks/tasks.yml
+
+    - name: Test tasks in role
+      import_role:
+        name: a_role
