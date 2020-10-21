@@ -54,28 +54,25 @@ foreground {
 }
 '''
 
-# This should not be needed once https://github.com/pulp/pulp-oci-images/pull/31 is merged in some shape or form.
-# Recent galaxy_ng changes blocked access to the pulp endpoint through the normal listener so we need to ensure that
-# gunicorn is bound to 0.0.0.0 and not 127.0.0.1.
-RUN_OVERRIDE = b'''#!/usr/bin/execlineb -S0
+# There are 2 overrides here:
+#   1. Change the gunicorn bind address from 127.0.0.1 to 0.0.0.0 now that Galaxy NG does not allow us to access the
+#      Pulp API through it.
+#   2. Grant access allowing us to DELETE a namespace in Galaxy NG. This is as CI deletes and recreates repos and
+#      distributions in Pulp which now breaks the namespace in Galaxy NG. Recreating it is the "simple" fix to get it
+#      working again.
+# These may not be needed in the future, especially if 1 becomes configurable by an env var but for now they must be
+# done.
+OVERRIDES = b'''#!/usr/bin/execlineb -S0
 foreground {
-  export DJANGO_SETTINGS_MODULE pulpcore.app.settings
-  export PULP_CONTENT_ORIGIN localhost
-  /usr/local/bin/pulpcore-manager collectstatic --noinput --link
+    sed -i "0,/\\"127.0.0.1:24817\\"/s//\\"0.0.0.0:24817\\"/" /etc/services.d/pulpcore-api/run
 }
-export DJANGO_SETTINGS_MODULE pulpcore.app.settings
-export PULP_SETTINGS /etc/pulp/settings.py
-/usr/local/bin/gunicorn pulpcore.app.wsgi:application --bind "0.0.0.0:24817" --access-logfile -
-'''
 
-# Part of the CI tests require us to remove all content which means the repository is removed in Pulp. Any existing
-# namespaces defined in Galaxy NG need to be removed as well but no one is granted permissions to actually do that.
-# Until another fix can be found we change the permissions from deny to allow. This sed calls changes the first
-# occurrence to "allow" which is conveniently the delete operation for a namespace.
+# This sed calls changes the first occurrence to "allow" which is conveniently the delete operation for a namespace.
 # https://github.com/ansible/galaxy_ng/blob/master/galaxy_ng/app/access_control/statements/standalone.py#L9-L11.
-GALAXY_FIXES = b'''#!/usr/bin/execlineb -S0
+backtick NG_PREFIX { python -c "import galaxy_ng; print(galaxy_ng.__path__[0], end='')" }
+importas ng_prefix NG_PREFIX
 foreground {
-    sed -i "0,/\\"effect\\": \\"deny\\"/s//\\"effect\\": \\"allow\\"/" /usr/local/lib/python3.7/site-packages/galaxy_ng/app/access_control/statements/standalone.py
+    sed -i "0,/\\"effect\\": \\"deny\\"/s//\\"effect\\": \\"allow\\"/" ${ng_prefix}/app/access_control/statements/standalone.py
 }'''
 
 
@@ -139,6 +136,7 @@ class GalaxyProvider(CloudProvider):
                      % ('Using the existing' if p_results else 'Starting a new'),
                      verbosity=1)
 
+        galaxy_port = 80
         pulp_port = 24817
 
         if not p_results:
@@ -147,7 +145,7 @@ class GalaxyProvider(CloudProvider):
             else:
                 # publish the simulator ports when not running inside docker
                 publish_ports = [
-                    '-p', '80:80',
+                    '-p', ':'.join((str(galaxy_port),) * 2),
                     '-p', ':'.join((str(pulp_port),) * 2),
                 ]
 
@@ -166,8 +164,7 @@ class GalaxyProvider(CloudProvider):
             injected_files = {
                 '/etc/pulp/settings.py': SETTINGS,
                 '/etc/cont-init.d/111-postgres': SET_ADMIN_PASSWORD,
-                '/etc/cont-init.d/000-ansible-test': GALAXY_FIXES,
-                '/etc/services.d/pulpcore-api/run': RUN_OVERRIDE,
+                '/etc/cont-init.d/000-ansible-test-overrides': OVERRIDES,
             }
             for path, content in injected_files.items():
                 with tempfile.NamedTemporaryFile() as temp_fd:
@@ -190,6 +187,7 @@ class GalaxyProvider(CloudProvider):
 
         self._set_cloud_config('PULP_HOST', pulp_host)
         self._set_cloud_config('PULP_PORT', str(pulp_port))
+        self._set_cloud_config('GALAXY_PORT', str(galaxy_port))
         self._set_cloud_config('PULP_USER', 'admin')
         self._set_cloud_config('PULP_PASSWORD', 'password')
 
@@ -225,6 +223,7 @@ class GalaxyEnvironment(CloudEnvironment):
         pulp_user = self._get_cloud_config('PULP_USER')
         pulp_password = self._get_cloud_config('PULP_PASSWORD')
         pulp_host = self._get_cloud_config('PULP_HOST')
+        galaxy_port = self._get_cloud_config('GALAXY_PORT')
         pulp_port = self._get_cloud_config('PULP_PORT')
 
         return CloudEnvironmentConfig(
@@ -234,13 +233,13 @@ class GalaxyEnvironment(CloudEnvironment):
                 pulp_v2_server='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
                 pulp_v3_server='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
                 pulp_api='http://%s:%s' % (pulp_host, pulp_port),
-                galaxy_ng_server='http://%s:80/api/galaxy/' % (pulp_host,),
+                galaxy_ng_server='http://%s:%s/api/galaxy/' % (pulp_host, galaxy_port),
             ),
             env_vars=dict(
                 PULP_USER=pulp_user,
                 PULP_PASSWORD=pulp_password,
                 PULP_V2_SERVER='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
                 PULP_V3_SERVER='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
-                GALAXY_NG_SERVER='http://%s:80/api/galaxy/' % (pulp_host,),
+                GALAXY_NG_SERVER='http://%s:%s/api/galaxy/' % (pulp_host, galaxy_port),
             ),
         )
