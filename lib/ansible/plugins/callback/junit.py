@@ -142,6 +142,8 @@ class CallbackModule(CallbackBase):
         JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
                                      test cases.
                                      Default: <empty>
+        JUNIT_TEST_CASE_IGNORE_TEXT (optional): Ignore a task if it contains this string (even if it failed).
+                                     Default: <empty>
 
     Requires:
         junit_xml
@@ -164,6 +166,7 @@ class CallbackModule(CallbackBase):
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
         self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
         self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
+        self._test_case_ignore_text = os.getenv('JUNIT_TEST_CASE_IGNORE_TEXT', '')
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -239,7 +242,10 @@ class CallbackModule(CallbackBase):
                 status = 'failed'
 
         if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
-            task_data.add_host(HostData(host_uuid, host_name, status, result))
+            if self._test_case_ignore_text == '' or \
+                self._test_case_ignore_text not in task_data.name:
+                # Only add the task when either test_case_ignore_text is not set or
+                task_data.add_host(HostData(host_uuid, host_name, status, result))
 
     def _build_test_case(self, task_data, host_data):
         """ build a TestCase from the given TaskData and HostData """
