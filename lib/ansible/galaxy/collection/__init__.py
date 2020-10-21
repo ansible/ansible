@@ -695,13 +695,12 @@ def filter_multiple_matches(req, collections, force):
         elif result in ['n', 'none']:
             indices = []
             break
+        try:
+            indices = [int(r) if int(r) in indices else int('invalid') for r in result.split(',')]
+        except ValueError:
+            pass
         else:
-            try:
-                indices = [int(r) if int(r) in indices else int('invalid') for r in result.split(',')]
-            except ValueError:
-                pass
-            else:
-                break
+            break
         display.display("Unexpected input for prompt '{0}'".format(result))
 
     return [collections[index] for index in indices]
