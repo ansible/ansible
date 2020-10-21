@@ -175,7 +175,7 @@ class GalaxyCLI(CLI):
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force])
-        self.add_remove_options(collection_parser, parents=[common, collections_path])
+        self.add_remove_options(collection_parser, parents=[common, collections_path, force])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
@@ -1230,10 +1230,11 @@ class GalaxyCLI(CLI):
         search_paths = context.CLIARGS['collections_path']
         requirements_file = context.CLIARGS['requirements']
         no_deps = context.CLIARGS['no_deps']
+        force = context.CLIARGS['force']
 
         requirements = self._require_one_of_collections_requirements(collections, requirements_file)['collections']
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
-        remove_collections(requirements, resolved_paths, no_deps)
+        remove_collections(requirements, resolved_paths, no_deps, force)
 
     def execute_list(self):
         """

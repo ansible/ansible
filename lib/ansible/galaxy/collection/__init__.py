@@ -594,43 +594,178 @@ def build_collection(collection_path, output_path, force):
     return collection_output
 
 
-def remove_collections(collections, search_paths, no_deps, parent=None):
-    with _display_progress():
-        for collection in collections:
-            b_collection = to_bytes(collection[0], errors='surrogate_or_strict')
-            if os.path.isfile(b_collection) or urlparse(collection[0]).scheme.lower() in ['http', 'https'] or len(collection[0].split('.')) != 2:
-                raise AnsibleError(message="'%s' is not a valid collection name. The format namespace.name is expected." % collection[0])
+def remove_collections(collections, search_paths, no_deps, force):
+    """Deletes the directories of installed collections that match the requirements list
 
-            collection_name = collection[0]
-            namespace, name = collection_name.split('.')
-            collection_version = collection[1]
+    :param collections: A list of collection requirements to find and remove
+    :param search_paths: A list of paths to search for the collections
+    :param no_deps: A boolean to indicate whether dangling dependences should be ignored instead of removed
+    :param force: A boolean to bypass prompting when multiple matching collections are found
+    """
+    # Find all collections in all paths to ensure the deps of collections we remove are only removed if they will become unused
+    everything = []
+    for search_path in search_paths:
+        everything.extend(find_existing_collections(search_path, fallback_metadata=True))
 
-            found = False
-            for search_path in search_paths:
-                display.vvvv("Looking for '%s' in the collection search path %s" % (to_text(collection, errors='surrogate_or_strict'), search_path))
+    # Find collections and unused dependencies
+    collections_to_remove = get_matching_collections(collections, everything, force)
+    if no_deps:
+        deps_still_needed = {}
+        deps_to_remove = []
+    else:
+        deps_of_removed_collections = get_dependencies(collections_to_remove, everything)
+        deps_still_needed = get_parents(deps_of_removed_collections, collections_to_remove, everything)
+        deps_to_remove = set(deps_of_removed_collections) - set(deps_still_needed.keys())
 
-                b_collection_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
+    # Remove stuff
+    if collections_to_remove:
+        display.display("Removing requested collections:")
+        for collection in collections_to_remove:
+            collection.remove()
+    else:
+        display.display("No collections to remove")
 
-                if not os.path.isdir(b_collection_path):
-                    continue
+    if deps_to_remove:
+        display.display("Removing unused dependencies:")
+        for dep in deps_to_remove:
+            dep.remove()
+    for dep in deps_still_needed:
+        needed_by = [to_text(needs_dep, errors='surrogate_or_strict') for needs_dep in deps_still_needed[dep]]
+        display.vvvv("Skipping removing dependency '%s' because it is still used by the installed collections: %s" % (
+            to_text(dep, errors='surrogate_or_strict'), ', '.join(needed_by))
+        )
 
-                local_collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True, parent=parent)
 
+def get_matching_collections(requirements, installed_collections, force):
+    """Gets the list of collections that match the requirements list
+
+    :param requirements: A list of collection specifications to look for in the list of collections
+    :param installed_collections: A list of CollectionRequirement instances
+    :param force: A boolean to bypass prompting when multiple matching instances are found
+    :return: A list of CollectionRequirement instances
+    """
+    matching_collections = []
+    for requirement in requirements:
+        unfiltered_matches = []
+
+        req_name = requirement[0]
+        req_version = requirement[1]
+        b_req_name = to_bytes(req_name, errors='surrogate_or_strict')
+
+        if os.path.isfile(b_req_name) or urlparse(req_name).scheme.lower() in ['http', 'https'] or len(req_name.split('.')) != 2:
+            display.display("Skipping '%s' because it is not a valid collection name. The format namespace.name is expected." % req_name)
+
+        for installed_collection in installed_collections:
+            if to_text(installed_collection) == req_name:
                 try:
-                    local_collection.add_requirement(parent, collection_version)
+                    installed_collection.add_requirement(None, req_version)
                 except AnsibleError:
                     continue
+                else:
+                    unfiltered_matches.append(installed_collection)
 
-                found = True
-                display.vvvv("Found collection '%s'" % to_text(collection, errors='surrogate_or_strict'))
-                local_collection.remove()
+        matching_collections.extend(
+            filter_multiple_matches('%s:%s' % (req_name, req_version), unfiltered_matches, force)
+        )
+    return matching_collections
 
-                if not no_deps:
-                    deps = [[identifier, requirement] for identifier, requirement in local_collection.dependencies.items()]
-                    remove_collections(deps, search_paths, no_deps, parent=local_collection)
 
-            if not found:
-                display.display('%s is not installed' % to_text(collection, errors='surrogate_or_strict'))
+def filter_multiple_matches(req, collections, force):
+    """Filter multiple collections found for a requirement by prompting the user
+
+    :param req: The 'namespace.name:version' string for the prompt
+    :param collections: A list of CollectionRequirement instances
+    :param force: A boolean to bypass prompting and return all collections without filtering
+    :return: A list of installed CollectionRequirement instances
+    """
+    if len(collections) <= 1 or force:
+        return collections
+
+    indices = list(range(0, len(collections)))
+
+    prompt = "Found the following collections that match '%s'" % req
+    for num in indices:
+        prompt += "\n\t%s. (%s) %s" % (num, collections[num].latest_version, to_text(collections[num].b_path, errors='surrogate_or_strict'))
+    prompt += "\nType the comma separate list of numbers to remove (a for all or n for none): "
+
+    while True:
+        result = display.prompt(prompt)
+        if result in ['a', 'all']:
+            break
+        elif result in ['n', 'none']:
+            indices = []
+            break
+        else:
+            try:
+                indices = [int(r) if int(r) in indices else int('invalid') for r in result.split(',')]
+            except ValueError:
+                pass
+            else:
+                break
+        display.display("Unexpected input for prompt '{0}'".format(result))
+
+    return [collections[index] for index in indices]
+
+
+def get_dependencies(collections, installed_collections):
+    """Finds all dependencies of the collections list in the list of all collections
+
+    :param collections: A list of CollectionRequirement instances
+    :param installed_collections: A list of installed CollectionRequirement instances
+    :return: A list of CollectionRequirement instances that are the dependencies of the given collections
+    """
+    dependencies = []
+    for collection in collections:
+        for dep_name, dep_version in collection.dependencies.items():
+            b_dep_name = to_bytes(dep_name, errors='surrogate_or_strict')
+
+            if os.path.isfile(b_dep_name) or urlparse(dep_name).scheme.lower() in ['http', 'https'] or len(dep_name.split('.')) != 2:
+                display.display("Skipping '%s' because it is not a valid collection name. The format namespace.name is expected." % dep_name)
+
+            for installed_collection in installed_collections:
+                if installed_collection in dependencies:
+                    continue
+                try:
+                    installed_collection.add_requirement(collection, dep_version)
+                except AnsibleError:
+                    pass
+                else:
+                    dependencies.append(installed_collection)
+    return dependencies
+
+
+def get_parents(dependencies, skip_parents, installed_collections):
+    """Finds all collections relying on a list of dependencies
+
+    :param dependencies: A list of CollectionRequirement instances
+    :param skip_parents: A list of CollectionRequirement instances that should be ignored as potential parents
+    :param installed_collections: The list of installed CollectionRequirement instances
+    :return: A dictionary of CollectionRequirement instance and list of parents pairs
+    """
+    dependencies_needed_by = {}
+    for installed_collection in installed_collections:
+        for collection in dependencies:
+            if installed_collection == collection:
+                continue
+            if installed_collection in skip_parents:
+                continue
+
+            for dep_name, dep_version in installed_collection.dependencies.items():
+                b_dep_name = to_bytes(dep_name, errors='surrogate_or_strict')
+                if os.path.isfile(b_dep_name) or urlparse(dep_name).scheme.lower() in ['http', 'https'] or len(dep_name.split('.')) != 2:
+                    continue
+
+                if to_text(collection) == dep_name:
+                    try:
+                        collection.add_requirement(installed_collection, dep_version)
+                    except AnsibleError:
+                        # the version didn't match - there should never be multiple deps with the same name for a collection, so we can move on
+                        break
+                    else:
+                        if collection not in dependencies_needed_by:
+                            dependencies_needed_by[collection] = []
+                        dependencies_needed_by[collection].append(installed_collection)
+    return dependencies_needed_by
 
 
 def download_collections(collections, output_path, apis, validate_certs, no_deps, allow_pre_release):
