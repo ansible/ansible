@@ -246,7 +246,11 @@ def _unhexlify(b_data):
     try:
         return unhexlify(b_data)
     except (BinasciiError, TypeError) as exc:
-        raise AnsibleVaultFormatError('Vault format unhexlify error: %s' % exc)
+        raise AnsibleVaultFormatError(
+            'Could not interpret the string "%s" as hexadecimal. '
+            'Vault format unhexlify error: %s'
+            % (b_data, exc)
+        )
 
 
 def _parse_vaulttext(b_vaulttext):
