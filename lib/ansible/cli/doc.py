@@ -418,7 +418,7 @@ class DocCLI(CLI, RoleMixin):
         roles = list(role_json.keys())
         text = []
         for role in roles:
-            text.append("%s %s" % (role, role_json[role]))
+            text += self.get_role_man_text(role, role_json[role])
 
         # display results
         DocCLI.pager("\n".join(text))
@@ -966,6 +966,62 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', return_values, opt_indent)
             if not suboptions:
                 text.append('')
+
+    def get_role_man_text(self, role, role_json):
+        '''Generate text for the supplied role suitable for display.
+
+        This is similar to get_man_text(), but roles are different enough that we have
+        a separate method for formatting their display.
+
+        :param role: The role name.
+        :param role_json: The JSON for the given role as returned from _create_role_doc().
+
+        :returns: A array of text suitable for displaying to screen.
+        '''
+        text = []
+        opt_indent = "        "
+        pad = display.columns * 0.20
+        limit = max(display.columns - int(pad), 70)
+
+        text.append("> %s    (%s)\n" % (role.upper(), role_json.get('path')))
+
+        for entry_point in role_json['entry_points']:
+            doc = role_json['entry_points'][entry_point]
+
+            if doc.get('short_description'):
+                text.append("ENTRY POINT: %s - %s\n" % (entry_point, doc.get('short_description')))
+            else:
+                text.append("ENTRY POINT: %s\n" % entry_point)
+
+            if doc.get('description'):
+                if isinstance(doc['description'], list):
+                    desc = " ".join(doc['description'])
+                else:
+                    desc = doc['description']
+
+                text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc),
+                                                   limit, initial_indent=opt_indent,
+                                                   subsequent_indent=opt_indent))
+            if doc.get('options'):
+                text.append("OPTIONS (= is mandatory):\n")
+                DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
+                text.append('')
+
+            # generic elements we will handle identically
+            for k in ('author',):
+                if k not in doc:
+                    continue
+                if isinstance(doc[k], string_types):
+                    text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]),
+                                            limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                elif isinstance(doc[k], (list, tuple)):
+                    text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
+                else:
+                    # use empty indent since this affects the start of the yaml doc, not it's keys
+                    text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
+                text.append('')
+
+        return text
 
     @staticmethod
     def get_man_text(doc, collection_name='', plugin_type=''):

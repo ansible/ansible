@@ -42,6 +42,12 @@ done
 
 #### test role functionality
 
+# Test role text output
+# we use sed to strip the role path from the first line
+current_role_out="$(ansible-doc -t role -r ./roles normal_role1 | sed '1 s/\(^> NORMAL_ROLE1\).*(.*)$/\1/')"
+expected_role_out="$(sed '1 s/\(^> NORMAL_ROLE1\).*(.*)$/\1/' fakerole.output)"
+test "$current_role_out" == "$expected_role_out"
+
 # Two collection roles are defined, but only 1 has a role arg spec with 2 entry points
 output=$(ansible-doc -t role -l --playbook-dir . testns.testcol | wc -l)
 test "$output" -eq 2
