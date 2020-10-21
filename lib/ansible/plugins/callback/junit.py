@@ -244,7 +244,7 @@ class CallbackModule(CallbackBase):
         if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
             if self._test_case_ignore_text == '' or \
                 self._test_case_ignore_text not in task_data.name:
-                # Only add the task when either test_case_ignore_text is not set or
+                # Only add the task when either test_case_ignore_text is not set or not in the task name
                 task_data.add_host(HostData(host_uuid, host_name, status, result))
 
     def _build_test_case(self, task_data, host_data):
