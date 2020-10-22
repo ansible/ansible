@@ -1,6 +1,7 @@
 shippable/posix/group3
 skip/osx
 skip/freebsd
+skip/docker  # avoid issues with tests and user-defined docker networks
 destructive
 docker_image
 docker_image_info
