@@ -180,29 +180,43 @@ from ansible.module_utils._text import to_native
 # MongoDB module specific support methods.
 #
 
-def check_compatibility(module, client):
+def check_compatibility(module, srv_version, driver_version):
     """Check the compatibility between the driver and the database.
-
-       See: https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#python-driver-compatibility
-
+    See: https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#python-driver-compatibility
     Args:
         module: Ansible module.
-        client (cursor): Mongodb cursor on admin database.
+        srv_version (LooseVersion): MongoDB server version.
+        driver_version (LooseVersion): Pymongo version.
     """
-    loose_srv_version = LooseVersion(client.server_info()['version'])
-    loose_driver_version = LooseVersion(PyMongoVersion)
+    msg = 'pymongo driver version and MongoDB version are incompatible: '
 
-    if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
-        module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
+    if srv_version >= LooseVersion('4.2') and driver_version < LooseVersion('3.9'):
+        msg += 'you must use pymongo 3.9+ with MongoDB >= 4.2'
+        module.fail_json(msg=msg)
 
-    elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
+    elif srv_version >= LooseVersion('4.0') and driver_version < LooseVersion('3.7'):
+        msg += 'you must use pymongo 3.7+ with MongoDB >= 4.0'
+        module.fail_json(msg=msg)
 
-    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
+    elif srv_version >= LooseVersion('3.6') and driver_version < LooseVersion('3.6'):
+        msg += 'you must use pymongo 3.6+ with MongoDB >= 3.6'
+        module.fail_json(msg=msg)
 
-    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
-        module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
+    elif srv_version >= LooseVersion('3.4') and driver_version < LooseVersion('3.4'):
+        msg += 'you must use pymongo 3.4+ with MongoDB >= 3.4'
+        module.fail_json(msg=msg)
+
+    elif srv_version >= LooseVersion('3.2') and driver_version < LooseVersion('3.2'):
+        msg += 'you must use pymongo 3.2+ with MongoDB >= 3.2'
+        module.fail_json(msg=msg)
+
+    elif srv_version >= LooseVersion('3.0') and driver_version <= LooseVersion('2.8'):
+        msg += 'you must use pymongo 2.8+ with MongoDB 3.0'
+        module.fail_json(msg=msg)
+
+    elif srv_version >= LooseVersion('2.6') and driver_version <= LooseVersion('2.7'):
+        msg += 'you must use pymongo 2.7+ with MongoDB 2.6'
+        module.fail_json(msg=msg)
 
 
 def replicaset_find(client):
@@ -394,6 +408,7 @@ def main():
                         # Get driver version::
                         driver_version = LooseVersion(PyMongoVersion)
                         # Check driver and server version compatibility:
+
                         check_compatibility(module, srv_version, driver_version)
                     except Exception as excep:
                         module.fail_json(msg='Unable to authenticate with MongoDB: %s' % to_native(excep))
