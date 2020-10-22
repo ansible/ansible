@@ -260,6 +260,7 @@ virtualenv:
 import os
 import re
 import sys
+import json
 import tempfile
 import operator
 import shlex
@@ -350,24 +351,59 @@ def _get_cmd_options(module, cmd):
     return cmd_options
 
 
-def _get_packages(module, pip, chdir):
-    '''Return results of pip command to get packages.'''
+def _get_packages(module, pip, chdir, env):
+    '''Return the installed packages as a string.
+
+    The result is formatted as one package per line, like:
+    black==20.8b1
+    filelock==3.0.12
+    jedi==0.17.2
+    '''
     # Try 'pip list' command first.
     command = '%s list --format=freeze' % pip
     lang_env = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
     rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
 
-    # If there was an error (pip version too old) then use 'pip freeze'.
+    # If there was an error (maybe pip version < 1.3) try 'pip freeze'.
     if rc != 0:
         command = '%s freeze' % pip
         rc, out, err = module.run_command(command, cwd=chdir)
         if rc != 0:
             _fail(module, command, out, err)
+        # pip freeze does not list setuptools or pip in its output
+        # So we need to get those via a specialcase
+        for pkg in ('setuptools', 'pip'):
+            formatted_dep = _get_package_info(module, pkg, env)
+            if formatted_dep is not None:
+                out += '%s\n' % formatted_dep
 
+    # Clean output for pip warnings
+    out = "\n".join(
+        line for line in out.split("\n")
+        if not line.startswith(("You are using", "You should consider"))
+    )
     return command, out, err
 
 
-def _is_present(module, req, installed_pkgs, pkg_command):
+def _get_outdated(module, pip, chdir):
+    '''Return a 4-tuple (command, out, err, outdated_packages),
+    outdated_packages being a set.
+
+    Returns an empty outdated packages set if pip does not implement
+    outdated with format (pip<6.1.0) or crashes (seen pip 18.1 raising
+    a "TypeError: '>' not supported between instances of 'Version' and
+    'Version'").
+
+    '''
+    command = "%s list --outdated --format=json" % pip
+    lang_env = {"LANG": "C", "LC_ALL": "C", "LC_MESSAGES": "C"}
+    rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
+    if rc != 0:
+        return command, out, err, set()
+    return command, out, err, set([package["name"] for package in json.loads(out)])
+
+
+def _is_present(module, req, installed_pkgs):
     '''Return whether or not package is installed.'''
     for pkg in installed_pkgs:
         if '==' in pkg:
@@ -717,31 +753,24 @@ def main():
             )
 
         if module.check_mode:
-            if extra_args or requirements or state == 'latest' or not name:
+            if extra_args or requirements or not name:
                 module.exit_json(changed=True)
 
-            pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
+            if state == 'latest' and name:
+                pkg_cmd, out_pip, err_pip, outdated = _get_outdated(module, pip, chdir)
+                if not outdated.isdisjoint(set([package.package_name for package in packages])):
+                    module.exit_json(changed=True, cmd=pkg_cmd, stdout=out, stderr=err)
+
+            pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir, env)
 
             out += out_pip
             err += err_pip
 
             changed = False
             if name:
-                pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
-
-                if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
-                    # Older versions of pip (pre-1.3) do not have pip list.
-                    # pip freeze does not list setuptools or pip in its output
-                    # So we need to get those via a specialcase
-                    for pkg in ('setuptools', 'pip'):
-                        if pkg in name:
-                            formatted_dep = _get_package_info(module, pkg, env)
-                            if formatted_dep is not None:
-                                pkg_list.append(formatted_dep)
-                                out += '%s\n' % formatted_dep
-
+                pkg_list = out_pip.split("\n")
                 for package in packages:
-                    is_present = _is_present(module, package, pkg_list, pkg_cmd)
+                    is_present = _is_present(module, package, pkg_list)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
@@ -749,7 +778,7 @@ def main():
 
         out_freeze_before = None
         if requirements or has_vcs:
-            _, out_freeze_before, _ = _get_packages(module, pip, chdir)
+            _, out_freeze_before, _ = _get_packages(module, pip, chdir, env)
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -766,7 +795,7 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                _, out_freeze_after, _ = _get_packages(module, pip, chdir, env)
                 changed = out_freeze_before != out_freeze_after
 
         changed = changed or venv_created
