@@ -4,14 +4,15 @@
 Using vmware_tools connection plugin
 ************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
 
 This guide will show you how to utilize VMware Connection plugin to communicate and automate various tasks on VMware guest machines.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 * Software
@@ -37,17 +38,17 @@ Caveats
 =======
 
 - All variable names and VMware object names are case sensitive.
-- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
+- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviors.
 
 
-Example Description
+Example description
 ===================
 
 User can run playbooks against VMware virtual machines using ``vmware_tools`` connection plugin.
 
 In order work with ``vmware_tools`` connection plugin, you will need to specify hostvars for the given virtual machine.
 
-For example, if you want to run a playbook on a virtual machine called ``centos_7`` located at ``/Asia-Datacenter1/prod/centos_7`` in the given vCenter, you will need to specify hostvars like following:
+For example, if you want to run a playbook on a virtual machine called ``centos_7`` located at ``/Asia-Datacenter1/prod/centos_7`` in the given vCenter, you will need to specify hostvars as follows:
 
 .. code-block:: ini
 
@@ -69,8 +70,8 @@ For example, if you want to run a playbook on a virtual machine called ``centos_
     ansible_vmware_tools_user=root
     ansible_vmware_tools_password=Secret123
 
-Here, we are providing vCenter details and credentials for the given virtual machine to run playbook on.
-If your virtual machine path is ``Asia-Datacenter1/prod/centos_7``, you will specify ``ansible_vmware_guest_path`` as ``Asia-Datacenter1/vm/prod/centos_7``. Please take a note that ``/vm`` is added in the virtual machine path, since this is a logical folder structure in VMware inventory.
+Here, we are providing vCenter details and credentials for the given virtual machine to run the playbook on.
+If your virtual machine path is ``Asia-Datacenter1/prod/centos_7``, you specify ``ansible_vmware_guest_path`` as ``Asia-Datacenter1/vm/prod/centos_7``. Please take a note that ``/vm`` is added in the virtual machine path, since this is a logical folder structure in the VMware inventory.
 
 Let us now run following playbook,
 
@@ -93,7 +94,7 @@ For now, you will be entering credentials in plain text, but in a more advanced 
 What to expect
 --------------
 
-Running this playbook can take some time, depending on your environment and network connectivity. When the run is complete you will see
+Running this playbook can take some time, depending on your environment and network connectivity. When the run is complete you will see:
 
 .. code-block:: yaml
 

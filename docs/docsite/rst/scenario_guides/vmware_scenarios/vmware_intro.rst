@@ -4,7 +4,8 @@
 Introduction to Ansible for VMware
 **********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============

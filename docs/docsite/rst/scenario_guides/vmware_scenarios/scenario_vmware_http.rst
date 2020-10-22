@@ -4,14 +4,15 @@
 Using VMware HTTP API using Ansible
 ***********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
 
 This guide will show you how to utilize Ansible to use VMware HTTP APIs to automate various tasks.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 * Software
@@ -40,7 +41,7 @@ Caveats
 - There are very limited number of APIs exposed, so you may need to rely on XMLRPC based VMware modules.
 
 
-Example Description
+Example description
 ===================
 
 With the following Ansible playbook you can find the VMware ESXi host system(s) and can perform various tasks depending on the list of host systems.
