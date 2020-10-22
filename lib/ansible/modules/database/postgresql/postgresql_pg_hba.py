@@ -342,7 +342,7 @@ class PgHba(object):
             ekeys = set(list(oldrule.keys()) + list(rule.keys()))
             ekeys.remove('line')
             for k in ekeys:
-                if oldrule[k] != rule[k]:
+                if oldrule.get(k) != rule.get(k):
                     raise PgHbaRuleChanged('{0} changes {1}'.format(rule, oldrule))
         except PgHbaRuleChanged:
             self.rules[key] = rule
