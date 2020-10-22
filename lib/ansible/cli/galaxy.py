@@ -931,7 +931,11 @@ class GalaxyCLI(CLI):
                         df.write(b_rendered)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
-                    shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
+                    check_path = os.path.join(obj_path, f_rel_path)
+                    if os.path.isfile(check_path) and os.access(check_path, os.R_OK):
+                        continue
+                    else:
+                        shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
 
             for d in dirs:
                 b_dir_path = to_bytes(os.path.join(obj_path, rel_root, d), errors='surrogate_or_strict')
