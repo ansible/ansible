@@ -217,10 +217,12 @@ class RoleMixin(object):
 
         return result
 
-    def _create_role_doc(self, role_names, roles_path):
+    def _create_role_doc(self, role_names, roles_path, entry_point=None):
         """
         :param role_names: A tuple of one or more role names.
         :param role_paths: A tuple of one or more role paths.
+        :param entry_point: A role entry point name for filtering.
+
         :returns: A dict indexed by role name, with 'collection', 'entry_points', and 'path' keys per role.
         """
         roles = self._find_all_normal_roles(roles_path, name_filters=role_names)
@@ -238,10 +240,16 @@ class RoleMixin(object):
             doc['path'] = path
             doc['collection'] = collection
             doc['entry_points'] = {}
-            for entry_point in argspec.keys():
-                entry_spec = argspec[entry_point] or {}
-                doc['entry_points'][entry_point] = entry_spec
-            result[fqcn] = doc
+            for ep in argspec.keys():
+                if entry_point is None or ep == entry_point:
+                    entry_spec = argspec[ep] or {}
+                    doc['entry_points'][ep] = entry_spec
+
+            # If we didn't add any entry points (b/c of filtering), remove this entry.
+            if len(doc['entry_points'].keys()) == 0:
+                del result[fqcn]
+            else:
+                result[fqcn] = doc
 
         for role, role_path in roles:
             argspec = self._load_argspec(role, role_path=role_path)
@@ -329,6 +337,8 @@ class DocCLI(CLI, RoleMixin):
                                  type=opt_help.unfrack_path(pathsep=True),
                                  action=opt_help.PrependListAction,
                                  help='The path to the directory containing your roles.')
+        self.parser.add_argument("-e", "--entry-point", dest="entry_point",
+                                 help="Select the entry point for role(s).")
 
         exclusive = self.parser.add_mutually_exclusive_group()
         exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
@@ -581,7 +591,8 @@ class DocCLI(CLI, RoleMixin):
                 else:
                     self._display_available_roles(list_json)
             else:
-                role_json = self._create_role_doc(context.CLIARGS['args'], roles_path)
+                role_json = self._create_role_doc(context.CLIARGS['args'], roles_path,
+                                                  context.CLIARGS['entry_point'])
                 if do_json:
                     jdump(role_json)
                 else:

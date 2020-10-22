@@ -56,3 +56,8 @@ test "$output" -eq 2
 output=$(ansible-doc -t role -l --playbook-dir . | wc -l)
 test "$output" -eq 3
 )
+
+# Test entry point filter
+current_role_out="$(ansible-doc -t role --playbook-dir . testns.testcol.testrole -e alternate| sed '1 s/\(^> TESTNS\.TESTCOL\.TESTROLE\).*(.*)$/\1/')"
+expected_role_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.TESTROLE\).*(.*)$/\1/' fakecollrole.output)"
+test "$current_role_out" == "$expected_role_out"
