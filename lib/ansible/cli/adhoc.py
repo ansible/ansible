@@ -71,8 +71,7 @@ class AdHocCLI(CLI):
                   'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        include_actions = C._INCLUDE_ROLE_TASKS_ACTIONS
-        if context.CLIARGS['module_name'] not in include_actions and any(frozenset((async_val, poll))):
+        if context.CLIARGS['module_name'] not in C._INCLUDE_ROLE_TASKS_ACTIONS and any(frozenset((async_val, poll))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
 
