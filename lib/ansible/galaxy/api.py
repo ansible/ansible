@@ -215,8 +215,8 @@ class GalaxyAPI:
             return
 
         if not self.token and required:
-            raise AnsibleError("No access token or username set. A token can be set with --api-key, with "
-                               "'ansible-galaxy login', or set in ansible.cfg.")
+            raise AnsibleError("No access token or username set. A token can be set with --api-key "
+                               "or set in ansible.cfg.")
 
         if self.token:
             headers.update(self.token.headers())
