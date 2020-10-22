@@ -31,6 +31,12 @@ If the plugin is in a collection, use the fully qualified name:
    [inventory]
    enable_plugins = namespace.collection_name.inventory_plugin_name
 
+If you want to be able to add a plugin from a collection to your other inventory methods, add it into the existing list:
+
+.. code-block:: ini
+
+   [inventory]
+   enable_plugins = host_list, script, auto, yaml, ini, toml, namespace.collection_name.inventory_plugin_name
 
 .. _using_inventory:
 
@@ -80,12 +86,24 @@ You can create dynamic groups using host variables with the constructed ``keyed_
       - key: tags.Name
         prefix: tag_Name_
         separator: ""
+      # If you have a tag called "Role" which has the value "Webserver", this will add the group
+      # Role_Webserver and add any hosts that have that tag assigned to it.
+      - key: tags.Role
+        prefix: role
     groups:
       # add hosts to the group development if any of the dictionary's keys or values is the word 'devel'
       development: "'devel' in (tags|list)"
+      # add hosts to the "private_only" group if the host doesn't have a public IP associated to it
+      private_only: "(network_interfaces[0].association | default({}) ).public_ip | default('') != ''"
     compose:
-      # set the ansible_host variable to connect with the private IP address without changing the hostname
-      ansible_host: private_ip_address
+      # use a private address where a public one isn't assigned
+      ansible_host: ((network_interfaces[0].association | default({}) ).public_ip | default('') != '') | ternary((network_interfaces[0].association | default({}) ).public_ip, private_ip_address)
+      # alternatively, set the ansible_host variable to connect with the private IP address without changing the hostname
+      # ansible_host: private_ip_address
+      # if you *must* set a string here (perhaps to identify the inventory source if you have multiple
+      # accounts you want to use as sources), you need to wrap this in two sets of quotes, either ' then "
+      # or " then '
+      some_inventory_wide_string: '"Yes, you need both types of quotes here"'
 
 Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
 
@@ -99,6 +117,8 @@ Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
       |--@development:
       |  |--ec2-12-345-678-901.compute-1.amazonaws.com
       |  |--ec2-98-765-432-10.compute-1.amazonaws.com
+      |--@role_Webserver
+      |  |--ec2-12-345-678-901.compute-1.amazonaws.com
       |--@tag_Name_ECS_Instance:
       |  |--ec2-98-765-432-10.compute-1.amazonaws.com
       |--@tag_Name_Test_Server:
