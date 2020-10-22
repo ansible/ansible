@@ -17,4 +17,4 @@ ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory with space"  ansible -m ping testho
 ANSIBLE_CONFIG=nonexistent.cfg ansible-config dump --only-changed -v | grep 'No config file found; using defaults'
 
 # test aliases for direct config options (timeout)
-ANSIBLE_CONNECTION_PLUGINS=./plugins/connection ansible -m raw -a 'echo test' all -i ./inventory.ini --timeout 2 "$@" | grep 'connectiontimeout is 2'
+ANSIBLE_CONNECTION_PLUGINS=./plugins/connection ansible -m raw -a 'echo test' all -i ./inventory.ini --timeout 2 "-vvvv" | grep 'connectiontimeout is 2'

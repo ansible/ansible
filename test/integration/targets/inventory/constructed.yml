@@ -1,7 +1,7 @@
 plugin: constructed
 strict: true
 keyed_groups:
-  - key: 'security_groups|json_query("[].group_id")'
+  - key: 'security_groups[0].group_id'
     prefix: 'security_groups'
   - key: 'tags'
     prefix: 'tag'

@@ -28,7 +28,9 @@ if [ "$?" != "1" ]; then
     exit 1
 fi
 
-# Ensure that non-matching limit causes failure with rc 1
+set -e
+
+# Ensure that an empty limit does not cause failure with rc 1
 ansible-playbook -i ../../inventory --limit @"${empty_limit_file}" playbook.yml
 
 ansible-playbook -i ../../inventory "$@" strategy.yml
