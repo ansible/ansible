@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-def add_builtin_fqcn(names):
+def add_internal_fqcns(names):
     '''
     Given a sequence of action/module names, returns a list of these names
     with the same names with the prefixes `ansible.builtin.` and
