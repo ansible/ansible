@@ -28,15 +28,11 @@ from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
 
 __all__ = ['Playbook']
-
-
-_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = add_builtin_fqcn(('include', 'import_playbook'))
 
 
 class Playbook:
@@ -95,7 +91,7 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if any(action in entry for action in _INCLUDE_IMPORT_PLAYBOOK_ACTIONS):
+            if any(action in entry for action in C._INCLUDE_IMPORT_PLAYBOOK_ACTIONS):
                 if 'include' in entry or 'ansible.builtin.include' in entry:
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')

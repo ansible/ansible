@@ -41,12 +41,8 @@ from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
-
-
-_META_ACTIONS = add_builtin_fqcn(('meta', ))
 
 
 class StrategyModule(StrategyBase):
@@ -193,7 +189,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action in _META_ACTIONS:
+                        if task.action in C._META_ACTIONS:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:

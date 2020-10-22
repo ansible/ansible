@@ -35,7 +35,6 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 if PY3:
@@ -50,10 +49,7 @@ global_display = Display()
 
 __all__ = ["CallbackBase"]
 
-
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
-
-_DEBUG_ACTIONS = add_builtin_fqcn(('debug', ))
 
 
 class CallbackBase(AnsiblePlugin):
@@ -251,7 +247,7 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name in _DEBUG_ACTIONS:
+        if task_name in C._DEBUG_ACTIONS:
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):

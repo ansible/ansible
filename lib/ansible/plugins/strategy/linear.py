@@ -31,6 +31,7 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.module_utils.six import iteritems
@@ -42,12 +43,8 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
-
-
-_META_ACTIONS = add_builtin_fqcn(('meta', ))
 
 
 class StrategyModule(StrategyBase):
@@ -275,7 +272,7 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         action = None
 
-                    if task.action in _META_ACTIONS:
+                    if task.action in C._META_ACTIONS:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
@@ -413,7 +410,7 @@ class StrategyModule(StrategyBase):
                 for res in results:
                     # execute_meta() does not set 'failed' in the TaskResult
                     # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action in _META_ACTIONS) and iterator.is_failed(res._host):
+                    if (res.is_failed() or res._task.action in C._META_ACTIONS) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)

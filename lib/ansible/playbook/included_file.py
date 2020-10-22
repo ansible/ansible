@@ -21,19 +21,15 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
-
-
-_INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include', 'include_tasks', 'include_role'))
-_INCLUDE_INCLUDE_TASKS_ACTIONS = add_builtin_fqcn(('include', 'include_tasks'))
 
 
 class IncludedFile:
@@ -72,7 +68,7 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action in _INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS:
+            if original_task.action in C._INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS:
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue
@@ -116,7 +112,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in _INCLUDE_INCLUDE_TASKS_ACTIONS:
+                    if original_task.action in C._INCLUDE_INCLUDE_TASKS_ACTIONS:
                         include_file = None
                         if original_task:
                             if original_task.static:

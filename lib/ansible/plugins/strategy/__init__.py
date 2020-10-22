@@ -50,7 +50,6 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
@@ -63,10 +62,6 @@ __all__ = ['StrategyBase']
 ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
     'discovered_interpreter_',
 ))
-
-
-_INCLUDE_VARS_ACTIONS = add_builtin_fqcn(('include_vars', ))
-_SET_FACT_ACTIONS = add_builtin_fqcn(('set_fact', ))
 
 
 class StrategySentinel:
@@ -680,7 +675,7 @@ class StrategyBase:
 
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                        if original_task.action in _INCLUDE_VARS_ACTIONS:
+                        if original_task.action in C._INCLUDE_VARS_ACTIONS:
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
@@ -694,7 +689,7 @@ class StrategyBase:
                                 # we set BOTH fact and nonpersistent_facts (aka hostvar)
                                 # when fact is retrieved from cache in subsequent operations it will have the lower precedence,
                                 # but for playbook setting it the 'higher' precedence is kept
-                                is_set_fact = original_task.action in _SET_FACT_ACTIONS
+                                is_set_fact = original_task.action in C._SET_FACT_ACTIONS
                                 if not is_set_fact or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
                                 if is_set_fact:

@@ -43,16 +43,12 @@ from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
 display = Display()
-
-
-_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_role', ))
 
 
 def preprocess_vars(a):
@@ -223,7 +219,7 @@ class VariableManager:
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
-            if task._role is not None and (play or task.action in _INCLUDE_ROLE_ACTIONS):
+            if task._role is not None and (play or task.action in C._INCLUDE_ROLE_ACTIONS):
                 all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
                                               "role '%s' defaults" % task._role.name)
 

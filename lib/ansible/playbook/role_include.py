@@ -20,6 +20,7 @@ __metaclass__ = type
 
 from os.path import basename
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
@@ -28,14 +29,10 @@ from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
 from ansible.module_utils.six import string_types
-from ansible.utils.fqcn import add_builtin_fqcn
 
 __all__ = ['IncludeRole']
 
 display = Display()
-
-
-_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_role', ))
 
 
 class IncludeRole(TaskInclude):
@@ -131,7 +128,7 @@ class IncludeRole(TaskInclude):
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
 
-        if 'public' in ir.args and ir.action not in _INCLUDE_ROLE_ACTIONS:
+        if 'public' in ir.args and ir.action not in C._INCLUDE_ROLE_ACTIONS:
             raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
@@ -148,7 +145,7 @@ class IncludeRole(TaskInclude):
             ir._from_files[from_key] = basename(args_value)
 
         apply_attrs = ir.args.get('apply', {})
-        if apply_attrs and ir.action not in _INCLUDE_ROLE_ACTIONS:
+        if apply_attrs and ir.action not in C._INCLUDE_ROLE_ACTIONS:
             raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
         elif not isinstance(apply_attrs, dict):
             raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)

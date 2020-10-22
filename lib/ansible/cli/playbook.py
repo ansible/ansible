@@ -8,6 +8,7 @@ __metaclass__ = type
 import os
 import stat
 
+from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
@@ -19,13 +20,9 @@ from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 
 display = Display()
-
-
-_META_ACTIONS = add_builtin_fqcn(('meta', ))
 
 
 class PlaybookCLI(CLI):
@@ -174,7 +171,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action in _META_ACTIONS and task.implicit:
+                                    if task.action in C._META_ACTIONS and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)

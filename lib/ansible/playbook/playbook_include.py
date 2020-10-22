@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems, string_types
@@ -34,12 +35,8 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
-
-
-_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = add_builtin_fqcn(('include', 'import_playbook'))
 
 
 class PlaybookInclude(Base, Conditional, Taggable):
@@ -143,7 +140,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             new_ds.ansible_pos = ds.ansible_pos
 
         for (k, v) in iteritems(ds):
-            if k in _INCLUDE_IMPORT_PLAYBOOK_ACTIONS:
+            if k in C._INCLUDE_IMPORT_PLAYBOOK_ACTIONS:
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly

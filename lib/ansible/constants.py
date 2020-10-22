@@ -165,3 +165,28 @@ for setting in config.data.get_settings():
 
 for warn in config.WARNINGS:
     _warning(warn)
+
+
+# The following are hard-coded action names
+_COMMAND_SHELL_SCRIPT_ACTIONS = add_builtin_fqcn(('command', 'shell', 'script'))
+_COMMAND_SHELL_SCRIPT_RAW_ACTIONS = add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
+_DEBUG_ACTIONS = add_builtin_fqcn(('debug', ))
+_IMPORT_PLAYBOOK_ACTIONS = add_builtin_fqcn(('import_playbook', ))
+_IMPORT_ROLE_ACTIONS = add_builtin_fqcn(('import_role', ))
+_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('import_tasks', ))
+_INCLUDE_ACTIONS = add_builtin_fqcn(('include', ))
+_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = add_builtin_fqcn(('include', 'import_playbook'))
+_INCLUDE_INCLUDE_TASKS_ACTIONS = add_builtin_fqcn(('include', 'include_tasks'))
+_INCLUDE_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('include', 'include_tasks', 'import_tasks'))
+_INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include', 'include_tasks', 'include_role'))
+_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_role', ))
+_INCLUDE_ROLE_IMPORT_ROLE_ACTIONS = add_builtin_fqcn(('include_role', 'import_role'))
+_INCLUDE_ROLE_TASKS_ACTIONS = add_builtin_fqcn(('include_role', 'include_tasks'))
+_INCLUDE_TASKS_ACTIONS = add_builtin_fqcn(('include_tasks', ))
+_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('include_tasks', 'import_tasks'))
+_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_tasks', 'include_role'))
+_INCLUDE_VARS_ACTIONS = add_builtin_fqcn(('include_vars', ))
+_META_ACTIONS = add_builtin_fqcn(('meta', ))
+_SETUP_GATHER_FACTS_ACTIONS = add_builtin_fqcn(('setup', 'gather_facts'))
+_SET_FACT_ACTIONS = add_builtin_fqcn(('set_fact', ))
+_SET_FACT_INCLUDE_VARS_ACTIONS = add_builtin_fqcn(('set_fact', 'include_vars'))

@@ -37,12 +37,8 @@ from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
-
-
-_COMMAND_SHELL_SCRIPT_RAW_ACTIONS = add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
@@ -189,7 +185,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
-            check_raw = module in _COMMAND_SHELL_SCRIPT_RAW_ACTIONS
+            check_raw = module in C._COMMAND_SHELL_SCRIPT_RAW_ACTIONS
             task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",
