@@ -92,17 +92,18 @@ class Playbook:
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
             if any(action in entry for action in C._INCLUDE_IMPORT_PLAYBOOK_ACTIONS):
-                if 'include' in entry or 'ansible.builtin.include' in entry:
+                if any(action in entry for action in C._INCLUDE_ACTIONS):
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
-                    which = entry.get('import_playbook',
-                                      entry.get('include',
-                                                entry.get('ansible.builtin.import_playbook',
-                                                          entry.get('ansible.builtin.include', entry))))
+                    which = entry
+                    for k in C._IMPORT_PLAYBOOK_ACTIONS + C._INCLUDE_ACTIONS:
+                        if k in entry:
+                            which = entry[k]
+                            break
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
