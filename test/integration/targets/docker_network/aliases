@@ -1,4 +1,5 @@
 shippable/posix/group4
 skip/osx
 skip/freebsd
+skip/docker  # avoid issues with tests and user-defined docker networks
 destructive
