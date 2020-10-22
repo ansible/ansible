@@ -35,8 +35,8 @@ Url: http://ansible.com
 BuildArch: noarch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-%{!?python2_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
-%{!?python3_sitelib: %global python_sitelib %(%{__python3} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python2_sitelib: %global _python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python3_sitelib: %global _python_sitelib %(%{__python3} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 # Bundled provides
 Provides: bundled(python-backports-ssl_match_hostname) = 3.7.0.1
@@ -219,8 +219,8 @@ done
 
 # Amazon Linux doesn't install to dist-packages but python_sitelib expands to
 # that location and the python interpreter expects things to be there.
-if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
-    DEST_DIR='%{buildroot}%{python_sitelib}'
+if expr x'%{_python_sitelib}' : 'x.*dist-packages/\?' ; then
+    DEST_DIR='%{buildroot}%{_python_sitelib}'
     SOURCE_DIR=$(echo "$DEST_DIR" | sed 's/dist-packages/site-packages/g')
     if test -d "$SOURCE_DIR" -a ! -d "$DEST_DIR" ; then
         mv $SOURCE_DIR $DEST_DIR
