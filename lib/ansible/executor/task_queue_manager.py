@@ -160,7 +160,7 @@ class TaskQueueManager:
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
 
-            # try to get colleciotn world name first
+            # try to get collection world name first
             cnames = getattr(callback_plugin, '_redirected_names', [])
             if cnames:
                 # store the name the plugin was loaded as, as that's what we'll need to compare to the configured callback list later
