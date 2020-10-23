@@ -96,7 +96,7 @@ class Zfs(object):
         self.changed = False
         self.zfs_cmd = module.get_bin_path('zfs', True)
         self.zpool_cmd = module.get_bin_path('zpool', True)
-        self.pool = name.split('/')[0]
+        self.pool = name.split('/')[0].split('@')[0]
         self.is_solaris = os.uname()[0] == 'SunOS'
         self.is_openzfs = self.check_openzfs()
         self.enhanced_sharing = self.check_enhanced_sharing()
