@@ -94,7 +94,7 @@ You can create dynamic groups using host variables with the constructed ``keyed_
       # add hosts to the group development if any of the dictionary's keys or values is the word 'devel'
       development: "'devel' in (tags|list)"
       # add hosts to the "private_only" group if the host doesn't have a public IP associated to it
-      private_only: "(network_interfaces[0].association | default({}) ).public_ip | default('') != ''"
+      private_only: "public_ip_address is not defined"
     compose:
       # use a private address where a public one isn't assigned
       ansible_host: ((network_interfaces[0].association | default({}) ).public_ip | default('') != '') | ternary((network_interfaces[0].association | default({}) ).public_ip, private_ip_address)
