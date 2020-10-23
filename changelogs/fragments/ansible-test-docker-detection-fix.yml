@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Correctly detect running in a Docker container on Azure Pipelines.

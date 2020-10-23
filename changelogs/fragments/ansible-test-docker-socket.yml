@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Always map ``/var/run/docker.sock`` into test containers created by the ``--docker`` option if the docker host is not ``localhost``.

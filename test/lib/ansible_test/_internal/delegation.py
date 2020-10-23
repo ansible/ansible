@@ -72,6 +72,9 @@ from .docker_util import (
     docker_available,
     docker_network_disconnect,
     get_docker_networks,
+    get_docker_preferred_network_name,
+    get_docker_hostname,
+    is_docker_user_defined_network,
 )
 
 from .cloud import (
@@ -305,14 +308,18 @@ def delegate_docker(args, exclude, require, integration_targets):
             if args.docker_seccomp != 'default':
                 test_options += ['--security-opt', 'seccomp=%s' % args.docker_seccomp]
 
-            if os.path.exists(docker_socket):
+            if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
             if httptester_id:
                 test_options += ['--env', 'HTTPTESTER=1', '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password]
 
-                for host in HTTPTESTER_HOSTS:
-                    test_options += ['--link', '%s:%s' % (httptester_id, host)]
+                network = get_docker_preferred_network_name(args)
+
+                if not is_docker_user_defined_network(network):
+                    # legacy links are required when using the default bridge network instead of user-defined networks
+                    for host in HTTPTESTER_HOSTS:
+                        test_options += ['--link', '%s:%s' % (httptester_id, host)]
 
             if isinstance(args, IntegrationConfig):
                 cloud_platforms = get_cloud_providers(args)

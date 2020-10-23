@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - The ``cs`` and ``openshift`` test plugins now search for containers on the current network instead of assuming the ``bridge`` network.
