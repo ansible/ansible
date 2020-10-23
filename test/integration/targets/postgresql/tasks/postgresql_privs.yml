@@ -495,6 +495,43 @@
     login_user: "{{ db_user3 }}"
     login_password: password
 
+# Issue https://github.com/ansible-collections/community.general/issues/994
+- name: Create a procedure for tests
+  postgresql_query:
+    query: "CREATE PROCEDURE mock_procedure() LANGUAGE SQL AS $$ SELECT 1; $$;"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  when: postgres_version_resp.stdout is version('11', '>=')
+
+# Issue https://github.com/ansible-collections/community.general/issues/994
+- name: Try to run module against a procedure, not function
+  postgresql_privs:
+    type: function
+    state: present
+    privs: ALL
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  when: postgres_version_resp.stdout is version('11', '>=')
+
+- assert:
+    that:
+    - result is not changed
+  when: postgres_version_resp.stdout is version('11', '>=')
+
+- name: Drop the procedure for tests
+  postgresql_query:
+    query: "DROP PROCEDURE mock_procedure()"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  when: postgres_version_resp.stdout is version('11', '>=')
+
 #################################################
 # Test ALL_IN_SCHEMA for 'partioned tables type #
 #################################################

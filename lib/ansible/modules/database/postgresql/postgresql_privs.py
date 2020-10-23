@@ -481,6 +481,7 @@ class Connection(object):
 
         self.connection = psycopg2.connect(**kw)
         self.cursor = self.connection.cursor()
+        self.pg_version = self.connection.server_version
 
     def commit(self):
         self.connection.commit()
@@ -528,10 +529,15 @@ class Connection(object):
     def get_all_functions_in_schema(self, schema):
         if not self.schema_exists(schema):
             raise Error('Schema "%s" does not exist.' % schema)
-        query = """SELECT p.proname, oidvectortypes(p.proargtypes)
-                    FROM pg_catalog.pg_proc p
-                    JOIN pg_namespace n ON n.oid = p.pronamespace
-                    WHERE nspname = %s"""
+
+        query = ("SELECT p.proname, oidvectortypes(p.proargtypes) "
+                 "FROM pg_catalog.pg_proc p "
+                 "JOIN pg_namespace n ON n.oid = p.pronamespace "
+                 "WHERE nspname = %s")
+
+        if self.pg_version >= 110000:
+            query += " and p.prokind = 'f'"
+
         self.cursor.execute(query, (schema,))
         return ["%s(%s)" % (t[0], t[1]) for t in self.cursor.fetchall()]
 
@@ -1052,7 +1058,7 @@ def main():
 
     except psycopg2.Error as e:
         conn.rollback()
-        module.fail_json(msg=to_native(e.message))
+        module.fail_json(msg=to_native(e))
 
     if module.check_mode:
         conn.rollback()
