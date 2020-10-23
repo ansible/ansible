@@ -4,7 +4,8 @@
 Using Virtual machine attributes in VMware dynamic inventory plugin
 *******************************************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Virtual machine attributes
 ==========================

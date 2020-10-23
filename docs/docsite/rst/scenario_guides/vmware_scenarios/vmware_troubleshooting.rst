@@ -4,7 +4,8 @@
 Troubleshooting Ansible for VMware
 **********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 This section lists things that can go wrong and possible ways to fix them.
 
