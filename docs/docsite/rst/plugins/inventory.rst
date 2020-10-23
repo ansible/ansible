@@ -24,19 +24,19 @@ In some circumstances, for example, if the inventory plugin does not use a YAML 
    [inventory]
    enable_plugins = host_list, script, auto, yaml, ini, toml
 
-If the plugin is in a collection, use the fully qualified name:
-
-.. code-block:: ini
-
-   [inventory]
-   enable_plugins = namespace.collection_name.inventory_plugin_name
-
-If you want to be able to add a plugin from a collection to your other inventory methods, add it into the existing list:
+If the plugin is in a collection, and isn't being picked up by the `auto` statement, you can append the fully qualified name:
 
 .. code-block:: ini
 
    [inventory]
    enable_plugins = host_list, script, auto, yaml, ini, toml, namespace.collection_name.inventory_plugin_name
+
+Or, if it's a local plugin, perhaps stored in `plugins/inventory/my_plugin.py`, you could reference it like this:
+
+.. code-block:: ini
+
+   [inventory]
+   enable_plugins = host_list, script, auto, yaml, ini, toml, my_plugin
 
 .. _using_inventory:
 
