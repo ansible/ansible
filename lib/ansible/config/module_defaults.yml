@@ -1,5 +1,7 @@
 version: '1.0'
 groupings:
+  s3_metrics_configuration:
+  - aws
   aws_acm:
   - aws
   aws_acm_facts:
