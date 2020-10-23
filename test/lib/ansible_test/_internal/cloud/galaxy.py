@@ -25,6 +25,10 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
+    get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -103,9 +107,6 @@ class GalaxyProvider(CloudProvider):
 
         container_id = get_docker_container_id()
 
-        if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
-
         p_results = docker_inspect(self.args, 'ansible-ci-pulp')
 
         if p_results and not p_results[0].get('State', {}).get('Running'):
@@ -166,7 +167,7 @@ class GalaxyProvider(CloudProvider):
             pulp_host = self._get_simulator_address('ansible-ci-pulp')
             display.info('Found Galaxy simulator container address: %s' % pulp_host, verbosity=1)
         else:
-            pulp_host = 'localhost'
+            pulp_host = get_docker_hostname()
 
         self._set_cloud_config('PULP_HOST', pulp_host)
         self._set_cloud_config('PULP_PORT', str(pulp_port))
@@ -178,7 +179,12 @@ class GalaxyProvider(CloudProvider):
 
         :rtype: list[str]
         """
-        return ['--link', 'ansible-ci-pulp']  # if self.managed else []
+        network = get_docker_preferred_network_name(self.args)
+
+        if not is_docker_user_defined_network(network):
+            return ['--link', 'ansible-ci-pulp']
+
+        return []
 
     def cleanup(self):
         """Clean up the resource and temporary configs files after tests."""
@@ -188,9 +194,7 @@ class GalaxyProvider(CloudProvider):
         super(GalaxyProvider, self).cleanup()
 
     def _get_simulator_address(self, container_name):
-        results = docker_inspect(self.args, container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, container_name)
 
 
 class GalaxyEnvironment(CloudEnvironment):
