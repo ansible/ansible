@@ -63,6 +63,7 @@ class EnvironmentConfig(CommonConfig):
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
         self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
+        self.docker_network = args.docker_network if 'docker_network' in args else None  # type: str
 
         if self.docker_seccomp is None:
             self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
