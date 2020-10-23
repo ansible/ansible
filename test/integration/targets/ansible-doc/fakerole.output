@@ -1,4 +1,4 @@
-> NORMAL_ROLE1    (/Users/shrews/Devel/github/Shrews/ansible/test/integration/targets/ansible-doc/roles/normal_role1)
+> NORMAL_ROLE1    (/ansible/test/integration/targets/ansible-doc/roles/normal_role1)
 
 ENTRY POINT: main - This is the main entry point.
 
