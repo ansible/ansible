@@ -1,0 +1,2 @@
+bugfixes:
+- "url lookup - make sure that options supplied in ansible.cfg are actually used (https://github.com/ansible/ansible/pull/71736)."
