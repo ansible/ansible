@@ -28,6 +28,10 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
+    get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -100,7 +104,9 @@ class ACMEProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []
@@ -115,9 +121,6 @@ class ACMEProvider(CloudProvider):
     def _setup_dynamic(self):
         """Create a ACME test container using docker."""
         container_id = get_docker_container_id()
-
-        if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
 
         self.container_name = self.DOCKER_SIMULATOR_NAME
 
@@ -158,7 +161,7 @@ class ACMEProvider(CloudProvider):
             acme_host_ip = acme_host
             display.info('Found ACME test container address: %s' % acme_host, verbosity=1)
         else:
-            acme_host = 'localhost'
+            acme_host = get_docker_hostname()
             acme_host_ip = acme_host
 
         self._set_cloud_config('acme_host', acme_host)
@@ -167,9 +170,7 @@ class ACMEProvider(CloudProvider):
         self._wait_for_service('https', acme_host_ip, 14000, 'dir', 'ACME CA endpoint')
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         raise NotImplementedError()

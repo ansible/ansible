@@ -22,6 +22,10 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
+    get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -89,7 +93,9 @@ class VcenterProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []
@@ -104,9 +110,6 @@ class VcenterProvider(CloudProvider):
     def _setup_dynamic_simulator(self):
         """Create a vcenter simulator using docker."""
         container_id = get_docker_container_id()
-
-        if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
 
         self.container_name = self.DOCKER_SIMULATOR_NAME
 
@@ -148,14 +151,12 @@ class VcenterProvider(CloudProvider):
             vcenter_host = self._get_simulator_address()
             display.info('Found vCenter simulator container address: %s' % vcenter_host, verbosity=1)
         else:
-            vcenter_host = 'localhost'
+            vcenter_host = get_docker_hostname()
 
         self._set_cloud_config('vcenter_host', vcenter_host)
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         parser = ConfigParser({
