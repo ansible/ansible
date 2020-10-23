@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ovirt_disk - don't move disk when already in storage_domain (https://github.com/oVirt/ovirt-ansible-collection/pull/135).
