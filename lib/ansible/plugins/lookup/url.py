@@ -67,6 +67,7 @@ options:
     description: User-Agent to use in the request
     type: string
     version_added: "2.10"
+    default: ansible-httpget
     vars:
         - name: ansible_lookup_url_agent
     env:
