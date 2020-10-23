@@ -1,0 +1,2 @@
+bugfixes:
+- nmcli - typecast parameters to string as required (https://github.com/ansible/ansible/issues/59095).
