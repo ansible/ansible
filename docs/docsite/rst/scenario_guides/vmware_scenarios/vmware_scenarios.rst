@@ -14,3 +14,4 @@ These scenarios teach you how to accomplish common VMware tasks using Ansible. T
    scenario_remove_vm
    scenario_find_vm_folder
    scenario_vmware_http
+   scenario_vmware_tools_connection
