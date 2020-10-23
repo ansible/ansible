@@ -58,6 +58,20 @@
   register: pg_hba_change
   with_items: "{{pg_hba_test_ips}}"
 
+- name: Able to add options on rule without
+  postgresql_pg_hba:
+    dest: "/tmp/pg_hba.conf"
+    users: "+some"
+    order: "sud"
+    state: "present"
+    contype: "local"
+    method: "cert"
+    options: "{{ item }}"
+    address: ""
+  with_items:
+  - ""
+  - "clientcert=1"
+
 - name: Retain options even if they contain spaces
   postgresql_pg_hba:
     dest: "/tmp/pg_hba.conf"

@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_pg_hba - fix a crash when a new rule with an 'options' field replaces a rule without or vice versa (https://github.com/ansible-collections/community.general/issues/1108).
