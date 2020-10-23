@@ -1,0 +1,2 @@
+minor_changes:
+  - constructed - Add a toggle to allow the separator to be omitted if no prefix has been provided.
