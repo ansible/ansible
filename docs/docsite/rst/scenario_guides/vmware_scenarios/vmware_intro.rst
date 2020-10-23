@@ -4,7 +4,8 @@
 Introduction to Ansible for VMware
 **********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
@@ -33,7 +34,7 @@ You can install vSphere Automation Python SDK using pip:
 
 Note:
    Installing vSphere Automation Python SDK also installs ``pyvmomi``. A separate installation of ``pyvmomi`` is not required.
-   
+
 vmware_guest module
 ===================
 

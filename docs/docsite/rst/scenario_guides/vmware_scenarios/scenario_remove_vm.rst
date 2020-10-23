@@ -4,14 +4,15 @@
 Remove an existing VMware virtual machine
 *****************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
 
 This guide will show you how to utilize Ansible to remove an existing VMware virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 * Software
@@ -47,7 +48,7 @@ Caveats
 
    The removal VMware virtual machine using ``vmware_guest`` module is destructive operation and can not be reverted, so it is strongly recommended to take the backup of virtual machine and related files (vmx and vmdk files) before proceeding.
 
-Example Description
+Example description
 ===================
 
 In this use case / example, user will be removing a virtual machine using name. The following Ansible playbook showcases the basic parameters that are needed for this.
