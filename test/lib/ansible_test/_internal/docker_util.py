@@ -19,6 +19,10 @@ from .util import (
     SubprocessError,
 )
 
+from .http import (
+    urlparse,
+)
+
 from .util_common import (
     run_command,
 )
@@ -37,27 +41,62 @@ def docker_available():
     return find_executable('docker', required=False)
 
 
+def get_docker_hostname():  # type: () -> str
+    """Return the hostname of the Docker service."""
+    try:
+        return get_docker_hostname.hostname
+    except AttributeError:
+        pass
+
+    docker_host = os.environ.get('DOCKER_HOST')
+
+    if docker_host and docker_host.startswith('tcp://'):
+        try:
+            hostname = urlparse(docker_host)[1].split(':')[0]
+            display.info('Detected Docker host: %s' % hostname, verbosity=1)
+        except ValueError:
+            hostname = 'localhost'
+            display.warning('Could not parse DOCKER_HOST environment variable "%s", falling back to localhost.' % docker_host)
+    else:
+        hostname = 'localhost'
+        display.info('Assuming Docker is available on localhost.', verbosity=1)
+
+    get_docker_hostname.hostname = hostname
+
+    return hostname
+
+
 def get_docker_container_id():
     """
     :rtype: str | None
     """
-    path = '/proc/self/cgroup'
+    try:
+        return get_docker_container_id.container_id
+    except AttributeError:
+        pass
 
-    if not os.path.exists(path):
-        return None
+    path = '/proc/self/cpuset'
+    container_id = None
 
-    contents = read_text_file(path)
+    if os.path.exists(path):
+        # File content varies based on the environment:
+        #   No Container: /
+        #   Docker: /docker/c86f3732b5ba3d28bb83b6e14af767ab96abbc52de31313dcb1176a62d91a507
+        #   Azure Pipelines (Docker): /azpl_job/0f2edfed602dd6ec9f2e42c867f4d5ee640ebf4c058e6d3196d4393bb8fd0891
+        #   Podman: /../../../../../..
+        contents = read_text_file(path)
 
-    paths = [line.split(':')[2] for line in contents.splitlines()]
-    container_ids = set(path.split('/')[2] for path in paths if path.startswith('/docker/'))
+        cgroup_path, cgroup_name = os.path.split(contents.strip())
 
-    if not container_ids:
-        return None
+        if cgroup_path in ('/docker', '/azpl_job'):
+            container_id = cgroup_name
 
-    if len(container_ids) == 1:
-        return container_ids.pop()
+    get_docker_container_id.container_id = container_id
 
-    raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
+    if container_id:
+        display.info('Detected execution in Docker container: %s' % container_id, verbosity=1)
+
+    return container_id
 
 
 def get_docker_container_ip(args, container_id):
@@ -67,8 +106,63 @@ def get_docker_container_ip(args, container_id):
     :rtype: str
     """
     results = docker_inspect(args, container_id)
-    ipaddress = results[0]['NetworkSettings']['IPAddress']
+    network_settings = results[0]['NetworkSettings']
+    networks = network_settings.get('Networks')
+
+    if networks:
+        network_name = get_docker_preferred_network_name(args)
+        ipaddress = networks[network_name]['IPAddress']
+    else:
+        # podman doesn't provide Networks, fall back to using IPAddress
+        ipaddress = network_settings['IPAddress']
+
+    if not ipaddress:
+        raise ApplicationError('Cannot retrieve IP address for container: %s' % container_id)
+
     return ipaddress
+
+
+def get_docker_network_name(args, container_id):  # type: (EnvironmentConfig, str) -> str
+    """
+    Return the network name of the specified container.
+    Raises an exception if zero or more than one network is found.
+    """
+    networks = get_docker_networks(args, container_id)
+
+    if not networks:
+        raise ApplicationError('No network found for Docker container: %s.' % container_id)
+
+    if len(networks) > 1:
+        raise ApplicationError('Found multiple networks for Docker container %s instead of only one: %s' % (container_id, ', '.join(networks)))
+
+    return networks[0]
+
+
+def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
+    """
+    Return the preferred network name for use with Docker. The selection logic is:
+    - the network selected by the user with `--docker-network`
+    - the network of the currently running docker container (if any)
+    - the default docker network (returns None)
+    """
+    network = None
+
+    if args.docker_network:
+        network = args.docker_network
+    else:
+        current_container_id = get_docker_container_id()
+
+        if current_container_id:
+            # Make sure any additional containers we launch use the same network as the current container we're running in.
+            # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
+            network = get_docker_network_name(args, current_container_id)
+
+    return network
+
+
+def is_docker_user_defined_network(network):  # type: (str) -> bool
+    """Return True if the network being used is a user-defined network."""
+    return network and network != 'bridge'
 
 
 def get_docker_networks(args, container_id):
@@ -154,6 +248,13 @@ def docker_run(args, image, options, cmd=None, create_only=False):
         command = 'create'
     else:
         command = 'run'
+
+    network = get_docker_preferred_network_name(args)
+
+    if is_docker_user_defined_network(network):
+        # Only when the network is not the default bridge network.
+        # Using this with the default bridge network results in an error when using --link: links are only supported for user-defined networks
+        options.extend(['--network', network])
 
     for _iteration in range(1, 3):
         try:

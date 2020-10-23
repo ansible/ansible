@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-test - Always connect additional Docker containers to the network used by the current container (if any).
+minor_changes:
+  - ansible-test - Add a ``--docker-network`` option to choose the network for running containers when using the ``--docker`` option.

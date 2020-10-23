@@ -21,6 +21,10 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
+    get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -96,7 +100,12 @@ class ForemanProvider(CloudProvider):
 
         :rtype: list[str]
         """
-        return ['--link', self.DOCKER_SIMULATOR_NAME] if self.managed else []
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
+            return ['--link', self.DOCKER_SIMULATOR_NAME]
+
+        return []
 
     def cleanup(self):
         """Clean up the resource and temporary configs files after tests."""
@@ -109,12 +118,6 @@ class ForemanProvider(CloudProvider):
         """Spawn a Foreman stub within docker container."""
         foreman_port = 8080
         container_id = get_docker_container_id()
-
-        if container_id:
-            display.info(
-                'Running in docker container: %s' % container_id,
-                verbosity=1,
-            )
 
         self.container_name = self.DOCKER_SIMULATOR_NAME
 
@@ -157,15 +160,13 @@ class ForemanProvider(CloudProvider):
                 % foreman_host, verbosity=1
             )
         else:
-            foreman_host = 'localhost'
+            foreman_host = get_docker_hostname()
 
         self._set_cloud_config('FOREMAN_HOST', foreman_host)
         self._set_cloud_config('FOREMAN_PORT', str(foreman_port))
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ip_address = results[0]['NetworkSettings']['IPAddress']
-        return ip_address
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         raise NotImplementedError
