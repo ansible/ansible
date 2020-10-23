@@ -12,6 +12,7 @@ import tarfile
 import uuid
 import time
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.six import string_types
@@ -216,7 +217,7 @@ class GalaxyAPI:
 
         if not self.token and required:
             raise AnsibleError("No access token or username set. A token can be set with --api-key "
-                               "or set in ansible.cfg.")
+                               "or at {0}.".format(to_native(C.GALAXY_TOKEN_PATH)))
 
         if self.token:
             headers.update(self.token.headers())

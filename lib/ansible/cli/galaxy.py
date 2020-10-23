@@ -117,8 +117,7 @@ class GalaxyCLI(CLI):
                 display.error(
                     "The login command was removed in late 2020. An API key is now required to publish roles or collections "
                     "to Galaxy. The key can be found at https://galaxy.ansible.com/me/preferences, and passed to the "
-                    "ansible-galaxy CLI via the `ANSIBLE_GALAXY_TOKEN` environment variable, in a file at {0}, by setting "
-                    "`token` under the `galaxy` section in `ansible.cfg`, or (insecurely) via the `--token` "
+                    "ansible-galaxy CLI via a file at {0} or (insecurely) via the `--token` "
                     "command-line argument.".format(to_text(C.GALAXY_TOKEN_PATH)))
                 exit(1)
 
