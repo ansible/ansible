@@ -87,7 +87,7 @@ You can create dynamic groups using host variables with the constructed ``keyed_
         prefix: tag_Name_
         separator: ""
       # If you have a tag called "Role" which has the value "Webserver", this will add the group
-      # Role_Webserver and add any hosts that have that tag assigned to it.
+      # role_Webserver and add any hosts that have that tag assigned to it.
       - key: tags.Role
         prefix: role
     groups:
