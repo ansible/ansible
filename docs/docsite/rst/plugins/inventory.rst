@@ -31,7 +31,7 @@ If the plugin is in a collection, and isn't being picked up by the `auto` statem
    [inventory]
    enable_plugins = host_list, script, auto, yaml, ini, toml, namespace.collection_name.inventory_plugin_name
 
-Or, if it's a local plugin, perhaps stored in `plugins/inventory/my_plugin.py`, you could reference it like this:
+Or, if it's a local plugin, perhaps stored in `~/.ansible/plugins/inventory/my_plugin.py`, you could reference it like this:
 
 .. code-block:: ini
 
