@@ -68,6 +68,9 @@ from lib.docker_util import (
     docker_rm,
     get_docker_container_id,
     get_docker_container_ip,
+    get_docker_hostname,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 from lib.ansible_util import (
@@ -986,9 +989,7 @@ def start_httptester(args):
 
     container_id = get_docker_container_id()
 
-    if container_id:
-        display.info('Running in docker container: %s' % container_id, verbosity=1)
-    else:
+    if not container_id:
         for item in ports:
             item['localhost'] = get_available_port()
 
@@ -1000,7 +1001,7 @@ def start_httptester(args):
         container_host = get_docker_container_ip(args, httptester_id)
         display.info('Found httptester container address: %s' % container_host, verbosity=1)
     else:
-        container_host = 'localhost'
+        container_host = get_docker_hostname()
 
     ssh_options = []
 
@@ -1023,6 +1024,13 @@ def run_httptester(args, ports=None):
     if ports:
         for localhost_port, container_port in ports.items():
             options += ['-p', '%d:%d' % (localhost_port, container_port)]
+
+    network = get_docker_preferred_network_name(args)
+
+    if is_docker_user_defined_network(network):
+        # network-scoped aliases are only supported for containers in user defined networks
+        for alias in HTTPTESTER_HOSTS:
+            options.extend(['--network-alias', alias])
 
     httptester_id, _ = docker_run(args, args.httptester, options=options)
 
