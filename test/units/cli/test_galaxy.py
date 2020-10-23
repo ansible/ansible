@@ -237,13 +237,6 @@ class TestGalaxy(unittest.TestCase):
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
-    def test_parse_login(self):
-        ''' testing the options parser when the action 'login' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "login"])
-        gc.parse()
-        self.assertEqual(context.CLIARGS['verbosity'], 0)
-        self.assertEqual(context.CLIARGS['token'], None)
-
     def test_parse_remove(self):
         ''' testing the options parser when the action 'remove' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "remove", "foo"])

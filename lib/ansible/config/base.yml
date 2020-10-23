@@ -1440,13 +1440,6 @@ GALAXY_SERVER_LIST:
   - {key: server_list, section: galaxy}
   type: list
   version_added: "2.9"
-GALAXY_TOKEN:
-  default: null
-  description: "GitHub personal access token"
-  env: [{name: ANSIBLE_GALAXY_TOKEN}]
-  ini:
-  - {key: token, section: galaxy}
-  yaml: {key: galaxy.token}
 GALAXY_TOKEN_PATH:
   default: ~/.ansible/galaxy_token
   description: "Local path to galaxy access token file"
