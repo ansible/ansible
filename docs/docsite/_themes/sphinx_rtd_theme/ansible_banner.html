@@ -14,7 +14,7 @@
       current_url_path = window.location.pathname;
       if (startsWith(current_url_path, "/ansible/latest/") || startsWith(current_url_path, "/ansible/{{ latest_version }}/")) {
         document.write('<div id="banner_id" class="admonition caution">');
-        document.write('<p>You are reading the latest upstream version of the Ansible documentation. Select *2.9* from the version selection to the left if you want the current Red Hat released version.</p>');
+        document.write('<p>You are reading the latest community version of the Ansible documentation. Red Hat subscribers, select <b>2.9</b> in the version selection to the left for the most recent Red Hat release.</p>');
         document.write('</div>');
 
         /* temp banner to advertise AnsibleFest
@@ -23,11 +23,11 @@
         document.write('</div>'); */
       } else if (startsWith(current_url_path, "/ansible/2.9/")) {
         document.write('<div id="banner_id" class="admonition caution">');
-        document.write('<p>You are reading the current Red Hat released version of the Ansible documentation.  Select *latest* from the version selection to the left if you want the latest upstream released version.</p>');
+        document.write('<p>You are reading the latest Red Hat released version of the Ansible documentation. Community users can use this, or select any version in version selection to the left, including <b>latest</b> for the most recent community version.</p>');
         document.write('</div>');
       } else if (startsWith(current_url_path, "/ansible/devel/")) {
         document.write('<div id="banner_id" class="admonition caution">');
-        document.write('<p>You are reading the *devel* version of the Ansible documentation - this version is not guaranteed stable. Use the version selection to the left if you want the latest stable released version.</p>');
+        document.write('<p>You are reading the <b>devel</b> version of the Ansible documentation - this version is not guaranteed stable. Use the version selection to the left if you want the latest stable released version.</p>');
         document.write('</div>');
       } else {
         document.write('<div id="banner_id" class="admonition caution">');
