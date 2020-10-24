@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: file
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read file contents
     description:
@@ -45,6 +45,8 @@ RETURN = """
   _raw:
     description:
       - content of file(s)
+    type: list
+    elements: str
 """
 
 from ansible.errors import AnsibleError, AnsibleParserError

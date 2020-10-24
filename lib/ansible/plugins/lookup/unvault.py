@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: unvault
-    author: ansible core team
+    author: Ansible Core Team
     version_added: "2.10"
     short_description: read vaulted file(s) contents
     description:
@@ -26,6 +26,8 @@ RETURN = """
   _raw:
     description:
       - content of file(s) as bytes
+    type: list
+    elements: raw
 """
 
 from ansible.errors import AnsibleParserError

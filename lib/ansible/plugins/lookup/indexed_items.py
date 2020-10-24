@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: indexed_items
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    author: Michael DeHaan
     version_added: "1.3"
     short_description: rewrites lists to return 'indexed items'
     description:
@@ -31,6 +31,7 @@ RETURN = """
     description:
       - list with each item.0 giving you the position and item.1 the value
     type: list
+    elements: list
 """
 
 from ansible.errors import AnsibleError

@@ -21,7 +21,7 @@ DOCUMENTATION = '''
     description:
         - Task execution is 'linear' but controlled by an interactive debug session.
     version_added: "2.1"
-    author: Kishin Yagami
+    author: Kishin Yagami (!UNKNOWN)
 '''
 
 import cmd

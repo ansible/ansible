@@ -7,7 +7,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: template
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    author: Michael DeHaan
     version_added: "0.9"
     short_description: retrieve contents of file after templating with Jinja2
     description:
@@ -43,6 +43,8 @@ EXAMPLES = """
 RETURN = """
 _raw:
    description: file(s) content after templating
+   type: list
+   elements: raw
 """
 
 from copy import deepcopy

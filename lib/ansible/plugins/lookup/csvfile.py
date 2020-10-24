@@ -56,6 +56,8 @@ RETURN = """
   _raw:
     description:
       - value(s) stored in file column
+    type: list
+    elements: str
 """
 
 import codecs

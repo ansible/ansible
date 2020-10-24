@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: first_found
-    author: Seth Vidal <skvidal@fedoraproject.org>
+    author: Seth Vidal (!UNKNOWN) <skvidal@fedoraproject.org>
     version_added: historical
     short_description: return first file found from list
     description:
@@ -99,6 +99,8 @@ RETURN = """
   _raw:
     description:
       - path to file found
+    type: list
+    elements: path
 """
 import os
 

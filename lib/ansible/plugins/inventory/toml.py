@@ -159,7 +159,7 @@ class InventoryModule(BaseFileInventoryPlugin):
     NAME = 'toml'
 
     def _parse_group(self, group, group_data):
-        if not isinstance(group_data, (MutableMapping, type(None))):
+        if group_data is not None and not isinstance(group_data, MutableMapping):
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
             return
 

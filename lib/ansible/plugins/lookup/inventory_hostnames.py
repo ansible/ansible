@@ -9,8 +9,8 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: inventory_hostnames
     author:
-      - Michael DeHaan <michael.dehaan@gmail.com>
-      - Steven Dossett <sdossett@panath.com>
+      - Michael DeHaan
+      - Steven Dossett (!UNKNOWN) <sdossett@panath.com>
     version_added: "1.3"
     short_description: list of inventory hosts matching a host pattern
     description:

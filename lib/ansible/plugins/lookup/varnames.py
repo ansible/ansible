@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: varnames
-    author: Ansible Core
+    author: Ansible Core Team
     version_added: "2.8"
     short_description: Lookup matching variable names
     description:

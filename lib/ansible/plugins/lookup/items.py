@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: items
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    author: Michael DeHaan
     version_added: historical
     short_description: list of items
     description:
