@@ -287,7 +287,7 @@ Note that it should normally be acceptable to catch all normal exceptions here, 
 expect anything other than botocore exceptions you should test everything works as expected.
 
 If you need to perform an action based on the error boto3 returned, use the error code and the
-``is_boto3_error_code()`` helper
+``is_boto3_error_code()`` helper.
 
 .. code-block:: python
 
@@ -297,7 +297,7 @@ If you need to perform an action based on the error boto3 returned, use the erro
        result = connection.describe_frooble(FroobleName=name)
    except is_boto3_error_code('FroobleNotFound'):
        workaround_failure()  # This is an error that we can work around
-   except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+   except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
        module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 
 using fail_json() and avoiding ansible.module_utils.aws.core
