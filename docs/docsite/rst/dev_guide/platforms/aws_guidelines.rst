@@ -397,7 +397,7 @@ argument on the decorator.
 .. code-block:: python
 
    @AWSRetry.exponential_backoff(retries=5, delay=5, catch_extra_error_codes=['ResourceNotFound'])
-   def describe_some_resource_with_backoff(client, **kwargs):
+   def describe_some_resource_retry_missing(client, **kwargs):
         return client.describe_some_resource(ResourceName=kwargs['name'])['Resources']
 
    def describe_some_resource(client, module):
