@@ -1413,13 +1413,6 @@ GALAXY_SERVER:
   ini:
   - {key: server, section: galaxy}
   yaml: {key: galaxy.server}
-GALAXY_TOKEN:
-  default: null
-  description: "GitHub personal access token"
-  env: [{name: ANSIBLE_GALAXY_TOKEN}]
-  ini:
-  - {key: token, section: galaxy}
-  yaml: {key: galaxy.token}
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True
