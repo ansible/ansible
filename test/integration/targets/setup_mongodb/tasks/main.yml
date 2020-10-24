@@ -129,7 +129,7 @@
   when:
     - ansible_distribution == "Fedora"
 
-- name: Fix cirrupted yum db in Redhat 8 Shippable
+- name: Fix corrupted yum db in Redhat 8 Shippable
   shell: rm -rf /var/lib/rpm/ && yum clean all
   when:
     - ansible_os_family == "RedHat"
@@ -137,7 +137,7 @@
     - not ansible_distribution == "Fedora"
 
 - name: Ensure epel package is installed
-  yum:
+  package:
     name: epel-release
     state: present
   when: ansible_os_family == "RedHat"
