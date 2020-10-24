@@ -70,10 +70,10 @@ Noteworthy module changes
 * facts - On NetBSD, ``ansible_virtualization_type`` now tries to report a more accurate result than ``xen`` when virtualized and not running on Xen.
 * facts - Virtualization facts now include ``virtualization_tech_guest`` and ``virtualization_tech_host`` keys. These are lists of virtualization technologies that a guest is a part of, or that a host provides, respectively. As an example, a host may be set up to provide both KVM and VirtualBox, and these will be included in ``virtualization_tech_host``, and a podman container running on a VM powered by KVM will have a ``virtualization_tech_guest`` of ``["kvm", "podman", "container"]``.
 * The parameter ``filter`` type is changed from ``string`` to ``list`` in the :ref:`setup <setup_module>` module in order to use more than one filter. Previous behaviour (using a ``string``) still remains and works as a single filter.
-* For Python modules, the conditional required check ``required_by`` no longer interprets ``None`` the same way as "not specified", but behaves as all other conditional and unconditional required checks.
-* For Python modules, parameters that are marked as required (conditionally or unconditionally) are no longer allowed to be explicitly set to ``None``.
+* For Python modules, the conditional required check ``required_by`` currently interprets an explicit ``None`` value as "not specified". This behavior has been deprecated and will change in ansible-base 2.15. From then on, an explicit ``None`` value will no longer be ignored. That will make ``required_by`` behave the same way as all other ``required`` and ``required_*`` checks.
+* For Python modules, parameters that are marked as required (conditionally or unconditionally) are accepted if explicitly set to ``None`` by the user. This behavior will now trigger a warning. This warning will be changed to a deprecation warning in ansible-base 2.12, and the behavior will change in ansible-base 2.16.
 
-  Module authors can revert the behavior for an explicit module parameter by declaring ``allow_none_value=True`` in the argument spec::
+  Module authors can explicitly specify the behavior for a module parameter by declaring ``allow_none_value=False`` or ``allow_none_value=True`` in the argument spec::
 
         module = AnsibleModule({
             'required_parameter': {
@@ -81,16 +81,21 @@ Noteworthy module changes
                 'required': True,
                 'allow_none_value: True,
             },
+            'other_required_parameter': {
+                'type': 'str',
+                'required': True,
+                'allow_none_value: False,
+            },
             'other_parameter': ...
         })
 
-  If this parameter is explicitly set to ``None`` in a playbook or role::
+  If ``required_parameter`` is explicitly set to ``None`` in a playbook or role::
 
         module:
             required_parameter:
-            other_parameter: foo
+            other_required_parameter: foo
 
-  this will still be accepted. If ``allow_none_value`` is not set to ``True``, ``AnsibleModule`` will report ``required parameter required_parameter cannot be none (null)``.
+  this will still be accepted. If ``other_required_parameter`` is explicitly set to ``None``, the module will fail.
 
 Plugins
 =======
