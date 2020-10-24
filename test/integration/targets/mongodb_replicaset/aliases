@@ -3,5 +3,5 @@ shippable/posix/group1
 skip/osx
 skip/freebsd
 skip/rhel
-skip/linux/centos8
+linux/centos8/1
 needs/root
