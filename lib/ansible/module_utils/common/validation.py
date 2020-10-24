@@ -13,7 +13,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
-from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.common.warnings import warn, deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import (
     binary_type,
@@ -195,16 +195,26 @@ def check_required_by(requirements, parameters, options_context=None, add_requir
     if requirements is None:
         return result
 
+    deprecation_fmt = (
+        'The explicit none (null) value specified to %s' +
+        (' found in {0}'.format(' -> '.join(options_context)) if options_context else '') +
+        ' will not be treated as "not specified" in the future'
+    )
+
     for (key, value) in requirements.items():
-        if key not in parameters:
+        if key not in parameters or parameters[key] is None:
+            if key in parameters and parameters[key] is None:
+                deprecate(msg=deprecation_fmt % key, version='2.20')
             continue
         result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
         for required in value:
-            if required not in parameters:
+            if required not in parameters or parameters[required] is None:
                 result[key].append(required)
+                if required in parameters:
+                    deprecate(msg=deprecation_fmt % required, version='2.20')
             if add_required is not None:
                 add_required.append(required)
 
