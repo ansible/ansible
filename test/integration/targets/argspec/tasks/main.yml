@@ -59,10 +59,28 @@
 - argspec:
     required: value
     required_one_of_two: value
+    required_by_one:
+    required_by_two:
+    required_by_three: value
+  register: argspec_required_by_fail_none_1
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
     required_by_one: value
     required_by_two:
     required_by_three: value
-  register: argspec_required_by_fail_none
+  register: argspec_required_by_fail_none_2
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one:
+    required_by_two:
+    required_by_three: value
+  register: argspec_required_by_fail_none_3
   ignore_errors: true
 
 - argspec:
@@ -275,7 +293,25 @@
         other:
     required: value
     required_one_of_one: value
-  register: argspec_required_by_fail_2_none
+  register: argspec_required_by_fail_2_none_1
+  ignore_errors: true
+
+- argspec:
+    required_by:
+      - thing:
+        other: bar
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2_none_2
+  ignore_errors: true
+
+- argspec:
+    required_by:
+      - thing:
+        other:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2_none_3
   ignore_errors: true
 
 - argspec:
@@ -451,8 +487,14 @@
       - argspec_required_one_of_explicitly_disallowed.msg == 'required parameter required_one_of_four cannot be none (null)'
 
       - argspec_required_by_fail is failed
-      - argspec_required_by_fail_none is succeeded
-      - "'required parameter required_by_two is none (null)' in argspec_required_by_fail_none.warnings"
+      - argspec_required_by_fail_none_1 is succeeded
+      - argspec_required_by_fail_none_1.deprecations | length == 1
+      - argspec_required_by_fail_none_1.deprecations[0].msg == 'From ansible-base 2.15 on, the explicit none value specified to required_by_one will no longer be interpreted as "not specified"'
+      - argspec_required_by_fail_none_2 is failed
+      - argspec_required_by_fail_none_2.msg == "missing parameter(s) required by 'required_by_one': required_by_two"
+      - argspec_required_by_fail_none_3 is succeeded
+      - argspec_required_by_fail_none_3.deprecations | length == 1
+      - argspec_required_by_fail_none_3.deprecations[0].msg == 'From ansible-base 2.15 on, the explicit none value specified to required_by_one will no longer be interpreted as "not specified"'
 
       - argspec_required_if_fail is failed
       - argspec_required_if_fail_none is succeeded
@@ -490,8 +532,14 @@
       - "'required parameter thing is none (null) found in required_one_of' in argspec_required_one_of_fail_2_none.warnings"
 
       - argspec_required_by_fail_2 is failed
-      - argspec_required_by_fail_2_none is succeeded
-      - "'required parameter other is none (null) found in required_by' in argspec_required_by_fail_2_none.warnings"
+      - argspec_required_by_fail_2_none_1 is failed
+      - argspec_required_by_fail_2_none_1.msg == "missing parameter(s) required by 'thing': other"
+      - argspec_required_by_fail_2_none_2 is succeeded
+      - argspec_required_by_fail_2_none_2.deprecations | length == 1
+      - argspec_required_by_fail_2_none_2.deprecations[0].msg == 'From ansible-base 2.15 on, the explicit none value specified to thing will no longer be interpreted as "not specified" found in required_by'
+      - argspec_required_by_fail_2_none_3 is succeeded
+      - argspec_required_by_fail_2_none_3.deprecations | length == 1
+      - argspec_required_by_fail_2_none_3.deprecations[0].msg == 'From ansible-base 2.15 on, the explicit none value specified to thing will no longer be interpreted as "not specified" found in required_by'
 
       - argspec_good_json_string is successful
       - >-

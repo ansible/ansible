@@ -1415,10 +1415,21 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
+        none_warnings = []
         try:
-            check_required_by(spec, param, add_required=add_required)
+            check_required_by(spec, param, add_required=add_required, none_warnings=none_warnings)
         except TypeError as e:
+            for msg in none_warnings:
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.deprecate(msg, version='2.15', collection_name='ansible.builtin')
+
             self.fail_json(msg=to_native(e))
+
+        for msg in none_warnings:
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.deprecate(msg, version='2.15', collection_name='ansible.builtin')
 
     def _check_required_arguments(self, spec=None, param=None, add_required=None):
         if spec is None:

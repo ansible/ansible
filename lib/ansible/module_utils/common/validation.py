@@ -136,7 +136,7 @@ def check_required_together(terms, parameters, add_required=None):
     return results
 
 
-def check_required_by(requirements, parameters, add_required=None):
+def check_required_by(requirements, parameters, add_required=None, none_is_not_specified=True, none_warnings=None):
     """For each key in requirements, check the corresponding list to see if they
     exist in parameters
 
@@ -145,6 +145,10 @@ def check_required_by(requirements, parameters, add_required=None):
     :arg requirements: Dictionary of requirements
     :arg parameters: Dictionary of parameters
     :arg add_required: None or list to which all required parameters are added
+    :arg none_is_not_specified: If True, treat explicit None values as "not specified". The default
+                                value will change in ansible-base 2.15 to False.
+    :arg none_warnings: None or list to which warnings will be added for parameters for which a
+                        change of the default behavior in ansible-base 2.15 will have an affect.
 
     :returns: Empty dictionary or raises TypeError if the
     """
@@ -154,15 +158,21 @@ def check_required_by(requirements, parameters, add_required=None):
         return result
 
     for (key, value) in requirements.items():
-        if key not in parameters:
+        if key not in parameters or (none_is_not_specified and parameters[key] is None):
+            if key in parameters and none_warnings is not None:
+                none_warnings.append('From ansible-base 2.15 on, the explicit none value specified'
+                                     ' to %s will no longer be interpreted as "not specified"' % key)
             continue
         result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
         for required in value:
-            if required not in parameters:
+            if required not in parameters or (none_is_not_specified and parameters[required] is None):
                 result[key].append(required)
+                if key not in module_parameters and required in module_parameters and none_warnings is not None:
+                    none_warnings.append('From ansible-base 2.15 on, the explicit none value specified'
+                                         ' to %s will no longer be interpreted as "not specified"' % required)
             if add_required is not None:
                 add_required.append(required)
 
