@@ -291,13 +291,49 @@ def check_required_if(requirements, parameters, add_required=None):
     return results
 
 
+def check_required_none(spec, param, required_options, default_allow_none_value=None):
+    """Check whether required options having value None are allowed to do so.
+
+    :arg spec: Argument spec dictionary
+    :arg param: Arguments dictionary to check
+    :arg required_options: Iterable of options in argument spec which are
+                           required directly or indirectly.
+    :arg default_allow_none_value: The default value for allow_none_value
+                                   in the argument spec. Defaults to None.
+                                   Will change to False in Ansible-base 2.16.
+
+    :returns: List of warning messages for parameters explicitly set to None
+              where allow_none_value in the argument spec is None.
+
+    Raises TypeError for parameters explicitly set to None where allow_none_value
+    inthe argument spec is False.
+
+    Note that the code does not care about whether a parameter is marked as
+    required in the provided argument spec or not. It assumes this information
+    is provided by the required_options argument.
+    """
+    warning_msgs = []
+    for required_option in required_options:
+        if required_option in spec and required_option in param and param[required_option] is None:
+            allow_none_value = spec[required_option].get('allow_none_value', default_allow_none_value)
+            if allow_none_value is None:
+                # If allow_none_value is None for this option, add warning
+                warning_msgs.append("required parameter %s is none (null)" % (required_option, ))
+            elif not allow_none_value:
+                # If allow_none_value is explicitly set to False for this option, raise error
+                msg = "required parameter %s cannot be none (null)" % (required_option, )
+                raise TypeError(msg)
+            # If allow_none_value is explicitly set to True for this option, silently accept
+    return warning_msgs
+
+
 def check_missing_parameters(parameters, required_parameters=None):
     """This is for checking for required params when we can not check via
     argspec because we need more information than is simply given in the argspec.
 
     Raises TypeError if any required parameters are missing
 
-    :arg module_paramaters: Dictionary of parameters
+    :arg paramaters: Dictionary of parameters
     :arg required_parameters: List of parameters to look for in the given module
         parameters
 

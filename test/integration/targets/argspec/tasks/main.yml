@@ -21,6 +21,14 @@
     required: value
     # Explicit None is allowed for 'required_one_of_three'
     required_one_of_three:
+  register: argspec_required_one_of_explicitly_allowed
+
+- argspec:
+    required: value
+    # Explicit None is not allowed for 'required_one_of_four'
+    required_one_of_four:
+  register: argspec_required_one_of_explicitly_disallowed
+  ignore_errors: true
 
 - argspec:
     required: value
@@ -431,16 +439,24 @@
 - assert:
     that:
       - argspec_required_fail is failed
-      - argspec_required_fail_none is failed
+      - argspec_required_fail_none is succeeded
+      - "'required parameter required is none (null)' in argspec_required_fail_none.warnings"
 
       - argspec_required_one_of_fail is failed
-      - argspec_required_one_of_fail_none is failed
+      - argspec_required_one_of_fail_none is succeeded
+      - "'required parameter required_one_of_one is none (null)' in argspec_required_one_of_fail_none.warnings"
+
+      - argspec_required_one_of_explicitly_allowed.warnings is not defined or argspec_required_one_of_explicitly_allowed.warnings | length == 0
+      - argspec_required_one_of_explicitly_disallowed is failed
+      - argspec_required_one_of_explicitly_disallowed.msg == 'required parameter required_one_of_four cannot be none (null)'
 
       - argspec_required_by_fail is failed
-      - argspec_required_by_fail_none is failed
+      - argspec_required_by_fail_none is succeeded
+      - "'required parameter required_by_two is none (null)' in argspec_required_by_fail_none.warnings"
 
       - argspec_required_if_fail is failed
-      - argspec_required_if_fail_none is failed
+      - argspec_required_if_fail_none is succeeded
+      - "'required parameter path is none (null)' in argspec_required_if_fail_none.warnings"
 
       - argspec_mutually_exclusive_fail is failed
       - argspec_mutually_exclusive_fail_none is failed
@@ -462,16 +478,20 @@
       - argspec_bad_mapping_list is failed
 
       - argspec_required_together_fail is failed
-      - argspec_required_together_fail_none is failed
+      - argspec_required_together_fail_none is succeeded
+      - "'required parameter other is none (null) found in required_together' in argspec_required_together_fail_none.warnings"
 
       - argspec_required_if_fail_2 is failed
-      - argspec_required_if_fail_2_none is failed
+      - argspec_required_if_fail_2_none is succeeded
+      - "'required parameter other is none (null) found in required_if' in argspec_required_if_fail_2_none.warnings"
 
       - argspec_required_one_of_fail_2 is failed
-      - argspec_required_one_of_fail_2_none is failed
+      - argspec_required_one_of_fail_2_none is succeeded
+      - "'required parameter thing is none (null) found in required_one_of' in argspec_required_one_of_fail_2_none.warnings"
 
       - argspec_required_by_fail_2 is failed
-      - argspec_required_by_fail_2_none is failed
+      - argspec_required_by_fail_2_none is succeeded
+      - "'required parameter other is none (null) found in required_by' in argspec_required_by_fail_2_none.warnings"
 
       - argspec_good_json_string is successful
       - >-
@@ -484,7 +504,8 @@
       - argspec_fail_on_missing_params_bad is failed
 
       - argspec_fail_required_together_2 is failed
-      - argspec_fail_required_together_2_none is failed
+      - argspec_fail_required_together_2_none is succeeded
+      - "'required parameter required_together_two is none (null)' in argspec_fail_required_together_2_none.warnings"
 
       - >-
         argspec_suboptions_list_no_elements.suboptions_list_no_elements.0 == {'thing': 'foo'}

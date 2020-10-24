@@ -193,6 +193,7 @@ from ansible.module_utils.common.validation import (
     check_required_if,
     check_required_one_of,
     check_required_together,
+    check_required_none,
     count_terms,
     check_type_bool,
     check_type_bits,
@@ -1456,14 +1457,20 @@ class AnsibleModule(object):
             param = self.params
         if required_options is None:
             return
-        for required_option in required_options:
-            if required_option in spec and required_option in param and param[required_option] is None:
-                # Only accept None if allow_none_value is explicitly set to True for this option
-                if not spec[required_option].get('allow_none_value', False):
-                    msg = "required parameter %s cannot be none (null)" % (required_option, )
-                    if self._options_context:
-                        msg += " found in %s" % " -> ".join(self._options_context)
-                    self.fail_json(msg=msg)
+        try:
+            warning_msgs = check_required_none(spec, param, required_options)
+            for msg in warning_msgs:
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                # TODO: in Ansible 2.12, make this a deprecation (removal version 2.16).
+                #       Removal means that the default for default_allow_none_value
+                #       in check_required_none will change to False.
+                self.warn(msg)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''

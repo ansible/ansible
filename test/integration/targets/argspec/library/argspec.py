@@ -19,6 +19,9 @@ def main():
             'required_one_of_three': {
                 'allow_none_value': True,
             },
+            'required_one_of_four': {
+                'allow_none_value': False,
+            },
             'required_by_one': {},
             'required_by_two': {},
             'required_by_three': {},
@@ -137,7 +140,7 @@ def main():
             ('path', 'content'),
         ),
         required_one_of=(
-            ('required_one_of_one', 'required_one_of_two', 'required_one_of_three'),
+            ('required_one_of_one', 'required_one_of_two', 'required_one_of_three', 'required_one_of_four'),
         ),
         required_by={
             'required_by_one': ('required_by_two', 'required_by_three'),

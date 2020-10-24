@@ -1,5 +1,8 @@
 breaking_changes:
 - For Python modules, ``required_by`` no longer treats ``none`` as "not specified". It now behaves like all other required checks.
-- "For Python modules, the checks for ``required``, ``required_if``, ``required_together``, ``required_one_of``, and ``required_by`` no longer allow an explicitly specified value ``none``.
-   The old behavior (explicit ``none`` counts as specified) can be explicitly allowed by setting ``allow_none_value=True`` in the argument spec for that option
+- "For Python modules, the checks for ``required``, ``required_if``, ``required_together``, ``required_one_of``, and ``required_by`` warn when an explicit ``none`` value is passed for them, but still accept that value.
+   This behavior will be deprecated in ansible-base 2.12 and disabled in ansible-base 2.16.
+
+   Module authors can explicitly request the old behavior (explicit ``none`` counts as specified) by setting ``allow_none_value=True`` in the argument spec for that option,
+   and can explicitly request the new behavior  from ansible-base 2.16 (explicit ``none`` counts as error) by setting ``allow_none_value=False`` in the argument spec for that option
    (https://github.com/ansible/ansible/issues/69190)."
