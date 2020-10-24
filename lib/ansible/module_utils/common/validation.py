@@ -13,6 +13,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
+from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import (
     binary_type,
@@ -195,14 +196,14 @@ def check_required_by(requirements, parameters, options_context=None, add_requir
         return result
 
     for (key, value) in requirements.items():
-        if key not in parameters or parameters[key] is None:
+        if key not in parameters:
             continue
         result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
         for required in value:
-            if required not in parameters or parameters[required] is None:
+            if required not in parameters:
                 result[key].append(required)
             if add_required is not None:
                 add_required.append(required)
@@ -355,20 +356,28 @@ def check_required_none(required_options, argument_spec, parameters, options_con
     :arg parameters: Dictionary of parameters.
     :kwarg options_context: The context for the sub-specs.
 
-    Raises TypeError for parameters set to None.
+    Raises TypeError for parameters set to None where allow_none_value in the argument_spec is False.
     """
     for required_option in list(required_options):
         if required_option not in parameters:
             continue
         if required_option not in argument_spec or parameters[required_option] is not None:
             continue
-        if argument_spec[required_option].get('allow_none_value') is True:
+        allow_none_value = argument_spec[required_option].get('allow_none_value')
+        if allow_none_value:
             continue
 
-        msg = "required parameter %s cannot be none (null)" % (required_option, )
+        if allow_none_value is False:
+            msg = "required parameter %s cannot be none (null)" % (required_option, )
+        else:
+            msg = "required parameter %s is none (null)" % (required_option, )
         if options_context:
             msg += " found in %s" % " -> ".join(options_context)
-        raise TypeError(to_native(msg))
+
+        if allow_none_value is False:
+            raise TypeError(to_native(msg))
+        else:
+            warn(msg)
 
 
 def check_missing_parameters(parameters, required_parameters=None):
