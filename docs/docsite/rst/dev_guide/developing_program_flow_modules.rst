@@ -760,3 +760,43 @@ Dependencies between module options
       },
 
   In the example, if ``force`` is specified, ``force_reason`` must also be specified. Also, if ``path`` is specified, then three three options ``mode``, ``owner`` and ``group`` also must be specified.
+
+Declaring check mode
+^^^^^^^^^^^^^^^^^^^^
+
+To declare that a module supports check mode, supply ``supports_check_mode=True`` to the ``AnsibleModule()`` call::
+
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
+
+The module can determine whether it is called in check mode by checking the boolean value ``module.check_mode``. If it evaluates to ``True``, the module must take care not to do any modification.
+
+If ``supports_check_mode=False`` is specified, which is the default value, the module will exit in check mode with ``skipped=True`` and message ``remote module (<insert module name here>) does not support check mode``.
+
+Adding file options
+^^^^^^^^^^^^^^^^^^^
+
+To declare that a module should add support for all common file options, supply ``add_file_common_args=True`` to the ``AnsibleModule()`` call::
+
+    module = AnsibleModule(argument_spec, add_file_common_args=True)
+
+You can find `a list of all file options here <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_. It is recommended that you make your ``DOCUMENTATION`` extend the doc fragment ``ansible.builtin.files`` (see :ref:`module_docs_fragments`) in this case, to make sure that all these fields are correctly documented.
+
+The helper functions ``module.load_file_common_arguments()`` and ``module.set_fs_attributes_if_different()`` can be used to handle these arguments for you::
+
+    argument_spec = {
+      'path': {
+        'type': 'str',
+        'required': True,
+      },
+    }
+
+    module = AnsibleModule(argument_spec, add_file_common_args=True)
+    changed = False
+
+    # TODO do something with module.params['path'], like update it's contents
+
+    # Ensure that module.params['path'] satisfies the file options supplied by the user
+    file_args = module.load_file_common_arguments(module.params)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
+
+    module.exit_json(changed=changed)
