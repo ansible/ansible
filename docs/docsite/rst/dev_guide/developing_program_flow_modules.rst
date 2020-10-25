@@ -658,3 +658,105 @@ This section will discuss the behavioral attributes for arguments:
   :collection_name:
 
     Specifies which collection (or ansible-base) deprecates this deprecated alias. Specify ``ansible.builtin`` for ansible-base, or the collection's name (format ``foo.bar``). Must be used with ``version`` or ``date``.
+
+:mutually_exclusive:
+
+  If ``options`` is specified, ``mutually_exclusive`` refers to the sub-options described in ``options`` and behaves as in :ref:`argument_spec_dependencies`.
+
+:required_together:
+
+  If ``options`` is specified, ``required_together`` refers to the sub-options described in ``options`` and behaves as in :ref:`argument_spec_dependencies`.
+
+:required_one_of:
+
+  If ``options`` is specified, ``required_one_of`` refers to the sub-options described in ``options`` and behaves as in :ref:`argument_spec_dependencies`.
+
+:required_if:
+
+  If ``options`` is specified, ``required_if`` refers to the sub-options described in ``options`` and behaves as in :ref:`argument_spec_dependencies`.
+
+:required_by:
+
+  If ``options`` is specified, ``required_by`` refers to the sub-options described in ``options`` and behaves as in :ref:`argument_spec_dependencies`.
+
+
+.. _argument_spec_dependencies:
+
+Dependencies between module options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:mutually_exclusive:
+
+  Must be a sequence (list or tuple) of sequences of strings. Every sequence of strings is a list of option names which are mutually exclusive. If more than one options of a list are specified together, Ansible will fail the module with an error.
+
+  Example::
+
+      mutually_exclusive=[
+        ('path', 'content'),
+        ('repository_url', 'repository_filename'),
+      ],
+
+  In this example, the options ``path`` and ``content`` must not specified at the same time. Also the options ``repository_url`` and ``repository_filename`` must not be specified at the same time. But specifying ``path`` and ``repository_url`` is accepted.
+
+  To ensure that precisely one of two (or more) options is specified, combine ``mutually_exclusive`` with ``required_one_of``.
+
+:required_together:
+
+  Must be a sequence (list or tuple) of sequences of strings. Every sequence of strings is a list of option names which are must be specified together. If at least one of these options are specified, the other ones from the same sequence must all be present.
+
+  Example::
+
+      required_together=[
+        ('file_path', 'file_hash'),
+      ],
+
+  In this example, if one of the options ``file_path`` or ``file_hash`` is specified, Ansible will fail the module with an error if the other one is not specified.
+
+:required_one_of:
+
+  Must be a sequence (list or tuple) of sequences of strings. Every sequence of strings is a list of option names from which at least one must be specified. If none one of these options are specified, Ansible will fail module execution.
+
+  Example::
+
+      required_one_of=[
+        ('path', 'content'),
+      ],
+
+  In this example, at least one of ``path`` and ``content`` must be specified. If none are specified, execution will fail. Specifying both is explicitly allowed; to prevent this, combine ``required_one_of`` with ``mutually_exclusive``.
+
+:required_if:
+
+  Must be a sequence of sequences. Every inner sequence describes one conditional dependency. Every sequence must have three or four values. The first two values are the option's name and the option's value which describes the condition. The further elements of the sequence are only needed if the option of that name has precisely this value.
+
+  If you want that all options in a list of option names are specified if the condition is met, use one of the following forms::
+
+      ('option_name', option_value, ('option_a', 'option_b', ...)),
+      ('option_name', option_value, ('option_a', 'option_b', ...), False),
+
+  If you want that at least one option of a list of option names is specified if the condition is met, use the following form::
+
+      ('option_name', option_value, ('option_a', 'option_b', ...), True),
+
+  Example::
+
+      required_if=[
+        ('state', 'present', ('path', 'content'), True),
+        ('force', True, ('force_reason', 'force_code')),
+      ],
+
+  In this example, if the user specifies ``state=present``, at least one of the options ``path`` and ``content`` must be supplied (or both). To make sure that precisely one can be specified, combine ``required_if`` with ``mutually_exclusive``.
+
+  On the other hand, if ``force`` (a boolean parameter) is set to ``true``, ``yes`` etc., both ``force_reason`` and ``force_code`` must be specified.
+
+:required_by:
+
+  Must be a dictionary mapping option names to sequences of option names. If the option name in a dictionary key is specified, the option names it maps to must all also be specified. Note that instead of a sequence of option names, you can also specify one single option name.
+
+  Example::
+
+      required_by={
+        'force': 'force_reason',
+        'path': ('mode', 'owner', 'group'),
+      },
+
+  In the example, if ``force`` is specified, ``force_reason`` must also be specified. Also, if ``path`` is specified, then three three options ``mode``, ``owner`` and ``group`` also must be specified.
