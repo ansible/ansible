@@ -797,8 +797,8 @@ Dependencies between module options
 
   In the example, if ``force`` is specified, ``force_reason`` must also be specified. Also, if ``path`` is specified, then three three options ``mode``, ``owner`` and ``group`` also must be specified.
 
-Declaring check mode
-^^^^^^^^^^^^^^^^^^^^
+Declaring check mode support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To declare that a module supports check mode, supply ``supports_check_mode=True`` to the ``AnsibleModule()`` call::
 
