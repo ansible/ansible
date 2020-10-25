@@ -631,9 +631,25 @@ This section will discuss the behavioral attributes for arguments:
 
   ``removed_in_version`` indicates which version of ansible-base or a collection a deprecated argument will be removed in. Mutually exclusive with ``removed_at_date``, and must be used with ``removed_from_collection``.
 
+  Example::
+
+      'option': {
+        'type': 'str',
+        'removed_in_version': '2.0.0',
+        'collection_name': 'testns.testcol',
+      },
+
 :removed_at_date:
 
   ``removed_at_date`` indicates that a deprecated argument will be removed in a minor ansible-base release or major collection release after this date. Mutually exclusive with ``removed_in_version``, and must be used with ``removed_from_collection``.
+
+  Example::
+
+      'option': {
+        'type': 'str',
+        'removed_at_date': '2020-12-31',
+        'collection_name': 'testns.testcol',
+      },
 
 :removed_from_collection:
 
@@ -658,6 +674,26 @@ This section will discuss the behavioral attributes for arguments:
   :collection_name:
 
     Specifies which collection (or ansible-base) deprecates this deprecated alias. Specify ``ansible.builtin`` for ansible-base, or the collection's name (format ``foo.bar``). Must be used with ``version`` or ``date``.
+
+  Examples::
+
+      'option': {
+        'type': 'str',
+        'aliases': ['foo', 'bar'],
+        'depecated_aliases': [
+          {
+            'name': 'foo',
+            'version': '2.0.0',
+            'collection_name': 'testns.testcol',
+          },
+          {
+            'name': 'foo',
+            'date': '2020-12-31',
+            'collection_name': 'testns.testcol',
+          },
+        ],
+      },
+
 
 :mutually_exclusive:
 
