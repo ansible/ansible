@@ -594,7 +594,9 @@ This section will discuss the behavioral attributes for arguments:
 
   The most common callable used is ``env_fallback`` which will allow an argument to optionally use an environment variable when the argument is not supplied.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']))
 
@@ -631,7 +633,9 @@ This section will discuss the behavioral attributes for arguments:
 
   ``removed_in_version`` indicates which version of ansible-base or a collection a deprecated argument will be removed in. Mutually exclusive with ``removed_at_date``, and must be used with ``removed_from_collection``.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       'option': {
         'type': 'str',
@@ -643,7 +647,9 @@ This section will discuss the behavioral attributes for arguments:
 
   ``removed_at_date`` indicates that a deprecated argument will be removed in a minor ansible-base release or major collection release after this date. Mutually exclusive with ``removed_in_version``, and must be used with ``removed_from_collection``.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       'option': {
         'type': 'str',
@@ -675,7 +681,9 @@ This section will discuss the behavioral attributes for arguments:
 
     Specifies which collection (or ansible-base) deprecates this deprecated alias. Specify ``ansible.builtin`` for ansible-base, or the collection's name (format ``foo.bar``). Must be used with ``version`` or ``date``.
 
-  Examples::
+  Examples:
+
+  .. code-block:: python
 
       'option': {
         'type': 'str',
@@ -721,11 +729,27 @@ This section will discuss the behavioral attributes for arguments:
 Dependencies between module options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The following are optional arguments for ``AnsibleModule()``:
+
+.. code-block:: python
+
+    module = AnsibleModule(
+      argument_spec,
+      mutually_exclusive=[
+        ('path', 'content'),
+      ],
+      required_one_of=[
+        ('path', 'content'),
+      ],
+    )
+
 :mutually_exclusive:
 
   Must be a sequence (list or tuple) of sequences of strings. Every sequence of strings is a list of option names which are mutually exclusive. If more than one options of a list are specified together, Ansible will fail the module with an error.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       mutually_exclusive=[
         ('path', 'content'),
@@ -740,7 +764,9 @@ Dependencies between module options
 
   Must be a sequence (list or tuple) of sequences of strings. Every sequence of strings is a list of option names which are must be specified together. If at least one of these options are specified, the other ones from the same sequence must all be present.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       required_together=[
         ('file_path', 'file_hash'),
@@ -752,7 +778,9 @@ Dependencies between module options
 
   Must be a sequence (list or tuple) of sequences of strings. Every sequence of strings is a list of option names from which at least one must be specified. If none one of these options are specified, Ansible will fail module execution.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       required_one_of=[
         ('path', 'content'),
@@ -764,16 +792,22 @@ Dependencies between module options
 
   Must be a sequence of sequences. Every inner sequence describes one conditional dependency. Every sequence must have three or four values. The first two values are the option's name and the option's value which describes the condition. The further elements of the sequence are only needed if the option of that name has precisely this value.
 
-  If you want that all options in a list of option names are specified if the condition is met, use one of the following forms::
+  If you want that all options in a list of option names are specified if the condition is met, use one of the following forms:
+
+  .. code-block:: python
 
       ('option_name', option_value, ('option_a', 'option_b', ...)),
       ('option_name', option_value, ('option_a', 'option_b', ...), False),
 
-  If you want that at least one option of a list of option names is specified if the condition is met, use the following form::
+  If you want that at least one option of a list of option names is specified if the condition is met, use the following form:
+
+  .. code-block:: python
 
       ('option_name', option_value, ('option_a', 'option_b', ...), True),
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       required_if=[
         ('state', 'present', ('path', 'content'), True),
@@ -788,7 +822,9 @@ Dependencies between module options
 
   Must be a dictionary mapping option names to sequences of option names. If the option name in a dictionary key is specified, the option names it maps to must all also be specified. Note that instead of a sequence of option names, you can also specify one single option name.
 
-  Example::
+  Example:
+
+  .. code-block:: python
 
       required_by={
         'force': 'force_reason',
@@ -800,7 +836,9 @@ Dependencies between module options
 Declaring check mode support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To declare that a module supports check mode, supply ``supports_check_mode=True`` to the ``AnsibleModule()`` call::
+To declare that a module supports check mode, supply ``supports_check_mode=True`` to the ``AnsibleModule()`` call:
+
+.. code-block:: python
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
@@ -811,13 +849,17 @@ If ``supports_check_mode=False`` is specified, which is the default value, the m
 Adding file options
 ^^^^^^^^^^^^^^^^^^^
 
-To declare that a module should add support for all common file options, supply ``add_file_common_args=True`` to the ``AnsibleModule()`` call::
+To declare that a module should add support for all common file options, supply ``add_file_common_args=True`` to the ``AnsibleModule()`` call:
+
+.. code-block:: python
 
     module = AnsibleModule(argument_spec, add_file_common_args=True)
 
 You can find `a list of all file options here <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_. It is recommended that you make your ``DOCUMENTATION`` extend the doc fragment ``ansible.builtin.files`` (see :ref:`module_docs_fragments`) in this case, to make sure that all these fields are correctly documented.
 
-The helper functions ``module.load_file_common_arguments()`` and ``module.set_fs_attributes_if_different()`` can be used to handle these arguments for you::
+The helper functions ``module.load_file_common_arguments()`` and ``module.set_fs_attributes_if_different()`` can be used to handle these arguments for you:
+
+.. code-block:: python
 
     argument_spec = {
       'path': {
