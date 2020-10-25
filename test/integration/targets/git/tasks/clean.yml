@@ -1,0 +1,102 @@
+---
+- name: CLEAN | clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: CLEAN | Clone example git repo that we are going to modify
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+
+- name: CLEAN | add untracked and ignored file
+  file: path='{{ checkout_dir }}/repo/{{ item }}' state=touch
+  with_items:
+    - untracked_file1
+    - ignoreme
+
+- name: CLEAN | update README.md file
+  copy: content='BLAH' dest='{{ checkout_dir }}/repo/README.md'
+
+- name: CLEAN | add gitignore file
+  copy: content='ignoreme' dest='{{ checkout_dir }}/repo/.gitignore'
+
+- name: CLEAN | try git clone now with local changes
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+  ignore_errors: yes
+  register: git_clone
+
+- name: CLEAN | git clone should fail when local changes exist
+  assert:
+    that:
+      - git_clone.failed
+
+- name: CLEAN | clean only ignored files
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: ignored
+  register: git_clean_ignored
+
+- name: CLEAN | ignored files should be cleaned
+  assert:
+    that:
+      - git_clean_ignored is changed
+
+- name: CLEAN | clean only untracked files
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: untracked
+  register: git_clean_untracked
+
+- name: CLEAN | untracked files should be cleaned
+  assert:
+    that:
+      - git_clean_untracked is changed
+
+- name: CLEAN | Try cleaning ignored files again
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: ignored
+  register: git_clean_ignored_2
+
+- name: CLEAN | No more ignored files
+  assert:
+    that:
+      - not git_clean_ignored_2 is changed
+
+- name: CLEAN | Try cleaning untracked files again
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: untracked
+  register: git_clean_untracked_2
+
+- name: CLEAN | No more untracked files
+  assert:
+    that:
+      - not git_clean_untracked_2 is changed
+
+- name: CLEAN | add untracked and ignored file
+  file: path='{{ checkout_dir }}/repo/{{ item }}' state=touch
+  with_items:
+    - untracked_file1
+    - ignoreme
+
+- name: CLEAN | add gitignore file
+  copy: content='ignoreme' dest='{{ checkout_dir }}/repo/.gitignore'
+
+- name: CLEAN | now clone using clean
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: all
+  ignore_errors: yes
+  register: git_clone
+
+- name: CLEAN | clone works after cleaning all files
+  assert:
+    that:
+      - git_clone is changed

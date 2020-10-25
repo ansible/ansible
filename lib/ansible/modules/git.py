@@ -90,6 +90,15 @@ options:
         type: bool
         default: 'no'
         version_added: "0.7"
+    clean:
+        description:
+            - If C(ignored), clean ignored files and directories in the repository.
+            - If C(untracked), clean untracked files and directories in the repository.
+            - If C(all), clean both ignored and untracked.
+        type: str
+        required: false
+        choices: [ "ignored", "untracked", "all" ]
+        version_added: "2.11"
     depth:
         description:
             - Create a shallow clone with a history truncated to the specified
@@ -551,16 +560,43 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         verify_commit_sign(git_path, module, dest, version, gpg_whitelist)
 
 
-def has_local_mods(module, git_path, dest, bare):
+def clean_files(module, git_path, dest, clean):
+    if clean:
+        cmd = [git_path, 'clean', '-fd']
+        if clean == 'ignored':
+            cmd.append('-X')
+
+        elif clean == 'all':
+            cmd.append('-x')
+
+        module.run_command(cmd, check_rc=True, cwd=dest)
+
+
+def git_files_status(module, git_path, dest, bare):
+    modified = untracked = ignored = False
+
     if bare:
-        return False
+        return (modified, untracked, ignored)
 
-    cmd = "%s status --porcelain" % (git_path)
+    cmd = "%s status --ignored --porcelain" % (git_path)
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
-    lines = stdout.splitlines()
-    lines = list(filter(lambda c: not re.search('^\\?\\?.*$', c), lines))
+    lines = to_native(stdout).splitlines()
 
-    return len(lines) > 0
+    ignored_re = re.compile(r'\?\?\s.+')
+    untracked_re = re.compile(r'\!\!\s.+')
+    for line in lines:
+        if re.match(ignored_re, line):
+            untracked = True
+        elif re.match(untracked_re, line):
+            ignored = True
+        else:
+            modified = True
+
+        if all((modified, untracked, ignored)):
+            # nothing left to search for
+            break
+
+    return (modified, untracked, ignored)
 
 
 def reset(git_path, module, dest):
@@ -1092,6 +1128,8 @@ def main():
             refspec=dict(default=None),
             reference=dict(default=None),
             force=dict(default='no', type='bool'),
+            clean=dict(default=None, type='str', required=False,
+                       choices=['ignored', 'untracked', 'all']),
             depth=dict(default=None, type='int'),
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
@@ -1136,6 +1174,7 @@ def main():
     archive = module.params['archive']
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
+    clean = module.params['clean']
 
     result = dict(changed=False, warnings=list())
 
@@ -1209,7 +1248,7 @@ def main():
 
     result.update(before=None)
 
-    local_mods = False
+    local_mod_files = False
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
@@ -1244,9 +1283,16 @@ def main():
         module.exit_json(**result)
     else:
         # else do a pull
-        local_mods = has_local_mods(module, git_path, dest, bare)
+        local_mod_files, untracked_files, ignored_files = git_files_status(module, git_path, dest, bare)
+        # clean untracked or ignored files
+        if clean and (untracked_files or ignored_files):
+            # TODO: support check mode
+            clean_files(module, git_path, dest, clean)
+            local_mod_files = False
+            result.update(changed=True)
+
         result['before'] = get_version(module, git_path, dest)
-        if local_mods:
+        if local_mod_files:
             # failure should happen regardless of check mode
             if not force:
                 module.fail_json(msg="Local modifications exist in repository (force=no).", **result)
@@ -1299,7 +1345,7 @@ def main():
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
 
-    if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
+    if result['before'] != result['after'] or local_mod_files or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:
             diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
