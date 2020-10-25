@@ -61,6 +61,9 @@ class AnsibleDocTest(SanitySingleVersion):
             'terminal',
             'test',
         ])
+        if data_context().content.collection:
+            # Ansible 2.9 does not support var plugins in collections
+            plugin_type_blacklist.add('vars')
 
         plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in plugin_type_blacklist]
 
