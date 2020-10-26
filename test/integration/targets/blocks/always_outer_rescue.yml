@@ -3,9 +3,9 @@
   tasks:
     - name: outer block
       block:
-        - name: EXPECTED FAILURE inner block
+        - name: inner block
           block:
-            - name: ansible_failed_task works
+            - name: EXPECTED FAILURE ansible_failed_task works
               fail:
           always:
             - debug:
