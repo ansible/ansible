@@ -671,9 +671,9 @@ class User(object):
 
         cmd.append(self.name)
 
-        (rc, err, out) = self.execute_command(cmd)
+        (rc, out, err) = self.execute_command(cmd)
         if not self.local or rc != 0:
-            return (rc, err, out)
+            return (rc, out, err)
 
         if self.expires is not None:
             if self.expires < time.gmtime(0):
@@ -681,7 +681,7 @@ class User(object):
             else:
                 # Convert seconds since Epoch to days since Epoch
                 lexpires = int(math.floor(self.module.params['expires'])) // 86400
-            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            (rc, _out, _err) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
             out += _out
             err += _err
             if rc != 0:
@@ -825,18 +825,18 @@ class User(object):
             cmd.append('-p')
             cmd.append(self.password)
 
-        (rc, err, out) = (None, '', '')
+        (rc, out, err) = (None, '', '')
 
         # skip if no usermod changes to be made
         if len(cmd) > 1:
             cmd.append(self.name)
-            (rc, err, out) = self.execute_command(cmd)
+            (rc, out, err) = self.execute_command(cmd)
 
         if not self.local or not (rc is None or rc == 0):
-            return (rc, err, out)
+            return (rc, out, err)
 
         if lexpires is not None:
-            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            (rc, _out, _err) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
             out += _out
             err += _err
             if rc != 0:
@@ -2200,20 +2200,20 @@ class DarwinUser(User):
 
         if self.append is False:
             for remove in current - target:
-                (_rc, _err, _out) = self.__modify_group(remove, 'delete')
+                (_rc, _out, _err) = self.__modify_group(remove, 'delete')
                 rc += rc
                 out += _out
                 err += _err
                 changed = True
 
         for add in target - current:
-            (_rc, _err, _out) = self.__modify_group(add, 'add')
+            (_rc, _out, _err) = self.__modify_group(add, 'add')
             rc += _rc
             out += _out
             err += _err
             changed = True
 
-        return (rc, err, out, changed)
+        return (rc, out, err, changed)
 
     def _update_system_user(self):
         '''Hide or show user on login window according SELF.SYSTEM.
@@ -2284,7 +2284,7 @@ class DarwinUser(User):
     def create_user(self, command_name='dscl'):
         cmd = self._get_dscl()
         cmd += ['-create', '/Users/%s' % self.name]
-        (rc, err, out) = self.execute_command(cmd)
+        (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
 
@@ -2311,16 +2311,16 @@ class DarwinUser(User):
 
                 cmd = self._get_dscl()
                 cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
-                (rc, _err, _out) = self.execute_command(cmd)
+                (rc, _out, _err) = self.execute_command(cmd)
                 if rc != 0:
                     self.module.fail_json(msg='Cannot add property "%s" to user "%s".' % (field[0], self.name), err=err, out=out, rc=rc)
 
                 out += _out
                 err += _err
                 if rc != 0:
-                    return (rc, _err, _out)
+                    return (rc, _out, _err)
 
-        (rc, _err, _out) = self._change_user_password()
+        (rc, _out, _err) = self._change_user_password()
         out += _out
         err += _err
 
@@ -2331,7 +2331,7 @@ class DarwinUser(User):
             (rc, _out, _err, changed) = self._modify_group()
             out += _out
             err += _err
-        return (rc, err, out)
+        return (rc, out, err)
 
     def modify_user(self):
         changed = None
@@ -2347,7 +2347,7 @@ class DarwinUser(User):
                 if current is None or current != to_text(self.__dict__[field[0]]):
                     cmd = self._get_dscl()
                     cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
-                    (rc, _err, _out) = self.execute_command(cmd)
+                    (rc, _out, _err) = self.execute_command(cmd)
                     if rc != 0:
                         self.module.fail_json(
                             msg='Cannot update property "%s" for user "%s".'
@@ -2356,7 +2356,7 @@ class DarwinUser(User):
                     out += _out
                     err += _err
         if self.update_password == 'always' and self.password is not None:
-            (rc, _err, _out) = self._change_user_password()
+            (rc, _out, _err) = self._change_user_password()
             out += _out
             err += _err
             changed = rc
