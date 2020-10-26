@@ -1615,6 +1615,37 @@ releases:
     - runas-become-system-privileges.yml
     - v2.9.14rc1_summary.yaml
     release_date: '2020-09-28'
+  2.9.15rc1:
+    codename: Immigrant Song
+    fragments:
+    - 1124-pg_hba-dictkey_bugfix.yaml
+    - 412-vmware_guest_custom_attributes.yml
+    - 58115_nmcli.yml
+    - 66132_dnf_show_pkgs_in_check_mode.yml
+    - 70854-dnf-mutually-exclusive-filters.yml
+    - 71535_kubectl_followup.yml
+    - 71559-fix-distribution-fact-sles4sap.yaml
+    - 72145-s3_metrics_configuration-in-module_defaults.yml
+    - 72194-ovirt_disk-ignore-move-when-in-sd.yml
+    - 996-postgresql_privs_fix_function_handling.yml
+    - ansible-test-ansible-doc-vars-collections.yml
+    - ansible-test-azp-agent-temp-dir.yml
+    - ansible-test-collection-constraints.yml
+    - ansible-test-container-ip-lookup.yml
+    - ansible-test-docker-default-network.yml
+    - ansible-test-docker-detection-fix.yml
+    - ansible-test-docker-not-localhost.yml
+    - ansible-test-docker-socket.yml
+    - ansible-test-network-container-search.yml
+    - async-race-condition.yml
+    - changed_when_group_by.yml
+    - fix_ansible_issue_71942.yaml
+    - fix_reversed_return_value_order_72088.yaml
+    - galaxy_login_bye.yml
+    - powershell-version-env.yml
+    - v2.9.15rc1_summary.yaml
+    - zfs-root-snapshot.yml
+    release_date: '2020-10-26'
   2.9.2:
     codename: Immigrant Song
     fragments:

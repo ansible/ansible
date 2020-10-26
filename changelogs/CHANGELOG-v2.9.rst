@@ -5,6 +5,57 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.15rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-10-26
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add a ``--docker-network`` option to choose the network for running containers when using the ``--docker`` option.
+- ansible-test - Collections can now specify pip constraints for unit and integration test requirements using ``tests/unit/constraints.txt`` and ``tests/integration/constraints.txt`` respectively.
+- dnf - now shows specific package changes (installations/removals) under ``results`` in check_mode. (https://github.com/ansible/ansible/issues/66132)
+- module_defaults - add new module s3_metrics_configuration from community.aws to aws module_defaults group (https://github.com/ansible/ansible/pull/72145).
+- vmware_guest_custom_attributes - Fixed issue when trying to set a VM custom attribute when there are custom attributes with the same name for other object types (https://github.com/ansible-collections/community.vmware/issues/412).
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)
+
+Bugfixes
+--------
+
+- Restore the ability for changed_when/failed_when to function with group_by (#70844).
+- ansible-test - Always connect additional Docker containers to the network used by the current container (if any).
+- ansible-test - Always map ``/var/run/docker.sock`` into test containers created by the ``--docker`` option if the docker host is not ``localhost``.
+- ansible-test - Attempt to detect the Docker hostname instead of assuming ``localhost``.
+- ansible-test - Correctly detect running in a Docker container on Azure Pipelines.
+- ansible-test - Prefer container IP at ``.NetworkSettings.Networks.{NetworkName}.IPAddress`` over ``.NetworkSettings.IPAddress``.
+- ansible-test - The ``cs`` and ``openshift`` test plugins now search for containers on the current network instead of assuming the ``bridge`` network.
+- ansible-test - Using the ``--remote`` option on Azure Pipelines now works from a job running in a container.
+- ansible-test - disable ansible-doc sanity test for vars plugins in collections, which are not supported by Ansible 2.9 (https://github.com/ansible/ansible/pull/72336).
+- async_wrapper - Fix race condition when ``~/.ansible_async`` folder tries to be created by multiple async tasks at the same time - https://github.com/ansible/ansible/issues/59306
+- dnf - it is now possible to specify both ``security: true`` and ``bugfix: true`` to install updates of both types. Previously, only security would get installed if both were true. (https://github.com/ansible/ansible/issues/70854)
+- facts - fix distribution fact for SLES4SAP (https://github.com/ansible/ansible/pull/71559).
+- kubectl - follow up fix in _build_exec_cmd API (https://github.com/ansible/ansible/issues/72171).
+- nmcli - typecast parameters to string as required (https://github.com/ansible/ansible/issues/59095).
+- ovirt_disk - don't move disk when already in storage_domain (https://github.com/oVirt/ovirt-ansible-collection/pull/135).
+- postgresql_pg_hba - fix a crash when a new rule with an 'options' field replaces a rule without or vice versa (https://github.com/ansible-collections/community.general/issues/1108).
+- postgresql_privs - fix the module mistakes a procedure for a function (https://github.com/ansible-collections/community.general/issues/994)
+- powershell - remove getting the PowerShell version from the env var ``POWERSHELL_VERSION``. This feature never worked properly and can cause conflicts with other libraries that use this var
+- user - AnsibleModule.run_command returns a tuple of return code, stdout and stderr. The module main function of the user module expects user.create_user to return a tuple of return code, stdout and stderr. Fix the locations where stdout and stderr got reversed.
+
+- user - Local users with an expiry date cannot be created as the ``luseradd`` / ``lusermod`` commands do not support the ``-e`` option. Set the expiry time in this case via ``lchage`` after the user was created / modified. (https://github.com/ansible/ansible/issues/71942)
+
+- zfs - fixed ``invalid character '@' in pool name"`` error when working with snapshots on a root zvol (https://github.com/ansible-collections/community.general/issues/932).
+
 v2.9.14
 =======
 
