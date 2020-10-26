@@ -5,6 +5,38 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.17rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-10-26
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add a ``--docker-network`` option to choose the network for running containers when using the ``--docker`` option.
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)
+
+Bugfixes
+--------
+
+- ansible-test - Always connect additional Docker containers to the network used by the current container (if any).
+- ansible-test - Always map ``/var/run/docker.sock`` into test containers created by the ``--docker`` option if the docker host is not ``localhost``.
+- ansible-test - Attempt to detect the Docker hostname instead of assuming ``localhost``.
+- ansible-test - Correctly detect running in a Docker container on Azure Pipelines.
+- ansible-test - Prefer container IP at ``.NetworkSettings.Networks.{NetworkName}.IPAddress`` over ``.NetworkSettings.IPAddress``.
+- ansible-test - The ``cs`` and ``openshift`` test plugins now search for containers on the current network instead of assuming the ``bridge`` network.
+- ansible-test - Using the ``--remote`` option on Azure Pipelines now works from a job running in a container.
+- kubectl - follow up fix in _build_exec_cmd API (https://github.com/ansible/ansible/issues/72171).
+
 v2.8.16
 =======
 

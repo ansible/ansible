@@ -1709,6 +1709,20 @@ releases:
     - ansible-test-parallels-endpoint.yml
     - v2.8.16rc1_summary.yaml
     release_date: '2020-09-28'
+  2.8.17rc1:
+    codename: How Many More Times
+    fragments:
+    - 71535_kubectl_followup.yml
+    - ansible-test-azp-agent-temp-dir.yml
+    - ansible-test-container-ip-lookup.yml
+    - ansible-test-docker-default-network.yml
+    - ansible-test-docker-detection-fix.yml
+    - ansible-test-docker-not-localhost.yml
+    - ansible-test-docker-socket.yml
+    - ansible-test-network-container-search.yml
+    - galaxy_login_bye.yml
+    - v2.8.17rc1_summary.yaml
+    release_date: '2020-10-26'
   2.8.2:
     codename: How Many More Times
     fragments:
