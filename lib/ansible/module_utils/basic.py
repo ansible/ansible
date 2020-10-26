@@ -1741,23 +1741,20 @@ class AnsibleModule(object):
             return check_type_str(value, allow_conversion)
         except TypeError:
             common_msg = 'quote the entire value to ensure it does not change.'
-            from_msg = '{value!r}'.format(value=value)
             to_msg = '{value!r}'.format(value=to_text(value))
 
             if param is not None:
                 if prefix:
                     param = '{prefix}{param}'.format(prefix=prefix, param=param)
 
-                from_msg = '{param}: {value!r}'.format(param=param, value=value)
                 to_msg = '{param}: {value!r}'.format(param=param, value=to_text(value))
 
             if self._string_conversion_action == 'error':
                 msg = common_msg.capitalize()
                 raise TypeError(to_native(msg))
             elif self._string_conversion_action == 'warn':
-                msg = ('The value {value!r} (type {value.__class__.__name__}) in a strict string field was converted '
-                       'from {from_msg} to {to_msg} (type string). '
-                       'If this does not look like what you expect, {msg}').format(value=value, from_msg=from_msg, to_msg=to_msg, msg=common_msg)
+                msg = ("The value '{value!r}' (type {value.__class__.__name__}) in a strict string field was converted to {to_msg}. "
+                       "If this does not look like what you expect, {msg}").format(value=value, to_msg=to_msg, msg=common_msg)
                 self.warn(to_native(msg))
                 return to_native(value, errors='surrogate_or_strict')
 
