@@ -525,6 +525,50 @@ class PlayIterator:
             return self.is_any_block_rescuing(state.tasks_child_state)
         return False
 
+    def skip_always(self, state, host):
+        '''
+        Given the current state and host, skip any tasks in a always section
+        immediately following the original state and return a (potentially)
+        new state.
+        '''
+        new_state, task = self._get_next_task_from_state(state, host, peek=True)
+        if new_state.run_state == self.ITERATING_ALWAYS:
+            return self.skip_always(new_state, host)
+        return state
+
+    def is_rescue(self, state, host):
+        '''
+        Given the current state and host determine if we ever enter a rescue section.
+        '''
+        if state is None:
+            return False
+
+        # Use of get_active_state() here helps detect proper state if, say,
+        # we are in a rescue block from an included file (include_tasks).
+        if self.get_active_state(state).run_state == self.ITERATING_RESCUE:
+            return True
+
+        # In a non-included rescue case, a rescue that starts with a new
+        # 'block' will have an active state of ITERATING_TASKS, so we also
+        # check the current state block tree to see if any blocks are rescuing.
+        if self.is_any_block_rescuing(state):
+            return True
+
+        # This covers a case where we enter an always section after failure
+        # (no rescue block) but then enter a rescue section in an outer block:
+        # - block:
+        #     - block:
+        #         - fail:
+        #       always:
+        #         - debug:
+        #   rescue:
+        #     - debug:
+        state = self.skip_always(state, host)
+        if state.run_state == self.ITERATING_RESCUE:
+            return True
+
+        return False
+
     def get_original_task(self, host, task):
         # now a noop because we've changed the way we do caching
         return (None, None)

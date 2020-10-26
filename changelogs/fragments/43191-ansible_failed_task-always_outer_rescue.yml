@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix an issue when ``ansible_failed_task`` was not defined when a failure was followed by an always section and the rescue section was in an outer block. (https://github.com/ansible/ansible/issues/43191)
