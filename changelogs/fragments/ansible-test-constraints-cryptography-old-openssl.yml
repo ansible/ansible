@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - python-cryptography is now bounded at <3.2, as 3.2 drops support for OpenSSL 1.0.2 upon which some of our CI infrastructure still depends.
