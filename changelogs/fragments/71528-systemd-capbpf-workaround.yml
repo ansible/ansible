@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    systemd - work around bug with ``systemd`` 245 and 5.8 kernel that does not correctly
+    report service state (https://github.com/ansible/ansible/issues/71528)
