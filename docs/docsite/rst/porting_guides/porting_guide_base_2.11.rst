@@ -46,6 +46,15 @@ No notable changes
 Modules
 =======
 
+
+New Module Parameter Type
+-------------------------
+
+A new parameter type, ``str_strict``, is now available. This allows module authors to have Ansible take the action specified in ``ANSIBLE_STRING_CONVERSION_ACTION`` (``warn``, ``error``, or ``ignore`` and silently convert to a string) when a value in a ``str_strict`` field is not a string, such as unquoted integer or boolean values.
+
+This is a change from what was introduced in 2.8 where this behavior applied to *all* ``str`` type parameters.
+
+
 * The ``apt_key`` module has explicitly defined ``file`` as mutually exclusive with ``data``, ``keyserver`` and ``url``. They cannot be used together anymore.
 * The ``meta`` module now supports tags for user-defined tasks. Set the task's tags to 'always' to maintain the previous behavior. Internal ``meta`` tasks continue to always run.
 

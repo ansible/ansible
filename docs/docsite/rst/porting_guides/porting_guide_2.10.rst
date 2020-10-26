@@ -56,13 +56,6 @@ Deprecated
 Modules
 =======
 
-New Module Parameter Type
--------------------------
-
-A new parameter type, ``str_strict``, is now available. This allows module authors to have Ansible take the action specified in ``ANSIBLE_STRING_CONVERSION_ACTION`` (``warn``, ``error``, or ``ignore`` and silently convert to a string) when a value in a ``str_strict`` field is not a string, such as unquoted integer or boolean values.
-
-This is a change from what was introduced in 2.8 where this behavior applied to *all* ``str`` type parameters.
-
 .. warning::
 
 	Links on this page may not point to the most recent versions of modules. We will update them when we can.
