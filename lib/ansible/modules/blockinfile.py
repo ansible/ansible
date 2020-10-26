@@ -302,8 +302,12 @@ def main():
         lines[n1:n0 + 1] = []
         n0 = n1
 
-    lines[n0:n0] = blocklines
+    # No new line at the end of file, so ensure there is a new line before
+    # the block of new text to be inserted.
+    if not lines[n0 - 1].endswith(b(os.linesep)):
+        lines[n0 - 1] = lines[n0 - 1] + b(os.linesep)
 
+    lines[n0:n0] = blocklines
     if lines:
         result = b''.join(lines)
     else:
