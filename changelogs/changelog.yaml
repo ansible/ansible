@@ -2029,3 +2029,93 @@ releases:
     - runas-become-system-privileges.yml
     - v2.10.2rc1_summary.yaml
     release_date: '2020-09-28'
+  2.10.3rc1:
+    changes:
+      breaking_changes:
+      - ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)
+      bugfixes:
+      - Collection callbacks were ignoring options and rules for stdout and adhoc
+        cases.
+      - Collections - Ensure ``action_loader.get`` is called with ``collection_list``
+        to properly find collections when ``collections:`` search is specified (https://github.com/ansible/ansible/issues/72170)
+      - Fix ``RecursionError`` when templating large vars structures (https://github.com/ansible/ansible/issues/71920)
+      - ansible-doc - plugin option deprecations now also get ``collection_name``
+        added (https://github.com/ansible/ansible/pull/71735).
+      - ansible-test - Always connect additional Docker containers to the network
+        used by the current container (if any).
+      - ansible-test - Always map ``/var/run/docker.sock`` into test containers created
+        by the ``--docker`` option if the docker host is not ``localhost``.
+      - ansible-test - Attempt to detect the Docker hostname instead of assuming ``localhost``.
+      - ansible-test - Correctly detect running in a Docker container on Azure Pipelines.
+      - ansible-test - Prefer container IP at ``.NetworkSettings.Networks.{NetworkName}.IPAddress``
+        over ``.NetworkSettings.IPAddress``.
+      - ansible-test - The ``cs`` and ``openshift`` test plugins now search for containers
+        on the current network instead of assuming the ``bridge`` network.
+      - ansible-test - Using the ``--remote`` option on Azure Pipelines now works
+        from a job running in a container.
+      - async_wrapper - Fix race condition when ``~/.ansible_async`` folder tries
+        to be created by multiple async tasks at the same time - https://github.com/ansible/ansible/issues/59306
+      - 'dnf - it is now possible to specify both ``security: true`` and ``bugfix:
+        true`` to install updates of both types. Previously, only security would get
+        installed if both were true. (https://github.com/ansible/ansible/issues/70854)'
+      - facts - fix distribution fact for SLES4SAP (https://github.com/ansible/ansible/pull/71559).
+      - is_string/vault - Ensure the is_string helper properly identifies AnsibleVaultEncryptedUnicode
+        as a string (https://github.com/ansible/ansible/pull/71609)
+      - powershell - remove getting the PowerShell version from the env var ``POWERSHELL_VERSION``.
+        This feature never worked properly and can cause conflicts with other libraries
+        that use this var
+      - url lookup - make sure that options supplied in ansible.cfg are actually used
+        (https://github.com/ansible/ansible/pull/71736).
+      - 'user - AnsibleModule.run_command returns a tuple of return code, stdout and
+        stderr. The module main function of the user module expects user.create_user
+        to return a tuple of return code, stdout and stderr. Fix the locations where
+        stdout and stderr got reversed.
+
+        '
+      - 'user - Local users with an expiry date cannot be created as the ``luseradd``
+        / ``lusermod`` commands do not support the ``-e`` option. Set the expiry time
+        in this case via ``lchage`` after the user was created / modified. (https://github.com/ansible/ansible/issues/71942)
+
+        '
+      minor_changes:
+      - ansible-test - Add a ``--docker-network`` option to choose the network for
+        running containers when using the ``--docker`` option.
+      - ansible-test - Collections can now specify pip constraints for unit and integration
+        test requirements using ``tests/unit/constraints.txt`` and ``tests/integration/constraints.txt``
+        respectively.
+      - ansible-test - python-cryptography is now bounded at <3.2, as 3.2 drops support
+        for OpenSSL 1.0.2 upon which some of our CI infrastructure still depends.
+      - dnf - now shows specific package changes (installations/removals) under ``results``
+        in check_mode. (https://github.com/ansible/ansible/issues/66132)
+      release_summary: '| Release Date: 2020-10-26
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - 66132_dnf_show_pkgs_in_check_mode.yml
+    - 70854-dnf-mutually-exclusive-filters.yml
+    - 71559-fix-distribution-fact-sles4sap.yaml
+    - 71609-is_string-vault.yml
+    - 71735-deprecation-tagging.yml
+    - 71920-fix-templating-recursion-error.yml
+    - 72170-action-loader-collection-list.yml
+    - ansible-test-azp-agent-temp-dir.yml
+    - ansible-test-collection-constraints.yml
+    - ansible-test-constraints-cryptography-old-openssl.yml
+    - ansible-test-container-ip-lookup.yml
+    - ansible-test-docker-default-network.yml
+    - ansible-test-docker-detection-fix.yml
+    - ansible-test-docker-not-localhost.yml
+    - ansible-test-docker-socket.yml
+    - ansible-test-network-container-search.yml
+    - async-race-condition.yml
+    - collections_cb_fix.yml
+    - fix_ansible_issue_71942.yaml
+    - fix_reversed_return_value_order_72088.yaml
+    - galaxy_login_bye.yml
+    - powershell-version-env.yml
+    - url-lookup-ini.yml
+    - v2.10.3rc1_summary.yaml
+    release_date: '2020-10-26'
