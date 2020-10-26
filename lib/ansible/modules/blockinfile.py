@@ -304,7 +304,7 @@ def main():
 
     # Ensure there is a line separator before the block of lines to be inserted
     if not lines[n0 - 1].endswith(b(os.linesep)):
-        lines[n0 - 1] = lines[n0 - 1] + b(os.linesep)
+        lines[n0 - 1] += b(os.linesep)
 
     lines[n0:n0] = blocklines
     if lines:
