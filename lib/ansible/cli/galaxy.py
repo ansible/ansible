@@ -555,28 +555,9 @@ class GalaxyCLI(CLI):
         """
         verify user's identify via GitHub and retrieve an auth token from Ansible Galaxy.
         """
-        # Authenticate with github and retrieve a token
-        if context.CLIARGS['token'] is None:
-            if C.GALAXY_TOKEN:
-                github_token = C.GALAXY_TOKEN
-            else:
-                login = GalaxyLogin(self.galaxy)
-                github_token = login.create_github_token()
-        else:
-            github_token = context.CLIARGS['token']
-
-        galaxy_response = self.api.authenticate(github_token)
-
-        if context.CLIARGS['token'] is None and C.GALAXY_TOKEN is None:
-            # Remove the token we created
-            login.remove_github_token()
-
-        # Store the Galaxy token
-        token = GalaxyToken()
-        token.set(galaxy_response['token'])
-
-        display.display("Successfully logged into Galaxy as %s" % galaxy_response['username'])
-        return 0
+        display.error("The login command was removed in late 2020. To continue importing roles to Galaxy, upgrade to "
+                      "ansible >= 2.9 or use the Web UI to import manually.")
+        return 1
 
     def execute_import(self):
         """ used to import a role into Ansible Galaxy """
