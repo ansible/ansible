@@ -209,7 +209,6 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True
     )
-
     params = module.params
     path = params['path']
 
@@ -303,8 +302,9 @@ def main():
         n0 = n1
 
     # Ensure there is a line separator before the block of lines to be inserted
-    if not lines[n0 - 1].endswith(b(os.linesep)):
-        lines[n0 - 1] += b(os.linesep)
+    if n0 > 0:
+        if not lines[n0 - 1].endswith(b(os.linesep)):
+            lines[n0 - 1] += b(os.linesep)
 
     lines[n0:n0] = blocklines
     if lines:
