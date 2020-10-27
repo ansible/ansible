@@ -1,0 +1,52 @@
+- name: macOS | Set hostname
+  hostname:
+    name: bugs.acme.example.com
+
+# These tasks can be changed to a loop once https://github.com/ansible/ansible/issues/71031
+# is fixed
+- name: macOS | Set hostname specifiying macos strategy
+  hostname:
+    name: bugs.acme.example.com
+    use: macos
+
+- name: macOS | Set hostname specifiying macosx strategy
+  hostname:
+    name: bugs.acme.example.com
+    use: macosx
+
+- name: macOS | Set hostname specifiying darwin strategy
+  hostname:
+    name: bugs.acme.example.com
+    use: darwin
+
+- name: macOS | Get macOS hostname values
+  command: scutil --get {{ item }}
+  loop:
+    - HostName
+    - ComputerName
+    - LocalHostName
+  register: macos_scutil
+  ignore_errors: yes
+
+- name: macOS | Ensure all hostname values were set correctly
+  assert:
+    that:
+      - "['bugs.acme.example.com', 'bugs.acme.example.com', 'bugsacmeexamplecom'] == macos_scutil.results | map(attribute='stdout') | list"
+
+- name: macOS | Set to a hostname using spaces and punctuation
+  hostname:
+    name: The Dude's Computer
+
+- name: macOS | Get macOS hostname values
+  command: scutil --get {{ item }}
+  loop:
+    - HostName
+    - ComputerName
+    - LocalHostName
+  register: macos_scutil_complex
+  ignore_errors: yes
+
+- name: macOS | Ensure all hostname values were set correctly
+  assert:
+    that:
+      - "['The Dude\\'s Computer', 'The Dude\\'s Computer', 'The-Dudes-Computer'] == (macos_scutil_complex.results | map(attribute='stdout') | list)"

@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - add macOS support (https://github.com/ansible/ansible/pull/54439)
