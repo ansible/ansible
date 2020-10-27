@@ -34,3 +34,7 @@
 - import_tasks: preserve_line_endings.yml
 - import_tasks: block_without_trailing_newline.yml
 - import_tasks: file_without_trailing_newline.yml
+- import_tasks: diff.yml
+- import_tasks: validate.yml
+- import_tasks: insertafter.yml
+- import_tasks: insertbefore.yml
