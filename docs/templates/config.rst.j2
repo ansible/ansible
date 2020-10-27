@@ -118,9 +118,29 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {%     for ini_map in config['ini']|sort(attribute='section') %}
 :Ini Section: {{ini_map['section']}}
 :Ini Key: {{ini_map['key']}}
+{%       if ini_map['version_added'] %}
+    :Version Added: {{ini_map['version_added']}}
+{%       endif %}
+{%       if ini_map['deprecated'] %}
+    :Deprecated in: {{ini_map['deprecated']['version']}}
+    :Deprecated detail: {{ini_map['deprecated']['why']}}
+{%         if ini_map['deprecated']['alternatives'] %}
+    :Deprecated alternatives: {{ini_map['deprecated']['alternatives']}}
+{%         endif %}
+{%       endif %}
 {%     endfor %}
 {%     for env_var_map in config['env']|sort(attribute='name') %}
 :Environment: :envvar:`{{env_var_map['name']}}`
+{%       if env_var_map['version_added'] %}
+    :Version Added: {{env_var_map['version_added']}}
+{%       endif %}
+{%       if env_var_map['deprecated'] %}
+    :Deprecated in: {{env_var_map['deprecated']['version']}}
+    :Deprecated detail: {{env_var_map['deprecated']['why']}}
+{%         if env_var_map['deprecated']['alternatives'] %}
+    :Deprecated alternatives: {{env_var_map['deprecated']['alternatives']}}
+{%         endif %}
+{%       endif %}
 {%     endfor %}
 {%     if config['deprecated'] %}
 :Deprecated in: {{config['deprecated']['version']}}
@@ -152,6 +172,17 @@ Environment Variables
 {%       endif %}
 
     See also :ref:`{{config_option}} <{{config_option}}>`
+
+{%       if env_var_map['version_added'] %}
+    :Version Added: {{env_var_map['version_added']}}
+{%       endif %}
+{%       if env_var_map['deprecated'] %}
+    :Deprecated in: {{env_var_map['deprecated']['version']}}
+    :Deprecated detail: {{env_var_map['deprecated']['why']}}
+{%         if env_var_map['deprecated']['alternatives'] %}
+    :Deprecated alternatives: {{env_var_map['deprecated']['alternatives']}}
+{%         endif %}
+{%       endif %}
 
 {%     endfor %}
 
