@@ -256,6 +256,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_task.ignore_unreachable = False
         mock_task._uuid = uuid.uuid4()
         mock_task.loop = None
+        mock_task.projection = None
         mock_task.copy.return_value = mock_task
 
         mock_handler_task = Handler()
