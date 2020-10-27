@@ -156,6 +156,22 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {%         endif %}
 {%       endif %}
 {%     endfor %}
+{%     if config.get('vars', False) %}
+:Variables:
+{%       for a_var in config['vars']|sort(attribute='name') %}
+     {% if config['vars']|length > 1 %}- {%endif%}:name: `{{a_var['name']}}`
+{%       if a_var['version_added'] %}
+       :Version Added: {{a_var['version_added']}}
+{%       endif %}
+{%         if a_var['deprecated'] %}
+       :Deprecated in: {{a_var['deprecated']['version']}}
+       :Deprecated detail: {{a_Var['deprecated']['why']}}
+{%           if a_var['deprecated']['alternatives'] %}
+       :Deprecated alternatives: {{a_var['deprecated']['alternatives']}}
+{%           endif %}
+{%         endif %}
+{%       endfor %}
+{%     endif %}
 {%     if config['deprecated'] %}
 :Deprecated in: {{config['deprecated']['version']}}
 :Deprecated detail: {{config['deprecated']['why']}}
