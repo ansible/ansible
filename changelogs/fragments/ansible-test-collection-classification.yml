@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test - improve classification of changes to ``changelogs/``, ``README.md``, ``CHANGELOG.rst``, ``COPYING`` and ``LICENSE`` (https://github.com/ansible/ansible/pull/72353)."

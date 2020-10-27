@@ -663,9 +663,14 @@ class PathMapper:
         minimal = {}
 
         if path.startswith('changelogs/'):
-            return minimal
+            return {
+                'sanity': 'changelog',
+            }
 
         if path.startswith('docs/'):
+            return minimal
+
+        if path in ('README.md', 'CHANGELOG.rst', 'COPYING', 'LICENSE'):
             return minimal
 
         return None
