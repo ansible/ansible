@@ -377,11 +377,6 @@ class DocCLI(CLI):
         doc['returndocs'] = returndocs
         doc['metadata'] = metadata
 
-        # generate extra data
-        doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-        if 'docuri' in doc:
-            doc['docuri'] = doc[plugin_type].replace('_', '-')
-
         if context.CLIARGS['show_snippet'] and plugin_type == 'module':
             text = DocCLI.get_snippet_text(doc)
         else:
