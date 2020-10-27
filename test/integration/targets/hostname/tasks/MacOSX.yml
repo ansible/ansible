@@ -9,12 +9,12 @@
     name: bugs.acme.example.com
     use: macos
 
-- name: macOS | Set hostname specifiying macos strategy
+- name: macOS | Set hostname specifiying macosx strategy
   hostname:
     name: bugs.acme.example.com
     use: macosx
 
-- name: macOS | Set hostname specifiying macos strategy
+- name: macOS | Set hostname specifiying darwin strategy
   hostname:
     name: bugs.acme.example.com
     use: darwin
