@@ -704,7 +704,7 @@ class DarwinStrategy(GenericStrategy):
         # Get all the current host name values in the order of self.name_types
         all_names = tuple(self.module.run_command([self.scutil, '--get', name_type])[1].strip() for name_type in self.name_types)
 
-        # Get the expeceted hostname valuse based on the order in self.name_types
+        # Get the expected host name values based on the order in self.name_types
         expected_names = tuple(self.scrubbed_name if n == 'LocalHostName' else name for n in self.name_types)
 
         # Ensure all three names are updated
