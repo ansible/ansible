@@ -350,6 +350,7 @@ class DocCLI(CLI):
         if doc is None:
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
+        # generate extra data
         if plugin_type == 'module':
             # is there corresponding action plugin?
             if plugin in action_loader:
