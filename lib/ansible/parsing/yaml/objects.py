@@ -25,6 +25,7 @@ import sys as _sys
 import sys
 import yaml
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_bytes, to_text, to_native
@@ -117,7 +118,7 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
     def data(self):
         if not self.vault:
             return to_text(self._ciphertext)
-        return to_text(self.vault.decrypt(self._ciphertext))
+        return to_text(self.vault.decrypt(self._ciphertext, obj=self))
 
     @data.setter
     def data(self, value):

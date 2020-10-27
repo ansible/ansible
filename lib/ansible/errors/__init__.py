@@ -53,22 +53,34 @@ class AnsibleError(Exception):
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
         super(AnsibleError, self).__init__(message)
 
+        self._show_content = show_content
+        self._suppress_extended_error = suppress_extended_error
+        self.message = self._message = '%s' % to_native(message)
+        self.obj = obj
+
+        if orig_exc:
+            self.orig_exc = orig_exc
+
+    @property
+    def obj(self):
+        return self._obj
+
+    @obj.setter
+    def obj(self, val):
+        self._obj = val
+
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
-        self._obj = obj
-        self._show_content = show_content
-        if obj and isinstance(obj, AnsibleBaseYAMLObject):
+        if isinstance(val, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
-            if extended_error and not suppress_extended_error:
-                self.message = '%s\n\n%s' % (to_native(message), to_native(extended_error))
+            if extended_error and not self._suppress_extended_error:
+                self.message = '%s\n\n%s' % (self._message, to_native(extended_error))
             else:
-                self.message = '%s' % to_native(message)
+                self.message = self._message
         else:
-            self.message = '%s' % to_native(message)
-        if orig_exc:
-            self.orig_exc = orig_exc
+            self.message = self._message
 
     def __str__(self):
         return self.message
