@@ -4,7 +4,6 @@ __metaclass__ = type
 
 import os
 import tempfile
-import uuid
 
 from . import (
     CloudProvider,
@@ -59,6 +58,27 @@ foreground {
 }
 '''
 
+# There are 2 overrides here:
+#   1. Change the gunicorn bind address from 127.0.0.1 to 0.0.0.0 now that Galaxy NG does not allow us to access the
+#      Pulp API through it.
+#   2. Grant access allowing us to DELETE a namespace in Galaxy NG. This is as CI deletes and recreates repos and
+#      distributions in Pulp which now breaks the namespace in Galaxy NG. Recreating it is the "simple" fix to get it
+#      working again.
+# These may not be needed in the future, especially if 1 becomes configurable by an env var but for now they must be
+# done.
+OVERRIDES = b'''#!/usr/bin/execlineb -S0
+foreground {
+    sed -i "0,/\\"127.0.0.1:24817\\"/s//\\"0.0.0.0:24817\\"/" /etc/services.d/pulpcore-api/run
+}
+
+# This sed calls changes the first occurrence to "allow" which is conveniently the delete operation for a namespace.
+# https://github.com/ansible/galaxy_ng/blob/master/galaxy_ng/app/access_control/statements/standalone.py#L9-L11.
+backtick NG_PREFIX { python -c "import galaxy_ng; print(galaxy_ng.__path__[0], end='')" }
+importas ng_prefix NG_PREFIX
+foreground {
+    sed -i "0,/\\"effect\\": \\"deny\\"/s//\\"effect\\": \\"allow\\"/" ${ng_prefix}/app/access_control/statements/standalone.py
+}'''
+
 
 class GalaxyProvider(CloudProvider):
     """Galaxy plugin.
@@ -76,7 +96,7 @@ class GalaxyProvider(CloudProvider):
 
         self.pulp = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'docker.io/pulp/pulp-galaxy-ng@sha256:69b4c4cba4908539b56c5592f40d282f938dd1bdf4de5a81e0a8d04ac3e6e326'
+            'docker.io/pulp/pulp-galaxy-ng@sha256:b79a7be64eff86d8f58db9ca83ed4967bd8b4e45c99addb17a91d11926480cf1'
         )
 
         self.containers = []
@@ -117,7 +137,8 @@ class GalaxyProvider(CloudProvider):
                      % ('Using the existing' if p_results else 'Starting a new'),
                      verbosity=1)
 
-        pulp_port = 80
+        galaxy_port = 80
+        pulp_port = 24817
 
         if not p_results:
             if self.args.docker or container_id:
@@ -125,6 +146,7 @@ class GalaxyProvider(CloudProvider):
             else:
                 # publish the simulator ports when not running inside docker
                 publish_ports = [
+                    '-p', ':'.join((str(galaxy_port),) * 2),
                     '-p', ':'.join((str(pulp_port),) * 2),
                 ]
 
@@ -140,21 +162,16 @@ class GalaxyProvider(CloudProvider):
 
             pulp_id = stdout.strip()
 
-            try:
-                # Inject our settings.py file
-                with tempfile.NamedTemporaryFile(delete=False) as settings:
-                    settings.write(SETTINGS)
-                docker_command(self.args, ['cp', settings.name, '%s:/etc/pulp/settings.py' % pulp_id])
-            finally:
-                os.unlink(settings.name)
-
-            try:
-                # Inject our settings.py file
-                with tempfile.NamedTemporaryFile(delete=False) as admin_pass:
-                    admin_pass.write(SET_ADMIN_PASSWORD)
-                docker_command(self.args, ['cp', admin_pass.name, '%s:/etc/cont-init.d/111-postgres' % pulp_id])
-            finally:
-                os.unlink(admin_pass.name)
+            injected_files = {
+                '/etc/pulp/settings.py': SETTINGS,
+                '/etc/cont-init.d/111-postgres': SET_ADMIN_PASSWORD,
+                '/etc/cont-init.d/000-ansible-test-overrides': OVERRIDES,
+            }
+            for path, content in injected_files.items():
+                with tempfile.NamedTemporaryFile() as temp_fd:
+                    temp_fd.write(content)
+                    temp_fd.flush()
+                    docker_command(self.args, ['cp', temp_fd.name, '%s:%s' % (pulp_id, path)])
 
             # Start the container
             docker_start(self.args, 'ansible-ci-pulp', [])
@@ -171,6 +188,7 @@ class GalaxyProvider(CloudProvider):
 
         self._set_cloud_config('PULP_HOST', pulp_host)
         self._set_cloud_config('PULP_PORT', str(pulp_port))
+        self._set_cloud_config('GALAXY_PORT', str(galaxy_port))
         self._set_cloud_config('PULP_USER', 'admin')
         self._set_cloud_config('PULP_PASSWORD', 'password')
 
@@ -209,22 +227,23 @@ class GalaxyEnvironment(CloudEnvironment):
         pulp_user = self._get_cloud_config('PULP_USER')
         pulp_password = self._get_cloud_config('PULP_PASSWORD')
         pulp_host = self._get_cloud_config('PULP_HOST')
+        galaxy_port = self._get_cloud_config('GALAXY_PORT')
         pulp_port = self._get_cloud_config('PULP_PORT')
 
         return CloudEnvironmentConfig(
             ansible_vars=dict(
                 pulp_user=pulp_user,
                 pulp_password=pulp_password,
-                pulp_v2_server='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
-                pulp_v3_server='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
+                pulp_v2_server='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
+                pulp_v3_server='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
                 pulp_api='http://%s:%s' % (pulp_host, pulp_port),
-                galaxy_ng_server='http://%s:%s/api/galaxy/' % (pulp_host, pulp_port),
+                galaxy_ng_server='http://%s:%s/api/galaxy/' % (pulp_host, galaxy_port),
             ),
             env_vars=dict(
                 PULP_USER=pulp_user,
                 PULP_PASSWORD=pulp_password,
-                PULP_V2_SERVER='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
-                PULP_V3_SERVER='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
-                GALAXY_NG_SERVER='http://%s:%s/api/galaxy/' % (pulp_host, pulp_port),
+                PULP_V2_SERVER='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
+                PULP_V3_SERVER='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
+                GALAXY_NG_SERVER='http://%s:%s/api/galaxy/' % (pulp_host, galaxy_port),
             ),
         )
