@@ -1,0 +1,36 @@
+- name: Create file without trailing newline
+  copy:
+    content: '# File with no newline'
+    dest: "{{ output_dir_test }}/no_newline_at_end.txt"
+  register: no_newline
+
+
+- name: Add block to file that does not have a newline at the end
+  blockinfile:
+    path: "{{ output_dir_test }}/no_newline_at_end.txt"
+    content: |
+      one
+      two
+      three
+  register: no_newline_test1
+
+- name: Add block to file that does not have a newline at the end again
+  blockinfile:
+    path: "{{ output_dir_test }}/no_newline_at_end.txt"
+    content: |
+      one
+      two
+      three
+  register: no_newline_test2
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir_test }}/no_newline_at_end.txt"
+  register: no_newline_file
+
+- name: Ensure block was correctly written to file with no newline at end
+  assert:
+    that:
+      - no_newline_test1 is changed
+      - no_newline_test2 is not changed
+      - no_newline_file.stat.checksum == 'dab16f864025e59125e74d1498ffb2bb048224e6'
