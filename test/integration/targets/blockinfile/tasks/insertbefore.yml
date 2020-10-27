@@ -1,0 +1,39 @@
+- name: Create insertbefore test file
+  copy:
+    dest: "{{ output_dir }}/before.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: Add block using insertbefore
+  blockinfile:
+    path: "{{ output_dir }}/before.txt"
+    insertbefore: line2
+    block: |
+      block1
+      block2
+  register: after1
+
+- name: Add block using insertbefore again
+  blockinfile:
+    path: "{{ output_dir }}/before.txt"
+    insertbefore: line2
+    block: |
+      block1
+      block2
+  register: after2
+
+- name: Stat the before.txt file
+  stat:
+    path: "{{ output_dir }}/before.txt"
+  register: after_file
+
+- command: cat {{ output_dir }}/before.txt
+
+- name: Ensure insertbefore worked correctly
+  assert:
+    that:
+      - after1 is changed
+      - after2 is not changed
+      - after_file.stat.checksum == '16681d1d7f29d173243bb951d6afb9c0824d7bf4'
