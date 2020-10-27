@@ -683,9 +683,11 @@ class DarwinStrategy(GenericStrategy):
 
     def set_permanent_hostname(self, name):
         for hostname_type in self.name_types:
+            cmd = [self.scutil, '--set', hostname_type]
             if hostname_type == 'LocalHostName':
-                name = self.scrubbed_name
-            cmd = [self.scutil, '--set', hostname_type, to_native(name)]
+                cmd.append(to_native(self.scrubbed_name))
+            else:
+                cmd.append(to_native(name))
             rc, out, err = self.module.run_command(cmd)
             if rc != 0:
                 self.module.fail_json(msg="Failed to set {3} to '{2}': {0} {1}".format(to_native(out), to_native(err), to_native(name), hostname_type))
@@ -699,10 +701,14 @@ class DarwinStrategy(GenericStrategy):
     def update_permanent_hostname(self):
         name = self.module.params['name']
 
-        # Ensure all three names were updated
-        all_names = tuple((self.module.run_command([self.scutil, '--get', name_type])[1].strip() for name_type in self.name_types))
+        # Get all the current host name values in the order of self.name_types
+        all_names = tuple(self.module.run_command([self.scutil, '--get', name_type])[1].strip() for name_type in self.name_types)
 
-        if all_names != (name, name, self.scrubbed_name):
+        # Get the expeceted hostname valuse based on the order in self.name_types
+        expected_names = tuple(self.scrubbed_name if n == 'LocalHostName' else name for n in self.name_types)
+
+        # Ensure all three names are updated
+        if all_names != expected_names:
             if not self.module.check_mode:
                 self.set_permanent_hostname(name)
             self.changed = True
