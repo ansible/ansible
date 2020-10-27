@@ -1,0 +1,5 @@
+bugfixes:
+  - >
+    systemd - follow up fix to https://github.com/ansible/ansible/issues/72338
+    to use ``list-unit-files`` rather than ``list-units`` in order to show
+    all units files on the system.
