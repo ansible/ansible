@@ -259,7 +259,7 @@ class DocCLI(CLI):
                     # The doc section existed but was empty
                     continue
 
-                plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
+                plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
 
             if do_json:
                 jdump(plugin_docs)
@@ -350,6 +350,12 @@ class DocCLI(CLI):
         if doc is None:
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
+        doc['filename'] = filename
+        doc['collection'] = collection_name
+        return doc, plainexamples, returndocs, metadata
+
+    @staticmethod
+    def _combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
         # generate extra data
         if plugin_type == 'module':
             # is there corresponding action plugin?
@@ -358,9 +364,8 @@ class DocCLI(CLI):
             else:
                 doc['has_action'] = False
 
-        doc['filename'] = filename
-        doc['collection'] = collection_name
-        return doc, plainexamples, returndocs, metadata
+        # return everything as one dictionary
+        return {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
 
     @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
