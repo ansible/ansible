@@ -663,9 +663,7 @@ class PathMapper:
         minimal = {}
 
         if path.startswith('changelogs/'):
-            return {
-                'sanity': 'changelog',
-            }
+            return minimal
 
         if path.startswith('docs/'):
             return minimal
