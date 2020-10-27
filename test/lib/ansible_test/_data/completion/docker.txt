@@ -7,7 +7,7 @@ centos8 name=quay.io/ansible/centos8-test-container:1.21.0 python=3.6 seccomp=un
 fedora30 name=quay.io/ansible/fedora30-test-container:1.17.0 python=3.7
 fedora31 name=quay.io/ansible/fedora31-test-container:1.17.0 python=3.7
 fedora32 name=quay.io/ansible/fedora32-test-container:1.17.0 python=3.8
-fedora33 name=quay.io/ansible/fedora33-test-container:1.22.0 python=3.9
+fedora33 name=quay.io/ansible/fedora33-test-container:1.23.0 python=3.9
 opensuse15py2 name=quay.io/ansible/opensuse15py2-test-container:1.21.0 python=2.7
 opensuse15 name=quay.io/ansible/opensuse15-test-container:1.21.0 python=3.6
 ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.21.0 python=2.7 seccomp=unconfined
