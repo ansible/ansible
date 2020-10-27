@@ -415,10 +415,28 @@ You can also test a version of your collection in development by installing it f
 
 .. include:: ../shared_snippets/installing_collections_git_repo.txt
 
+.. _collection_versions:
+
+Collection versions
+-------------------
+
+Once you publish a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before publishing. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) will be the version displayed everywhere in Galaxy or Automation Hub; however, users will still be able to download older versions.
+
+Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
+
+* Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
+* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
+* Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
+
 .. _publishing_collections:
 
 Publishing collections
-----------------------
+======================
+
+You can publish collections to Ansible Galaxy, to Automation Hub (part of the Red Hat Ansible Automation Platform), and/or to a private Automation Hub.
+
+Publishing a collection to Ansible Galaxy
+-----------------------------------------
 
 You can publish collections to Galaxy using the ``ansible-galaxy collection publish`` command or the Galaxy UI itself. You need a namespace on Galaxy to upload your collection. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
 
@@ -511,21 +529,6 @@ namespace, the upload request will fail.
 
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
-
-.. _collection_versions:
-
-Collection versions
--------------------
-
-Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before
-uploading. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number)
-will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
-
-Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
-
-* Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
-* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
-* Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
 
 .. _migrate_to_collection:
 
