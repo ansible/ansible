@@ -405,7 +405,7 @@ def main():
         elif err and rc == 1 and 'Failed to parse bus message' in err:
             result['status'] = parse_systemctl_show(to_native(out).split('\n'))
 
-            (rc, out, err) = module.run_command("{systemctl} list-units '{unit}*'".format(systemctl=systemctl, unit=unit))
+            (rc, out, err) = module.run_command("{systemctl} list-unit-files '{unit}*'".format(systemctl=systemctl, unit=unit))
             is_systemd = unit in out
 
             (rc, out, err) = module.run_command("{systemctl} is-active '{unit}'".format(systemctl=systemctl, unit=unit))
