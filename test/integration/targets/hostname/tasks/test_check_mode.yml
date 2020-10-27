@@ -1,0 +1,50 @@
+- name: Run hostname module in check_mode
+  hostname:
+    name: crocodile.ansible.test.doesthiswork.net.example.com
+  check_mode: true
+  register: hn1
+
+- name: Get current hostname again
+  command: hostname
+  register: after_hn
+
+- name: Ensure hostname changed properly
+  assert:
+    that:
+      - hn1 is changed
+      - original.stdout == after_hn.stdout
+
+- when: _hostname_file is defined and _hostname_file
+  block:
+    - name: See if current hostname file exists
+      stat:
+        path: "{{ _hostname_file }}"
+      register: hn_stat
+
+    - name: Move the current hostname file if it exists
+      command: mv {{ _hostname_file }} {{ _hostname_file }}.orig
+      when: hn_stat.stat.exists
+
+    - name: Run hostname module in check_mode
+      hostname:
+        name: crocodile.ansible.test.doesthiswork.net.example.com
+      check_mode: true
+      register: hn
+
+    - stat:
+        path: /etc/rc.conf.d/hostname
+      register: hn_stat_checkmode
+
+    - assert:
+        that:
+          # TODO: This is a legitimate bug and will be fixed in another PR.
+          # - not hn_stat_checkmode.stat.exists
+          - hn is changed
+
+    - name: Get hostname again
+      command: hostname
+      register: current_after_cm
+
+    - assert:
+        that:
+          - original.stdout == current_after_cm.stdout
