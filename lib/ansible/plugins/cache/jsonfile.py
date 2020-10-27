@@ -23,6 +23,7 @@ DOCUMENTATION = '''
         ini:
           - key: fact_caching_connection
             section: defaults
+        type: path
       _prefix:
         description: User defined prefix to use when creating the JSON files
         env:
