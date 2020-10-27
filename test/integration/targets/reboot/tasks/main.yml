@@ -1,5 +1,5 @@
 - name: Test reboot
-  when: ansible_facts.virtualization_type | default('') not in ['docker', 'container']
+  when: ansible_facts.virtualization_type | default('') not in ['docker', 'container', 'containerd']
   block:
     # This block can be removed once we have a mechanism in ansible-test to separate
     # the control node from the managed node.
