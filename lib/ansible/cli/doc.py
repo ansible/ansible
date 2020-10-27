@@ -350,6 +350,13 @@ class DocCLI(CLI):
         if doc is None:
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
+        if plugin_type == 'module':
+            # is there corresponding action plugin?
+            if plugin in action_loader:
+                doc['has_action'] = True
+            else:
+                doc['has_action'] = False
+
         doc['filename'] = filename
         doc['collection'] = collection_name
         return doc, plainexamples, returndocs, metadata
@@ -370,13 +377,6 @@ class DocCLI(CLI):
         doc['metadata'] = metadata
 
         # generate extra data
-        if plugin_type == 'module':
-            # is there corresponding action plugin?
-            if plugin in action_loader:
-                doc['action'] = True
-            else:
-                doc['action'] = False
-
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         if 'docuri' in doc:
             doc['docuri'] = doc[plugin_type].replace('_', '-')
@@ -658,7 +658,7 @@ class DocCLI(CLI):
                 text.append("%s" % doc.pop('deprecated'))
             text.append("\n")
 
-        if doc.pop('action', False):
+        if doc.pop('has_action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if doc.get('options', False):
