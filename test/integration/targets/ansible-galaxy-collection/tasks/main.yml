@@ -14,11 +14,36 @@
 - name: run ansible-galaxy collection build tests
   import_tasks: build.yml
 
+# The pulp container has a long start up time
+# The first task to interact with pulp needs to wait until it responds appropriately
+- name: list pulp distributions
+  uri:
+    url: '{{ pulp_api }}/pulp/api/v3/distributions/ansible/ansible/'
+    status_code:
+      - 200
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: pulp_distributions
+  until: pulp_distributions is successful
+  delay: 1
+  retries: 60
+
 - name: configure pulp
   include_tasks: pulp.yml
 
-- name: configure galaxy_ng
-  include_tasks: galaxy_ng.yml
+- name: Get galaxy_ng token
+  uri:
+    url: '{{ galaxy_ng_server }}v3/auth/token/'
+    method: POST
+    body_format: json
+    body: {}
+    status_code:
+      - 200
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: galaxy_ng_token
 
 - name: create test ansible.cfg that contains the Galaxy server list
   template:
@@ -34,19 +59,15 @@
   vars:
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
-    is_pulp: '{{ item.pulp|default(false) }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
   loop:
   - name: pulp_v2
     server: '{{ pulp_v2_server }}'
-    pulp: true
   - name: pulp_v3
     server: '{{ pulp_v3_server }}'
-    pulp: true
     v3: true
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
-    pulp: true
     v3: true
 
 # We use a module for this so we can speed up the test time.
