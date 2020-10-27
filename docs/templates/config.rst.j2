@@ -111,7 +111,21 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {%     if config['type'] %}
 :Type: {{config['type']}}
 {%     endif %}
+{%     if 'default' in config %}
 :Default: {{config['default']}}
+{%     endif %}
+{%     if config.get('choices', False) %}
+:Choices:
+{%       if config['choices'] is mapping %}
+{%         for key in config['choices'].keys() %}
+    - :{{key}}: {{ config['choices'][key] }}
+{%         endfor %}
+{%       else %}
+{%         for key in config['choices'] %}
+    - :{{key}}:
+{%         endfor %}
+{%       endif %}
+{%     endif %}
 {%     if config['version_added'] %}
 :Version Added: {{config['version_added']}}
 {%     endif %}
