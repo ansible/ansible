@@ -39,12 +39,6 @@ except ImportError:
     Version = None
 
 try:
-    # use C version if possible for speedup
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
-
-try:
     import importlib.util
     imp = None
 except ImportError:
@@ -312,7 +306,7 @@ class PluginLoader:
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
-            self.package_path = os.path.dirname(m.__file__)
+            self.package_path = to_text(os.path.dirname(m.__file__), errors='surrogate_or_strict')
         if subdirs:
             return self._all_directories(self.package_path)
         return [self.package_path]
@@ -331,12 +325,15 @@ class PluginLoader:
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
             for path in self.config:
-                path = os.path.realpath(os.path.expanduser(path))
+                path = os.path.abspath(os.path.expanduser(path))
                 if subdirs:
                     contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                     for c in contents:
+                        c = to_text(c, errors='surrogate_or_strict')
                         if os.path.isdir(c) and c not in ret:
                             ret.append(PluginPathContext(c, False))
+
+                path = to_text(path, errors='surrogate_or_strict')
                 if path not in ret:
                     ret.append(PluginPathContext(path, False))
 
@@ -657,16 +654,18 @@ class PluginLoader:
         #       we need to make sure we don't want to add additional directories
         #       (add_directory()) once we start using the iterator.
         #       We can use _get_paths_with_context() since add_directory() forces a cache refresh.
-        for path_context in (p for p in self._get_paths_with_context() if p.path not in self._searched_paths and os.path.isdir(p.path)):
-            path = path_context.path
+        for path_with_context in (p for p in self._get_paths_with_context() if p.path not in self._searched_paths and os.path.isdir(to_bytes(p.path))):
+            path = path_with_context.path
+            b_path = to_bytes(path)
             display.debug('trying %s' % path)
             plugin_load_context.load_attempts.append(path)
+            internal = path_with_context.internal
             try:
-                full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                full_paths = (os.path.join(b_path, f) for f in os.listdir(b_path))
             except OSError as e:
                 display.warning("Error accessing plugin paths: %s" % to_text(e))
 
-            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
+            for full_path in (to_native(f) for f in full_paths if os.path.isfile(f) and not f.endswith(b'__init__.py')):
                 full_name = os.path.basename(full_path)
 
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
@@ -674,15 +673,15 @@ class PluginLoader:
                 # For all other plugins we want .pyc and .pyo should be valid
                 if any(full_path.endswith(x) for x in C.MODULE_IGNORE_EXTS):
                     continue
-
                 splitname = os.path.splitext(full_name)
                 base_name = splitname[0]
-                internal = path_context.internal
                 try:
                     extension = splitname[1]
                 except IndexError:
                     extension = ''
 
+                # everything downstream expects unicode
+                full_path = to_text(full_path, errors='surrogate_or_strict')
                 # Module found, now enter it into the caches that match this file
                 if base_name not in self._plugin_path_cache['']:
                     self._plugin_path_cache[''][base_name] = PluginPathContext(full_path, internal)
@@ -895,7 +894,7 @@ class PluginLoader:
         found_in_cache = True
 
         for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+            all_matches.extend(glob.glob(to_native(os.path.join(i, "*.py"))))
 
         loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):

@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     module: fakemodule
-    short_desciptoin: fake module
+    short_desciption: fake module
     description:
         - this is a fake module
     options:

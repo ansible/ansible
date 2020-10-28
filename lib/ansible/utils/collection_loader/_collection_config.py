@@ -67,8 +67,6 @@ class _AnsibleCollectionConfig(type):
 
     @default_collection.setter
     def default_collection(cls, value):
-        if cls._default_collection:
-            raise ValueError('default collection {0} has already been configured'.format(value))
 
         cls._default_collection = value
 
