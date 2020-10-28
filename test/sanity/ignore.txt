@@ -339,8 +339,6 @@ test/support/integration/plugins/module_utils/k8s/common.py metaclass-boilerplat
 test/support/integration/plugins/module_utils/k8s/raw.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/net_tools/nios/api.py future-import-boilerplate
-test/support/integration/plugins/module_utils/net_tools/nios/api.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
@@ -395,10 +393,6 @@ test/support/network-integration/collections/ansible_collections/vyos/vyos/plugi
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_config.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_logging.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_logging.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_static_route.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_static_route.py metaclass-boilerplate
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
