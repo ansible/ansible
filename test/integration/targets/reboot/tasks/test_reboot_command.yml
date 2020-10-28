@@ -1,0 +1,22 @@
+- import_tasks: get_boot_time.yml
+- name: Reboot with custom reboot_command using unqualified path
+  reboot:
+    reboot_command: reboot
+  register: reboot_result
+- import_tasks: check_reboot.yml
+
+
+- import_tasks: get_boot_time.yml
+- name: Reboot with custom reboot_command using absolute path
+  reboot:
+    reboot_command: /sbin/reboot
+  register: reboot_result
+- import_tasks: check_reboot.yml
+
+
+- import_tasks: get_boot_time.yml
+- name: Reboot with custom reboot_command with parameters
+  reboot:
+    reboot_command: shutdown -r now
+  register: reboot_result
+- import_tasks: check_reboot.yml

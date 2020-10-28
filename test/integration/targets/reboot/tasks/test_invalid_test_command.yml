@@ -1,0 +1,8 @@
+- name: Reboot with test command that fails
+  reboot:
+    test_command: 'FAIL'
+    reboot_timeout: "{{ timeout }}"
+  register: reboot_fail_test
+  failed_when: "reboot_fail_test.msg != 'Timed out waiting for post-reboot test command (timeout=' ~ timeout ~ ')'"
+  vars:
+    timeout: "{{ _timeout_value[ansible_facts['distribution'] | lower] | default(60) }}"
