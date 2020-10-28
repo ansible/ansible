@@ -64,9 +64,10 @@ options:
         - section: url_lookup
           key: timeout
   http_agent:
-    description: User-Agent to use in the request
+    description: User-Agent to use in the request. The default was changed in 2.11 to C(ansible-httpget).
     type: string
     version_added: "2.10"
+    default: ansible-httpget
     vars:
         - name: ansible_lookup_url_agent
     env:
