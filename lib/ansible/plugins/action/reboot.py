@@ -12,8 +12,7 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common.collections import is_string
-from ansible.module_utils.common.validation import check_type_str
+from ansible.module_utils.common.validation import check_type_list, check_type_str
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -32,9 +31,10 @@ class ActionModule(ActionBase):
         'msg',
         'post_reboot_delay',
         'pre_reboot_delay',
-        'test_command',
+        'reboot_command',
         'reboot_timeout',
-        'search_paths'
+        'search_paths',
+        'test_command',
     ))
 
     DEFAULT_REBOOT_TIMEOUT = 600
@@ -114,11 +114,25 @@ class ActionModule(ActionBase):
         return value
 
     def get_shutdown_command_args(self, distribution):
-        args = self._get_value_from_facts('SHUTDOWN_COMMAND_ARGS', distribution, 'DEFAULT_SHUTDOWN_COMMAND_ARGS')
-        # Convert seconds to minutes. If less that 60, set it to 0.
-        delay_min = self.pre_reboot_delay // 60
-        reboot_message = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
-        return args.format(delay_sec=self.pre_reboot_delay, delay_min=delay_min, message=reboot_message)
+        reboot_command = self._task.args.get('reboot_command')
+        if reboot_command is not None:
+            try:
+                reboot_command = check_type_str(reboot_command, allow_conversion=False)
+            except TypeError as e:
+                raise AnsibleError("Invalid value given for 'reboot_command': %s." % to_native(e))
+
+            # No args were provided
+            try:
+                return reboot_command.split(' ', 1)[1]
+            except IndexError:
+                return ''
+        else:
+            args = self._get_value_from_facts('SHUTDOWN_COMMAND_ARGS', distribution, 'DEFAULT_SHUTDOWN_COMMAND_ARGS')
+
+            # Convert seconds to minutes. If less that 60, set it to 0.
+            delay_min = self.pre_reboot_delay // 60
+            reboot_message = self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE)
+            return args.format(delay_sec=self.pre_reboot_delay, delay_min=delay_min, message=reboot_message)
 
     def get_distribution(self, task_vars):
         # FIXME: only execute the module if we don't already have the facts we need
@@ -142,44 +156,49 @@ class ActionModule(ActionBase):
             raise AnsibleError('Failed to get distribution information. Missing "{0}" in output.'.format(ke.args[0]))
 
     def get_shutdown_command(self, task_vars, distribution):
-        shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
-        default_search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-        search_paths = self._task.args.get('search_paths', default_search_paths)
+        reboot_command = self._task.args.get('reboot_command')
+        if reboot_command is not None:
+            try:
+                reboot_command = check_type_str(reboot_command, allow_conversion=False)
+            except TypeError as e:
+                raise AnsibleError("Invalid value given for 'reboot_command': %s." % to_native(e))
+            shutdown_bin = reboot_command.split(' ', 1)[0]
+        else:
+            shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
 
-        # FIXME: switch all this to user arg spec validation methods when they are available
-        # Convert bare strings to a list
-        if is_string(search_paths):
-            search_paths = [search_paths]
+        if shutdown_bin[0] == '/':
+            return shutdown_bin
+        else:
+            default_search_paths = ['/sbin', '/bin', '/usr/sbin', '/usr/bin', '/usr/local/sbin']
+            search_paths = self._task.args.get('search_paths', default_search_paths)
 
-        # Error if we didn't get a list
-        err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
-        try:
-            incorrect_type = any(not is_string(x) for x in search_paths)
-            if not isinstance(search_paths, list) or incorrect_type:
-                raise TypeError
-        except TypeError:
-            raise AnsibleError(err_msg.format(search_paths))
+            try:
+                # Convert bare strings to a list
+                search_paths = check_type_list(search_paths)
+            except TypeError:
+                err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
+                raise AnsibleError(err_msg.format(search_paths))
 
-        display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
-            action=self._task.action,
-            command=shutdown_bin,
-            paths=search_paths))
-        find_result = self._execute_module(
-            task_vars=task_vars,
-            # prevent collection search by calling with ansible.legacy (still allows library/ override of find)
-            module_name='ansible.legacy.find',
-            module_args={
-                'paths': search_paths,
-                'patterns': [shutdown_bin],
-                'file_type': 'any'
-            }
-        )
+            display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
+                action=self._task.action,
+                command=shutdown_bin,
+                paths=search_paths))
 
-        full_path = [x['path'] for x in find_result['files']]
-        if not full_path:
-            raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
-        self._shutdown_command = full_path[0]
-        return self._shutdown_command
+            find_result = self._execute_module(
+                task_vars=task_vars,
+                # prevent collection search by calling with ansible.legacy (still allows library/ override of find)
+                module_name='ansible.legacy.find',
+                module_args={
+                    'paths': search_paths,
+                    'patterns': [shutdown_bin],
+                    'file_type': 'any'
+                }
+            )
+
+            full_path = [x['path'] for x in find_result['files']]
+            if not full_path:
+                raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
+            return full_path[0]
 
     def deprecated_args(self):
         for arg, version in self.DEPRECATED_ARGS.items():
@@ -322,7 +341,7 @@ class ActionModule(ActionBase):
         if reboot_result['rc'] != 0:
             result['failed'] = True
             result['rebooted'] = False
-            result['msg'] = "Reboot command failed. Error was {stdout}, {stderr}".format(
+            result['msg'] = "Reboot command failed. Error was: '{stdout}, {stderr}'".format(
                 stdout=to_native(reboot_result['stdout'].strip()),
                 stderr=to_native(reboot_result['stderr'].strip()))
             return result
