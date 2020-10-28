@@ -6,6 +6,7 @@ export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_s
 export ANSIBLE_GATHERING=explicit
 export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
+export ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0
 
 # FUTURE: just use INVENTORY_PATH as-is once ansible-test sets the right dir
 ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
@@ -72,6 +73,23 @@ echo "--- validating bypass_host_loop with collection search"
 ansible-playbook -i host1,host2, -v test_bypass_host_loop.yml "$@"
 
 echo "--- validating inventory"
+# test collection inventories
+ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
+
+if [[ ${INVENTORY_PATH} != *.winrm ]]; then
+	# base invocation tests
+	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
+
+	# run playbook from collection, test default again, but with FQCN
+	ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook.yml "$@"
+
+	# run playbook from collection, test default again, but with FQCN and no extension
+	ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook "$@"
+
+	# run playbook that imports from collection
+	ansible-playbook -i "${INVENTORY_PATH}" import_collection_pb.yml "$@"
+fi
+
 # test collection inventories
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
