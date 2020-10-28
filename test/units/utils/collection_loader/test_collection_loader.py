@@ -527,8 +527,6 @@ def test_default_collection_config():
     assert AnsibleCollectionConfig.default_collection is None
     AnsibleCollectionConfig.default_collection = 'foo.bar'
     assert AnsibleCollectionConfig.default_collection == 'foo.bar'
-    with pytest.raises(ValueError):
-        AnsibleCollectionConfig.default_collection = 'bar.baz'
 
 
 def test_default_collection_detection():
