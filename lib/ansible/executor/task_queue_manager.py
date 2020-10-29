@@ -175,7 +175,7 @@ class TaskQueueManager:
         callback_list = list(callback_loader.all(class_only=True))
 
         # add enabled callbacks that refer to collections, which might not appear in normal listing
-        for c in C.DEFAULT_CALLBACK_ENABLED:
+        for c in C.CALLBACKS_ENABLED:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
 
@@ -214,7 +214,7 @@ class TaskQueueManager:
                 pass
             elif not self._run_additional_callbacks or (callback_needs_enabled and (
                 # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
-                    C.DEFAULT_CALLBACK_ENABLED is None or callback_name not in C.DEFAULT_CALLBACK_ENABLED)):
+                    C.CALLBACKS_ENABLED is None or callback_name not in C.CALLBACKS_ENABLED)):
                 # 2.x plugins shipped with ansible should require enabling, older or non shipped should load automatically
                 continue
 
