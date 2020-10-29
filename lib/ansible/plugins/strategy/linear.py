@@ -37,6 +37,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.do_block import DoBlock
 from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
@@ -339,6 +340,13 @@ class StrategyModule(StrategyBase):
                     variable_manager=self._variable_manager
                 )
 
+                do_blocks = DoBlock.process_do_results(
+                    host_results,
+                    iterator=iterator,
+                    loader=self._loader,
+                    variable_manager=self._variable_manager
+                )
+
                 include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
@@ -400,6 +408,62 @@ class StrategyModule(StrategyBase):
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
+
+                ###
+                if len(do_blocks) > 0:
+                    display.debug("we have included do blocks to process")
+
+                    display.debug("generating all_blocks data")
+                    all_blocks = dict((host, []) for host in hosts_left)
+                    display.debug("done generating all_blocks data")
+                    for do_block in do_blocks:
+                        display.debug("processing do_block")
+                        # included hosts get the task list while those excluded get an equal-length
+                        # list of noop tasks, to make sure that they continue running in lock-step
+                        try:
+                            new_blocks = self._load_do_block(do_block, iterator=iterator)
+
+                            display.debug("iterating over new_blocks loaded from do blocks")
+                            for new_block in new_blocks:
+                                task_vars = self._variable_manager.get_vars(
+                                    play=iterator._play,
+                                    task=new_block._parent,
+                                    _hosts=self._hosts_cache,
+                                    _hosts_all=self._hosts_cache_all,
+                                )
+                                display.debug("filtering new block on tags")
+                                final_block = new_block.filter_tagged_tasks(task_vars)
+                                display.debug("done filtering new block on tags")
+
+                                noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
+
+                                for host in hosts_left:
+                                    # TODO
+                                    if host in do_block._hosts:
+                                        all_blocks[host].append(final_block)
+                                    else:
+                                        all_blocks[host].append(noop_block)
+                            display.debug("done iterating over new_blocks loaded from do block")
+
+                        except AnsibleError as e:
+                            for host in do_block._hosts:
+                                self._tqm._failed_hosts[host.name] = True
+                                iterator.mark_host_failed(host)
+                            display.error(to_text(e), wrap_text=False)
+                            include_failure = True
+                            continue
+
+                    # finally go through all of the hosts and append the
+                    # accumulated blocks to their list of tasks
+                    display.debug("extending task lists for all hosts with do blocks")
+
+                    for host in hosts_left:
+                        iterator.add_tasks(host, all_blocks[host])
+
+                    display.debug("done extending task lists")
+                    display.debug("done processing do blocks")
+
+                ###
 
                 display.debug("results queue empty")
 

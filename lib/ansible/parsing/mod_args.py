@@ -24,6 +24,7 @@ from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionErr
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
+from ansible.parsing.yaml.objects import AnsibleSequence
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
 from ansible.utils.sentinel import Sentinel
@@ -38,6 +39,7 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'include_tasks',
     'include_role',
     'import_tasks',
+    'do',
     'import_role',
     'add_host',
     'group_by',
@@ -213,6 +215,8 @@ class ModuleArgsParser:
         elif thing is None:
             # this can happen with modules which take no params, like ping:
             args = None
+        elif isinstance(thing, AnsibleSequence):
+            args = { u'_raw_params': thing }
         else:
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args

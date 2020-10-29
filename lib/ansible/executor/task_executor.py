@@ -486,6 +486,16 @@ class TaskExecutor:
             include_file = templar.template(include_file)
             return dict(include=include_file, include_args=include_args)
 
+        # if this task is a TaskDo, we just return now with a success code so the
+        # main thread can expand the task list for the given host
+        if self._task.action == 'do':
+            do_args = self._task.args.copy()
+            do_block = do_args.get('_raw_params', None)
+            if not do_block:
+                return dict(failed=True, msg="Do block was specified without a body.")
+
+            return dict(do=do_block, do_args=do_args)
+
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
             include_args = self._task.args.copy()

@@ -36,6 +36,7 @@ import time
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.do_block import DoBlock
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
@@ -237,6 +238,13 @@ class StrategyModule(StrategyBase):
                 variable_manager=self._variable_manager
             )
 
+            do_blocks = DoBlock.process_do_results(
+                host_results,
+                iterator=iterator,
+                loader=self._loader,
+                variable_manager=self._variable_manager
+            )
+
             if len(included_files) > 0:
                 all_blocks = dict((host, []) for host in hosts_left)
                 for included_file in included_files:
@@ -272,6 +280,32 @@ class StrategyModule(StrategyBase):
                 for host in hosts_left:
                     iterator.add_tasks(host, all_blocks[host])
                 display.debug("done adding collected blocks to iterator")
+
+            if len(do_blocks) > 0:
+                all_blocks = dict((host, []) for host in hosts_left)
+                for do_block in do_blocks:
+                    display.debug("collecting new blocks")
+                    try:
+                        new_blocks = self._load_do_block(do_block, iterator=iterator)
+                    except AnsibleError as e:
+                        for host in do_block._hosts:
+                            iterator.mark_host_failed(host)
+                        display.warning(to_text(e))
+                        continue
+
+                    for new_block in new_blocks:
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent)
+                        final_block = new_block.filter_tagged_tasks(task_vars)
+                        for host in hosts_left:
+                            if host in do_block._hosts:
+                                all_blocks[host].append(final_block)
+                    display.debug("done collecting new blocks")
+
+                display.debug("adding all collected blocks from %d do blocks to iterator" % len(do_blocks))
+                for host in hosts_left:
+                    iterator.add_tasks(host, all_blocks[host])
+                display.debug("done adding collected blocks to iterator")
+           
 
             # pause briefly so we don't spin lock
             time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)

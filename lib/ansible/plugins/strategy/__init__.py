@@ -910,6 +910,20 @@ class StrategyBase:
 
         return ti_copy
 
+    def _copy_do(self, do_block):
+        '''
+        A proven safe and performant way to create a copy of do block.
+        '''
+        ti_copy = do_block._task.copy(exclude_parent=True)
+        ti_copy._parent = do_block._task._parent
+
+        temp_vars = ti_copy.vars.copy()
+        temp_vars.update(do_block._vars)
+
+        ti_copy.vars = temp_vars
+
+        return ti_copy
+
     def _load_included_file(self, included_file, iterator, is_handler=False):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
@@ -975,6 +989,67 @@ class StrategyBase:
         display.debug("done processing included file")
         return block_list
 
+###
+    def _load_do_block(self, do_block, iterator, is_handler=False):
+        '''
+        Loads a list of tasks from the args of a do block, applying the optional set of variables.
+        '''
+
+        try:
+            data = do_block._args['_raw_params']
+            if data is None:
+                return []
+            elif not isinstance(data, list):
+                raise AnsibleError("do blocks must contain a list of tasks")
+
+            ti_copy = self._copy_do(do_block)
+            # pop tags out of the do args, if they were specified there, and assign
+            # them to the block. If the do already had tags specified, we raise an
+            # error so that users know not to specify them both ways
+            tags = do_block._task.vars.pop('tags', [])
+            if isinstance(tags, string_types):
+                tags = tags.split(',')
+            if len(tags) > 0:
+                if len(do_block._task.tags) > 0:
+                    raise AnsibleParserError("Do blocks should not specify tags in more than one way (both via args and directly on the task). "
+                                             "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
+                                             obj=do_block._task._ds)
+                display.deprecated("You should not specify tags in the do parameters. All tags should be specified using the task-level option",
+                                   version='2.12', collection_name='ansible.builtin')
+                do_block._task.tags = tags
+
+            block_list = load_list_of_blocks(
+                data,
+                play=iterator._play,
+                parent_block=ti_copy,
+                role=do_block._task._role,
+                use_handlers=is_handler,
+                loader=self._loader,
+                variable_manager=self._variable_manager,
+            )
+
+            # since we skip incrementing the stats when the task result is
+            # first processed, we do so now for each host in the list
+            for host in do_block._hosts:
+                self._tqm._stats.increment('ok', host.name)
+
+        except AnsibleError as e:
+            reason = to_text(e)
+
+            # mark all of the hosts including this file as failed, send callbacks,
+            # and increment the stats for this host
+            for host in do_block._hosts:
+                tr = TaskResult(host=host, task=do_block._task, return_data=dict(failed=True, reason=reason))
+                iterator.mark_host_failed(host)
+                self._tqm._failed_hosts[host.name] = True
+                self._tqm._stats.increment('failures', host.name)
+                self._tqm.send_callback('v2_runner_on_failed', tr)
+            return []
+
+        display.debug("done processing do blocks")
+        return block_list
+
+###
     def run_handlers(self, iterator, play_context):
         '''
         Runs handlers on those hosts which have been notified.
