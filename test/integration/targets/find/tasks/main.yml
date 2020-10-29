@@ -201,7 +201,7 @@
     - find:
         paths: '{{mypath}}'
         patterns: '*'
-        register: failed_path
+      register: failed_path
 
     - assert:
         that:
