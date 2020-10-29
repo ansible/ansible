@@ -216,7 +216,7 @@ class ModuleArgsParser:
             # this can happen with modules which take no params, like ping:
             args = None
         elif isinstance(thing, AnsibleSequence):
-            args = { u'_raw_params': thing }
+            args = {u'_raw_params': thing}
         else:
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args

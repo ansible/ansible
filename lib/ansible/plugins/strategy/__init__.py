@@ -989,7 +989,6 @@ class StrategyBase:
         display.debug("done processing included file")
         return block_list
 
-###
     def _load_do_block(self, do_block, iterator, is_handler=False):
         '''
         Loads a list of tasks from the args of a do block, applying the optional set of variables.
@@ -1049,7 +1048,6 @@ class StrategyBase:
         display.debug("done processing do blocks")
         return block_list
 
-###
     def run_handlers(self, iterator, play_context):
         '''
         Runs handlers on those hosts which have been notified.

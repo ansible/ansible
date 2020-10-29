@@ -409,7 +409,6 @@ class StrategyModule(StrategyBase):
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
 
-                ###
                 if len(do_blocks) > 0:
                     display.debug("we have included do blocks to process")
 
@@ -462,8 +461,6 @@ class StrategyModule(StrategyBase):
 
                     display.debug("done extending task lists")
                     display.debug("done processing do blocks")
-
-                ###
 
                 display.debug("results queue empty")
 

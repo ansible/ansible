@@ -305,7 +305,6 @@ class StrategyModule(StrategyBase):
                 for host in hosts_left:
                     iterator.add_tasks(host, all_blocks[host])
                 display.debug("done adding collected blocks to iterator")
-           
 
             # pause briefly so we don't spin lock
             time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)

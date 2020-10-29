@@ -11,7 +11,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-author: Estelle Poulin (dev@inspiredby.es)
+author: Estelle Poulin (@estheruary)
 module: do
 short_description: Dynamically include a task block
 description:
