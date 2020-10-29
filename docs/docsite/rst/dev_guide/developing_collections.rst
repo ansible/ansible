@@ -436,19 +436,19 @@ Getting a namespace
 You need a namespace on Galaxy and/or Automation Hub to upload your collection. To get a namespace:
 
 * For Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
-* For Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`.
+* For Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_.
 
 .. _galaxy_get_token:
 
 Getting your API token
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You need an API token for Galaxy and/or Automation Hub to upload your collection. The API token is a secret token used to protect your content.
+You need an API token for Galaxy and/or Automation Hub to upload your collection. Use the API token(s) to authenticate your connection to the distribution server(s) and protect your content.
 
 To get your API token:
 
 * For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`.
-* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Load token` from the version dropdown.
+* For Automation Hub, go to `the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ and click :guilabel:`Load token` from the version dropdown.
 
 Specifying your API token
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -489,20 +489,7 @@ Publishing a collection
 
 Once you have a namespace and an API token for each distribution server you want to use, you can distribute your collection by publishing it to Ansible Galaxy, Red Hat Automation Hub, or a privately hosted Automation Hub instance. You can use either the ``ansible-galaxy collection publish`` command or the distribution server (Galaxy, Automation Hub) itself.
 
-Each time you add features or make changes to your collection, you must publish a new version of the collection.
-
-.. _collection_versions:
-
-Collection versions
-^^^^^^^^^^^^^^^^^^^
-
-Each time you publish your collection, you create a new version. Once you publish a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before publishing. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) will be the version displayed everywhere in Galaxy or Automation Hub; however, users will still be able to download older versions.
-
-Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
-
-* Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
-* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
-* Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
+Each time you add features or make changes to your collection, you must publish a new version of the collection. For details on versioning, see :ref:`collection_versions`.
 
 .. _upload_collection_ansible_galaxy:
 
@@ -538,6 +525,19 @@ To publish your collection directly on the Galaxy website:
 When you upload a collection, it always uploads to the namespace specified in the collection metadata in the ``galaxy.yml`` file, no matter which namespace you select on the website. If you are not an owner of the namespace specified in your collection metadata, the upload request will fail.
 
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the import process, including any errors or warnings about the metadata and content contained in the collection.
+
+.. _collection_versions:
+
+Collection versions
+^^^^^^^^^^^^^^^^^^^
+
+Each time you publish your collection, you create a new version. Once you publish a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before publishing. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) will be the version displayed everywhere in Galaxy or Automation Hub; however, users will still be able to download older versions.
+
+Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
+
+* Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
+* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
+* Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
 
 .. _migrate_to_collection:
 
