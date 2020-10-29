@@ -912,7 +912,7 @@ class StrategyBase:
 
     def _copy_do(self, do_block):
         '''
-        A proven safe and performant way to create a copy of do block.
+        A safe and performant way to create a copy of a do block.
         '''
         ti_copy = do_block._task.copy(exclude_parent=True)
         ti_copy._parent = do_block._task._parent
