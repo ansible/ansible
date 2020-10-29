@@ -77,8 +77,7 @@ DOCUMENTATION = """
             description:
                 - For selinux systems, the role to assume when running commands.
                 - Note that your sudo executable needs to support this option, otherwise it will error out.
-            default: ''
-            version_added: '2.10'
+            version_added: '2.11'
             required: False
             vars:
               - name: ansible_sudo_selinux_role
