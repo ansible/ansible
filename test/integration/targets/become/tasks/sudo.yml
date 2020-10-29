@@ -94,15 +94,15 @@
   become_method: sudo
   become: true
   block:
-    - name: setup selinux for ansible_user
-      shell:  semanage login -a -s staff_u -r s0 {{ansible_user}}
+   - name: setup selinux for ansible_user
+     shell: semanage login -a -s staff_u -r s0 {{ansible_user}}
 
    - name: see if we get expected string from id
      shell: id -Z
      register: se_id
 
-  - debug:
-    become: false
-      msg: 'result of id: {{se_id.stdout}}'
-    failed_when: "se_id.stdout != 'staff_u:sysadm_r:sysadm_t:s0'"
+   - debug:
+     become: false
+       msg: 'result of id: {{se_id.stdout}}'
+     failed_when: "se_id.stdout != 'staff_u:sysadm_r:sysadm_t:s0'"
   when: ansible_facts['distribution'] in ['RedHat', 'CentOS']
