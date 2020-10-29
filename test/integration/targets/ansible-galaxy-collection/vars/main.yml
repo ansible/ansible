@@ -110,3 +110,8 @@ collection_list:
   - namespace: symlink
     name: symlink
     use_symlink: yes
+
+  # Caching update tests
+  - namespace: cache
+    name: cache
+    version: 1.0.0

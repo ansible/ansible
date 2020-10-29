@@ -103,6 +103,10 @@
   pause:
     seconds: 5
 
+# Stores the cached test version number index as we run install many times
+- set_fact:
+    cache_version_build: 0
+
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:
