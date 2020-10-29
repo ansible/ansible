@@ -104,7 +104,7 @@ def create_tarfile(dst_path, src_path, tar_filter):
     """
     display.info('Creating a compressed tar archive of path: %s' % src_path, verbosity=1)
 
-    with tarfile.TarFile.gzopen(dst_path, mode='w', compresslevel=4) as tar:
+    with tarfile.TarFile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
         tar.add(src_path, filter=tar_filter.ignore)
 
     display.info('Resulting archive is %d bytes.' % os.path.getsize(dst_path), verbosity=1)
