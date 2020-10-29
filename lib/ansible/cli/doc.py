@@ -103,7 +103,7 @@ class RoleMixin(object):
         found = set()
         for path in role_paths:
             if not os.path.isdir(path):
-                display.warning("Invalid role path: {0}".format(path))
+                continue
             else:
                 # Check each subdir for a meta/argument_specs.yml file
                 for entry in os.listdir(path):
@@ -127,13 +127,10 @@ class RoleMixin(object):
         :returns: A set of tuples consisting of: role name, collection name, collection path
         """
         found = set()
-        b_colldirs = list_collection_dirs()
+        b_colldirs = list_collection_dirs(coll_filter=collection_filter)
         for b_path in b_colldirs:
             path = to_text(b_path, errors='surrogate_or_strict')
             collname = _get_collection_name_from_path(b_path)
-
-            if collection_filter and collname != collection_filter:
-                continue
 
             roles_dir = os.path.join(path, 'roles')
             if os.path.exists(roles_dir):
@@ -337,8 +334,6 @@ class DocCLI(CLI, RoleMixin):
                                  type=opt_help.unfrack_path(pathsep=True),
                                  action=opt_help.PrependListAction,
                                  help='The path to the directory containing your roles.')
-        self.parser.add_argument("-e", "--entry-point", dest="entry_point",
-                                 help="Select the entry point for role(s).")
 
         exclusive = self.parser.add_mutually_exclusive_group()
         exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
@@ -349,6 +344,8 @@ class DocCLI(CLI, RoleMixin):
                                help='Show playbook snippet for specified plugin(s)')
         exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
                                help='**For internal testing only** Dump json metadata for all plugins.')
+        exclusive.add_argument("-e", "--entry-point", dest="entry_point",
+                               help="Select the entry point for role(s).")
 
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
@@ -582,8 +579,9 @@ class DocCLI(CLI, RoleMixin):
             if context.CLIARGS['list_dir']:
                 # If an argument was given with --list, it is a collection filter
                 coll_filter = None
-                if len(context.CLIARGS['args']) == 1:
+                if len(context.CLIARGS['args']) >= 1:
                     coll_filter = context.CLIARGS['args'][0]
+                    display.warning("Only a single collection filter is supported. Ignoring: %s" % ", ".join(context.CLIARGS['args'][1:]))
 
                 list_json = self._create_role_list(roles_path, collection_filter=coll_filter)
                 if do_json:
