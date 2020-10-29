@@ -137,6 +137,7 @@ class LinuxNetwork(Network):
                 interfaces[device]['mode'] = get_file_content(os.path.join(path, 'bonding', 'mode'), default='').split()[0]
                 interfaces[device]['miimon'] = get_file_content(os.path.join(path, 'bonding', 'miimon'), default='').split()[0]
                 interfaces[device]['lacp_rate'] = get_file_content(os.path.join(path, 'bonding', 'lacp_rate'), default='').split()[0]
+                interfaces[device]['xmit_hash_policy'] = get_file_content(os.path.join(path, 'bonding', 'xmit_hash_policy'), default='').split()[0]
                 primary = get_file_content(os.path.join(path, 'bonding', 'primary'))
                 if primary:
                     interfaces[device]['primary'] = primary
