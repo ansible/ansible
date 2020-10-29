@@ -2685,14 +2685,17 @@ class AnsibleModule(object):
         prev_dir = os.getcwd()
 
         # make sure we're in the right working directory
-        if cwd and os.path.isdir(cwd):
-            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
-            kwargs['cwd'] = cwd
-            try:
-                os.chdir(cwd)
-            except (OSError, IOError) as e:
-                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)),
-                               exception=traceback.format_exc())
+        if cwd:
+            if os.path.isdir(cwd):
+                cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
+                kwargs['cwd'] = cwd
+                try:
+                    os.chdir(cwd)
+                except (OSError, IOError) as e:
+                    self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)),
+                                   exception=traceback.format_exc())
+            else:
+                self.fail_json(msg="The provided cwd is not a valid directory: %s" % cwd)
 
         old_umask = None
         if umask:
