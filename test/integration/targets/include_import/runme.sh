@@ -81,6 +81,9 @@ if [[ -z "$OUT" ]]; then
     exit 1
 fi
 
+ANSIBLE_STRATEGY='linear' ANSIBLE_PLAYBOOK_VARS_ROOT=all ansible-playbook apply/include_apply_65710.yml -i inventory "$@"
+ANSIBLE_STRATEGY='free' ANSIBLE_PLAYBOOK_VARS_ROOT=all ansible-playbook apply/include_apply_65710.yml -i inventory "$@"
+
 # Test that duplicate items in loop are not deduped
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_include_dupe_loop.yml -i inventory "$@" | tee test_include_dupe_loop.out
 test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
