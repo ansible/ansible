@@ -2692,7 +2692,7 @@ class AnsibleModule(object):
                 try:
                     os.chdir(cwd)
                 except (OSError, IOError) as e:
-                    self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)),
+                    self.fail_json(rc=e.errno, msg="Could not chdir to %s, %s" % (cwd, to_native(e)),
                                    exception=traceback.format_exc())
             else:
                 self.fail_json(msg="The provided cwd is not a valid directory: %s" % cwd)
