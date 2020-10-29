@@ -579,9 +579,10 @@ class DocCLI(CLI, RoleMixin):
             if context.CLIARGS['list_dir']:
                 # If an argument was given with --list, it is a collection filter
                 coll_filter = None
-                if len(context.CLIARGS['args']) >= 1:
+                if len(context.CLIARGS['args']) == 1:
                     coll_filter = context.CLIARGS['args'][0]
-                    display.warning("Only a single collection filter is supported. Ignoring: %s" % ", ".join(context.CLIARGS['args'][1:]))
+                elif len(context.CLIARGS['args']) > 1:
+                    raise AnsibleOptionsError("Only a single collection filter is supported.")
 
                 list_json = self._create_role_list(roles_path, collection_filter=coll_filter)
                 if do_json:
