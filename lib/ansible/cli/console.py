@@ -279,7 +279,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             try:
                 display.verbosity = int(arg)
                 display.v('verbosity level set to %s' % arg)
-            except TypeError as e:
+            except (TypeError, ValueError) as e:
                 display.error('The verbosity must be a valid integer: %s' % to_text(e))
 
     def do_cd(self, arg):
@@ -370,7 +370,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     display.error('The timeout must be greater than or equal to 1, use 0 to disable')
                 else:
                     self.task_timeout = timeout
-            except TypeError as e:
+            except (TypeError, ValueError) as e:
                 display.error('The timeout must be a valid positive integer, or 0 to disable: %s' % to_text(e))
         else:
             display.display('Usage: timeout <seconds>')

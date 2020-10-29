@@ -345,7 +345,7 @@ def add_runtask_options(parser):
 
 def add_tasknoplay_options(parser):
     """Add options for commands that run a task w/o a defined play"""
-    parser.add_argument('--task-timeout', dest="task_timeout", action="store", default=C.TASK_TIMEOUT,
+    parser.add_argument('--task-timeout', type=int, dest="task_timeout", action="store", default=C.TASK_TIMEOUT,
                         help="set task timeout limit in seconds, must be positive integer.")
 
 
