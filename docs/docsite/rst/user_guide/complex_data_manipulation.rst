@@ -139,6 +139,8 @@ Another way is to avoid adding elements to the list in the first place, so you c
 Custom Fileglob Based on a Variable
 -----------------------------------
 
+This example uses `Python argument list unpacking <https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists>`_ to create a custom list of fileglobs based on a variable.
+
 .. code-block:: YAML+Jinja
   :caption: Using fileglob with a list based on a variable.
 
