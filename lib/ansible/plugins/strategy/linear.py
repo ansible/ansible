@@ -366,7 +366,7 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=new_block._parent,
+                                    task=new_block.get_first_parent_include(),
                                     _hosts=self._hosts_cache,
                                     _hosts_all=self._hosts_cache_all,
                                 )
