@@ -159,7 +159,7 @@
     dest: "{{ output_dir }}"
 
 - name: Create zombie process
-  shell: "{{ output_dir }}/zombie"
+  shell: "{{ ansible_python.executable }} {{ output_dir }}/zombie"
   async: 90
   poll: 0
 
