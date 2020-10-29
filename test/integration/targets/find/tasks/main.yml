@@ -206,4 +206,4 @@
     - assert:
         that:
             - failed_path.files == []
-            - "failed_path.msg == \"Skipped '{{mypath}}' path due to this access issue: '{{mypath}}' is not a directory\n\""
+            - failed_path.msg.startswith("Skipped '{{mypath}}' path due to this access issue")
