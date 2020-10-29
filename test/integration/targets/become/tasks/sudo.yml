@@ -102,7 +102,7 @@
      register: se_id
 
    - debug:
-     become: false
        msg: 'result of id: {{se_id.stdout}}'
      failed_when: "se_id.stdout != 'staff_u:sysadm_r:sysadm_t:s0'"
+     become: false
   when: ansible_facts['distribution'] in ['RedHat', 'CentOS']
