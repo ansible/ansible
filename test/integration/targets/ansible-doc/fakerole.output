@@ -1,6 +1,6 @@
-> NORMAL_ROLE1    (/ansible/test/integration/targets/ansible-doc/roles/normal_role1)
+> TEST_ROLE1    (/ansible/test/integration/targets/ansible-doc/roles/normal_role1)
 
-ENTRY POINT: main - This is the main entry point.
+ENTRY POINT: main - test_role1 from roles subdir
 
         In to am attended desirous raptures *declared* diverted
         confined at. Collected instantly remaining up certainly to
