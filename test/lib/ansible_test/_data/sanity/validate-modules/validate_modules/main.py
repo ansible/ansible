@@ -41,10 +41,9 @@ import yaml
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils._text import to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.plugin_docs import BLACKLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
+from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
@@ -65,11 +64,11 @@ if PY3:
 else:
     TRY_EXCEPT = ast.TryExcept
 
-BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
+REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
-BLACKLIST_IMPORTS = {
+REJECTLIST_IMPORTS = {
     'requests': {
         'new_only': True,
         'error': {
@@ -236,23 +235,23 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
 
 
 class ModuleValidator(Validator):
-    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
-    BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
-                                 'shippable.yml',
-                                 '.gitattributes', '.gitmodules', 'COPYING',
-                                 '__init__.py', 'VERSION', 'test-docs.sh'))
-    BLACKLIST = BLACKLIST_FILES.union(BLACKLIST['MODULE'])
+    REJECTLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
+    REJECTLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
+                                  'shippable.yml',
+                                  '.gitattributes', '.gitmodules', 'COPYING',
+                                  '__init__.py', 'VERSION', 'test-docs.sh'))
+    REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['MODULE'])
 
-    PS_DOC_BLACKLIST = frozenset((
+    PS_DOC_REJECTLIST = frozenset((
         'async_status.ps1',
         'slurp.ps1',
         'setup.ps1'
     ))
-    PS_ARG_VALIDATE_BLACKLIST = frozenset((
-        'win_dsc.ps1',  # win_dsc is a dynamic arg spec, the docs won't ever match
-    ))
 
-    WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
+    # win_dsc is a dynamic arg spec, the docs won't ever match
+    PS_ARG_VALIDATE_REJECTLIST = frozenset(('win_dsc.ps1', ))
+
+    ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
     def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
                  base_branch=None, git_cache=None, reporter=None, routing=None):
@@ -360,7 +359,7 @@ class ModuleValidator(Validator):
                     # allowed from __future__ imports
                     if isinstance(child, ast.ImportFrom) and child.module == '__future__':
                         for future_import in child.names:
-                            if future_import.name not in self.WHITELIST_FUTURE_IMPORTS:
+                            if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
                                 break
                         else:
                             continue
@@ -509,7 +508,7 @@ class ModuleValidator(Validator):
                         names.extend(grandchild.names)
             for name in names:
                 # TODO: Add line/col
-                for blacklist_import, options in BLACKLIST_IMPORTS.items():
+                for blacklist_import, options in REJECTLIST_IMPORTS.items():
                     if re.search(blacklist_import, name.name):
                         new_only = options['new_only']
                         if self._is_new_module() and new_only:
@@ -696,12 +695,12 @@ class ModuleValidator(Validator):
                 if isinstance(child, ast.ImportFrom) and child.module == '__future__':
                     # allowed from __future__ imports
                     for future_import in child.names:
-                        if future_import.name not in self.WHITELIST_FUTURE_IMPORTS:
+                        if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
                             self.reporter.error(
                                 path=self.object_path,
                                 code='illegal-future-imports',
                                 msg=('Only the following from __future__ imports are allowed: %s'
-                                     % ', '.join(self.WHITELIST_FUTURE_IMPORTS)),
+                                     % ', '.join(self.ACCEPTLIST_FUTURE_IMPORTS)),
                                 line=child.lineno
                             )
                             break
@@ -818,7 +817,7 @@ class ModuleValidator(Validator):
             )
 
     def _find_ps_docs_py_file(self):
-        if self.object_name in self.PS_DOC_BLACKLIST:
+        if self.object_name in self.PS_DOC_REJECTLIST:
             return
         py_path = self.path.replace('.ps1', '.py')
         if not os.path.isfile(py_path):
@@ -2104,10 +2103,10 @@ class ModuleValidator(Validator):
         if file_name.startswith('_') and os.path.islink(path):
             return True
 
-        if not frozenset((base_name, file_name)).isdisjoint(ModuleValidator.BLACKLIST):
+        if not frozenset((base_name, file_name)).isdisjoint(ModuleValidator.REJECTLIST):
             return True
 
-        for pat in ModuleValidator.BLACKLIST_PATTERNS:
+        for pat in ModuleValidator.REJECTLIST_PATTERNS:
             if fnmatch(base_name, pat):
                 return True
 
@@ -2200,7 +2199,7 @@ class ModuleValidator(Validator):
             self._check_for_os_call()
 
         if self._powershell_module():
-            if self.basename in self.PS_DOC_BLACKLIST:
+            if self.basename in self.PS_DOC_REJECTLIST:
                 return
 
             self._validate_ps_replacers()
@@ -2208,7 +2207,7 @@ class ModuleValidator(Validator):
 
             # We can only validate PowerShell arg spec if it is using the new Ansible.Basic.AnsibleModule util
             pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
-            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
+            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_REJECTLIST:
                 with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
                     docs = docs_mv._validate_docs()[1]
                     self._validate_ansible_module_call(docs)
@@ -2228,7 +2227,7 @@ class ModuleValidator(Validator):
 
 
 class PythonPackageValidator(Validator):
-    BLACKLIST_FILES = frozenset(('__pycache__',))
+    REJECTLIST_FILES = frozenset(('__pycache__',))
 
     def __init__(self, path, reporter=None):
         super(PythonPackageValidator, self).__init__(reporter=reporter or Reporter())
@@ -2247,7 +2246,7 @@ class PythonPackageValidator(Validator):
     def validate(self):
         super(PythonPackageValidator, self).validate()
 
-        if self.basename in self.BLACKLIST_FILES:
+        if self.basename in self.REJECTLIST_FILES:
             return
 
         init_file = os.path.join(self.path, '__init__.py')
@@ -2343,10 +2342,10 @@ def run():
 
         for root, dirs, files in os.walk(module):
             basedir = root[len(module) + 1:].split('/', 1)[0]
-            if basedir in BLACKLIST_DIRS:
+            if basedir in REJECTLIST_DIRS:
                 continue
             for dirname in dirs:
-                if root == module and dirname in BLACKLIST_DIRS:
+                if root == module and dirname in REJECTLIST_DIRS:
                     continue
                 path = os.path.join(root, dirname)
                 if args.exclude and args.exclude.search(path):

@@ -32,7 +32,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
-    BLACKLIST,
+    REJECTLIST,
     remove_current_collection_from_versions_and_dates,
     get_docstring,
     get_versioned_doclink,
@@ -417,7 +417,7 @@ class DocCLI(CLI):
                 continue
             elif os.path.isdir(full_path):
                 continue
-            elif any(plugin.endswith(x) for x in C.BLACKLIST_EXTS):
+            elif any(plugin.endswith(x) for x in C.REJECT_EXTS):
                 continue
             elif plugin.startswith('__'):
                 continue
@@ -430,7 +430,7 @@ class DocCLI(CLI):
             plugin = os.path.splitext(plugin)[0]  # removes the extension
             plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
 
-            if plugin not in BLACKLIST.get(bkey, ()):
+            if plugin not in REJECTLIST.get(bkey, ()):
 
                 if collection:
                     plugin = '%s.%s' % (collection, plugin)
