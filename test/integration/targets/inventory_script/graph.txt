@@ -1,0 +1,12 @@
+@all:
+  |--@None:
+  |  |--DC0_C0_RP0_VM0_cd0681bf-2f18-5c00-9b9b-8197c0095348
+  |  |--DC0_C0_RP0_VM1_f7c371d6-2003-5a48-9859-3bc9a8b08908
+  |  |--DC0_H0_VM0_265104de-1472-547c-b873-6dc7883fb6cb
+  |  |--DC0_H0_VM1_39365506-5a0a-5fd0-be10-9586ad53aaad
+  |--@guests:
+  |  |--DC0_C0_RP0_VM0_cd0681bf-2f18-5c00-9b9b-8197c0095348
+  |  |--DC0_C0_RP0_VM1_f7c371d6-2003-5a48-9859-3bc9a8b08908
+  |  |--DC0_H0_VM0_265104de-1472-547c-b873-6dc7883fb6cb
+  |  |--DC0_H0_VM1_39365506-5a0a-5fd0-be10-9586ad53aaad
+  |--@ungrouped:
