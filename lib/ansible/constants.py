@@ -60,7 +60,7 @@ class _DeprecatedSequenceConstant(Sequence):
 
 
 # CONSTANTS ### yes, actual ones
-BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
+REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
 DEFAULT_BECOME_PASS = None

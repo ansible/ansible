@@ -42,7 +42,7 @@
 - name: Verify lookup_config
   assert:
     that:
-      - '"meow" in lookup("config", "ANSIBLE_COW_WHITELIST")'
+      - '"meow" in lookup("config", "ANSIBLE_COW_ACCEPTLIST")'
       - lookup_config_1 is failed
       - '"Unable to find setting" in lookup_config_1.msg'
       - lookup_config_2 is failed

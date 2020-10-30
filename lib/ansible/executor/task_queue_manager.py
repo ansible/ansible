@@ -174,8 +174,8 @@ class TaskQueueManager:
         # get all configured loadable callbacks (adjacent, builtin)
         callback_list = list(callback_loader.all(class_only=True))
 
-        # add whitelisted callbacks that refer to collections, which might not appear in normal listing
-        for c in C.DEFAULT_CALLBACK_WHITELIST:
+        # add enabled callbacks that refer to collections, which might not appear in normal listing
+        for c in C.CALLBACKS_ENABLED:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
 
@@ -191,7 +191,7 @@ class TaskQueueManager:
         for callback_plugin in callback_list:
 
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
-            callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
+            callback_needs_enabled = getattr(callback_plugin, 'CALLBACK_NEEDS_ENABLED', getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False))
 
             # try to get colleciotn world name first
             cnames = getattr(callback_plugin, '_redirected_names', [])
@@ -212,10 +212,10 @@ class TaskQueueManager:
             elif callback_name == 'tree' and self._run_tree:
                 # TODO: remove special case for tree, which is an adhoc cli option --tree
                 pass
-            elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+            elif not self._run_additional_callbacks or (callback_needs_enabled and (
                 # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
-                    C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
-                # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+                    C.CALLBACKS_ENABLED is None or callback_name not in C.CALLBACKS_ENABLED)):
+                # 2.x plugins shipped with ansible should require enabling, older or non shipped should load automatically
                 continue
 
             try:
