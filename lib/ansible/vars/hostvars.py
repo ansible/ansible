@@ -22,27 +22,9 @@ __metaclass__ = type
 from collections.abc import Mapping
 
 from ansible.template import Templar, AnsibleUndefined
+from ansible.template.vars import AutoVars
 
-STATIC_VARS = [
-    'ansible_version',
-    'ansible_play_hosts',
-    'ansible_dependent_role_names',
-    'ansible_play_role_names',
-    'ansible_role_names',
-    'inventory_hostname',
-    'inventory_hostname_short',
-    'inventory_file',
-    'inventory_dir',
-    'groups',
-    'group_names',
-    'omit',
-    'playbook_dir',
-    'play_hosts',
-    'role_names',
-    'ungrouped',
-]
-
-__all__ = ['HostVars', 'HostVarsVars']
+__all__ = ['HostVars']
 
 
 # Note -- this is a Mapping, not a MutableMapping
@@ -54,6 +36,7 @@ class HostVars(Mapping):
         self._loader = loader
         self._variable_manager = variable_manager
         variable_manager._hostvars = self
+        self._templar = None
 
     def set_variable_manager(self, variable_manager):
         self._variable_manager = variable_manager
@@ -91,10 +74,28 @@ class HostVars(Mapping):
             self._variable_manager._hostvars = self
 
     def __getitem__(self, host_name):
-        data = self.raw_get(host_name)
-        if isinstance(data, AnsibleUndefined):
-            return data
-        return HostVarsVars(data, loader=self._loader)
+        '''
+        wrap all the magic and either return undeifned or
+        a self templating on demand object pretending to be a dict
+        '''
+        data = {}
+
+        # don't keep cached cause vars sources can change over life of this object.
+        raw_data = self.raw_get(host_name)
+
+        # if its not undefined, wrap in autotemplating object
+        if isinstance(raw_data, AnsibleUndefined):
+            data = raw_data
+        else:
+            if self._templar is None:
+                # initialize temlpar if we had not before
+                self._templar = Templar(variables=raw_data, loader=self._loader)
+            else:
+                self._templar.available_variables = raw_data
+
+            data = AutoVars(self._templar)
+
+        return data
 
     def set_host_variable(self, host, varname, value):
         self._variable_manager.set_host_variable(host, varname, value)

@@ -8,6 +8,24 @@ from jinja2.utils import missing
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.common.text.converters import to_native
 
+STATIC_VARS = [
+    'ansible_version',
+    'ansible_play_hosts',
+    'ansible_dependent_role_names',
+    'ansible_play_role_names',
+    'ansible_role_names',
+    'inventory_hostname',
+    'inventory_hostname_short',
+    'inventory_file',
+    'inventory_dir',
+    'groups',
+    'group_names',
+    'omit',
+    'playbook_dir',
+    'play_hosts',
+    'role_names',
+    'ungrouped',
+]
 
 __all__ = ['AnsibleJ2Vars']
 
@@ -74,3 +92,27 @@ class AnsibleJ2Vars(ChainMap):
         new_locals = current_locals | locals
 
         return AnsibleJ2Vars(self._templar, current_globals, locals=new_locals)
+
+
+class AutoVars(Mapping):
+    ''' A special view of template vars on demand. '''
+
+    def __init__(self, templar):
+        self._t = templar
+
+    def __getitem__(self, var):
+        foo = self._t.template(self._t._available_variables[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return foo
+
+    def __contains__(self, var):
+        return (var in self._t._available_variables)
+
+    def __iter__(self):
+        for var in self._t._available_variables.keys():
+            yield var
+
+    def __len__(self):
+        return len(self._t._available_variables.keys())
+
+    def __repr__(self):
+        return repr(templar.template(self._t._available_variables, fail_on_undefined=False, static_vars=STATIC_VARS))
