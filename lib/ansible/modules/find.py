@@ -228,6 +228,7 @@ import re
 import stat
 import time
 
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -422,7 +423,10 @@ def main():
     looked = 0
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
-        if os.path.isdir(npath):
+        try:
+            if not os.path.isdir(npath):
+                raise Exception("'%s' is not a directory" % to_native(npath))
+
             for root, dirs, files in os.walk(npath, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
@@ -437,8 +441,8 @@ def main():
 
                     try:
                         st = os.lstat(fsname)
-                    except Exception:
-                        msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
+                    except (IOError, OSError) as e:
+                        msg += "Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e))
                         continue
 
                     r = {'path': fsname}
@@ -474,8 +478,10 @@ def main():
 
                 if not params['recurse']:
                     break
-        else:
-            msg += "%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
+        except Exception as e:
+            warn = "Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e))
+            module.warn(warn)
+            msg += warn
 
     matched = len(filelist)
     module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)

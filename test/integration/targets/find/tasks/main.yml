@@ -193,3 +193,17 @@
 - assert:
       that:
           - no_match_line_boundaries.matched == 0
+
+- block:
+    - set_fact:
+        mypath: /idontexist{{lookup('pipe', 'mktemp')}}
+
+    - find:
+        paths: '{{mypath}}'
+        patterns: '*'
+      register: failed_path
+
+    - assert:
+        that:
+            - failed_path.files == []
+            - failed_path.msg.startswith("Skipped '{{mypath}}' path due to this access issue")
