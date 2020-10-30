@@ -295,6 +295,7 @@ class TCPConnectionInfo(object):
                 else:
                     connections = p.connections(kind='inet')
             except psutil.Error:
+                # Process is Zombie or other error state
                 continue
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
