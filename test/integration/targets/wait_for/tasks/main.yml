@@ -153,6 +153,16 @@
     name: psutil
   when: ansible_system != 'Linux'
 
+- name: Copy zombie.py
+  copy:
+    src: zombie.py
+    dest: "{{ output_dir }}"
+
+- name: Create zombie process
+  shell: "{{ ansible_python.executable }} {{ output_dir }}/zombie"
+  async: 90
+  poll: 0
+
 - name: test wait for port drained
   wait_for:
     port: "{{ http_port }}"
