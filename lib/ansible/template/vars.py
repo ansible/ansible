@@ -101,8 +101,7 @@ class AutoVars(Mapping):
         self._t = templar
 
     def __getitem__(self, var):
-        foo = self._t.template(self._t._available_variables[var], fail_on_undefined=False, static_vars=STATIC_VARS)
-        return foo
+        return self._t.template(self._t._available_variables[var], fail_on_undefined=False, static_vars=STATIC_VARS)
 
     def __contains__(self, var):
         return (var in self._t._available_variables)
