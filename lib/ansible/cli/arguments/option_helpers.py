@@ -343,6 +343,12 @@ def add_runtask_options(parser):
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
 
 
+def add_tasknoplay_options(parser):
+    """Add options for commands that run a task w/o a defined play"""
+    parser.add_argument('--task-timeout', type=int, dest="task_timeout", action="store", default=C.TASK_TIMEOUT,
+                        help="set task timeout limit in seconds, must be positive integer.")
+
+
 def add_subset_options(parser):
     """Add options for commands which can run a subset of tasks"""
     parser.add_argument('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
