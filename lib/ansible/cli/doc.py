@@ -259,7 +259,7 @@ class DocCLI(CLI):
                     # The doc section existed but was empty
                     continue
 
-                plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
+                plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
 
             if do_json:
                 jdump(plugin_docs)
@@ -355,6 +355,19 @@ class DocCLI(CLI):
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
+    def _combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
+        # generate extra data
+        if plugin_type == 'module':
+            # is there corresponding action plugin?
+            if plugin in action_loader:
+                doc['has_action'] = True
+            else:
+                doc['has_action'] = False
+
+        # return everything as one dictionary
+        return {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
+
+    @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
         collection_name = doc['collection']
 
@@ -368,18 +381,6 @@ class DocCLI(CLI):
         doc['plainexamples'] = plainexamples
         doc['returndocs'] = returndocs
         doc['metadata'] = metadata
-
-        # generate extra data
-        if plugin_type == 'module':
-            # is there corresponding action plugin?
-            if plugin in action_loader:
-                doc['action'] = True
-            else:
-                doc['action'] = False
-
-        doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-        if 'docuri' in doc:
-            doc['docuri'] = doc[plugin_type].replace('_', '-')
 
         if context.CLIARGS['show_snippet'] and plugin_type == 'module':
             text = DocCLI.get_snippet_text(doc)
@@ -658,7 +659,7 @@ class DocCLI(CLI):
                 text.append("%s" % doc.pop('deprecated'))
             text.append("\n")
 
-        if doc.pop('action', False):
+        if doc.pop('has_action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if doc.get('options', False):
