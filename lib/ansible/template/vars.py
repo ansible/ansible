@@ -27,7 +27,7 @@ STATIC_VARS = [
     'ungrouped',
 ]
 
-__all__ = ['AnsibleJ2Vars']
+__all__ = ['AnsibleJ2Vars', 'AutoVars']
 
 
 def _process_locals(_l):
@@ -115,4 +115,15 @@ class AutoVars(Mapping):
         return len(self._t._available_variables.keys())
 
     def __repr__(self):
-        return repr(templar.template(self._t._available_variables, fail_on_undefined=False, static_vars=STATIC_VARS))
+        return repr(self._t.template(self._t._available_variables, fail_on_undefined=False, static_vars=STATIC_VARS))
+
+    def __readonly__(self, *args, **kwargs):
+        raise RuntimeError("Cannot modify this variable, it is read only.")
+
+    __setitem__ = __readonly__
+    __delitem__ = __readonly__
+    pop = __readonly__
+    popitem = __readonly__
+    clear = __readonly__
+    update = __readonly__
+    setdefault = __readonly__
