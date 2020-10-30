@@ -438,6 +438,10 @@ class VariableManager:
         if task and host and task.delegate_to is not None and include_delegate_to:
             all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
+
+        if 'hostvars' in all_vars:
+            all_vars['hostvars'].set_available_vars(all_vars)
+
         display.debug("done with get_vars()")
         if C.DEFAULT_DEBUG:
             # Use VarsWithSources wrapper class to display var sources

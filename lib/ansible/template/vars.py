@@ -97,24 +97,28 @@ class AnsibleJ2Vars(ChainMap):
 class AutoVars(Mapping):
     ''' A special view of template vars on demand. '''
 
-    def __init__(self, templar):
+    def __init__(self, templar, myvars=None):
         self._t = templar
+        if myvars is None:
+            self._vars = self._t.._available_variables
+        else:
+            self._vars = myvars
 
     def __getitem__(self, var):
-        return self._t.template(self._t._available_variables[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return self._t.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
 
     def __contains__(self, var):
-        return (var in self._t._available_variables)
+        return (var in self._vars)
 
     def __iter__(self):
-        for var in self._t._available_variables.keys():
+        for var in self._vars.keys():
             yield var
 
     def __len__(self):
-        return len(self._t._available_variables.keys())
+        return len(self._vars.keys())
 
     def __repr__(self):
-        return repr(self._t.template(self._t._available_variables, fail_on_undefined=False, static_vars=STATIC_VARS))
+        return repr(self._t.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))
 
     def __readonly__(self, *args, **kwargs):
         raise RuntimeError("Cannot modify this variable, it is read only.")
