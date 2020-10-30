@@ -1249,11 +1249,11 @@ def main():
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
-                module.fail_json(msg="Local modifications exist in repository (force=no).", **result)
+                module.fail_json(msg="Local modifications exist in the destination directory (force=no).", **result)
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
-                result.update(changed=True, msg='Local modifications exist.')
+                result.update(changed=True, msg='Local modifications exist in the destination directory.')
 
         # exit if already at desired sha version
         if module.check_mode:
