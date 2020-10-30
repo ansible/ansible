@@ -60,7 +60,7 @@ test "$output" -eq 3
 # 'roles' subdir of the playbook dir does not appear (lower precedence).
 output=$(ansible-doc -t role -l --playbook-dir . | grep -c "test_role1 from roles subdir")
 test "$output" -eq 1
-output=$(ansible-doc -t role -l --playbook-dir . | grep -c "test_role1 from playbook dir")
+output=$(ansible-doc -t role -l --playbook-dir . | grep -c "test_role1 from playbook dir" || true)
 test "$output" -eq 0
 
 # Test entry point filter
