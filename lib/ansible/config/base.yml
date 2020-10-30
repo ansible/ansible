@@ -36,15 +36,29 @@ ANSIBLE_COW_SELECTION:
   env: [{name: ANSIBLE_COW_SELECTION}]
   ini:
   - {key: cow_selection, section: defaults}
-ANSIBLE_COW_WHITELIST:
-  name: Cowsay filter whitelist
+ANSIBLE_COW_ACCEPTLIST:
+  name: Cowsay filter acceptance list
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
   description: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
-  env: [{name: ANSIBLE_COW_WHITELIST}]
+  env:
+  - name: ANSIBLE_COW_WHITELIST
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: 'ANSIBLE_COW_ACCEPTLIST'
+  - name: ANSIBLE_COW_ACCEPTLIST
+    version_added: '2.11'
   ini:
-  - {key: cow_whitelist, section: defaults}
+  - key: cow_whitelist
+    section: defaults
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: 'cowsay_enabled_stencils'
+  - key: cowsay_enabled_stencils
+    section: defaults
+    version_added: '2.11'
   type: list
-  yaml: {key: display.cowsay_whitelist}
 ANSIBLE_FORCE_COLOR:
   name: Force color output
   default: False
@@ -382,7 +396,7 @@ COVERAGE_REMOTE_OUTPUT:
   - {name: _ansible_coverage_remote_output}
   type: str
   version_added: '2.9'
-COVERAGE_REMOTE_PATH_FILTER:
+COVERAGE_REMOTE_PATHS:
   name: Sets the list of paths to run coverage for.
   description:
   - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
@@ -392,8 +406,14 @@ COVERAGE_REMOTE_PATH_FILTER:
   - This is for internal use only.
   default: '*'
   env:
-  - {name: _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER}
-  type: str
+  - name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: '_ANSIBLE_COVERAGE_REMOTE_PATHS'
+  - name: '_ANSIBLE_COVERAGE_REMOTE_PATHS'
+    version_added: '2.11'
+  type: pathlist
   version_added: '2.9'
 ACTION_WARNINGS:
   name: Toggle action warnings
@@ -548,13 +568,28 @@ DEFAULT_CACHE_PLUGIN_PATH:
   ini:
   - {key: cache_plugins, section: defaults}
   type: pathspec
-DEFAULT_CALLABLE_WHITELIST:
-  name: Template 'callable' whitelist
+CALLABLE_ACCEPT_LIST:
+  name: Template 'callable' accept list
   default: []
   description: Whitelist of callable methods to be made available to template evaluation
-  env: [{name: ANSIBLE_CALLABLE_WHITELIST}]
+  env:
+  - name: ANSIBLE_CALLABLE_WHITELIST
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: 'ANSIBLE_CALLABLE_ENABLED'
+  - name: ANSIBLE_CALLABLE_ENABLED
+    version_added: '2.11'
   ini:
-  - {key: callable_whitelist, section: defaults}
+  - key: callable_whitelist
+    section: defaults
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: 'callable_enabled'
+  - key: callable_enabled
+    section: defaults
+    version_added: '2.11'
   type: list
 DEFAULT_CALLBACK_PLUGIN_PATH:
   name: Callback Plugins Path
@@ -565,17 +600,31 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   - {key: callback_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.callback.path}
-DEFAULT_CALLBACK_WHITELIST:
-  name: Callback Whitelist
+CALLBACKS_ENABLED:
+  name: Enable callback plugins that require it.
   default: []
   description:
-    - "List of whitelisted callbacks, not all callbacks need whitelisting,
+    - "List of enabled callbacks, not all callbacks need enabling,
       but many of those shipped with Ansible do as we don't want them activated by default."
-  env: [{name: ANSIBLE_CALLBACK_WHITELIST}]
+  env:
+  - name: ANSIBLE_CALLBACK_WHITELIST
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: 'ANSIBLE_CALLBACKS_ENABLED'
+  - name: ANSIBLE_CALLBACKS_ENABLED
+    version_added: '2.11'
   ini:
-  - {key: callback_whitelist, section: defaults}
+  - key: callback_whitelist
+    section: defaults
+    deprecated:
+      why: Normalizing names to new standard.
+      version: "2.15"
+      alternatives: 'callback_enabled'
+  - key: callbacks_enabled
+    section: defaults
+    version_added: '2.11'
   type: list
-  yaml: {key: plugins.callback.whitelist}
 DEFAULT_CLICONF_PLUGIN_PATH:
   name: Cliconf Plugins Path
   default: ~/.ansible/plugins/cliconf:/usr/share/ansible/plugins/cliconf
@@ -1618,7 +1667,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(BLACKLIST_EXTS + ('.orig', '.ini', '.cfg', '.retry'))}}"
+  default: "{{(REJECT_EXTS + ('.orig', '.ini', '.cfg', '.retry'))}}"
   description: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
@@ -1680,10 +1729,10 @@ INJECT_FACTS_AS_VARS:
   version_added: "2.5"
 MODULE_IGNORE_EXTS:
   name: Module ignore extensions
-  default: "{{(BLACKLIST_EXTS + ('.yaml', '.yml', '.ini'))}}"
+  default: "{{(REJECT_EXTS + ('.yaml', '.yml', '.ini'))}}"
   description:
     - List of extensions to ignore when looking for modules to load
-    - This is for blacklisting script and binary module fallback extensions
+    - This is for rejecting script and binary module fallback extensions
   env: [{name: ANSIBLE_MODULE_IGNORE_EXTS}]
   ini:
   - {key: module_ignore_exts, section: defaults}
@@ -1913,7 +1962,7 @@ USE_PERSISTENT_CONNECTIONS:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
 VARIABLE_PLUGINS_ENABLED:
-  name: Vars plugin whitelist
+  name: Vars plugin enabled list
   default: ['host_group_vars']
   description: Whitelist for variable plugins that require it.
   env: [{name: ANSIBLE_VARS_ENABLED}]

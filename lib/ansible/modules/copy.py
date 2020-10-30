@@ -86,8 +86,8 @@ options:
   remote_src:
     description:
     - Influence whether C(src) needs to be transferred or already is present remotely.
-    - If C(no), it will search for C(src) at originating/master machine.
-    - If C(yes) it will go to the remote/target machine for the C(src).
+    - If C(no), it will search for C(src) on the controller node.
+    - If C(yes) it will search for C(src) on the managed (remote) node.
     - C(remote_src) supports recursive copying as of version 2.8.
     - C(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool

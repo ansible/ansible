@@ -149,8 +149,8 @@ options:
     version_added: '2.7'
   remote_src:
     description:
-      - If C(no), the module will search for src on originating/master machine.
-      - If C(yes) the module will use the C(src) path on the remote/target machine.
+      - If C(no), the module will search for the C(src) on the controller node.
+      - If C(yes), the module will search for the C(src) on the managed (remote) node.
     type: bool
     default: no
     version_added: '2.7'

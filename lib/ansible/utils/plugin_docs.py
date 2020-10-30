@@ -18,7 +18,7 @@ display = Display()
 
 
 # modules that are ok that they do not have documentation strings
-BLACKLIST = {
+REJECTLIST = {
     'MODULE': frozenset(('async_wrapper',)),
     'CACHE': frozenset(('base',)),
 }

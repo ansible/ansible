@@ -39,7 +39,7 @@ options:
     required: true
   copy:
     description:
-      - If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine.
+      - If true, the file is copied from local controller to the managed (remote) node, otherwise, the plugin will look for src archive on the managed machine.
       - This option has been deprecated in favor of C(remote_src).
       - This option is mutually exclusive with C(remote_src).
     type: bool

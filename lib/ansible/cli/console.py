@@ -150,7 +150,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     self._find_modules_in_path(module)
                 elif module.startswith('__'):
                     continue
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
+                elif any(module.endswith(x) for x in C.REJECT_EXTS):
                     continue
                 elif module in C.IGNORE_FILES:
                     continue
