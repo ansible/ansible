@@ -668,8 +668,23 @@ class PathMapper:
         if path.startswith('docs/'):
             return minimal
 
-        if path in ('README.md', 'CHANGELOG.rst', 'COPYING', 'LICENSE'):
-            return minimal
+        if '/' not in path:
+            if path in (
+                    '.gitignore',
+                    'COPYING',
+                    'LICENSE',
+                    'Makefile',
+            ):
+                return minimal
+
+            if ext in (
+                    '.in',
+                    '.md',
+                    '.rst',
+                    '.toml',
+                    '.txt',
+            ):
+                return minimal
 
         return None
 
