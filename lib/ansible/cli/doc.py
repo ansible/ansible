@@ -33,7 +33,7 @@ from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
-from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
@@ -577,7 +577,6 @@ class DocCLI(CLI, RoleMixin):
                 roles_path = (subdir,) + roles_path
             roles_path = roles_path + (basedir,)
 
-
         if plugin_type not in TARGET_OPTIONS:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
         elif plugin_type == 'keyword':
@@ -592,6 +591,8 @@ class DocCLI(CLI, RoleMixin):
                 coll_filter = None
                 if len(context.CLIARGS['args']) == 1:
                     coll_filter = context.CLIARGS['args'][0]
+                    if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
+                        raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
                 elif len(context.CLIARGS['args']) > 1:
                     raise AnsibleOptionsError("Only a single collection filter is supported.")
 
