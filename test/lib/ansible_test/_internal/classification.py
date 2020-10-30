@@ -660,6 +660,9 @@ class PathMapper:
         if result is not None:
             return result
 
+        filename = os.path.basename(path)
+        dummy, ext = os.path.splitext(filename)
+
         minimal = {}
 
         if path.startswith('changelogs/'):
