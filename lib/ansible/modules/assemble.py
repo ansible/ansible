@@ -91,7 +91,7 @@ EXAMPLES = r'''
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
-- name: Inserted provided delimiter in between each fragment
+- name: Insert the provided delimiter between fragments
   assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
