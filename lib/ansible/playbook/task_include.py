@@ -43,7 +43,7 @@ class TaskInclude(Task):
     OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
     VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
     VALID_INCLUDE_KEYWORDS = frozenset(('action', 'args', 'collections', 'debugger', 'ignore_errors', 'loop', 'loop_control',
-                                        'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'vars',
+                                        'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'timeout', 'vars',
                                         'when'))
 
     # =================================================================================
