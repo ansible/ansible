@@ -289,10 +289,14 @@ class TCPConnectionInfo(object):
     def get_active_connections_count(self):
         active_connections = 0
         for p in psutil.process_iter():
-            if hasattr(p, 'get_connections'):
-                connections = p.get_connections(kind='inet')
-            else:
-                connections = p.connections(kind='inet')
+            try:
+                if hasattr(p, 'get_connections'):
+                    connections = p.get_connections(kind='inet')
+                else:
+                    connections = p.connections(kind='inet')
+            except psutil.Error:
+                # Process is Zombie or other error state
+                continue
             for conn in connections:
                 if conn.status not in self.module.params['active_connection_states']:
                     continue
