@@ -1083,6 +1083,7 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
                         tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else 0o0644
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
+                    tarinfo.mtime = time.time()
 
                     return tarinfo
 

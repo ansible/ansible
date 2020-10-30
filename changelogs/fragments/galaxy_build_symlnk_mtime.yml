@@ -1,0 +1,2 @@
+minor_changes:
+- galaxy - fix mtime for symlink files in tar file (https://github.com/ansible-collections/community.kubernetes/issues/288).
