@@ -184,7 +184,6 @@ _INCLUDE_ROLE_IMPORT_ROLE_ACTIONS = add_internal_fqcns(('include_role', 'import_
 _INCLUDE_ROLE_TASKS_ACTIONS = add_internal_fqcns(('include_role', 'include_tasks'))
 _INCLUDE_TASKS_ACTIONS = add_internal_fqcns(('include_tasks', ))
 _INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_internal_fqcns(('include_tasks', 'import_tasks'))
-_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_internal_fqcns(('include_tasks', 'include_role'))
 _INCLUDE_VARS_ACTIONS = add_internal_fqcns(('include_vars', ))
 _META_ACTIONS = add_internal_fqcns(('meta', ))
 _SETUP_GATHER_FACTS_ACTIONS = add_internal_fqcns(('setup', 'gather_facts'))

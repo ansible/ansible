@@ -98,7 +98,7 @@ class TaskInclude(Task):
         diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
             # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
-            if ds[k] is not Sentinel and ds['action'] in C._INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS:
+            if ds[k] is not Sentinel and ds['action'] in C._INCLUDE_ROLE_TASKS_ACTIONS:
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
                 else:
