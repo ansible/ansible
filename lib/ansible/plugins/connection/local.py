@@ -49,8 +49,7 @@ class Connection(ConnectionBase):
         ''' connect to the local host; nothing to do here '''
 
         # Because we haven't made any remote connection we're running as
-        # the local user, rather than as whatever is configured in
-        # remote_user.
+        # the local user, rather than as whatever is configured in remote_user.
         self._play_context.remote_user = getpass.getuser()
 
         if not self._connected:

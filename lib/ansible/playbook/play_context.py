@@ -22,7 +22,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pwd
 import sys
 
 from ansible import constants as C
@@ -313,15 +312,11 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
-        # if the final connection type is local, reset the remote_user value to that of the currently logged in user
-        # this ensures any become settings are obeyed correctly
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
-        # connection_user to be deprecated once connection=local is removed for
-        # network modules
+        # connection_user to be deprecated once connection=local is removed for, as local resets remote_user
         if new_info.connection == 'local':
             if not new_info.connection_user:
                 new_info.connection_user = new_info.remote_user
-            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previously set
         if new_info.no_log is None:
