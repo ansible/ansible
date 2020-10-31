@@ -1,0 +1,2 @@
+bugfixes:
+  - added arg ``ignore_invalid_cwd`` to ``AnsibleModule.run_command()``, to control its behaviour when ``cwd`` is invalid.
