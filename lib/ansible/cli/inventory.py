@@ -286,21 +286,21 @@ class InventoryCLI(CLI):
         from hashlib import sha1
         depth = depth + 1
         hashed_group_name = sha1(group.name.encode()).hexdigest()
-        result = ["%s\"%s\" [label=\"%s\"];" % (' ' * depth*4, hashed_group_name, group.name)]
+        result = ["%s\"%s\" [label=\"%s\"];" % (' ' * depth * 4, hashed_group_name, group.name)]
         for kid in sorted(group.child_groups, key=attrgetter('name')):
             hashed_kid_name = sha1(kid.name.encode()).hexdigest()
             result.extend(self._graph_group_dot(kid, depth))
             new_group = '%s"%s" -> "%s";' % (
-                    ' ' * depth*2, hashed_group_name, hashed_kid_name)
+                ' ' * depth * 4, hashed_group_name, hashed_kid_name)
             result.append(new_group)
 
         if group.name != 'all':
             for host in sorted(group.hosts, key=attrgetter('name')):
                 hashed_host_name = sha1(host.name.encode()).hexdigest()
-                new_host = '%s"%s" [label="%s"];' % (' ' * depth*4, hashed_host_name, host.name)
+                new_host = '%s"%s" [label="%s"];' % (' ' * depth * 4, hashed_host_name, host.name)
                 result.append(new_host)
                 new_parent_group = '%s"%s" -> "%s";' % (
-                        ' ' * depth*2, hashed_group_name, hashed_host_name)
+                    ' ' * depth * 2, hashed_group_name, hashed_host_name)
                 result.append(new_parent_group)
         return result
 
@@ -311,11 +311,11 @@ class InventoryCLI(CLI):
             raise AnsibleOptionsError("This would be graphic")
 
         output = [
-                'digraph G {',
-                'graph [rankdir="LR" bgcolor="#F6F6F6"];',
-                'node [shape="record" color="#D3D3D3" style="filled" fillcolor="#AAAAAA" contraint="false"];',
-                'edge [color="#4284F3"];',
-            ]
+            'digraph G {',
+            'graph [rankdir="LR" bgcolor="#F6F6F6"];',
+            'node [shape="record" color="#D3D3D3" style="filled" fillcolor="#AAAAAA" contraint="false"];',
+            'edge [color="#4284F3"];',
+        ]
         output.extend(self._graph_group_dot(start_at))
         output.append('}')
         if start_at:
