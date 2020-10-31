@@ -2521,7 +2521,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2572,6 +2572,9 @@ class AnsibleModule(object):
             after ``Popen`` object will be created
             but before communicating to the process.
             (``Popen`` object will be passed to callback as a first argument)
+        :kw ignore_invalid_cwd: This flag indicates whether an invalid ``cwd``
+            (non-existent or not a directory) should be ignored or should raise
+            an exception.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2694,8 +2697,8 @@ class AnsibleModule(object):
                 except (OSError, IOError) as e:
                     self.fail_json(rc=e.errno, msg="Could not chdir to %s, %s" % (cwd, to_native(e)),
                                    exception=traceback.format_exc())
-            else:
-                self.fail_json(msg="The provided cwd is not a valid directory: %s" % cwd)
+            elif not ignore_invalid_cwd:
+                self.fail_json(msg="Provided cwd is not a valid directory: %s" % cwd)
 
         old_umask = None
         if umask:
