@@ -9,7 +9,6 @@ import sys
 
 import argparse
 from operator import attrgetter
-from hashlib import sha1
 
 from ansible import constants as C
 from ansible import context
