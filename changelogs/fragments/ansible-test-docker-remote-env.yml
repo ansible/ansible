@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test integration - exports ``ANSIBLE_TEST_DOCKER`` or ``ANSIBLE_TEST_REMOTE`` environment variables when the ``--docker`` resp. ``--remote`` options are used (https://github.com/ansible/ansible/pull/72430)."

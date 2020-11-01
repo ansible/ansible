@@ -1441,6 +1441,12 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
 
+    if args.docker:
+        env.update(dict(ANSIBLE_TEST_DOCKER=args.docker_raw))
+
+    if args.remote:
+        env.update(dict(ANSIBLE_TEST_REMOTE=args.remote))
+
     if args.debug_strategy:
         env.update(dict(ANSIBLE_STRATEGY='debug'))
 
