@@ -123,10 +123,11 @@ def main():
 
     class RestrictedModuleLoader:
         """Python module loader that restricts inappropriate imports."""
-        def __init__(self, path, name):
+        def __init__(self, path, name, restrict_to_module_paths):
             self.path = path
             self.name = name
             self.loaded_modules = set()
+            self.restrict_to_module_paths = restrict_to_module_paths
 
         def find_module(self, fullname, path=None):
             """Return self if the given fullname is restricted, otherwise return None.
@@ -138,6 +139,9 @@ def main():
                 return None  # ignore modules that are already being loaded
 
             if is_name_in_namepace(fullname, ['ansible']):
+                if not self.restrict_to_module_paths:
+                    return None  # for non-modules, everything in the ansible namespace is allowed
+
                 if fullname in ('ansible.module_utils.basic', 'ansible.module_utils.common.removed'):
                     return self  # intercept loading so we can modify the result
 
@@ -152,6 +156,9 @@ def main():
             if is_name_in_namepace(fullname, ['ansible_collections']):
                 if not collection_loader:
                     return self  # restrict access to collections when we are not testing a collection
+
+                if not self.restrict_to_module_paths:
+                    return None  # for non-modules, everything in the ansible namespace is allowed
 
                 if is_name_in_namepace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
@@ -201,19 +208,37 @@ def main():
         base_dir = os.getcwd()
         messages = set()
 
-        for path in sys.argv[1:] or sys.stdin.read().splitlines():
-            name = convert_relative_path_to_name(path)
-            test_python_module(path, name, base_dir, messages)
+        args = sys.argv[1:]
+        import_type = 'module'
+        try:
+            type_index = args.index('--type')
+            import_type = args[type_index + 1]
+            args = args[:type_index] + args[type_index + 2:]
+        except ValueError:
+            pass
+
+        if import_type == 'module':
+            for path in args or sys.stdin.read().splitlines():
+                name = convert_relative_path_to_name(path)
+                test_python_module(path, name, base_dir, messages, True)
+        elif import_type == 'plugin':
+            for path in args or sys.stdin.read().splitlines():
+                name = convert_relative_path_to_name(path)
+                test_python_module(path, name, base_dir, messages, False)
+        else:
+            print('Invalid import type!')
+            sys.exit(1)
 
         if messages:
             sys.exit(10)
 
-    def test_python_module(path, name, base_dir, messages):
+    def test_python_module(path, name, base_dir, messages, restrict_to_module_paths):
         """Test the given python module by importing it.
         :type path: str
         :type name: str
         :type base_dir: str
         :type messages: set[str]
+        :type restrict_to_module_paths: bool
         """
         if name in sys.modules:
             return  # cannot be tested because it has already been loaded
@@ -230,13 +255,13 @@ def main():
 
         try:
             with monitor_sys_modules(path, messages):
-                with restrict_imports(path, name, messages):
+                with restrict_imports(path, name, messages, restrict_to_module_paths):
                     with capture_output(capture_normal):
                         import_module(name)
 
             if run_main:
                 with monitor_sys_modules(path, messages):
-                    with restrict_imports(path, name, messages):
+                    with restrict_imports(path, name, messages, restrict_to_module_paths):
                         with capture_output(capture_main):
                             runpy.run_module(name, run_name='__main__', alter_sys=True)
         except ImporterAnsibleModuleException:
@@ -398,13 +423,14 @@ def main():
             print(message)
 
     @contextlib.contextmanager
-    def restrict_imports(path, name, messages):
+    def restrict_imports(path, name, messages, restrict_to_module_paths):
         """Restrict available imports.
         :type path: str
         :type name: str
         :type messages: set[str]
+        :type restrict_to_module_paths: bool
         """
-        restricted_loader = RestrictedModuleLoader(path, name)
+        restricted_loader = RestrictedModuleLoader(path, name, restrict_to_module_paths)
 
         # noinspection PyTypeChecker
         sys.meta_path.insert(0, restricted_loader)

@@ -60,12 +60,20 @@ from ..data import (
 )
 
 
+def _get_module_test(module_restrictions):
+    module_path = data_context().content.module_path
+    module_utils_path = data_context().content.module_utils_path
+    if module_restrictions:
+        return lambda path: is_subdir(path, module_path) or is_subdir(path, module_utils_path)
+    return lambda path: not (is_subdir(path, module_path) or is_subdir(path, module_utils_path))
+
+
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and
-                (is_subdir(target.path, data_context().content.module_path) or is_subdir(target.path, data_context().content.module_utils_path))]
+                any(is_subdir(target.path, path) for path in data_context().content.plugin_paths.values())]
 
     def test(self, args, targets, python_version):
         """
@@ -144,39 +152,46 @@ class ImportTest(SanityMultipleVersion):
         run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env, capture=capture_pip)
         run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env, capture=capture_pip)
 
-        cmd = ['importer.py']
-
-        data = '\n'.join(paths)
-
-        display.info(data, verbosity=4)
-
         results = []
 
-        try:
-            with coverage_context(args):
-                stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
-                                                   virtualenv=virtualenv_python)
+        for import_type, test in (
+                ('module', _get_module_test(True)),
+                ('plugin', _get_module_test(False)),
+        ):
+            data = '\n'.join([path for path in paths if test(path)])
+            if not data:
+                continue
 
-            if stdout or stderr:
-                raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
-        except SubprocessError as ex:
-            if ex.status != 10 or ex.stderr or not ex.stdout:
-                raise
+            display.info(import_type + ': ' + data, verbosity=4)
 
-            pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+            cmd = ['importer.py', '--type', import_type]
 
-            results = parse_to_list_of_dict(pattern, ex.stdout)
+            this_results = []
+            try:
+                with coverage_context(args):
+                    stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
+                                                       virtualenv=virtualenv_python)
 
-            relative_temp_root = os.path.relpath(temp_root, data_context().content.root) + os.path.sep
+                if stdout or stderr:
+                    raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
+            except SubprocessError as ex:
+                if ex.status != 10 or ex.stderr or not ex.stdout:
+                    raise
 
-            results = [SanityMessage(
-                message=r['message'],
-                path=os.path.relpath(r['path'], relative_temp_root) if r['path'].startswith(relative_temp_root) else r['path'],
-                line=int(r['line']),
-                column=int(r['column']),
-            ) for r in results]
+                pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
 
-        results = settings.process_errors(results, paths)
+                this_results = parse_to_list_of_dict(pattern, ex.stdout)
+
+                relative_temp_root = os.path.relpath(temp_root, data_context().content.root) + os.path.sep
+
+                this_results = [SanityMessage(
+                    message=r['message'],
+                    path=os.path.relpath(r['path'], relative_temp_root) if r['path'].startswith(relative_temp_root) else r['path'],
+                    line=int(r['line']),
+                    column=int(r['column']),
+                ) for r in this_results]
+
+            results.extend(settings.process_errors(this_results, paths))
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)
