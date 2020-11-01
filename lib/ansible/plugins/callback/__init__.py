@@ -49,6 +49,7 @@ global_display = Display()
 
 __all__ = ["CallbackBase"]
 
+
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
 
 
