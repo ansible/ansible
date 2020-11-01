@@ -91,7 +91,7 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if any(action in entry for action in C._ACTION_IMPORT_PLAYBOOKS):
+            if any(action in entry for action in C._ACTION_ALL_IMPORT_PLAYBOOKS):
                 if any(action in entry for action in C._ACTION_INCLUDE):
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')

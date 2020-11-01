@@ -128,7 +128,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # But if it wasn't, we can add the yaml object now to get more detail
                 raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
 
-            if action in C._ACTION_INCLUDE_IMPORT_TASKS:
+            if action in C._ACTION_ALL_INCLUDE_IMPORT_TASKS:
 
                 if use_handlers:
                     include_class = HandlerTaskInclude
@@ -286,7 +286,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
-                        if action in C._ACTION_INCLUDE_IMPORT_TASKS:
+                        if action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS:
                             raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
@@ -316,7 +316,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     t.is_static = False
                     task_list.append(t)
 
-            elif action in C._ACTION_INCLUDE_IMPORT_ROLES:
+            elif action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES:
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,

@@ -76,7 +76,7 @@ class TaskInclude(Task):
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(self.VALID_ARGS)
-        if bad_opts and task.action in C._ACTION_INCLUDE_IMPORT_TASKS:
+        if bad_opts and task.action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS:
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
@@ -98,7 +98,7 @@ class TaskInclude(Task):
         diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
             # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
-            if ds[k] is not Sentinel and ds['action'] in C._ACTION_INCLUDE_ROLE_TASKS:
+            if ds[k] is not Sentinel and ds['action'] in C._ACTION_ALL_INCLUDE_ROLE_TASKS:
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
                 else:

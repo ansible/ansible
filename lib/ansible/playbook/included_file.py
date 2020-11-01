@@ -68,7 +68,7 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action in C._ACTION_INCLUDES:
+            if original_task.action in C._ACTION_ALL_INCLUDES:
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue

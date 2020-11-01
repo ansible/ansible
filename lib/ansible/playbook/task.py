@@ -394,7 +394,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action in C._ACTION_INCLUDES:
+        if self.action in C._ACTION_ALL_INCLUDES:
             all_vars.update(self.vars)
         return all_vars
 
