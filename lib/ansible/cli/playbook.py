@@ -171,7 +171,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action in C._META_ACTIONS and task.implicit:
+                                    if task.action in C._ACTION_META and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)

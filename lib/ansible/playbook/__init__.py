@@ -91,8 +91,8 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if any(action in entry for action in C._INCLUDE_IMPORT_PLAYBOOK_ACTIONS):
-                if any(action in entry for action in C._INCLUDE_ACTIONS):
+            if any(action in entry for action in C._ACTION_IMPORT_PLAYBOOKS):
+                if any(action in entry for action in C._ACTION_INCLUDE):
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
@@ -100,7 +100,7 @@ class Playbook:
                     self._entries.extend(pb._entries)
                 else:
                     which = entry
-                    for k in C._IMPORT_PLAYBOOK_ACTIONS + C._INCLUDE_ACTIONS:
+                    for k in C._ACTION_IMPORT_PLAYBOOK + C._ACTION_INCLUDE:
                         if k in entry:
                             which = entry[k]
                             break

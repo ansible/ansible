@@ -68,7 +68,7 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action in C._INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS:
+            if original_task.action in C._ACTION_INCLUDES:
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue
@@ -112,7 +112,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in C._INCLUDE_INCLUDE_TASKS_ACTIONS:
+                    if original_task.action in C._ACTION_INCLUDE_TASKS:
                         include_file = None
                         if original_task:
                             if original_task.static:

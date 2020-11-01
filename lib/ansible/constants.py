@@ -168,24 +168,24 @@ for warn in config.WARNINGS:
 
 
 # The following are hard-coded action names
-_COMMAND_SHELL_SCRIPT_ACTIONS = add_internal_fqcns(('command', 'shell', 'script'))
-_COMMAND_SHELL_SCRIPT_RAW_ACTIONS = add_internal_fqcns(('command', 'shell', 'script', 'raw'))
-_DEBUG_ACTIONS = add_internal_fqcns(('debug', ))
-_IMPORT_PLAYBOOK_ACTIONS = add_internal_fqcns(('import_playbook', ))
-_IMPORT_ROLE_ACTIONS = add_internal_fqcns(('import_role', ))
-_IMPORT_TASKS_ACTIONS = add_internal_fqcns(('import_tasks', ))
-_INCLUDE_ACTIONS = add_internal_fqcns(('include', ))
-_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = add_internal_fqcns(('include', 'import_playbook'))
-_INCLUDE_INCLUDE_TASKS_ACTIONS = add_internal_fqcns(('include', 'include_tasks'))
-_INCLUDE_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_internal_fqcns(('include', 'include_tasks', 'import_tasks'))
-_INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_internal_fqcns(('include', 'include_tasks', 'include_role'))
-_INCLUDE_ROLE_ACTIONS = add_internal_fqcns(('include_role', ))
-_INCLUDE_ROLE_IMPORT_ROLE_ACTIONS = add_internal_fqcns(('include_role', 'import_role'))
-_INCLUDE_ROLE_TASKS_ACTIONS = add_internal_fqcns(('include_role', 'include_tasks'))
-_INCLUDE_TASKS_ACTIONS = add_internal_fqcns(('include_tasks', ))
-_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_internal_fqcns(('include_tasks', 'import_tasks'))
-_INCLUDE_VARS_ACTIONS = add_internal_fqcns(('include_vars', ))
-_META_ACTIONS = add_internal_fqcns(('meta', ))
-_SETUP_GATHER_FACTS_ACTIONS = add_internal_fqcns(('setup', 'gather_facts'))
-_SET_FACT_ACTIONS = add_internal_fqcns(('set_fact', ))
-_SET_FACT_INCLUDE_VARS_ACTIONS = add_internal_fqcns(('set_fact', 'include_vars'))
+_ACTION_DEBUG = add_internal_fqcns(('debug', ))
+_ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
+_ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
+_ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
+_ACTION_INCLUDE = add_internal_fqcns(('include', ))
+_ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
+_ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
+_ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_META = add_internal_fqcns(('meta', ))
+_ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
+_ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
+_ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
+_ACTION_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_IMPORT_PLAYBOOKS = _ACTION_INCLUDE + _ACTION_IMPORT_PLAYBOOK
+_ACTION_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
+_ACTION_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
+_ACTION_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
+_ACTION_FACT_GATHERING = add_internal_fqcns(('setup', 'gather_facts'))
+_ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
