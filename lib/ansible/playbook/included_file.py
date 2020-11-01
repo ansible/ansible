@@ -112,7 +112,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in C._ACTION_INCLUDE_TASKS:
+                    if original_task.action in C._ACTION_ALL_INCLUDE_TASKS:
                         include_file = None
                         if original_task:
                             if original_task.static:
