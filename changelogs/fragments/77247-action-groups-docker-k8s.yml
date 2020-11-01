@@ -1,0 +1,2 @@
+bugfixes:
+- "The ``docker`` and ``k8s`` action groups / module default groups now also support the moved modules in [community.docker](https://galaxy.ansible.com/community/docker) and [community.kubevirt](https://github.com/ansible-collections/community.kubevirt) (https://github.com/ansible/ansible/pull/72427)."
