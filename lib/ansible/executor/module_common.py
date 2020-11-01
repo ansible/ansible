@@ -1359,7 +1359,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         'cpm': ['wti.remote'],
         'docker': ['community.general', 'community.docker'],
         'gcp': ['google.cloud'],
-        'k8s': ['community.kubernetes', 'community.general', 'community.kubevirt'],
+        'k8s': ['community.kubernetes', 'community.general', 'community.kubevirt', 'community.okd'],
         'os': ['openstack.cloud'],
         'ovirt': ['ovirt.ovirt', 'community.general'],
         'vmware': ['community.vmware'],
