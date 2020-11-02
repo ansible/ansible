@@ -121,7 +121,13 @@ class AnsibleConstructor(SafeConstructor):
         data.ansible_pos = self._node_position_info(node)
 
     def construct_yaml_unsafe(self, node):
-        return wrap_var(self.construct_yaml_str(node))
+        if node.tag == '!unsafe':
+            node.tag = None
+        if node.tag in self.yaml_constructors:
+            constructor = self.yaml_constructors[node.tag]
+        else:
+            constructor = self.construct_object
+        return wrap_var(constructor(node))
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
