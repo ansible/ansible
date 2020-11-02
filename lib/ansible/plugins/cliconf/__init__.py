@@ -88,7 +88,7 @@ class CliconfBase(AnsiblePlugin):
         self._connection.queue_message('log', 'closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout)
         self.close()
 
-    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
+    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False, use_cache=False):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
