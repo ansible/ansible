@@ -660,6 +660,9 @@ class PathMapper:
         if result is not None:
             return result
 
+        filename = os.path.basename(path)
+        dummy, ext = os.path.splitext(filename)
+
         minimal = {}
 
         if path.startswith('changelogs/'):
@@ -667,6 +670,24 @@ class PathMapper:
 
         if path.startswith('docs/'):
             return minimal
+
+        if '/' not in path:
+            if path in (
+                    '.gitignore',
+                    'COPYING',
+                    'LICENSE',
+                    'Makefile',
+            ):
+                return minimal
+
+            if ext in (
+                    '.in',
+                    '.md',
+                    '.rst',
+                    '.toml',
+                    '.txt',
+            ):
+                return minimal
 
         return None
 
