@@ -479,7 +479,8 @@
 
 - name: try install package with setuptools extras
   pip:
-    name: "{{pip_test_package}}[dev,test]"
+    name:
+      - "{{pip_test_package}}[test]"
 
 - name: clean up
   pip:
