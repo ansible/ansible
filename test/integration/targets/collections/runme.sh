@@ -30,7 +30,7 @@ ANSIBLE_CALLBACKS_ENABLED=charlie.gomez.notme ansible localhost -m debug 2>&1 | 
 
 unset ANSIBLE_LOAD_CALLBACK_PLUGINS
 # adhoc normally shouldn't load non-default plugins- let's be sure
-output=$(ANSIBLE_CALLBACK_ENABLED=testns.testcoll.usercallback ansible localhost -m debug)
+output=$(ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible localhost -m debug)
 if [[ "${output}" =~ "usercallback says ok" ]]; then echo fail; exit 1; fi
 
 echo "--- validating docs"
