@@ -91,6 +91,13 @@ def main():
                     'off',
                 ],
             },
+            'choices': {
+                'type': 'str',
+                'choices': [
+                    'foo',
+                    'bar',
+                ],
+            }
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
