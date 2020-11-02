@@ -100,7 +100,7 @@ class AutoVars(Mapping):
     def __init__(self, templar, myvars=None):
         self._t = templar
         if myvars is None:
-            self._vars = self._t.._available_variables
+            self._vars = self._t._available_variables
         else:
             self._vars = myvars
 
