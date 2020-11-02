@@ -1615,6 +1615,11 @@ releases:
     - runas-become-system-privileges.yml
     - v2.9.14rc1_summary.yaml
     release_date: '2020-09-28'
+  2.9.15:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.15_summary.yaml
+    release_date: '2020-11-02'
   2.9.15rc1:
     codename: Immigrant Song
     fragments:
