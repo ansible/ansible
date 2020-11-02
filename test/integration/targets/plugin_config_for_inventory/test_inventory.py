@@ -64,7 +64,8 @@ class InventoryModule(BaseInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
-        self._read_config_data(path=path)
+        config_data = self._read_config_data(path=path)
+        self._consume_options(config_data)
 
         departments = self.get_option('departments')
 
