@@ -1709,6 +1709,11 @@ releases:
     - ansible-test-parallels-endpoint.yml
     - v2.8.16rc1_summary.yaml
     release_date: '2020-09-28'
+  2.8.17:
+    codename: How Many More Times
+    fragments:
+    - v2.8.17_summary.yaml
+    release_date: '2020-11-02'
   2.8.17rc1:
     codename: How Many More Times
     fragments:
