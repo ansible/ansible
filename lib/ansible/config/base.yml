@@ -406,14 +406,8 @@ COVERAGE_REMOTE_PATHS:
   - This is for internal use only.
   default: '*'
   env:
-  - name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST
-    deprecated:
-      why: Normalizing names to new standard.
-      version: "2.15"
-      alternatives: '_ANSIBLE_COVERAGE_REMOTE_PATHS'
-  - name: '_ANSIBLE_COVERAGE_REMOTE_PATHS'
-    version_added: '2.11'
-  type: pathlist
+  - {name: _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER}
+  type: str
   version_added: '2.9'
 ACTION_WARNINGS:
   name: Toggle action warnings
