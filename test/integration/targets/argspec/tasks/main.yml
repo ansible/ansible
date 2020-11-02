@@ -259,6 +259,18 @@
     required_one_of_one: value
   register: argspec_choices_with_strings_like_bools_false
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    choices: foo
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    choices: baz
+  register: argspec_choices_bad_choice
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -310,3 +322,5 @@
       - argspec_choices_with_strings_like_bools_true.choices_with_strings_like_bools == 'on'
       - argspec_choices_with_strings_like_bools_true_bool.choices_with_strings_like_bools == 'on'
       - argspec_choices_with_strings_like_bools_false.choices_with_strings_like_bools == 'off'
+
+      - argspec_choices_bad_choice is failed
