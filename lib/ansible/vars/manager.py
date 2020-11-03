@@ -219,7 +219,7 @@ class VariableManager:
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
-            if task._role is not None and (play or task.action == 'include_role'):
+            if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
                 all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
                                               "role '%s' defaults" % task._role.name)
 

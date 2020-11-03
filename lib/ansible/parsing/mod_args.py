@@ -26,13 +26,14 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
+from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
 FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
 
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
+RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
     'include',
     'include_vars',
     'include_tasks',
@@ -43,16 +44,16 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'group_by',
     'set_fact',
     'meta',
-))
+)))
 
-BUILTIN_TASKS = frozenset((
+BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
     'include',
     'include_tasks',
     'include_role',
     'import_tasks',
     'import_role'
-))
+)))
 
 
 class ModuleArgsParser:

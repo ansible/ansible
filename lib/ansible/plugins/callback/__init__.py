@@ -248,7 +248,7 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name == 'debug':
+        if task_name in C._ACTION_DEBUG:
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):

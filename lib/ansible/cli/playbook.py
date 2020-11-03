@@ -8,6 +8,7 @@ __metaclass__ = type
 import os
 import stat
 
+from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
@@ -170,7 +171,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action == 'meta' and task.implicit:
+                                    if task.action in C._ACTION_META and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)

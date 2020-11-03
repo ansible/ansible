@@ -189,7 +189,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action == 'meta':
+                        if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
