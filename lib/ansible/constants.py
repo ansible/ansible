@@ -17,6 +17,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
+from ansible.utils.fqcn import add_internal_fqcns
 
 
 def _warning(msg):
@@ -74,10 +75,10 @@ DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = ('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                       'ansible.windows.win_shell', 'raw', 'script')
-MODULE_NO_JSON = ('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                  'ansible.windows.win_shell', 'raw')
+MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
+                                                'ansible.windows.win_shell', 'raw', 'script')))
+MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
+                                           'ansible.windows.win_shell', 'raw')))
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
@@ -164,3 +165,27 @@ for setting in config.data.get_settings():
 
 for warn in config.WARNINGS:
     _warning(warn)
+
+
+# The following are hard-coded action names
+_ACTION_DEBUG = add_internal_fqcns(('debug', ))
+_ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
+_ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
+_ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
+_ACTION_INCLUDE = add_internal_fqcns(('include', ))
+_ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
+_ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
+_ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_META = add_internal_fqcns(('meta', ))
+_ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
+_ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
+_ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
+_ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_ALL_IMPORT_PLAYBOOKS = _ACTION_INCLUDE + _ACTION_IMPORT_PLAYBOOK
+_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
+_ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
+_ACTION_FACT_GATHERING = add_internal_fqcns(('setup', 'gather_facts'))
+_ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS

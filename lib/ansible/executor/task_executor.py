@@ -477,7 +477,7 @@ class TaskExecutor:
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action in ('include', 'include_tasks'):
+        if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
             include_args = self._task.args.copy()
             include_file = include_args.pop('_raw_params', None)
             if not include_file:
@@ -487,7 +487,7 @@ class TaskExecutor:
             return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
-        elif self._task.action == 'include_role':
+        elif self._task.action in C._ACTION_INCLUDE_ROLE:
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 
@@ -624,7 +624,7 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                if self._task.action in ('set_fact', 'include_vars'):
+                if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                     vars_copy.update(result['ansible_facts'])
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
@@ -688,7 +688,7 @@ class TaskExecutor:
             variables[self._task.register] = result = wrap_var(result)
 
         if 'ansible_facts' in result:
-            if self._task.action in ('set_fact', 'include_vars'):
+            if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                 variables.update(result['ansible_facts'])
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars

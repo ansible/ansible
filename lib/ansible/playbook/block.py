@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -374,8 +375,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     filtered_block = evaluate_block(task)
                     if filtered_block.has_tasks():
                         tmp_list.append(filtered_block)
-                elif ((task.action == 'meta' and task.implicit) or
-                        (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
+                elif ((task.action in C._ACTION_META and task.implicit) or
+                        (task.action in C._ACTION_INCLUDE and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
                         task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
