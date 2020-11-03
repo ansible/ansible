@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
@@ -114,7 +115,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             new_ds.ansible_pos = ds.ansible_pos
 
         for (k, v) in iteritems(ds):
-            if k in ('include', 'import_playbook'):
+            if k in C._ACTION_ALL_IMPORT_PLAYBOOKS:
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
