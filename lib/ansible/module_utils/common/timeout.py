@@ -15,8 +15,9 @@ def _raise_timeout(signum, frame):
 
 
 class Timeout:
-    def __init__(self, timeout):
+    def __init__(self, timeout, raising=False):
         self._timeout = timeout
+        self._raising = raising
         self.timed_out = False
 
     def __call__(self, func):
@@ -28,7 +29,9 @@ class Timeout:
             try:
                 return func(*args, **kwargs)
             except TimeoutError:
-                warn('Function call to %s timed out after %d seconds.' % (func_name, self._timeout)
+                if self._raising:
+                    raise
+                warn('Function call to %s timed out after %d seconds.' % (func_name, self._timeout))
                 return None
             finally:
                 signal.signal(signal.SIGALRM, signal.SIG_IGN)
@@ -43,4 +46,5 @@ class Timeout:
         signal.signal(signal.SIGALRM, signal.SIG_IGN)
         if exc_type is TimeoutError:
             self.timed_out = True
-            return True
+            if not raising:
+                return True
