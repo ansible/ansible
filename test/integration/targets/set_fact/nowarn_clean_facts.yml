@@ -5,3 +5,6 @@
     - name: set ssh jump host args
       set_fact:
         ansible_ssh_common_args: "-o ProxyCommand='ssh -W %h:%p -q root@localhost'"
+    - name: set ssh jump host args (FQCN)
+      ansible.builtin.set_fact:
+        ansible_ssh_common_args: "-o ProxyCommand='ssh -W %h:%p -q root@localhost'"
