@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from jinja2.runtime import Undefined
 from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
@@ -27,9 +26,10 @@ from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
+from ansible.template import AnsibleUndefined
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
 
@@ -125,7 +125,7 @@ class AnsibleConstructor(SafeConstructor):
         return wrap_var(self.construct_yaml_str(node))
 
     def construct_undefined(self, node):
-        return Undefined()
+        return AnsibleUndefined()
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
