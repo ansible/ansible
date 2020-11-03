@@ -42,9 +42,10 @@ def get_distribution_version():
     '''
     Get the version of the distribution the code is running on
 
-    :rtype: NativeString or None :returns: A string representation of the
-    version of the distribution. If it cannot determine the version, it returns
-    empty string. If this is not run on a Linux machine it returns None.
+    :rtype: NativeString or None
+    :returns: A string representation of the version of the distribution. If it
+    cannot determine the version, it returns empty string. If this is not run on
+    a Linux machine it returns None.
     '''
     version = None
 
