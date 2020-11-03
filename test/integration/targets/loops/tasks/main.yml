@@ -388,8 +388,8 @@
 
 - assert:
     that:
-      - foo[0] != 'foo1.0'
-      - foo[0] == unsafe_value
+      - foo[0] == 'foo1.0'
+      - foo[0] != unsafe_value
   vars:
     unsafe_value: !unsafe 'foo{{ version_64169 }}'
 
@@ -405,3 +405,6 @@
 - assert:
     that:
       - foo[0] == 'foo1.0'
+      - foo[0] != unsafe_value
+  vars:
+    unsafe_value: !unsafe 'foo{{ version_64169 }}'
