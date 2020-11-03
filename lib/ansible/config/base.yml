@@ -586,7 +586,7 @@ CALLABLE_ACCEPT_LIST:
     version_added: '2.11'
   type: list
 CONTROLLER_PYTHON_WARNING:
-  name: Running Older than Py3.8 Warning
+  name: Running Older than Python 3.8 Warning
   default: True
   description: Toggle to control showing warnings related to running a Python version
                older than Python 3.8 on the controller
