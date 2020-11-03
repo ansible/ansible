@@ -1,0 +1,16 @@
+- set_fact:
+    names: '{{ things|map(attribute="name") }}'
+  vars:
+    things:
+      - name: one
+      - name: two
+      - notname: three
+      - name: four
+
+- assert:
+    that:
+      - '"%r"|format(undef) == "AnsibleUndefined"'
+      # The existence of AnsibleUndefined in a templating result
+      # prevents safe_eval from turning the value into a python object
+      - names is string
+      - '", AnsibleUndefined," in names'
