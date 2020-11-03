@@ -1,0 +1,29 @@
+{
+  {% set hosts = []  -%}
+  {% for group in groups recursive %}
+  "{{group.name}}": {
+	"children": {
+		{% for child in group.children %}
+			{{child.name}},
+		{% endfor %}
+	} {# end group children #}
+	{% set hosts = hosts|list + group.hosts|list %}
+	"hosts": {{group.hosts|map(attribute='name')|list|to_json}}
+	{% if export %}
+	"vars": {
+	{% for varname in group.vars.keys() %}
+       "{{varname}}": {{group.vars[varname]|tojson}},
+	} {# end group vars #}
+		{% endfor %}
+	{% endif %}
+ }, {# end of group #}
+   {{ loop(group.children) }}
+ {% endfor %}
+ "_meta": {
+    "hostvars": {
+	{% for host in hosts|unique %}
+	"{{host.name}}": {{host.vars|to_json }},
+	{% endfor %}
+    } {# end hostvars #}
+ } {# end _meta #}
+} {# just THE END #}
