@@ -103,68 +103,26 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {{config_option}}
 {{ '-' * config_len }}
 
-{% if config.get('description', ['']) not in ([''], ['TODO: write it']) %}
+{% if config['description'] and config['description'] != [''] %}
+{% if config['description'] != ['TODO: write it'] %}
 :Description: {{' '.join(config['description'])}}
+{% endif %}
 {% endif %}
 {% if config['type'] %}
 :Type: {{config['type']}}
 {% endif %}
-{% if 'default' in config %}
 :Default: {{config['default']}}
-{% endif %}
-{% if config.get('choices', False) %}
-:Choices:
-{% if config['choices'] is mapping %}
-{% for key in config['choices'].keys() %}
-    - :{{key}}: {{ config['choices'][key] }}
-{% endfor %}
-{% else %}
-{% for key in config['choices'] %}
-    - :{{key}}:
-{% endfor %}
-{% endif %}
-{% endif %}
 {% if config['version_added'] %}
 :Version Added: {{config['version_added']}}
 {% endif %}
-{% if config.get('ini', False) %}
-:Ini:
 {% for ini_map in config['ini']|sort(attribute='section') %}
-     {% if config['ini']|length > 1 %}- {% endif %}:Section: [{{ini_map['section']}}]
-     {% if config['ini']|length > 1 %}  {% endif %}:Key: {{ini_map['key']}}
-{% if ini_map.get('deprecated') %}
-	 :Deprecated in: {{ini_map['deprecated']['version']}}
-	 :Deprecated detail: {{ini_map['deprecated']['why']}}
-	 :Deprecated alternatives: {{ini_map['deprecated']['alternatives']}}
-{% endif %}
-   - :Section: {{ini_map['section']}}
-     :Key: {{ini_map['key']}}
-    {% if config['env']|length > 1 %}- {% endif%}:envvar:`{{env_var_map['name']}}`
-{% if env_var_map.get('deprecated') %}
-	  :Deprecated in: {{env_var_map['deprecated']['version']}}
-	  :Deprecated detail: {{env_var_map['deprecated']['why']}}
-	  :Deprecated alternatives: {{env_var_map['deprecated']['alternatives']}}
-{% endif %}
+:Ini Section: {{ini_map['section']}}
+:Ini Key: {{ini_map['key']}}
 {% endfor %}
-{% endif %}
-{% if config.get('vars', False) %}
-:Variables:
-{% for a_var in config['vars']|sort(attribute='name') %}
-     {% if config['vars']|length > 1 %}- {%endif%}:name: `{{a_var['name']}}`
-{% if a_var.get('deprecated') %}
-	  :Deprecated in: {{a_var['deprecated']['version']}}
-	  :Deprecated detail: {{a_Var['deprecated']['why']}}
-	  :Deprecated alternatives: {{a_var['deprecated']['alternatives']}}
-{% endif %}
+{% for env_var_map in config['env']|sort(attribute='name') %}
+:Environment: :envvar:`{{env_var_map['name']}}`
 {% endfor %}
-{% endif %}
-{% if config.get('deprecated') %}
-=======
-    - :envvar:`{{env_var_map['name']}}`
-{% endfor %}
-{% endif %}
 {% if config['deprecated'] %}
->>>>>>> fix choices for transform
 :Deprecated in: {{config['deprecated']['version']}}
 :Deprecated detail: {{config['deprecated']['why']}}
 :Deprecated alternatives: {{config['deprecated']['alternatives']}}
