@@ -42,7 +42,9 @@ Playbook
 Command Line
 ============
 
-No notable changes
+* The ``ansible-galaxy login`` command has been removed, as the underlying API it used for GitHub auth is being shut down. Publishing roles or
+  collections to Galaxy via ``ansible-galaxy`` now requires that a Galaxy API token be passed to the CLI via a token file (default location
+  ``~/.ansible/galaxy_token``) or (insecurely) via the ``--token`` argument to ``ansible-galaxy``.
 
 
 Deprecated
@@ -95,6 +97,51 @@ Porting custom scripts
 ======================
 
 No notable changes
+
+
+Porting Guide for v2.10.2
+=========================
+
+Breaking Changes
+----------------
+
+Ansible-base
+~~~~~~~~~~~~
+
+- ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)
+
+Major Changes
+-------------
+
+ovirt.ovirt
+~~~~~~~~~~~
+
+- cluster_upgrade - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/94).
+- disaster_recovery - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/134).
+- engine_setup - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/69).
+- hosted_engine_setup - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/106).
+- image_template - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/95).
+- infra - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/92).
+- manageiq - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/97).
+- repositories - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/96).
+- shutdown_env - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/112).
+- vm_infra - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/93).
+
+Removed Features
+----------------
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Removed arp_state parameter from the bigip_virtual_address module
+
+Deprecated Features
+-------------------
+
+cisco.nxos
+~~~~~~~~~~
+
+- Deprecated `nxos_interface_ospf` in favor of `nxos_ospf_interfaces` Resource Module.
 
 Porting Guide for v2.10.1
 =========================
@@ -367,6 +414,47 @@ community.libvirt
 - added generic libvirt inventory plugin
 - removed libvirt_lxc inventory script
 
+dellemc.os10
+~~~~~~~~~~~~
+
+- New role os10_aaa - Facilitates the configuration of Authentication Authorization and Accounting (AAA), TACACS and RADIUS server.
+- New role os10_acl - Facilitates the configuration of Access Control lists.
+- New role os10_bfd - Facilitates the configuration of BFD global attributes.
+- New role os10_bgp - Facilitates the configuration of border gateway protocol (BGP) attributes.
+- New role os10_copy_config - This role pushes the backup running configuration into a OS10 device.
+- New role os10_dns - Facilitates the configuration of domain name service (DNS).
+- New role os10_ecmp - Facilitates the configuration of equal cost multi-path (ECMP) for IPv4.
+- New role os10_fabric_summary Facilitates to get show system information of all the OS10 switches in the fabric.
+- New role os10_flow_monitor Facilitates the configuration of ACL flow-based monitoring attributes.
+- New role os10_image_upgrade Facilitates installation of OS10 software images.
+- New role os10_interface Facilitates the configuration of interface attributes.
+- New role os10_lag Facilitates the configuration of link aggregation group (LAG) attributes.
+- New role os10_lldp Facilitates the configuration of link layer discovery protocol (LLDP) attributes at global and interface level.
+- New role os10_logging Facilitates the configuration of global logging attributes and logging servers.
+- New role os10_network_validation Facilitates validation of wiring connection, BGP neighbors, MTU between neighbors and VLT pair.
+- New role os10_ntp Facilitates the configuration of network time protocol (NTP) attributes.
+- New role os10_prefix_list Facilitates the configuration of IP prefix-list.
+- New role os10_qos Facilitates the configuration of quality of service attributes including policy-map and class-map.
+- New role os10_raguard Facilitates the configuration of IPv6 RA Guard attributes.
+- New role os10_route_map Facilitates the configuration of route-map attributes.
+- New role os10_snmp Facilitates the configuration of  global SNMP attributes.
+- New role os10_system Facilitates the configuration of hostname and hashing algorithm.
+- New role os10_template The role takes the raw string input from the CLI of OS10 device, and returns a structured text in the form of a Python dictionary.
+- New role os10_uplink Facilitates the configuration of uplink attributes like uplink-state group.
+- New role os10_users Facilitates the configuration of global system user attributes.
+- New role os10_vlan Facilitates the configuration of virtual LAN (VLAN) attributes.
+- New role os10_vlt Facilitates the configuration of virtual link trunking (VLT).
+- New role os10_vrf Facilitates the configuration of virtual routing and forwarding (VRF).
+- New role os10_vrrp Facilitates the configuration of virtual router redundancy protocol (VRRP) attributes.
+- New role os10_vxlan Facilitates the configuration of virtual extensible LAN (VXLAN) attributes.
+- New role os10_xstp Facilitates the configuration of xSTP attributes.
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Broke apart bigip_device_auth_radius to implement radius server configuration in bigip_device_auth_server module. Refer to module documentation for usage details
+- Remove redundant parameters in f5_provider to fix disparity between documentation and module parameters
+
 gluster.gluster
 ~~~~~~~~~~~~~~~
 
@@ -474,6 +562,16 @@ community.windows
 - win_disk_image - removed the deprecated return value ``mount_path`` in favour of ``mount_paths``.
 - win_psexec - removed the deprecated ``extra_opts`` option.
 
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Remove _bigip_iapplx_package alias
+- Remove _bigip_security_address_list alias
+- Remove _bigip_security_port_list alias
+- Remove _bigip_traffic_group alias
+- Remove bigip_appsvcs_extension module
+- Remove bigip_asm_policy module
+
 Deprecated Features
 -------------------
 
@@ -580,3 +678,10 @@ community.zabbix
 ~~~~~~~~~~~~~~~~
 
 - zabbix_proxy (module) - deprecates ``interface`` sub-options ``type`` and ``main`` when proxy type is set to passive via ``status=passive``. Make sure these suboptions are removed from your playbook as they were never supported by Zabbix in the first place.
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Deprecated bigip_appsvcs_extension module
+- Deprecated bigip_device_facts module name
+- Deprecated bigiq_device_facts module name
