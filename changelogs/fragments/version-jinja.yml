@@ -1,0 +1,2 @@
+minor_changes:
+  - CLI - Specify jinja version in ``--version`` output
