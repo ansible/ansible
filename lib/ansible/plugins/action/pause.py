@@ -181,7 +181,6 @@ class ActionModule(ActionBase):
             # that we can restore them later after we set raw mode
             stdin_fd = None
             stdout_fd = None
-            running_in_background = False
             try:
                 if PY3:
                     stdin = self._connection._new_stdin.buffer
