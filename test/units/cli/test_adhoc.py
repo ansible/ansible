@@ -104,7 +104,7 @@ def test_ansible_version(capsys, mocker):
         # Python 2.6 does return a named tuple, so get the first item
         version_lines = version[0].splitlines()
 
-    assert len(version_lines) == 8, 'Incorrect number of lines in "ansible --version" output'
+    assert len(version_lines) == 9, 'Incorrect number of lines in "ansible --version" output'
     assert re.match('ansible [0-9.a-z]+$', version_lines[0]), 'Incorrect ansible version line in "ansible --version" output'
     assert re.match('  config file = .*$', version_lines[1]), 'Incorrect config file line in "ansible --version" output'
     assert re.match('  configured module search path = .*$', version_lines[2]), 'Incorrect module search path in "ansible --version" output'
@@ -112,4 +112,5 @@ def test_ansible_version(capsys, mocker):
     assert re.match('  ansible collection location = .*$', version_lines[4]), 'Incorrect collection location in "ansible --version" output'
     assert re.match('  executable location = .*$', version_lines[5]), 'Incorrect executable locaction in "ansible --version" output'
     assert re.match('  python version = .*$', version_lines[6]), 'Incorrect python version in "ansible --version" output'
-    assert re.match('  libyaml = .*$', version_lines[7]), 'Missing libyaml in "ansible --version" output'
+    assert re.match('  jinja version = .*$', version_lines[7]), 'Incorrect jinja version in "ansible --version" output'
+    assert re.match('  libyaml = .*$', version_lines[8]), 'Missing libyaml in "ansible --version" output'
