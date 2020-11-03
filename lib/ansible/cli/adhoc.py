@@ -69,7 +69,7 @@ class AdHocCLI(CLI):
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)}}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        if context.CLIARGS['module_name'] not in ('include_role', 'include_tasks') and any(frozenset((async_val, poll))):
+        if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
 
@@ -118,7 +118,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if context.CLIARGS['module_name'] in ('import_playbook',):
+        if context.CLIARGS['module_name'] in C._ACTION_IMPORT_PLAYBOOK:
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 
