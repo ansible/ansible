@@ -182,12 +182,11 @@ class ActionModule(ActionBase):
                 stdout_fd = stdout.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
-                # AttributeError: someone is using a null file descriptor as stdin on windoez
+                # AttributeError: someone is using a null file descriptor as stdin on windoze
                 stdin = None
-
             if stdin_fd is not None:
-                # Compare the current process group to the proccees group accosicated
-                # with stdin to determine if the process is running the background.
+                # Compare the current process group to the process group associated
+                # with stdin to determine if the process is running in the background.
                 running_in_background = not getpgrp() == tcgetpgrp(stdin_fd)
                 if isatty(stdin_fd) and not running_in_background:
                     # grab actual Ctrl+C sequence
