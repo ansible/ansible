@@ -110,7 +110,8 @@ class CliconfBase(AnsiblePlugin):
             'sendonly': sendonly,
             'newline': newline,
             'prompt_retry_check': prompt_retry_check,
-            'check_all': check_all
+            'check_all': check_all,
+            'use_cache': use_cache,
         }
 
         if prompt is not None:
