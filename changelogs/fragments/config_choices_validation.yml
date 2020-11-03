@@ -1,0 +1,3 @@
+---
+bugfixes:
+- validate choices and also allow choices to document inline vs requriing notes or description
