@@ -277,6 +277,23 @@
   register: argspec_choices_bad_choice
   ignore_errors: true
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    list_choices:
+      - bar
+      - baz
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    list_choices:
+      - bar
+      - baz
+      - qux
+  register: argspec_list_choices_bad_choice
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -333,3 +350,5 @@
       - argspec_choices_with_strings_like_bools_false.choices_with_strings_like_bools == 'off'
 
       - argspec_choices_bad_choice is failed
+
+      - argspec_list_choices_bad_choice is failed

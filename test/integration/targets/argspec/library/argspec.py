@@ -97,7 +97,15 @@ def main():
                     'foo',
                     'bar',
                 ],
-            }
+            },
+            'list_choices': {
+                'type': 'list',
+                'choices': [
+                    'foo',
+                    'bar',
+                    'baz',
+                ],
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
