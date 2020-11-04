@@ -522,14 +522,10 @@ class ConfigManager(object):
                                               (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
             # ensure choice is valid
-            if value is not None and defs[config].get('choices'):
-                if value not in defs[config].get('choices'):
-                    choices = defs[config].get('choices')
-                    if isinstance(choices, Mapping):
-                        choices = ', '.join(choices.keys())
-                    else:
-                        choices = ', '.join(choices)
-                    raise AnsibleError("Invalid value '%s' for '%s', choices are: %s" % (value, config, choices))
+            if value is not None:
+                choices = defs[config].get('choices')
+                if choices is not None and value not in choices:
+                    raise AnsibleError("Invalid value '%s' for '%s', choices are: %s" % (value, config, ', '.join(choices)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
