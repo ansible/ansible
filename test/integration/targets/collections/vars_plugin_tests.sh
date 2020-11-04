@@ -2,7 +2,7 @@
 
 set -eux
 
-# Collections vars plugins must be whitelisted with FQCN because PluginLoader.all() does not search collections
+# Collections vars plugins must be enabled using the FQCN in the 'enabled' list, because PluginLoader.all() does not search collections
 
 # Let vars plugins run for inventory by using the global setting
 export ANSIBLE_RUN_VARS_PLUGINS=start
@@ -33,7 +33,7 @@ grep '"collection": "collection_root_user"' out.txt
 grep '"adj_var": "value"' out.txt
 grep -v '"collection": "adjacent"' out.txt
 
-# Test that 3rd party plugins in plugin_path do not need to require whitelisting by default
+# Test that 3rd party plugins in plugin_path do not need to require enabling by default
 # Plugins shipped with Ansible and in the custom plugin dir should be used first
 export ANSIBLE_VARS_PLUGINS=./custom_vars_plugins
 
@@ -42,15 +42,11 @@ ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
 grep '"name": "v2_vars_plugin"' out.txt
 grep '"collection": "collection_root_user"' out.txt
 grep '"adj_var": "value"' out.txt
-grep -v '"whitelisted": true' out.txt
 
-# Test plugins in plugin paths that opt-in to require whitelisting
+# Test plugins in plugin paths that opt-in to require enabling
 unset ANSIBLE_VARS_ENABLED
 unset ANSIBLE_COLLECTIONS_PATH
 
-ANSIBLE_VARS_ENABLED=vars_req_whitelist ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
-
-grep '"whitelisted": true' out.txt
 
 # Test vars plugins that support the stage setting don't run for inventory when stage is set to 'task'
 # and that the vars plugins that don't support the stage setting don't run for inventory when the global setting is 'demand'
@@ -58,7 +54,6 @@ ANSIBLE_VARS_PLUGIN_STAGE=task ansible-inventory -i a.statichost.yml --list --pl
 
 grep -v '"v1_vars_plugin": true' out.txt
 grep -v '"v2_vars_plugin": true' out.txt
-grep -v '"vars_req_whitelist": true' out.txt
 grep -v '"collection": "adjacent"' out.txt
 grep -v '"collection": "collection_root_user"' out.txt
 grep -v '"adj_var": "value"' out.txt
@@ -66,7 +61,6 @@ grep -v '"adj_var": "value"' out.txt
 # Test that the global setting allows v1 and v2 plugins to run after importing inventory
 ANSIBLE_RUN_VARS_PLUGINS=start ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
 
-grep -v '"vars_req_whitelist": true' out.txt
 grep '"v1_vars_plugin": true' out.txt
 grep '"v2_vars_plugin": true' out.txt
 grep '"name": "v2_vars_plugin"' out.txt

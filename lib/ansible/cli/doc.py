@@ -32,7 +32,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
-    BLACKLIST,
+    REJECTLIST,
     remove_current_collection_from_versions_and_dates,
     get_docstring,
     get_versioned_doclink,
@@ -259,7 +259,7 @@ class DocCLI(CLI):
                     # The doc section existed but was empty
                     continue
 
-                plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
+                plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
 
             if do_json:
                 jdump(plugin_docs)
@@ -355,6 +355,19 @@ class DocCLI(CLI):
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
+    def _combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
+        # generate extra data
+        if plugin_type == 'module':
+            # is there corresponding action plugin?
+            if plugin in action_loader:
+                doc['has_action'] = True
+            else:
+                doc['has_action'] = False
+
+        # return everything as one dictionary
+        return {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
+
+    @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
         collection_name = doc['collection']
 
@@ -368,18 +381,6 @@ class DocCLI(CLI):
         doc['plainexamples'] = plainexamples
         doc['returndocs'] = returndocs
         doc['metadata'] = metadata
-
-        # generate extra data
-        if plugin_type == 'module':
-            # is there corresponding action plugin?
-            if plugin in action_loader:
-                doc['action'] = True
-            else:
-                doc['action'] = False
-
-        doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-        if 'docuri' in doc:
-            doc['docuri'] = doc[plugin_type].replace('_', '-')
 
         if context.CLIARGS['show_snippet'] and plugin_type == 'module':
             text = DocCLI.get_snippet_text(doc)
@@ -416,7 +417,7 @@ class DocCLI(CLI):
                 continue
             elif os.path.isdir(full_path):
                 continue
-            elif any(plugin.endswith(x) for x in C.BLACKLIST_EXTS):
+            elif any(plugin.endswith(x) for x in C.REJECT_EXTS):
                 continue
             elif plugin.startswith('__'):
                 continue
@@ -429,7 +430,7 @@ class DocCLI(CLI):
             plugin = os.path.splitext(plugin)[0]  # removes the extension
             plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
 
-            if plugin not in BLACKLIST.get(bkey, ()):
+            if plugin not in REJECTLIST.get(bkey, ()):
 
                 if collection:
                     plugin = '%s.%s' % (collection, plugin)
@@ -658,7 +659,7 @@ class DocCLI(CLI):
                 text.append("%s" % doc.pop('deprecated'))
             text.append("\n")
 
-        if doc.pop('action', False):
+        if doc.pop('has_action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if doc.get('options', False):
