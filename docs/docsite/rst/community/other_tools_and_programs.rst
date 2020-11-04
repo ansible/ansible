@@ -1,7 +1,7 @@
 .. _other_tools_and_programs:
 
 ************************
-Other tools and programs
+Other Tools and Programs
 ************************
 
 .. contents::
