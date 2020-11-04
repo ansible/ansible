@@ -260,6 +260,14 @@ EXAMPLES = '''
 - git:
     single_branch: yes
     branch: master
+
+- name: avoid hanging when http(s) password is missing
+  git:
+    repo: https://github.com/ansible/could-be-a-private-repo
+    dest: /src/from-private-repo
+  environment:
+    GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
+    # or GIT_ASKPASS: /bin/true # for git before version 2.3.0, reports "Authentication failed" on missing password
 '''
 
 RETURN = '''
