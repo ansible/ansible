@@ -136,7 +136,6 @@ matrix:
     - env: T=i/aws/3.6/1
     - env: T=i/azure/2.7/1
     - env: T=i/azure/3.6/1
-    - env: T=i/tower//1
     - env: T=i/cloud//1
 
 branches:
