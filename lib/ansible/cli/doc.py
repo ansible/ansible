@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import datetime
 import json
+import pkgutil
 import os
 import re
 import textwrap
@@ -26,6 +27,7 @@ from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
+from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -116,8 +118,8 @@ class DocCLI(CLI):
         self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
         self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
                                  help='Choose which plugin type (defaults to "module"). '
-                                      'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
-                                 choices=C.DOCUMENTABLE_PLUGINS)
+                                      'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS + ('keyword',)),
+                                 choices=C.DOCUMENTABLE_PLUGINS + ('keyword',))
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
 
@@ -181,6 +183,16 @@ class DocCLI(CLI):
 
         if plugin_type in C.DOCUMENTABLE_PLUGINS:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        if plugin_type == 'keyword':
+            text = []
+            for keyword in context.CLIARGS['args']:
+                try:
+                    text.append(DocCLI._get_keyword_doc(keyword))
+                except KeyError as e:
+                    display.warning("Skipping Invalid keyword '%s' specified: %s" % to_native(e))
+
+            DocCLI.pager(''.join(text))
+            return 0
         else:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
@@ -331,6 +343,11 @@ class DocCLI(CLI):
             clean_ns = None
 
         return clean_ns
+
+    @staticmethod
+    def _get_keyword_doc(keyword):
+        keywords = from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
+        return "%s: %s\n" % (keyword, keywords[keyword])
 
     @staticmethod
     def _get_plugin_doc(plugin, plugin_type, loader, search_paths):
