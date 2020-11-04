@@ -80,6 +80,7 @@ if __name__ == '__main__':
                     'Current version: %s' % ''.join(sys.version.splitlines())
                 ),
                 version='2.12',
+                collection_name='ansible.builtin',
             )
         display.debug("starting run")
 
