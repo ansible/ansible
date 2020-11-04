@@ -9,33 +9,40 @@ Here is a basic example::
 
     - hosts: localhost
       module_defaults:
-        file:
+        ansible.builtin.file:
           owner: root
           group: root
           mode: 0755
       tasks:
-        - file:
+        - name: Create file1
+          ansible.builtin.file:
             state: touch
             path: /tmp/file1
-        - file:
+
+        - name: Create file2
+          ansible.builtin.file:
             state: touch
             path: /tmp/file2
-        - file:
+
+        - name: Create file3
+          ansible.builtin.file:
             state: touch
             path: /tmp/file3
 
 The ``module_defaults`` keyword can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument::
 
     - block:
-        - debug:
-            msg: "a different message"
+        - name: Print a message
+          ansible.builtin.debug:
+            msg: "Different message"
       module_defaults:
-        debug:
-          msg: "a default message"
+        ansible.builtin.debug:
+          msg: "Default message"
 
 You can remove any previously established defaults for a module by specifying an empty dict::
 
-    - file:
+    - name: Create file1
+      ansible.builtin.file:
         state: touch
         path: /tmp/file1
       module_defaults:
@@ -50,16 +57,21 @@ Interacting with an API that requires auth::
 
     - hosts: localhost
       module_defaults:
-        uri:
+        ansible.builtin.uri:
           force_basic_auth: true
           user: some_user
           password: some_password
       tasks:
-        - uri:
+        - name: Interact with a web service
+          ansible.builtin.uri:
             url: http://some.api.host/v1/whatever1
-        - uri:
+
+        - name: Interact with a web service
+          ansible.builtin.uri:
             url: http://some.api.host/v1/whatever2
-        - uri:
+
+        - name: Interact with a web service
+          ansible.builtin.uri:
             url: http://some.api.host/v1/whatever3
 
 Setting a default AWS region for specific EC2-related modules::
@@ -68,11 +80,11 @@ Setting a default AWS region for specific EC2-related modules::
       vars:
         my_region: us-west-2
       module_defaults:
-        ec2:
+        amazon.aws.ec2:
           region: '{{ my_region }}'
-        ec2_instance_info:
+        community.aws.ec2_instance_info:
           region: '{{ my_region }}'
-        ec2_vpc_net_info:
+        amazon.aws.ec2_vpc_net_info:
           region: '{{ my_region }}'
 
 .. _module_defaults_groups:
@@ -120,8 +132,12 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
         group/aws:
           region: us-west-2
       tasks:
-      - aws_s3_bucket_info:
+      - name: Get info
+        aws_s3_bucket_info:
+
       # now the region is shared between both info modules
-      - ec2_ami_info:
+
+      - name: Get info
+        ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'
