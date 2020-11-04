@@ -116,10 +116,12 @@ class DocCLI(CLI):
         opt_help.add_basedir_options(self.parser)
 
         self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
+
+        T_OPT = C.DOCUMENTABLE_PLUGINS + ('keyword',)
         self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
                                  help='Choose which plugin type (defaults to "module"). '
-                                      'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS + ('keyword',)),
-                                 choices=C.DOCUMENTABLE_PLUGINS + ('keyword',))
+                                      'Available plugin types are : {0}'.format(T_OPT),
+                                 choices=T_OPT)
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
 
@@ -183,13 +185,13 @@ class DocCLI(CLI):
 
         if plugin_type in C.DOCUMENTABLE_PLUGINS:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        if plugin_type == 'keyword':
+        elif plugin_type == 'keyword':
             text = []
             for keyword in context.CLIARGS['args']:
                 try:
                     text.append(DocCLI._get_keyword_doc(keyword))
                 except KeyError as e:
-                    display.warning("Skipping Invalid keyword '%s' specified: %s" % to_native(e))
+                    display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_native(e)))
 
             DocCLI.pager(''.join(text))
             return 0
