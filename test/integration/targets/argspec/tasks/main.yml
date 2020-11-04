@@ -84,6 +84,12 @@
   register: argspec_good_mapping_json
 
 - argspec:
+    mapping: !!str '{"foo": False}'
+    required: value
+    required_one_of_one: value
+  register: argspec_good_mapping_dict_repr
+
+- argspec:
     mapping: foo
     required: value
     required_one_of_one: value
@@ -289,6 +295,9 @@
       - argspec_good_mapping_json is successful
       - >-
         argspec_good_mapping_json.mapping == {'foo': 'bar'}
+      - argspec_good_mapping_dict_repr is successful
+      - >-
+        argspec_good_mapping_dict_repr.mapping == {'foo': False}
       - argspec_good_mapping_kv is successful
       - >-
         argspec_good_mapping_kv.mapping == {'foo': 'bar'}
