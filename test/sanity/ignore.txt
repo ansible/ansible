@@ -198,8 +198,6 @@ test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPat
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
 test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
-test/support/integration/plugins/module_utils/ansible_tower.py future-import-boilerplate
-test/support/integration/plugins/module_utils/ansible_tower.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
