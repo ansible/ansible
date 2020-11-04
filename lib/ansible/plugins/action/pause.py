@@ -70,6 +70,7 @@ def clear_line(stdout):
     stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
     stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
 
+
 def is_interactive(fd=None):
     if fd is None:
         return False
