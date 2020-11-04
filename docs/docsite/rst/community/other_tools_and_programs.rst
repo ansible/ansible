@@ -75,7 +75,8 @@ JetBrains
 
 An open-source Community edition and closed-source Enterprise edition, integrated development environments based on IntelliJ's framework including IDEA, AppCode, CLion, GoLand, PhpStorm, PyCharm and others. Useful JetBrains platform plugins include:
 
-* `Ansible <https://plugins.jetbrains.com/plugin/14893-ansible>`_ - Ansible plugin for Jetbrains IDEs. It provides auto-completion, role name suggestion and other  handy features to work with playbooks and roles. 
+* `Ansible <https://plugins.jetbrains.com/plugin/14893-ansible>`_ - general Ansible plugin provides auto-completion, role name suggestion and other handy features for working with playbooks and roles.
+
 * `Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - Ansible Vault Editor with auto encryption/decryption.
 
 *****************
@@ -120,4 +121,3 @@ Other Tools
 - `OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - uses Ansible to configure an environment that provides the support of `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_, namely centralized logging and analysis, availability monitoring, and performance monitoring.
 - `TD4A <https://github.com/cidrblock/td4a>`_ - a template designer for automation. TD4A is a visual design aid for building and testing jinja2 templates. It will combine data in yaml format with a jinja2 template and render the output.
 - `PHP-Ansible <https://github.com/maschmann/php-ansible>`_ - an object oriented Ansible wrapper for PHP.
-
