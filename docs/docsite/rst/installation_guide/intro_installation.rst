@@ -35,7 +35,7 @@ When choosing a control node, bear in mind that any management system benefits f
 
 .. warning::
 
-    Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python3.8 or newer to function on the control node.
+    Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node.
 
 .. warning::
 
