@@ -128,12 +128,14 @@ options:
   security:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+      - Note that, similar to ``dnf upgrade-minimal``, this filter applies to dependencies as well.
     type: bool
     default: "no"
     version_added: "2.7"
   bugfix:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - Note that, similar to ``dnf upgrade-minimal``, this filter applies to dependencies as well.
     default: "no"
     type: bool
     version_added: "2.7"
@@ -674,10 +676,10 @@ class DnfModule(YumDnf):
         filters = []
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
-            filters.append(base.sack.query().filter(**key))
+            filters.append(base.sack.query().upgrades().filter(**key))
         if self.security:
             key = {'advisory_type__eq': 'security'}
-            filters.append(base.sack.query().filter(**key))
+            filters.append(base.sack.query().upgrades().filter(**key))
         if filters:
             base._update_security_filters = filters
 
