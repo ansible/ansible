@@ -75,7 +75,7 @@ To create an info module:
 
 1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing module using collection, ``$ cd plugins/modules/`` inside your collection development tree.
 2. Create your new module file: ``$ touch my_test_info.py``.
-3. Paste the content below into your new info module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
+3. Paste the content below into your new info module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>`, a simple :ref:`argument spec for declaring the module options <argument_spec>`, and some example code.
 4. Modify and extend the code to do what you want your new info module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
 
 .. literalinclude:: ../../../../examples/scripts/my_test_info.py
@@ -93,7 +93,7 @@ To create a module:
 
 1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing a module in a :ref:`collection <developing_collections>`, ``$ cd plugins/modules/`` inside your collection development tree.
 2. Create your new module file: ``$ touch my_test.py``.
-3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
+3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>`, a simple :ref:`argument spec for declaring the module options <argument_spec>`, and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
 
 .. literalinclude:: ../../../../examples/scripts/my_test.py
