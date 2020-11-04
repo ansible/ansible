@@ -81,6 +81,7 @@ import os
 import time
 import re
 
+from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 
@@ -290,7 +291,7 @@ class CallbackModule(CallbackBase):
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
-            if task_data.action == 'setup' and self._include_setup_tasks_in_report == 'false':
+            if task_data.action in C._ACTION_SETUP and self._include_setup_tasks_in_report == 'false':
                 continue
 
             for host_uuid, host_data in task_data.host_data.items():
