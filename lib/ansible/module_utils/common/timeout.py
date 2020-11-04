@@ -46,5 +46,5 @@ class Timeout:
         signal.signal(signal.SIGALRM, signal.SIG_IGN)
         if exc_type is TimeoutError:
             self.timed_out = True
-            if not raising:
+            if not self._raising:
                 return True
