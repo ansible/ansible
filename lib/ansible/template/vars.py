@@ -54,8 +54,10 @@ class AnsibleJ2Vars(ChainMap):
     def __getitem__(self, varname):
         variable = super().__getitem__(varname)
 
+        # HostVars and AutoVars are special self templting returns.
+        # this is how 'vars' and 'hostvars' magic variables are implemented.
         from ansible.vars.hostvars import HostVars
-        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, AutoVars) or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, (AutoVars, HostVars)) or hasattr(variable, '__UNSAFE__'):
             return variable
 
         try:
