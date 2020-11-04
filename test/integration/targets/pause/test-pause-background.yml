@@ -5,7 +5,6 @@
 
   tasks:
     - pause:
+
     - pause:
         seconds: 1
-    - debug:
-        msg: After pause
