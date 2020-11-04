@@ -55,7 +55,7 @@ class AnsibleJ2Vars(ChainMap):
         variable = super().__getitem__(varname)
 
         from ansible.vars.hostvars import HostVars
-        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, AutoVars) or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
             return variable
 
         try:
@@ -98,7 +98,11 @@ class AutoVars(Mapping):
     ''' A special view of template vars on demand. '''
 
     def __init__(self, templar, myvars=None):
+
         self._t = templar
+
+        # this allows for vars that are part of this object to be
+        # resolved even if they depend on vars not contained within.
         if myvars is None:
             self._vars = self._t._available_variables
         else:
