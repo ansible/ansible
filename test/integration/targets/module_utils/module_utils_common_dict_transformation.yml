@@ -4,23 +4,27 @@
     - test_recursive_diff:
         a:
           foo:
-            - bar:
-                baz: qux
+            bar:
+              - baz:
+                  qux: ham_sandwich
         b:
           foo:
-            - bar:
-                baz: notqux
+            bar:
+              - baz:
+                  qux: turkey_sandwich
       register: recursive_diff_diff
 
     - test_recursive_diff:
         a:
           foo:
-            - bar:
-                baz: qux
+            bar:
+              - baz:
+                  qux: ham_sandwich
         b:
           foo:
-            - bar:
-                baz: qux
+            bar:
+              - baz:
+                  qux: ham_sandwich
       register: recursive_diff_same
 
     - assert:
