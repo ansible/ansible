@@ -180,6 +180,14 @@ class TestRunCommandCwd:
         rc_am.run_command('/bin/ls', cwd='/not-a-dir')
         assert rc_am._os.chdir.mock_calls == [mocker.call('/old'), ]
 
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_cwd_not_a_dir_noignore(self, rc_am):
+        rc_am._os.getcwd.return_value = '/old'
+        rc_am._os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
+        with pytest.raises(SystemExit):
+            rc_am.run_command('/bin/ls', cwd='/not-a-dir', ignore_invalid_cwd=False)
+        assert rc_am.fail_json.called
+
 
 class TestRunCommandPrompt:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
