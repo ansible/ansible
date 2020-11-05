@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: downgrade
+  shell: dnf downgrade -y https://dl.fedoraproject.org/pub/fedora/linux/updates/32/Everything/x86_64/Packages/c/coreutils-8.32-4.fc32.1.x86_64.rpm https://dl.fedoraproject.org/pub/fedora/linux/updates/32/Everything/x86_64/Packages/c/coreutils-common-8.32-4.fc32.1.x86_64.rpm https://dl.fedoraproject.org/pub/fedora/linux/updates/32/Everything/x86_64/Packages/c/coreutils-single-8.32-4.fc32.1.x86_64.rpm
+
 - name: DEBUG
   shell: ls -laZ /; mount; df -h; getenforce; touch /tmp/a
   ignore_errors: true
