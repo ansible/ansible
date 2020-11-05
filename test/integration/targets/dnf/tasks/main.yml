@@ -62,5 +62,6 @@
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
 
 - include_tasks: nobest.yml
-  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('24', '>=')) or
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('24', '>=')
+         and ansible_distribution_major_version is version('33', '<')) or
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
