@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
+import importlib
 import json
 import pkgutil
 import os
@@ -44,6 +45,8 @@ display = Display()
 
 
 TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('keyword',)
+PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
+PB_LOADED = {}
 
 
 def jdump(text):
@@ -88,6 +91,9 @@ class DocCLI(CLI):
     _CONST = re.compile(r"\bC\(([^)]+)\)")
     _RULER = re.compile(r"\bHORIZONTALLINE\b")
 
+    # rst specific
+    _REFTAG = re.compile(r":ref:")
+
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
@@ -104,6 +110,8 @@ class DocCLI(CLI):
         t = cls._REF.sub(r"\1", t)                      # R(word, sphinx-ref) => word
         t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
+
+        t = cls._REFTAG.sub(r"", text)  # remove rst :ref:
 
         return t
 
@@ -184,23 +192,55 @@ class DocCLI(CLI):
 
     @staticmethod
     def _get_keywords_docs(keys):
+
         data = {}
         descs = DocCLI._list_keywords()
         for keyword in keys:
+            if keyword.startswith('with_'):
+                keyword = 'loop'
             try:
                 # if no desc, typeerror raised ends this block
                 kdata = {'description': descs[keyword]}
 
-                #_get_playbook_objects(keyword)
-                # get info from playbook objects/ FA defs
-                kdata['applies'] = 'TODO' #
-                kdata['type'] = 'TODO'
-                kdata['default'] = 'TODO'
-                kdata['template'] = 'TODO' # static|implicit|explicit
-                kdata['stage'] = 'TODO' # pre|post|loop
+                #_get_playbook_objects for keyword
+                kdata['applies_to'] = []
+                for pobj in PB_OBJECTS:
+                    if pobj not in PB_LOADED:
+                        obj_class = 'ansible.playbook.%s' % pobj.lower()
+                        loaded_class = importlib.import_module(obj_class)
+                        PB_LOADED[pobj] = getattr(loaded_class, pobj, None)
+
+                    if keyword in PB_LOADED[pobj]._valid_attrs:
+                        kdata['applies_to'].append(pobj)
+
+                        # we should only need these once
+                        if 'type' not in kdata:
+
+                            fa = getattr(PB_LOADED[pobj], '_%s' % keyword)
+                            if getattr(fa, 'private'):
+                                kdata = {}
+                                raise KeyError
+
+                            kdata['type'] = getattr(fa, 'isa', 'string')
+
+                            if keyword.endswith('when'):
+                                kdata['template'] = 'implicit'
+                            elif getattr(fa, 'static'):
+                                kdata['template'] = 'static'
+                            else:
+                                kdata['template'] = 'explicit'
+
+                            # those that require no processing
+                            for visible in ('alias', 'priority') :
+                                kdata[visible] = getattr(fa, visible)
 
             except KeyError as e:
                 display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_native(e)))
+
+            # remove None keys
+            for k in list(kdata.keys()):
+                if kdata[k] is None:
+                    del kdata[k]
 
             data[keyword] = kdata
 
