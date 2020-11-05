@@ -99,6 +99,17 @@ class InventoryCLI(CLI):
         # self.parser.add_argument("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
         #                          help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
+        # dot color options
+        self.parser.add_argument("--dot-bg", default='white', dest='dot_bg',
+                                 help='Specify the background color of the dot graph (default : white)')
+        self.parser.add_argument("--dot-node-bg", default='grey', dest='dot_node_bg',
+                                 help='Specify the background color of the dot graph (default : grey)')
+        self.parser.add_argument("--dot-fg", default='black', dest='dot_fg',
+                                 help='Specify the text and frame color of the dot graph (default : black)')
+        self.parser.add_argument("--dot-edge-fg", default='darkgrey', dest='dot_edge_fg',
+                                 help='Specify the arrow color of the dot graph (default : darkgrey)')
+
+
     def post_process_args(self, options):
         options = super(InventoryCLI, self).post_process_args(options)
 
@@ -311,9 +322,10 @@ class InventoryCLI(CLI):
 
         output = [
             'digraph G {',
-            'graph [rankdir="LR" bgcolor="#F6F6F6"];',
-            'node [shape="record" color="#D3D3D3" style="filled" fillcolor="#AAAAAA" contraint="false"];',
-            'edge [color="#4284F3"];',
+            'graph [rankdir="LR" bgcolor="%s"];' % (context.CLIARGS['dot_bg']),
+            'node [shape="record" color="%s" fontcolor="%s" style="filled" fillcolor="%s" contraint="false"];' % (
+                context.CLIARGS['dot_fg'], context.CLIARGS['dot_fg'], context.CLIARGS['dot_node_bg']),
+            'edge [color="%s"];' % (context.CLIARGS['dot_edge_fg']),
         ]
         output.extend(self._graph_group_dot(start_at))
         output.append('}')
