@@ -88,7 +88,7 @@ class InventoryCLI(CLI):
         self.parser.add_argument('--toml', action='store_true', default=False, dest='toml',
                                  help='Use TOML format instead of default JSON, ignored for --graph and --dot')
         self.parser.add_argument("--vars", action="store_true", default=False, dest='show_vars',
-                                 help='Add vars to graph display, ignored unless used with --graph and --dot')
+                                 help='Add vars to graph display, ignored unless used with --graph')
 
         # list
         self.parser.add_argument("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
@@ -320,6 +320,8 @@ class InventoryCLI(CLI):
 
         start_at = self._get_group(context.CLIARGS['pattern'])
         output = [
+            '// diagram generated ansible-inventory for %s group' % (start_at),
+            '// this file is meant to be compiled with the graphviz toolchain',
             'digraph G {',
             'graph [rankdir="LR" bgcolor="%s"];' % (context.CLIARGS['dot_bg']),
             'node [shape="record" color="%s" fontcolor="%s" style="filled" fillcolor="%s" contraint="false"];' % (
