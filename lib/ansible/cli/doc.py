@@ -93,6 +93,9 @@ class DocCLI(CLI):
 
     # rst specific
     _REFTAG = re.compile(r":ref:")
+    _TERM = re.compile(r":term:")
+    _NOTES = re.compile(r".. note:")
+    _SEEALSO = re.compile(r"^\s*.. seealso:.*$", re.MULTILINE)
 
     def __init__(self, args):
 
@@ -112,6 +115,9 @@ class DocCLI(CLI):
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
         t = cls._REFTAG.sub(r"", t)  # remove rst :ref:
+        t = cls._TERM.sub(r"", t)  # remove rst :term:
+        t = cls._NOTES.sub(r" note", t)  # nicer note
+        t = cls._SEEALSO.sub(r"", t)  # remove seealso
 
         return t
 
