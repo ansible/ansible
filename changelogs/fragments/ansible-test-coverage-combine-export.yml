@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Added a ``--export`` option to the ``ansible-test coverage combine`` command to facilitate multi-stage aggregation of coverage in CI pipelines.
