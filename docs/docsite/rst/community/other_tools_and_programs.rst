@@ -75,8 +75,9 @@ JetBrains
 
 An open-source Community edition and closed-source Enterprise edition, integrated development environments based on IntelliJ's framework including IDEA, AppCode, CLion, GoLand, PhpStorm, PyCharm and others. Useful JetBrains platform plugins include:
 
-* `Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - Ansible Vault Editor with auto encryption/decryption.
+* `Ansible <https://plugins.jetbrains.com/plugin/14893-ansible>`_ - general Ansible plugin provides auto-completion, role name suggestion and other handy features for working with playbooks and roles.
 
+* `Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - Ansible Vault Editor with auto encryption/decryption.
 
 *****************
 Development tools
