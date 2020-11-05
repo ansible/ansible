@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - fix filtering to avoid dependncy conflicts (https://github.com/ansible/ansible/issues/72316)
