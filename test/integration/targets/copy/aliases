@@ -1,4 +1,4 @@
 needs/root
-shippable/posix/group2
+shippable/posix/group3
 destructive
 skip/aix

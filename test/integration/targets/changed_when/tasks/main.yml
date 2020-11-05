@@ -16,6 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: DEBUG
+  shell: ls -laZ /; mount; df -h; getenforce; touch /tmp/a
+  ignore_errors: true
+  register: d
+
+- debug: var=d
+
 - name: ensure shell is always changed
   shell: ls -al /tmp
   register: shell_result
