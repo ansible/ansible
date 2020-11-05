@@ -125,6 +125,9 @@ class InventoryCLI(CLI):
         elif used > 1:
             raise AnsibleOptionsError("Conflicting options used, only one of --host, --graph, --dot or --list can be used at the same time.")
 
+        if options.graph_dot and options.show_vars:
+            raise AnsibleOptionsError("Variable display is not support in dot diagrams.")
+
         # set host pattern to default if not supplied
         if options.args:
             options.pattern = options.args
