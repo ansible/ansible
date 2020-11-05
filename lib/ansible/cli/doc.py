@@ -234,15 +234,15 @@ class DocCLI(CLI):
                             for visible in ('alias', 'priority') :
                                 kdata[visible] = getattr(fa, visible)
 
+                # remove None keys
+                for k in list(kdata.keys()):
+                    if kdata[k] is None:
+                        del kdata[k]
+
+                data[keyword] = kdata
+
             except KeyError as e:
                 display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_native(e)))
-
-            # remove None keys
-            for k in list(kdata.keys()):
-                if kdata[k] is None:
-                    del kdata[k]
-
-            data[keyword] = kdata
 
         return data
 
