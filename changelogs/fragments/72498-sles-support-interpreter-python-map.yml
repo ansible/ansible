@@ -1,0 +1,2 @@
+minor_changes:
+  - config - add support for SLES to INTERPRETER_PYTHON_DISTRO_MAP, causing it to default to ``/usr/bin/python3`` starting with SLES 15.
