@@ -330,6 +330,18 @@
 - command: ansible localhost -m import_role -a 'role=argspec tasks_from=password_no_log.yml'
   register: argspec_password_no_log
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    int: 1
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    int: foo
+  register: argspec_int_invalid
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -403,3 +415,5 @@
       - '"Module did not set no_log for password" not in argspec_password_no_log.stderr'
       - '"Module did not set no_log for not_a_password" not in argspec_password_no_log.stderr'
       - argspec_password_no_log.stdout|regex_findall('VALUE_SPECIFIED_IN_NO_LOG_PARAMETER')|length == 1
+
+      - argspec_int_invalid is failed

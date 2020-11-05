@@ -123,6 +123,9 @@ def main():
             'maybe_password': {
                 'type': 'str',
             },
+            'int': {
+                'type': 'int',
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
