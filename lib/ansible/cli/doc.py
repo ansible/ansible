@@ -111,7 +111,7 @@ class DocCLI(CLI):
         t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
-        t = cls._REFTAG.sub(r"", text)  # remove rst :ref:
+        t = cls._REFTAG.sub(r"", t)  # remove rst :ref:
 
         return t
 
