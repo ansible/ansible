@@ -109,7 +109,6 @@ class InventoryCLI(CLI):
         self.parser.add_argument("--dot-edge-fg", default='darkgrey', dest='dot_edge_fg',
                                  help='Specify the arrow color of the dot graph (default : darkgrey)')
 
-
     def post_process_args(self, options):
         options = super(InventoryCLI, self).post_process_args(options)
 
@@ -317,9 +316,6 @@ class InventoryCLI(CLI):
     def inventory_graph_dot(self):
 
         start_at = self._get_group(context.CLIARGS['pattern'])
-        if context.CLIARGS['show_vars']:
-            raise AnsibleOptionsError("This would be graphic")
-
         output = [
             'digraph G {',
             'graph [rankdir="LR" bgcolor="%s"];' % (context.CLIARGS['dot_bg']),
