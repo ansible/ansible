@@ -19,10 +19,10 @@ expected_out="$(cat fakemodule.output)"
 test "$current_out" == "$expected_out"
 
 # ensure we do work with valid collection name for list
-ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Skipping 'testns.testcol.fakemodule' as it is invalid collection name."
+ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "as it is invalid collection name."
 
 # ensure we dont break on invalid collection name for list
-ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Skipping 'testns.testcol.fakemodule' as it is invalid collection name."
+ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "as it is invalid collection name."
 
 
 # test listing diff plugin types from collection
