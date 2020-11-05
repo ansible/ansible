@@ -953,7 +953,7 @@ class Templar:
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
 
-            jvars = AnsibleJ2Vars(self, t.globals)
+            jvars = AnsibleJ2Vars(self, t.globals, {'vars': AutoVars(self)})
 
             # In case this is a recursive call to do_template we need to
             # save/restore cur_context to prevent overriding __UNSAFE__.
