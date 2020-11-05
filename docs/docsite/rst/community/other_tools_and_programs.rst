@@ -1,8 +1,8 @@
 .. _other_tools_and_programs:
 
-########################
-Other Tools And Programs
-########################
+************************
+Other Tools and Programs
+************************
 
 .. contents::
    :local:
@@ -12,7 +12,7 @@ The Ansible community uses a range of tools for working with the Ansible project
 If you know of any other tools that should be added, this list can be updated by clicking "Edit on GitHub" on the top right of this page.
 
 ***************
-Popular Editors
+Popular editors
 ***************
 
 Atom
@@ -53,7 +53,7 @@ A closed-source, subscription GUI text editor. You can customize the GUI with th
 * `Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - a Sublime wrapper around yamllint.
 
 
-Visual Studio Code
+Visual studio code
 ==================
 
 An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:
@@ -79,7 +79,7 @@ An open-source Community edition and closed-source Enterprise edition, integrate
 
 
 *****************
-Development Tools
+Development tools
 *****************
 
 Finding related issues and PRs
@@ -93,22 +93,22 @@ There are various ways to find existing issues and pull requests (PRs)
 .. _validate-playbook-tools:
 
 ******************************
-Tools for Validating Playbooks
+Tools for validating playbooks
 ******************************
 
 - `Ansible Lint <https://docs.ansible.com/ansible-lint/index.html>`_ - a highly configurable linter for Ansible playbooks.
 - `Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review.
-- `Molecule <https://molecule.readthedocs.io/en/latest/>`_ is a testing framework for Ansible plays and roles.
-- `yamllint <https://yamllint.readthedocs.io/en/stable/>`__ is a command-line utility to check syntax validity including key repetition and indentation issues.
+- `Molecule <https://molecule.readthedocs.io/en/latest/>`_ - a testing framework for Ansible plays and roles.
+- `yamllint <https://yamllint.readthedocs.io/en/stable/>`__ - a command-line utility to check syntax validity including key repetition and indentation issues.
 
 
 ***********
-Other Tools
+Other tools
 ***********
 
 - `Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information.
 - `Ansible Inventory Grapher <https://github.com/willthames/ansible-inventory-grapher>`_ - visually displays inventory inheritance hierarchies and at what level a variable is defined in inventory.
-- `Ansible Playbook Grapher <https://github.com/haidaraM/ansible-playbook-grapher>`_ - A command line tool to create a graph representing your Ansible playbook tasks and roles.
+- `Ansible Playbook Grapher <https://github.com/haidaraM/ansible-playbook-grapher>`_ - a command line tool to create a graph representing your Ansible playbook tasks and roles.
 - `Ansible Shell <https://github.com/dominis/ansible-shell>`_ - an interactive shell for Ansible with built-in tab completion for all the modules.
 - `Ansible Silo <https://github.com/groupon/ansible-silo>`_ - a self-contained Ansible environment by Docker.
 - `Ansigenome <https://github.com/nickjj/ansigenome>`_ - a command line tool designed to help you manage your Ansible roles.
@@ -120,4 +120,3 @@ Other Tools
 - `OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - uses Ansible to configure an environment that provides the support of `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_, namely centralized logging and analysis, availability monitoring, and performance monitoring.
 - `TD4A <https://github.com/cidrblock/td4a>`_ - a template designer for automation. TD4A is a visual design aid for building and testing jinja2 templates. It will combine data in yaml format with a jinja2 template and render the output.
 - `PHP-Ansible <https://github.com/maschmann/php-ansible>`_ - an object oriented Ansible wrapper for PHP.
-
