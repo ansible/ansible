@@ -46,7 +46,7 @@ class DateTimeFactCollector(BaseFactCollector):
         date_time_facts['hour'] = now.strftime('%H')
         date_time_facts['minute'] = now.strftime('%M')
         date_time_facts['second'] = now.strftime('%S')
-        date_time_facts['epoch'] = now.strftime('%s')
+        date_time_facts['epoch'] = str(int(now.strftime('%s')))
         if date_time_facts['epoch'] == '' or date_time_facts['epoch'][0] == '%':
             date_time_facts['epoch'] = str(int(epoch_ts))
         date_time_facts['date'] = now.strftime('%Y-%m-%d')
