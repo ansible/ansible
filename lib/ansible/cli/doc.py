@@ -202,7 +202,7 @@ class DocCLI(CLI):
                 # if no desc, typeerror raised ends this block
                 kdata = {'description': descs[keyword]}
 
-                #_get_playbook_objects for keyword
+                # get playbook objects for keyword and use first to get keyword attributes
                 kdata['applies_to'] = []
                 for pobj in PB_OBJECTS:
                     if pobj not in PB_LOADED:
