@@ -289,7 +289,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                     new_data = self._loader.load_from_file(found)
                     if new_data:
                         if isinstance(new_data, Mapping):
-                            data = combine_vars(data, new_data)
+                            if allow_dir:
+                                data = combine_vars(data, new_data)
+                            else:
+                                data = new_data
                         else:
                             display.warning("Skipping '%s' vars file as it didn't produce a dictionary but a '%s'" % (to_text(found), type(new_data)))
             elif main is not None:
