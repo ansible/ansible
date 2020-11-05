@@ -106,6 +106,23 @@ def main():
                     'baz',
                 ],
             },
+            'primary': {
+                'type': 'str',
+                'aliases': [
+                    'alias',
+                ],
+            },
+            'password': {
+                'type': 'str',
+                'no_log': True,
+            },
+            'not_a_password': {
+                'type': 'str',
+                'no_log': False,
+            },
+            'maybe_password': {
+                'type': 'str',
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
