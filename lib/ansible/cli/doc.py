@@ -231,7 +231,7 @@ class DocCLI(CLI):
                                 kdata['template'] = 'explicit'
 
                             # those that require no processing
-                            for visible in ('alias', 'priority') :
+                            for visible in ('alias', 'priority'):
                                 kdata[visible] = getattr(fa, visible)
 
                 # remove None keys
@@ -276,7 +276,6 @@ class DocCLI(CLI):
         return results
 
     def _get_plugins_docs(self, plugin_type, loader):
-
 
         search_paths = DocCLI.print_paths(loader)
 
