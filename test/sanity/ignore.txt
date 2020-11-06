@@ -234,8 +234,6 @@ test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py future-i
 test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py metaclass-boilerplate
 test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py future-import-boilerplate
 test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py metaclass-boilerplate
-test/integration/targets/incidental_script_inventory_vmware_inventory/vmware_inventory.py future-import-boilerplate
-test/integration/targets/incidental_script_inventory_vmware_inventory/vmware_inventory.py metaclass-boilerplate
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip
