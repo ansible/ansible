@@ -11,3 +11,5 @@ ansible-playbook module_utils_vvvvv.yml -i ../../inventory -vvvvv "$@"
 ansible-playbook module_utils_test.yml -i ../../inventory -e output_dir="$OUTPUT_DIR" -v "$@"
 
 ANSIBLE_MODULE_UTILS=other_mu_dir ansible-playbook module_utils_envvar.yml -i ../../inventory -v "$@"
+
+ansible-playbook module_utils_common_dict_transformation.yml -i ../../inventory "$@"

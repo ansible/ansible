@@ -31,6 +31,18 @@
     test_echo_module:
     register: echoout
 
+  - name: clear facts to force interpreter discovery to run again
+    meta: clear_facts
+
+  - name: get the interpreter being used on the target to execute modules with ansible_facts
+    vars:
+      # keep this set so we can verify we didn't repeat discovery
+      ansible_python_interpreter: auto
+    test_echo_module:
+      facts:
+        sandwich: ham
+    register: echoout_with_facts
+
   - when: distro == 'macosx'
     block:
       - name: Get the sys.executable for the macos discovered interpreter, as it may be different than the actual path
@@ -50,7 +62,8 @@
       - echoout.running_python_interpreter == normalized_discovered_interpreter
       # verify that discovery didn't run again (if it did, we'd have the fact in the result)
       - echoout.ansible_facts is not defined or echoout.ansible_facts.discovered_interpreter_python is not defined
-
+      - echoout_with_facts.ansible_facts is defined
+      - echoout_with_facts.running_python_interpreter == normalized_discovered_interpreter
 
 - name: test that auto_legacy gives a dep warning when /usr/bin/python present but != auto result
   block:
