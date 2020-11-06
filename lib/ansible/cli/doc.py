@@ -6,7 +6,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import importlib
 import json
 import pkgutil
 import os
@@ -26,6 +25,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
