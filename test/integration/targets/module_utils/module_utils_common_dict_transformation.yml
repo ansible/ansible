@@ -1,0 +1,34 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - test_recursive_diff:
+        a:
+          foo:
+            bar:
+              - baz:
+                  qux: ham_sandwich
+        b:
+          foo:
+            bar:
+              - baz:
+                  qux: turkey_sandwich
+      register: recursive_diff_diff
+
+    - test_recursive_diff:
+        a:
+          foo:
+            bar:
+              - baz:
+                  qux: ham_sandwich
+        b:
+          foo:
+            bar:
+              - baz:
+                  qux: ham_sandwich
+      register: recursive_diff_same
+
+    - assert:
+        that:
+          - recursive_diff_diff.the_diff is not none
+          - recursive_diff_diff.the_diff|length == 2
+          - recursive_diff_same.the_diff is none

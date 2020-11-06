@@ -277,6 +277,71 @@
   register: argspec_choices_bad_choice
   ignore_errors: true
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    list_choices:
+      - bar
+      - baz
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    list_choices:
+      - bar
+      - baz
+      - qux
+  register: argspec_list_choices_bad_choice
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    primary: foo
+  register: argspec_aliases_primary
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    alias: foo
+  register: argspec_aliases_alias
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    primary: foo
+    alias: foo
+  register: argspec_aliases_both
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    primary: foo
+    alias: bar
+  register: argspec_aliases_both_different
+
+- command: >-
+    ansible localhost -m argspec
+    -a 'required=value required_one_of_one=value primary=foo alias=bar'
+  environment:
+    ANSIBLE_LIBRARY: '{{ role_path }}/library'
+  register: argspec_aliases_both_warning
+
+- command: ansible localhost -m import_role -a 'role=argspec tasks_from=password_no_log.yml'
+  register: argspec_password_no_log
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    int: 1
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    int: foo
+  register: argspec_int_invalid
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -333,3 +398,22 @@
       - argspec_choices_with_strings_like_bools_false.choices_with_strings_like_bools == 'off'
 
       - argspec_choices_bad_choice is failed
+
+      - argspec_list_choices_bad_choice is failed
+
+      - argspec_aliases_primary.primary == 'foo'
+      - argspec_aliases_primary.alias is undefined
+      - argspec_aliases_alias.primary == 'foo'
+      - argspec_aliases_alias.alias == 'foo'
+      - argspec_aliases_both.primary == 'foo'
+      - argspec_aliases_both.alias == 'foo'
+      - argspec_aliases_both_different.primary == 'bar'
+      - argspec_aliases_both_different.alias == 'bar'
+      - '"[WARNING]: Both option primary and its alias alias are set." in argspec_aliases_both_warning.stderr'
+
+      - '"Module did not set no_log for maybe_password" in argspec_password_no_log.stderr'
+      - '"Module did not set no_log for password" not in argspec_password_no_log.stderr'
+      - '"Module did not set no_log for not_a_password" not in argspec_password_no_log.stderr'
+      - argspec_password_no_log.stdout|regex_findall('VALUE_SPECIFIED_IN_NO_LOG_PARAMETER')|length == 1
+
+      - argspec_int_invalid is failed
