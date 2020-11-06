@@ -116,7 +116,7 @@ class DocCLI(CLI):
 
         t = cls._REFTAG.sub(r"", t)  # remove rst :ref:
         t = cls._TERM.sub(r"", t)  # remove rst :term:
-        t = cls._NOTES.sub(r" note", t)  # nicer note
+        t = cls._NOTES.sub(r" Note:", t)  # nicer note
         t = cls._SEEALSO.sub(r"", t)  # remove seealso
 
         return t
