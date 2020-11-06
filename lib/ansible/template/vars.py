@@ -135,7 +135,7 @@ class AutoVars(Mapping):
             self._vars = myvars
 
     def __getitem__(self, var):
-        if is_unsafe(self._vars[var]):
+        if is_unsafe(self._vars[var]) or isinstance(self._vars[var], (HostVars, AnsibleJ2Vars, AutoVars)):
             res = self._vars[var]
         else:
             res = self._t.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
