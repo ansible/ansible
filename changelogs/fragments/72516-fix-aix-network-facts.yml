@@ -1,0 +1,2 @@
+bugfixes:
+    - Fixed issue when `netstat` is either missing or doesn't have execution permissions leading to incorrect command being executed. 
