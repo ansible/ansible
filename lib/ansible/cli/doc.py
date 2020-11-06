@@ -355,7 +355,7 @@ class DocCLI(CLI):
         else:
             text = []
             if plugin_type in C.DOCUMENTABLE_PLUGINS:
-                if listing:
+                if listing and docs:
                     self.display_plugin_list(docs)
                 else:
                     # Some changes to how plain text docs are formatted
@@ -367,7 +367,7 @@ class DocCLI(CLI):
                             text.append(textret)
                         else:
                             display.warning("No valid documentation was retrieved from '%s'" % plugin)
-            else:
+            elif docs:
                 text = DocCLI._dump_yaml(docs, '')
 
             if text:
