@@ -122,7 +122,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._role:
             role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
 
-        if self._role and self.name and role_name not in self.name:
+        if self._role and self.name:
             return "%s : %s" % (role_name, self.name)
         elif self.name:
             return self.name
