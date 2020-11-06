@@ -205,8 +205,6 @@ test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boil
 test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/integration/plugins/module_utils/database.py future-import-boilerplate
 test/support/integration/plugins/module_utils/database.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/k8s/common.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/k8s/raw.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
