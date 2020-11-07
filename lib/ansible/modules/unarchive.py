@@ -90,7 +90,7 @@ options:
       - This option is silently ignored if I(src) is not a web URL.
     type: int
     default: 10
-    version_added: '1.11'
+    version_added: '2.11'
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
