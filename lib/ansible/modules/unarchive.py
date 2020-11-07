@@ -177,7 +177,7 @@ handler:
   type: string
   sample: "TgzArchive"
 mode:
-  description: string that represents the octal permissions applied to extracted files.
+  description: string that represents the octal permissions of the destination directory.
   returned: always
   type: string
   sample: "0755"
