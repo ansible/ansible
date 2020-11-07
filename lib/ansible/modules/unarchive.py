@@ -160,7 +160,7 @@ files:
   description: List of all the file in the archive.
   returned: When I(list_files) is True
   type: list
-  sample: \["file1", "file2"\]
+  sample: '["file1", "file2"]'
 gid:
   description: numerical id of the group that owns the destination directory.
   returned: always
