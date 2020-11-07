@@ -83,6 +83,13 @@ options:
     type: bool
     default: no
     version_added: "2.2"
+  timeout:
+    description:
+      - Timeout in seconds for web URL request.
+      - This option is silently ignored if I(src) is not a web URL.
+    type: int
+    default: 10
+    version_added: '1.11'
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
@@ -131,6 +138,7 @@ EXAMPLES = r'''
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
+    timeout: 60
 
 - name: Unarchive a file with extra options
   unarchive:
@@ -828,6 +836,7 @@ def main():
             keep_newer=dict(type='bool', default=False),
             exclude=dict(type='list', elements='str', default=[]),
             extra_opts=dict(type='list', elements='str', default=[]),
+            timeout=dict(type='int', default=10),
             validate_certs=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
@@ -840,6 +849,7 @@ def main():
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
+    timeout = module.params['timeout']
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -847,7 +857,7 @@ def main():
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
-            src = fetch_file(module, src)
+            src = fetch_file(module, src, timeout=timeout)
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
