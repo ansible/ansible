@@ -6,6 +6,7 @@
 # Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 # Copyright: (c) 2016, Dag Wieers <dag@wieers.com>
 # Copyright: (c) 2017, Ansible Project
+# Copyright: (c) 2020, Paul Aiton <@paultaiton>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -147,6 +148,66 @@ EXAMPLES = r'''
     extra_opts:
     - --transform
     - s/^xxx/yyy/
+'''
+
+RETURN = r'''
+dest:
+  description: Path to the destination directory
+  returned: always
+  type: string
+  sample: /opt/software
+files:
+  description: List of all the file in the archive.
+  returned: When I(list_files) is True
+  type: list
+  sample: \["file1", "file2"\]
+gid:
+  description: numerical id of the group that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
+group:
+  description: name of the group that owns the destination directory.
+  returned: always
+  type: string
+  sample: "paul"
+handler:
+  description: which archive software handler was used to extract and decompress the archive.
+  returned: always
+  type: string
+  sample: "TgzArchive"
+mode:
+  description: string that represents the octal permissions applied to extracted files.
+  returned: always
+  type: string
+  sample: "0755"
+owner:
+  description: name of the user that owns the destination directory.
+  returned: always
+  type: string
+  sample: "paul"
+size:
+  description: The size of destination directory.
+  returned: always
+  type: int
+  sample: 36
+src:
+  description: 
+    - The source archive's path.
+    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+  returned: always
+  type: string
+  sample: "/home/paul/test.tar.gz"
+state:
+  description: State of the destination. Effectively always "directory".
+  returned: always
+  type: string
+  sample: "directory"
+uid:
+  description: numerical id of the user that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
 '''
 
 import binascii
