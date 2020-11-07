@@ -154,7 +154,7 @@ RETURN = r'''
 dest:
   description: Path to the destination directory
   returned: always
-  type: string
+  type: str
   sample: /opt/software
 files:
   description: List of all the file in the archive.
@@ -169,22 +169,22 @@ gid:
 group:
   description: name of the group that owns the destination directory.
   returned: always
-  type: string
+  type: str
   sample: "paul"
 handler:
   description: which archive software handler was used to extract and decompress the archive.
   returned: always
-  type: string
+  type: str
   sample: "TgzArchive"
 mode:
   description: string that represents the octal permissions of the destination directory.
   returned: always
-  type: string
+  type: str
   sample: "0755"
 owner:
   description: name of the user that owns the destination directory.
   returned: always
-  type: string
+  type: str
   sample: "paul"
 size:
   description: The size of destination directory.
@@ -196,12 +196,12 @@ src:
     - The source archive's path.
     - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
   returned: always
-  type: string
+  type: str
   sample: "/home/paul/test.tar.gz"
 state:
   description: State of the destination. Effectively always "directory".
   returned: always
-  type: string
+  type: str
   sample: "directory"
 uid:
   description: numerical id of the user that owns the destination directory.
