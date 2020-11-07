@@ -192,7 +192,7 @@ size:
   type: int
   sample: 36
 src:
-  description: 
+  description:
     - The source archive's path.
     - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
   returned: always
