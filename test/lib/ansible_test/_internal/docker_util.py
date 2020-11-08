@@ -111,7 +111,11 @@ def get_docker_container_ip(args, container_id):
 
     if networks:
         network_name = get_docker_preferred_network_name(args)
-        ipaddress = networks[network_name]['IPAddress']
+        if network_name is None:
+            # Docker default network: fall back to NetworkSettings.IPAddress
+            ipaddress = network_settings['IPAddress']
+        else:
+            ipaddress = networks[network_name]['IPAddress']
     else:
         # podman doesn't provide Networks, fall back to using IPAddress
         ipaddress = network_settings['IPAddress']

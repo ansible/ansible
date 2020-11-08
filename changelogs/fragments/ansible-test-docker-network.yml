@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test - when retrieving the IP of containers for Docker's default network, use ``NetworkSettings.IPAddress`` instead of crashing (https://github.com/ansible/ansible/issues/72528)."
