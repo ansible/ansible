@@ -246,9 +246,9 @@ COLLECTIONS_PATHS:
   description: >
     Colon separated paths in which Ansible will search for collections content.
     Collections must be in nested *subdirectories*, not directly in these directories.
-    For example, if `COLLECTIONS_PATHS` includes `~/.ansible/collections`,
-    and you want to add `my.collection`, it must be saved as
-    `~/.ansible/collections/ansible_collections/my/collection`.
+    For example, if ``COLLECTIONS_PATHS`` includes ``~/.ansible/collections``,
+    and you want to add ``my.collection`` to that directory, it must be saved as
+    ``~/.ansible/collections/ansible_collections/my/collection``.
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
