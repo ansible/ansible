@@ -1,3 +1,3 @@
 minor_changes:
-  - Added a timeout parameter to the unarchive module so that a value other than the default 10 seconds may be given for fetching from remote web sources.
+  - Added a timeout parameter to the unarchive module so that a value other than the default 10 seconds may be given for fetching from remote web sources. (https://github.com/ansible/ansible/pull/72530)
   - Added 'RETURN' documentation (https://github.com/ansible/ansible/issues/67445)
