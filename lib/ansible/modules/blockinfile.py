@@ -352,5 +352,6 @@ def main():
     else:
         module.exit_json(changed=changed, msg=msg, diff=difflist, backup_file=backup_file)
 
+
 if __name__ == '__main__':
     main()
