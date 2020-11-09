@@ -73,3 +73,4 @@ ansible-playbook verify_interpreter.yml -i inventory_interpreters -v "$@"
 ansible-playbook discovery_applied.yml -i inventory -v "$@"
 ansible-playbook resolve_vars.yml -i inventory -v "$@"
 ansible-playbook test_delegate_to_lookup_context.yml -i inventory -v "$@"
+ansible-playbook delegate_local_from_root.yml -i inventory -v "$@" -e 'ansible_user=root'

@@ -44,13 +44,14 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
         self.cwd = None
+        self.default_user = getpass.getuser()
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
 
         # Because we haven't made any remote connection we're running as
         # the local user, rather than as whatever is configured in remote_user.
-        self._play_context.remote_user = getpass.getuser()
+        self._play_context.remote_user = self.default_user
 
         if not self._connected:
             display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
