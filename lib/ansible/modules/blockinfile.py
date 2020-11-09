@@ -347,7 +347,7 @@ def main():
 
     difflist = [diff, attr_diff]
 
-    if backup_file is None
+    if backup_file is None:
         module.exit_json(changed=changed, msg=msg, diff=difflist)
     else:
         module.exit_json(changed=changed, msg=msg, diff=difflist, backup_file=backup_file)
