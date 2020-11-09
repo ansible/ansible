@@ -182,6 +182,7 @@ test/integration/targets/template/files/encoding_1252_windows-1252.expected no-s
 test/integration/targets/template/files/foo.dos.txt line-endings
 test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
 test/integration/targets/unicode/unicode.yml no-smart-quotes
+test/integration/targets/yaml_parsing/tasks/unsafe.yml yamllint:unparsable-with-libyaml
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
 test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
