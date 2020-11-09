@@ -1512,6 +1512,19 @@ GALAXY_DISPLAY_PROGRESS:
   - {key: display_progress, section: galaxy}
   type: bool
   version_added: "2.10"
+GALAXY_CACHE_DIR:
+  default: ~/.ansible/galaxy_cache
+  description:
+  - The directory that stores cached responses from a Galaxy server.
+  - This is only used by the ``ansible-galaxy collection install`` and ``download`` commands.
+  - Cache files inside this dir will be ignored if they are world writable.
+  env:
+  - name: ANSIBLE_GALAXY_CACHE_DIR
+  ini:
+  - section: galaxy
+    key: cache_dir
+  type: path
+  version_added: '2.11'
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True

@@ -301,6 +301,40 @@
     - (install_req_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_req_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
 
+- name: install cache.cache at the current latest version
+  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' -vvv
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- set_fact:
+    cache_version_build: '{{ (cache_version_build | int) + 1 }}'
+
+- name: publish update for cache.cache test
+  setup_collections:
+    server: galaxy_ng
+    collections:
+    - namespace: cache
+      name: cache
+      version: 1.0.{{ cache_version_build }}
+    wait: yes
+
+- name: make sure the cache version list is ignored on a collection version change
+  command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
+  register: install_cached_update
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of install collections with ansible-galaxy install - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/cache/cache/MANIFEST.json'
+  register: install_cached_update_actual
+
+- name: assert install collections with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
+    - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
+
 - name: remove test collection install directory - {{ test_name }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections'

@@ -169,6 +169,12 @@ class GalaxyCLI(CLI):
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
 
+        cache_options = opt_help.argparse.ArgumentParser(add_help=False)
+        cache_options.add_argument('--clear-response-cache', dest='clear_response_cache', action='store_true',
+                                   default=False, help='Clear the existing server response cache.')
+        cache_options.add_argument('--no-cache', dest='no_cache', action='store_true', default=False,
+                                   help='Do not use the server response cache.')
+
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
@@ -177,11 +183,11 @@ class GalaxyCLI(CLI):
         collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
-        self.add_download_options(collection_parser, parents=[common])
+        self.add_download_options(collection_parser, parents=[common, cache_options])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
-        self.add_install_options(collection_parser, parents=[common, force])
+        self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
@@ -429,6 +435,10 @@ class GalaxyCLI(CLI):
                       ('auth_url', False), ('v3', False)]
 
         validate_certs = not context.CLIARGS['ignore_certs']
+        galaxy_options = {'validate_certs': validate_certs}
+        for optional_key in ['clear_response_cache', 'no_cache']:
+            if optional_key in context.CLIARGS:
+                galaxy_options[optional_key] = context.CLIARGS[optional_key]
 
         config_servers = []
 
@@ -472,8 +482,7 @@ class GalaxyCLI(CLI):
                         # The galaxy v1 / github / django / 'Token'
                         server_options['token'] = GalaxyToken(token=token_val)
 
-            server_options['validate_certs'] = validate_certs
-
+            server_options.update(galaxy_options)
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
         cmd_server = context.CLIARGS['api_server']
@@ -486,14 +495,14 @@ class GalaxyCLI(CLI):
                 self.api_servers.append(config_server)
             else:
                 self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token,
-                                                  validate_certs=validate_certs))
+                                                  **galaxy_options))
         else:
             self.api_servers = config_servers
 
         # Default to C.GALAXY_SERVER if no servers were defined
         if len(self.api_servers) == 0:
             self.api_servers.append(GalaxyAPI(self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token,
-                                              validate_certs=validate_certs))
+                                              **galaxy_options))
 
         context.CLIARGS['func']()
 
