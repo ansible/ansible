@@ -143,42 +143,42 @@ EXAMPLES = r'''
 
 RETURN = r'''
 dest:
-  description: Path to the destination directory
+  description: Path to the destination directory.
   returned: always
   type: str
   sample: /opt/software
 files:
-  description: List of all the file in the archive.
+  description: List of all the files in the archive.
   returned: When I(list_files) is True
   type: list
   sample: '["file1", "file2"]'
 gid:
-  description: numerical id of the group that owns the destination directory.
+  description: Numerical ID of the group that owns the destination directory.
   returned: always
   type: int
   sample: 1000
 group:
-  description: name of the group that owns the destination directory.
+  description: Name of the group that owns the destination directory.
   returned: always
   type: str
-  sample: "paul"
+  sample: "librarians"
 handler:
-  description: which archive software handler was used to extract and decompress the archive.
+  description: Archive software handler used to extract and decompress the archive.
   returned: always
   type: str
   sample: "TgzArchive"
 mode:
-  description: string that represents the octal permissions of the destination directory.
+  description: String that represents the octal permissions of the destination directory.
   returned: always
   type: str
   sample: "0755"
 owner:
-  description: name of the user that owns the destination directory.
+  description: Name of the user that owns the destination directory.
   returned: always
   type: str
   sample: "paul"
 size:
-  description: The size of destination directory.
+  description: The size of destination directory in bytes. Does not include the size of files or subdirectories contained within.
   returned: always
   type: int
   sample: 36
@@ -195,7 +195,7 @@ state:
   type: str
   sample: "directory"
 uid:
-  description: numerical id of the user that owns the destination directory.
+  description: numerical ID of the user that owns the destination directory.
   returned: always
   type: int
   sample: 1000
