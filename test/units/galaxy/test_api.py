@@ -58,14 +58,7 @@ def collection_artifact(tmp_path_factory):
 @pytest.fixture()
 def cache_dir(tmp_path_factory, monkeypatch):
     cache_dir = to_text(tmp_path_factory.mktemp('Test ÅÑŚÌβŁÈ Galaxy Cache'))
-    orig_get_config = C.config.get_config_value
-
-    def get_config_value(option):
-        overrides = {
-            'GALAXY_CACHE_DIR': cache_dir,
-        }
-        return overrides.get(option, orig_get_config(option))
-    monkeypatch.setattr(C.config, 'get_config_value', get_config_value)
+    monkeypatch.setitem(C.config._base_defs, 'GALAXY_CACHE_DIR', {'default': cache_dir})
 
     yield cache_dir
 
@@ -1038,7 +1031,7 @@ def test_clear_cache(cache_dir):
     assert stat.S_IMODE(os.stat(cache_file).st_mode) == 0o600
 
 
-@pytest.mark.parametrize('url, expected', [
+@pytest.mark.parametrize(['url', 'expected'], [
     ('http://hostname/path', 'hostname:'),
     ('http://hostname:80/path', 'hostname:80'),
     ('https://testing.com:invalid', 'testing.com:'),

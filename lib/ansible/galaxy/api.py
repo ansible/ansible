@@ -37,6 +37,14 @@ display = Display()
 _CACHE_LOCK = threading.Lock()
 
 
+def cache_lock(func):
+    def wrapped(*args, **kwargs):
+        with _CACHE_LOCK:
+            return func(*args, **kwargs)
+
+    return wrapped
+
+
 def g_connect(versions):
     """
     Wrapper to lazily initialize connection info to Galaxy and verify the API versions required are available on the
@@ -119,39 +127,39 @@ def get_cache_id(url):
     return '%s:%s' % (url_info.hostname, port or '')
 
 
+@cache_lock
 def _load_cache(b_cache_path):
     """ Loads the cache file requested if possible. The file must not be world writable. """
     cache_version = 1
 
-    with _CACHE_LOCK:
-        if not os.path.isfile(b_cache_path):
-            display.vvvv("Creating Galaxy API response cache file at '%s'" % to_text(b_cache_path))
-            with open(b_cache_path, 'w'):
-                os.chmod(b_cache_path, 0o600)
+    if not os.path.isfile(b_cache_path):
+        display.vvvv("Creating Galaxy API response cache file at '%s'" % to_text(b_cache_path))
+        with open(b_cache_path, 'w'):
+            os.chmod(b_cache_path, 0o600)
 
-        cache_mode = os.stat(b_cache_path).st_mode
-        if cache_mode & stat.S_IWOTH:
-            display.warning("Galaxy cache has world writable access (%s), ignoring it as a cache source."
-                            % to_text(b_cache_path))
-            return
+    cache_mode = os.stat(b_cache_path).st_mode
+    if cache_mode & stat.S_IWOTH:
+        display.warning("Galaxy cache has world writable access (%s), ignoring it as a cache source."
+                        % to_text(b_cache_path))
+        return
 
-        with open(b_cache_path, mode='rb') as fd:
-            json_val = to_text(fd.read(), errors='surrogate_or_strict')
+    with open(b_cache_path, mode='rb') as fd:
+        json_val = to_text(fd.read(), errors='surrogate_or_strict')
 
-        try:
-            cache = json.loads(json_val)
-        except ValueError:
-            cache = None
+    try:
+        cache = json.loads(json_val)
+    except ValueError:
+        cache = None
 
-        if not isinstance(cache, dict) or cache.get('version', None) != cache_version:
-            display.vvvv("Galaxy cache file at '%s' has an invalid version, clearing" % to_text(b_cache_path))
-            cache = {'version': cache_version}
+    if not isinstance(cache, dict) or cache.get('version', None) != cache_version:
+        display.vvvv("Galaxy cache file at '%s' has an invalid version, clearing" % to_text(b_cache_path))
+        cache = {'version': cache_version}
 
-            # Set the cache after we've cleared the existing entries
-            with open(b_cache_path, mode='wb') as fd:
-                fd.write(to_bytes(json.dumps(cache), errors='surrogate_or_strict'))
+        # Set the cache after we've cleared the existing entries
+        with open(b_cache_path, mode='wb') as fd:
+            fd.write(to_bytes(json.dumps(cache), errors='surrogate_or_strict'))
 
-        return cache
+    return cache
 
 
 def _urljoin(*args):
@@ -357,10 +365,10 @@ class GalaxyAPI:
         if self.token:
             headers.update(self.token.headers())
 
+    @cache_lock
     def _set_cache(self):
-        with _CACHE_LOCK:
-            with open(self._b_cache_path, mode='wb') as fd:
-                fd.write(to_bytes(json.dumps(self._cache), errors='surrogate_or_strict'))
+        with open(self._b_cache_path, mode='wb') as fd:
+            fd.write(to_bytes(json.dumps(self._cache), errors='surrogate_or_strict'))
 
     @g_connect(['v1'])
     def authenticate(self, github_token):
