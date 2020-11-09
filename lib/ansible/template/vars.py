@@ -95,7 +95,7 @@ class AnsibleJ2Vars(Mapping):
         else:
             value = None
             try:
-                value = self._templar.template(variable)
+                value = self._templar.template(variable, path_to_variable=varname)
             except AnsibleUndefinedVariable as e:
                 raise AnsibleUndefinedVariable("%s: %s" % (to_native(variable), e.message))
             except Exception as e:

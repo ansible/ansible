@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import OrderedDict
+
 from jinja2.runtime import Context
 
 from units.compat import unittest
@@ -27,13 +29,23 @@ from units.compat.mock import patch
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
-from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
+from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined, KnownVariablesDict
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
 
 
 class BaseTemplar(object):
     def setUp(self):
+        # see lib.ansible.parsing.yaml. We're using OrderedDict when parsing yaml, so we need use it in tests.
+        # This is important for parsing structures like this. Current parsing relies on variables order.
+        nested_self_pointing = OrderedDict()
+        nested_self_pointing['a'] = 'A!'
+        nested_self_pointing['b'] = '{{ nested_self_pointing.a }}/B!'
+        nested_self_pointing['foo'] = '{{ foo }}-bara'
+        nested_self_pointing['sub_nested'] = {
+            'c': "{{ nested_self_pointing.b }}/C!",
+        }
+
         self.test_vars = dict(
             foo="bar",
             bam="{{foo}}",
@@ -51,6 +63,15 @@ class BaseTemplar(object):
             some_static_unsafe_var=wrap_var("static_unsafe_blip"),
             some_unsafe_keyword=wrap_var("{{ foo }}"),
             str_with_error="{{ 'str' | from_json }}",
+            nested_simple={
+                'a': 'A!',
+                'b': 'B!',
+                'foo': '{{foo}}',
+                'sub_nested': {
+                    'my_foo': "foo{{ foo }}",
+                }
+            },
+            nested_self_pointing=nested_self_pointing,
         )
         self.fake_loader = DictDataLoader({
             "/path/to/my_file.txt": "foo\n",
@@ -270,6 +291,18 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         except Exception as e:
             self.fail(e)
 
+    def test_nested_simple(self):
+        self.assertEqual(self.templar.template("{{ nested_simple.a }}"), "A!")
+        self.assertEqual(self.templar.template("{{ nested_simple.b }}"), "B!")
+        self.assertEqual(self.templar.template("{{ nested_simple.foo }}"), "bar")
+        self.assertEqual(self.templar.template("{{ nested_simple.sub_nested.my_foo }}"), "foobar")
+
+    def test_nested_recursive(self):
+        self.assertEqual(self.templar.template("{{ nested_self_pointing.a }}"), "A!")
+        self.assertEqual(self.templar.template("{{ nested_self_pointing.b }}"), "A!/B!")
+        self.assertEqual(self.templar.template("{{ nested_self_pointing.foo }}"), "bar-bara")
+        self.assertEqual(self.templar.template("{{ nested_self_pointing.sub_nested.c }}"), "A!/B!/C!")
+
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with
         # the same number of backslashes as when you started.
@@ -444,3 +477,26 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
     def test_is_unsafe(self):
         context = self._context()
         self.assertFalse(context._is_unsafe(AnsibleUndefined()))
+
+
+class TestKnownVariablesDict(unittest.TestCase):
+    def test_simple(self):
+        kvd = KnownVariablesDict()
+        kvd['a.b.c'] = 'd'
+        self.assertIsInstance(kvd['a'], KnownVariablesDict)
+        self.assertIsInstance(kvd['a']['b'], KnownVariablesDict)
+        self.assertEqual(kvd['a']['b'], kvd['a.b'])
+        self.assertEqual(kvd['a']['b']['c'], kvd['a.b.c'])
+        kvd['a.b'] = 'c'
+        self.assertEqual(kvd['a']['b'], 'c')
+
+    def test_assign_dict(self):
+        kvd = KnownVariablesDict()
+        kvd['a'] = {'b': 'c'}
+        self.assertEqual(kvd['a.b'], 'c')
+        self.assertIsInstance(kvd['a.b'], str)
+        kvd['a.b.c'] = 'd'
+        self.assertIsInstance(kvd['a.b'], KnownVariablesDict)
+        self.assertEqual(kvd['a.b.c'], 'd')
+        b = kvd['a.b']
+        self.assertEqual(b['c'], 'd')
