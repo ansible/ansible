@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import datetime
 import json
+import pkgutil
 import os
 import re
 import textwrap
@@ -24,8 +25,10 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
+from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -39,6 +42,11 @@ from ansible.utils.plugin_docs import (
 )
 
 display = Display()
+
+
+TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('keyword',)
+PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
+PB_LOADED = {}
 
 
 def jdump(text):
@@ -83,6 +91,12 @@ class DocCLI(CLI):
     _CONST = re.compile(r"\bC\(([^)]+)\)")
     _RULER = re.compile(r"\bHORIZONTALLINE\b")
 
+    # rst specific
+    _REFTAG = re.compile(r":ref:")
+    _TERM = re.compile(r":term:")
+    _NOTES = re.compile(r".. note:")
+    _SEEALSO = re.compile(r"^\s*.. seealso:.*$", re.MULTILINE)
+
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
@@ -100,6 +114,11 @@ class DocCLI(CLI):
         t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
+        t = cls._REFTAG.sub(r"", t)  # remove rst :ref:
+        t = cls._TERM.sub(r"", t)  # remove rst :term:
+        t = cls._NOTES.sub(r" Note:", t)  # nicer note
+        t = cls._SEEALSO.sub(r"", t)  # remove seealso
+
         return t
 
     def init_parser(self):
@@ -114,10 +133,11 @@ class DocCLI(CLI):
         opt_help.add_basedir_options(self.parser)
 
         self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
+
         self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
                                  help='Choose which plugin type (defaults to "module"). '
-                                      'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
-                                 choices=C.DOCUMENTABLE_PLUGINS)
+                                      'Available plugin types are : {0}'.format(TARGET_OPTIONS),
+                                 choices=TARGET_OPTIONS)
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
 
@@ -172,112 +192,186 @@ class DocCLI(CLI):
         # display results
         DocCLI.pager("\n".join(text))
 
+    @staticmethod
+    def _list_keywords():
+        return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
+
+    @staticmethod
+    def _get_keywords_docs(keys):
+
+        data = {}
+        descs = DocCLI._list_keywords()
+        for keyword in keys:
+            if keyword.startswith('with_'):
+                keyword = 'loop'
+            try:
+                # if no desc, typeerror raised ends this block
+                kdata = {'description': descs[keyword]}
+
+                # get playbook objects for keyword and use first to get keyword attributes
+                kdata['applies_to'] = []
+                for pobj in PB_OBJECTS:
+                    if pobj not in PB_LOADED:
+                        obj_class = 'ansible.playbook.%s' % pobj.lower()
+                        loaded_class = importlib.import_module(obj_class)
+                        PB_LOADED[pobj] = getattr(loaded_class, pobj, None)
+
+                    if keyword in PB_LOADED[pobj]._valid_attrs:
+                        kdata['applies_to'].append(pobj)
+
+                        # we should only need these once
+                        if 'type' not in kdata:
+
+                            fa = getattr(PB_LOADED[pobj], '_%s' % keyword)
+                            if getattr(fa, 'private'):
+                                kdata = {}
+                                raise KeyError
+
+                            kdata['type'] = getattr(fa, 'isa', 'string')
+
+                            if keyword.endswith('when'):
+                                kdata['template'] = 'implicit'
+                            elif getattr(fa, 'static'):
+                                kdata['template'] = 'static'
+                            else:
+                                kdata['template'] = 'explicit'
+
+                            # those that require no processing
+                            for visible in ('alias', 'priority'):
+                                kdata[visible] = getattr(fa, visible)
+
+                # remove None keys
+                for k in list(kdata.keys()):
+                    if kdata[k] is None:
+                        del kdata[k]
+
+                data[keyword] = kdata
+
+            except KeyError as e:
+                display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_native(e)))
+
+        return data
+
+    def _list_plugins(self, plugin_type, loader):
+
+        results = {}
+        coll_filter = None
+        if len(context.CLIARGS['args']) == 1:
+            coll_filter = context.CLIARGS['args'][0]
+
+        if coll_filter in ('', None):
+            paths = loader._get_paths_with_context()
+            for path_context in paths:
+                self.plugin_list.update(DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type))
+
+        add_collection_plugins(self.plugin_list, plugin_type, coll_filter=coll_filter)
+
+        # get appropriate content depending on option
+        if context.CLIARGS['list_dir']:
+            results = self._get_plugin_list_descriptions(loader)
+        elif context.CLIARGS['list_files']:
+            results = self._get_plugin_list_filenames(loader)
+        # dump plugin desc/data as JSON
+        elif context.CLIARGS['dump']:
+            plugin_names = DocCLI.get_all_plugins_of_type(plugin_type)
+            for plugin_name in plugin_names:
+                plugin_info = DocCLI.get_plugin_metadata(plugin_type, plugin_name)
+                if plugin_info is not None:
+                    results[plugin_name] = plugin_info
+
+        return results
+
+    def _get_plugins_docs(self, plugin_type, loader):
+
+        search_paths = DocCLI.print_paths(loader)
+
+        # display specific plugin docs
+        if len(context.CLIARGS['args']) == 0:
+            raise AnsibleOptionsError("Incorrect options passed")
+
+        # get the docs for plugins in the command line list
+        plugin_docs = {}
+        for plugin in context.CLIARGS['args']:
+            try:
+                doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
+            except PluginNotFound:
+                display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
+                continue
+            except Exception as e:
+                display.vvv(traceback.format_exc())
+                raise AnsibleError("%s %s missing documentation (or could not parse"
+                                   " documentation): %s\n" %
+                                   (plugin_type, plugin, to_native(e)))
+
+            if not doc:
+                # The doc section existed but was empty
+                continue
+
+            plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
+
+        return plugin_docs
+
     def run(self):
 
         super(DocCLI, self).run()
 
         plugin_type = context.CLIARGS['type']
         do_json = context.CLIARGS['json_format']
+        listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir'] or context.CLIARGS['dump']
+        docs = {}
 
-        if plugin_type in C.DOCUMENTABLE_PLUGINS:
-            loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        else:
+        if plugin_type not in TARGET_OPTIONS:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
+        elif plugin_type == 'keyword':
 
-        # add to plugin paths from command line
-        basedir = context.CLIARGS['basedir']
-        if basedir:
-            AnsibleCollectionConfig.playbook_paths = basedir
-            loader.add_directory(basedir, with_subdir=True)
-
-        if context.CLIARGS['module_path']:
-            for path in context.CLIARGS['module_path']:
-                if path:
-                    loader.add_directory(path)
-
-        # save only top level paths for errors
-        search_paths = DocCLI.print_paths(loader)
-        loader._paths = None  # reset so we can use subdirs below
-
-        # list plugins names or filepath for type, both options share most code
-        if context.CLIARGS['list_files'] or context.CLIARGS['list_dir']:
-
-            coll_filter = None
-            if len(context.CLIARGS['args']) == 1:
-                coll_filter = context.CLIARGS['args'][0]
-
-            if coll_filter in ('', None):
-                paths = loader._get_paths_with_context()
-                for path_context in paths:
-                    self.plugin_list.update(
-                        DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type))
-
-            add_collection_plugins(self.plugin_list, plugin_type, coll_filter=coll_filter)
-
-            # get appropriate content depending on option
-            if context.CLIARGS['list_dir']:
-                results = self._get_plugin_list_descriptions(loader)
-            elif context.CLIARGS['list_files']:
-                results = self._get_plugin_list_filenames(loader)
-
-            if do_json:
-                jdump(results)
-            elif self.plugin_list:
-                self.display_plugin_list(results)
+            if listing:
+                docs = DocCLI._list_keywords()
             else:
-                display.warning("No plugins found.")
-        # dump plugin desc/data as JSON
-        elif context.CLIARGS['dump']:
-            plugin_data = {}
-            plugin_names = DocCLI.get_all_plugins_of_type(plugin_type)
-            for plugin_name in plugin_names:
-                plugin_info = DocCLI.get_plugin_metadata(plugin_type, plugin_name)
-                if plugin_info is not None:
-                    plugin_data[plugin_name] = plugin_info
-
-            jdump(plugin_data)
+                docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
         else:
-            # display specific plugin docs
-            if len(context.CLIARGS['args']) == 0:
-                raise AnsibleOptionsError("Incorrect options passed")
+            loader = getattr(plugin_loader, '%s_loader' % plugin_type)
 
-            # get the docs for plugins in the command line list
-            plugin_docs = {}
-            for plugin in context.CLIARGS['args']:
-                try:
-                    doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
-                except PluginNotFound:
-                    display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
-                    continue
-                except Exception as e:
-                    display.vvv(traceback.format_exc())
-                    raise AnsibleError("%s %s missing documentation (or could not parse"
-                                       " documentation): %s\n" %
-                                       (plugin_type, plugin, to_native(e)))
+            # add to plugin paths from command line
+            basedir = context.CLIARGS['basedir']
+            if basedir:
+                AnsibleCollectionConfig.playbook_paths = basedir
+                loader.add_directory(basedir, with_subdir=True)
 
-                if not doc:
-                    # The doc section existed but was empty
-                    continue
+            if context.CLIARGS['module_path']:
+                for path in context.CLIARGS['module_path']:
+                    if path:
+                        loader.add_directory(path)
 
-                plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
+            # save only top level paths for errors
+            loader._paths = None  # reset so we can use subdirs below
 
-            if do_json:
-                jdump(plugin_docs)
-
+            if listing:
+                docs = self._list_plugins(plugin_type, loader)
             else:
-                # Some changes to how plain text docs are formatted
-                text = []
-                for plugin, doc_data in plugin_docs.items():
-                    textret = DocCLI.format_plugin_doc(plugin, plugin_type,
-                                                       doc_data['doc'], doc_data['examples'],
-                                                       doc_data['return'], doc_data['metadata'])
-                    if textret:
-                        text.append(textret)
-                    else:
-                        display.warning("No valid documentation was retrieved from '%s'" % plugin)
+                docs = self._get_plugins_docs(plugin_type, loader)
 
-                if text:
-                    DocCLI.pager(''.join(text))
+        if do_json:
+            jdump(docs)
+        else:
+            text = []
+            if plugin_type in C.DOCUMENTABLE_PLUGINS:
+                if listing and docs:
+                    self.display_plugin_list(docs)
+                else:
+                    # Some changes to how plain text docs are formatted
+                    for plugin, doc_data in docs.items():
+                        textret = DocCLI.format_plugin_doc(plugin, plugin_type,
+                                                           doc_data['doc'], doc_data['examples'],
+                                                           doc_data['return'], doc_data['metadata'])
+                        if textret:
+                            text.append(textret)
+                        else:
+                            display.warning("No valid documentation was retrieved from '%s'" % plugin)
+            elif docs:
+                text = DocCLI._dump_yaml(docs, '')
+
+            if text:
+                DocCLI.pager(''.join(text))
 
         return 0
 

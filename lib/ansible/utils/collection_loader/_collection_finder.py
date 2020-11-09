@@ -947,6 +947,7 @@ def _get_collection_name_from_path(path):
 
     original_path_prefix = os.path.join('/', *path_parts[0:ac_pos + 3])
 
+    imported_pkg_path = to_native(os.path.abspath(to_bytes(imported_pkg_path)))
     if original_path_prefix != imported_pkg_path:
         return None
 
