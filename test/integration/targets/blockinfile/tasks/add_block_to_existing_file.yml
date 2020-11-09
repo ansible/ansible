@@ -12,6 +12,11 @@
     backup: yes
   register: blockinfile_test0
 
+- name: ensure we have a bcackup file
+  assert:
+    that:
+      - "'backup_file' in blockinfile_test0"
+
 - name: check content
   shell: 'grep -c -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ output_dir_test }}/sshd_config'
   register: blockinfile_test0_grep
