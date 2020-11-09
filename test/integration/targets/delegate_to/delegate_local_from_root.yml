@@ -6,5 +6,5 @@
   - name: ensure we copy w/o errors due to remote user not being overriden
     copy:
       src: testfile
-      dest: "{{ output_dir }}"
+      dest: "{{ output_dir_test }}"
     delegate_to: localhost
