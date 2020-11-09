@@ -135,7 +135,7 @@ class ACMEProvider(CloudProvider):
         else:
             display.info('Starting a new ACME docker test container.', verbosity=1)
 
-            if not self.args.docker and not container_id:
+            if not container_id:
                 # publish the simulator ports when not running inside docker
                 publish_ports = [
                     '-p', '5000:5000',  # control port for flask app in container
@@ -155,14 +155,16 @@ class ACMEProvider(CloudProvider):
 
         if self.args.docker:
             acme_host = self.DOCKER_SIMULATOR_NAME
-            acme_host_ip = self._get_simulator_address()
         elif container_id:
             acme_host = self._get_simulator_address()
-            acme_host_ip = acme_host
             display.info('Found ACME test container address: %s' % acme_host, verbosity=1)
         else:
             acme_host = get_docker_hostname()
-            acme_host_ip = acme_host
+
+        if container_id:
+            acme_host_ip = self._get_simulator_address()
+        else:
+            acme_host_ip = get_docker_hostname()
 
         self._set_cloud_config('acme_host', acme_host)
 
