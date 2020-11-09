@@ -74,6 +74,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
         ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
+        ANSIBLE_CONTROLLER_PYTHON_WARNING='false',  # Don't show warnings in CI for old controller Python
         PYTHONPATH=get_ansible_python_path(),
         PAGER='/bin/cat',
         PATH=path,

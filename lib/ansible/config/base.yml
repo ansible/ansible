@@ -585,6 +585,15 @@ CALLABLE_ACCEPT_LIST:
     section: defaults
     version_added: '2.11'
   type: list
+CONTROLLER_PYTHON_WARNING:
+  name: Running Older than Python 3.8 Warning
+  default: True
+  description: Toggle to control showing warnings related to running a Python version
+               older than Python 3.8 on the controller
+  env: [{name: ANSIBLE_CONTROLLER_PYTHON_WARNING}]
+  ini:
+  - {key: controller_python_warning, section: defaults}
+  type: boolean
 DEFAULT_CALLBACK_PLUGIN_PATH:
   name: Callback Plugins Path
   default: ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback

@@ -1,0 +1,4 @@
+minor_changes:
+- Controller - Add warning for Ansible 2.11 when running a Python version older than Python 3.8
+  to inform users that 2.12 will only support Python 3.8 and newer on the controller. Starting
+  with Ansible 2.11, the project will only be packaged for Python 3.8 and newer.

@@ -38,6 +38,7 @@ from ansible.module_utils._text import to_text
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
+_PY38_MIN = sys.version_info[:2] >= (3, 8)
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
 _PY2_MIN = (2, 6) <= sys.version_info[:2] < (3,)
 _PY_MIN = _PY3_MIN or _PY2_MIN
@@ -72,6 +73,15 @@ if __name__ == '__main__':
 
     try:
         display = Display()
+        if C.CONTROLLER_PYTHON_WARNING and not _PY38_MIN:
+            display.deprecated(
+                (
+                    'Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12. '
+                    'Current version: %s' % ''.join(sys.version.splitlines())
+                ),
+                version='2.12',
+                collection_name='ansible.builtin',
+            )
         display.debug("starting run")
 
         sub = None
