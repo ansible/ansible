@@ -8,6 +8,7 @@ import os
 
 from collections import defaultdict
 
+from ansible.errors import AnsibleError
 from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -54,6 +55,17 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
     :return: list of collection directory paths
     """
 
+    coll = None
+    nsp = None
+    if coll_filter is not None:
+        if '.' in coll_filter:
+            try:
+                (nsp, coll) = coll_filter.split('.')
+            except ValueError:
+                raise AnsibleError("Invalid collection pattern supplied: %s" % coll_filter)
+        else:
+            nsp = coll_filter
+
     collections = defaultdict(dict)
     for path in list_valid_collection_paths(search_paths):
 
@@ -62,18 +74,10 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
             b_coll_root = to_bytes(os.path.join(path, 'ansible_collections'))
 
             if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
-                coll = None
-                if coll_filter is None:
+
+                if nsp is None:
                     namespaces = os.listdir(b_coll_root)
                 else:
-                    if '.' in coll_filter:
-                        try:
-                            (nsp, coll) = coll_filter.split('.')
-                        except ValueError:
-                            display.warning("Skipping '%s' as it is invalid collection name." % coll_filter)
-                            continue
-                    else:
-                        nsp = coll_filter
                     namespaces = [nsp]
 
                 for ns in namespaces:
