@@ -3,6 +3,12 @@
 set -eux
 ansible-playbook test.yml -i inventory "$@"
 
+# test keyword docs
+ansible-doc -t keyword -l | grep 'vars_prompt: list of variables to prompt for.'
+ansible-doc -t keyword vars_prompt | grep 'description: list of variables to prompt for.'
+ansible-doc -t keyword asldkfjaslidfhals 2>&1 | grep 'Skipping Invalid keyword'
+
+# collections testing
 (
 unset ANSIBLE_PLAYBOOK_DIR
 cd "$(dirname "$0")"
