@@ -560,6 +560,7 @@ class DocCLI(CLI, RoleMixin):
         basedir = context.CLIARGS['basedir']
         plugin_type = context.CLIARGS['type']
         do_json = context.CLIARGS['json_format']
+        roles_path = context.CLIARGS['roles_path']
         listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir'] or context.CLIARGS['dump']
         docs = {}
 
