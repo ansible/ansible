@@ -328,9 +328,10 @@ def main():
         msg = 'Block inserted'
         changed = True
 
+    backup_file = None
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
-            module.backup_local(path)
+            backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
         real_path = os.path.realpath(params['path'])
         write_changes(module, result, real_path)
@@ -345,7 +346,11 @@ def main():
     attr_diff['after_header'] = '%s (file attributes)' % path
 
     difflist = [diff, attr_diff]
-    module.exit_json(changed=changed, msg=msg, diff=difflist)
+
+    if backup_file is None:
+        module.exit_json(changed=changed, msg=msg, diff=difflist)
+    else:
+        module.exit_json(changed=changed, msg=msg, diff=difflist, backup_file=backup_file)
 
 
 if __name__ == '__main__':

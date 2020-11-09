@@ -1,0 +1,2 @@
+bugfixes:
+  - blockinfile now returns name of backup file when this option is used.
