@@ -560,8 +560,6 @@ def construct_rule(params):
         '--set-dscp-class',
         False)
     append_match_flag(rule, params['syn'], '--syn', True)
-    append_match(rule, params['comment'], 'comment')
-    append_param(rule, params['comment'], '--comment', False)
     if 'conntrack' in params['match']:
         append_csv(rule, params['ctstate'], '--ctstate')
     elif 'state' in params['match']:
@@ -593,6 +591,8 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
+    append_match(rule, params['comment'], 'comment')
+    append_param(rule, params['comment'], '--comment', False)
     return rule
 
 
