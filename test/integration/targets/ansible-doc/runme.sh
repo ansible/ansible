@@ -18,6 +18,13 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule)"
 expected_out="$(cat fakemodule.output)"
 test "$current_out" == "$expected_out"
 
+# ensure we do work with valid collection name for list
+ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection pattern"
+
+# ensure we dont break on invalid collection name for list
+ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection pattern"
+
+
 # test listing diff plugin types from collection
 for ptype in cache inventory lookup vars
 do

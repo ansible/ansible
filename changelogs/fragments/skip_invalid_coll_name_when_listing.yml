@@ -1,0 +1,2 @@
+bugfixes:
+  - Skip invalid collection names when listing in ansible-doc instead of throwing exception. Issue#72257
