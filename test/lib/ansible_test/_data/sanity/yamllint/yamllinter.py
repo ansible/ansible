@@ -31,10 +31,22 @@ def main():
 class TestConstructor(SafeConstructor):
     """Yaml Safe Constructor that knows about Ansible tags"""
 
+    def construct_yaml_unsafe(self, node):
+        try:
+            constructor = getattr(node, 'id', 'object')
+            if constructor is not None:
+                constructor = getattr(self, 'construct_%s' % constructor)
+        except AttributeError:
+            constructor = self.construct_object
+
+        value = constructor(node)
+
+        return value
+
 
 TestConstructor.add_constructor(
     u'!unsafe',
-    TestConstructor.construct_yaml_str)
+    TestConstructor.construct_yaml_unsafe)
 
 
 TestConstructor.add_constructor(
