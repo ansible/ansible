@@ -4,14 +4,18 @@
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
 
-
 - block:
+  - name: ensure test packages are removed before starting
+    yum:
+      name:
+      - sos
+      state: absent
+    
   - import_tasks: yum.yml
   always:
     - name: remove installed packages
       yum:
         name:
-          - bc
           - sos
         state: absent
 
