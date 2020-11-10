@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - Added the ``-remote rhel/7.9`` option to run tests on RHEL 7.9
