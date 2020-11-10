@@ -400,6 +400,8 @@ You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your
 expect to find collections when attempting to use them. If you don't specify a path value, ``ansible-galaxy collection install``
 installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``.
 
+If you want to use a collection directly out of a checked out git repository, see :ref:`hacking_collections`.
+
 Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`
 
 .. _collections_scm_install:
