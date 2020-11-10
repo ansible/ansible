@@ -234,7 +234,7 @@ class StrategyBase:
         self._hosts_cache_all = []
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
-        self._worker = MaybeWorker(tqm)
+        self._worker = MaybeWorker(tqm, self.ALLOW_BASE_THROTTLING)
 
     def _set_hosts_cache(self, play, refresh=True):
         """Responsible for setting _hosts_cache and _hosts_cache_all

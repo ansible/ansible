@@ -91,8 +91,9 @@ class MaybeWorker:
     to short-circuit worker creation in addition.
     '''
 
-    def __init__(self, tqm):
+    def __init__(self, tqm, allow_base_throttling):
         self._tqm = tqm
+        self._allow_base_throttling = allow_base_throttling
         self._workers = tqm._workers
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
@@ -216,14 +217,14 @@ class MaybeWorker:
             # by the forks or serial setting), however a task/block/play may "throttle"
             # that limit down.
             rewind_point = len(self._workers)
-            # FIXME re-enable throttling, need to pass ALLOW_BASE_THROTTLING from the strategy
-            # if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-            #     if task.run_once:
-            #         display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-            #     else:
-            #         if throttle <= rewind_point:
-            #             display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-            #             rewind_point = throttle
+
+            if throttle > 0 and self._allow_base_throttling:
+                if task.run_once:
+                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                else:
+                    if throttle <= rewind_point:
+                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                        rewind_point = throttle
 
             queued = False
             starting_worker = self._cur_worker
