@@ -243,7 +243,12 @@ COLLECTIONS_SCAN_SYS_PATH:
   - {key: collections_scan_sys_path, section: defaults}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
-  description: Colon separated paths in which Ansible will search for collections content.
+  description: >
+    Colon separated paths in which Ansible will search for collections content.
+    Collections must be in nested *subdirectories*, not directly in these directories.
+    For example, if ``COLLECTIONS_PATHS`` includes ``~/.ansible/collections``,
+    and you want to add ``my.collection`` to that directory, it must be saved as
+    ``~/.ansible/collections/ansible_collections/my/collection``.
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
