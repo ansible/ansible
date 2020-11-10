@@ -141,6 +141,66 @@ EXAMPLES = r'''
     - s/^xxx/yyy/
 '''
 
+RETURN = r'''
+dest:
+  description: Path to the destination directory.
+  returned: always
+  type: str
+  sample: /opt/software
+files:
+  description: List of all the files in the archive.
+  returned: When I(list_files) is True
+  type: list
+  sample: '["file1", "file2"]'
+gid:
+  description: Numerical ID of the group that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
+group:
+  description: Name of the group that owns the destination directory.
+  returned: always
+  type: str
+  sample: "librarians"
+handler:
+  description: Archive software handler used to extract and decompress the archive.
+  returned: always
+  type: str
+  sample: "TgzArchive"
+mode:
+  description: String that represents the octal permissions of the destination directory.
+  returned: always
+  type: str
+  sample: "0755"
+owner:
+  description: Name of the user that owns the destination directory.
+  returned: always
+  type: str
+  sample: "paul"
+size:
+  description: The size of destination directory in bytes. Does not include the size of files or subdirectories contained within.
+  returned: always
+  type: int
+  sample: 36
+src:
+  description:
+    - The source archive's path.
+    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+  returned: always
+  type: str
+  sample: "/home/paul/test.tar.gz"
+state:
+  description: State of the destination. Effectively always "directory".
+  returned: always
+  type: str
+  sample: "directory"
+uid:
+  description: Numerical ID of the user that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
+'''
+
 import binascii
 import codecs
 import datetime
