@@ -149,6 +149,7 @@ class TaskQueueManager:
             if plugin:
                 # avoids incorrect and dupes possible due to collections
                 if plugin not in callback_list:
+                    setattr(plugin, '_redirected_names', [c])  # here for backport as newer versions of plugin_loader already do this
                     callback_list.append(plugin)
             else:
                 display.warning("Skipping callback plugin '%s', unable to load" % c)
