@@ -68,7 +68,7 @@ Settings by Platform
     `Cloudengine OS`_                ``community.network.ce``          ✓            ✓                 ✓
     `Dell OS6`_                      ``dellemc.os6.os6``               ✓                              ✓
     `Dell OS9`_                      ``dellemc.os9.os9``               ✓                              ✓
-    `Dell OS10`_                     ``dellemc.os10.0s10``             ✓                              ✓
+    `Dell OS10`_                     ``dellemc.os10.os10``             ✓                              ✓
     `Ericsson ECCLI`_                ``community.network.eric_eccli``  ✓                              ✓
     `Extreme EXOS`_                  ``community.network.exos``        ✓                     ✓
     `Extreme IronWare`_              ``community.network.ironware``    ✓                              ✓
