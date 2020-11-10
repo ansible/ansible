@@ -195,7 +195,7 @@ state:
   type: str
   sample: "directory"
 uid:
-  description: numerical ID of the user that owns the destination directory.
+  description: Numerical ID of the user that owns the destination directory.
   returned: always
   type: int
   sample: 1000
