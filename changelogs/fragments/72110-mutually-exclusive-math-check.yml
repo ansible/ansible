@@ -1,0 +1,5 @@
+minor_changes:
+  - >
+    mutually exclusive module parameters are now evaluated for their truthiness
+    in addition to checking for the presence of mutually excluse keys
+    (https://github.com/ansible/ansible/issues/72110)

@@ -42,6 +42,35 @@ def test_check_mutually_exclusive_found(mutually_exclusive_terms):
     assert to_native(e.value) == expected
 
 
+@pytest.mark.parametrize(
+    'params',
+    (
+        {'string1': 'cat', 'string2': None},
+        {'fox': 'blue', 'box': False},
+        {'fox': 'blue', 'box': '', 'socks': None},
+    )
+)
+def test_check_mutually_exclusive_mathematical_pass(mutually_exclusive_terms, params):
+    check_mutually_exclusive(mutually_exclusive_terms, params)
+
+
+@pytest.mark.parametrize(
+    ('params', 'expected'),
+    (
+        ({'fox': 'blue', 'box': 'large'}, 'box|fox|socks'),
+        ({'fox': 'blue', 'box': '', 'socks': 'blue'}, 'box|fox|socks'),
+        ({'string1': 'cat', 'string2': None, 'fox': 'blue', 'box': 'large'}, 'box|fox|socks'),
+        ({'string1': 'cat', 'string2': 'bat', 'fox': 'blue', 'box': 'large'}, 'string1|string2, box|fox|socks'),
+        ({'string1': 'cat', 'string2': 'bat', 'fox': '', 'box': 'large', 'socks': 0}, 'string1|string2'),
+    )
+)
+def test_check_mutually_exclusive_mathematical_fail(mutually_exclusive_terms, params, expected):
+    with pytest.raises(TypeError) as e:
+        check_mutually_exclusive(mutually_exclusive_terms, params)
+
+    assert to_native(e.value) == 'parameters are mutually exclusive: {0}'.format(expected)
+
+
 def test_check_mutually_exclusive_none():
     terms = None
     params = {

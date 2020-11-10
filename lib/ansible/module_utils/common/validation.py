@@ -9,6 +9,8 @@ import os
 import re
 
 from ast import literal_eval
+from itertools import combinations
+
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
@@ -43,7 +45,9 @@ def check_mutually_exclusive(terms, module_parameters):
     """Check mutually exclusive terms against argument parameters
 
     Accepts a single list or list of lists that are groups of terms that should be
-    mutually exclusive with one another
+    mutually exclusive with one another. The values of each mutually exclusive
+    term are evaluated. If any combination of a pair of mutually exclusive
+    values evaluate to True, then a TypeError is raised.
 
     :arg terms: List of mutually exclusive module parameters
     :arg module_parameters: Dictionary of module parameters
@@ -60,8 +64,20 @@ def check_mutually_exclusive(terms, module_parameters):
         if count > 1:
             results.append(check)
 
-    if results:
-        full_list = ['|'.join(check) for check in results]
+    value_check = []
+    for check_terms in results:
+        # Create pairs of each value for parameters that are mutually exclusive
+        param_combos = combinations((module_parameters.get(k) for k in check_terms), 2)
+
+        # Test each value pair to ensure they evaluate to False
+        for combo in param_combos:
+            if all(combo):
+                value_check.append(check_terms)
+                # If one value pair evaluates to True, then no need to evaluate further combinations
+                break
+
+    if value_check:
+        full_list = ['|'.join(check) for check in value_check]
         msg = "parameters are mutually exclusive: %s" % ', '.join(full_list)
         raise TypeError(to_native(msg))
 
