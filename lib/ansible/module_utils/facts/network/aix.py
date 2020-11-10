@@ -30,22 +30,23 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
     platform = 'AIX'
 
     def get_default_interfaces(self, route_path):
-        netstat_path = self.module.get_bin_path('netstat')
-
-        rc, out, err = self.module.run_command([netstat_path, '-nr'])
-
         interface = dict(v4={}, v6={})
 
-        lines = out.splitlines()
-        for line in lines:
-            words = line.split()
-            if len(words) > 1 and words[0] == 'default':
-                if '.' in words[1]:
-                    interface['v4']['gateway'] = words[1]
-                    interface['v4']['interface'] = words[5]
-                elif ':' in words[1]:
-                    interface['v6']['gateway'] = words[1]
-                    interface['v6']['interface'] = words[5]
+        netstat_path = self.module.get_bin_path('netstat')
+
+        if netstat_path:
+            rc, out, err = self.module.run_command([netstat_path, '-nr'])
+
+            lines = out.splitlines()
+            for line in lines:
+                words = line.split()
+                if len(words) > 1 and words[0] == 'default':
+                    if '.' in words[1]:
+                        interface['v4']['gateway'] = words[1]
+                        interface['v4']['interface'] = words[5]
+                    elif ':' in words[1]:
+                        interface['v6']['gateway'] = words[1]
+                        interface['v6']['interface'] = words[5]
 
         return interface['v4'], interface['v6']
 
