@@ -75,7 +75,7 @@ options:
     type: bool
   force:
     description:
-      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes)'
+      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes) and C(allow_change_held_packages: yes)'
       - "This option will disable checking both the packages' signatures and the certificates of the
         web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
@@ -91,6 +91,14 @@ options:
     type: bool
     default: 'no'
     version_added: "2.1"
+  allow_change_held_packages:
+    description:
+      - Allow changes to packages which are marked as held.
+      - 'C(allow_change_held_packages) is only supported with state: I(install)/I(present)'
+    aliases: [ allow-change-held-packages ]
+    type: bool
+    default: 'no'
+    version_added: "2.4"
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
@@ -637,7 +645,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False):
+            allow_unauthenticated=False, allow_change_held_packages=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -712,6 +720,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
+        if allow_change_held_packages:
+            cmd += " --allow-change-held-packages"
+
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
 
@@ -748,7 +759,8 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, dpkg_options):
+def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends,
+                allow_unauthenticated, allow_change_held_packages, dpkg_options):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -792,6 +804,7 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
                                      install_recommends=install_recommends,
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
+                                     allow_change_held_packages=allow_change_held_packages,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)
@@ -922,6 +935,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
             allow_unauthenticated=False,
+            allow_change_held_packages=False,
             ):
 
     if autoremove:
@@ -968,6 +982,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         fail_on_autoremove = ''
 
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
+    allow_change_held_packages = '--allow-change-held-packages' if allow_change_held_packages else ''
 
     if apt_cmd is None:
         if use_apt_get:
@@ -1068,6 +1083,7 @@ def main():
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
+            allow_change_held_packages=dict(type='bool', default=False, aliases=['allow-change-held-packages']),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -1117,6 +1133,7 @@ def main():
     updated_cache_time = 0
     install_recommends = p['install_recommends']
     allow_unauthenticated = p['allow_unauthenticated']
+    allow_change_held_packages = p['allow_change_held_packages']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
@@ -1181,7 +1198,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated, allow_change_held_packages)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -1191,6 +1208,7 @@ def main():
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
+                        allow_change_held_packages=allow_change_held_packages,
                         force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
@@ -1201,7 +1219,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated, allow_change_held_packages)
 
         if packages:
             for package in packages:
@@ -1241,7 +1259,8 @@ def main():
                 autoremove=autoremove,
                 fail_on_autoremove=fail_on_autoremove,
                 only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
+                allow_unauthenticated=allow_unauthenticated,
+                allow_change_held_packages=allow_change_held_packages,
             )
 
             # Store if the cache has been updated
