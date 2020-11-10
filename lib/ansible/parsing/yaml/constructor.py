@@ -24,11 +24,10 @@ from yaml.nodes import MappingNode
 
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode
 from ansible.parsing.vault import VaultLib
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
 
@@ -121,7 +120,16 @@ class AnsibleConstructor(SafeConstructor):
         data.ansible_pos = self._node_position_info(node)
 
     def construct_yaml_unsafe(self, node):
-        return wrap_var(self.construct_yaml_str(node))
+        try:
+            constructor = getattr(node, 'id', 'object')
+            if constructor is not None:
+                constructor = getattr(self, 'construct_%s' % constructor)
+        except AttributeError:
+            constructor = self.construct_object
+
+        value = constructor(node)
+
+        return wrap_var(value)
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)

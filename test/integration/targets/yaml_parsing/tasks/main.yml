@@ -31,3 +31,7 @@
     that:
       - '"found a duplicate dict key (foo)" not in duplicate_ignore.stderr'
       - duplicate_ignore.rc == 0
+
+
+- name: test unsafe YAMLism
+  import_tasks: unsafe.yml
