@@ -1,0 +1,2 @@
+minor_changes:
+  - unarchive - add ``RETURN`` documentation (https://github.com/ansible/ansible/issues/67445).
