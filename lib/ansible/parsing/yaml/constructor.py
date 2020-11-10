@@ -26,9 +26,10 @@ from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
+from ansible.template import AnsibleUndefined
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
 
@@ -123,6 +124,9 @@ class AnsibleConstructor(SafeConstructor):
     def construct_yaml_unsafe(self, node):
         return wrap_var(self.construct_yaml_str(node))
 
+    def construct_undefined(self, node):
+        return AnsibleUndefined()
+
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
         # Add one so that the first line is line 1 rather than line 0
@@ -138,32 +142,13 @@ class AnsibleConstructor(SafeConstructor):
         return (datasource, line, column)
 
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:map',
-    AnsibleConstructor.construct_yaml_map)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/dict',
-    AnsibleConstructor.construct_yaml_map)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:str',
-    AnsibleConstructor.construct_yaml_str)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/unicode',
-    AnsibleConstructor.construct_yaml_str)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:seq',
-    AnsibleConstructor.construct_yaml_seq)
-
-AnsibleConstructor.add_constructor(
-    u'!unsafe',
-    AnsibleConstructor.construct_yaml_unsafe)
-
-AnsibleConstructor.add_constructor(
-    u'!vault',
-    AnsibleConstructor.construct_vault_encrypted_unicode)
-
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:map', AnsibleConstructor.construct_yaml_map)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:python/dict', AnsibleConstructor.construct_yaml_map)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:str', AnsibleConstructor.construct_yaml_str)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:python/unicode', AnsibleConstructor.construct_yaml_str)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:seq', AnsibleConstructor.construct_yaml_seq)
+AnsibleConstructor.add_constructor(u'!unsafe', AnsibleConstructor.construct_yaml_unsafe)
+AnsibleConstructor.add_constructor(u'!vault', AnsibleConstructor.construct_vault_encrypted_unicode)
 AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+AnsibleConstructor.add_constructor(u'!undef', AnsibleConstructor.construct_undefined)
+AnsibleConstructor.add_constructor(u'!undefined', AnsibleConstructor.construct_undefined)
