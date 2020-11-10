@@ -1,0 +1,3 @@
+
+minor_changes:
+  - slurp - add ``RETURN`` documentation (https://github.com/ansible/ansible/pull/72559).
