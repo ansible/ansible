@@ -455,8 +455,8 @@ You can create vars plugins that are not enabled by default using the class vari
 
 .. code-block:: python
 
-    class VarsModule(BaseVarsPlugin):
-        REQUIRES_ENABLED = True
+   class VarsModule(BaseVarsPlugin):
+       REQUIRES_ENABLED = True
 
  Include the ``vars_plugin_staging`` documentation fragment to allow users to determine when vars plugins run.
 
