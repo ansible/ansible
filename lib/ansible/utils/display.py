@@ -220,6 +220,9 @@ class Display(metaclass=Singleton):
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 self.cows_available = {to_text(c) for c in out.split()}
+                if cmd.returncode:
+                    raise Exception
+                self.cows_available = set([to_text(c) for c in out.split()])
                 if C.ANSIBLE_COW_ACCEPTLIST and any(C.ANSIBLE_COW_ACCEPTLIST):
                     self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(self.cows_available)
             except Exception:
