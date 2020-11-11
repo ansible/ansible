@@ -71,37 +71,16 @@
     v3: true
 
 # We use a module for this so we can speed up the test time.
+# For pulp interactions, we only upload to galaxy_ng which shares
+# the same repo and distribution with pulp_ansible
+# However, we use galaxy_ng only, since collections are unique across
+# pulp repositories, and galaxy_ng maintains a 2nd list of published collections
 - name: setup test collections for install and download test
-  loop:
-    # For pulp interactions, we only upload to galaxy_ng which shares
-    # the same repo and distribution with pulp_ansible
-    # However, we use galaxy_ng only, since collections are unique across
-    # pulp repositories, and galaxy_ng maintains a 2nd list of published collections
-    - galaxy_ng
+  setup_collections:
+    server: galaxy_ng
+    collections: '{{ collection_list }}'
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
-  async: 300
-  poll: 0
-  register: setup_collections
-  setup_collections:
-    server: '{{ item }}'
-    collections: '{{ collection_list }}'
-
-- name: Wait for setup_collections
-  async_status:
-    jid: '{{ item.ansible_job_id }}'
-    mode: status
-  retries: 300
-  delay: 1
-  loop: '{{ setup_collections.results }}'
-  register: setup_collections_wait
-  until: setup_collections_wait is finished
-
-# The above setup_collections uses --no-wait
-# pause for good measure.
-- name: precautionary wait
-  pause:
-    seconds: 5
 
 # Stores the cached test version number index as we run install many times
 - set_fact:

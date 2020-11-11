@@ -316,7 +316,6 @@
     - namespace: cache
       name: cache
       version: 1.0.{{ cache_version_build }}
-    wait: yes
 
 - name: make sure the cache version list is ignored on a collection version change
   command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
