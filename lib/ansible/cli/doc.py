@@ -106,16 +106,15 @@ class RoleMixin(object):
         for path in role_paths:
             if not os.path.isdir(path):
                 continue
-            else:
-                # Check each subdir for a meta/argument_specs.yml file
-                for entry in os.listdir(path):
-                    role_path = os.path.join(path, entry)
-                    full_path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
-                    if os.path.exists(full_path):
-                        if name_filters is None or entry in name_filters:
-                            if entry not in found_names:
-                                found.add((entry, role_path))
-                            found_names.add(entry)
+            # Check each subdir for a meta/argument_specs.yml file
+            for entry in os.listdir(path):
+                role_path = os.path.join(path, entry)
+                full_path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
+                if os.path.exists(full_path):
+                    if name_filters is None or entry in name_filters:
+                        if entry not in found_names:
+                            found.add((entry, role_path))
+                        found_names.add(entry)
         return found
 
     def _find_all_collection_roles(self, name_filters=None, collection_filter=None):
@@ -154,6 +153,30 @@ class RoleMixin(object):
                                     found.add((entry, collname, path))
         return found
 
+    def _build_summary(self, role, collection, argspec):
+        """Build a summary dict for a role.
+
+        Returns a simplified role arg spec containing only the role entry points and their
+        short descriptions, and the role collection name (if applicable).
+
+        :param role: The simple role name.
+        :param collection: The collection containing the role (None or empty string if N/A).
+        :param argspec: The complete role argspec data dict.
+
+        :returns: A tuple with the FQCN role name and a summary dict.
+        """
+        if collection:
+            fqcn = '.'.join([collection, role])
+        else:
+            fqcn = role
+        summary = {}
+        summary['collection'] = collection
+        summary['entry_points'] = {}
+        for entry_point in argspec.keys():
+            entry_spec = argspec[entry_point] or {}
+            summary['entry_points'][entry_point] = entry_spec.get('short_description', '')
+        return (fqcn, summary)
+
     def _create_role_list(self, roles_path, collection_filter=None):
         """Return a dict describing the listing of all roles with arg specs.
 
@@ -183,7 +206,6 @@ class RoleMixin(object):
                   }
                },
             }
-
         """
         if not collection_filter:
             roles = self._find_all_normal_roles(roles_path)
@@ -193,28 +215,15 @@ class RoleMixin(object):
 
         result = {}
 
-        def build_summary(role, collection, argspec):
-            if collection:
-                fqcn = '.'.join([collection, role])
-            else:
-                fqcn = role
-            if fqcn not in result:
-                result[fqcn] = {}
-            summary = {}
-            summary['collection'] = collection
-            summary['entry_points'] = {}
-            for entry_point in argspec.keys():
-                entry_spec = argspec[entry_point] or {}
-                summary['entry_points'][entry_point] = entry_spec.get('short_description', '')
-            result[fqcn] = summary
-
         for role, role_path in roles:
             argspec = self._load_argspec(role, role_path=role_path)
-            build_summary(role, '', argspec)
+            fqcn, summary = self._build_summary(role, '', argspec)
+            result[fqcn] = summary
 
         for role, collection, collection_path in collroles:
             argspec = self._load_argspec(role, collection_path=collection_path)
-            build_summary(role, collection, argspec)
+            fqcn, summary = self._build_summary(role, collection, argspec)
+            result[fqcn] = summary
 
         return result
 
@@ -597,19 +606,9 @@ class DocCLI(CLI, RoleMixin):
                 elif len(context.CLIARGS['args']) > 1:
                     raise AnsibleOptionsError("Only a single collection filter is supported.")
 
-                list_json = self._create_role_list(roles_path, collection_filter=coll_filter)
-                if do_json:
-                    jdump(list_json)
-                else:
-                    self._display_available_roles(list_json)
+                docs = self._create_role_list(roles_path, collection_filter=coll_filter)
             else:
-                role_json = self._create_role_doc(context.CLIARGS['args'], roles_path,
-                                                  context.CLIARGS['entry_point'])
-                if do_json:
-                    jdump(role_json)
-                else:
-                    self._display_role_doc(role_json)
-            return 0
+                docs = self._create_role_doc(context.CLIARGS['args'], roles_path, context.CLIARGS['entry_point'])
         else:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
 
@@ -649,6 +648,11 @@ class DocCLI(CLI, RoleMixin):
                             text.append(textret)
                         else:
                             display.warning("No valid documentation was retrieved from '%s'" % plugin)
+            elif plugin_type == 'role':
+                if listing and docs:
+                    self._display_available_roles(docs)
+                elif docs:
+                    self._display_role_doc(docs)
             elif docs:
                 text = DocCLI._dump_yaml(docs, '')
 
