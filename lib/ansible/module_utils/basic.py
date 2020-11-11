@@ -156,6 +156,7 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
+    check_arguments,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
@@ -1561,9 +1562,10 @@ class AnsibleModule(object):
         if legal_inputs is None:
             legal_inputs = self._legal_inputs
 
-        for k in list(param.keys()):
-            if k not in legal_inputs:
-                unsupported_parameters.add(k)
+        # FIXME: This should raise a TypeError, but I need a way to pass values
+        # with the exception. This will most likely require a custom exception class
+        # subclassed from TypeError.
+        unsupported_parameters = check_arguments(param, legal_inputs)
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
