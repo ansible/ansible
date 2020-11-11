@@ -103,10 +103,17 @@ On Fedora:
 
     $ sudo dnf install ansible
 
-On RHEL and CentOS:
+On RHEL:
 
 .. code-block:: bash
 
+    $ sudo yum install ansible
+
+On CentOS:
+
+.. code-block:: bash
+
+    $ sudo yum install epel-release
     $ sudo yum install ansible
 
 RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
