@@ -94,9 +94,13 @@ class GalaxyProvider(CloudProvider):
         """
         super(GalaxyProvider, self).__init__(args)
 
+        # Cannot use the latest container image as either galaxy_ng 4.2.0rc2 or pulp 0.5.0 has sporatic issues with
+        # dropping published collections in CI. Try running the tests multiple times when updating. Will also need to
+        # comment out the cache tests in 'test/integration/targets/ansible-galaxy-collection/tasks/install.yml' when
+        # the newer update is available.
         self.pulp = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'docker.io/pulp/pulp-galaxy-ng@sha256:263282d364e2c996f5e0740e85bbfb685bcc602bce1ab2c4f5af702fe46f9b20'
+            'docker.io/pulp/pulp-galaxy-ng@sha256:b79a7be64eff86d8f58db9ca83ed4967bd8b4e45c99addb17a91d11926480cf1'
         )
 
         self.containers = []
