@@ -692,6 +692,7 @@ class AnsibleModule(object):
         self._diff = False
         self._socket_path = None
         self._shell = None
+        self._syslog_facility = 'LOG_USER'
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -1528,7 +1529,6 @@ class AnsibleModule(object):
                       collection_name=message.get('collection_name'))
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
-        self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
         if spec is None:
             spec = self.argument_spec
