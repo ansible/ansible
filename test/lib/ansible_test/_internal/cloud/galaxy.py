@@ -238,16 +238,14 @@ class GalaxyEnvironment(CloudEnvironment):
             ansible_vars=dict(
                 pulp_user=pulp_user,
                 pulp_password=pulp_password,
-                pulp_v2_server='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
-                pulp_v3_server='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
                 pulp_api='http://%s:%s' % (pulp_host, pulp_port),
+                pulp_server='http://%s:%s/pulp_ansible/galaxy/' % (pulp_host, pulp_port),
                 galaxy_ng_server='http://%s:%s/api/galaxy/' % (pulp_host, galaxy_port),
             ),
             env_vars=dict(
                 PULP_USER=pulp_user,
                 PULP_PASSWORD=pulp_password,
-                PULP_V2_SERVER='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
-                PULP_V3_SERVER='http://%s:%s/pulp_ansible/galaxy/published/api/' % (pulp_host, pulp_port),
+                PULP_SERVER='http://%s:%s/pulp_ansible/galaxy/api/' % (pulp_host, pulp_port),
                 GALAXY_NG_SERVER='http://%s:%s/api/galaxy/' % (pulp_host, galaxy_port),
             ),
         )
