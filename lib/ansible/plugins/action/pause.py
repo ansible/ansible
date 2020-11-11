@@ -77,7 +77,8 @@ def is_interactive(fd=None):
 
     if isatty(fd):
         # Compare the current process group to the process group associated
-        # with stdin to determine if the process is running in the background.
+        # with terminal of the given file descriptor to determine if the process
+        # is running in the background.
         return getpgrp() == tcgetpgrp(fd)
     else:
         return False
