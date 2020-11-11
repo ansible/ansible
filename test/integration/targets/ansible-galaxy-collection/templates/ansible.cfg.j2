@@ -1,4 +1,6 @@
 [galaxy]
+# Ensures subsequent unstable reruns don't use the cached information causing another failure
+cache_dir={{ remote_tmp_dir }}/galaxy_cache
 server_list=pulp_v2,pulp_v3,galaxy_ng
 
 [galaxy_server.pulp_v2]
