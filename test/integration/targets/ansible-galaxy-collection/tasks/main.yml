@@ -144,11 +144,19 @@
 - name: assert result of install collection with dep on another server
   assert:
     that:
-    - '"''secondary.name'' obtained from server secondary" in install_cross_dep.stdout'
+    - >-
+      "'secondary.name:1.0.0' obtained from server secondary"
+      in install_cross_dep.stdout
     # pulp_v2 is highest in the list so it will find it there first
-    - '"''parent_dep.parent_collection'' obtained from server pulp_v2" in install_cross_dep.stdout'
-    - '"''child_dep.child_collection'' obtained from server pulp_v2" in install_cross_dep.stdout'
-    - '"''child_dep.child_dep2'' obtained from server pulp_v2" in install_cross_dep.stdout'
+    - >-
+      "'parent_dep.parent_collection:1.0.0' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - >-
+      "'child_dep.child_collection:0.9.9' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - >-
+      "'child_dep.child_dep2:1.2.2' obtained from server pulp_v2"
+      in install_cross_dep.stdout
     - (install_cross_dep_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_cross_dep_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_cross_dep_actual.results[2].content | b64decode | from_json).collection_info.version == '0.9.9'
@@ -171,3 +179,6 @@
     test_name: 'galaxy_ng'
     test_server: '{{ galaxy_ng_server }}'
     vX: "v3/"
+
+- name: run ansible-galaxy collection list tests
+  include_tasks: list.yml

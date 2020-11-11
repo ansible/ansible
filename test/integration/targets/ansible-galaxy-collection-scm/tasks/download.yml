@@ -24,8 +24,8 @@
 
 - assert:
     that:
-      - '"Downloading collection ''amazon.aws'' to" in download_collection.stdout'
-      - '"Downloading collection ''awx.awx'' to" in download_collection.stdout'
+      - '"Downloading collection ''amazon.aws:1.0.0'' to" in download_collection.stdout'
+      - '"Downloading collection ''awx.awx:0.0.1-devel'' to" in download_collection.stdout'
       - download_collection_amazon_actual.stat.exists
       - download_collection_awx_actual.stat.exists
 
