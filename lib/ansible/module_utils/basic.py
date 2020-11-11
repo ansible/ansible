@@ -729,6 +729,7 @@ class AnsibleModule(object):
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
+        self._set_internal_properties()
         self._check_arguments()
 
         # check exclusive early
@@ -1528,6 +1529,29 @@ class AnsibleModule(object):
             deprecate(message['msg'], version=message.get('version'), date=message.get('date'),
                       collection_name=message.get('collection_name'))
 
+    def _set_internal_properties(self, argument_spec=None, module_parameters=None):
+        if argument_spec is None:
+            argument_spec = self.argument_spec
+        if module_parameters is None:
+            module_parameters = self.params
+
+        for k in PASS_VARS:
+            # handle setting internal properties from internal ansible vars
+            param_key = '_ansible_%s' % k
+            if param_key in module_parameters:
+                if k in PASS_BOOLS:
+                    setattr(self, PASS_VARS[k][0], self.boolean(module_parameters[param_key]))
+                else:
+                    setattr(self, PASS_VARS[k][0], module_parameters[param_key])
+
+                # clean up internal top level params:
+                if param_key in self.params:
+                    del self.params[param_key]
+            else:
+                # use defaults if not already set
+                if not hasattr(self, PASS_VARS[k][0]):
+                    setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
+
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         unsupported_parameters = set()
         if spec is None:
@@ -1538,26 +1562,8 @@ class AnsibleModule(object):
             legal_inputs = self._legal_inputs
 
         for k in list(param.keys()):
-
             if k not in legal_inputs:
                 unsupported_parameters.add(k)
-
-        for k in PASS_VARS:
-            # handle setting internal properties from internal ansible vars
-            param_key = '_ansible_%s' % k
-            if param_key in param:
-                if k in PASS_BOOLS:
-                    setattr(self, PASS_VARS[k][0], self.boolean(param[param_key]))
-                else:
-                    setattr(self, PASS_VARS[k][0], param[param_key])
-
-                # clean up internal top level params:
-                if param_key in self.params:
-                    del self.params[param_key]
-            else:
-                # use defaults if not already set
-                if not hasattr(self, PASS_VARS[k][0]):
-                    setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
