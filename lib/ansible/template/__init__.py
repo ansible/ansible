@@ -314,6 +314,17 @@ class AnsibleUndefined(StrictUndefined):
         # Return original Undefined object to preserve the first failure context
         return self
 
+    @property
+    def _undefined_message(self):
+        obj = self._undefined_obj
+        key = self._undefined_name
+        if isinstance(obj, KnownVariablesDict):
+            path = obj.get("__path")
+            if path:
+                return "Variable '{0}' has no key '{1}'".format(path, key)
+            return "Variable '{0}' is not defined.".format(key)
+        return super(AnsibleUndefined, self)._undefined_message
+
 
 class AnsibleContext(Context):
     '''
@@ -637,22 +648,39 @@ class KnownVariablesDict(dict):
     a = dict["variable_root"]["sub_variable.sub_sub_variable"]
     a = dict["variable_root"]["sub_variable"]["sub_sub_variable"]
 
+    '__path' key keeps full path to current KnownVariableDict, if it's nested within another KnownVariablesDict.
+    This is required for precise "_undefined_message" in AnsibleUndefined.
     """
-    @classmethod
-    def from_dict(cls, d):
-        return cls(**d)
+    def __init__(self, *args, **kwargs):
+        super(KnownVariablesDict, self).__init__(*args, **kwargs)
+        self.setdefault('__path', '')
+
+    @property
+    def __path(self):
+        return self['__path']
+
+    def __get_path(self, key):
+        if self.__path:
+            return "{0}.{1}".format(self.__path, key)
+        return key
+
+    def __get_or_create_subdict(self, subdict_name, dict_=None):
+        dict_ = dict_ or {}
+        dict_.pop('__path', None)
+        subdict = self.get(subdict_name)
+        if not isinstance(subdict, KnownVariablesDict):
+            subdict = KnownVariablesDict(__path=self.__get_path(subdict_name))
+        subdict.update(**dict_)
+        dict.__setitem__(self, subdict_name, subdict)
+        return subdict
 
     def __setitem__(self, key, value):
-        if isinstance(value, dict):
-            value = self.from_dict(value)
         if "." in key:
             subdict_name, subitem = key.split(".", 1)
-            subdict = self.setdefault(subdict_name, KnownVariablesDict())
-            if isinstance(subdict, KnownVariablesDict):
-                self[subdict_name][subitem] = value
-            else:
-                self[subdict_name] = KnownVariablesDict(**{subitem: value})
-
+            subdict = self.__get_or_create_subdict(subdict_name)
+            subdict[subitem] = value
+        elif isinstance(value, dict):
+            self.__get_or_create_subdict(key, value)
         else:
             super(KnownVariablesDict, self).__setitem__(key, value)
 
