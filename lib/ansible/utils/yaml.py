@@ -16,9 +16,13 @@ import yaml
 try:
     SafeLoader = yaml.CSafeLoader
     SafeDumper = yaml.CSafeDumper
+    Parser = yaml.CParser
+    HAS_LIBYAML = True
 except AttributeError:
     SafeLoader = yaml.SafeLoader
     SafeDumper = yaml.SafeDumper
+    Parser = yaml.Parser
+    HAS_LIBYAML = False
 
 
 safe_load = partial(yaml.load, Loader=SafeLoader)

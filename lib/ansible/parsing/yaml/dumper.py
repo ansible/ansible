@@ -24,10 +24,11 @@ import yaml
 from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.utils.yaml import SafeDumper
 from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
-class AnsibleDumper(yaml.SafeDumper):
+class AnsibleDumper(SafeDumper):
     '''
     A simple stub class that allows us to add representers
     for our overridden object types.
