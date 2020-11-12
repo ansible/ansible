@@ -75,7 +75,6 @@ options:
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
     - When doing a recursive copy, see also C(directory_mode).
-    type: path
   directory_mode:
     description:
     - When doing a recursive copy set the mode for the directories.
