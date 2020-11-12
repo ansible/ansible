@@ -24,7 +24,11 @@ import termios
 import time
 import tty
 
-from os import isatty
+from os import (
+    getpgrp,
+    isatty,
+    tcgetpgrp,
+)
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -65,6 +69,19 @@ def timeout_handler(signum, frame):
 def clear_line(stdout):
     stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
     stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
+
+
+def is_interactive(fd=None):
+    if fd is None:
+        return False
+
+    if isatty(fd):
+        # Compare the current process group to the process group associated
+        # with terminal of the given file descriptor to determine if the process
+        # is running in the background.
+        return getpgrp() == tcgetpgrp(fd)
+    else:
+        return False
 
 
 class ActionModule(ActionBase):
@@ -177,71 +194,69 @@ class ActionModule(ActionBase):
                 stdout_fd = stdout.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
-                # AttributeError: someone is using a null file descriptor as stdin on windoez
+                # AttributeError: someone is using a null file descriptor as stdin on windoze
                 stdin = None
+            interactive = is_interactive(stdin_fd)
+            if interactive:
+                # grab actual Ctrl+C sequence
+                try:
+                    intr = termios.tcgetattr(stdin_fd)[6][termios.VINTR]
+                except Exception:
+                    # unsupported/not present, use default
+                    intr = b'\x03'  # value for Ctrl+C
 
-            if stdin_fd is not None:
-                if isatty(stdin_fd):
-                    # grab actual Ctrl+C sequence
-                    try:
-                        intr = termios.tcgetattr(stdin_fd)[6][termios.VINTR]
-                    except Exception:
-                        # unsupported/not present, use default
-                        intr = b'\x03'  # value for Ctrl+C
+                # get backspace sequences
+                try:
+                    backspace = termios.tcgetattr(stdin_fd)[6][termios.VERASE]
+                except Exception:
+                    backspace = [b'\x7f', b'\x08']
 
-                    # get backspace sequences
-                    try:
-                        backspace = termios.tcgetattr(stdin_fd)[6][termios.VERASE]
-                    except Exception:
-                        backspace = [b'\x7f', b'\x08']
+                old_settings = termios.tcgetattr(stdin_fd)
+                tty.setraw(stdin_fd)
 
-                    old_settings = termios.tcgetattr(stdin_fd)
-                    tty.setraw(stdin_fd)
+                # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
+                # stdout to a file since a file cannot be set to raw mode.
+                if isatty(stdout_fd):
+                    tty.setraw(stdout_fd)
 
-                    # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
-                    # stdout to a file since a file cannot be set to raw mode.
-                    if isatty(stdout_fd):
-                        tty.setraw(stdout_fd)
+                # Only echo input if no timeout is specified
+                if not seconds and echo:
+                    new_settings = termios.tcgetattr(stdin_fd)
+                    new_settings[3] = new_settings[3] | termios.ECHO
+                    termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
 
-                    # Only echo input if no timeout is specified
-                    if not seconds and echo:
-                        new_settings = termios.tcgetattr(stdin_fd)
-                        new_settings[3] = new_settings[3] | termios.ECHO
-                        termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
-
-                    # flush the buffer to make sure no previous key presses
-                    # are read in below
-                    termios.tcflush(stdin, termios.TCIFLUSH)
+                # flush the buffer to make sure no previous key presses
+                # are read in below
+                termios.tcflush(stdin, termios.TCIFLUSH)
 
             while True:
+                if not interactive:
+                    display.warning("Not waiting for response to prompt as stdin is not interactive")
+                    if seconds is not None:
+                        # Give the signal handler enough time to timeout
+                        time.sleep(seconds + 1)
+                    break
 
                 try:
-                    if stdin_fd is not None:
+                    key_pressed = stdin.read(1)
 
-                        key_pressed = stdin.read(1)
+                    if key_pressed == intr:  # value for Ctrl+C
+                        clear_line(stdout)
+                        raise KeyboardInterrupt
 
-                        if key_pressed == intr:  # value for Ctrl+C
-                            clear_line(stdout)
-                            raise KeyboardInterrupt
-
-                    if not seconds:
-                        if stdin_fd is None or not isatty(stdin_fd):
-                            display.warning("Not waiting for response to prompt as stdin is not interactive")
-                            break
-
-                        # read key presses and act accordingly
-                        if key_pressed in (b'\r', b'\n'):
-                            clear_line(stdout)
-                            break
-                        elif key_pressed in backspace:
-                            # delete a character if backspace is pressed
-                            result['user_input'] = result['user_input'][:-1]
-                            clear_line(stdout)
-                            if echo:
-                                stdout.write(result['user_input'])
-                            stdout.flush()
-                        else:
-                            result['user_input'] += key_pressed
+                    # read key presses and act accordingly
+                    if key_pressed in (b'\r', b'\n'):
+                        clear_line(stdout)
+                        break
+                    elif key_pressed in backspace:
+                        # delete a character if backspace is pressed
+                        result['user_input'] = result['user_input'][:-1]
+                        clear_line(stdout)
+                        if echo:
+                            stdout.write(result['user_input'])
+                        stdout.flush()
+                    else:
+                        result['user_input'] += key_pressed
 
                 except KeyboardInterrupt:
                     signal.alarm(0)
