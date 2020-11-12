@@ -43,8 +43,10 @@
     state: present
     extra_args: '-c {{ remote_constraints }}'
   environment:
-    # Need this custom path for OpenSUSE as krb5-config is placed there
-    PATH: '{{ ansible_facts.env.PATH }}:/usr/lib/mit/bin'
+    # Put /usr/local/bin for FreeBSD as we need to use the heimdal port over the builtin version
+    # https://github.com/pythongssapi/python-gssapi/issues/228
+    # Need the /usr/lib/mit/bin custom path for OpenSUSE as krb5-config is placed there
+    PATH: '/usr/local/bin:{{ ansible_facts.env.PATH }}:/usr/lib/mit/bin'
   notify: Remove python gssapi
 
 - name: test the environment to make sure Kerberos is working properly
