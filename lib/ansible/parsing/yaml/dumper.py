@@ -23,21 +23,24 @@ import yaml
 
 from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.utils import convert_yaml_objects_to_native
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.utils.yaml import HAS_LIBYAML, SafeDumper
 from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
-class AnsibleDumper(yaml.SafeDumper):
+class AnsibleDumper(SafeDumper):
     '''
     A simple stub class that allows us to add representers
     for our overridden object types.
-
-    This class *cannot* subclass yaml.cyaml.CSafeDumper
-    as the C implementation denies subclasses of str causing
-    a TypeError. The problematic subclass is AnsibleUnicode,
-    and cannot be represented.
     '''
-    pass
+    def __init__(self, *args, **kwargs):
+        super(AnsibleDumper, self).__init__(*args, **kwargs)
+
+    def represent(self, data):
+        if HAS_LIBYAML:
+            data = convert_yaml_objects_to_native(data)
+        super(AnsibleDumper, self).represent(data)
 
 
 def represent_hostvars(self, data):
