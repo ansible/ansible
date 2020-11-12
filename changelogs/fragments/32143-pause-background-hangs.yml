@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    pause - Fix indefinite hang when using a pause task on a background
+    process (https://github.com/ansible/ansible/issues/32142)
