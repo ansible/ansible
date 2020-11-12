@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 import tempfile
 import threading
 import time
@@ -327,6 +328,22 @@ class TaskQueueManager:
         self.terminate()
         self._final_q.close()
         self._cleanup_processes()
+
+        # A bug exists in Python 2.6 that causes an exception to be raised during
+        # interpreter shutdown. This is only an issue in our CI testing but we
+        # hit it frequently enough to add a small sleep to avoid the issue.
+        # This can be removed once we have split controller available in CI.
+        #
+        # Further information:
+        #     Issue: https://bugs.python.org/issue4106
+        #     Fix:   https://hg.python.org/cpython/rev/d316315a8781
+        #
+        try:
+            if (2, 6) == (sys.version_info[0:2]):
+                time.sleep(0.0001)
+        except (IndexError, AttributeError):
+            # In case there is an issue getting the version info, don't raise an Exception
+            pass
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
