@@ -324,6 +324,13 @@ You can also distribute playbooks in your collection and invoke them using the s
 
     ansible-playbook my_namespace.my_collection.playbook1 -i ./myinventory
 
+From inside a playbook:
+
+.. code-block:: yaml
+
+    - import_playbook: my_namespace.my_collection.playbookX
+
+
 A few recommendations when creating such playbooks, ``hosts:`` should be generic or at least have a variable input.
 
 .. code-block:: yaml
