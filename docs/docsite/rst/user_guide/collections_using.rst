@@ -320,7 +320,7 @@ Using a playbook from a collection
 
 You can also distribute playbooks in your collection and invoke them using the same semantics you use for plugins:
 
-.. code_block:: shell
+.. code-block:: shell
 
     ansible-playbook my_namespace.my_collection.playbook1 -i ./myinventory
 
