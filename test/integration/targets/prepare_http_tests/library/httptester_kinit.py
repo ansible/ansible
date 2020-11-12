@@ -92,9 +92,19 @@ def main():
         required_together=[('username', 'password')],
     )
 
+    # Heimdal has a few quirks that we want to paper over in this module
+    #     1. KRB5_TRACE does not work in any released version (<=7.7), we need to use a custom krb5.config to enable it
+    #     2. When reading the password it reads from the pty not stdin by default causing an issue with subprocess. We
+    #        can control that behaviour with '--password-file=STDIN'
+    # Also need to set the custom path to krb5-config and kinit as FreeBSD relies on the newer Heimdal version in the
+    # port package.
+    sysname = os.uname()[0]
+    prefix = '/usr/local/bin/' if sysname == 'FreeBSD' else ''
+    is_heimdal = sysname in ['Darwin', 'FreeBSD']
+
     # Debugging purposes, get the Kerberos version. On platforms like OpenSUSE this may not be on the PATH.
     try:
-        process = subprocess.Popen(['krb5-config', '--version'], stdout=subprocess.PIPE)
+        process = subprocess.Popen(['%skrb5-config' % prefix, '--version'], stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         version = to_text(stdout)
     except OSError as e:
@@ -102,13 +112,7 @@ def main():
             raise
         version = 'Unknown (no krb5-config)'
 
-    # Heimdal has a few quirks that we want to paper over in this module
-    #     1. KRB5_TRACE does not work in any released version (<=7.7), we need to use a custom krb5.config to enable it
-    #     2. When reading the password it reads from the pty not stdin by default causing an issue with subprocess. We
-    #        can control that behaviour with '--password-file=STDIN'
-    is_heimdal = os.uname()[0] in ['Darwin', 'FreeBSD']
-
-    kinit_args = ['kinit']
+    kinit_args = ['%skinit' % prefix]
     config = {}
     if is_heimdal:
         kinit_args.append('--password-file=STDIN')
