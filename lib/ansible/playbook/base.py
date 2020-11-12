@@ -337,19 +337,23 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def get_validated_value(self, name, attribute, value, templar):
         if attribute.isa == 'string':
-            value = to_text(value)
+            if value is not None:
+                value = to_text(value)
         elif attribute.isa == 'int':
-            value = int(value)
+            if value is not None:
+                value = int(value)
         elif attribute.isa == 'float':
-            value = float(value)
+            if value is not None:
+                value = float(value)
         elif attribute.isa == 'bool':
             value = boolean(value, strict=True)
         elif attribute.isa == 'percent':
             # special value, which may be an integer or float
             # with an optional '%' at the end
-            if isinstance(value, string_types) and '%' in value:
-                value = value.replace('%', '')
-            value = float(value)
+            if value is not None:
+                if isinstance(value, string_types) and '%' in value:
+                    value = value.replace('%', '')
+                value = float(value)
         elif attribute.isa == 'list':
             if value is None:
                 value = []
@@ -381,9 +385,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             elif not isinstance(value, dict):
                 raise TypeError("%s is not a dictionary" % value)
         elif attribute.isa == 'class':
-            if not isinstance(value, attribute.class_type):
-                raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
-            value.post_validate(templar=templar)
+            if value is not None:
+                if not isinstance(value, attribute.class_type):
+                    raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+                value.post_validate(templar=templar)
         return value
 
     def post_validate(self, templar):
