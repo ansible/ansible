@@ -339,7 +339,7 @@ class TaskQueueManager:
         #     Fix:   https://hg.python.org/cpython/rev/d316315a8781
         #
         try:
-            if (2, 6) == (sys.version[0], sys.version[1]):
+            if (2, 6) == (sys.version_info[0:2]):
                 time.sleep(0.0001)
         except (IndexError, AttributeError):
             # In case there is an issue getting the version info, don't raise an Exception
