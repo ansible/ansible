@@ -316,7 +316,7 @@ The ``collections`` keyword merely creates an ordered 'search path' for non-name
 Using a playbook from a collection
 ==================================
 
-.. version_added:: 2.11
+.. versionadded:: 2.11
 
 You can also distribute playbooks in your collection and invoke them using the same semantics you use for plugins:
 
