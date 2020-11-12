@@ -90,7 +90,6 @@ lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/copy.py pylint:blacklisted-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/copy.py validate-modules:doc-type-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
