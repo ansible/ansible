@@ -493,10 +493,18 @@ class TestKnownVariablesDict(unittest.TestCase):
     def test_assign_dict(self):
         kvd = KnownVariablesDict()
         kvd['a'] = {'b': 'c'}
+        self.assertIsInstance(kvd['a'], KnownVariablesDict)
         self.assertEqual(kvd['a.b'], 'c')
         self.assertIsInstance(kvd['a.b'], str)
         kvd['a.b.c'] = 'd'
-        self.assertIsInstance(kvd['a.b'], KnownVariablesDict)
+        self.assertIsInstance(kvd['a.b'], KnownVariablesDict, msg="At this point 'c' rewritten and becomes "
+                                                                  "KnownVariablesDict")
         self.assertEqual(kvd['a.b.c'], 'd')
         b = kvd['a.b']
         self.assertEqual(b['c'], 'd')
+
+    def test_path(self):
+        kvd = KnownVariablesDict()
+        kvd['a.b.c'] = 'd'
+        self.assertEqual(kvd['a']['__path'], 'a')
+        self.assertEqual(kvd['a.b']['__path'], 'a.b')
