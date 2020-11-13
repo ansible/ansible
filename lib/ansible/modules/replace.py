@@ -127,14 +127,14 @@ EXAMPLES = r'''
     before: '</VirtualHost>'
     regexp: '^(.+)$'
     replace: '# \1'
-    
+
 - name: Remove a block of 3 lines between the expressions (requires Ansible >= 2.4)
   replace:
     path: /home/usertest/config.xml
     after: '<config>'
     before: '</config>'
     regexp: ".*<element.*test1(.*\n){2}</element>"
-  
+
 - name: Supports common file attributes
   replace:
     path: /home/jdoe/.ssh/known_hosts
