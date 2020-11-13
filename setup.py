@@ -82,14 +82,14 @@ def _validate_install_ansible_core():
         version_tuple = tuple(int(v) for v in __version__.split('.')[:2])
         if version_tuple >= (2, 11):
             return
-        elif version_tuple == (2,10):
+        elif version_tuple == (2, 10):
             ansible_name = 'ansible-base'
         else:
             ansible_name = 'ansible'
 
         stars = '*' * 76
         raise RuntimeError(
-                '''
+            '''
 
     %s
 
@@ -109,8 +109,7 @@ def _validate_install_ansible_core():
         ANSIBLE_SKIP_CONFLICT_CHECK=1 pip install ansible-core
 
     %s
-                ''' % (stars, ansible_name, __version__, ansible_name, ansible_name, stars)
-            )
+            ''' % (stars, ansible_name, __version__, ansible_name, ansible_name, stars))
     finally:
         sys.path[:] = sys_path
         for key in sys_modules_keys.symmetric_difference(sys.modules):
