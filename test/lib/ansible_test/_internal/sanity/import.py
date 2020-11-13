@@ -20,7 +20,7 @@ from ..target import (
 )
 
 from ..util import (
-    ANSIBLE_ROOT,
+    ANSIBLE_TEST_DATA_ROOT,
     SubprocessError,
     remove_tree,
     display,
@@ -120,7 +120,7 @@ class ImportTest(SanityMultipleVersion):
             # create a clean virtual environment to minimize the available imports beyond the python standard library
             virtual_environment_dirname = 'minimal-py%s' % python_version.replace('.', '')
             if add_ansible_requirements:
-                requirements_file = os.path.join(ANSIBLE_ROOT, 'requirements.txt')
+                requirements_file = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.import-plugins.txt')
                 virtual_environment_dirname += '-requirements-%s' % get_hash(requirements_file)
             virtual_environment_path = os.path.join(temp_root, virtual_environment_dirname)
             virtual_environment_bin = os.path.join(virtual_environment_path, 'bin')
