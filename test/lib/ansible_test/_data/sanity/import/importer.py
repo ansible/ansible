@@ -103,15 +103,25 @@ def main():
     # remove all modules under the ansible package
     list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__]))
 
-    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
-    # this more accurately reflects the environment that AnsiballZ runs modules under
-    # it also avoids issues with imports in the ansible package that are not allowed
-    ansible_module = types.ModuleType(ansible.__name__)
-    ansible_module.__file__ = ansible.__file__
-    ansible_module.__path__ = ansible.__path__
-    ansible_module.__package__ = ansible.__package__
+    args = sys.argv[1:]
+    import_type = 'module'
+    try:
+        type_index = args.index('--type')
+        import_type = args[type_index + 1]
+        args = args[:type_index] + args[type_index + 2:]
+    except ValueError:
+        pass
 
-    sys.modules[ansible.__name__] = ansible_module
+    if import_type == 'module':
+        # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
+        # this more accurately reflects the environment that AnsiballZ runs modules under
+        # it also avoids issues with imports in the ansible package that are not allowed
+        ansible_module = types.ModuleType(ansible.__name__)
+        ansible_module.__file__ = ansible.__file__
+        ansible_module.__path__ = ansible.__path__
+        ansible_module.__package__ = ansible.__package__
+
+        sys.modules[ansible.__name__] = ansible_module
 
     class ImporterAnsibleModuleException(Exception):
         """Exception thrown during initialization of ImporterAnsibleModule."""
@@ -203,19 +213,10 @@ def main():
             self.loaded_modules.add(fullname)
             return import_module(fullname)
 
-    def run():
+    def run(args):
         """Main program function."""
         base_dir = os.getcwd()
         messages = set()
-
-        args = sys.argv[1:]
-        import_type = 'module'
-        try:
-            type_index = args.index('--type')
-            import_type = args[type_index + 1]
-            args = args[:type_index] + args[type_index + 2:]
-        except ValueError:
-            pass
 
         if import_type == 'module':
             for path in args or sys.stdin.read().splitlines():
@@ -439,6 +440,13 @@ def main():
         try:
             yield
         finally:
+            if import_type == 'plugin':
+                # Remove collection loader from sys.meta_path
+                i = sys.meta_path.index(restricted_loader)
+                for entry in list(sys.meta_path[:i]):
+                    if 'ansible.utils.collection_loader._collection_finder._AnsibleCollectionFinder' in repr(entry):
+                        sys.meta_path.remove(entry)
+
             if sys.meta_path[0] != restricted_loader:
                 report_message(path, 0, 0, 'metapath', 'changes to sys.meta_path[0] are not permitted', messages)
 
@@ -490,7 +498,7 @@ def main():
                 sys.stdout = old_stdout
                 sys.stderr = old_stderr
 
-    run()
+    run(args)
 
 
 if __name__ == '__main__':

@@ -9,7 +9,6 @@ import re
 import time
 import textwrap
 import functools
-import hashlib
 import difflib
 import filecmp
 import random
@@ -44,7 +43,6 @@ from .cloud import (
 from .io import (
     make_dirs,
     open_text_file,
-    read_binary_file,
     read_text_file,
     write_text_file,
 )
@@ -70,6 +68,7 @@ from .util import (
     SUPPORTED_PYTHON_VERSIONS,
     str_to_version,
     version_to_str,
+    get_hash,
 )
 
 from .util_common import (
@@ -475,7 +474,7 @@ License: GPLv3+
     write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None, requirements_file=None):
     """
     :type pip: list[str]
     :type command: str
@@ -483,10 +482,13 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
     :type constraints: str | None
     :type use_constraints: bool
     :type context: str | None
+    :type requirements_file: str | None
     :rtype: list[str] | None
     """
     constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
     requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % ('%s.%s' % (command, context) if context else command))
+    if requirements_file:
+        requirements = requirements_file
     content_constraints = None
 
     options = []
@@ -2172,14 +2174,7 @@ class EnvironmentDescription:
         :type path: str
         :rtype: str | None
         """
-        if not os.path.exists(path):
-            return None
-
-        file_hash = hashlib.sha256()
-
-        file_hash.update(read_binary_file(path))
-
-        return file_hash.hexdigest()
+        return get_hash(path)
 
 
 class NoChangesDetected(ApplicationWarning):
