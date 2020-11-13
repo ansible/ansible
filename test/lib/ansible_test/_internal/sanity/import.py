@@ -108,6 +108,9 @@ class ImportTest(SanityMultipleVersion):
                 ('module', _get_module_test(True), False),
                 ('plugin', _get_module_test(False), True),
         ):
+            if import_type == 'plugin' and python_version.startswith('2.6'):
+                continue
+
             data = '\n'.join([path for path in paths if test(path)])
             if not data:
                 continue
