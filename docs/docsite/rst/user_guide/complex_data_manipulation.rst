@@ -25,6 +25,19 @@ Most programming languages have loops (``for``, ``while``, and so on) and list c
 - selectattr/rejectattr: very similar to the above but it uses a specific attribute of the list elements for the conditional statement.
 
 
+.. _exponential_backoff:
+
+Use a loop to create exponential backoff for retries/until.
+
+.. code-block:: yaml
+
+    - name: retry ping 10 times with exponential backup delay
+      ping:
+      retries: 10
+      delay: '{{item|int}}'
+      loop: '{{ range(1, 10)|map('pow', 2) }}'
+
+
 .. _keys_from_dict_matching_list:
 
 Extract keys from a dictionary matching elements from a list
