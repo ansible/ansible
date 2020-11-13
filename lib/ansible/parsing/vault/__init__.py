@@ -41,6 +41,8 @@ CRYPTOGRAPHY_BACKEND = None
 try:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.filterwarnings("ignore", "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography, and will be removed in a future release.")
+        warnings.filterwarnings("ignore", "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
         from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, padding
