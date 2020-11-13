@@ -9,7 +9,7 @@ try:
 except ImportError:
     from collections import Mapping  # pylint: disable=ansible-bad-import-from
 
-from ansible.utils.yaml import safe_load
+from ansible.utils.yaml import yaml_load
 
 
 def _meta_yml_to_dict(yaml_string_data, content_id):
@@ -21,7 +21,7 @@ def _meta_yml_to_dict(yaml_string_data, content_id):
     :return: a Python dictionary representing the YAML dictionary content
     """
     # NB: content_id is passed in, but not used by this implementation
-    routing_dict = safe_load(yaml_string_data)
+    routing_dict = yaml_load(yaml_string_data)
     if not routing_dict:
         routing_dict = {}
     if not isinstance(routing_dict, Mapping):

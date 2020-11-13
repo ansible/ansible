@@ -25,7 +25,7 @@ from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils import py3compat
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
-from ansible.utils.yaml import safe_load
+from ansible.utils.yaml import yaml_load
 
 
 Plugin = namedtuple('Plugin', 'name type')
@@ -309,7 +309,7 @@ class ConfigManager(object):
         yml_file = to_bytes(yml_file)
         if os.path.exists(yml_file):
             with open(yml_file, 'rb') as config_def:
-                return safe_load(config_def) or {}
+                return yaml_load(config_def) or {}
         raise AnsibleError(
             "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
 
@@ -343,7 +343,7 @@ class ConfigManager(object):
             # FIXME: this should eventually handle yaml config files
             # elif ftype == 'yaml':
             #     with open(cfile, 'rb') as config_stream:
-            #         self._parsers[cfile] = safe_load(config_stream)
+            #         self._parsers[cfile] = yaml_load(config_stream)
             else:
                 raise AnsibleOptionsError("Unsupported configuration file type: %s" % to_native(ftype))
 

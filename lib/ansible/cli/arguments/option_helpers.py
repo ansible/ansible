@@ -25,7 +25,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_native
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
-from ansible.utils.yaml import safe_load
+from ansible.utils.yaml import yaml_load
 
 
 #
@@ -114,7 +114,7 @@ def _git_repo_info(repo_path):
         if os.path.isfile(repo_path):
             try:
                 with open(repo_path) as f:
-                    gitdir = safe_load(f).get('gitdir')
+                    gitdir = yaml_load(f).get('gitdir')
                 # There is a possibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir

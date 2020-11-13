@@ -25,8 +25,8 @@ except AttributeError:
     HAS_LIBYAML = False
 
 
-safe_load = partial(yaml.load, Loader=SafeLoader)
-safe_load_all = partial(yaml.load_all, Loader=SafeLoader)
+yaml_load = partial(yaml.load, Loader=SafeLoader)
+yaml_load_all = partial(yaml.load_all, Loader=SafeLoader)
 
-safe_dump = partial(yaml.dump, Dumper=SafeDumper)
-safe_dump_all = partial(yaml.dump_all, Dumper=SafeDumper)
+yaml_dump = partial(yaml.dump, Dumper=SafeDumper)
+yaml_dump_all = partial(yaml.dump_all, Dumper=SafeDumper)

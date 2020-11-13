@@ -31,7 +31,7 @@ from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-from ansible.utils.yaml import safe_dump, safe_load
+from ansible.utils.yaml import yaml_dump, yaml_load
 
 display = Display()
 
@@ -125,7 +125,7 @@ class GalaxyToken(object):
             action = 'Created'
 
         with open(self.b_file, 'r') as f:
-            config = safe_load(f)
+            config = yaml_load(f)
 
         display.vvv('%s %s' % (action, to_text(self.b_file)))
 
@@ -144,7 +144,7 @@ class GalaxyToken(object):
 
     def save(self):
         with open(self.b_file, 'w') as f:
-            safe_dump(self.config, f, default_flow_style=False)
+            yaml_dump(self.config, f, default_flow_style=False)
 
     def headers(self):
         headers = {}
