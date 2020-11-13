@@ -30,7 +30,7 @@
     state: present
   when: ansible_facts.distribution not in ['Alpine', 'MacOSX']
 
-# apk isn't available on ansible-base so just call command
+# apk isn't available on ansible-core so just call command
 - name: Alpine - Install Kerberos system packages
   command: apk add {{ krb5_packages | join(' ') }}
   when: ansible_facts.distribution == 'Alpine'

@@ -55,14 +55,14 @@ MSGS = {
               "ansible-deprecated-no-collection-name",
               "The current collection name in format `namespace.name` must "
               "be provided as collection_name when calling Display.deprecated "
-              "or AnsibleModule.deprecate (`ansible.builtin` for ansible-base)",
+              "or AnsibleModule.deprecate (`ansible.builtin` for ansible-core)",
               {'minversion': (2, 6)}),
     'E9507': ("Wrong collection name (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "wrong-collection-deprecated",
               "The name of the current collection must be passed to the "
               "Display.deprecated resp. AnsibleModule.deprecate calls "
-              "(`ansible.builtin` for ansible-base)",
+              "(`ansible.builtin` for ansible-core)",
               {'minversion': (2, 6)}),
     'E9508': ("Expired date (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
