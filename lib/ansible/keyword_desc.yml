@@ -46,7 +46,7 @@ loop_control: |
 
     .. seealso:: :ref:`loop_control`
 
-max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed.
+max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed. This only wokrs on linear or linear derived strategies.
 module_defaults: Specifies default parameter values for modules.
 name: "Identifier. Can be used for documentation, or in tasks/handlers."
 no_log: Boolean that controls information disclosure.
