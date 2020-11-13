@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Schema validation of ansible-base's ansible_builtin_runtime.yml and collection's meta/runtime.yml"""
+"""Schema validation of ansible-core's ansible_builtin_runtime.yml and collection's meta/runtime.yml"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

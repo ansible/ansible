@@ -352,7 +352,7 @@ class Display(with_metaclass(Singleton, object)):
             msg += '.'
 
         if collection_name == 'ansible.builtin':
-            collection_name = 'ansible-base'
+            collection_name = 'ansible-core'
 
         if removed:
             header = '[DEPRECATED]: {0}'.format(msg)

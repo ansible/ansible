@@ -1,4 +1,4 @@
-Source: ansible-base
+Source: ansible-core
 Section: admin
 Priority: optional
 Standards-Version: 3.9.3
@@ -6,7 +6,7 @@ Maintainer: Ansible, Inc. <info@ansible.com>
 Build-Depends: cdbs, debhelper (>= 5.0.0), python3-docutils, python3, dh-python | python-support, python3-setuptools, lsb-release, python3-straight.plugin, python3-packaging, python3-jinja2
 Homepage: https://github.com/ansible/ansible/
 
-Package: ansible-base
+Package: ansible-core
 Architecture: all
 Depends: python3-jinja2, python3-yaml, python3-paramiko, python3-cryptography, sshpass, ${misc:Depends}, ${python:Depends}
 Description: Ansible IT Automation
@@ -18,7 +18,7 @@ Description: Ansible IT Automation
 
 Package: ansible-test
 Architecture: all
-Depends: ansible-base (= ${binary:Version}), python3-venv, ${misc:Depends}
+Depends: ansible-core (= ${binary:Version}), python3-venv, ${misc:Depends}
 Description: Ansible IT Automation
  Ansible is a radically simple model-driven configuration management,
  multi-node deployment, and remote task execution system. Ansible works

@@ -87,7 +87,7 @@
   ignore_errors: yes
   register: misuse_of_changed
 
-# providing artificial task results since there are no modules in ansible-base that provide a 'results' list instead of 'changed'
+# providing artificial task results since there are no modules in ansible-core that provide a 'results' list instead of 'changed'
 - name: Prepare artificial task results
   set_fact:
     results_all_changed:

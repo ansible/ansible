@@ -39,7 +39,7 @@ def _ensure_vendored_path_entry():
         already_loaded_vendored_modules = set(sys.modules.keys()).intersection(vendored_module_names)
 
         if already_loaded_vendored_modules:
-            warnings.warn('One or more Python packages bundled by this ansible-base distribution were already '
+            warnings.warn('One or more Python packages bundled by this ansible-core distribution were already '
                           'loaded ({0}). This may result in undefined behavior.'.format(', '.join(sorted(already_loaded_vendored_modules))))
 
 
