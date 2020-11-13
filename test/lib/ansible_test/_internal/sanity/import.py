@@ -153,7 +153,7 @@ class ImportTest(SanityMultipleVersion):
 
             # make sure requirements are installed if needed
             if requirements_file:
-                run_command(args, generate_pip_install(virtualenv_pip, '', requirements_file=requirements_file), env=env, capture=capture_pip)
+                run_command(args, generate_pip_install(virtualenv_pip, 'sanity', context='import-plugins'), env=env, capture=capture_pip)
 
             # make sure coverage is available in the virtual environment if needed
             if args.coverage:

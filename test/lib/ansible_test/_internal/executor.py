@@ -474,7 +474,7 @@ License: GPLv3+
     write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None, requirements_file=None):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None):
     """
     :type pip: list[str]
     :type command: str
@@ -482,13 +482,10 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
     :type constraints: str | None
     :type use_constraints: bool
     :type context: str | None
-    :type requirements_file: str | None
     :rtype: list[str] | None
     """
     constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
     requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % ('%s.%s' % (command, context) if context else command))
-    if requirements_file:
-        requirements = requirements_file
     content_constraints = None
 
     options = []
