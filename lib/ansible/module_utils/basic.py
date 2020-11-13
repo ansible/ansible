@@ -2649,8 +2649,12 @@ class AnsibleModule(object):
                 old_env_vals[key] = os.environ.get(key, None)
                 os.environ[key] = val
         if path_prefix:
-            old_env_vals['PATH'] = os.environ['PATH']
-            os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
+            path = os.environ.get('PATH', '')
+            old_env_vals['PATH'] = path
+            if path:
+                os.environ['PATH'] = "%s:%s" % (path_prefix, path)
+            else:
+                os.environ['PATH'] = path_prefix
 
         # If using test-module.py and explode, the remote lib path will resemble:
         #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
