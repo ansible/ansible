@@ -12,12 +12,6 @@ import os.path
 import sys
 import time
 
-try:
-    import _yaml
-    HAS_LIBYAML = True
-except ImportError:
-    HAS_LIBYAML = False
-
 from jinja2 import __version__ as j2_version
 
 import ansible
@@ -25,7 +19,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_native
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
-from ansible.utils.yaml import yaml_load
+from ansible.utils.yaml import HAS_LIBYAML, yaml_load
 
 
 #
