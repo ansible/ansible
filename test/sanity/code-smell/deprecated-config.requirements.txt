@@ -1,2 +1,2 @@
-jinja2  # ansible-base requirement
+jinja2  # ansible-core requirement
 pyyaml

@@ -50,9 +50,9 @@ def find_package_info(*file_paths):
     raise RuntimeError("Unable to find package info.")
 
 
-def _validate_install_ansible_base():
-    """Validate that we can install ansible-base. Currently this only
-    cares about upgrading to ansible-base from ansible<2.10
+def _validate_install_ansible_core():
+    """Validate that we can install ansible-core. This checks if
+    ansible<=2.9 or ansible-base>=2.10 are installed.
     """
     # Skip common commands we can ignore
     # Do NOT add bdist_wheel here, we don't ship wheels
@@ -80,31 +80,36 @@ def _validate_install_ansible_base():
         pass
     else:
         version_tuple = tuple(int(v) for v in __version__.split('.')[:2])
-        if version_tuple < (2, 10):
-            stars = '*' * 76
-            raise RuntimeError(
-                '''
+        if version_tuple >= (2, 11):
+            return
+        elif version_tuple == (2, 10):
+            ansible_name = 'ansible-base'
+        else:
+            ansible_name = 'ansible'
+
+        stars = '*' * 76
+        raise RuntimeError(
+            '''
 
     %s
 
-    Cannot install ansible-base with a pre-existing ansible==%s
+    Cannot install ansible-core with a pre-existing %s==%s
     installation.
 
-    Installing ansible-base with ansible-2.9 or older currently installed with
-    pip is known to cause problems. Please uninstall ansible and install the new
-    version:
+    Installing ansible-core with ansible-2.9 or older, or ansible-base-2.10
+    currently installed with pip is known to cause problems. Please uninstall
+    %s and install the new version:
 
-        pip uninstall ansible
-        pip install ansible-base
+        pip uninstall %s
+        pip install ansible-core
 
     If you want to skip the conflict checks and manually resolve any issues
     afterwards, set the ANSIBLE_SKIP_CONFLICT_CHECK environment variable:
 
-        ANSIBLE_SKIP_CONFLICT_CHECK=1 pip install ansible-base
+        ANSIBLE_SKIP_CONFLICT_CHECK=1 pip install ansible-core
 
     %s
-                ''' % (stars, __version__, stars)
-            )
+            ''' % (stars, ansible_name, __version__, ansible_name, ansible_name, stars))
     finally:
         sys.path[:] = sys_path
         for key in sys_modules_keys.symmetric_difference(sys.modules):
@@ -112,7 +117,7 @@ def _validate_install_ansible_base():
         sys.modules.update(sys_modules)
 
 
-_validate_install_ansible_base()
+_validate_install_ansible_core()
 
 
 SYMLINK_CACHE = 'SYMLINK_CACHE.json'
@@ -347,7 +352,7 @@ static_setup_params = dict(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible-base',
+    name='ansible-core',
     version=__version__,
     description='Radically simple IT automation',
     author=__author__,

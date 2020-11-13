@@ -155,7 +155,7 @@ def check_removal_version(v, version_field, collection_name_field, error_code='i
             parsed_version.parse(version)
         except ValueError as exc:
             raise _add_ansible_error_code(
-                Invalid('%s (%r) is not a valid ansible-base version: %s' % (version_field, version, exc)),
+                Invalid('%s (%r) is not a valid ansible-core version: %s' % (version_field, version, exc)),
                 error_code=error_code)
         return v
     try:
@@ -283,7 +283,7 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
                     version.parse(version_added)
                 except ValueError as exc:
                     raise _add_ansible_error_code(
-                        Invalid('version_added (%r) is not a valid ansible-base version: '
+                        Invalid('version_added (%r) is not a valid ansible-core version: '
                                 '%s' % (version_added, exc)),
                         error_code=error_code)
             else:

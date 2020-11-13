@@ -1,4 +1,4 @@
 bugfixes:
   - apt_repository - fixes ``mode`` doc to remove ineffective default (https://github.com/ansible/ansible/pull/70319).
 deprecated_features:
-  - apt_key - the paramater ``key`` does not have any effect, has been deprecated and will be removed in ansible-base version 2.14 (https://github.com/ansible/ansible/pull/70319).
+  - apt_key - the paramater ``key`` does not have any effect, has been deprecated and will be removed in ansible-core version 2.14 (https://github.com/ansible/ansible/pull/70319).

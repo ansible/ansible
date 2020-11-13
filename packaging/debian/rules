@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 # -- makefile --
 
-DEB_PYTHON3_MODULE_PACKAGES=ansible-base ansible_test
+DEB_PYTHON3_MODULE_PACKAGES=ansible-core ansible_test
 #DEB_PYTHON_INSTALL_ARGS_ALL="--install-purelib=/usr/lib/python2.7/site-packages/"
 DEB_PYTHON_DISTUTILS_INSTALLDIR_SKEL = /usr/lib/python3/dist-packages/
 

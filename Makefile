@@ -14,7 +14,7 @@
 ########################################################
 # variable section
 
-NAME = ansible-base
+NAME = ansible-core
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
 SDIST_DIR ?= 'dist'
