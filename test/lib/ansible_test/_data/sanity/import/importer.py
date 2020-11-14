@@ -441,11 +441,8 @@ def main():
             yield
         finally:
             if import_type == 'plugin':
-                # Remove collection loader from sys.meta_path
-                i = sys.meta_path.index(restricted_loader)
-                for entry in list(sys.meta_path[:i]):
-                    if 'ansible.utils.collection_loader._collection_finder._AnsibleCollectionFinder' in repr(entry):
-                        sys.meta_path.remove(entry)
+                from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+                _AnsibleCollectionFinder._remove()
 
             if sys.meta_path[0] != restricted_loader:
                 report_message(path, 0, 0, 'metapath', 'changes to sys.meta_path[0] are not permitted', messages)
