@@ -442,7 +442,7 @@ def main():
         finally:
             if import_type == 'plugin':
                 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-                _AnsibleCollectionFinder._remove()
+                _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
 
             if sys.meta_path[0] != restricted_loader:
                 report_message(path, 0, 0, 'metapath', 'changes to sys.meta_path[0] are not permitted', messages)
