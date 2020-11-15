@@ -7,7 +7,7 @@ import datetime
 import os
 import re
 import sys
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion, LooseVersion
 from functools import partial
 
 import yaml
@@ -40,7 +40,7 @@ def isodate(value):
     return value
 
 
-def removal_version(value, is_ansible):
+def removal_version(value, is_ansible, current_version=None, is_tombstone=False):
     """Validate a removal version string."""
     msg = (
         'Removal version must be a string' if is_ansible else
@@ -52,12 +52,24 @@ def removal_version(value, is_ansible):
         if is_ansible:
             version = StrictVersion()
             version.parse(value)
+            version = LooseVersion(value)  # We're storing Ansible's version as a LooseVersion
         else:
             version = SemanticVersion()
             version.parse(value)
             if version.major != 0 and (version.minor != 0 or version.patch != 0):
                 raise Invalid('removal_version (%r) must be a major release, not a minor or patch release '
                               '(see specification at https://semver.org/)' % (value, ))
+        if current_version is not None:
+            if is_tombstone:
+                # For a tombstone, the removal version must not be in the future
+                if version > current_version:
+                    raise Invalid('The tombstone removal_version (%r) must not be after the '
+                                  'current version (%s)' % (value, current_version))
+            else:
+                # For a deprecation, the removal version must be in the future
+                if version <= current_version:
+                    raise Invalid('The deprecation removal_version (%r) must be after the '
+                                  'current version (%s)' % (value, current_version))
     except ValueError:
         raise Invalid(msg)
     return value
@@ -66,6 +78,33 @@ def removal_version(value, is_ansible):
 def any_value(value):
     """Accepts anything."""
     return value
+
+
+def get_ansible_version():
+    """Return current ansible-core version"""
+    from ansible.release import __version__
+
+    return LooseVersion(__version__)
+
+
+def get_collection_version():
+    """Return current collection version, or None if it is not available"""
+    import importlib.util
+
+    collection_detail_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                          'collection_detail.py')
+    collection_detail_spec = importlib.util.spec_from_file_location('collection_detail', collection_detail_path)
+    collection_detail = importlib.util.module_from_spec(collection_detail_spec)
+    sys.modules['collection_detail'] = collection_detail
+    collection_detail_spec.loader.exec_module(collection_detail)
+
+    try:
+        result = collection_detail.read_manifest_json('.') or collection_detail.read_galaxy_yml('.')
+        return SemanticVersion(result['version'])
+    except Exception:  # pylint: disable=broad-except
+        # We do not care why it fails, in case we cannot get the version
+        # just return None to indicate "we don't know".
+        return None
 
 
 def validate_metadata_file(path, is_ansible):
@@ -82,39 +121,60 @@ def validate_metadata_file(path, is_ansible):
               (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
         return
 
+    if is_ansible:
+        current_version = get_ansible_version()
+    else:
+        current_version = get_collection_version()
+
     # Updates to schema MUST also be reflected in the documentation
     # ~https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
 
     # plugin_routing schema
 
-    deprecation_tombstoning_schema = All(
+    avoid_additional_data = Schema(
+        Any(
+            {
+                Required('removal_version'): any_value,
+                'warning_text': any_value,
+            },
+            {
+                Required('removal_date'): any_value,
+                'warning_text': any_value,
+            }
+        ),
+        extra=PREVENT_EXTRA
+    )
+
+    deprecation_schema = All(
         # The first schema validates the input, and the second makes sure no extra keys are specified
         Schema(
             {
-                'removal_version': partial(removal_version, is_ansible=is_ansible),
+                'removal_version': partial(removal_version, is_ansible=is_ansible,
+                                           current_version=current_version),
                 'removal_date': Any(isodate),
                 'warning_text': Any(*string_types),
             }
         ),
+        avoid_additional_data
+    )
+
+    tombstoning_schema = All(
+        # The first schema validates the input, and the second makes sure no extra keys are specified
         Schema(
-            Any(
-                {
-                    Required('removal_version'): any_value,
-                    'warning_text': any_value,
-                },
-                {
-                    Required('removal_date'): any_value,
-                    'warning_text': any_value,
-                }
-            ),
-            extra=PREVENT_EXTRA
-        )
+            {
+                'removal_version': partial(removal_version, is_ansible=is_ansible,
+                                           current_version=current_version, is_tombstone=True),
+                'removal_date': Any(isodate),
+                'warning_text': Any(*string_types),
+            }
+        ),
+        avoid_additional_data
     )
 
     plugin_routing_schema = Any(
         Schema({
-            ('deprecation'): Any(deprecation_tombstoning_schema),
-            ('tombstone'): Any(deprecation_tombstoning_schema),
+            ('deprecation'): Any(deprecation_schema),
+            ('tombstone'): Any(tombstoning_schema),
             ('redirect'): Any(*string_types),
         }, extra=PREVENT_EXTRA),
     )
