@@ -1,0 +1,2 @@
+minor_changes:
+  - git - display the destination directory path in error msg when local_mods detects local modifications conflict so that users see the exact location
