@@ -1,0 +1,2 @@
+minor_changes:
+  - facts - add `xmit_hash_policy` fact for Linux bonding interfaces, which returns its setting. (https://github.com/ansible/ansible/issues/72388)
