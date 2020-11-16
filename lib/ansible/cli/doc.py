@@ -649,7 +649,7 @@ class DocCLI(CLI, RoleMixin):
                         else:
                             display.warning("No valid documentation was retrieved from '%s'" % plugin)
             elif plugin_type == 'role':
-                if listing and docs:
+                if context.CLIARGS['list_dir'] and docs:
                     self._display_available_roles(docs)
                 elif docs:
                     self._display_role_doc(docs)
