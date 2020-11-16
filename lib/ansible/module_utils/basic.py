@@ -156,7 +156,7 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
-    check_arguments,
+    get_unsupported_parameters,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
@@ -1562,10 +1562,7 @@ class AnsibleModule(object):
         if legal_inputs is None:
             legal_inputs = self._legal_inputs
 
-        # FIXME: This should raise a TypeError, but I need a way to pass values
-        # with the exception. This will most likely require a custom exception class
-        # subclassed from TypeError.
-        unsupported_parameters = check_arguments(param, legal_inputs)
+        unsupported_parameters = get_unsupported_parameters(spec, param, legal_inputs)
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
@@ -1579,6 +1576,7 @@ class AnsibleModule(object):
                     supported_parameters.append(key)
             msg += " Supported parameters include: %s" % (', '.join(supported_parameters))
             self.fail_json(msg=msg)
+
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 

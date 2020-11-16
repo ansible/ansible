@@ -197,18 +197,26 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
     return aliases_results, legal_inputs
 
 
-def check_arguments(module_parameters=None, legal_inputs=None):
-    """Check arguments provided in the module_paramaters to ensure they contain
-    legal values.
+def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
+    """Check arguments in argument_spec against those provided in module_paramaters
+    to ensure they contain legal values. If legal_inputs are supplied, ignore
+    the values in argument_spec and only check module_parameters against legal_inputs.
 
+    :arg argument_spec: Dictionary of parameters, their type, and valid values.
     :arg module_paramaters: Dictionary of module parameters.
-    :arg legal_inputs: List of valid key names property names.
+    :arg legal_inputs: List of valid key names property names. Overrides values
+        in argument_spec.
 
-    :returns: Tuple of unsupported parameters and dictionary of internal
-        properties that should be applied to the AnsibleModule object.
+    :returns: Set of unsupported parameters
     """
+
+    valid_keys = module_parameters.keys()
+
+    if legal_inputs is None:
+        aliases, valid_keys = handle_aliases(argument_spec, module_parameters)
+
     unsupported_parameters = set()
-    for k in module_parameters.keys():
+    for k in valid_keys:
         if k not in legal_inputs:
             unsupported_parameters.add(k)
 
