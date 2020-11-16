@@ -8,5 +8,6 @@ rhel/7.8 python=2.7
 rhel/7.9 python=2.7
 rhel/8.1 python=3.6
 rhel/8.2 python=3.6
+rhel/8.3 python=3.6
 aix/7.2 python=2.7 httptester=disabled temp-unicode=disabled pip-check=disabled
 power/centos/7 python=2.7
