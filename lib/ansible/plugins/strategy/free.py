@@ -92,6 +92,9 @@ class StrategyModule(StrategyBase):
 
         self._set_hosts_cache(iterator._play)
 
+        if iterator._play.max_fail_percentage is not None:
+            display.warning("Using max_fail_percentage with the free strategy is not supported, as tasks are executed independently on each host")
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
@@ -197,9 +200,6 @@ class StrategyModule(StrategyBase):
                             if not self._step or self._take_step(task, host_name):
                                 if task.any_errors_fatal:
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
-                                                    "as tasks are executed independently on each host")
-                                if task.max_fail_percentage:
-                                    display.warning("Using max_fail_percentage with the free strategy is not supported, "
                                                     "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
