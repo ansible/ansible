@@ -8,6 +8,7 @@
     # avoid header that has full path and won't work across random paths for tests
     actual_output_clean: '{{ actual_output.splitlines()[1:] }}'
     expected_output_clean: '{{ expected_output.splitlines()[1:] }}'
+    ANSIBLE_DOC_FRAGMENT_PLUGINS: "{{ playbook_dir }}/doc_fragments"
   tasks:
     - name: module with missing description return docs
       command: ansible-doc test_docs_missing_description
