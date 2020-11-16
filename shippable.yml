@@ -29,7 +29,7 @@ matrix:
 
     - env: T=macos/10.15/1
     - env: T=rhel/7.9/1
-    - env: T=rhel/8.2/1
+    - env: T=rhel/8.3/1
     - env: T=freebsd/11.1/1
     - env: T=freebsd/12.2/1
     - env: T=linux/alpine3/1
@@ -45,7 +45,7 @@ matrix:
 
     - env: T=macos/10.15/2
     - env: T=rhel/7.9/2
-    - env: T=rhel/8.2/2
+    - env: T=rhel/8.3/2
     - env: T=freebsd/11.1/2
     - env: T=freebsd/12.2/2
     - env: T=linux/alpine3/2
@@ -61,7 +61,7 @@ matrix:
 
     - env: T=macos/10.15/3
     - env: T=rhel/7.9/3
-    - env: T=rhel/8.2/3
+    - env: T=rhel/8.3/3
     - env: T=freebsd/11.1/3
     - env: T=freebsd/12.2/3
     - env: T=linux/alpine3/3
@@ -77,7 +77,7 @@ matrix:
 
     - env: T=macos/10.15/4
     - env: T=rhel/7.9/4
-    - env: T=rhel/8.2/4
+    - env: T=rhel/8.3/4
     - env: T=freebsd/11.1/4
     - env: T=freebsd/12.2/4
     - env: T=linux/alpine3/4
@@ -93,7 +93,7 @@ matrix:
 
     - env: T=macos/10.15/5
     - env: T=rhel/7.9/5
-    - env: T=rhel/8.2/5
+    - env: T=rhel/8.3/5
     - env: T=freebsd/11.1/5
     - env: T=freebsd/12.2/5
     - env: T=linux/alpine3/5
@@ -115,7 +115,7 @@ matrix:
 
     - env: T=i/osx/10.11
     - env: T=i/rhel/7.9
-    - env: T=i/rhel/8.2
+    - env: T=i/rhel/8.3
     - env: T=i/freebsd/11.1
     - env: T=i/freebsd/12.2
     - env: T=i/linux/centos6
