@@ -14,8 +14,9 @@ unset ANSIBLE_PLAYBOOK_DIR
 cd "$(dirname "$0")"
 
 # test module docs from collection
-current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule)"
-expected_out="$(cat fakemodule.output)"
+# we use sed to strip the module path from the first line
+current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule | sed '1 s/\(^> TESTNS\.TESTCOL\.FAKEMODULE\).*(.*)$/\1/')"
+expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.FAKEMODULE\).*(.*)$/\1/' fakemodule.output)"
 test "$current_out" == "$expected_out"
 
 # ensure we do work with valid collection name for list
@@ -45,4 +46,33 @@ do
 	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns|wc -l)
 	test "$justcol" -eq 1
 done
+
+#### test role functionality
+
+# Test role text output
+# we use sed to strip the role path from the first line
+current_role_out="$(ansible-doc -t role -r ./roles test_role1 | sed '1 s/\(^> TEST_ROLE1\).*(.*)$/\1/')"
+expected_role_out="$(sed '1 s/\(^> TEST_ROLE1\).*(.*)$/\1/' fakerole.output)"
+test "$current_role_out" == "$expected_role_out"
+
+# Two collection roles are defined, but only 1 has a role arg spec with 2 entry points
+output=$(ansible-doc -t role -l --playbook-dir . testns.testcol | wc -l)
+test "$output" -eq 2
+
+# Include normal roles (no collection filter)
+output=$(ansible-doc -t role -l --playbook-dir . | wc -l)
+test "$output" -eq 3
+
+# Test that a role in the playbook dir with the same name as a role in the
+# 'roles' subdir of the playbook dir does not appear (lower precedence).
+output=$(ansible-doc -t role -l --playbook-dir . | grep -c "test_role1 from roles subdir")
+test "$output" -eq 1
+output=$(ansible-doc -t role -l --playbook-dir . | grep -c "test_role1 from playbook dir" || true)
+test "$output" -eq 0
+
+# Test entry point filter
+current_role_out="$(ansible-doc -t role --playbook-dir . testns.testcol.testrole -e alternate| sed '1 s/\(^> TESTNS\.TESTCOL\.TESTROLE\).*(.*)$/\1/')"
+expected_role_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.TESTROLE\).*(.*)$/\1/' fakecollrole.output)"
+test "$current_role_out" == "$expected_role_out"
+
 )

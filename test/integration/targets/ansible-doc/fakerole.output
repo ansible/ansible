@@ -1,0 +1,32 @@
+> TEST_ROLE1    (/ansible/test/integration/targets/ansible-doc/roles/normal_role1)
+
+ENTRY POINT: main - test_role1 from roles subdir
+
+        In to am attended desirous raptures *declared* diverted
+        confined at. Collected instantly remaining up certainly to
+        `necessary' as. Over walk dull into son boy door went new. At
+        or happiness commanded daughters as. Is `handsome' an declared
+        at received in extended vicinity subjects. Into miss on he
+        over been late pain an. Only week bore boy what fat case left
+        use. Match round scale now style far times. Your me past an
+        much.
+
+OPTIONS (= is mandatory):
+
+= myopt1
+        First option.
+
+        type: str
+
+- myopt2
+        Second option
+        [Default: 8000]
+        type: int
+
+- myopt3
+        Third option.
+        (Choices: choice1, choice2)[Default: (null)]
+        type: str
+
+
+AUTHOR: John Doe (@john), Jane Doe (@jane)
