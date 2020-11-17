@@ -12,6 +12,13 @@ export ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0
 ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
 export INVENTORY_PATH="$ipath"
 
+# ensure we can call collection module
+ansible localhost -m testns.testcoll.testmodule
+
+# ensure we can call collection module with ansible_collections in path
+ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_sys/ansible_collections ansible localhost -m testns.testcoll.testmodule
+
+
 echo "--- validating callbacks"
 # validate FQ callbacks in ansible-playbook
 ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible-playbook noop.yml | grep "usercallback says ok"
@@ -127,4 +134,3 @@ if [[ "$(grep -wc "dynamic_host_a" "$CACHEFILE")" -ne "0" ]]; then
 fi
 
 ./vars_plugin_tests.sh
-
