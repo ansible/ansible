@@ -1,0 +1,16 @@
+> TESTNS.TESTCOL.TESTROLE    (/ansible/test/integration/targets/ansible-doc/collections/ansible_collections/testns/testcol)
+
+ENTRY POINT: alternate - testns.testcol.testrole short description for alternate entry point
+
+        Longer description for testns.testcol.testrole alternate entry
+        point.
+
+OPTIONS (= is mandatory):
+
+= altopt1
+        altopt1 description
+
+        type: int
+
+
+AUTHOR: Ansible Core (@ansible)
