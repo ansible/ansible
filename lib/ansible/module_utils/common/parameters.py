@@ -203,7 +203,7 @@ def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=No
     they will be generated using the argument_spec.
 
     :arg argument_spec: Dictionary of parameters, their type, and valid values.
-    :arg module_paramaters: Dictionary of module parameters.
+    :arg module_parameters: Dictionary of module parameters.
     :arg legal_inputs: List of valid key names property names. Overrides values
         in argument_spec.
 
