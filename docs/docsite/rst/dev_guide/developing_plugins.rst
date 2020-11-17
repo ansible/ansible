@@ -130,7 +130,7 @@ For example, if you wanted to check the time difference between your Ansible con
 
             if remote_date:
                 remote_date_obj = datetime.strptime(remote_date, '%Y-%m-%dT%H:%M:%SZ')
-                time_delta = datetime.now() - remote_date_obj
+                time_delta = datetime.utcnow() - remote_date_obj
                 ret['delta_seconds'] = time_delta.seconds
                 ret['delta_days'] = time_delta.days
                 ret['delta_microseconds'] = time_delta.microseconds
