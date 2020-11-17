@@ -165,7 +165,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
 
         fragment_yaml = getattr(fragment_class, fragment_var, None)
         if fragment_yaml is None:
-            if fragment_var != 'DOCUMENTATION':
+            if fragment_var not in FRAGMENTS:
                 # if it's asking for something specific that's missing, that's an error
                 unknown_fragments.append(fragment_slug)
                 continue
