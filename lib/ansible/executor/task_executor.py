@@ -1020,7 +1020,7 @@ def start_connection(play_context, variables, task_uuid):
     Starts the persistent connection
     '''
     candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
-    candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
+    candidate_paths.extend(os.environ.get('PATH', '').split(os.pathsep))
     for dirname in candidate_paths:
         ansible_connection = os.path.join(dirname, 'ansible-connection')
         if os.path.isfile(ansible_connection):
