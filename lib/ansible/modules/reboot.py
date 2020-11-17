@@ -68,8 +68,21 @@ options:
       - Command to run that returns a unique string indicating the last time the system was booted.
       - Setting this to a command that has different output each time it is run will cause the task to fail.
     type: str
-    default: 'cat /proc/sys/kernel/random/boot_id'
+    default: '[determined based on target OS]'
     version_added: '2.10'
+
+  boot_time_filter_regex:
+    description:
+      - Filters stdout lines from the result of C(boot_time_command).
+      - Some systems will inject shutdown warnings into the result of the command if the reboot
+        triggers too quickly. Using this option allows you to filter to lines that contain the
+        relevant information (boot time).
+      - This regex is applied in multiline mode to the stdout of C(boot_time_command). If multiple
+        lines match, they will all be used (any of them changing will cause the module to assume
+        the reboot has been successful).
+    type: str
+    default: '[determined based on target OS]'
+    version_added: '2.11'
 
   reboot_command:
     description:

@@ -36,6 +36,7 @@
 
     - import_tasks: test_standard_scenarios.yml
     - import_tasks: test_reboot_command.yml
+    - import_tasks: test_invalid_filter_regex.yml
     - import_tasks: test_invalid_parameter.yml
     - import_tasks: test_invalid_test_command.yml
     - import_tasks: test_molly_guard.yml

@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import random
+import re
 import time
 
 from datetime import datetime, timedelta
@@ -27,6 +28,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset((
         'boot_time_command',
+        'boot_time_filter_regex',
         'connect_timeout',
         'msg',
         'post_reboot_delay',
@@ -43,6 +45,7 @@ class ActionModule(ActionBase):
     DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_TEST_COMMAND = 'whoami'
     DEFAULT_BOOT_TIME_COMMAND = 'cat /proc/sys/kernel/random/boot_id'
+    DEFAULT_BOOT_TIME_FILTER_REGEX = None
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '-r {delay_min} "{message}"'
@@ -58,6 +61,11 @@ class ActionModule(ActionBase):
         'sunos': 'who -b',
         'vmkernel': 'grep booted /var/log/vmksummary.log | tail -n 1',
         'aix': 'who -b',
+    }
+
+    BOOT_TIME_FILTER_REGEX = {
+        'freebsd': r'^kern\.boottime.*',
+        'openbsd': r'^kern\.boottime.*',
     }
 
     SHUTDOWN_COMMANDS = {
@@ -220,16 +228,36 @@ class ActionModule(ActionBase):
 
         display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
+        stdout = command_result['stdout']
+        stderr = command_result['stderr']
 
         if command_result['rc'] != 0:
-            stdout = command_result['stdout']
-            stderr = command_result['stderr']
             raise AnsibleError("{action}: failed to get host boot time info, rc: {rc}, stdout: {out}, stderr: {err}".format(
                                action=self._task.action,
                                rc=command_result['rc'],
                                out=to_native(stdout),
                                err=to_native(stderr)))
-        display.debug("{action}: last boot time: {boot}".format(action=self._task.action, boot=command_result['stdout'].strip()))
+
+        filter_re = self._get_value_from_facts('BOOT_TIME_FILTER_REGEX', distribution, 'DEFAULT_BOOT_TIME_FILTER_REGEX')
+        if self._task.args.get('boot_time_filter_regex'):
+            filter_re = self._task.args.get('boot_time_filter_regex')
+
+        display.debug("{action}: result of last boot time command: {stdout}".format(action=self._task.action, stdout=command_result['stdout'].strip()))
+
+        if filter_re:
+            matches = re.findall(filter_re, command_result['stdout'], re.MULTILINE)
+            if not matches:
+                raise AnsibleError("{action}: failed to get host boot time info, filter regex did not match result of boot time check command. rc: {rc}, stdout: {out}, stderr: {err}".format(
+                    action=self._task.action,
+                    rc=command_result['rc'],
+                    out=to_native(stdout),
+                    err=to_native(stderr)))
+
+            # If there are multiple matches, munge them together into a string
+            # We could return a list, but we don't actually use the data IN the
+            # result for anything other than seeing if it changed, so
+            # constructing a string works fine.
+            return '\n'.join(matches)
         return command_result['stdout'].strip()
 
     def check_boot_time(self, distribution, previous_boot_time):

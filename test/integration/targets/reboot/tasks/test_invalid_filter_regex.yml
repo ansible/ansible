@@ -1,0 +1,8 @@
+- name: Reboot with boot time command regex filter that fails
+  reboot:
+    reboot_timeout: "{{ timeout }}"
+    boot_time_filter_regex: ^thislinewillneverexist$
+  register: regex_fail
+  failed_when: "regex_fail is success or 'filter regex did not match' not in regex_fail.msg"
+  vars:
+    timeout: "{{ _timeout_value[ansible_facts['distribution'] | lower] | default(60) }}"

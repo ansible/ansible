@@ -1,0 +1,2 @@
+minor_changes:
+  - reboot - now accepts a ``boot_time_filter_regex`` option which can be used to limit the boot time command's output to relevant lines before seeing if they changed.
