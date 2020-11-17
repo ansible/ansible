@@ -198,25 +198,24 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
 
 
 def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
-    """Check arguments in argument_spec against those provided in module_paramaters
-    to ensure they contain legal values. If legal_inputs are supplied, ignore
-    the values in argument_spec and only check module_parameters against legal_inputs.
+    """Check keys in module_parameters against those provided in legal_inputs
+    to ensure they contain legal values. If legal_inputs are not supplied,
+    they will be generated using the argument_spec.
 
     :arg argument_spec: Dictionary of parameters, their type, and valid values.
     :arg module_paramaters: Dictionary of module parameters.
     :arg legal_inputs: List of valid key names property names. Overrides values
         in argument_spec.
 
-    :returns: Set of unsupported parameters
+    :returns: Set of unsupported parameters. Empty set if no unsupported parameters
+        are found.
     """
 
-    valid_keys = module_parameters.keys()
-
     if legal_inputs is None:
-        aliases, valid_keys = handle_aliases(argument_spec, module_parameters)
+        aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
 
     unsupported_parameters = set()
-    for k in valid_keys:
+    for k in module_parameters.keys():
         if k not in legal_inputs:
             unsupported_parameters.add(k)
 
