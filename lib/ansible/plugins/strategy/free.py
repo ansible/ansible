@@ -92,6 +92,9 @@ class StrategyModule(StrategyBase):
 
         self._set_hosts_cache(iterator._play)
 
+        if iterator._play.max_fail_percentage is not None:
+            display.warning("Using max_fail_percentage with the free strategy is not supported, as tasks are executed independently on each host")
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
