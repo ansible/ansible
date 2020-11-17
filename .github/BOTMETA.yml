@@ -85,7 +85,7 @@ files:
     migrated_to: community.aws
   $modules/cloud/atomic/: krsacme
   $modules/cloud/azure/:
-    ignored: chouseknecht jwhitbeck
+    ignored: chouseknecht jwhitbeck haroldwongms
     maintainers: $team_azure
   $modules/cloud/azure/azure_rm_dnsrecordset.py:
     ignored: ozboms
@@ -30171,7 +30171,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_aws: jillr s-hertel tremble
-  team_azure: haroldwongms yuwzho yungezz zikalino haiyuazhang gavinfish
+  team_azure: yuwzho yungezz zikalino haiyuazhang gavinfish
   team_bsd: bcoca dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: dpassante rhtyd
