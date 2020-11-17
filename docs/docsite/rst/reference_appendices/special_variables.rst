@@ -116,7 +116,7 @@ play_hosts
     Deprecated, the same as ansible_play_batch
 
 ansible_play_name
-    The name of the currently executed play. Added in ``2.8``.
+    The name of the currently executed play. Added in ``2.8``. (`name` attribute of the play, not file name of the playbook.)
 
 playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
