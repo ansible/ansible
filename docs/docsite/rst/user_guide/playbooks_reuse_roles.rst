@@ -362,17 +362,13 @@ For example, a role named ``car`` depends on a role named ``wheel`` as follows:
     ---
     dependencies:
       - role: wheel
-        vars:
-          n: 1
+        n: 1
       - role: wheel
-        vars:
-          n: 2
+        n: 2
       - role: wheel
-        vars:
-          n: 3
+        n: 3
       - role: wheel
-        vars:
-          n: 4
+        n: 4
 
 And the ``wheel`` role depends on two roles: ``tire`` and ``brake``. The ``meta/main.yml`` for wheel would then contain the following:
 
