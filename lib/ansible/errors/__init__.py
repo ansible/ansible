@@ -55,32 +55,23 @@ class AnsibleError(Exception):
 
         self._show_content = show_content
         self._suppress_extended_error = suppress_extended_error
-        self.message = self._message = '%s' % to_native(message)
+        self._message = to_native(message)
         self.obj = obj
 
         if orig_exc:
             self.orig_exc = orig_exc
 
     @property
-    def obj(self):
-        return self._obj
-
-    @obj.setter
-    def obj(self, val):
-        self._obj = val
-
+    def message(self):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
-        if isinstance(val, AnsibleBaseYAMLObject):
+        if isinstance(self.obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error and not self._suppress_extended_error:
-                self.message = '%s\n\n%s' % (self._message, to_native(extended_error))
-            else:
-                self.message = self._message
-        else:
-            self.message = self._message
+                return '%s\n\n%s' % (self._message, to_native(extended_error))
+        return self._message
 
     def __str__(self):
         return self.message
@@ -122,7 +113,7 @@ class AnsibleError(Exception):
         error_message = ''
 
         try:
-            (src_file, line_number, col_number) = self._obj.ansible_pos
+            (src_file, line_number, col_number) = self.obj.ansible_pos
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
