@@ -1,0 +1,2 @@
+bugfixes:
+  - hardware facts - Return info about ZFS mounts on Linux hosts in `ansible_mounts` (https://github.com/ansible/ansible/pull/72659).
