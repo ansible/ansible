@@ -198,25 +198,6 @@ def manifest(manifest_info):
             yield fake_file, sha256(b_data).hexdigest()
 
 
-@pytest.fixture()
-def mock_collection(galaxy_server):
-    def create_mock_collection(namespace='ansible_namespace', name='collection', version='0.1.0', local=True, local_installed=True):
-        b_path = None
-        force = False
-
-        if local:
-            mock_collection = collection.CollectionRequirement(namespace, name, b_path, galaxy_server, [version], version, force, skip=local_installed)
-        else:
-            download_url = 'https://galaxy.ansible.com/download/{0}-{1}-{2}.tar.gz'.format(namespace, name, version)
-            digest = '19415a6a6df831df61cffde4a09d1d89ac8d8ca5c0586e85bea0b106d6dff29a'
-            dependencies = {}
-            metadata = api.CollectionVersionMetadata(namespace, name, version, download_url, digest, dependencies)
-            mock_collection = collection.CollectionRequirement(namespace, name, b_path, galaxy_server, [version], version, force, metadata=metadata)
-
-        return mock_collection
-    return create_mock_collection
-
-
 def test_build_collection_no_galaxy_yaml():
     fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
     expected = to_native("The collection galaxy.yml path '%s/galaxy.yml' does not exist." % fake_path)
@@ -821,13 +802,13 @@ def test_execute_verify_with_defaults(mock_verify_collections):
 
     assert mock_verify_collections.call_count == 1
 
-    requirements, search_paths, galaxy_apis, validate, ignore_errors = mock_verify_collections.call_args[0]
+    print("Call args {0}".format(mock_verify_collections.call_args[0]))
+    requirements, search_paths, galaxy_apis, ignore_errors = mock_verify_collections.call_args[0]
 
-    assert requirements == [('namespace.collection', '1.0.4', None, None)]
+    assert [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type) for r in requirements] == [('namespace.collection', '1.0.4', None, 'galaxy')]
     for install_path in search_paths:
         assert install_path.endswith('ansible_collections')
     assert galaxy_apis[0].api_server == 'https://galaxy.ansible.com'
-    assert validate is True
     assert ignore_errors is False
 
 
@@ -840,13 +821,12 @@ def test_execute_verify(mock_verify_collections):
 
     assert mock_verify_collections.call_count == 1
 
-    requirements, search_paths, galaxy_apis, validate, ignore_errors = mock_verify_collections.call_args[0]
+    requirements, search_paths, galaxy_apis, ignore_errors = mock_verify_collections.call_args[0]
 
-    assert requirements == [('namespace.collection', '1.0.4', None, None)]
+    assert [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type) for r in requirements] == [('namespace.collection', '1.0.4', None, 'galaxy')]
     for install_path in search_paths:
         assert install_path.endswith('ansible_collections')
     assert galaxy_apis[0].api_server == 'http://galaxy-dev.com'
-    assert validate is False
     assert ignore_errors is True
 
 
@@ -863,8 +843,7 @@ def test_verify_file_hash_deleted_file(manifest_info):
 
     with patch.object(builtins, 'open', mock_open(read_data=data)) as m:
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=False)) as mock_isfile:
-            collection_req = collection.CollectionRequirement(namespace, name, './', server, [version], version, False)
-            collection_req._verify_file_hash(b'path/', 'file', digest, error_queue)
+            collection._verify_file_hash(b'path/', 'file', digest, error_queue)
 
             assert mock_isfile.called_once
 
@@ -887,8 +866,7 @@ def test_verify_file_hash_matching_hash(manifest_info):
 
     with patch.object(builtins, 'open', mock_open(read_data=data)) as m:
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=True)) as mock_isfile:
-            collection_req = collection.CollectionRequirement(namespace, name, './', server, [version], version, False)
-            collection_req._verify_file_hash(b'path/', 'file', digest, error_queue)
+            collection._verify_file_hash(b'path/', 'file', digest, error_queue)
 
             assert mock_isfile.called_once
 
@@ -910,8 +888,7 @@ def test_verify_file_hash_mismatching_hash(manifest_info):
 
     with patch.object(builtins, 'open', mock_open(read_data=data)) as m:
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=True)) as mock_isfile:
-            collection_req = collection.CollectionRequirement(namespace, name, './', server, [version], version, False)
-            collection_req._verify_file_hash(b'path/', 'file', different_digest, error_queue)
+            collection._verify_file_hash(b'path/', 'file', different_digest, error_queue)
 
             assert mock_isfile.called_once
 
@@ -972,355 +949,3 @@ def test_get_json_from_tar_file(tmp_tarfile):
     data = collection._get_json_from_tar_file(tfile.name, 'MANIFEST.json')
 
     assert isinstance(data, dict)
-
-
-def test_verify_collection_not_installed(mock_collection):
-
-    local_collection = mock_collection(local_installed=False)
-    remote_collection = mock_collection(local=False)
-
-    with patch.object(collection.display, 'display') as mocked_display:
-        local_collection.verify(remote_collection, './', './')
-
-        assert mocked_display.called
-        assert mocked_display.call_args[0][0] == "'%s.%s' has not been installed, nothing to verify" % (local_collection.namespace, local_collection.name)
-
-
-def test_verify_successful_debug_info(monkeypatch, mock_collection):
-    local_collection = mock_collection()
-    remote_collection = mock_collection(local=False)
-
-    monkeypatch.setattr(collection, '_get_tar_file_hash', MagicMock())
-    monkeypatch.setattr(collection.CollectionRequirement, '_verify_file_hash', MagicMock())
-    monkeypatch.setattr(collection, '_get_json_from_tar_file', MagicMock())
-
-    with patch.object(collection.display, 'vvv') as mock_display:
-        local_collection.verify(remote_collection, './', './')
-
-        namespace = local_collection.namespace
-        name = local_collection.name
-        version = local_collection.latest_version
-
-        assert mock_display.call_count == 4
-        assert mock_display.call_args_list[0][0][0] == "Verifying '%s.%s:%s'." % (namespace, name, version)
-        assert mock_display.call_args_list[1][0][0] == "Installed collection found at './%s/%s'" % (namespace, name)
-        located = "Remote collection found at 'https://galaxy.ansible.com/download/%s-%s-%s.tar.gz'" % (namespace, name, version)
-        assert mock_display.call_args_list[2][0][0] == located
-        verified = "Successfully verified that checksums for '%s.%s:%s' match the remote collection" % (namespace, name, version)
-        assert mock_display.call_args_list[3][0][0] == verified
-
-
-def test_verify_different_versions(mock_collection):
-
-    local_collection = mock_collection(version='0.1.0')
-    remote_collection = mock_collection(local=False, version='3.0.0')
-
-    with patch.object(collection.display, 'display') as mock_display:
-        local_collection.verify(remote_collection, './', './')
-
-        namespace = local_collection.namespace
-        name = local_collection.name
-        installed_version = local_collection.latest_version
-        compared_version = remote_collection.latest_version
-
-        msg = "%s.%s has the version '%s' but is being compared to '%s'" % (namespace, name, installed_version, compared_version)
-
-        assert mock_display.call_count == 1
-        assert mock_display.call_args[0][0] == msg
-
-
-@patch.object(builtins, 'open', mock_open())
-def test_verify_modified_manifest(monkeypatch, mock_collection, manifest_info):
-    local_collection = mock_collection()
-    remote_collection = mock_collection(local=False)
-
-    monkeypatch.setattr(collection, '_get_tar_file_hash', MagicMock(side_effect=['manifest_checksum']))
-    monkeypatch.setattr(collection, '_consume_file', MagicMock(side_effect=['manifest_checksum_modified', 'files_manifest_checksum']))
-    monkeypatch.setattr(collection, '_get_json_from_tar_file', MagicMock(side_effect=[manifest_info, {'files': []}]))
-    monkeypatch.setattr(collection.os.path, 'isfile', MagicMock(return_value=True))
-
-    with patch.object(collection.display, 'display') as mock_display:
-        with patch.object(collection.display, 'vvv') as mock_debug:
-            local_collection.verify(remote_collection, './', './')
-
-            namespace = local_collection.namespace
-            name = local_collection.name
-
-            assert mock_display.call_count == 3
-            assert mock_display.call_args_list[0][0][0] == 'Collection %s.%s contains modified content in the following files:' % (namespace, name)
-            assert mock_display.call_args_list[1][0][0] == '%s.%s' % (namespace, name)
-            assert mock_display.call_args_list[2][0][0] == '    MANIFEST.json'
-
-            # The -vvv output should show details (the checksums do not match)
-            assert mock_debug.call_count == 5
-            assert mock_debug.call_args_list[-1][0][0] == '    Expected: manifest_checksum\n    Found: manifest_checksum_modified'
-
-
-@patch.object(builtins, 'open', mock_open())
-def test_verify_modified_files_manifest(monkeypatch, mock_collection, manifest_info):
-    local_collection = mock_collection()
-    remote_collection = mock_collection(local=False)
-
-    monkeypatch.setattr(collection, '_get_tar_file_hash', MagicMock(side_effect=['manifest_checksum']))
-    monkeypatch.setattr(collection, '_consume_file', MagicMock(side_effect=['manifest_checksum', 'files_manifest_checksum_modified']))
-    monkeypatch.setattr(collection, '_get_json_from_tar_file', MagicMock(side_effect=[manifest_info, {'files': []}]))
-    monkeypatch.setattr(collection.os.path, 'isfile', MagicMock(return_value=True))
-
-    with patch.object(collection.display, 'display') as mock_display:
-        with patch.object(collection.display, 'vvv') as mock_debug:
-            local_collection.verify(remote_collection, './', './')
-
-            namespace = local_collection.namespace
-            name = local_collection.name
-
-            assert mock_display.call_count == 3
-            assert mock_display.call_args_list[0][0][0] == 'Collection %s.%s contains modified content in the following files:' % (namespace, name)
-            assert mock_display.call_args_list[1][0][0] == '%s.%s' % (namespace, name)
-            assert mock_display.call_args_list[2][0][0] == '    FILES.json'
-
-            # The -vvv output should show details (the checksums do not match)
-            assert mock_debug.call_count == 5
-            assert mock_debug.call_args_list[-1][0][0] == '    Expected: files_manifest_checksum\n    Found: files_manifest_checksum_modified'
-
-
-@patch.object(builtins, 'open', mock_open())
-def test_verify_modified_files(monkeypatch, mock_collection, manifest_info, files_manifest_info):
-
-    local_collection = mock_collection()
-    remote_collection = mock_collection(local=False)
-
-    monkeypatch.setattr(collection, '_get_tar_file_hash', MagicMock(side_effect=['manifest_checksum']))
-    fakehashes = ['manifest_checksum', 'files_manifest_checksum', 'individual_file_checksum_modified']
-    monkeypatch.setattr(collection, '_consume_file', MagicMock(side_effect=fakehashes))
-    monkeypatch.setattr(collection, '_get_json_from_tar_file', MagicMock(side_effect=[manifest_info, files_manifest_info]))
-    monkeypatch.setattr(collection.os.path, 'isfile', MagicMock(return_value=True))
-
-    with patch.object(collection.display, 'display') as mock_display:
-        with patch.object(collection.display, 'vvv') as mock_debug:
-            local_collection.verify(remote_collection, './', './')
-
-            namespace = local_collection.namespace
-            name = local_collection.name
-
-            assert mock_display.call_count == 3
-            assert mock_display.call_args_list[0][0][0] == 'Collection %s.%s contains modified content in the following files:' % (namespace, name)
-            assert mock_display.call_args_list[1][0][0] == '%s.%s' % (namespace, name)
-            assert mock_display.call_args_list[2][0][0] == '    README.md'
-
-            # The -vvv output should show details (the checksums do not match)
-            assert mock_debug.call_count == 5
-            assert mock_debug.call_args_list[-1][0][0] == '    Expected: individual_file_checksum\n    Found: individual_file_checksum_modified'
-
-
-@patch.object(builtins, 'open', mock_open())
-def test_verify_identical(monkeypatch, mock_collection, manifest_info, files_manifest_info):
-
-    local_collection = mock_collection()
-    remote_collection = mock_collection(local=False)
-
-    monkeypatch.setattr(collection, '_get_tar_file_hash', MagicMock(side_effect=['manifest_checksum']))
-    monkeypatch.setattr(collection, '_consume_file', MagicMock(side_effect=['manifest_checksum', 'files_manifest_checksum', 'individual_file_checksum']))
-    monkeypatch.setattr(collection, '_get_json_from_tar_file', MagicMock(side_effect=[manifest_info, files_manifest_info]))
-    monkeypatch.setattr(collection.os.path, 'isfile', MagicMock(return_value=True))
-
-    with patch.object(collection.display, 'display') as mock_display:
-        with patch.object(collection.display, 'vvv') as mock_debug:
-            local_collection.verify(remote_collection, './', './')
-
-            # Successful verification is quiet
-            assert mock_display.call_count == 0
-
-            # The -vvv output should show the checksums not matching
-            namespace = local_collection.namespace
-            name = local_collection.name
-            version = local_collection.latest_version
-            success_msg = "Successfully verified that checksums for '%s.%s:%s' match the remote collection" % (namespace, name, version)
-
-            assert mock_debug.call_count == 4
-            assert mock_debug.call_args_list[-1][0][0] == success_msg
-
-
-@patch.object(os.path, 'isdir', return_value=True)
-def test_verify_collections_no_version(mock_isdir, mock_collection, monkeypatch):
-    namespace = 'ansible_namespace'
-    name = 'collection'
-    version = '*'  # Occurs if MANIFEST.json does not exist
-
-    local_collection = mock_collection(namespace=namespace, name=name, version=version)
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=local_collection))
-
-    collections = [('%s.%s' % (namespace, name), version, None)]
-
-    with pytest.raises(AnsibleError) as err:
-        collection.verify_collections(collections, './', local_collection.api, False, False)
-
-    err_msg = 'Collection %s.%s does not appear to have a MANIFEST.json. ' % (namespace, name)
-    err_msg += 'A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy.'
-    assert err.value.message == err_msg
-
-
-@patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_not_installed(mock_verify, mock_collection, monkeypatch):
-    namespace = 'ansible_namespace'
-    name = 'collection'
-    version = '1.0.0'
-
-    local_collection = mock_collection(local_installed=False)
-
-    found_remote = MagicMock(return_value=mock_collection(local=False))
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_name', found_remote)
-
-    collections = [('%s.%s' % (namespace, name), version, None, None)]
-    search_path = './'
-    validate_certs = False
-    ignore_errors = False
-    apis = [local_collection.api]
-
-    with patch.object(collection, '_download_file') as mock_download_file:
-        with pytest.raises(AnsibleError) as err:
-            collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
-
-    assert err.value.message == "Collection %s.%s is not installed in any of the collection paths." % (namespace, name)
-
-
-@patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collection, monkeypatch):
-    namespace = 'ansible_namespace'
-    name = 'collection'
-    version = '1.0.0'
-
-    local_collection = mock_collection(local_installed=False)
-
-    found_remote = MagicMock(return_value=mock_collection(local=False))
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_name', found_remote)
-
-    collections = [('%s.%s' % (namespace, name), version, None)]
-    search_path = './'
-    validate_certs = False
-    ignore_errors = True
-    apis = [local_collection.api]
-
-    with patch.object(collection, '_download_file') as mock_download_file:
-        with patch.object(Display, 'warning') as mock_warning:
-            collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
-
-            skip_message = "Failed to verify collection %s.%s but skipping due to --ignore-errors being set." % (namespace, name)
-            original_err = "Error: Collection %s.%s is not installed in any of the collection paths." % (namespace, name)
-
-            assert mock_warning.called
-            assert mock_warning.call_args[0][0] == skip_message + " " + original_err
-
-
-@patch.object(os.path, 'isdir', return_value=True)
-@patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_no_remote(mock_verify, mock_isdir, mock_collection, monkeypatch):
-    namespace = 'ansible_namespace'
-    name = 'collection'
-    version = '1.0.0'
-
-    monkeypatch.setattr(os.path, 'isfile', MagicMock(side_effect=[False, True]))
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=mock_collection()))
-
-    collections = [('%s.%s' % (namespace, name), version, None)]
-    search_path = './'
-    validate_certs = False
-    ignore_errors = False
-    apis = []
-
-    with pytest.raises(AnsibleError) as err:
-        collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
-
-    assert err.value.message == "Failed to find remote collection %s.%s:%s on any of the galaxy servers" % (namespace, name, version)
-
-
-@patch.object(os.path, 'isdir', return_value=True)
-@patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_no_remote_ignore_errors(mock_verify, mock_isdir, mock_collection, monkeypatch):
-    namespace = 'ansible_namespace'
-    name = 'collection'
-    version = '1.0.0'
-
-    monkeypatch.setattr(os.path, 'isfile', MagicMock(side_effect=[False, True]))
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=mock_collection()))
-
-    collections = [('%s.%s' % (namespace, name), version, None)]
-    search_path = './'
-    validate_certs = False
-    ignore_errors = True
-    apis = []
-
-    with patch.object(Display, 'warning') as mock_warning:
-        collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
-
-        skip_message = "Failed to verify collection %s.%s but skipping due to --ignore-errors being set." % (namespace, name)
-        original_err = "Error: Failed to find remote collection %s.%s:%s on any of the galaxy servers" % (namespace, name, version)
-
-        assert mock_warning.called
-        assert mock_warning.call_args[0][0] == skip_message + " " + original_err
-
-
-def test_verify_collections_tarfile(monkeypatch):
-
-    monkeypatch.setattr(os.path, 'isfile', MagicMock(return_value=True))
-
-    invalid_format = 'ansible_namespace-collection-0.1.0.tar.gz'
-    collections = [(invalid_format, '*', None)]
-
-    with pytest.raises(AnsibleError) as err:
-        collection.verify_collections(collections, './', [], False, False)
-
-    msg = "'%s' is not a valid collection name. The format namespace.name is expected." % invalid_format
-    assert err.value.message == msg
-
-
-def test_verify_collections_path(monkeypatch):
-
-    monkeypatch.setattr(os.path, 'isfile', MagicMock(return_value=False))
-
-    invalid_format = 'collections/collection_namespace/collection_name'
-    collections = [(invalid_format, '*', None)]
-
-    with pytest.raises(AnsibleError) as err:
-        collection.verify_collections(collections, './', [], False, False)
-
-    msg = "'%s' is not a valid collection name. The format namespace.name is expected." % invalid_format
-    assert err.value.message == msg
-
-
-def test_verify_collections_url(monkeypatch):
-
-    monkeypatch.setattr(os.path, 'isfile', MagicMock(return_value=False))
-
-    invalid_format = 'https://galaxy.ansible.com/download/ansible_namespace-collection-0.1.0.tar.gz'
-    collections = [(invalid_format, '*', None)]
-
-    with pytest.raises(AnsibleError) as err:
-        collection.verify_collections(collections, './', [], False, False)
-
-    msg = "'%s' is not a valid collection name. The format namespace.name is expected." % invalid_format
-    assert err.value.message == msg
-
-
-@patch.object(os.path, 'isdir', return_value=True)
-@patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_name(mock_verify, mock_isdir, mock_collection, monkeypatch):
-    local_collection = mock_collection()
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=local_collection))
-
-    monkeypatch.setattr(os.path, 'isfile', MagicMock(side_effect=[False, True, False]))
-
-    located_remote_from_name = MagicMock(return_value=mock_collection(local=False))
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_name', located_remote_from_name)
-
-    with patch.object(collection, '_download_file') as mock_download_file:
-
-        collections = [('%s.%s' % (local_collection.namespace, local_collection.name), '%s' % local_collection.latest_version, None)]
-        search_path = './'
-        validate_certs = False
-        ignore_errors = False
-        apis = [local_collection.api]
-
-        collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
-
-        assert mock_download_file.call_count == 1
-        assert located_remote_from_name.call_count == 1
