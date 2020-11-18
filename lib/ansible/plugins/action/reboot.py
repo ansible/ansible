@@ -247,11 +247,14 @@ class ActionModule(ActionBase):
         if filter_re:
             matches = re.findall(filter_re, command_result['stdout'], re.MULTILINE)
             if not matches:
-                raise AnsibleError("{action}: failed to get host boot time info, filter regex did not match result of boot time check command. rc: {rc}, stdout: {out}, stderr: {err}".format(
-                    action=self._task.action,
-                    rc=command_result['rc'],
-                    out=to_native(stdout),
-                    err=to_native(stderr)))
+                raise AnsibleError(
+                    "{action}: failed to get host boot time info, filter regex "
+                    "did not match result of boot time check command. rc: {rc}, "
+                    "stdout: {out}, stderr: {err}".format(
+                        action=self._task.action,
+                        rc=command_result['rc'],
+                        out=to_native(stdout),
+                        err=to_native(stderr)))
 
             # If there are multiple matches, munge them together into a string
             # We could return a list, but we don't actually use the data IN the
