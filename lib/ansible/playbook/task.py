@@ -221,7 +221,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         except AnsibleParserError as e:
             # if the raises exception was created with obj=ds args, then it includes the detail
             # so we dont need to add it so we can just re raise.
-            if e._obj:
+            if e.obj:
                 raise
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
