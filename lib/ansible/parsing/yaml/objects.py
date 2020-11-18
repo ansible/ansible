@@ -117,7 +117,7 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
     def data(self):
         if not self.vault:
             return to_text(self._ciphertext)
-        return to_text(self.vault.decrypt(self._ciphertext))
+        return to_text(self.vault.decrypt(self._ciphertext, obj=self))
 
     @data.setter
     def data(self, value):
