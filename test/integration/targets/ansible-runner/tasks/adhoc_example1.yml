@@ -1,7 +1,5 @@
 - name: execute the script
   command: "'{{ ansible_python_interpreter }}' '{{ role_path }}/files/adhoc_example1.py' '{{ lookup('env', 'OUTPUT_DIR') }}'"
-  environment:
-    AWX_LIB_DIRECTORY: "{{ callback_path }}"
   register: script
 
 - name: parse script output
