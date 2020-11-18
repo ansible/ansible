@@ -355,6 +355,14 @@ Running role dependencies multiple times in one playbook
 
 Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
+.. note::
+
+    Role deduplication does not consult the invocation signature of parent roles. Additionally, when using ``vars:`` instead of role params, there is a side effect of changing variable scoping. Using ``vars:`` results
+    in those variables being scoped at the play level. In the below example, using ``vars:`` would cause ``n`` to be defined as ``4`` through the entire play, including roles called before it.
+
+    In addition to the above, users should be aware that role de-duplication occurs before variable evaluation. This means that lazy evaluation (link) may make seemingly different role invocations equivalently the same, preventing the role from running more than once.
+
+
 For example, a role named ``car`` depends on a role named ``wheel`` as follows:
 
 .. code-block:: yaml
