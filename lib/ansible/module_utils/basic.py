@@ -157,11 +157,13 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
+    get_wanted_type,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
     PASS_VARS,
     PASS_BOOLS,
+    CHECK_ARGUMENT_TYPES_DISPATCHER,
 )
 
 from ansible.module_utils.six import (
@@ -1849,20 +1851,10 @@ class AnsibleModule(object):
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
-        if not callable(wanted):
-            if wanted is None:
-                # Mostly we want to default to str.
-                # For values set to None explicitly, return None instead as
-                # that allows a user to unset a parameter
-                wanted = 'str'
-            try:
-                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-            except KeyError:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-        else:
-            # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
-            type_checker = wanted
-            wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+        try:
+            type_checker = get_wanted_type(wanted)
+        except KeyError:
+            self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
         return type_checker, wanted
 
@@ -1879,6 +1871,7 @@ class AnsibleModule(object):
                 kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
+                # FIXME: Calling check_type_str() doesn't accept a 'params' value.
                 validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param
