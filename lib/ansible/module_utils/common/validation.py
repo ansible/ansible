@@ -9,7 +9,7 @@ import os
 import re
 
 from ast import literal_eval
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native
 from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import jsonify
