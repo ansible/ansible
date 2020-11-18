@@ -649,7 +649,7 @@ class VaultLib:
                                                 vault_id=vault_id)
         return b_vaulttext
 
-    def decrypt(self, vaulttext, filename=None):
+    def decrypt(self, vaulttext, filename=None, obj=None):
         '''Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
@@ -670,7 +670,7 @@ class VaultLib:
                 display.warning('Vault secrets issue: %s' % to_native(e))
         return plaintext
 
-    def decrypt_and_get_vault_id(self, vaulttext, filename=None):
+    def decrypt_and_get_vault_id(self, vaulttext, filename=None, obj=None):
         """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
@@ -756,7 +756,12 @@ class VaultLib:
                         display.vvvvv('Decrypt successful with secret=%s and vault_id=%s for %s' % (to_text(vault_secret), to_text(vault_secret_id), vaulted()))
                     break
             except AnsibleVaultFormatError as exc:
-                display.warning("There was a vault format error in %s: %s" % (vaulted(), to_native(exc)))
+                exc.obj = obj
+                msg = u"There was a vault format error"
+                if filename:
+                    msg += u' in %s' % (to_text(filename))
+                msg += u': %s' % to_text(exc)
+                display.warning(msg, formatted=True)
                 raise
             except AnsibleVaultError as e:
                 display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed: %s' %

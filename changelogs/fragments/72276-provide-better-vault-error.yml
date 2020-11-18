@@ -1,0 +1,3 @@
+minor_changes:
+- vault - Provide better error for single value encrypted values to indicate the file, line, and column of
+  the errant vault (https://github.com/ansible/ansible/issues/72276)
