@@ -73,6 +73,10 @@ class AnsibleError(Exception):
                 return '%s\n\n%s' % (self._message, to_native(extended_error))
         return self._message
 
+    @message.setter
+    def message(self, val):
+        self._message = val
+
     def __str__(self):
         return self.message
 
