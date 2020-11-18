@@ -59,7 +59,7 @@ def mock_handle_aliases(*args):
     )
 )
 def test_check_arguments(argument_spec, module_parameters, legal_inputs, expected, mocker):
-    # mocker.patch('ansible.module_utils.common.parameters.handle_aliases', side_effect=mock_handle_aliases)
+    mocker.patch('ansible.module_utils.common.parameters.handle_aliases', side_effect=mock_handle_aliases)
     result = get_unsupported_parameters(argument_spec, module_parameters, legal_inputs)
 
     assert result == expected
