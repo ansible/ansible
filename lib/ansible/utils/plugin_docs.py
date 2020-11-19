@@ -281,7 +281,12 @@ def get_versioned_doclink(path):
         return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))
 
 
+<<<<<<< HEAD
 def _find_adjacent(path, plugin, extensions):
+=======
+def get_pymodule_docs(pymodule, path=None, section=None, floader=None):
+    ''' faster method that gets docs from loaded python module '''
+>>>>>>> af01693d20 (add path to keep it 'relative')
 
     adjacent = Path(path)
 
