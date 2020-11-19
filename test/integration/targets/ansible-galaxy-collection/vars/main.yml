@@ -1,5 +1,9 @@
 galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
 
+pulp_repositories:
+  - published
+  - secondary
+
 publish_namespaces:
   - ansible_test
 
