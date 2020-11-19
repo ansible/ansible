@@ -1870,7 +1870,10 @@ class AnsibleModule(object):
                 kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
-                # FIXME: Calling check_type_str() doesn't accept a 'param' value.
+                # FIXME: Since this is now calling check_type_str directly, need to figure
+                # out how to deal with the string conversion behavior that was kept
+                # in the private method, _check_type_str(), to avoid complicating the
+                # standalone function.
                 validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param
