@@ -1,0 +1,3 @@
+minor_changes:
+- Errors - Ensure that errors passed with ``orig_exc`` include the context of that exception
+  (https://github.com/ansible/ansible/issues/68605)
