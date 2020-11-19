@@ -88,12 +88,8 @@ class RoleMixin(object):
         else:
             raise AnsibleError("A path is required to load argument specs for role '%s'" % role_name)
 
-        try:
-            with open(path, 'r') as f:
-                return yaml.safe_load(f)
-        except Exception as e:
-            display.vvvvv("Unable to load %s: %s" % (path, to_native(e)))
-            return {}
+        with open(path, 'r') as f:
+            return from_yaml(f.read(), file_name=path)
 
 
     def _find_all_normal_roles(self, role_paths, name_filters=None):
