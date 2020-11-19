@@ -1193,7 +1193,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
                     deps_exhausted = False
                     for dep_name, dep_requirement in parent_info.dependencies.items():
                         _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
-                                             parent_info.api, b_temp_path, apis, validate_certs, force_deps,
+                                             source, b_temp_path, apis, validate_certs, force_deps,
                                              parent=parent, allow_pre_release=allow_pre_release)
 
                     checked_parents.add(parent)

@@ -33,16 +33,17 @@ options:
     - The password to use when authenticating against Pulp.
     required: yes
     type: str
-  repository:
+  repositories:
     description:
-    - The name of the repository to create.
-    - This should match C(GALAXY_API_DEFAULT_DISTRIBUTION_BASE_PATH) in C(/etc/pulp/settings.py) or use the default of
-      C(published).
+    - A list of pulp repositories to create.
+    - Galaxy NG expects a repository that matches C(GALAXY_API_DEFAULT_DISTRIBUTION_BASE_PATH) in
+      C(/etc/pulp/settings.py) or the default of C(published).
     required: yes
-    type: str
+    type: list
+    elements: str
   namespaces:
     description:
-    - A list of namespaces to create.
+    - A list of namespaces to create for Galaxy NG.
     required: yes
     type: list
     elements: str
@@ -183,7 +184,7 @@ def main():
         galaxy_ng_server=dict(type='str', required=True),
         url_username=dict(type='str', required=True),
         url_password=dict(type='str', required=True, no_log=True),
-        repository=dict(type='str', required=True),
+        repositories=dict(type='list', elements='str', required=True),
         namespaces=dict(type='list', elements='str', required=True),
     )
 
@@ -198,8 +199,9 @@ def main():
     delete_pulp_orphans(module)
     [delete_galaxy_namespace(n, module) for n in get_galaxy_namespaces(module)]
 
-    repo_href = new_pulp_repository(module.params['repository'], module)
-    new_pulp_distribution(module.params['repository'], module.params['repository'], repo_href, module)
+    for repository in module.params['repositories']:
+        repo_href = new_pulp_repository(repository, module)
+        new_pulp_distribution(repository, repository, repo_href, module)
     [new_galaxy_namespace(n, module) for n in module.params['namespaces']]
 
     module.exit_json(changed=True)

@@ -7,5 +7,5 @@
     galaxy_ng_server: '{{ galaxy_ng_server }}'
     url_username: '{{ pulp_user }}'
     url_password: '{{ pulp_password }}'
-    repository: published
+    repositories: '{{ pulp_repositories }}'
     namespaces: '{{ collection_list|map(attribute="namespace")|unique + publish_namespaces }}'
