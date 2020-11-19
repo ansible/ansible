@@ -57,9 +57,7 @@ class AnsibleError(Exception):
         self._suppress_extended_error = suppress_extended_error
         self._message = to_native(message)
         self.obj = obj
-
-        if orig_exc:
-            self.orig_exc = orig_exc
+        self.orig_exc = orig_exc
 
     @property
     def message(self):
@@ -67,11 +65,17 @@ class AnsibleError(Exception):
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
+        message = [self._message]
         if isinstance(self.obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error and not self._suppress_extended_error:
-                return '%s\n\n%s' % (self._message, to_native(extended_error))
-        return self._message
+                message.append(
+                    '\n\n%s' % to_native(extended_error)
+                )
+        elif self.orig_exc:
+            message.append('. %s' % to_native(self.orig_exc))
+
+        return ''.join(message)
 
     @message.setter
     def message(self, val):
