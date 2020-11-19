@@ -34,20 +34,22 @@ def test_finder_setup():
     assert isinstance(f._n_collection_paths, list)
 
     # ensure sys.path paths that have an ansible_collections dir are added to the end of the collections paths
-    with patch.object(sys, 'path', ['/bogus', default_test_collection_paths[1], '/morebogus', default_test_collection_paths[0]]):
+    with patch.object(sys, 'path', ['/bogus', default_test_collection_paths[1], '/morebogus', default_test_collection_paths[0], '/explicit', '/other']):
         f = _AnsibleCollectionFinder(paths=['/explicit', '/other'])
         assert f._n_collection_paths == ['/explicit', '/other', default_test_collection_paths[1], default_test_collection_paths[0]]
 
     configured_paths = ['/bogus']
     playbook_paths = ['/playbookdir']
-    f = _AnsibleCollectionFinder(paths=configured_paths)
-    assert f._n_collection_paths == configured_paths
-    f.set_playbook_paths(playbook_paths)
-    assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
+    with patch.object(sys, 'path', ['/bogus', '/playbookdir']):
+        f = _AnsibleCollectionFinder(paths=configured_paths)
+        assert f._n_collection_paths == configured_paths
 
-    # ensure scalar playbook_paths gets listified
-    f.set_playbook_paths(playbook_paths[0])
-    assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
+        f.set_playbook_paths(playbook_paths)
+        assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
+
+        # ensure scalar playbook_paths gets listified
+        f.set_playbook_paths(playbook_paths[0])
+        assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
 
 
 def test_finder_not_interested():
