@@ -157,7 +157,7 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
-    get_wanted_type,
+    get_validator,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
@@ -1851,9 +1851,8 @@ class AnsibleModule(object):
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
-        try:
-            type_checker = get_wanted_type(wanted)
-        except KeyError:
+        type_checker, wanted = get_validator(wanted)
+        if type_checker is None:
             self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
         return type_checker, wanted
@@ -1871,7 +1870,7 @@ class AnsibleModule(object):
                 kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
-                # FIXME: Calling check_type_str() doesn't accept a 'params' value.
+                # FIXME: Calling check_type_str() doesn't accept a 'param' value.
                 validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param

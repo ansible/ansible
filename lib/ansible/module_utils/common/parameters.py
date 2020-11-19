@@ -250,18 +250,28 @@ def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=No
     return unsupported_parameters
 
 
-def get_wanted_type(wanted):
+def get_validator(wanted):
+    """Returns the callable used to validate a wanted type and the type name.
+
+    :arg wanted: String or callable. If a string, get the corresponding
+        validation function from CHECK_ARGUMENT_TYPES_DISPATCHER. If callable,
+        get the name of the custom callable and return that for the type_checker.
+
+    :returns: Tuple of callable function or None, and a string that is the name
+        of the wanted type.
+    """
+
+    # Use one our our builtin validators.
     if not callable(wanted):
         if wanted is None:
-            # Mostly we want to default to str.
-            # For values set to None explicitly, return None instead as
-            # that allows a user to unset a parameter
+            # Default type for parameters
             wanted = 'str'
 
-        type_checker = CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+        type_checker = CHECK_ARGUMENT_TYPES_DISPATCHER.get(wanted)
 
+    # Use the custom callable for validation.
     else:
         type_checker = wanted
         wanted = getattr(wanted, '__name__', to_native(type(wanted)))
 
-    return type_checker
+    return type_checker, wanted
