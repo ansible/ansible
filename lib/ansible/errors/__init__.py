@@ -70,7 +70,7 @@ class AnsibleError(Exception):
             extended_error = self._get_extended_error()
             if extended_error and not self._suppress_extended_error:
                 message.append(
-                    '\n\n%s' % (self._message, to_native(extended_error))
+                    '\n\n%s' % to_native(extended_error)
                 )
         elif self.orig_exc:
             message.append('. %s' % to_native(self.orig_exc))
