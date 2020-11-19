@@ -1548,10 +1548,4 @@ def _consume_file(read_from, write_to=None):
 
 
 def get_galaxy_metadata_path(b_path):
-    b_default_path = os.path.join(b_path, b'galaxy.yml')
-    candidate_names = [b'galaxy.yml', b'galaxy.yaml']
-    for b_name in candidate_names:
-        b_path = os.path.join(b_path, b_name)
-        if os.path.exists(b_path):
-            return b_path
-    return b_default_path
+    return os.path.join(b_path, b'galaxy.yml')
