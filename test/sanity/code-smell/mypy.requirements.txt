@@ -1,0 +1,4 @@
+mypy
+types-PyYAML
+typing
+typing-extensions == 3.10.0.2

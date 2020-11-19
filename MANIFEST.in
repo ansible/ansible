@@ -47,3 +47,4 @@ recursive-include hacking/build_library *.py
 include hacking/build-ansible.py
 include hacking/test-module.py
 include bin/*
+include test/sanity/code-smell/mypy.ini
