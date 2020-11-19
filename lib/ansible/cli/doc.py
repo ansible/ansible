@@ -91,7 +91,6 @@ class RoleMixin(object):
         with open(path, 'r') as f:
             return from_yaml(f.read(), file_name=path)
 
-
     def _find_all_normal_roles(self, role_paths, name_filters=None):
         """Find all non-collection roles that have an argument spec file.
 
