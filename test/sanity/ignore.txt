@@ -85,6 +85,7 @@ lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, requi
 lib/ansible/modules/async_wrapper.py use-argspec-type-path
 lib/ansible/modules/blockinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/blockinfile.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec  # _uses_shell is undocumented
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
@@ -112,6 +113,7 @@ lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
+lib/ansible/modules/stat.py validate-modules:doc-default-does-not-match-spec  # get_md5 is undocumented
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/stat.py validate-modules:undocumented-parameter
