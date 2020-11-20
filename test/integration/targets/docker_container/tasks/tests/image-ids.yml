@@ -105,8 +105,8 @@
 
 - name: set Digests
   set_fact:
-    digest_hello_world_v1: 4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
-    digest_hello_world_latest: 4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+    digest_hello_world_v1: 941928d702a2f08c986017b1eed3417d83952f05de55d657787512e82714dd89
+    digest_hello_world_latest: 7f99ece5f39bf8d5d76a43cd9104a8d0a39f7135821b94bc1ebdc39cdc6dd63b
 
 - name: Create container with hello-world image via old digest
   docker_container:
