@@ -1,0 +1,2 @@
+bugfixes:
+  - basic.AnsibleModule - AnsibleModule.run_command silently ignores a non-existent directory in the ``cwd`` argument (https://github.com/ansible/ansible/pull/72390).
