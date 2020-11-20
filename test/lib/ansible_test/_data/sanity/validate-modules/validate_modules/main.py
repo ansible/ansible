@@ -1734,8 +1734,6 @@ class ModuleValidator(Validator):
                         msg=msg
                     )
                     continue
-            elif data.get('default') is None and _type == 'bool' and 'options' not in data:
-                arg_default = False
 
             doc_options_args = []
             for alias in sorted(set([arg] + list(aliases))):
@@ -1765,8 +1763,6 @@ class ModuleValidator(Validator):
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
-                elif doc_options_arg.get('default') is None and _type == 'bool' and 'suboptions' not in doc_options_arg:
-                    doc_default = False
             except (Exception, SystemExit):
                 msg = "Argument '%s' in documentation" % arg
                 if context:
