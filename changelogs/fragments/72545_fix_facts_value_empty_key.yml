@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix parsing of values when using empty string as a key (https://github.com/ansible/ansible/issues/57132)
