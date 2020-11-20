@@ -69,12 +69,6 @@ Use the ping module to ping all the nodes in your inventory:
 
    $ ansible all -m ping
 
-Now run a live command on all of your nodes:
-
-.. code-block:: bash
-
-   $ ansible all -a "/bin/echo hello"
-
 You should see output for each host in your inventory, similar to this:
 
 .. code-block:: ansible-output
@@ -86,6 +80,12 @@ You should see output for each host in your inventory, similar to this:
        "changed": false,
        "ping": "pong"
    }
+
+Now run a live command on all of your nodes:
+
+.. code-block:: bash
+
+   $ ansible all -a "/bin/echo hello"
 
 Beyond the basics
 -----------------
