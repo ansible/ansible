@@ -20,9 +20,7 @@
       state: present
       advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
 
-  - include_tasks: run-test.yml
-    with_fileglob:
-      - "tests/*.yml"
+  - import_tasks: tests/options.yml
 
   always:
     - name: Make sure all services are removed

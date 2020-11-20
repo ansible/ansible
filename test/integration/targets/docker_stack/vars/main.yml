@@ -2,7 +2,7 @@ stack_compose_base:
     version: '3'
     services:
         busybox:
-            image: busybox:latest
+            image: quay.io/quay/busybox:latest
             command: sleep 3600
 
 stack_compose_overrides:

@@ -9,7 +9,7 @@
   # Create objects to be pruned
   - docker_container:
       name: "{{ cname }}"
-      image: hello-world
+      image: quay.io/redhattraining/hello-world-nginx
       state: present
     register: container
   - docker_network:
