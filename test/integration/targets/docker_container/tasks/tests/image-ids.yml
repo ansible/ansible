@@ -11,15 +11,15 @@
     name: "{{ image }}"
     source: pull
   loop:
-    - "quay.io/redhattraining/hello-world-nginx:latest"
+    - "quay.io/app-sre/busybox:latest"
     - "quay.io/app-sre/alpine:3.8"
   loop_control:
     loop_var: image
 
-- name: Get image ID of hello-world and alpine images
+- name: Get image ID of busybox and alpine images
   docker_image_info:
     name:
-    - "quay.io/redhattraining/hello-world-nginx:latest"
+    - "quay.io/app-sre/busybox:latest"
     - "quay.io/app-sre/alpine:3.8"
   register: image_info
 
@@ -29,9 +29,9 @@
 
 - name: Print image IDs
   debug:
-    msg: "hello-world: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
+    msg: "busybox: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
 
-- name: Create container with hello-world image via ID
+- name: Create container with busybox image via ID
   docker_container:
     image: "{{ image_info.images[0].Id }}"
     name: "{{ cname }}"
@@ -39,7 +39,7 @@
     force_kill: yes
   register: create_1
 
-- name: Create container with hello-world image via ID (idempotent)
+- name: Create container with busybox image via ID (idempotent)
   docker_container:
     image: "{{ image_info.images[0].Id }}"
     name: "{{ cname }}"
@@ -105,28 +105,28 @@
 
 - name: set Digests
   set_fact:
-    digest_hello_world_v1: 941928d702a2f08c986017b1eed3417d83952f05de55d657787512e82714dd89
-    digest_hello_world_latest: 7f99ece5f39bf8d5d76a43cd9104a8d0a39f7135821b94bc1ebdc39cdc6dd63b
+    digest_hello_world_v1_29: e004c2cc521c95383aebb1fb5893719aa7a8eae2e7a71f316a4410784edb00a9
+    digest_hello_world_v1_32: c9249fdf56138f0d929e2080ae98ee9cb2946f71498fc1484288e6a935b5e5bc
 
-- name: Create container with hello-world image via old digest
+- name: Create container with busybox image via old digest
   docker_container:
-    image: "quay.io/redhattraining/hello-world-nginx@sha256:{{ digest_hello_world_v1 }}"
+    image: "quay.io/app-sre/busybox@sha256:{{ digest_hello_world_v1_29 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
   register: digest_1
 
-- name: Create container with hello-world image via old digest (idempotent)
+- name: Create container with busybox image via old digest (idempotent)
   docker_container:
-    image: "quay.io/redhattraining/hello-world-nginx@sha256:{{ digest_hello_world_v1 }}"
+    image: "quay.io/app-sre/busybox@sha256:{{ digest_hello_world_v1_29 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
   register: digest_2
 
-- name: Update container with hello-world image via new digest
+- name: Update container with busybox image via new digest
   docker_container:
-    image: "quay.io/redhattraining/hello-world-nginx@sha256:{{ digest_hello_world_latest }}"
+    image: "quay.io/app-sre/busybox@sha256:{{ digest_hello_world_v1_32 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
