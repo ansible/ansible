@@ -797,7 +797,7 @@ class Templar:
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
-        static_vars = [''] if static_vars is None else static_vars
+        static_vars = [] if static_vars is None else static_vars
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):

@@ -28,3 +28,6 @@ ansible-playbook -i inventory --flush-cache "$@" set_fact_no_cache.yml
 # Test boolean conversions in set_fact
 ANSIBLE_JINJA2_NATIVE=0 ansible-playbook -v set_fact_bool_conv.yml
 ANSIBLE_JINJA2_NATIVE=1 ansible-playbook -v set_fact_bool_conv_jinja2_native.yml
+
+# Test parsing of values when using an empty string as a key
+ansible-playbook -i inventory set_fact_empty_str_key.yml
