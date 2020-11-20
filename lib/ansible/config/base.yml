@@ -43,7 +43,7 @@ ANSIBLE_COW_ACCEPTLIST:
   env:
   - name: ANSIBLE_COW_WHITELIST
     deprecated:
-      why: Normalizing names to new standard.
+      why: normalizing names to new standard
       version: "2.15"
       alternatives: 'ANSIBLE_COW_ACCEPTLIST'
   - name: ANSIBLE_COW_ACCEPTLIST
@@ -52,7 +52,7 @@ ANSIBLE_COW_ACCEPTLIST:
   - key: cow_whitelist
     section: defaults
     deprecated:
-      why: Normalizing names to new standard.
+      why: normalizing names to new standard
       version: "2.15"
       alternatives: 'cowsay_enabled_stencils'
   - key: cowsay_enabled_stencils
@@ -574,7 +574,7 @@ CALLABLE_ACCEPT_LIST:
   env:
   - name: ANSIBLE_CALLABLE_WHITELIST
     deprecated:
-      why: Normalizing names to new standard.
+      why: normalizing names to new standard
       version: "2.15"
       alternatives: 'ANSIBLE_CALLABLE_ENABLED'
   - name: ANSIBLE_CALLABLE_ENABLED
@@ -583,7 +583,7 @@ CALLABLE_ACCEPT_LIST:
   - key: callable_whitelist
     section: defaults
     deprecated:
-      why: Normalizing names to new standard.
+      why: normalizing names to new standard
       version: "2.15"
       alternatives: 'callable_enabled'
   - key: callable_enabled
@@ -617,7 +617,7 @@ CALLBACKS_ENABLED:
   env:
   - name: ANSIBLE_CALLBACK_WHITELIST
     deprecated:
-      why: Normalizing names to new standard.
+      why: normalizing names to new standard
       version: "2.15"
       alternatives: 'ANSIBLE_CALLBACKS_ENABLED'
   - name: ANSIBLE_CALLBACKS_ENABLED
@@ -626,7 +626,7 @@ CALLBACKS_ENABLED:
   - key: callback_whitelist
     section: defaults
     deprecated:
-      why: Normalizing names to new standard.
+      why: normalizing names to new standard
       version: "2.15"
       alternatives: 'callback_enabled'
   - key: callbacks_enabled
@@ -782,7 +782,7 @@ DEFAULT_HASH_BEHAVIOUR:
   ini:
   - {key: hash_behaviour, section: defaults}
   deprecated:
-    why: This feature is fragile and not portable, leading to continual confusion and misuse
+    why: this feature is fragile and not portable, leading to continual confusion and misuse
     version: "2.13"
     alternatives: the ``combine`` filter explicitly
 DEFAULT_HOST_LIST:
