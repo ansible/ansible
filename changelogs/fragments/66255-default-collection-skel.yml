@@ -1,0 +1,3 @@
+bugfixes:
+- ansible-galaxy - Ensure that the configured role skeleton does not apply to collection init
+  (https://github.com/ansible/ansible/issues/66255)
