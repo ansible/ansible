@@ -14,7 +14,7 @@
 - name: Create containers
   docker_container:
     name: "{{ container_name }}"
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: /bin/sleep 10m
     state: started
   loop:

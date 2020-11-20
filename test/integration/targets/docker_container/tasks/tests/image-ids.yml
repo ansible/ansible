@@ -72,7 +72,7 @@
 
 - name: Create container with alpine image via name (check mode, will pull, same image)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     name: "{{ cname }}"
     state: present
   register: create_5
@@ -80,7 +80,7 @@
 
 - name: Create container with alpine image via name (will pull, same image)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     name: "{{ cname }}"
     state: present
   register: create_6

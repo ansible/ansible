@@ -48,7 +48,7 @@
 
 - name: network_mode
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -57,7 +57,7 @@
 
 - name: network_mode (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -66,7 +66,7 @@
 
 - name: network_mode (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -76,7 +76,7 @@
 
 - name: network_mode (container mode setup)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname_h1 }}"
     state: started
@@ -84,7 +84,7 @@
 
 - name: network_mode (container mode)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -94,7 +94,7 @@
 
 - name: network_mode (container mode idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -133,7 +133,7 @@
 - block:
   - name: networks_cli_compatible=no, networks w/o purge_networks
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -145,7 +145,7 @@
 
   - name: networks_cli_compatible=no, networks w/o purge_networks
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -157,7 +157,7 @@
 
   - name: networks_cli_compatible=no, networks, purge_networks
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -171,7 +171,7 @@
 
   - name: networks_cli_compatible=no, networks, purge_networks (idempotency)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -184,7 +184,7 @@
 
   - name: networks_cli_compatible=no, networks (less networks)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -195,7 +195,7 @@
 
   - name: networks_cli_compatible=no, networks, purge_networks (less networks)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -208,7 +208,7 @@
 
   - name: networks_cli_compatible=no, networks, purge_networks (more networks)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -275,7 +275,7 @@
 - block:
   - name: networks_cli_compatible=yes, networks specified
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -290,7 +290,7 @@
 
   - name: networks_cli_compatible=yes, networks specified
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -309,7 +309,7 @@
 
   - name: networks_cli_compatible=yes, empty networks list specified
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -319,7 +319,7 @@
 
   - name: networks_cli_compatible=yes, empty networks list specified
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -329,7 +329,7 @@
 
   - name: networks_cli_compatible=yes, empty networks list specified, purge_networks
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -348,7 +348,7 @@
 
   - name: networks_cli_compatible=yes, networks not specified
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -358,7 +358,7 @@
 
   - name: networks_cli_compatible=yes, networks not specified
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -367,7 +367,7 @@
 
   - name: networks_cli_compatible=yes, networks not specified, purge_networks
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -429,7 +429,7 @@
 - block:
   - name: create container with one network
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -440,7 +440,7 @@
 
   - name: different networks, comparisons=ignore
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -453,7 +453,7 @@
 
   - name: less networks, comparisons=ignore
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -465,7 +465,7 @@
 
   - name: less networks, comparisons=allow_more_present
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -477,7 +477,7 @@
 
   - name: different networks, comparisons=allow_more_present
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -491,7 +491,7 @@
 
   - name: different networks, comparisons=strict
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -505,7 +505,7 @@
 
   - name: less networks, comparisons=strict
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -563,7 +563,7 @@
 - block:
   - name: create container (stopped) with one network and fixed IP
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: stopped
@@ -575,7 +575,7 @@
 
   - name: create container (stopped) with one network and fixed IP (idempotent)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: stopped
@@ -587,7 +587,7 @@
 
   - name: create container (stopped) with one network and fixed IP (different IPv4)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: stopped
@@ -605,7 +605,7 @@
 
   - name: create container (started) with one network and fixed IP (different IPv4)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
@@ -618,7 +618,7 @@
 
   - name: create container (started) with one network and fixed IP (idempotent)
     docker_container:
-      image: alpine:3.8
+      image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
