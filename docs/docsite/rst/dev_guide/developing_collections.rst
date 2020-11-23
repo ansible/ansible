@@ -548,7 +548,7 @@ To migrate content from one collection to another, if the collections are parts 
   * add ``redirect`` to the corresponding module/plugin's entry in ``meta/runtime.yml``
   * add ``redirect`` for the removed module utils and documentation fragments
   * remove ``removal_version`` from there
-  * remove related entries from tests/sanity/ignore-*.txt files if exist
+  * remove related entries from tests/sanity/ignore.txt files if exist
 
 According to the above, you need to create at least three PRs as follows:
 
