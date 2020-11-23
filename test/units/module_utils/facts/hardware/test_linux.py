@@ -89,7 +89,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
 
         # Check that all mounts points were parsed correctly
         parsed_mounts = [m['device'] for m in mount_facts['mounts']]
-        self.assertListEqual(VALID_MOUNTS, parsed_mounts)
+        self.assertListEqual(sorted(VALID_MOUNTS), sorted(parsed_mounts))
 
     @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
     def test_get_mtab_entries(self, mock_get_file_content):
