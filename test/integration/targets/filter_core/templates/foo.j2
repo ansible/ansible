@@ -60,3 +60,6 @@ regex_replace = {{ 'foo' | regex_replace('^foo', 'bar') }}
 regex_search = {{ 'test_value_0001' | regex_search('([0-9]+)$')}}
 regex_findall = {{ 'car\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True)|to_json }}
 regex_escape = {{ '^f.*o(.*)$' | regex_escape() }}
+
+# check that version_sort sorts versions correctly and in a stable manner
+sorted_versions = {{ ['a-1.9.rpm', 'a-1.10-1.rpm', 'a-1.09.rpm', 'b-1.01.rpm', 'a-2.1-0.rpm', 'a-1.10-0.rpm'] | version_sort }}

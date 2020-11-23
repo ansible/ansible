@@ -67,3 +67,6 @@ regex_replace = bar
 regex_search = 0001
 regex_findall = ["car", "tar", "bar"]
 regex_escape = \^f\.\*o\(\.\*\)\$
+
+# check that version_sort sorts versions correctly and in a stable manner
+sorted_versions = ['a-1.9.rpm', 'a-1.09.rpm', 'a-1.10-0.rpm', 'a-1.10-1.rpm', 'a-2.1-0.rpm', 'b-1.01.rpm']

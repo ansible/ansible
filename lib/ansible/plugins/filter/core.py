@@ -35,6 +35,7 @@ import uuid
 import yaml
 
 import datetime
+from distutils.version import LooseVersion
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
@@ -113,6 +114,11 @@ def quote(a):
     if a is None:
         a = u''
     return shlex_quote(to_text(a))
+
+
+def version_sort(value, reverse=False):
+    '''Sort a list according to loose versions so that e.g. 2.9 is smaller than 2.10'''
+    return sorted(value, key=LooseVersion, reverse=reverse)
 
 
 def fileglob(pathname):
@@ -621,6 +627,9 @@ class FilterModule(object):
 
             # quote string for shell usage
             'quote': quote,
+
+            # version sort for e.g. package versions sorting
+            'version_sort': version_sort,
 
             # hash filters
             # md5 hex digest of string
