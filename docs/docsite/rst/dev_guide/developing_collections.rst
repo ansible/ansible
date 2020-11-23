@@ -543,7 +543,10 @@ To migrate content from one collection to another, if the collections are parts 
 #. When the next major release comes:
 
   * remove the module/plugin from the source collection
-  * add ``redirect`` to the corresponding entry in ``meta/runtime.yml``
+  * remove its unit and integration tests, specific module utils, and documentation fragments if exist from the source collection
+  * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``
+  * add ``redirect`` to the corresponding module/plugin's entry in ``meta/runtime.yml``
+  * add ``redirect`` for the removed module utils and documentation fragments
   * remove ``removal_version`` from there
 
 According to the above, you need to create at least three PRs as follows:
