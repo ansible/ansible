@@ -62,11 +62,7 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     error = e = None
     try:
         if HAS_UNIQUE:
-            c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
-            if isinstance(a, Hashable):
-                c = set(c)
-            else:
-                c = list(c)
+            c = list(do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute))
     except TypeError as e:
         error = e
         _do_fail(e)
@@ -82,13 +78,11 @@ def unique(environment, a, case_sensitive=False, attribute=None):
             raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
-        if isinstance(a, Hashable):
-            c = set(a)
-        else:
-            c = []
-            for x in a:
-                if x not in c:
-                    c.append(x)
+        c = []
+        for x in a:
+            if x not in c:
+                c.append(x)
+
     return c
 
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - Ensure Ansible's unique filter preserves order (https://github.com/ansible/ansible/issues/63417)
