@@ -22,13 +22,12 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import iteritems, string_types
-from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -89,8 +88,11 @@ class RoleMixin(object):
         else:
             raise AnsibleError("A path is required to load argument specs for role '%s'" % role_name)
 
-        loader = DataLoader()
-        return loader.load_from_file(path, cache=False, unsafe=True)
+        try:
+            with open(path, 'r') as f:
+                return from_yaml(f.read(), file_name=path)
+        except (IOError, OSError) as e:
+            raise AnsibleParserError("An error occurred while trying to read the file '%s': %s" % (path, to_native(e)), orig_exc=e)
 
     def _find_all_normal_roles(self, role_paths, name_filters=None):
         """Find all non-collection roles that have an argument spec file.
