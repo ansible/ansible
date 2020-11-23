@@ -528,7 +528,8 @@ class LinuxHardware(Hardware):
 
     @staticmethod
     def _is_blocking_mount(device, fstype):
-        # The only mounts starting without slashes should be network mounts and ZFS
+        # The only mounts starting without slashes should be network mounts, special filesystems
+        # and ZFS (which we want to keep)
         if not device.startswith(('/', '\\')) and fstype != 'zfs':
             return True
         if fstype == 'none':
