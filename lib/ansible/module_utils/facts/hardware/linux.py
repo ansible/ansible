@@ -526,6 +526,15 @@ class LinuxHardware(Hardware):
 
         return mount_size, uuid
 
+    @staticmethod
+    def _is_blocking_mount(device, fstype):
+        # The only mounts starting without slashes should be network mounts and ZFS
+        if not device.startswith(('/', '\\')) and fstype != 'zfs':
+            return True
+        if fstype == 'none':
+            return True
+        return False
+
     def get_mount_facts(self):
 
         mounts = []
@@ -545,7 +554,7 @@ class LinuxHardware(Hardware):
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
 
-            if not device.startswith(('/', '\\')) and ':/' not in device and fstype != 'zfs' or fstype == 'none':
+            if self._is_blocking_mount(device, fstype):
                 continue
 
             mount_info = {'mount': mount,
