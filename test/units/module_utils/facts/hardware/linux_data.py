@@ -94,6 +94,7 @@ cgroup /sys/fs/cgroup/perf_event cgroup rw,nosuid,nodev,noexec,relatime,perf_eve
 cgroup /sys/fs/cgroup/net_cls,net_prio cgroup rw,nosuid,nodev,noexec,relatime,net_cls,net_prio 0 0
 configfs /sys/kernel/config configfs rw,relatime 0 0
 pool1/root / zfs rw,relatime,xattr,noacl 0 0
+pool1/root:/var /var zfs rw,noatime,xattr,posixacl 0 0
 /dev/mapper/fedora_dhcp129--186-root / ext4 rw,seclabel,relatime,data=ordered 0 0
 selinuxfs /sys/fs/selinux selinuxfs rw,relatime 0 0
 systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=24,pgrp=1,timeout=0,minproto=5,maxproto=5,direct 0 0
@@ -255,10 +256,18 @@ MTAB_ENTRIES = [
     ],
     ['configfs', '/sys/kernel/config', 'configfs', 'rw,relatime', '0', '0'],
     [
-        'pool1/system/root',
+        'pool1/root',
         '/',
         'zfs',
         'rw,relatime,xattr,noacl',
+        '0',
+        '0'
+    ],
+    [
+        'pool1/root:/var',
+        '/var',
+        'zfs',
+        'rw,relatime,xattr,posixacl',
         '0',
         '0'
     ],

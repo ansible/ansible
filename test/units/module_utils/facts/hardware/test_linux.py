@@ -95,7 +95,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         mtab_entries = lh._mtab_entries()
         self.assertIsInstance(mtab_entries, list)
         self.assertIsInstance(mtab_entries[0], list)
-        self.assertEqual(len(mtab_entries), 39)
+        self.assertEqual(len(mtab_entries), 40)
 
     @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
     def test_find_bind_mounts(self, mock_run_findmnt):
