@@ -4,7 +4,7 @@
 Guidelines for VMware module development
 ****************************************
 
-The Ansible VMware collection (on `Galaxy <https://galaxy.ansible.com/community/vmware>`_, source code `repository <https://github.com/ansible-collections/vmware>`_) is maintained by the VMware Working Group. For further information see the `team community page <https://github.com/ansible/community/wiki/VMware>`_.
+The Ansible VMware collection (on `Galaxy <https://galaxy.ansible.com/community/vmware>`_, source code `repository <https://github.com/ansible-collections/community.vmware>`_) is maintained by the VMware Working Group. For more information see the `team community page <https://github.com/ansible/community/wiki/VMware>`_.
 
 .. contents::
    :local:
@@ -12,9 +12,9 @@ The Ansible VMware collection (on `Galaxy <https://galaxy.ansible.com/community/
 Testing with govcsim
 ====================
 
-Most of the existing modules are covered by functional tests. The tests are located in the :file:`test/integration/targets/`.
+Most of the existing modules are covered by functional tests. The tests are located `here <https://github.com/ansible-collections/community.vmware/tree/main/tests/integration/targets>`_.
 
-By default, the tests run against a vCenter API simulator called `govcsim <https://github.com/vmware/govmomi/tree/master/vcsim>`_. ``ansible-test`` will automatically pull a `govcsim container <https://quay.io/repository/ansible/vcenter-test-container>` and use it to set-up the test environment.
+By default, the tests run against a vCenter API simulator called `govcsim <https://github.com/vmware/govmomi/tree/master/vcsim>`_. ``ansible-test`` will automatically pull a `govcsim container <https://quay.io/repository/ansible/vcenter-test-container>`_ and use it to set-up the test environment.
 
 You can trigger the test of a module manually with the ``ansible-test`` command. For example, to trigger ``vcenter_folder`` tests:
 
@@ -23,12 +23,12 @@ You can trigger the test of a module manually with the ``ansible-test`` command.
     source hacking/env-setup
     ansible-test integration --python 3.7 vcenter_folder
 
-``govcsim`` is handy because it's much more fast that than a regular test environment. However, it does not
+``govcsim`` is handy because it is much faster than a regular test environment. However, ``govcsim`` does not
 support all the ESXi or vCenter features.
 
 .. note::
 
-   Do not confuse ``govcsim`` with ``vcsim``. It's old outdated version of vCenter simulator whereas govcsim is new and written in go lang
+   Do not confuse ``govcsim`` with ``vcsim``. ``vcsim`` is an older and outdated version of vCenter simulator, whereas ``govcsim`` is new and written in Go language.
 
 Testing with your own infrastructure
 ====================================
@@ -43,10 +43,10 @@ Requirements
 - a VCSA host
 - a NFS server
 - Python dependencies:
-    - `pyvmomi <https://github.com/vmware/pyvmomi/tree/master/pyVmomi>`
-    - `requests <https://2.python-requests.org/en/master/>`.
+    - `pyvmomi <https://github.com/vmware/pyvmomi/tree/master/pyVmomi>`_
+    - `requests <https://2.python-requests.org/en/master/>`_
 
-If you want to deploy your test environment in a hypervisor, both VMware or Libvirt <https://github.com/goneri/vmware-on-libvirt> work well.
+If you want to deploy your test environment in a hypervisor, both `VMware or Libvirt <https://github.com/goneri/vmware-on-libvirt>`_ works well.
 
 NFS server configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,8 +88,8 @@ Configure your installation
 
 Prepare a configuration file that describes your set-up. The file
 should be called :file:`test/integration/cloud-config-vcenter.ini` and based on
-:file:`test/lib/ansible_test/config/cloud-config-vcenter.ini.template`. For instance, if you've deployed your lab with
-`vmware-on-libvirt <https://github.com/goneri/vmware-on-libvirt>`:
+:file:`test/lib/ansible_test/config/cloud-config-vcenter.ini.template`. For instance, if you have deployed your lab with
+`vmware-on-libvirt <https://github.com/goneri/vmware-on-libvirt>`_:
 
 .. code-block:: ini
 
@@ -98,30 +98,23 @@ should be called :file:`test/integration/cloud-config-vcenter.ini` and based on
     vcenter_password: !234AaAa56
     vcenter_hostname: vcenter.test
     vmware_validate_certs: false
-    esxi1_username: root
     esxi1_hostname: esxi1.test
+    esxi1_username: root
     esxi1_password: root
-    esxi2_username: root
     esxi2_hostname: test2.test
+    esxi2_username: root
     esxi2_password: root
 
-If you use an HTTP proxy
--------------------------
-Support for hosting test infrastructure behind an HTTP proxy is currently in development. See the following pull requests for more information:
-
-- ansible-test: vcenter behind an HTTP proxy <https://github.com/ansible/ansible/pull/58208>
-- pyvmomi: proxy support <https://github.com/vmware/pyvmomi/pull/799>
-- VMware: add support for HTTP proxy in connection API <https://github.com/ansible/ansible/pull/52936>
-
-Once you have incorporated the code from those PRs, specify the location of the proxy server with the two extra keys:
+Using an HTTP proxy
+-------------------
+Hosting test infrastructure behind an HTTP proxy is supported. You can specify the location of the proxy server with the two extra keys:
 
 .. code-block:: ini
 
     vmware_proxy_host: esxi1-gw.ws.testing.ansible.com
     vmware_proxy_port: 11153
 
-In addition, you may need to adjust the variables of the following file to match the configuration of your lab:
-:file:`test/integration/targets/prepare_vmware_tests/vars/real_lab.yml`. If you use `vmware-on-libvirt <https://github.com/goneri/vmware-on-libvirt>` to prepare you lab, you don't have anything to change.
+In addition, you may need to adjust the variables of the following `var files <https://github.com/ansible-collections/community.vmware/tree/main/tests/integration/targets/prepare_vmware_tests/vars>`_ to match the configuration of your lab. If you use vmware-on-libvirt to prepare your lab, you do not have anything to change.
 
 Run the test-suite
 ------------------
@@ -135,8 +128,7 @@ Once your configuration is ready, you can trigger a run with the following comma
 
 ``vmware_host_firewall_manager`` is the name of the module to test.
 
-``vmware_guest`` is much larger than any other test role and is rather slow. You can enable or disable some of its test playbooks in
-:file:`test/integration/targets/vmware_guest/defaults/main.yml`.
+``vmware_guest`` is much larger than any other test role and is rather slow. You can enable or disable some of its test playbooks in `main.yml <https://github.com/ansible-collections/community.vmware/tree/main/tests/integration/targets/vmware_guest/defaults/main.yml>`_.
 
 
 Unit-test
@@ -180,10 +172,10 @@ Depending upon the functionality provided by ESXi or vCenter, some modules can s
 Example should use the fully qualified collection name (FQCN)
 -------------------------------------------------------------
 
-Use FQCN for examples within module documentation For instance, you should use ``community.vmware.vmware_guest`` instead of just
+Use FQCN for examples within module documentation. For instance, you should use ``community.vmware.vmware_guest`` instead of just
 ``vmware_guest``.
 
-This way, the examples don't depend on the ``collections`` directive of the
+This way, the examples do not depend on the ``collections`` directive of the
 playbook.
 
 Functional tests
@@ -195,7 +187,7 @@ Writing new tests
 If you are writing a new collection of integration tests, there are a few VMware-specific things to note beyond
 the standard Ansible :ref:`integration testing<testing_integration>` process.
 
-The test-suite uses a set of common, pre-defined vars located in the :file:`test/integration/targets/prepare_vmware_tests/` role.
+The test-suite uses a set of common, pre-defined vars located `in prepare_vmware_tests <https://github.com/ansible-collections/community.vmware/tree/main/tests/integration/targets/test/integration/targets/prepare_vmware_tests/>`_ role.
 The resources defined there are automatically created by importing that role at the start of your test:
 
 .. code-block:: yaml
@@ -235,7 +227,7 @@ For example, the following block:
 .. code-block:: yaml
 
     - name: Add a VMware vSwitch
-      vmware_vswitch:
+      community.vmware.vmware_vswitch:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
@@ -249,7 +241,7 @@ should be simplified to just:
 .. code-block:: yaml
 
     - name: Add a VMware vSwitch
-      vmware_vswitch:
+      community.vmware.vmware_vswitch:
         esxi_hostname: 'esxi1'
         switch_name: "boby"
         state: present
