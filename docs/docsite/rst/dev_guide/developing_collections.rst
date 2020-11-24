@@ -542,7 +542,7 @@ To migrate content from one collection to another, if the collections are parts 
 #. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. The deprecation must be released after the copied content has been included in a release of the target collection.
 #. When the next major release comes:
 
-  * remove the module/plugin from the source collection
+  * remove the module/plugin from the source collection and its symlink stored in ``plugin/modules`` directory
   * remove its unit and integration tests, specific module utils, and documentation fragments if exist from the source collection
   * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; refer to the fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ as an example
   * add ``redirect`` to the corresponding module/plugin's entry in ``meta/runtime.yml``
