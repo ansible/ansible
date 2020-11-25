@@ -545,7 +545,8 @@ To migrate content from one collection to another, if the collections are parts 
   * remove the module/plugin from the source collection and its symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)
   * remove its unit and integration tests, specific module utils, and documentation fragments if there are any in the source collection
   * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; refer to the fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ as an example
-  * add ``redirect`` to the corresponding module/plugin's entry in ``meta/runtime.yml`` (in particular, add ``redirect`` for the removed module utils and documentation fragments if applicable)
+  * add ``redirect`` to the corresponding module/plugin's entry in ``meta/runtime.yml``
+  * in particular, add ``redirect`` for the removed module utils and documentation fragments if applicable
   * remove ``removal_version`` from there
   * remove related entries from ``tests/sanity/ignore.txt`` files if exist
   * remove changelog fragments for removed content that are not yet part of the changelog (in other words, do not modify `changelogs/changelog.yaml` and do not delete files mentioned in it)
