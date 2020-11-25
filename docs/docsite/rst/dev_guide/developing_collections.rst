@@ -549,7 +549,7 @@ To migrate content from one collection to another, if the collections are parts 
     * in particular, add ``redirect`` for the removed module utils and documentation fragments if applicable
   * remove ``removal_version`` from there
   * remove related entries from ``tests/sanity/ignore.txt`` files if exist
-
+* remove requirements that are no longer required in ``tests/unit/requirements.txt``
 According to the above, you need to create at least three PRs as follows:
 
 #. Create a PR against the target collection to copy the content.
