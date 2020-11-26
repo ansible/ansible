@@ -1,6 +1,0 @@
----
-minor_changes:
-  - vars plugins - Support vars plugins in collections by adding the ability to whitelist plugins.
-  - host_group_vars plugin - Require whitelisting and whitelist by default.
-  - Add a global toggle to control when vars plugins are executed (per task by default for backward compatibility or after importing inventory).
-  - Add a per-plugin stage option to override the global toggle to control the execution of individual vars plugins (per task, after inventory, or both).

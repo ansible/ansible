@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-connection persists even after playbook run is completed (https://github.com/ansible/ansible/pull/61591)

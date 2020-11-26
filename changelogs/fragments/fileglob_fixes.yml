@@ -1,2 +1,0 @@
-bugfixes:
-    - deal with cases in which just a file is pased and not a path with directories, now fileglob correctly searches in 'files/' subdirs.

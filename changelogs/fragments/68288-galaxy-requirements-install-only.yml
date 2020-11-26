@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-galaxy - allow role to define dependency requirements that will be only installed by defining them in ``meta/requirements.yml`` (https://github.com/ansible/proposals/issues/57)

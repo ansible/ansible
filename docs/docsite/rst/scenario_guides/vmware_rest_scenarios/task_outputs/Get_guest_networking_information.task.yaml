@@ -1,0 +1,4 @@
+- name: Get guest networking information
+  vmware.vmware_rest.vcenter_vm_guest_networking_info:
+    vm: '{{ test_vm1_info.id }}'
+  register: _result

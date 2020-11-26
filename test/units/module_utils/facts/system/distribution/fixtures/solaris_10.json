@@ -1,0 +1,25 @@
+{
+    "name": "Solaris 10",
+    "uname_r": "5.10",
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. All rights reserved.\n                            Assembled 17 January 2013\n"
+    },
+    "platform.system": "SunOS",
+    "result": {
+        "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
+        "distribution": "Solaris",
+        "os_family": "Solaris",
+        "distribution_major_version": "10",
+        "distribution_version": "10"
+    }
+}

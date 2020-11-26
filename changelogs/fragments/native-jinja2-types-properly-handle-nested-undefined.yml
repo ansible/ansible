@@ -1,0 +1,2 @@
+bugfixes:
+  - native jinja2 types - properly handle Undefined in nested data.

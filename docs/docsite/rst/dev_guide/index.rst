@@ -17,6 +17,8 @@ Find the task that best describes what you want to do:
    * I want to :ref:`add a custom plugin or module locally <developing_locally>`.
    * I want to figure out if :ref:`developing a module is the right approach <module_dev_should_you>` for my use case.
    * I want to :ref:`develop a collection <developing_collections>`.
+   * I want to :ref:`contribute to an Ansible-maintained collection <contributing_maintained_collections>`.
+   * I want to :ref:`contribute to a community-maintained collection <hacking_collections>`.
    * I want to :ref:`migrate a role to a collection <migrating_roles>`.
 
 * I've read the info above, and I'm sure I want to develop a module:
@@ -31,11 +33,11 @@ Find the task that best describes what you want to do:
       * an :ref:`OpenStack module <OpenStack_module_development>`.
       * an :ref:`oVirt/RHV module <oVirt_module_development>`.
       * a :ref:`VMware module <VMware_module_development>`.
-   * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
+   * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, and so on).
 
 * I want to refine my code:
 
-   * I want to :ref:`debug my module code <debugging>`.
+   * I want to :ref:`debug my module code <debugging_modules>`.
    * I want to :ref:`add tests <developing_testing>`.
    * I want to :ref:`document my module <module_documenting>`.
    * I want to :ref:`document my set of modules for a network platform <documenting_modules_network>`.
@@ -73,6 +75,7 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    platforms/openstack_guidelines
    platforms/ovirt_dev_guide
    platforms/vmware_guidelines
+   platforms/vmware_rest_guidelines
    developing_modules_in_groups
    testing
    module_lifecycle
@@ -84,6 +87,7 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_rebasing
    developing_module_utilities
    developing_collections
+   migrating_roles
    collections_galaxy_meta
    migrating_roles
    overview_architecture

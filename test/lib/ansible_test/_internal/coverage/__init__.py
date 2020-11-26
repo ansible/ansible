@@ -61,6 +61,7 @@ class CoverageConfig(EnvironmentConfig):
         self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
+        self.export = args.export if 'export' in args else None  # type: str
         self.coverage = False  # temporary work-around to support intercept_command in cover.py
 
 
@@ -104,7 +105,7 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
     env = common_environment()
     env.update(dict(COVERAGE_FILE=output_file))
 
-    cmd = ['python', '-m', 'coverage', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
+    cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
     intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
 
@@ -208,6 +209,14 @@ def enumerate_powershell_lines(
         filename = sanitize_filename(filename, collection_search_re=collection_search_re, collection_sub_re=collection_sub_re)
 
         if not filename:
+            continue
+
+        if isinstance(hits, dict) and not hits.get('Line'):
+            # Input data was previously aggregated and thus uses the standard ansible-test output format for PowerShell coverage.
+            # This format differs from the more verbose format of raw coverage data from the remote Windows hosts.
+            hits = dict((int(key), value) for key, value in hits.items())
+
+            yield filename, hits
             continue
 
         # PowerShell unpacks arrays if there's only a single entry so this is a defensive check on that

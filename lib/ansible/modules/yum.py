@@ -10,9 +10,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -21,7 +18,7 @@ version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
-     - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
+     - This module only works on Python 2. If you require Python 3 support see the M(ansible.builtin.dnf) module.
 options:
   use_backend:
     description:
@@ -31,6 +28,7 @@ options:
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
     choices: [ auto, yum, yum4, dnf ]
+    type: str
     version_added: "2.7"
   name:
     description:
@@ -41,15 +39,20 @@ options:
       - You can also pass a url or a local path to a rpm file (using state=present).
         To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
+    type: list
+    elements: str
   exclude:
     description:
       - Package name(s) to exclude when state=present, or latest
+    type: list
+    elements: str
     version_added: "2.0"
   list:
     description:
       - "Package name to run the equivalent of yum list --show-duplicates <package> against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
       - This parameter is mutually exclusive with C(name).
+    type: str
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
@@ -58,6 +61,7 @@ options:
       - C(absent) and C(removed) will remove the specified package.
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
+    type: str
     choices: [ absent, installed, latest, present, removed ]
   enablerepo:
     description:
@@ -66,6 +70,8 @@ options:
         When specifying multiple repos, separate them with a C(",").
       - As of Ansible 2.7, this can alternatively be a list instead of C(",")
         separated string
+    type: list
+    elements: str
     version_added: "0.9"
   disablerepo:
     description:
@@ -74,10 +80,13 @@ options:
         When specifying multiple repos, separate them with a C(",").
       - As of Ansible 2.7, this can alternatively be a list instead of C(",")
         separated string
+    type: list
+    elements: str
     version_added: "0.9"
   conf_file:
     description:
       - The remote yum configuration file to use for the transaction.
+    type: str
     version_added: "0.6"
   disable_gpg_check:
     description:
@@ -122,6 +131,7 @@ options:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
     default: "/"
+    type: str
     version_added: "2.3"
   security:
     description:
@@ -133,6 +143,7 @@ options:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
     default: "no"
+    type: bool
     version_added: "2.6"
   allow_downgrade:
     description:
@@ -151,16 +162,21 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
+    type: list
+    elements: str
     version_added: "2.5"
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
+    type: list
+    elements: str
     version_added: "2.5"
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
+    type: str
     version_added: "2.7"
   autoremove:
     description:
@@ -177,6 +193,7 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
+    type: str
     version_added: "2.7"
   download_only:
     description:
@@ -204,6 +221,20 @@ options:
       - Has an effect only if I(download_only) is specified.
     type: str
     version_added: "2.8"
+  install_repoquery:
+    description:
+      - If repoquery is not available, install yum-utils. If the system is
+        registered to RHN or an RHN Satellite, repoquery allows for querying
+        all channels assigned to the system. It is also required to use the
+        'list' parameter.
+      - "NOTE: This will run and be logged as a separate yum transation which
+        takes place before any other installation or removal."
+      - "NOTE: This will use the system's default enabled repositories without
+        regard for disablerepo/enablerepo given to the module."
+    required: false
+    version_added: "1.5"
+    default: "yes"
+    type: bool
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -241,12 +272,12 @@ author:
 '''
 
 EXAMPLES = '''
-- name: install the latest version of Apache
+- name: Install the latest version of Apache
   yum:
     name: httpd
     state: latest
 
-- name: install a list of packages (suitable replacement for 2.11 loop deprecation warning)
+- name: Install a list of packages (suitable replacement for 2.11 loop deprecation warning)
   yum:
     name:
       - nginx
@@ -254,7 +285,7 @@ EXAMPLES = '''
       - postgresql-server
     state: present
 
-- name: install a list of packages with a list variable
+- name: Install a list of packages with a list variable
   yum:
     name: "{{ packages }}"
   vars:
@@ -262,54 +293,54 @@ EXAMPLES = '''
     - httpd
     - httpd-tools
 
-- name: remove the Apache package
+- name: Remove the Apache package
   yum:
     name: httpd
     state: absent
 
-- name: install the latest version of Apache from the testing repo
+- name: Install the latest version of Apache from the testing repo
   yum:
     name: httpd
     enablerepo: testing
     state: present
 
-- name: install one specific version of Apache
+- name: Install one specific version of Apache
   yum:
     name: httpd-2.2.29-1.4.amzn1
     state: present
 
-- name: upgrade all packages
+- name: Upgrade all packages
   yum:
     name: '*'
     state: latest
 
-- name: upgrade all packages, excluding kernel & foo related packages
+- name: Upgrade all packages, excluding kernel & foo related packages
   yum:
     name: '*'
     state: latest
     exclude: kernel*,foo*
 
-- name: install the nginx rpm from a remote repo
+- name: Install the nginx rpm from a remote repo
   yum:
     name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
-- name: install nginx rpm from a local file
+- name: Install nginx rpm from a local file
   yum:
     name: /usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
-- name: install the 'Development tools' package group
+- name: Install the 'Development tools' package group
   yum:
     name: "@Development tools"
     state: present
 
-- name: install the 'Gnome desktop' environment group
+- name: Install the 'Gnome desktop' environment group
   yum:
     name: "@^gnome-desktop-environment"
     state: present
 
-- name: List ansible packages and register result to print with debug later.
+- name: List ansible packages and register result to print with debug later
   yum:
     list: ansible
   register: result
@@ -1159,7 +1190,7 @@ class YumModule(YumDnf):
                 if pkg.startswith('@'):
                     installed = self.is_group_env_installed(pkg)
                 else:
-                    installed = self.is_installed(repoq, pkg)
+                    installed = self.is_installed(repoq, pkg, is_pkg=True)
 
                 if installed:
                     # Return a message so it's obvious to the user why yum failed

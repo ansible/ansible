@@ -9,10 +9,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
 DOCUMENTATION = '''
 ---
 module: ping
@@ -23,8 +19,8 @@ description:
      contact. It does not make sense in playbooks, but it is useful from
      C(/usr/bin/ansible) to verify the ability to login and that a usable Python is configured.
    - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
-   - For Windows targets, use the M(win_ping) module instead.
-   - For Network targets, use the M(net_ping) module instead.
+   - For Windows targets, use the M(ansible.windows.win_ping) module instead.
+   - For Network targets, use the M(ansible.netcommon.net_ping) module instead.
 options:
   data:
     description:
@@ -33,8 +29,8 @@ options:
     type: str
     default: pong
 seealso:
-- module: net_ping
-- module: win_ping
+- module: ansible.netcommon.net_ping
+- module: ansible.windows.win_ping
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -44,11 +40,11 @@ EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
 # ansible webservers -m ping
 
-# Example from an Ansible Playbook
-- ping:
+- name: Example from an Ansible Playbook
+  ping:
 
-# Induce an exception to see what happens
-- ping:
+- name: Induce an exception to see what happens
+  ping:
     data: crash
 '''
 

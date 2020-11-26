@@ -1,3 +1,0 @@
-bugfixes:
-    - ansible-test no longer optimizes setting ``PATH`` by prepending the directory containing the selected Python interpreter when it is named ``python``.
-      This avoids unintentionally making other programs available on ``PATH``, including an already installed version of Ansible.

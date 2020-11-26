@@ -8,9 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -21,8 +18,9 @@ extends_documentation_fragment: files
 description:
 - Set attributes of files, symlinks or directories.
 - Alternatively, remove files, symlinks or directories.
-- Many other modules support the same options as the C(file) module - including M(copy), M(template), and M(assemble).
-- For Windows targets, use the M(win_file) module instead.
+- Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
+  M(ansible.builtin.template), and M(ansible.builtin.assemble).
+- For Windows targets, use the M(ansible.windows.win_file) module instead.
 options:
   path:
     description:
@@ -40,7 +38,7 @@ options:
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
     - If C(file), without any other options this works mostly as a 'stat' and will return the current state of C(path).
       Even with other options (i.e C(mode)), the file will be modified but will NOT be created if it does not exist;
-      see the C(touch) value or the M(copy) or M(template) module if you want that behavior.
+      see the C(touch) value or the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want that behavior.
     - If C(hard), the hard link will be created or changed.
     - If C(link), the symbolic link will be created or changed.
     - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
@@ -108,11 +106,11 @@ options:
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
 seealso:
-- module: assemble
-- module: copy
-- module: stat
-- module: template
-- module: win_file
+- module: ansible.builtin.assemble
+- module: ansible.builtin.copy
+- module: ansible.builtin.stat
+- module: ansible.builtin.template
+- module: ansible.windows.win_file
 author:
 - Ansible Core Team
 - Michael DeHaan
@@ -209,7 +207,16 @@ EXAMPLES = r'''
 
 '''
 RETURN = r'''
-
+dest:
+    description: Destination file/path, equal to the value passed to I(path)
+    returned: state=touch, state=hard, state=link
+    type: str
+    sample: /path/to/file.txt
+path:
+    description: Destination file/path, equal to the value passed to I(path)
+    returned: state=absent, state=directory, state=file
+    type: str
+    sample: /path/to/file.txt
 '''
 
 import errno
@@ -217,6 +224,9 @@ import os
 import shutil
 import sys
 import time
+
+from pwd import getpwnam, getpwuid
+from grp import getgrnam, getgrgid
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
@@ -231,7 +241,7 @@ class AnsibleModuleError(Exception):
         self.results = results
 
     def __repr__(self):
-        print('AnsibleModuleError(results={0})'.format(self.results))
+        return 'AnsibleModuleError(results={0})'.format(self.results)
 
 
 class ParameterError(AnsibleModuleError):
@@ -552,7 +562,7 @@ def execute_touch(path, follow, timestamps):
             changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
             changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
         except SystemExit as e:
-            if e.code:
+            if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
                 # We take this to mean that fail_json() was called from
                 # somewhere in basic.py
                 if prev_state == 'absent':
@@ -583,7 +593,7 @@ def ensure_file_attributes(path, follow, timestamps):
     if prev_state not in ('file', 'hard'):
         # file is not absent and any other state is a conflict
         raise AnsibleModuleError(results={'msg': 'file (%s) is %s, cannot continue' % (path, prev_state),
-                                          'path': path})
+                                          'path': path, 'state': prev_state})
 
     diff = initial_diff(path, 'file', prev_state)
     changed = module.set_fs_attributes_if_different(file_args, False, diff, expand=False)
@@ -611,7 +621,7 @@ def ensure_directory(path, follow, recurse, timestamps):
     if prev_state == 'absent':
         # Create directory and assign permissions to it
         if module.check_mode:
-            return {'changed': True, 'diff': diff}
+            return {'path': path, 'changed': True, 'diff': diff}
         curpath = ''
 
         try:
@@ -853,6 +863,34 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
+def check_owner_exists(module, owner):
+    try:
+        uid = int(owner)
+        try:
+            getpwuid(uid).pw_name
+        except KeyError:
+            module.warn('failed to look up user with uid %s. Create user up to this point in real play' % uid)
+    except ValueError:
+        try:
+            getpwnam(owner).pw_uid
+        except KeyError:
+            module.warn('failed to look up user %s. Create user up to this point in real play' % owner)
+
+
+def check_group_exists(module, group):
+    try:
+        gid = int(group)
+        try:
+            getgrgid(gid).gr_name
+        except KeyError:
+            module.warn('failed to look up group with gid %s. Create group up to this point in real play' % gid)
+    except ValueError:
+        try:
+            getgrnam(group).gr_gid
+        except KeyError:
+            module.warn('failed to look up group %s. Create group up to this point in real play' % group)
+
+
 def main():
 
     global module
@@ -887,6 +925,13 @@ def main():
     follow = params['follow']
     path = params['path']
     src = params['src']
+
+    if module.check_mode and state != 'absent':
+        file_args = module.load_file_common_arguments(module.params)
+        if file_args['owner']:
+            check_owner_exists(module, file_args['owner'])
+        if file_args['group']:
+            check_group_exists(module, file_args['group'])
 
     timestamps = {}
     timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)

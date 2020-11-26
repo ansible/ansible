@@ -8,7 +8,7 @@ Developing plugins
 .. contents::
    :local:
 
-Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. All plugins must:
+Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible collections include a number of handy plugins, and you can easily write your own. All plugins must:
 
 * be written in Python
 * raise errors
@@ -70,8 +70,7 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
 
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
-
-Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
+Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
 Developing particular plugin types
 ==================================
@@ -131,7 +130,7 @@ For example, if you wanted to check the time difference between your Ansible con
 
             if remote_date:
                 remote_date_obj = datetime.strptime(remote_date, '%Y-%m-%dT%H:%M:%SZ')
-                time_delta = datetime.now() - remote_date_obj
+                time_delta = datetime.utcnow() - remote_date_obj
                 ret['delta_seconds'] = time_delta.seconds
                 ret['delta_days'] = time_delta.days
                 ret['delta_microseconds'] = time_delta.microseconds
@@ -278,6 +277,10 @@ Note that the ``CALLBACK_VERSION`` and ``CALLBACK_NAME`` definitions are require
 
 For example callback plugins, see the source code for the `callback plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_
 
+New in ansible-base 2.11, callback plugins are notified (via ``v2_playbook_on_task_start``) of :ref:`meta<meta_module>` tasks. By default, only explicit ``meta`` tasks that users list in their plays are sent to callbacks.
+
+There are also some tasks which are generated internally and implicitly at various points in execution. Callback plugins can opt-in to receiving these implicit tasks as well, by setting ``self.wants_implicit_tasks = True``. Any ``Task`` object received by a callback hook will have an ``.implicit`` attribute, which can be consulted to determine whether the ``Task`` originated from within Ansible, or explicitly by the user.
+
 .. _developing_connection_plugins:
 
 Connection plugins
@@ -288,6 +291,8 @@ Connection plugins allow Ansible to connect to the target hosts so it can execut
 Ansible version 2.1 introduced the ``smart`` connection plugin. The ``smart`` connection type allows Ansible to automatically select either the ``paramiko`` or ``openssh`` connection plugin based on system capabilities, or the ``ssh`` connection plugin if OpenSSH supports ControlPersist.
 
 To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into ``connection`` directory on your :ref:`local plugin path <local_plugins>`.
+
+Connection plugins can support common options (such as the ``--timeout`` flag) by defining an entry in the documentation for the attribute name (in this case ``timeout``). If the common option has a non-null default, the plugin should define the same default since a different default would be ignored.
 
 For example connection plugins, see the source code for the `connection plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_.
 
@@ -480,8 +485,8 @@ For example vars plugins, see the source code for the `vars plugins included wit
 
 .. seealso::
 
-   :ref:`all_modules`
-       List of all modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_api`
        Learn about the Python API for task execution
    :ref:`developing_inventory`

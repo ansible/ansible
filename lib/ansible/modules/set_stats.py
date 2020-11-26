@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -42,14 +39,14 @@ version_added: "2.3"
 '''
 
 EXAMPLES = r'''
-# Aggregating packages_installed stat per host
-- set_stats:
+- name: Aggregating packages_installed stat per host
+  set_stats:
     data:
       packages_installed: 31
     per_host: yes
 
-# Aggregating random stats for all hosts using complex arguments
-- set_stats:
+- name: Aggregating random stats for all hosts using complex arguments
+  set_stats:
     data:
       one_stat: 11
       other_stat: "{{ local_var * 2 }}"
@@ -57,8 +54,8 @@ EXAMPLES = r'''
     per_host: no
 
 
-# setting stats (not aggregating)
-- set_stats:
+- name: Setting stats (not aggregating)
+  set_stats:
     data:
       the_answer: 42
     aggregate: no

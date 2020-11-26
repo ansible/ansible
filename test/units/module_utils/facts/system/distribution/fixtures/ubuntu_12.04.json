@@ -1,0 +1,24 @@
+{
+    "name": "Ubuntu 12.04",
+    "input": {
+        "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=12.04\nDISTRIB_CODENAME=precise\nDISTRIB_DESCRIPTION=\"Ubuntu 12.04.5 LTS\"",
+        "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"12.04.5 LTS, Precise Pangolin\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu precise (12.04.5 LTS)\"\nVERSION_ID=\"12.04\""
+    },
+    "platform.dist": ["Ubuntu", "12.04", "precise"],
+    "distro": {
+        "codename": "precise",
+        "id": "ubuntu",
+        "name": "Ubuntu",
+        "version": "12.04",
+        "version_best": "12.04.5",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Ubuntu",
+        "distribution_major_version": "12",
+        "distribution_release": "precise",
+        "os_family": "Debian",
+        "distribution_version": "12.04"
+    }
+}

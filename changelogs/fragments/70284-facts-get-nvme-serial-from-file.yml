@@ -1,0 +1,2 @@
+bugfixes:
+  - Facts collection - get serial number of NVMe device without sg_inq (https://github.com/ansible/ansible/issues/66663).

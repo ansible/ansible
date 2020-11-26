@@ -89,9 +89,9 @@ def setup_env(filename):
                 del sys.modules[k]
 
 
-def get_ps_argument_spec(filename):
-    # This uses a very small skeleton of Ansible.Basic.AnsibleModule to return the argspec defined by the module. This
-    # is pretty rudimentary and will probably require something better going forward.
+def get_ps_argument_spec(filename, collection):
+    fqc_name = get_module_name_from_filename(filename, collection)
+
     pwsh = find_executable('pwsh')
     if not pwsh:
         raise FileNotFoundError('Required program for PowerShell arg spec inspection "pwsh" not found.')
@@ -102,11 +102,15 @@ def get_ps_argument_spec(filename):
         b_module_data = module_fd.read()
 
     ps_dep_finder = PSModuleDepFinder()
-    ps_dep_finder.scan_module(b_module_data)
+    ps_dep_finder.scan_module(b_module_data, fqn=fqc_name)
+
+    # For ps_argspec.ps1 to compile Ansible.Basic it also needs the AddType module_util.
+    ps_dep_finder._add_module((b"Ansible.ModuleUtils.AddType", ".psm1", None), wrapper=False)
 
     util_manifest = json.dumps({
         'module_path': to_text(module_path, errors='surrogiate_or_strict'),
-        'ps_utils': dict([(name, info['path']) for name, info in ps_dep_finder.ps_modules.items()])
+        'ansible_basic': ps_dep_finder.cs_utils_module["Ansible.Basic"]['path'],
+        'ps_utils': dict([(name, info['path']) for name, info in ps_dep_finder.ps_modules.items()]),
     })
 
     script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
@@ -115,7 +119,7 @@ def get_ps_argument_spec(filename):
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
-        raise AnsibleModuleImportError(stderr.decode('utf-8'))
+        raise AnsibleModuleImportError("STDOUT:\n%s\nSTDERR:\n%s" % (stdout.decode('utf-8'), stderr.decode('utf-8')))
 
     kwargs = json.loads(stdout)
 
@@ -142,19 +146,19 @@ def get_py_argument_spec(filename, collection):
             raise AnsibleModuleNotInitialized()
 
     try:
-        try:
-            # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
+        # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
+        if 'argument_spec' in fake.kwargs:
             argument_spec = fake.kwargs['argument_spec']
-            # If add_file_common_args is truish, add options from FILE_COMMON_ARGUMENTS when not present.
-            # This is the only modification to argument_spec done by AnsibleModule itself, and which is
-            # not caught by setup_env's AnsibleModule replacement
-            if fake.kwargs.get('add_file_common_args'):
-                for k, v in FILE_COMMON_ARGUMENTS.items():
-                    if k not in argument_spec:
-                        argument_spec[k] = v
-            return argument_spec, fake.args, fake.kwargs
-        except KeyError:
-            return fake.args[0], fake.args, fake.kwargs
+        else:
+            argument_spec = fake.args[0]
+        # If add_file_common_args is truish, add options from FILE_COMMON_ARGUMENTS when not present.
+        # This is the only modification to argument_spec done by AnsibleModule itself, and which is
+        # not caught by setup_env's AnsibleModule replacement
+        if fake.kwargs.get('add_file_common_args'):
+            for k, v in FILE_COMMON_ARGUMENTS.items():
+                if k not in argument_spec:
+                    argument_spec[k] = v
+        return argument_spec, fake.args, fake.kwargs
     except (TypeError, IndexError):
         return {}, (), {}
 
@@ -163,4 +167,4 @@ def get_argument_spec(filename, collection):
     if filename.endswith('.py'):
         return get_py_argument_spec(filename, collection)
     else:
-        return get_ps_argument_spec(filename)
+        return get_ps_argument_spec(filename, collection)

@@ -18,7 +18,6 @@ from ..util import (
     ApplicationError,
     display,
     SubprocessError,
-    is_shippable,
     ConfigParser,
 )
 
@@ -36,6 +35,9 @@ from ..docker_util import (
     docker_network_inspect,
     docker_exec,
     get_docker_container_id,
+    get_docker_preferred_network_name,
+    get_docker_hostname,
+    is_docker_user_defined_network,
 )
 
 
@@ -49,8 +51,7 @@ class CsCloudProvider(CloudProvider):
         """
         super(CsCloudProvider, self).__init__(args)
 
-        # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
+        self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -91,7 +92,7 @@ class CsCloudProvider(CloudProvider):
         :rtype: list[str]
         """
         if self.managed:
-            return ['-R', '8888:localhost:8888']
+            return ['-R', '8888:%s:8888' % get_docker_hostname()]
 
         return []
 
@@ -99,7 +100,9 @@ class CsCloudProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []
@@ -107,7 +110,7 @@ class CsCloudProvider(CloudProvider):
     def cleanup(self):
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.container_name:
-            if is_shippable():
+            if self.ci_provider.code:
                 docker_rm(self.args, self.container_name)
             elif not self.args.explain:
                 display.notice('Remember to run `docker rm -f %s` when finished testing.' % self.container_name)
@@ -170,11 +173,10 @@ class CsCloudProvider(CloudProvider):
         container_id = get_docker_container_id()
 
         if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
             self.host = self._get_simulator_address()
             display.info('Found CloudStack simulator container address: %s' % self.host, verbosity=1)
         else:
-            self.host = 'localhost'
+            self.host = get_docker_hostname()
 
         self.port = 8888
         self.endpoint = 'http://%s:%d' % (self.host, self.port)
@@ -191,6 +193,8 @@ class CsCloudProvider(CloudProvider):
 
             if self.args.docker:
                 host = self.DOCKER_SIMULATOR_NAME
+            elif self.args.remote:
+                host = 'localhost'
             else:
                 host = self.host
 
@@ -208,11 +212,12 @@ class CsCloudProvider(CloudProvider):
         self._write_config(config)
 
     def _get_simulator_address(self):
-        networks = docker_network_inspect(self.args, 'bridge')
+        current_network = get_docker_preferred_network_name(self.args)
+        networks = docker_network_inspect(self.args, current_network)
 
         try:
-            bridge = [network for network in networks if network['Name'] == 'bridge'][0]
-            containers = bridge['Containers']
+            network = [network for network in networks if network['Name'] == current_network][0]
+            containers = network['Containers']
             container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
             return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
         except Exception:

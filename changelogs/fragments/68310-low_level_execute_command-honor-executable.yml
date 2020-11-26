@@ -1,2 +1,0 @@
-bugfixes:
-- Update ActionBase._low_level_execute_command to honor executable (https://github.com/ansible/ansible/issues/68054)

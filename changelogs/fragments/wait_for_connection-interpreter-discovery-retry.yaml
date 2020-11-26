@@ -1,4 +1,0 @@
----
-bugfixes:
-- wait_for_connection - with pipelining enabled, interpreter discovery would
-  fail if the first connection attempt was not successful

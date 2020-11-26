@@ -1,2 +1,0 @@
-bugfixes:
-- "ansible-test change detection - Run only sanity tests on ``docs/`` and ``changelogs/`` in collections, to avoid triggering full CI runs of integration and unit tests when files in these directories change."

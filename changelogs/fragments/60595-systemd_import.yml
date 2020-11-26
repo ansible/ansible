@@ -1,2 +1,0 @@
-minor_changes:
-- Add an additional check for importing journal from systemd-python module (https://github.com/ansible/ansible/issues/60595).

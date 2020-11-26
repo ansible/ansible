@@ -6,11 +6,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
-
 DOCUMENTATION = '''
 ---
 module: pause
@@ -18,7 +13,7 @@ short_description: Pause playbook execution
 description:
   - Pauses playbook execution for a set amount of time, or until a prompt is acknowledged.
     All parameters are optional. The default behavior is to pause with a prompt.
-  - To pause/wait/sleep per host, use the M(wait_for) module.
+  - To pause/wait/sleep per host, use the M(ansible.builtin.wait_for) module.
   - You can use C(ctrl+c) if you wish to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely.
     To continue early press C(ctrl+c) and then C(c). To abort a playbook press C(ctrl+c) and then C(a).
   - The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates).
@@ -50,19 +45,19 @@ notes:
 '''
 
 EXAMPLES = '''
-# Pause for 5 minutes to build app cache.
-- pause:
+- name: Pause for 5 minutes to build app cache
+  pause:
     minutes: 5
 
-# Pause until you can verify updates to an application were successful.
-- pause:
+- name: Pause until you can verify updates to an application were successful
+  pause:
 
-# A helpful reminder of what to look out for post-update.
-- pause:
+- name: A helpful reminder of what to look out for post-update
+  pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
 
-# Pause to get some sensitive input.
-- pause:
+- name: Pause to get some sensitive input
+  pause:
     prompt: "Enter a secret"
     echo: no
 '''

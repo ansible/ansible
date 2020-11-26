@@ -1,0 +1,41 @@
+{
+    "name": "Pardus GNU/Linux 19.1",
+    "distro": {
+        "codename": "ondokuz",
+        "id": "pradus",
+        "name": "Pardus GNU/Linux",
+        "version": "19.1",
+        "version_best": "19.1",
+        "lsb_release_info": {
+            "release": "19.1",
+            "codename": "ondokuz",
+            "distributor_id": "Pardus",
+            "description": "Pardus GNU/Linux Ondokuz"
+        },
+        "os_release_info": {
+            "pardus_codename": "ondokuz",
+            "name": "Pardus GNU/Linux",
+            "version_codename": "ondokuz",
+            "id_like": "debian",
+            "version_id": "19.1",
+            "bug_report_url": "https://talep.pardus.org.tr/",
+            "pretty_name": "Pardus GNU/Linux Ondokuz",
+            "version": "19.1 (Ondokuz)",
+            "codename": "ondokuz",
+            "home_url": "https://www.pardus.org.tr/",
+            "id": "pardus",
+            "support_url": "https://forum.pardus.org.tr/"
+        }
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Pardus GNU/Linux\"\nVERSION=\"19.1 (Ondokuz)\"\nID=pardus\nID_LIKE=debian\nPRETTY_NAME=\"Pardus GNU/Linux Ondokuz\"\nVERSION_ID=\"19.1\"\nHOME_URL=\"https://www.pardus.org.tr/\"\nSUPPORT_URL=\"https://forum.pardus.org.tr/\"\nBUG_REPORT_URL=\"https://talep.pardus.org.tr/\"\nVERSION_CODENAME=ondokuz\nPARDUS_CODENAME=ondokuz"
+    },
+    "platform.dist": ["debian", "10.0", ""],
+    "result": {
+        "distribution": "Pardus GNU/Linux",
+        "distribution_version": "19.1",
+        "distribution_release": "ondokuz",
+        "distribution_major_version": "19",
+        "os_family": "Debian"
+    }
+}

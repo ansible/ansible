@@ -12,11 +12,11 @@ from .util import (
     cmd_quote,
     display,
     ANSIBLE_TEST_DATA_ROOT,
-    get_network_settings,
 )
 
 from .util_common import (
     intercept_command,
+    get_network_settings,
     run_command,
 )
 
@@ -211,6 +211,8 @@ class ManagePosixCI:
                 self.become = ['sudo', '-in', 'sh', '-c']
             else:
                 raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
+        elif self.core_ci.platform == 'macos':
+            self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH', 'sh', '-c']
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel' or self.core_ci.platform == 'centos':

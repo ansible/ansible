@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test now has a ``--list-files`` option to list files using the ``env`` command.

@@ -648,9 +648,10 @@ def test_install_collection(collection_artifact, monkeypatch):
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == 0o0644
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == 0o0755
 
-    assert mock_display.call_count == 1
+    assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
         % to_text(collection_path)
+    assert mock_display.mock_calls[1][1][0] == "ansible_namespace.collection (0.1.0) was installed successfully"
 
 
 def test_install_collection_with_download(galaxy_server, collection_artifact, monkeypatch):
@@ -683,9 +684,10 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
-    assert mock_display.call_count == 1
+    assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
         % to_text(collection_path)
+    assert mock_display.mock_calls[1][1][0] == "ansible_namespace.collection (0.1.0) was installed successfully"
 
     assert mock_download.call_count == 1
     assert mock_download.mock_calls[0][1][0] == 'https://downloadme.com'
@@ -702,7 +704,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
-    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+    collection.install_collections([(to_text(collection_tar), '*', None, None)], to_text(temp_path),
                                    [u'https://galaxy.ansible.com'], True, False, False, False, False)
 
     assert os.path.isdir(collection_path)
@@ -721,7 +723,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 3
+    assert len(display_msgs) == 4
     assert display_msgs[0] == "Process install dependency map"
     assert display_msgs[1] == "Starting collection install process"
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
@@ -735,7 +737,7 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
     monkeypatch.setattr(Display, 'display', mock_display)
 
     # If we don't delete collection_path it will think the original build skeleton is installed so we expect a skip
-    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+    collection.install_collections([(to_text(collection_tar), '*', None, None)], to_text(temp_path),
                                    [u'https://galaxy.ansible.com'], True, False, False, False, False)
 
     assert os.path.isdir(collection_path)
@@ -746,12 +748,34 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 4
-    # Msg1 is the warning about not MANIFEST.json, cannot really check message as it has line breaks which varies based
-    # on the path size
-    assert display_msgs[1] == "Process install dependency map"
-    assert display_msgs[2] == "Starting collection install process"
-    assert display_msgs[3] == "Skipping 'ansible_namespace.collection' as it is already installed"
+    assert len(display_msgs) == 3
+
+    assert display_msgs[0] == "Process install dependency map"
+    assert display_msgs[1] == "Starting collection install process"
+    assert display_msgs[2] == "Skipping 'ansible_namespace.collection' as it is already installed"
+
+    for msg in display_msgs:
+        assert 'WARNING' not in msg
+
+
+def test_install_missing_metadata_warning(collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    temp_path = os.path.split(collection_tar)[0]
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    for file in [b'MANIFEST.json', b'galaxy.yml']:
+        b_path = os.path.join(collection_path, file)
+        if os.path.isfile(b_path):
+            os.unlink(b_path)
+
+    collection.install_collections([(to_text(collection_tar), '*', None, None)], to_text(temp_path),
+                                   [u'https://galaxy.ansible.com'], True, False, False, False, False)
+
+    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
+
+    assert 'WARNING' in display_msgs[0]
 
 
 # Makes sure we don't get stuck in some recursive loop
@@ -766,7 +790,7 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
-    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+    collection.install_collections([(to_text(collection_tar), '*', None, None)], to_text(temp_path),
                                    [u'https://galaxy.ansible.com'], True, False, False, False, False)
 
     assert os.path.isdir(collection_path)
@@ -785,7 +809,8 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 3
+    assert len(display_msgs) == 4
     assert display_msgs[0] == "Process install dependency map"
     assert display_msgs[1] == "Starting collection install process"
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
+    assert display_msgs[3] == "ansible_namespace.collection (0.1.0) was installed successfully"

@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -25,6 +22,7 @@ options:
       - The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of the remote package.
       - This can be a list (since 2.2) and contain version specifiers (since 2.7).
     type: list
+    elements: str
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.
@@ -134,96 +132,98 @@ author:
 '''
 
 EXAMPLES = '''
-# Install (Bottle) python package.
-- pip:
+- name: Install bottle python package
+  pip:
     name: bottle
 
-# Install (Bottle) python package on version 0.11.
-- pip:
+- name: Install bottle python package on version 0.11
+  pip:
     name: bottle==0.11
 
-# Install (bottle) python package with version specifiers
-- pip:
+- name: Install bottle python package with version specifiers
+  pip:
     name: bottle>0.10,<0.20,!=0.11
 
-# Install multi python packages with version specifiers
-- pip:
+- name: Install multi python packages with version specifiers
+  pip:
     name:
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
-# Install python package using a proxy - it doesn't use the standard environment variables, please use the CAPITALIZED ones below
-- pip:
+- name: Install python package using a proxy
+  # Pip doesn't use the standard environment variables, please use the CAPITALIZED ones below
+  pip:
     name: six
   environment:
     HTTP_PROXY: '127.0.0.1:8080'
     HTTPS_PROXY: '127.0.0.1:8080'
 
-# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
-- pip:
+# You do not have to supply '-e' option in extra_args
+- name: Install MyApp using one of the remote protocols (bzr+,hg+,git+,svn+)
+  pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
-# Install MyApp using one of the remote protocols (bzr+,hg+,git+).
-- pip:
+- name: Install MyApp using one of the remote protocols (bzr+,hg+,git+)
+  pip:
     name: git+http://myrepo/app/MyApp
 
-# Install (MyApp) from local tarball
-- pip:
+- name: Install MyApp from local tarball
+  pip:
     name: file:///path/to/MyApp.tar.gz
 
-# Install (Bottle) into the specified (virtualenv), inheriting none of the globally installed modules
-- pip:
+- name: Install bottle into the specified (virtualenv), inheriting none of the globally installed modules
+  pip:
     name: bottle
     virtualenv: /my_app/venv
 
-# Install (Bottle) into the specified (virtualenv), inheriting globally installed modules
-- pip:
+- name: Install bottle into the specified (virtualenv), inheriting globally installed modules
+  pip:
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_site_packages: yes
 
-# Install (Bottle) into the specified (virtualenv), using Python 2.7
-- pip:
+- name: Install bottle into the specified (virtualenv), using Python 2.7
+  pip:
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
 
-# Install (Bottle) within a user home directory.
-- pip:
+- name: Install bottle within a user home directory
+  pip:
     name: bottle
     extra_args: --user
 
-# Install specified python requirements.
-- pip:
+- name: Install specified python requirements
+  pip:
     requirements: /my_app/requirements.txt
 
-# Install specified python requirements in indicated (virtualenv).
-- pip:
+- name: Install specified python requirements in indicated (virtualenv)
+  pip:
     requirements: /my_app/requirements.txt
     virtualenv: /my_app/venv
 
-# Install specified python requirements and custom Index URL.
-- pip:
+- name: Install specified python requirements and custom Index URL
+  pip:
     requirements: /my_app/requirements.txt
     extra_args: -i https://example.com/pypi/simple
 
-# Install specified python requirements offline from a local directory with downloaded packages.
-- pip:
+- name: Install specified python requirements offline from a local directory with downloaded packages
+  pip:
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
-# Install (Bottle) for Python 3.3 specifically,using the 'pip3.3' executable.
-- pip:
+- name: Install bottle for Python 3.3 specifically, using the 'pip3.3' executable
+  pip:
     name: bottle
     executable: pip3.3
 
-# Install (Bottle), forcing reinstallation if it's already installed
-- pip:
+- name: Install bottle, forcing reinstallation if it's already installed
+  pip:
     name: bottle
     state: forcereinstall
 
-# Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
-- pip:
+- name: Install bottle while ensuring the umask is 0022 (to ensure other users can use it)
+  pip:
     name: bottle
     umask: "0022"
   become: True

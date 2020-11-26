@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -46,9 +43,9 @@ options:
 notes:
      - This module is also supported for Windows targets.
 seealso:
-- module: debug
-- module: fail
-- module: meta
+- module: ansible.builtin.debug
+- module: ansible.builtin.fail
+- module: ansible.builtin.meta
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -77,7 +74,7 @@ EXAMPLES = r'''
       - my_param >= 0
     msg: "'my_param' must be between 0 and 100"
 
-- name: use quiet to avoid verbose output
+- name: Use quiet to avoid verbose output
   assert:
     that:
       - my_param <= 100

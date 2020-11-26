@@ -19,6 +19,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import ps_module_utils_loader
+from ansible.utils.collection_loader import resource_from_fqcr
 
 
 class PSModuleDepFinder(object):
@@ -141,7 +142,7 @@ class PSModuleDepFinder(object):
         if name in self.exec_scripts.keys():
             return
 
-        data = pkgutil.get_data("ansible.executor.powershell", name + ".ps1")
+        data = pkgutil.get_data("ansible.executor.powershell", to_native(name + ".ps1"))
         if data is None:
             raise AnsibleError("Could not find executor powershell script "
                                "for '%s'" % name)
@@ -309,7 +310,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         exec_manifest["async_timeout_sec"] = async_timeout
         exec_manifest["async_startup_timeout"] = C.config.get_config_value("WIN_ASYNC_STARTUP_TIMEOUT", variables=task_vars)
 
-    if become and become_method.split('.')[-1] == 'runas':  # runas and namespace.collection.runas
+    if become and resource_from_fqcr(become_method) == 'runas':  # runas and namespace.collection.runas
         finder.scan_exec_script('exec_wrapper')
         finder.scan_exec_script('become_wrapper')
 
@@ -339,8 +340,8 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         finder.scan_exec_script('coverage_wrapper')
         coverage_manifest['output'] = coverage_output
 
-        coverage_whitelist = C.config.get_config_value('COVERAGE_REMOTE_WHITELIST', variables=task_vars)
-        coverage_manifest['whitelist'] = coverage_whitelist
+        coverage_enabled = C.config.get_config_value('COVERAGE_REMOTE_PATHS', variables=task_vars)
+        coverage_manifest['path_filter'] = coverage_enabled
 
     # make sure Ansible.ModuleUtils.AddType is added if any C# utils are used
     if len(finder.cs_utils_wrapper) > 0 or len(finder.cs_utils_module) > 0:

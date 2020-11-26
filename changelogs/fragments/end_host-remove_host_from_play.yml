@@ -1,2 +1,0 @@
-bugfixes:
-  - "Fix a bug when a host was not removed from a play after ``meta: end_host`` and as a result the host was still present in ``ansible_play_hosts`` and ``ansible_play_batch`` variables."

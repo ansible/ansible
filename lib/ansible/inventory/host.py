@@ -113,7 +113,7 @@ class Host:
                     self.groups.append(group)
 
     def add_group(self, group):
-
+        added = False
         # populate ancestors first
         for oldg in group.get_ancestors():
             if oldg not in self.groups:
@@ -122,11 +122,14 @@ class Host:
         # actually add group
         if group not in self.groups:
             self.groups.append(group)
+            added = True
+        return added
 
     def remove_group(self, group):
-
+        removed = False
         if group in self.groups:
             self.groups.remove(group)
+            removed = True
 
             # remove exclusive ancestors, xcept all!
             for oldg in group.get_ancestors():
@@ -136,6 +139,7 @@ class Host:
                             break
                     else:
                         self.remove_group(oldg)
+        return removed
 
     def set_variable(self, key, value):
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):

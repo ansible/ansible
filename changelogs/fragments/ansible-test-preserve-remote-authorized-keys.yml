@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now preserves existing SSH authorized keys when provisioning a remote host

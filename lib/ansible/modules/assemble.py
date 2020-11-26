@@ -9,9 +9,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -55,7 +52,7 @@ options:
     - If C(no), it will search for src at originating/master machine.
     - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    default: no
+    default: yes
     version_added: '1.4'
   regexp:
     description:
@@ -78,9 +75,9 @@ options:
     type: str
     version_added: '2.0'
 seealso:
-- module: copy
-- module: template
-- module: win_copy
+- module: ansible.builtin.copy
+- module: ansible.builtin.template
+- module: ansible.windows.win_copy
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
@@ -94,7 +91,7 @@ EXAMPLES = r'''
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
-- name: Inserted provided delimiter in between each fragment
+- name: Insert the provided delimiter between fragments
   assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
@@ -183,7 +180,7 @@ def main():
             delimiter=dict(type='str'),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
-            remote_src=dict(type='bool', default=False),
+            remote_src=dict(type='bool', default=True),
             regexp=dict(type='str'),
             ignore_hidden=dict(type='bool', default=False),
             validate=dict(type='str'),

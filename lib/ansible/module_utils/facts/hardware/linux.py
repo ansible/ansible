@@ -30,6 +30,7 @@ from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
@@ -274,6 +275,26 @@ class LinuxHardware(Hardware):
 
                 cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
                                                 cpu_facts['processor_count'] * cpu_facts['processor_cores'])
+
+                # if the number of processors available to the module's
+                # thread cannot be determined, the processor count
+                # reported by /proc will be the default:
+                cpu_facts['processor_nproc'] = processor_occurence
+
+                try:
+                    cpu_facts['processor_nproc'] = len(
+                        os.sched_getaffinity(0)
+                    )
+                except AttributeError:
+                    # In Python < 3.3, os.sched_getaffinity() is not available
+                    try:
+                        cmd = get_bin_path('nproc')
+                    except ValueError:
+                        pass
+                    else:
+                        rc, out, _err = self.module.run_command(cmd)
+                        if rc == 0:
+                            cpu_facts['processor_nproc'] = int(out)
 
         return cpu_facts
 
@@ -522,7 +543,7 @@ class LinuxHardware(Hardware):
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
 
-            if not device.startswith('/') and ':/' not in device or fstype == 'none':
+            if not device.startswith(('/', '\\')) and ':/' not in device or fstype == 'none':
                 continue
 
             mount_info = {'mount': mount,
@@ -679,6 +700,9 @@ class LinuxHardware(Hardware):
 
             sg_inq = self.module.get_bin_path('sg_inq')
 
+            # we can get NVMe device's serial number from /sys/block/<name>/device/serial
+            serial_path = "/sys/block/%s/device/serial" % (block)
+
             if sg_inq:
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
@@ -686,6 +710,10 @@ class LinuxHardware(Hardware):
                     serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
+            else:
+                serial = get_file_content(serial_path)
+                if serial:
+                    d['serial'] = serial
 
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),

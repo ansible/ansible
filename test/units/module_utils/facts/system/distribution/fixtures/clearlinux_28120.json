@@ -1,0 +1,24 @@
+{
+    "platform.dist": ["Clear Linux OS", "28120", "clear-linux-os"],
+    "distro": {
+        "codename": "",
+        "id": "clear-linux-os",
+        "name": "Clear Linux OS",
+        "version": "28120",
+        "version_best": "28120",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Clear Linux OS\"\nVERSION=1\nID=clear-linux-os\nID_LIKE=clear-linux-os\nVERSION_ID=28120\nPRETTY_NAME=\"Clear Linux OS\"\nANSI_COLOR=\"1;35\"\nHOME_URL=\"https://clearlinux.org\"\nSUPPORT_URL=\"https://clearlinux.org\"\nBUG_REPORT_URL=\"mailto:dev@lists.clearlinux.org\"\nPRIVACY_POLICY_URL=\"http://www.intel.com/privacy\"",
+        "/usr/lib/os-release": "NAME=\"Clear Linux OS\"\nVERSION=1\nID=clear-linux-os\nID_LIKE=clear-linux-os\nVERSION_ID=28120\nPRETTY_NAME=\"Clear Linux OS\"\nANSI_COLOR=\"1;35\"\nHOME_URL=\"https://clearlinux.org\"\nSUPPORT_URL=\"https://clearlinux.org\"\nBUG_REPORT_URL=\"mailto:dev@lists.clearlinux.org\"\nPRIVACY_POLICY_URL=\"http://www.intel.com/privacy\""
+    },
+    "name": "ClearLinux 28120",
+    "result": {
+        "distribution_release": "clear-linux-os",
+        "distribution": "Clear Linux OS",
+        "distribution_major_version": "28120",
+        "os_family": "ClearLinux",
+        "distribution_version": "28120"
+    }
+}

@@ -1,0 +1,7 @@
+bugfixes:
+- password lookup - Try to automatically generate salts using known salt sizes
+  (https://github.com/ansible/ansible/issues/53750)
+- bcrypt hashing - Ensure we repair the salt, to avoid warnings
+  (https://github.com/ansible/ansible/issues/36129)
+- password hashing - Ensure we validate salts against allowed characters and length
+  when using ``crypt`` (https://github.com/ansible/ansible/issues/71107)

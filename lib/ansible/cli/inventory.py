@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
+
 import argparse
 from operator import attrgetter
 
@@ -13,9 +15,7 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -64,6 +64,7 @@ class InventoryCLI(CLI):
         opt_help.add_inventory_options(self.parser)
         opt_help.add_vault_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
 
         # remove unused default options
         self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')
@@ -161,9 +162,9 @@ class InventoryCLI(CLI):
                         f.write(results)
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
-            exit(0)
+            sys.exit(0)
 
-        exit(1)
+        sys.exit(1)
 
     @staticmethod
     def dump(stuff):

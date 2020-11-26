@@ -8,9 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -20,8 +17,8 @@ short_description: Creates temporary files and directories
 description:
   - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps
     to avoid troubles related to that. Files/directories created by module are accessible only by creator. In case you need to make them world-accessible
-    you need to use M(file) module.
-  - For Windows targets, use the M(win_tempfile) module instead.
+    you need to use M(ansible.builtin.file) module.
+  - For Windows targets, use the M(ansible.windows.win_tempfile) module instead.
 options:
   state:
     description:
@@ -45,25 +42,25 @@ options:
     type: str
     default: ""
 seealso:
-- module: file
-- module: win_tempfile
+- module: ansible.builtin.file
+- module: ansible.windows.win_tempfile
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
 '''
 
 EXAMPLES = """
-- name: create temporary build directory
+- name: Create temporary build directory
   tempfile:
     state: directory
     suffix: build
 
-- name: create temporary file
+- name: Create temporary file
   tempfile:
     state: file
     suffix: temp
   register: tempfile_1
 
-- name: use the registered var and the file module to remove the temporary file
+- name: Use the registered var and the file module to remove the temporary file
   file:
     path: "{{ tempfile_1.path }}"
     state: absent

@@ -3,13 +3,20 @@
 .. _developing_plugins_network:
 
 **************************
-Network connection plugins
+Developing network plugins
 **************************
 
+You can extend the existing network modules with custom plugins in your collection.
+
+.. contents::
+  :local:
+
+Network connection plugins
+==========================
 Each network connection plugin has a set of its own plugins which provide a specification of the
 connection for a particular set of devices. The specific plugin used is selected at runtime based
 on the value of the ``ansible_network_os`` variable assigned to the host. This variable should be
-set to the same value as the name of the plugin to be loaed. Thus, ``ansible_network_os=nxos``
+set to the same value as the name of the plugin to be loaded. Thus, ``ansible_network_os=nxos``
 will try to load a plugin in a file named ``nxos.py``, so it is important to name the plugin in a
 way that will be sensible to users.
 
@@ -113,7 +120,9 @@ The ``handle_httperror(self, exception)`` method can deal with status codes retu
 
 * A value of ``true`` means that the request can be retried. This my be used to indicate a transient error, or one that has been resolved. For example, the default implementation will try to call ``login()`` when presented with a 401, and return ``true`` if successful.
 
-* A value of ``false`` means that the plugin is unable to recover from this response. The status code will be returned to the calling module as an exception. Any other value will be taken as a nonfatal response from the request. This may be useful if the server returns error messages in the body of the response. Returning the original exception is usually sufficient in this case, as HTTPError objects have the same interface as a successful response.
+* A value of ``false`` means that the plugin is unable to recover from this response. The status code will be raised as an exception to the calling module.
+
+* Any other value will be taken as a nonfatal response from the request. This may be useful if the server returns error messages in the body of the response. Returning the original exception is usually sufficient in this case, as HTTPError objects have the same interface as a successful response.
 
 For example httpapi plugins, see the `source code for the httpapi plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/httpapi>`_ included with Ansible Core.
 
@@ -180,3 +189,77 @@ After adding the ``cliconf`` and ``terminal`` plugins in the expected locations,
 
 * Use the :ref:`cli_command <cli_command_module>` to run an arbitrary command on the network device.
 * Use the :ref:`cli_config <cli_config_module>` to  implement configuration changes on the remote hosts without platform-specific modules.
+
+
+.. _develop_cli_parse_plugins:
+
+Developing cli_parser plugins in a collection
+===============================================
+
+You can use ``cli_parse`` as an entry point for a cli_parser plugin in
+your own collection.
+
+The following sample shows the start of a custom cli_parser plugin:
+
+.. code-block:: python
+
+   from ansible_collections.ansible.netcommon.plugins.module_utils.cli_parser.cli_parserbase import (
+       CliParserBase,
+   )
+
+   class CliParser(CliParserBase):
+       """ Sample cli_parser plugin
+       """
+
+       # Use the follow extention when loading a template
+       DEFAULT_TEMPLATE_EXTENSION = "txt"
+       # Provide the contents of the template to the parse function
+       PROVIDE_TEMPLATE_CONTENTS = True
+
+       def myparser(text, template_contents):
+         # parse the text using the template contents
+         return {...}
+
+       def parse(self, *_args, **kwargs):
+           """ Standard entry point for a cli_parse parse execution
+
+           :return: Errors or parsed text as structured data
+           :rtype: dict
+
+           :example:
+
+           The parse function of a parser should return a dict:
+           {"errors": [a list of errors]}
+           or
+           {"parsed": obj}
+           """
+           template_contents = kwargs["template_contents"]
+           text = self._task_args.get("text")
+           try:
+               parsed = myparser(text, template_contents)
+           except Exception as exc:
+               msg = "Custom parser returned an error while parsing. Error: {err}"
+               return {"errors": [msg.format(err=to_native(exc))]}
+           return {"parsed": parsed}
+
+The following task uses this custom cli_parser plugin:
+
+.. code-block:: yaml
+
+   - name: Use a custom cli_parser
+     ansible.netcommon.cli_parse:
+       command: ls -l
+       parser:
+         name: my_organiztion.my_collection.custom_parser
+
+To develop a custom plugin:
+- Each cli_parser plugin requires a ``CliParser`` class.
+- Each cli_parser plugin requires a ``parse`` function.
+- Always return a dictionary with ``errors`` or ``parsed``.
+- Place the custom cli_parser in plugins/cli_parsers directory of the collection.
+- See the `current cli_parsers <https://github.com/ansible-collections/ansible.netcommon/tree/main/plugins/cli_parsers>`_ for examples to follow.
+
+
+.. seealso::
+
+  * :ref:`cli_parsing`

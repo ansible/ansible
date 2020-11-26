@@ -11,7 +11,9 @@ import os
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.collections import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
 
 
@@ -28,32 +30,63 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
+        body_format = self._task.args.get('body_format', 'raw')
+        body = self._task.args.get('body')
         src = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
 
         try:
-            if (src and remote_src) or not src:
+            if remote_src:
                 # everything is remote, so we just execute the module
                 # without changing any of the module arguments
-                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars, wrap_async=self._task.async_val))
+                # call with ansible.legacy prefix to prevent collections collisions while allowing local override
+                raise _AnsibleActionDone(result=self._execute_module(module_name='ansible.legacy.uri',
+                                                                     task_vars=task_vars, wrap_async=self._task.async_val))
 
-            try:
-                src = self._find_needle('files', src)
-            except AnsibleError as e:
-                raise AnsibleActionFail(to_native(e))
+            kwargs = {}
 
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
-            self._transfer_file(src, tmp_src)
-            self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
+            if src:
+                try:
+                    src = self._find_needle('files', src)
+                except AnsibleError as e:
+                    raise AnsibleActionFail(to_native(e))
+
+                tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
+                kwargs['src'] = tmp_src
+                self._transfer_file(src, tmp_src)
+                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
+            elif body_format == 'form-multipart':
+                if not isinstance(body, Mapping):
+                    raise AnsibleActionFail(
+                        'body must be mapping, cannot be type %s' % body.__class__.__name__
+                    )
+                for field, value in body.items():
+                    if isinstance(value, text_type):
+                        continue
+                    content = value.get('content')
+                    filename = value.get('filename')
+                    if not filename or content:
+                        continue
+
+                    try:
+                        filename = self._find_needle('files', filename)
+                    except AnsibleError as e:
+                        raise AnsibleActionFail(to_native(e))
+
+                    tmp_src = self._connection._shell.join_path(
+                        self._connection._shell.tmpdir,
+                        os.path.basename(filename)
+                    )
+                    value['filename'] = tmp_src
+                    self._transfer_file(filename, tmp_src)
+                    self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
+                kwargs['body'] = body
 
             new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=tmp_src,
-                )
-            )
+            new_module_args.update(kwargs)
 
-            result.update(self._execute_module('uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+            # call with ansible.legacy prefix to prevent collections collisions while allowing local override
+            result.update(self._execute_module('ansible.legacy.uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
         except AnsibleAction as e:
             result.update(e.result)
         finally:

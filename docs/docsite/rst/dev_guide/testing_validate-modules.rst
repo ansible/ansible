@@ -62,10 +62,9 @@ Codes
   **Error Code**                                                 **Type**             **Level**            **Sample Message**
 ------------------------------------------------------------   ------------------   --------------------   -----------------------------------------------------------------------------------------
   ansible-deprecated-version                                   Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier Ansible version
-  ansible-invalid-version                                      Documentation        Error                  The Ansible version at which a feature is supposed to be removed cannot be parsed
   ansible-module-not-initialized                               Syntax               Error                  Execution of the module did not result in initialization of AnsibleModule
   collection-deprecated-version                                Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier collection version
-  collection-invalid-version                                   Documentation        Error                  The collection version at which a feature is supposed to be removed cannot be parsed (it must be a semantic version, see https://semver.org/)
+  deprecated-date                                              Documentation        Error                  A date before today appears as ``removed_at_date`` or in ``deprecated_aliases``
   deprecation-mismatch                                         Documentation        Error                  Module marked as deprecated or removed in at least one of the filename, its metadata, or in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all Documentation for removed) but not in all three places.
   doc-choices-do-not-match-spec                                Documentation        Error                  Value for "choices" from the argument_spec does not match the documentation
   doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec
@@ -79,10 +78,10 @@ Codes
   documentation-error                                          Documentation        Error                  Unknown ``DOCUMENTATION`` error
   documentation-syntax-error                                   Documentation        Error                  Invalid ``DOCUMENTATION`` schema
   illegal-future-imports                                       Imports              Error                  Only the following ``from __future__`` imports are allowed: ``absolute_import``, ``division``, and ``print_function``.
-  import-before-documentation                                  Imports              Error                  Import found before documentation variables. All imports must appear below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
+  import-before-documentation                                  Imports              Error                  Import found before documentation variables. All imports must appear below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
   import-error                                                 Documentation        Error                  ``Exception`` attempting to import module for ``argument_spec`` introspection
-  import-placement                                             Locations            Warning                Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA`` for legacy modules
-  imports-improper-location                                    Imports              Error                  Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
+  import-placement                                             Locations            Warning                Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
+  imports-improper-location                                    Imports              Error                  Imports should be directly below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``
   incompatible-choices                                         Documentation        Error                  Choices value from the argument_spec is not compatible with type defined in the argument_spec
   incompatible-default-type                                    Documentation        Error                  Default value from the argument_spec is not compatible with type defined in the argument_spec
   invalid-argument-name                                        Documentation        Error                  Argument in argument_spec must not be one of 'message', 'syslog_facility' as it is used internally by Ansible Core Engine
@@ -92,12 +91,10 @@ Codes
   invalid-documentation-options                                Documentation        Error                  ``DOCUMENTATION.options`` must be a dictionary/hash when used
   invalid-examples                                             Documentation        Error                  ``EXAMPLES`` is not valid YAML
   invalid-extension                                            Naming               Error                  Official Ansible modules must have a ``.py`` extension for python modules or a ``.ps1`` for powershell modules
-  invalid-metadata-status                                      Documentation        Error                  ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
-  invalid-metadata-type                                        Documentation        Error                  ``ANSIBLE_METADATA`` was not provided as a dict, YAML not supported, Invalid ``ANSIBLE_METADATA`` schema
   invalid-module-schema                                        Documentation        Error                  ``AnsibleModule`` schema validation error
+  invalid-removal-version                                      Documentation        Error                  The version at which a feature is supposed to be removed cannot be parsed (for collections, it must be a semantic version, see https://semver.org/)
   invalid-requires-extension                                   Naming               Error                  Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs, Module ``#Requires`` should not end in .psm1
   last-line-main-call                                          Syntax               Error                  Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
-  metadata-changed                                             Documentation        Error                  ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
   missing-doc-fragment                                         Documentation        Error                  ``DOCUMENTATION`` fragment missing
   missing-existing-doc-fragment                                Documentation        Warning                Pre-existing ``DOCUMENTATION`` fragment missing
   missing-documentation                                        Documentation        Error                  No ``DOCUMENTATION`` provided
@@ -105,7 +102,6 @@ Codes
   missing-gplv3-license                                        Documentation        Error                  GPLv3 license header not found
   missing-if-name-main                                         Syntax               Error                  Next to last line is not ``if __name__ == "__main__":``
   missing-main-call                                            Syntax               Error                  Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
-  missing-metadata                                             Documentation        Error                  No ``ANSIBLE_METADATA`` provided
   missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
   missing-module-utils-import-csharp-requirements              Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
@@ -122,7 +118,7 @@ Codes
   no-default-for-required-parameter                            Documentation        Error                  Option is marked as required but specifies a default. Arguments with a default should not be marked as required
   nonexistent-parameter-documented                             Documentation        Error                  Argument is listed in DOCUMENTATION.options, but not accepted by the module
   option-incorrect-version-added                               Documentation        Error                  ``version_added`` for new option is incorrect
-  option-invalid-version-added                                 Documentation        Error                  ``version_added`` for new option is not a valid version number
+  option-invalid-version-added                                 Documentation        Error                  ``version_added`` for option is not a valid version number
   parameter-invalid                                            Documentation        Error                  Argument in argument_spec is not a valid python identifier
   parameter-invalid-elements                                   Documentation        Error                  Value for "elements" is valid only when value of "type" is ``list``
   implied-parameter-type-mismatch                              Documentation        Error                  Argument_spec implies ``type="str"`` but documentation defines it as different data type
@@ -133,7 +129,9 @@ Codes
   parameter-list-no-elements                                   Parameters           Error                  argument in argument_spec "type" is specified as ``list`` without defining "elements"
   parameter-state-invalid-choice                               Parameters           Error                  Argument ``state`` includes ``get``, ``list`` or ``info`` as a choice.  Functionality should be in an ``_info`` or (if further conditions apply) ``_facts`` module.
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
+  removal-version-must-be-major                                Documentation        Error                  According to the semantic versioning specification (https://semver.org/), the only versions in which features are allowed to be removed are major versions (x.0.0)
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
+  return-invalid-version-added                                 Documentation        Error                  ``version_added`` for return value is not a valid version number
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
   try-except-missing-has                                       Imports              Warning                Try/Except ``HAS_`` expression missing
   undocumented-parameter                                       Documentation        Error                  Argument is listed in the argument_spec, but not documented in the module
@@ -163,4 +161,5 @@ Codes
   required_if-value-type                                       Documentation        Error                  required_if entry's value is not of the type specified for its key
   required_by-collision                                        Documentation        Error                  required_by entry has repeated terms
   required_by-unknown                                          Documentation        Error                  required_by entry contains option which does not appear in argument_spec (potentially an alias of an option?)
+  version-added-must-be-major-or-minor                         Documentation        Error                  According to the semantic versioning specification (https://semver.org/), the only versions in which features are allowed to be added are major and minor versions (x.y.0)
 ============================================================   ==================   ====================   =========================================================================================

@@ -21,6 +21,7 @@ __metaclass__ = type
 import abc
 import argparse
 import ast
+import datetime
 import json
 import errno
 import os
@@ -40,17 +41,16 @@ import yaml
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import fragment_loader
-from ansible.utils.collection_loader import AnsibleCollectionLoader
-from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
+from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
-from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
+from .schema import ansible_module_kwargs_schema, doc_schema, return_schema
 
-from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
+from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml, parse_isodate
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass, string_types
@@ -64,11 +64,11 @@ if PY3:
 else:
     TRY_EXCEPT = ast.TryExcept
 
-BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
+REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
-BLACKLIST_IMPORTS = {
+REJECTLIST_IMPORTS = {
     'requests': {
         'new_only': True,
         'error': {
@@ -90,6 +90,16 @@ OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
+
+
+def compare_dates(d1, d2):
+    try:
+        date1 = parse_isodate(d1, allow_date=True)
+        date2 = parse_isodate(d2, allow_date=True)
+        return date1 == date2
+    except ValueError:
+        # At least one of d1 and d2 cannot be parsed. Simply compare values.
+        return d1 == d2
 
 
 class ReporterEncoder(json.JSONEncoder):
@@ -225,23 +235,23 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
 
 
 class ModuleValidator(Validator):
-    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
-    BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
-                                 'shippable.yml',
-                                 '.gitattributes', '.gitmodules', 'COPYING',
-                                 '__init__.py', 'VERSION', 'test-docs.sh'))
-    BLACKLIST = BLACKLIST_FILES.union(BLACKLIST['MODULE'])
+    REJECTLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
+    REJECTLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
+                                  'shippable.yml',
+                                  '.gitattributes', '.gitmodules', 'COPYING',
+                                  '__init__.py', 'VERSION', 'test-docs.sh'))
+    REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['MODULE'])
 
-    PS_DOC_BLACKLIST = frozenset((
+    PS_DOC_REJECTLIST = frozenset((
         'async_status.ps1',
         'slurp.ps1',
         'setup.ps1'
     ))
-    PS_ARG_VALIDATE_BLACKLIST = frozenset((
-        'win_dsc.ps1',  # win_dsc is a dynamic arg spec, the docs won't ever match
-    ))
 
-    WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
+    # win_dsc is a dynamic arg spec, the docs won't ever match
+    PS_ARG_VALIDATE_REJECTLIST = frozenset(('win_dsc.ps1', ))
+
+    ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
     def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
                  base_branch=None, git_cache=None, reporter=None, routing=None):
@@ -253,15 +263,21 @@ class ModuleValidator(Validator):
 
         self.analyze_arg_spec = analyze_arg_spec
 
-        self.Version = LooseVersion
+        self._Version = LooseVersion
+        self._StrictVersion = StrictVersion
 
         self.collection = collection
+        self.collection_name = 'ansible.builtin'
+        if self.collection:
+            self._Version = SemanticVersion
+            self._StrictVersion = SemanticVersion
+            collection_namespace_path, collection_name = os.path.split(self.collection)
+            self.collection_name = '%s.%s' % (os.path.basename(collection_namespace_path), collection_name)
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
-            self.Version = SemanticVersion
             self.collection_version_str = collection_version
-            self.collection_version = self.Version(collection_version)
+            self.collection_version = SemanticVersion(collection_version)
 
         self.base_branch = base_branch
         self.git_cache = git_cache or GitCache()
@@ -280,6 +296,24 @@ class ModuleValidator(Validator):
             self.base_module = self._get_base_file()
         else:
             self.base_module = None
+
+    def _create_version(self, v, collection_name=None):
+        if not v:
+            raise ValueError('Empty string is not a valid version')
+        if collection_name == 'ansible.builtin':
+            return LooseVersion(v)
+        if collection_name is not None:
+            return SemanticVersion(v)
+        return self._Version(v)
+
+    def _create_strict_version(self, v, collection_name=None):
+        if not v:
+            raise ValueError('Empty string is not a valid version')
+        if collection_name == 'ansible.builtin':
+            return StrictVersion(v)
+        if collection_name is not None:
+            return SemanticVersion(v)
+        return self._StrictVersion(v)
 
     def __enter__(self):
         return self
@@ -325,7 +359,7 @@ class ModuleValidator(Validator):
                     # allowed from __future__ imports
                     if isinstance(child, ast.ImportFrom) and child.module == '__future__':
                         for future_import in child.names:
-                            if future_import.name not in self.WHITELIST_FUTURE_IMPORTS:
+                            if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
                                 break
                         else:
                             continue
@@ -474,7 +508,7 @@ class ModuleValidator(Validator):
                         names.extend(grandchild.names)
             for name in names:
                 # TODO: Add line/col
-                for blacklist_import, options in BLACKLIST_IMPORTS.items():
+                for blacklist_import, options in REJECTLIST_IMPORTS.items():
                     if re.search(blacklist_import, name.name):
                         new_only = options['new_only']
                         if self._is_new_module() and new_only:
@@ -661,12 +695,12 @@ class ModuleValidator(Validator):
                 if isinstance(child, ast.ImportFrom) and child.module == '__future__':
                     # allowed from __future__ imports
                     for future_import in child.names:
-                        if future_import.name not in self.WHITELIST_FUTURE_IMPORTS:
+                        if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
                             self.reporter.error(
                                 path=self.object_path,
                                 code='illegal-future-imports',
                                 msg=('Only the following from __future__ imports are allowed: %s'
-                                     % ', '.join(self.WHITELIST_FUTURE_IMPORTS)),
+                                     % ', '.join(self.ACCEPTLIST_FUTURE_IMPORTS)),
                                 line=child.lineno
                             )
                             break
@@ -679,7 +713,7 @@ class ModuleValidator(Validator):
                         code='import-before-documentation',
                         msg=('Import found before documentation variables. '
                              'All imports must appear below '
-                             'DOCUMENTATION/EXAMPLES/RETURN/ANSIBLE_METADATA.'),
+                             'DOCUMENTATION/EXAMPLES/RETURN.'),
                         line=child.lineno
                     )
                     break
@@ -696,8 +730,7 @@ class ModuleValidator(Validator):
                                 code='import-before-documentation',
                                 msg=('Import found before documentation '
                                      'variables. All imports must appear below '
-                                     'DOCUMENTATION/EXAMPLES/RETURN/'
-                                     'ANSIBLE_METADATA.'),
+                                     'DOCUMENTATION/EXAMPLES/RETURN.'),
                                 line=child.lineno
                             )
                             break
@@ -707,7 +740,7 @@ class ModuleValidator(Validator):
                 msg = (
                     'import-placement',
                     ('Imports should be directly below DOCUMENTATION/EXAMPLES/'
-                     'RETURN/ANSIBLE_METADATA.')
+                     'RETURN.')
                 )
                 if self._is_new_module():
                     self.reporter.error(
@@ -784,7 +817,7 @@ class ModuleValidator(Validator):
             )
 
     def _find_ps_docs_py_file(self):
-        if self.object_name in self.PS_DOC_BLACKLIST:
+        if self.object_name in self.PS_DOC_REJECTLIST:
             return
         py_path = self.path.replace('.ps1', '.py')
         if not os.path.isfile(py_path):
@@ -812,11 +845,6 @@ class ModuleValidator(Validator):
                 'lineno': 0,
                 'end_lineno': 0,
             },
-            'ANSIBLE_METADATA': {
-                'value': None,
-                'lineno': 0,
-                'end_lineno': 0,
-            }
         }
         for child in self.ast.body:
             if isinstance(child, ast.Assign):
@@ -842,17 +870,6 @@ class ModuleValidator(Validator):
                         docs['RETURN']['end_lineno'] = (
                             child.lineno + len(child.value.s.splitlines())
                         )
-                    elif grandchild.id == 'ANSIBLE_METADATA':
-                        docs['ANSIBLE_METADATA']['value'] = child.value
-                        docs['ANSIBLE_METADATA']['lineno'] = child.lineno
-                        try:
-                            docs['ANSIBLE_METADATA']['end_lineno'] = (
-                                child.lineno + len(child.value.s.splitlines())
-                            )
-                        except AttributeError:
-                            docs['ANSIBLE_METADATA']['end_lineno'] = (
-                                child.value.values[-1].lineno
-                            )
 
         return docs
 
@@ -869,6 +886,8 @@ class ModuleValidator(Validator):
         for error in errors:
             path = [str(p) for p in error.path]
 
+            local_error_code = getattr(error, 'ansible_error_code', error_code)
+
             if isinstance(error.data, dict):
                 error_message = humanize_error(error.data, error)
             else:
@@ -881,7 +900,7 @@ class ModuleValidator(Validator):
 
             self.reporter.error(
                 path=self.object_path,
-                code=error_code,
+                code=local_error_code,
                 msg='%s: %s' % (combined_path, error_message)
             )
 
@@ -902,47 +921,11 @@ class ModuleValidator(Validator):
         if self.object_name.startswith('_') and not os.path.islink(self.object_path):
             filename_deprecated_or_removed = True
 
-        # Have to check the metadata first so that we know if the module is removed or deprecated
-        metadata = None
-        if not self.collection:
-            if not bool(doc_info['ANSIBLE_METADATA']['value']):
-                self.reporter.error(
-                    path=self.object_path,
-                    code='missing-metadata',
-                    msg='No ANSIBLE_METADATA provided'
-                )
-            else:
-                if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
-                    metadata = ast.literal_eval(
-                        doc_info['ANSIBLE_METADATA']['value']
-                    )
-                else:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='missing-metadata-format',
-                        msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
-                    )
-
-            if metadata:
-                self._validate_docs_schema(metadata, metadata_1_1_schema(),
-                                           'ANSIBLE_METADATA', 'invalid-metadata-type')
-                # We could validate these via the schema if we knew what the values are ahead of
-                # time.  We can figure that out for deprecated but we can't for removed.  Only the
-                # metadata has that information.
-                if 'removed' in metadata['status']:
-                    removed = True
-                if 'deprecated' in metadata['status']:
-                    deprecated = True
-                if (deprecated or removed) and len(metadata['status']) > 1:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='missing-metadata-status',
-                        msg='ANSIBLE_METADATA.status must be exactly one of "deprecated" or "removed"'
-                    )
-        else:
-            # We are testing a collection
-            if self.routing and self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
-                # meta/routing.yml says this is deprecated
+        # We are testing a collection
+        if self.routing:
+            routing_deprecation = self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {})
+            if routing_deprecation:
+                # meta/runtime.yml says this is deprecated
                 routing_says_deprecated = True
                 deprecated = True
 
@@ -960,6 +943,8 @@ class ModuleValidator(Validator):
                     doc_info['DOCUMENTATION']['lineno'],
                     self.name, 'DOCUMENTATION'
                 )
+                if doc:
+                    add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -975,7 +960,8 @@ class ModuleValidator(Validator):
                     missing_fragment = False
                     with CaptureStd():
                         try:
-                            get_docstring(self.path, fragment_loader, verbose=True)
+                            get_docstring(self.path, fragment_loader, verbose=True,
+                                          collection_name=self.collection_name, is_module=True)
                         except AssertionError:
                             fragment = doc['extends_documentation_fragment']
                             self.reporter.error(
@@ -996,7 +982,7 @@ class ModuleValidator(Validator):
                             )
 
                     if not missing_fragment:
-                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader, is_module=True)
 
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
@@ -1007,6 +993,15 @@ class ModuleValidator(Validator):
 
                     if 'deprecated' in doc and doc.get('deprecated'):
                         doc_deprecated = True
+                        doc_deprecation = doc['deprecated']
+                        documentation_collection = doc_deprecation.get('removed_from_collection')
+                        if documentation_collection != self.collection_name:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='deprecation-wrong-collection',
+                                msg='"DOCUMENTATION.deprecation.removed_from_collection must be the current collection name: %r vs. %r' % (
+                                    documentation_collection, self.collection_name)
+                            )
                     else:
                         doc_deprecated = False
 
@@ -1017,7 +1012,7 @@ class ModuleValidator(Validator):
                             doc,
                             doc_schema(
                                 os.readlink(self.object_path).split('.')[0],
-                                version_added=not bool(self.collection),
+                                for_collection=bool(self.collection),
                                 deprecated_module=deprecated,
                             ),
                             'DOCUMENTATION',
@@ -1029,7 +1024,7 @@ class ModuleValidator(Validator):
                             doc,
                             doc_schema(
                                 self.object_name.split('.')[0],
-                                version_added=not bool(self.collection),
+                                for_collection=bool(self.collection),
                                 deprecated_module=deprecated,
                             ),
                             'DOCUMENTATION',
@@ -1037,7 +1032,7 @@ class ModuleValidator(Validator):
                         )
 
                     if not self.collection:
-                        existing_doc = self._check_for_new_args(doc, metadata)
+                        existing_doc = self._check_for_new_args(doc)
                         self._check_version_added(doc, existing_doc)
 
             if not bool(doc_info['EXAMPLES']['value']):
@@ -1079,7 +1074,10 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                self._validate_docs_schema(data, return_schema, 'RETURN', 'return-syntax-error')
+                if data:
+                    add_collection_to_versions_and_dates(data, self.collection_name, is_module=True, return_docs=True)
+                self._validate_docs_schema(data, return_schema(for_collection=bool(self.collection)),
+                                           'RETURN', 'return-syntax-error')
 
                 for error in errors:
                     self.reporter.error(
@@ -1108,7 +1106,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='Module deprecation/removed must agree in Metadata, by prepending filename with'
+                    msg='Module deprecation/removed must agree in documentaiton, by prepending filename with'
                         ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
                         ' documentation for removed'
                 )
@@ -1118,16 +1116,39 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code='collections-no-underscore-on-deprecation',
-                    msg='Deprecated content in collections MUST NOT start with "_", update meta/routing.yml instead',
+                    msg='Deprecated content in collections MUST NOT start with "_", update meta/runtime.yml instead',
                 )
 
             if not (doc_deprecated == routing_says_deprecated):
-                # DOCUMENTATION.deprecated and meta/routing.yml disagree
+                # DOCUMENTATION.deprecated and meta/runtime.yml disagree
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='"meta/routing.yml" and DOCUMENTATION.deprecation do not agree.'
+                    msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.'
                 )
+            elif routing_says_deprecated:
+                # Both DOCUMENTATION.deprecated and meta/runtime.yml agree that the module is deprecated.
+                # Make sure they give the same version or date.
+                routing_date = routing_deprecation.get('removal_date')
+                routing_version = routing_deprecation.get('removal_version')
+                # The versions and dates in the module documentation are auto-tagged, so remove the tag
+                # to make comparison possible and to avoid confusing the user.
+                documentation_date = doc_deprecation.get('removed_at_date')
+                documentation_version = doc_deprecation.get('removed_in')
+                if not compare_dates(routing_date, documentation_date):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree on removal date: %r vs. %r' % (
+                            routing_date, documentation_date)
+                    )
+                if routing_version != documentation_version:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree on removal version: %r vs. %r' % (
+                            routing_version, documentation_version)
+                    )
 
             # In the future we should error if ANSIBLE_METADATA exists in a collection
 
@@ -1136,30 +1157,34 @@ class ModuleValidator(Validator):
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
         try:
-            version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
-        except ValueError:
-            version_added = doc.get('version_added', '0.0')
+            collection_name = doc.get('version_added_collection')
+            version_added = self._create_strict_version(
+                str(version_added_raw or '0.0'),
+                collection_name=collection_name)
+        except ValueError as e:
+            version_added = version_added_raw or '0.0'
             if self._is_new_module() or version_added != 'historical':
-                self.reporter.error(
-                    path=self.object_path,
-                    code='module-invalid-version-added',
-                    msg='version_added is not a valid version number: %r' % version_added
-                )
+                # already reported during schema validation, except:
+                if version_added == 'historical':
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='module-invalid-version-added',
+                        msg='version_added is not a valid version number: %r. Error: %s' % (version_added, e)
+                    )
                 return
 
         if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
             self.reporter.error(
                 path=self.object_path,
                 code='module-incorrect-version-added',
-                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
-                                                                  version_added_raw)
+                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'), version_added_raw)
             )
 
         if not self._is_new_module():
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = StrictVersion(should_be)
+        strict_ansible_version = self._create_strict_version(should_be, collection_name='ansible.builtin')
 
         if (version_added < strict_ansible_version or
                 strict_ansible_version < version_added):
@@ -1191,7 +1216,8 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(), 'AnsibleModule', 'invalid-ansiblemodule-schema')
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(for_collection=bool(self.collection)),
+                                   'AnsibleModule', 'invalid-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 
@@ -1403,7 +1429,7 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader, is_module=True)
         except Exception:
             # Cannot merge fragments
             return
@@ -1464,53 +1490,108 @@ class ModuleValidator(Validator):
                 )
                 continue
 
-            if not self.collection or self.collection_version is not None:
-                if self.collection:
-                    compare_version = self.collection_version
-                    version_of_what = "this collection (%s)" % self.collection_version_str
-                    version_parser_error = "the version number is not a valid semantic version (https://semver.org/)"
-                    code_prefix = 'collection'
-                else:
-                    compare_version = LOOSE_ANSIBLE_VERSION
-                    version_of_what = "Ansible (%s)" % ansible_version
-                    version_parser_error = "the version number cannot be parsed"
-                    code_prefix = 'ansible'
-
-                removed_in_version = data.get('removed_in_version', None)
-                if removed_in_version is not None:
-                    try:
-                        if compare_version >= self.Version(str(removed_in_version)):
-                            msg = "Argument '%s' in argument_spec" % arg
-                            if context:
-                                msg += " found in %s" % " -> ".join(context)
-                            msg += " has a deprecated removed_in_version '%s'," % removed_in_version
-                            msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
-                            self.reporter.error(
-                                path=self.object_path,
-                                code=code_prefix + '-deprecated-version',
-                                msg=msg,
-                            )
-                    except ValueError:
+            removed_at_date = data.get('removed_at_date', None)
+            if removed_at_date is not None:
+                try:
+                    if parse_isodate(removed_at_date, allow_date=False) < datetime.date.today():
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
-                        msg += " has an invalid removed_in_version '%s'," % removed_in_version
-                        msg += " i.e. %s" % version_parser_error
+                        msg += " has a removed_at_date '%s' before today" % removed_at_date
                         self.reporter.error(
                             path=self.object_path,
-                            code=code_prefix + '-invalid-version',
+                            code='deprecated-date',
                             msg=msg,
                         )
+                except ValueError:
+                    # This should only happen when removed_at_date is not in ISO format. Since schema
+                    # validation already reported this as an error, don't report it a second time.
+                    pass
 
-                deprecated_aliases = data.get('deprecated_aliases', None)
-                if deprecated_aliases is not None:
-                    for deprecated_alias in deprecated_aliases:
+            deprecated_aliases = data.get('deprecated_aliases', None)
+            if deprecated_aliases is not None:
+                for deprecated_alias in deprecated_aliases:
+                    if 'name' in deprecated_alias and 'date' in deprecated_alias:
                         try:
-                            if compare_version >= self.Version(str(deprecated_alias['version'])):
+                            date = deprecated_alias['date']
+                            if parse_isodate(date, allow_date=False) < datetime.date.today():
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
-                                msg += " has deprecated aliases '%s' with removal in version '%s'," % (
+                                msg += " has deprecated aliases '%s' with removal date '%s' before today" % (
+                                    deprecated_alias['name'], deprecated_alias['date'])
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code='deprecated-date',
+                                    msg=msg,
+                                )
+                        except ValueError:
+                            # This should only happen when deprecated_alias['date'] is not in ISO format. Since
+                            # schema validation already reported this as an error, don't report it a second
+                            # time.
+                            pass
+
+            has_version = False
+            if self.collection and self.collection_version is not None:
+                compare_version = self.collection_version
+                version_of_what = "this collection (%s)" % self.collection_version_str
+                code_prefix = 'collection'
+                has_version = True
+            elif not self.collection:
+                compare_version = LOOSE_ANSIBLE_VERSION
+                version_of_what = "Ansible (%s)" % ansible_version
+                code_prefix = 'ansible'
+                has_version = True
+
+            removed_in_version = data.get('removed_in_version', None)
+            if removed_in_version is not None:
+                try:
+                    collection_name = data.get('removed_from_collection')
+                    removed_in = self._create_version(str(removed_in_version), collection_name=collection_name)
+                    if has_version and collection_name == self.collection_name and compare_version >= removed_in:
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " has a deprecated removed_in_version %r," % removed_in_version
+                        msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=code_prefix + '-deprecated-version',
+                            msg=msg,
+                        )
+                except ValueError as e:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has an invalid removed_in_version number %r: %s" % (removed_in_version, e)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='invalid-deprecated-version',
+                        msg=msg,
+                    )
+                except TypeError:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has an invalid removed_in_version number %r: " % (removed_in_version, )
+                    msg += " error while comparing to version of %s" % version_of_what
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='invalid-deprecated-version',
+                        msg=msg,
+                    )
+
+            if deprecated_aliases is not None:
+                for deprecated_alias in deprecated_aliases:
+                    if 'name' in deprecated_alias and 'version' in deprecated_alias:
+                        try:
+                            collection_name = deprecated_alias.get('collection_name')
+                            version = self._create_version(str(deprecated_alias['version']), collection_name=collection_name)
+                            if has_version and collection_name == self.collection_name and compare_version >= version:
+                                msg = "Argument '%s' in argument_spec" % arg
+                                if context:
+                                    msg += " found in %s" % " -> ".join(context)
+                                msg += " has deprecated aliases '%s' with removal in version %r," % (
                                     deprecated_alias['name'], deprecated_alias['version'])
                                 msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
                                 self.reporter.error(
@@ -1518,16 +1599,27 @@ class ModuleValidator(Validator):
                                     code=code_prefix + '-deprecated-version',
                                     msg=msg,
                                 )
-                        except ValueError:
+                        except ValueError as e:
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
-                            msg += " has aliases '%s' with removal in invalid version '%s'," % (
-                                deprecated_alias['name'], deprecated_alias['version'])
-                            msg += " i.e. %s" % version_parser_error
+                            msg += " has deprecated aliases '%s' with invalid removal version %r: %s" % (
+                                deprecated_alias['name'], deprecated_alias['version'], e)
                             self.reporter.error(
                                 path=self.object_path,
-                                code=code_prefix + '-invalid-version',
+                                code='invalid-deprecated-version',
+                                msg=msg,
+                            )
+                        except TypeError:
+                            msg = "Argument '%s' in argument_spec" % arg
+                            if context:
+                                msg += " found in %s" % " -> ".join(context)
+                            msg += " has deprecated aliases '%s' with invalid removal version %r:" % (
+                                deprecated_alias['name'], deprecated_alias['version'])
+                            msg += " error while comparing to version of %s" % version_of_what
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='invalid-deprecated-version',
                                 msg=msg,
                             )
 
@@ -1559,7 +1651,7 @@ class ModuleValidator(Validator):
                         path=self.object_path,
                         code='parameter-state-invalid-choice',
                         msg="Argument 'state' includes the value '%s' as a choice" % bad_state)
-            if not data.get('removed_in_version', None):
+            if not data.get('removed_in_version', None) and not data.get('removed_at_date', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(aliases)
             else:
@@ -1814,7 +1906,7 @@ class ModuleValidator(Validator):
             doc_type = doc_options_arg.get('type', 'str')
             data_elements = data.get('elements', None)
             if (doc_elements and not doc_type == 'list'):
-                msg = "Argument '%s " % arg
+                msg = "Argument '%s' " % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)
                 msg += " defines parameter elements as %s but it is valid only when value of parameter type is list" % doc_elements
@@ -1902,13 +1994,14 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
-    def _check_for_new_args(self, doc, metadata):
+    def _check_for_new_args(self, doc):
         if not self.base_branch or self._is_new_module():
             return
 
         with CaptureStd():
             try:
-                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(self.base_module, fragment_loader, verbose=True)
+                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
+                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name, is_module=True)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -1931,27 +2024,18 @@ class ModuleValidator(Validator):
                 return
 
         try:
-            mod_version_added = StrictVersion()
-            mod_version_added.parse(
-                str(existing_doc.get('version_added', '0.0'))
-            )
+            mod_collection_name = existing_doc.get('version_added_collection')
+            mod_version_added = self._create_strict_version(
+                str(existing_doc.get('version_added', '0.0')),
+                collection_name=mod_collection_name)
         except ValueError:
-            mod_version_added = StrictVersion('0.0')
-
-        if self.base_branch and 'stable-' in self.base_branch:
-            metadata.pop('metadata_version', None)
-            metadata.pop('version', None)
-            if metadata != existing_metadata:
-                self.reporter.error(
-                    path=self.object_path,
-                    code='metadata-changed',
-                    msg=('ANSIBLE_METADATA cannot be changed in a point release for a stable branch')
-                )
+            mod_collection_name = self.collection_name
+            mod_version_added = self._create_strict_version('0.0')
 
         options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = StrictVersion(should_be)
+        strict_ansible_version = self._create_strict_version(should_be, collection_name='ansible.builtin')
 
         for option, details in options.items():
             try:
@@ -1961,42 +2045,43 @@ class ModuleValidator(Validator):
                 continue
 
             if any(name in existing_options for name in names):
+                # The option already existed. Make sure version_added didn't change.
                 for name in names:
+                    existing_collection_name = existing_options.get(name, {}).get('version_added_collection')
                     existing_version = existing_options.get(name, {}).get('version_added')
                     if existing_version:
                         break
+                current_collection_name = details.get('version_added_collection')
                 current_version = details.get('version_added')
-                if str(current_version) != str(existing_version):
+                if current_collection_name != existing_collection_name:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='option-incorrect-version-added-collection',
+                        msg=('version_added for existing option (%s) should '
+                             'belong to collection %r. Currently belongs to %r' %
+                             (option, current_collection_name, existing_collection_name))
+                    )
+                elif str(current_version) != str(existing_version):
                     self.reporter.error(
                         path=self.object_path,
                         code='option-incorrect-version-added',
-                        msg=('version_added for new option (%s) should '
+                        msg=('version_added for existing option (%s) should '
                              'be %r. Currently %r' %
                              (option, existing_version, current_version))
                     )
                 continue
 
             try:
-                version_added = StrictVersion()
-                version_added.parse(
-                    str(details.get('version_added', '0.0'))
-                )
-            except ValueError:
-                version_added = details.get('version_added', '0.0')
-                self.reporter.error(
-                    path=self.object_path,
-                    code='module-invalid-version-added-number',
-                    msg=('version_added for new option (%s) '
-                         'is not a valid version number: %r' %
-                         (option, version_added))
-                )
-                continue
-            except Exception:
-                # If there is any other exception it should have been caught
-                # in schema validation, so we won't duplicate errors by
-                # listing it again
+                collection_name = details.get('version_added_collection')
+                version_added = self._create_strict_version(
+                    str(details.get('version_added', '0.0')),
+                    collection_name=collection_name)
+            except ValueError as e:
+                # already reported during schema validation
                 continue
 
+            if collection_name != self.collection_name:
+                continue
             if (strict_ansible_version != mod_version_added and
                     (version_added < strict_ansible_version or
                      strict_ansible_version < version_added)):
@@ -2018,10 +2103,10 @@ class ModuleValidator(Validator):
         if file_name.startswith('_') and os.path.islink(path):
             return True
 
-        if not frozenset((base_name, file_name)).isdisjoint(ModuleValidator.BLACKLIST):
+        if not frozenset((base_name, file_name)).isdisjoint(ModuleValidator.REJECTLIST):
             return True
 
-        for pat in ModuleValidator.BLACKLIST_PATTERNS:
+        for pat in ModuleValidator.REJECTLIST_PATTERNS:
             if fnmatch(base_name, pat):
                 return True
 
@@ -2059,16 +2144,47 @@ class ModuleValidator(Validator):
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict) and 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
-                end_of_deprecation_should_be_removed_only = True
-            elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
-                try:
-                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
-                except ValueError:
-                    end_of_deprecation_should_be_removed_only = False
-                else:
-                    strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                    end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+            if docs and docs.get('deprecated', False):
+
+                if 'removed_in' in docs['deprecated']:
+                    removed_in = None
+                    collection_name = docs['deprecated'].get('removed_from_collection')
+                    version = docs['deprecated']['removed_in']
+                    if collection_name != self.collection_name:
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='invalid-module-deprecation-source',
+                            msg=('The deprecation version for a module must be added in this collection')
+                        )
+                    else:
+                        try:
+                            removed_in = self._create_strict_version(str(version), collection_name=collection_name)
+                        except ValueError as e:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='invalid-module-deprecation-version',
+                                msg=('The deprecation version %r cannot be parsed: %s' % (version, e))
+                            )
+
+                    if removed_in:
+                        if not self.collection:
+                            strict_ansible_version = self._create_strict_version(
+                                '.'.join(ansible_version.split('.')[:2]), self.collection_name)
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                        elif self.collection_version:
+                            strict_ansible_version = self.collection_version
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+
+                # handle deprecation by date
+                if 'removed_at_date' in docs['deprecated']:
+                    try:
+                        removed_at_date = docs['deprecated']['removed_at_date']
+                        if parse_isodate(removed_at_date, allow_date=True) < datetime.date.today():
+                            msg = "Module's deprecated.removed_at_date date '%s' is before today" % removed_at_date
+                            self.reporter.error(path=self.object_path, code='deprecated-date', msg=msg)
+                    except ValueError:
+                        # This happens if the date cannot be parsed. This is already checked by the schema.
+                        pass
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
@@ -2083,12 +2199,15 @@ class ModuleValidator(Validator):
             self._check_for_os_call()
 
         if self._powershell_module():
+            if self.basename in self.PS_DOC_REJECTLIST:
+                return
+
             self._validate_ps_replacers()
             docs_path = self._find_ps_docs_py_file()
 
             # We can only validate PowerShell arg spec if it is using the new Ansible.Basic.AnsibleModule util
             pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
-            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
+            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_REJECTLIST:
                 with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
                     docs = docs_mv._validate_docs()[1]
                     self._validate_ansible_module_call(docs)
@@ -2108,7 +2227,7 @@ class ModuleValidator(Validator):
 
 
 class PythonPackageValidator(Validator):
-    BLACKLIST_FILES = frozenset(('__pycache__',))
+    REJECTLIST_FILES = frozenset(('__pycache__',))
 
     def __init__(self, path, reporter=None):
         super(PythonPackageValidator, self).__init__(reporter=reporter or Reporter())
@@ -2127,7 +2246,7 @@ class PythonPackageValidator(Validator):
     def validate(self):
         super(PythonPackageValidator, self).validate()
 
-        if self.basename in self.BLACKLIST_FILES:
+        if self.basename in self.REJECTLIST_FILES:
             return
 
         init_file = os.path.join(self.path, '__init__.py')
@@ -2140,39 +2259,8 @@ class PythonPackageValidator(Validator):
 
 
 def setup_collection_loader():
-    def get_source(self, fullname):
-        mod = sys.modules.get(fullname)
-        if not mod:
-            mod = self.load_module(fullname)
-
-        with open(to_bytes(mod.__file__), 'rb') as mod_file:
-            source = mod_file.read()
-
-        return source
-
-    def get_code(self, fullname):
-        return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
-
-    def is_package(self, fullname):
-        return self.get_filename(fullname).endswith('__init__.py')
-
-    def get_filename(self, fullname):
-        mod = sys.modules.get(fullname) or self.load_module(fullname)
-
-        return mod.__file__
-
-    # monkeypatch collection loader to work with runpy
-    # remove this (and the associated code above) once implemented natively in the collection loader
-    AnsibleCollectionLoader.get_source = get_source
-    AnsibleCollectionLoader.get_code = get_code
-    AnsibleCollectionLoader.is_package = is_package
-    AnsibleCollectionLoader.get_filename = get_filename
-
-    collection_loader = AnsibleCollectionLoader()
-
-    # allow importing code from collections when testing a collection
-    # noinspection PyCallingNonCallable
-    sys.meta_path.insert(0, collection_loader)
+    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
+    _AnsibleCollectionFinder(collections_paths)
 
 
 def re_compile(value):
@@ -2210,7 +2298,7 @@ def run():
     parser.add_argument('--collection',
                         help='Specifies the path to the collection, when '
                              'validating files within a collection. Ensure '
-                             'that ANSIBLE_COLLECTIONS_PATHS is set so the '
+                             'that ANSIBLE_COLLECTIONS_PATH is set so the '
                              'contents of the collection can be located')
     parser.add_argument('--collection-version',
                         help='The collection\'s version number used to check '
@@ -2228,8 +2316,8 @@ def run():
     routing = None
     if args.collection:
         setup_collection_loader()
-        routing_file = 'meta/routing.yml'
-        # Load meta/routing.yml if it exists, as it may contain deprecation information
+        routing_file = 'meta/runtime.yml'
+        # Load meta/runtime.yml if it exists, as it may contain deprecation information
         if os.path.isfile(routing_file):
             try:
                 with open(routing_file) as f:
@@ -2254,10 +2342,10 @@ def run():
 
         for root, dirs, files in os.walk(module):
             basedir = root[len(module) + 1:].split('/', 1)[0]
-            if basedir in BLACKLIST_DIRS:
+            if basedir in REJECTLIST_DIRS:
                 continue
             for dirname in dirs:
-                if root == module and dirname in BLACKLIST_DIRS:
+                if root == module and dirname in REJECTLIST_DIRS:
                     continue
                 path = os.path.join(root, dirname)
                 if args.exclude and args.exclude.search(path):

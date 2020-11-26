@@ -1,0 +1,3 @@
+minor_changes:
+  - The ``csvfile`` lookup plugin now uses ``parse_kv()`` internally. As a result, multi-word search keys can now be passed.
+  - The ``csvfile`` lookup plugin's documentation has been fixed; it erroneously said that the delimiter could be ``t`` which was never true. We now accept ``\t``, however, and the error in the documentation has been fixed to note that.

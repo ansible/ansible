@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test no longer detects ``git`` submodule directories as files.

@@ -1,2 +1,0 @@
-deprecated_features:
-  - script inventory plugin - The 'cache' option is deprecated and will be removed in 2.12. Its use has been removed from the plugin since it has never had any effect.

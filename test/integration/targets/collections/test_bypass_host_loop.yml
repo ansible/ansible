@@ -1,0 +1,22 @@
+- name: Test collection lookup bypass host list
+  hosts: all
+  connection: local
+  gather_facts: false
+  collections:
+    - testns.testcoll
+  tasks:
+    - meta: end_host
+      when: lookup('pipe', ansible_playbook_python ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '<')
+
+    - bypass_host_loop:
+      register: bypass
+
+    - run_once: true
+      vars:
+        bypass_hosts: '{{ hostvars|dictsort|map(attribute="1.bypass.bypass_inventory_hostname")|select("defined")|unique }}'
+      block:
+        - debug:
+            var: bypass_hosts
+
+        - assert:
+            that: bypass_hosts|length == 1

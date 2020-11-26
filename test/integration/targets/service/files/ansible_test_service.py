@@ -3,6 +3,9 @@
 # this is mostly based off of the code found here:
 # http://code.activestate.com/recipes/278731-creating-a-daemon-the-python-way/
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import resource
 import signal

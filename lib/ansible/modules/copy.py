@@ -8,9 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,10 +16,10 @@ version_added: historical
 short_description: Copy files to remote locations
 description:
     - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
-    - Use the M(fetch) module to copy files from remote locations to the local box.
-    - If you need variable interpolation in copied files, use the M(template) module. Using a variable in the C(content)
-      field will result in unpredictable output.
-    - For Windows targets, use the M(win_copy) module instead.
+    - Use the M(ansible.builtin.fetch) module to copy files from remote locations to the local box.
+    - If you need variable interpolation in copied files, use the M(ansible.builtin.template) module.
+      Using a variable in the C(content) field will result in unpredictable output.
+    - For Windows targets, use the M(ansible.windows.win_copy) module instead.
 options:
   src:
     description:
@@ -37,7 +34,8 @@ options:
     description:
     - When used instead of C(src), sets the contents of a file directly to the specified value.
     - Works only when C(dest) is a file. Creates the file if it does not exist.
-    - For advanced formatting or if C(content) contains a variable, use the M(template) module.
+    - For advanced formatting or if C(content) contains a variable, use the
+      M(ansible.builtin.template) module.
     type: str
     version_added: '1.1'
   dest:
@@ -77,7 +75,6 @@ options:
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
     - When doing a recursive copy, see also C(directory_mode).
-    type: path
   directory_mode:
     description:
     - When doing a recursive copy set the mode for the directories.
@@ -88,8 +85,8 @@ options:
   remote_src:
     description:
     - Influence whether C(src) needs to be transferred or already is present remotely.
-    - If C(no), it will search for C(src) at originating/master machine.
-    - If C(yes) it will go to the remote/target machine for the C(src).
+    - If C(no), it will search for C(src) on the controller node.
+    - If C(yes) it will search for C(src) on the managed (remote) node.
     - C(remote_src) supports recursive copying as of version 2.8.
     - C(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
@@ -119,14 +116,14 @@ extends_documentation_fragment:
 - files
 - validate
 notes:
-- The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+- The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
 seealso:
-- module: assemble
-- module: fetch
-- module: file
-- module: synchronize
-- module: template
-- module: win_copy
+- module: ansible.builtin.assemble
+- module: ansible.builtin.fetch
+- module: ansible.builtin.file
+- module: ansible.builtin.template
+- module: ansible.posix.synchronize
+- module: ansible.windows.win_copy
 author:
 - Ansible Core Team
 - Michael DeHaan
@@ -398,6 +395,8 @@ def chown_recursive(path, module):
 
 
 def copy_diff_files(src, dest, module):
+    """Copy files that are different between `src` directory and `dest` directory."""
+
     changed = False
     owner = module.params['owner']
     group = module.params['group']
@@ -416,6 +415,7 @@ def copy_diff_files(src, dest, module):
                 os.symlink(linkto, b_dest_item_path)
             else:
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
+                shutil.copymode(b_src_item_path, b_dest_item_path)
 
             if owner is not None:
                 module.set_owner_if_different(b_dest_item_path, owner, False)
@@ -426,6 +426,8 @@ def copy_diff_files(src, dest, module):
 
 
 def copy_left_only(src, dest, module):
+    """Copy files that exist in `src` directory only to the `dest` directory."""
+
     changed = False
     owner = module.params['owner']
     group = module.params['group']
@@ -461,6 +463,8 @@ def copy_left_only(src, dest, module):
 
             if not os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path):
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
+                shutil.copymode(b_src_item_path, b_dest_item_path)
+
                 if owner is not None:
                     module.set_owner_if_different(b_dest_item_path, owner, False)
                 if group is not None:
@@ -517,7 +521,8 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead',
+                         version='2.13', collection_name='ansible.builtin')
 
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
@@ -720,6 +725,7 @@ def main():
     else:
         changed = False
 
+    # If neither have checksums, both src and dest are directories.
     if checksum_src is None and checksum_dest is None:
         if remote_src and os.path.isdir(module.params['src']):
             b_src = to_bytes(module.params['src'], errors='surrogate_or_strict')

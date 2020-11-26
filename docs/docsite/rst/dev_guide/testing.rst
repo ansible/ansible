@@ -4,7 +4,7 @@
 Testing Ansible
 ***************
 
-.. contents:: Topics
+.. contents::
    :local:
 
 
@@ -13,11 +13,11 @@ Why test your Ansible contributions?
 
 If you're a developer, one of the most valuable things you can do is to look at GitHub issues and help fix bugs, since bug-fixing is almost always prioritized over feature development.  Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
 
-Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (e.g., Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
+Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (for example, Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
 
 Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
 
-If you want to learn on how testing collections, you should read :ref:`testing_collections`
+If you want to learn about testing collections, read :ref:`testing_collections`
 
 
 
@@ -66,11 +66,10 @@ When Shippable detects an error and it can be linked back to a file that has bee
 
    lib/ansible/modules/network/foo/bar.py:509:17: E265 block comment should start with '# '
 
-   The test `ansible-test sanity --test validate-modules` failed with the following errors:
+   The test `ansible-test sanity --test validate-modules` failed with the following error:
    lib/ansible/modules/network/foo/bar.py:0:0: E307 version_added should be 2.4. Currently 2.3
-   lib/ansible/modules/network/foo/bar.py:0:0: E316 ANSIBLE_METADATA.metadata_version: required key not provided @ data['metadata_version']. Got None
 
-From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified issues. The commands given allow you to run the same tests locally to ensure you've fixed the issues without having to push your changed to GitHub and wait for Shippable, for example:
+From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Shippable, for example:
 
 If you haven't already got Ansible available, use the local checkout by running::
 
@@ -124,7 +123,7 @@ Here's how:
    sent may have mistakes or malicious code that could have a negative impact on your system. We recommend
    doing all testing on a virtual machine, whether a cloud instance, or locally.  Some users like Vagrant
    or Docker for this, but they are optional. It is also useful to have virtual machines of different Linux or
-   other flavors, since some features (apt vs. yum, for example) are specific to those OS versions.
+   other flavors, since some features (for example, package managers such as apt or yum) are specific to those OS versions.
 
 
 Create a fresh area to work::
@@ -175,6 +174,32 @@ Some ideas of what to test are:
 * Test to see if any Python backtraces returned (that's a bug)
 * Test on different operating systems, or against different library versions
 
+Run sanity tests
+````````````````
+
+.. code:: shell
+
+   ansible-test sanity
+
+More information: :ref:`testing_sanity`
+
+Run unit tests
+``````````````
+
+.. code:: shell
+
+   ansible-test units
+
+More information: :ref:`testing_units`
+
+Run integration tests
+`````````````````````
+
+.. code:: shell
+
+   ansible-test integration -v ping
+
+More information: :ref:`testing_integration`
 
 Any potential issues should be added as comments on the pull request (and it's acceptable to comment if the feature works as well), remembering to include the output of ``ansible --version``
 
@@ -184,7 +209,7 @@ Example::
 
 If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead:
 
-   | This doesn't work for me.
+   | This change causes errors for me.
    |
    | When I ran this Ubuntu 16.04 it failed with the following:
    |

@@ -207,11 +207,11 @@ If you have a custom ``module_utils`` or import from ``__init__.py``, you must a
 Updating ``module_utils``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the the Ansible internal Python namespace. Update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`module_utils in collections <collection_module_utils>` for more details.
+If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the Ansible internal Python namespace. Update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`module_utils in collections <collection_module_utils>` for more details.
 
 When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. The resulting Python import looks similar to the following example:
 
-.. code-block:: python
+.. code-block:: text
 
   from ansible_collections.{namespace}.{collectionname}.plugins.module_utils.{util} import {something}
 
@@ -223,7 +223,7 @@ The following example code snippets show a Python and a PowerShell module using 
 
 In the Python example the ``module_utils`` is ``helper`` and the :abbr:`FQCN (Fully Qualified Collection Name)` is ``ansible_example.community.plugins.module_utils.helper``:
 
-.. code-block:: python
+.. code-block:: text
 
   from ansible.module_utils.basic import AnsibleModule
   from ansible.module_utils._text import to_text
@@ -356,7 +356,7 @@ The following is an example RPM spec file that accomplishes this using this exam
   Version: 1.0.0
   Release: 1%{?dist}
   License: GPLv3+
-  Source0: amce-webserver-1.0.0.tar.gz
+  Source0: acme-webserver-1.0.0.tar.gz
 
   Url: https://github.com/acme/webserver-ansible-collection
   BuildArch: noarch

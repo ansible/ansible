@@ -1,34 +1,40 @@
-Start and Step
-======================
+.. _playbooks_start_and_step:
 
-This shows a few alternative ways to run playbooks. These modes are very useful for testing new plays or debugging.
+***************************************
+Executing playbooks for troubleshooting
+***************************************
 
+When you are testing new plays or debugging playbooks, you may need to run the same play multiple times. To make this more efficient, Ansible offers two alternative ways to execute a playbook: start-at-task and step mode.
 
 .. _start_at_task:
 
-Start-at-task
-`````````````
-If you want to start executing your playbook at a particular task, you can do so with the ``--start-at-task`` option::
+start-at-task
+-------------
+
+To start executing your playbook at a particular task (usually the task that failed on the previous run), use the ``--start-at-task`` option::
 
     ansible-playbook playbook.yml --start-at-task="install packages"
 
-The above will start executing your playbook at a task named "install packages".
-
+In this example, Ansible starts executing your playbook at a task named "install packages". This feature does not work with tasks inside dynamically re-used roles or tasks (``include_*``), see :ref:`dynamic_vs_static`.
 
 .. _step:
 
-Step
-````
+Step mode
+---------
 
-Playbooks can also be executed interactively with ``--step``::
+To execute a playbook interactively, use ``--step``::
 
     ansible-playbook playbook.yml --step
 
-This will cause ansible to stop on each task, and ask if it should execute that task.
-Say you had a task called "configure ssh", the playbook run will stop and ask::
+With this option, Ansible stops on each task, and asks if it should execute that task. For example, if you have a task called "configure ssh", the playbook run will stop and ask::
 
     Perform task: configure ssh (y/n/c):
 
-Answering "y" will execute the task, answering "n" will skip the task, and answering "c"
-will continue executing all the remaining tasks without asking.
+Answer "y" to execute the task, answer "n" to skip the task, and answer "c" to exit step mode, executing all remaining tasks without asking.
 
+.. seealso::
+
+   :ref:`playbooks_intro`
+       An introduction to playbooks
+   :ref:`playbook_debugger`
+       Using the Ansible debugger

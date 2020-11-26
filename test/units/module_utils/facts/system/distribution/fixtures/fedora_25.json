@@ -1,0 +1,25 @@
+{
+    "platform.dist": ["fedora", "25", "Rawhide"],
+    "distro": {
+        "codename": "Rawhide",
+        "id": "fedora",
+        "name": "Fedora",
+        "version": "25",
+        "version_best": "25",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
+        "/etc/os-release": "NAME=Fedora\nVERSION=\"25 (Workstation Edition)\"\nID=fedora\nVERSION_ID=25\nPRETTY_NAME=\"Fedora 25 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:25\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=rawhide\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=rawhide\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
+        "/etc/system-release": "Fedora release 25 (Rawhide)\n"
+    },
+    "name": "Fedora 25",
+    "result": {
+        "distribution_release": "Rawhide",
+        "distribution": "Fedora",
+        "distribution_major_version": "25",
+        "os_family": "RedHat",
+        "distribution_version": "25"
+    }
+}

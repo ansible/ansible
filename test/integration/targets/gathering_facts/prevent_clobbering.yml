@@ -1,0 +1,8 @@
+- name: Verify existing facts don't go undefined on unrelated new facts in loop
+  hosts: localhost
+  gather_facts: True
+  tasks:
+  - name: Ensure that 'virtualization_type' is not undefined after first loop iteration
+    bogus_facts:
+    loop: [1, 2, 3]
+    when: ansible_facts['virtualization_type'] != 'NotDocker'

@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test validate-modules - Fix arg spec collector for PowerShell to find utils in both a collection and base.

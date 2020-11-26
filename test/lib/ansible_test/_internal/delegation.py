@@ -21,8 +21,6 @@ from .executor import (
     start_httptester,
     get_python_interpreter,
     get_python_version,
-    get_docker_completion,
-    get_remote_completion,
 )
 
 from .config import (
@@ -60,6 +58,8 @@ from .util_common import (
     run_command,
     ResultType,
     create_interpreter_wrapper,
+    get_docker_completion,
+    get_remote_completion,
 )
 
 from .docker_util import (
@@ -72,6 +72,9 @@ from .docker_util import (
     docker_available,
     docker_network_disconnect,
     get_docker_networks,
+    get_docker_preferred_network_name,
+    get_docker_hostname,
+    is_docker_user_defined_network,
 )
 
 from .cloud import (
@@ -92,6 +95,10 @@ from .payload import (
 
 from .venv import (
     create_virtual_environment,
+)
+
+from .ci import (
+    get_ci_provider,
 )
 
 
@@ -117,6 +124,8 @@ def delegate(args, exclude, require, integration_targets):
     :rtype: bool
     """
     if isinstance(args, TestConfig):
+        args.metadata.ci_provider = get_ci_provider().code
+
         make_dirs(ResultType.TMP.path)
 
         with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
@@ -299,14 +308,18 @@ def delegate_docker(args, exclude, require, integration_targets):
             if args.docker_seccomp != 'default':
                 test_options += ['--security-opt', 'seccomp=%s' % args.docker_seccomp]
 
-            if os.path.exists(docker_socket):
+            if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
             if httptester_id:
-                test_options += ['--env', 'HTTPTESTER=1']
+                test_options += ['--env', 'HTTPTESTER=1', '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password]
 
-                for host in HTTPTESTER_HOSTS:
-                    test_options += ['--link', '%s:%s' % (httptester_id, host)]
+                network = get_docker_preferred_network_name(args)
+
+                if not is_docker_user_defined_network(network):
+                    # legacy links are required when using the default bridge network instead of user-defined networks
+                    for host in HTTPTESTER_HOSTS:
+                        test_options += ['--link', '%s:%s' % (httptester_id, host)]
 
             if isinstance(args, IntegrationConfig):
                 cloud_platforms = get_cloud_providers(args)
@@ -456,7 +469,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
             if httptester_id:
-                cmd += ['--inject-httptester']
+                cmd += ['--inject-httptester', '--httptester-krb5-password', args.httptester_krb5_password]
 
             if isinstance(args, TestConfig):
                 if args.coverage and not args.coverage_label:
@@ -550,8 +563,10 @@ def generate_command(args, python_interpreter, ansible_bin_path, content_root, o
     if isinstance(args, ShellConfig):
         cmd = create_shell_command(cmd)
     elif isinstance(args, SanityConfig):
-        if args.base_branch:
-            cmd += ['--base-branch', args.base_branch]
+        base_branch = args.base_branch or get_ci_provider().get_base_branch()
+
+        if base_branch:
+            cmd += ['--base-branch', base_branch]
 
     return cmd
 

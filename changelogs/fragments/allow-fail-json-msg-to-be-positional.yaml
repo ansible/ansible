@@ -1,5 +1,0 @@
-minor_changes:
-  - "`AnsibleModule.fail_json()` has always required that a message be passed
-    in which informs the end user why the module failed.  In the past this
-    message had to be passed as the `msg` keyword argument but it can now be
-    passed as the first positional argument instead."

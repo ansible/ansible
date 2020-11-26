@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    lipsum: jinja2 uses me internally
+  tasks:
+    - debug:

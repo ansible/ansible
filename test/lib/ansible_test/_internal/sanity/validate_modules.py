@@ -39,6 +39,10 @@ from ..config import (
     SanityConfig,
 )
 
+from ..ci import (
+    get_ci_provider,
+)
+
 from ..data import (
     data_context,
 )
@@ -46,6 +50,13 @@ from ..data import (
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
+
+    def __init__(self):
+        super(ValidateModulesTest, self).__init__()
+        self.optional_error_codes.update([
+            'deprecated-date',
+        ])
+
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
@@ -90,12 +101,14 @@ class ValidateModulesTest(SanitySingleVersion):
             except CollectionDetailError as ex:
                 display.warning('Skipping validate-modules collection version checks since collection detail loading failed: %s' % ex.reason)
         else:
-            if args.base_branch:
+            base_branch = args.base_branch or get_ci_provider().get_base_branch()
+
+            if base_branch:
                 cmd.extend([
-                    '--base-branch', args.base_branch,
+                    '--base-branch', base_branch,
                 ])
             else:
-                display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
+                display.warning('Cannot perform module comparison against the base branch because the base branch was not detected.')
 
         try:
             stdout, stderr = run_command(args, cmd, env=env, capture=True)

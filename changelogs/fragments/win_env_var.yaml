@@ -1,3 +1,0 @@
-bugfixes:
-- windows environment - Support env vars that contain the unicode variant of single quotes - https://github.com/ansible-collections/ansible.windows/issues/45
-- shell cmd - Properly escape double quotes in the command argument

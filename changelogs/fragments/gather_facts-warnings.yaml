@@ -1,2 +1,0 @@
-bugfixes:
-- fact gathering - Display warnings and deprecation messages that are created during the fact gathering phase

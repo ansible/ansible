@@ -1,0 +1,2 @@
+minor_changes:
+  - varnames lookup plugin - Fixed grammar error in exception message when the plugin is given a non-string term.

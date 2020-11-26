@@ -1,7 +1,0 @@
-minor_changes:
-    - ansible-test now supports the ``--remote power/centos/7`` platform option.
-    - ansible-test now supports skip aliases in the format ``skip/{platform}/{version}`` for the ``--remote`` option.
-      This is preferred over the older ``skip/{platform}{version}`` format which included no ``/`` between the platform and version.
-    - ansible-test now supports skip aliases in the format ``skip/{arch}/{platform}`` and ``skip/{arch}/{platform}/{version}`` where ``arch`` can be ``power``.
-      These aliases are only effective for the ``--remote`` option.
-    - ansible-test provides clearer error messages when failing to detect the provider to use with the ``--remote`` option.

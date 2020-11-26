@@ -8,9 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -38,7 +35,7 @@ options:
   marker:
     description:
     - The marker line template.
-    - C({mark}) will be replaced with the values C(in marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    - C({mark}) will be replaced with the values in C(marker_begin) (default="BEGIN") and C(marker_end) (default="END").
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
     type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
@@ -51,7 +48,7 @@ options:
     aliases: [ content ]
   insertafter:
     description:
-    - If specified, the block will be inserted after the last match of specified regular expression.
+    - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
     type: str
@@ -59,7 +56,7 @@ options:
     default: EOF
   insertbefore:
     description:
-    - If specified, the block will be inserted before the last match of specified regular expression.
+    - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
     type: str
@@ -212,7 +209,6 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True
     )
-
     params = module.params
     path = params['path']
 
@@ -237,7 +233,7 @@ def main():
         f = open(path, 'rb')
         original = f.read()
         f.close()
-        lines = original.splitlines()
+        lines = original.splitlines(True)
 
     diff = {'before': '',
             'after': '',
@@ -266,13 +262,15 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker)
-    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker)
+    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
+    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     if present and block:
         # Escape sequences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
             block = re.sub('', block, '')
-        blocklines = [marker0] + block.splitlines() + [marker1]
+        if not block.endswith(b(os.linesep)):
+            block += b(os.linesep)
+        blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
 
@@ -303,12 +301,14 @@ def main():
         lines[n1:n0 + 1] = []
         n0 = n1
 
-    lines[n0:n0] = blocklines
+    # Ensure there is a line separator before the block of lines to be inserted
+    if n0 > 0:
+        if not lines[n0 - 1].endswith(b(os.linesep)):
+            lines[n0 - 1] += b(os.linesep)
 
+    lines[n0:n0] = blocklines
     if lines:
-        result = b('\n').join(lines)
-        if original is None or original.endswith(b('\n')):
-            result += b('\n')
+        result = b''.join(lines)
     else:
         result = b''
 
@@ -328,9 +328,10 @@ def main():
         msg = 'Block inserted'
         changed = True
 
+    backup_file = None
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
-            module.backup_local(path)
+            backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
         real_path = os.path.realpath(params['path'])
         write_changes(module, result, real_path)
@@ -345,7 +346,11 @@ def main():
     attr_diff['after_header'] = '%s (file attributes)' % path
 
     difflist = [diff, attr_diff]
-    module.exit_json(changed=changed, msg=msg, diff=difflist)
+
+    if backup_file is None:
+        module.exit_json(changed=changed, msg=msg, diff=difflist)
+    else:
+        module.exit_json(changed=changed, msg=msg, diff=difflist, backup_file=backup_file)
 
 
 if __name__ == '__main__':

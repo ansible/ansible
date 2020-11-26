@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Code cleanup in the ``import`` sanity test.

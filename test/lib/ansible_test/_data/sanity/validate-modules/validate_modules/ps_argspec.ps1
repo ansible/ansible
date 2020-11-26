@@ -32,6 +32,8 @@ Function Resolve-CircularReference {
                 ,$v
             })
             $Hash[$key] = $values
+        } elseif ($value -is [DateTime]) {
+            $Hash[$key] = $value.ToString("yyyy-MM-dd")
         } elseif ($value -is [delegate]) {
             # Type can be set to a delegate function which defines it's own type. For the documentation we just
             # reflection that as raw
@@ -61,37 +63,13 @@ if (-not (Test-Path -LiteralPath $module_path -PathType Leaf)) {
     exit 1
 }
 
-$dummy_ansible_basic = @'
-using System;
-using System.Collections;
-using System.Management.Automation;
-
-namespace Ansible.Basic
-{
-    public class AnsibleModule
-    {
-        public AnsibleModule(string[] args, IDictionary argumentSpec)
-        {
-            ScriptBlock.Create("Set-Variable -Name arg_spec -Value $args[0] -Scope Global; exit 0"
-                ).Invoke(new Object[] { argumentSpec });
-        }
-
-        public static AnsibleModule Create(string[] args, IDictionary argumentSpec)
-        {
-            return new AnsibleModule(args, argumentSpec);
-        }
-    }
-}
-'@
-Add-Type -TypeDefinition $dummy_ansible_basic
-
 $module_code = Get-Content -LiteralPath $module_path -Raw
 
 $powershell = [PowerShell]::Create()
 $powershell.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 
 # Load the PowerShell module utils as the module may be using them to refer to shared module options. Currently we
-# can only load the PowerShell utils due to cross platform compatiblity issues.
+# can only load the PowerShell utils due to cross platform compatibility issues.
 if ($manifest.Contains('ps_utils')) {
     foreach ($util_info in $manifest.ps_utils.GetEnumerator()) {
         $util_name = $util_info.Key
@@ -109,8 +87,14 @@ if ($manifest.Contains('ps_utils')) {
         }) > $null
         $powershell.AddCommand('Import-Module').AddParameter('WarningAction', 'SilentlyContinue') > $null
         $powershell.AddCommand('Out-Null').AddStatement() > $null
+
+        # Also import it into the current runspace in case ps_argspec.ps1 needs to use it.
+        $null = New-Module -Name $util_name -ScriptBlock $util_sb | Import-Module -WarningAction SilentlyContinue
     }
 }
+
+Add-CSharpType -References @(Get-Content -LiteralPath $manifest.ansible_basic -Raw)
+[Ansible.Basic.AnsibleModule]::_DebugArgSpec = $true
 
 $powershell.AddScript($module_code) > $null
 $powershell.Invoke() > $null
@@ -120,7 +104,7 @@ if ($powershell.HadErrors) {
     exit 1
 }
 
-$arg_spec = $powershell.Runspace.SessionStateProxy.GetVariable('arg_spec')
+$arg_spec = $powershell.Runspace.SessionStateProxy.GetVariable('ansibleTestArgSpec')
 Resolve-CircularReference -Hash $arg_spec
 
 ConvertTo-Json -InputObject $arg_spec -Compress -Depth 99

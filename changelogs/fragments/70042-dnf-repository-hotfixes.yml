@@ -1,0 +1,2 @@
+minor_changes:
+  - yum_repository - added boolean option module_hotfixes which allows to enable functionality for dnf.

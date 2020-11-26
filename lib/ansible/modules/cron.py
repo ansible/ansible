@@ -11,9 +11,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -44,7 +41,7 @@ options:
   user:
     description:
       - The specific user whose crontab should be modified.
-      - When unset, this parameter defaults to using C(root).
+      - When unset, this parameter defaults to the current user.
     type: str
   job:
     description:
@@ -213,6 +210,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
 
@@ -224,7 +222,7 @@ class CronTab(object):
     """
         CronTab object to write time based crontab file
 
-        user      - the user of the crontab (defaults to root)
+        user      - the user of the crontab (defaults to current user)
         cron_file - a cron file under /etc/cron.d, or an absolute path
     """
 
@@ -234,14 +232,16 @@ class CronTab(object):
         self.root = (os.getuid() == 0)
         self.lines = None
         self.ansible = "#Ansible: "
-        self.existing = ''
+        self.n_existing = ''
         self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             if os.path.isabs(cron_file):
                 self.cron_file = cron_file
+                self.b_cron_file = to_bytes(cron_file, errors='surrogate_or_strict')
             else:
                 self.cron_file = os.path.join('/etc/cron.d', cron_file)
+                self.b_cron_file = os.path.join(b'/etc/cron.d', to_bytes(cron_file, errors='surrogate_or_strict'))
         else:
             self.cron_file = None
 
@@ -253,9 +253,9 @@ class CronTab(object):
         if self.cron_file:
             # read the cronfile
             try:
-                f = open(self.cron_file, 'r')
-                self.existing = f.read()
-                self.lines = self.existing.splitlines()
+                f = open(self.b_cron_file, 'rb')
+                self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
+                self.lines = self.n_existing.splitlines()
                 f.close()
             except IOError:
                 # cron file does not exist
@@ -269,7 +269,7 @@ class CronTab(object):
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
-            self.existing = out
+            self.n_existing = out
 
             lines = out.splitlines()
             count = 0
@@ -280,7 +280,7 @@ class CronTab(object):
                     self.lines.append(l)
                 else:
                     pattern = re.escape(l) + '[\r\n]?'
-                    self.existing = re.sub(pattern, '', self.existing, 1)
+                    self.n_existing = re.sub(pattern, '', self.n_existing, 1)
                 count += 1
 
     def is_empty(self):
@@ -294,15 +294,15 @@ class CronTab(object):
         Write the crontab to the system. Saves all information.
         """
         if backup_file:
-            fileh = open(backup_file, 'w')
+            fileh = open(backup_file, 'wb')
         elif self.cron_file:
-            fileh = open(self.cron_file, 'w')
+            fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
             os.chmod(path, int('0644', 8))
-            fileh = os.fdopen(filed, 'w')
+            fileh = os.fdopen(filed, 'wb')
 
-        fileh.write(self.render())
+        fileh.write(to_bytes(self.render()))
         fileh.close()
 
         # return if making a backup
@@ -621,17 +621,17 @@ def main():
     if not name:
         module.deprecate(
             msg="The 'name' parameter will be required in future releases.",
-            version='2.12'
+            version='2.12', collection_name='ansible.builtin'
         )
     if reboot:
         module.deprecate(
             msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
-            version='2.12'
+            version='2.12', collection_name='ansible.builtin'
         )
 
     if module._diff:
         diff = dict()
-        diff['before'] = crontab.existing
+        diff['before'] = crontab.n_existing
         if crontab.cron_file:
             diff['before_header'] = crontab.cron_file
         else:
@@ -727,8 +727,8 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and crontab.existing != '':
-        if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
+    if not changed and crontab.n_existing != '':
+        if not (crontab.n_existing.endswith('\r') or crontab.n_existing.endswith('\n')):
             changed = True
 
     res_args = dict(

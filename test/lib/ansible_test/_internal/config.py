@@ -8,16 +8,16 @@ import sys
 from . import types as t
 
 from .util import (
-    is_shippable,
-    docker_qualify_image,
     find_python,
+    generate_password,
     generate_pip_command,
-    get_docker_completion,
-    get_remote_completion,
     ApplicationError,
 )
 
 from .util_common import (
+    docker_qualify_image,
+    get_docker_completion,
+    get_remote_completion,
     CommonConfig,
 )
 
@@ -91,12 +91,14 @@ class EnvironmentConfig(CommonConfig):
         self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
         self.docker_terminate = args.docker_terminate if 'docker_terminate' in args else None  # type: str
+        self.docker_network = args.docker_network if 'docker_network' in args else None  # type: str
 
         if self.docker_seccomp is None:
             self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
 
         self.remote_stage = args.remote_stage  # type: str
         self.remote_provider = args.remote_provider  # type: str
+        self.remote_endpoint = args.remote_endpoint  # type: t.Optional[str]
         self.remote_aws_region = args.remote_aws_region  # type: str
         self.remote_terminate = args.remote_terminate  # type: str
 
@@ -123,6 +125,8 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+        krb5_password = args.httptester_krb5_password if 'httptester_krb5_password' in args else ''
+        self.httptester_krb5_password = krb5_password or generate_password()  # type: str
 
         if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
             self.httptester = False
@@ -194,6 +198,7 @@ class TestConfig(EnvironmentConfig):
         self.unstaged = args.unstaged  # type: bool
         self.changed_from = args.changed_from  # type: str
         self.changed_path = args.changed_path  # type: t.List[str]
+        self.base_branch = args.base_branch  # type: str
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
@@ -242,17 +247,6 @@ class SanityConfig(TestConfig):
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
         self.enable_optional_errors = args.enable_optional_errors  # type: bool
-
-        if args.base_branch:
-            self.base_branch = args.base_branch  # str
-        elif is_shippable():
-            self.base_branch = os.environ.get('BASE_BRANCH', '')  # str
-
-            if self.base_branch:
-                self.base_branch = 'origin/%s' % self.base_branch
-        else:
-            self.base_branch = ''
-
         self.info_stderr = self.lint
 
 

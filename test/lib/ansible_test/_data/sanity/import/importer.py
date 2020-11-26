@@ -9,19 +9,24 @@ def main():
     Main program function used to isolate globals from imported code.
     Changes to globals in imported modules on Python 2.x will overwrite our own globals.
     """
+    import ansible
     import contextlib
+    import datetime
+    import json
     import os
     import re
     import runpy
+    import subprocess
     import sys
     import traceback
     import types
     import warnings
 
-    ansible_path = os.environ['PYTHONPATH']
+    ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
+    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON') or sys.executable
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
-    collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
+    collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
 
     try:
         # noinspection PyCompatibility
@@ -37,66 +42,76 @@ def main():
     except ImportError:
         from io import StringIO
 
-    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
-    # without this the ansible.release import there would pull in many Python modules which Ansible modules should not have access to
-    ansible_module = types.ModuleType('ansible')
-    ansible_module.__file__ = os.path.join(os.environ['PYTHONPATH'], 'ansible', '__init__.py')
-    ansible_module.__path__ = [os.path.dirname(ansible_module.__file__)]
-    ansible_module.__package__ = 'ansible'
-
-    sys.modules['ansible'] = ansible_module
-
     if collection_full_name:
         # allow importing code from collections when testing a collection
-        from ansible.utils.collection_loader import AnsibleCollectionLoader
-        from ansible.module_utils._text import to_bytes
+        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native, text_type
+        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.utils.collection_loader import _collection_finder
 
-        def get_source(self, fullname):
-            with open(to_bytes(self.get_filename(fullname)), 'rb') as mod_file:
-                return mod_file.read()
+        yaml_to_json_path = os.path.join(os.path.dirname(__file__), 'yaml_to_json.py')
+        yaml_to_dict_cache = {}
 
-        def get_code(self, fullname):
-            return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
+        # unique ISO date marker matching the one present in yaml_to_json.py
+        iso_date_marker = 'isodate:f23983df-f3df-453c-9904-bcd08af468cc:'
+        iso_date_re = re.compile('^%s([0-9]{4})-([0-9]{2})-([0-9]{2})$' % iso_date_marker)
 
-        def is_package(self, fullname):
-            return os.path.basename(self.get_filename(fullname)) in ('__init__.py', '__synthetic__')
+        def parse_value(value):
+            """Custom value parser for JSON deserialization that recognizes our internal ISO date format."""
+            if isinstance(value, text_type):
+                match = iso_date_re.search(value)
 
-        def get_filename(self, fullname):
-            if fullname in sys.modules:
-                return sys.modules[fullname].__file__
+                if match:
+                    value = datetime.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
 
-            # find the module without importing it
-            # otherwise an ImportError during module load will prevent us from getting the filename of the module
-            loader = self.find_module(fullname)
+            return value
 
-            if not loader:
-                raise ImportError('module {0} not found'.format(fullname))
+        def object_hook(data):
+            """Object hook for custom ISO date deserialization from JSON."""
+            return dict((key, parse_value(value)) for key, value in data.items())
 
-            # determine the filename of the module that was found
-            filename = os.path.join(collection_root, fullname.replace('.', os.path.sep))
+        def yaml_to_dict(yaml, content_id):
+            """
+            Return a Python dict version of the provided YAML.
+            Conversion is done in a subprocess since the current Python interpreter does not have access to PyYAML.
+            """
+            if content_id in yaml_to_dict_cache:
+                return yaml_to_dict_cache[content_id]
 
-            if os.path.isdir(filename):
-                init_filename = os.path.join(filename, '__init__.py')
-                filename = init_filename if os.path.exists(init_filename) else os.path.join(filename, '__synthetic__')
-            else:
-                filename += '.py'
+            try:
+                cmd = [external_python, yaml_to_json_path]
+                proc = subprocess.Popen([to_bytes(c) for c in cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout_bytes, stderr_bytes = proc.communicate(to_bytes(yaml))
 
-            return filename
+                if proc.returncode != 0:
+                    raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
 
-        # monkeypatch collection loader to work with runpy
-        # remove this (and the associated code above) once implemented natively in the collection loader
-        AnsibleCollectionLoader.get_source = get_source
-        AnsibleCollectionLoader.get_code = get_code
-        AnsibleCollectionLoader.is_package = is_package
-        AnsibleCollectionLoader.get_filename = get_filename
+                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes), object_hook=object_hook)
 
-        collection_loader = AnsibleCollectionLoader()
+                return data
+            except Exception as ex:
+                raise Exception('internal importer error - failed to parse yaml: %s' % to_native(ex))
 
-        # noinspection PyCallingNonCallable
-        sys.meta_path.insert(0, collection_loader)
+        _collection_finder._meta_yml_to_dict = yaml_to_dict  # pylint: disable=protected-access
+
+        collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
+        # noinspection PyProtectedMember
+        collection_loader._install()  # pylint: disable=protected-access
     else:
         # do not support collection loading when not testing a collection
         collection_loader = None
+
+    # remove all modules under the ansible package
+    list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__]))
+
+    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
+    # this more accurately reflects the environment that AnsiballZ runs modules under
+    # it also avoids issues with imports in the ansible package that are not allowed
+    ansible_module = types.ModuleType(ansible.__name__)
+    ansible_module.__file__ = ansible.__file__
+    ansible_module.__path__ = ansible.__path__
+    ansible_module.__package__ = ansible.__package__
+
+    sys.modules[ansible.__name__] = ansible_module
 
     class ImporterAnsibleModuleException(Exception):
         """Exception thrown during initialization of ImporterAnsibleModule."""
@@ -106,18 +121,18 @@ def main():
         def __init__(self, *args, **kwargs):
             raise ImporterAnsibleModuleException()
 
-    class ImportBlacklist:
-        """Blacklist inappropriate imports."""
+    class RestrictedModuleLoader:
+        """Python module loader that restricts inappropriate imports."""
         def __init__(self, path, name):
             self.path = path
             self.name = name
             self.loaded_modules = set()
 
         def find_module(self, fullname, path=None):
-            """Return self if the given fullname is blacklisted, otherwise return None.
+            """Return self if the given fullname is restricted, otherwise return None.
             :param fullname: str
             :param path: str
-            :return: ImportBlacklist | None
+            :return: RestrictedModuleLoader | None
             """
             if fullname in self.loaded_modules:
                 return None  # ignore modules that are already being loaded
@@ -129,22 +144,22 @@ def main():
                 if is_name_in_namepace(fullname, ['ansible.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
-                if os.path.exists(convert_ansible_name_to_absolute_path(fullname)):
-                    return self  # blacklist ansible files that exist
+                if any(os.path.exists(candidate_path) for candidate_path in convert_ansible_name_to_absolute_paths(fullname)):
+                    return self  # restrict access to ansible files that exist
 
-                return None  # ansible file does not exist, do not blacklist
+                return None  # ansible file does not exist, do not restrict access
 
             if is_name_in_namepace(fullname, ['ansible_collections']):
                 if not collection_loader:
-                    return self  # blacklist collections when we are not testing a collection
+                    return self  # restrict access to collections when we are not testing a collection
 
                 if is_name_in_namepace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
                 if collection_loader.find_module(fullname, path):
-                    return self  # blacklist collection files that exist
+                    return self  # restrict access to collection files that exist
 
-                return None  # collection file does not exist, do not blacklist
+                return None  # collection file does not exist, do not restrict access
 
             # not a namespace we care about
             return None
@@ -191,7 +206,7 @@ def main():
             test_python_module(path, name, base_dir, messages)
 
         if messages:
-            exit(10)
+            sys.exit(10)
 
     def test_python_module(path, name, base_dir, messages):
         """Test the given python module by importing it.
@@ -215,13 +230,13 @@ def main():
 
         try:
             with monitor_sys_modules(path, messages):
-                with blacklist_imports(path, name, messages):
+                with restrict_imports(path, name, messages):
                     with capture_output(capture_normal):
                         import_module(name)
 
             if run_main:
                 with monitor_sys_modules(path, messages):
-                    with blacklist_imports(path, name, messages):
+                    with restrict_imports(path, name, messages):
                         with capture_output(capture_main):
                             runpy.run_module(name, run_name='__main__', alter_sys=True)
         except ImporterAnsibleModuleException:
@@ -314,12 +329,15 @@ def main():
         for module in sorted(changed):
             report_message(path, 0, 0, 'reload', 'reloading of "%s" in sys.modules is not supported' % module, messages)
 
-    def convert_ansible_name_to_absolute_path(name):
+    def convert_ansible_name_to_absolute_paths(name):
         """Calculate the module path from the given name.
         :type name: str
-        :rtype: str
+        :rtype: list[str]
         """
-        return os.path.join(ansible_path, name.replace('.', os.path.sep))
+        return [
+            os.path.join(ansible_path, name.replace('.', os.path.sep)),
+            os.path.join(ansible_path, name.replace('.', os.path.sep)) + '.py',
+        ]
 
     def convert_relative_path_to_name(path):
         """Calculate the module name from the given path.
@@ -380,24 +398,29 @@ def main():
             print(message)
 
     @contextlib.contextmanager
-    def blacklist_imports(path, name, messages):
-        """Blacklist imports.
+    def restrict_imports(path, name, messages):
+        """Restrict available imports.
         :type path: str
         :type name: str
         :type messages: set[str]
         """
-        blacklist = ImportBlacklist(path, name)
+        restricted_loader = RestrictedModuleLoader(path, name)
 
-        sys.meta_path.insert(0, blacklist)
+        # noinspection PyTypeChecker
+        sys.meta_path.insert(0, restricted_loader)
+        sys.path_importer_cache.clear()
 
         try:
             yield
         finally:
-            if sys.meta_path[0] != blacklist:
+            if sys.meta_path[0] != restricted_loader:
                 report_message(path, 0, 0, 'metapath', 'changes to sys.meta_path[0] are not permitted', messages)
 
-            while blacklist in sys.meta_path:
-                sys.meta_path.remove(blacklist)
+            while restricted_loader in sys.meta_path:
+                # noinspection PyTypeChecker
+                sys.meta_path.remove(restricted_loader)
+
+            sys.path_importer_cache.clear()
 
     @contextlib.contextmanager
     def monitor_sys_modules(path, messages):
@@ -427,6 +450,7 @@ def main():
         # clear all warnings registries to make all warnings available
         for module in sys.modules.values():
             try:
+                # noinspection PyUnresolvedReferences
                 module.__warningregistry__.clear()
             except AttributeError:
                 pass

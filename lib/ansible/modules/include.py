@@ -7,11 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'core'
-}
 
 DOCUMENTATION = r'''
 ---
@@ -37,15 +32,16 @@ options:
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
   - Include has some unintuitive behaviours depending on if it is running in a static or dynamic in play or in playbook context,
-    in an effort to clarify behaviours we are moving to a new set modules (M(include_tasks), M(include_role), M(import_playbook), M(import_tasks))
+    in an effort to clarify behaviours we are moving to a new set modules (M(ansible.builtin.include_tasks),
+    M(ansible.builtin.include_role), M(ansible.builtin.import_playbook), M(ansible.builtin.import_tasks))
     that have well established and clear behaviours.
   - B(This module will still be supported for some time but we are looking at deprecating it in the near future.)
 seealso:
-- module: import_playbook
-- module: import_role
-- module: import_tasks
-- module: include_role
-- module: include_tasks
+- module: ansible.builtin.import_playbook
+- module: ansible.builtin.import_role
+- module: ansible.builtin.import_tasks
+- module: ansible.builtin.include_role
+- module: ansible.builtin.include_tasks
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

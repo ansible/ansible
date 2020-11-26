@@ -8,11 +8,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
-
-
 DOCUMENTATION = '''
 ---
 module: git
@@ -27,19 +22,24 @@ options:
     repo:
         description:
             - git, SSH, or HTTP(S) protocol address of the git repository.
+        type: str
         required: true
         aliases: [ name ]
     dest:
         description:
             - The path of where the repository should be checked out. This
+              is equivalent to C(git clone [repo_url] [directory]). The repository
+              named in C(repo) is not appended to this path and the destination directory must be empty. This
               parameter is required, unless C(clone) is set to C(no).
+        type: path
         required: true
     version:
         description:
-            - What version of the repository to check out.  This can be
+            - What version of the repository to check out. This can be
               the literal string C(HEAD), a branch name, a tag name.
               It can also be a I(SHA-1) hash, in which case C(refspec) needs
               to be specified if the given revision is not already available.
+        type: str
         default: "HEAD"
     accept_hostkey:
         description:
@@ -55,10 +55,12 @@ options:
               An example value could be "-o StrictHostKeyChecking=no"
               (although this particular option is better set via
               C(accept_hostkey)).
+        type: str
         version_added: "1.5"
     key_file:
         description:
             - Specify an optional private key file path, on the target host, to use for the checkout.
+        type: path
         version_added: "1.5"
     reference:
         description:
@@ -67,6 +69,7 @@ options:
     remote:
         description:
             - Name of the remote.
+        type: str
         default: "origin"
     refspec:
         description:
@@ -74,8 +77,9 @@ options:
               If version is set to a I(SHA-1) not reachable from any branch
               or tag, this option may be necessary to specify the ref containing
               the I(SHA-1).
-              Uses the same syntax as the 'git fetch' command.
+              Uses the same syntax as the C(git fetch) command.
               An example value could be "refs/meta/config".
+        type: str
         version_added: "1.9"
     force:
         description:
@@ -91,6 +95,7 @@ options:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored. Needs I(git>=1.9.1) to work correctly.
+        type: int
         version_added: "1.2"
     clone:
         description:
@@ -110,6 +115,7 @@ options:
         description:
             - Path to git executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+        type: path
         version_added: "1.4"
     bare:
         description:
@@ -122,6 +128,7 @@ options:
         description:
             - The umask to set before doing any checkouts, or any other
               repository maintenance.
+        type: raw
         version_added: "2.2"
 
     recursive:
@@ -131,6 +138,13 @@ options:
         type: bool
         default: 'yes'
         version_added: "1.6"
+
+    single_branch:
+        description:
+            - Clone only the history leading to the tip of the specified C(branch)
+        type: bool
+        default: 'no'
+        version_added: '2.11'
 
     track_submodules:
         description:
@@ -161,6 +175,7 @@ options:
               Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
             - This will clone and perform git archive from local directory as not
               all git servers support git archive.
+        type: path
         version_added: "2.4"
 
     archive_prefix:
@@ -173,6 +188,7 @@ options:
         description:
             - The path to place the cloned repository. If specified, Git repository
               can be separated from working tree.
+        type: path
         version_added: "2.7"
 
     gpg_whitelist:
@@ -180,7 +196,9 @@ options:
            - A list of trusted GPG fingerprints to compare to the fingerprint of the
              GPG-signed commit.
            - Only used when I(verify_commit=yes).
+           - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
         type: list
+        elements: str
         default: []
         version_added: "2.9"
 
@@ -196,48 +214,60 @@ notes:
 '''
 
 EXAMPLES = '''
-# Example git checkout from Ansible Playbooks
-- git:
+- name: Git checkout
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
-# Example read-write git checkout from github
-- git:
+- name: Read-write git checkout from github
+  git:
     repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
-# Example just ensuring the repo checkout exists
-- git:
+- name: Just ensuring the repo checkout exists
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
-# Example just get information about the repository whether or not it has
-# already been cloned locally.
-- git:
+- name: Just get information about the repository whether or not it has already been cloned locally
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
 
-# Example checkout a github repo and use refspec to fetch all pull requests
-- git:
+- name: Checkout a github repo and use refspec to fetch all pull requests
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
 
-# Example Create git archive from repo
-- git:
+- name: Create git archive from repo
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
-# Example clone a repo with separate git directory
-- git:
+- name: Clone a repo with separate git directory
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
+
+# Example clone of a single branch
+- git:
+    single_branch: yes
+    branch: master
+
+- name: avoid hanging when http(s) password is missing
+  git:
+    repo: https://github.com/ansible/could-be-a-private-repo
+    dest: /src/from-private-repo
+  environment:
+    GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
+    # or GIT_ASKPASS: /bin/true # for git before version 2.3.0, reports "Authentication failed" on missing password
 '''
 
 RETURN = '''
@@ -260,7 +290,7 @@ warnings:
     description: List of warnings if requested features were not available due to a too old git version.
     returned: error
     type: str
-    sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
+    sample: git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
     description: Contains the new path of .git directory if it's changed
     returned: success
@@ -459,7 +489,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist):
+          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -472,11 +502,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.append('--bare')
     else:
         cmd.extend(['--origin', remote])
+
+    is_branch_or_tag = is_remote_branch(git_path, module, dest, repo, version) or is_remote_tag(git_path, module, dest, repo, version)
     if depth:
         if version == 'HEAD' or refspec:
             cmd.extend(['--depth', str(depth)])
-        elif is_remote_branch(git_path, module, dest, repo, version) \
-                or is_remote_tag(git_path, module, dest, repo, version):
+        elif is_branch_or_tag:
             cmd.extend(['--depth', str(depth)])
             cmd.extend(['--branch', version])
         else:
@@ -486,12 +517,23 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
                         "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend(['--reference', str(reference)])
-    needs_separate_git_dir_fallback = False
 
-    if separate_git_dir:
-        git_version_used = git_version(git_path, module)
+    if single_branch:
         if git_version_used is None:
-            module.fail_json(msg='Can not find git executable at %s' % git_path)
+            module.fail_json(msg='Cannot find git executable at %s' % git_path)
+
+        if git_version_used < LooseVersion('1.7.10'):
+            module.warn("git version '%s' is too old to use 'single-branch'. Ignoring." % git_version_used)
+        else:
+            cmd.append("--single-branch")
+
+            if is_branch_or_tag:
+                cmd.extend(['--branch', version])
+
+    needs_separate_git_dir_fallback = False
+    if separate_git_dir:
+        if git_version_used is None:
+            module.fail_json(msg='Cannot find git executable at %s' % git_path)
         if git_version_used < LooseVersion('1.7.5'):
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             needs_separate_git_dir_fallback = True
@@ -940,7 +982,9 @@ def verify_commit_sign(git_path, module, dest, version, gpg_whitelist):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
-    cmd = "%s %s %s --raw" % (git_path, git_sub, version)
+    cmd = "%s %s %s" % (git_path, git_sub, version)
+    if gpg_whitelist:
+        cmd += " --raw"
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
@@ -1060,13 +1104,14 @@ def main():
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
-            gpg_whitelist=dict(default=[], type='list'),
+            gpg_whitelist=dict(default=[], type='list', elements='str'),
             accept_hostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
             bare=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
+            single_branch=dict(default=False, type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
@@ -1091,6 +1136,7 @@ def main():
     verify_commit = module.params['verify_commit']
     gpg_whitelist = module.params['gpg_whitelist']
     reference = module.params['reference']
+    single_branch = module.params['single_branch']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
@@ -1163,7 +1209,7 @@ def main():
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
-        result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
+        module.warn("git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
     recursive = module.params['recursive']
@@ -1186,7 +1232,8 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
+              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo

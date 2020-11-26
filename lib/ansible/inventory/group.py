@@ -45,7 +45,6 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
             else:
                 if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
                     display.vvvv('Not replacing %s' % msg)
-                    warn = True
                     warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
     if warn:
@@ -169,7 +168,7 @@ class Group:
         return self.name
 
     def add_child_group(self, group):
-
+        added = False
         if self == group:
             raise Exception("can't add group to itself")
 
@@ -184,6 +183,7 @@ class Group:
             new_ancestors.add(self)
             new_ancestors.difference_update(start_ancestors)
 
+            added = True
             self.child_groups.append(group)
 
             # update the depth of the child
@@ -200,6 +200,7 @@ class Group:
                     h.populate_ancestors(additions=new_ancestors)
 
             self.clear_hosts_cache()
+        return added
 
     def _check_children_depth(self):
 
@@ -221,19 +222,24 @@ class Group:
                 raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
 
     def add_host(self, host):
+        added = False
         if host.name not in self.host_names:
             self.hosts.append(host)
             self._hosts.add(host.name)
             host.add_group(self)
             self.clear_hosts_cache()
+            added = True
+        return added
 
     def remove_host(self, host):
-
+        removed = False
         if host.name in self.host_names:
             self.hosts.remove(host)
             self._hosts.remove(host.name)
             host.remove_group(self)
             self.clear_hosts_cache()
+            removed = True
+        return removed
 
     def set_variable(self, key, value):
 

@@ -1,2 +1,0 @@
-bugfixes:
-  - Avoid bare select() for running commands to avoid too large file descriptor numbers failing tasks

@@ -1,2 +1,0 @@
-minor_changes:
-  - get_bin_path() - change the interface to always raise ``ValueError`` if the command is not found (https://github.com/ansible/ansible/pull/56813)

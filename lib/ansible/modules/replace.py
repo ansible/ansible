@@ -8,10 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -85,7 +81,7 @@ options:
     default: no
   others:
     description:
-      - All arguments accepted by the M(file) module also work here.
+      - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
   encoding:
     description:

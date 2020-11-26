@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -30,16 +27,16 @@ options:
 notes:
     - This module is also supported for Windows targets.
 seealso:
-- module: assert
-- module: debug
-- module: meta
+- module: ansible.builtin.assert
+- module: ansible.builtin.debug
+- module: ansible.builtin.meta
 author:
 - Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
-# Example playbook using fail and when together
-- fail:
+- name: Example using fail and when together
+  fail:
     msg: The system may not be provisioned according to the CMDB status.
   when: cmdb_status != "to-be-staged"
 '''

@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test - Updated requirements to limit ``boto3`` and ``botocore`` versions on Python 2.6 to supported versions.

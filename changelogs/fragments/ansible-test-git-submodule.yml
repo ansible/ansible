@@ -1,5 +1,0 @@
-bugfixes:
-    - ansible-test now properly handles enumeration of git submodules.
-      Enumeration is now done with ``git submodule status --recursive`` without specifying ``.`` for the path, since that could cause the command to fail.
-      Instead, relative paths outside the current directory are filtered out of the results.
-      Errors from ``git`` commands will now once again be reported as errors instead of warnings.

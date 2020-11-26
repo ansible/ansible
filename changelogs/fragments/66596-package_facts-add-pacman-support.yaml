@@ -1,2 +1,0 @@
-minor_changes:
-  - package_facts.py - Add support for Pacman package manager.

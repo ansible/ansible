@@ -59,7 +59,33 @@ To match strings against a substring or a regular expression, use the ``match``,
             msg: "matched pattern 4"
           when: url is regex("example.com/\w+/foo")
 
-``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well.
+``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well, by passing the ``match_type`` keyword argument. In particular, ``match_type`` determines the ``re`` method that gets used to perform the search. The full list can be found in the relevant Python documentation `here <https://docs.python.org/3/library/re.html#regular-expression-objects>`_.
+
+All of the string tests also take optional ``ignorecase`` and ``multiline`` arguments. These correspond to ``re.I`` and ``re.M`` from Python's ``re`` library, respectively.
+
+.. _testing_vault:
+
+Vault
+=====
+
+.. versionadded:: 2.10
+
+You can test whether a variable is an inline single vault encrypted value using the ``vault_encrypted`` test.
+
+.. code-block:: yaml
+
+    vars:
+      variable: !vault |
+        $ANSIBLE_VAULT;1.2;AES256;dev
+        61323931353866666336306139373937316366366138656131323863373866376666353364373761
+        3539633234313836346435323766306164626134376564330a373530313635343535343133316133
+        36643666306434616266376434363239346433643238336464643566386135356334303736353136
+        6565633133366366360a326566323363363936613664616364623437336130623133343530333739
+        3039
+
+    tasks:
+      - debug:
+          msg: '{{ (variable is vault_encrypted) | ternary("Vault encrypted", "Not vault encrypted") }}'
 
 .. _testing_truthiness:
 
@@ -126,6 +152,14 @@ The ``version`` test accepts the following operators::
 This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``distutils.version.StrictVersion`` should be used.  The default is ``False`` (using ``distutils.version.LooseVersion``), ``True`` enables strict version parsing::
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
+
+As of Ansible 2.11 the ``version`` test accepts a ``version_type`` parameter which is mutually exclusive with ``strict``, and accepts the following values::
+
+    loose, strict, semver, semantic
+
+Using ``version_type`` to compare a semantic version would be achieved like the following::
+
+    {{ sample_semver_var is version('2.0.0-rc.1+build.123', 'lt', version_type='semver') }}
 
 When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_::
 
@@ -362,7 +396,7 @@ The following tasks are illustrative of the tests meant to check the status of t
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_

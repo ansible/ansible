@@ -34,7 +34,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, load_extra_vars
 
 display = Display()
 
@@ -159,6 +159,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
+        self._vars = {}
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure
@@ -177,6 +178,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.loader = loader
         self.inventory = inventory
         self.templar = Templar(loader=loader)
+        self._vars = load_extra_vars(loader)
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check
@@ -216,20 +218,23 @@ class BaseInventoryPlugin(AnsiblePlugin):
         except Exception as e:
             raise AnsibleParserError(to_native(e))
 
+        # a plugin can be loaded via many different names with redirection- if so, we want to accept any of those names
+        valid_names = getattr(self, '_redirected_names') or [self.NAME]
+
         if not config:
             # no data
             raise AnsibleParserError("%s is empty" % (to_native(path)))
-        elif config.get('plugin') != self.NAME:
+        elif config.get('plugin') not in valid_names:
             # this is not my config file
             raise AnsibleParserError("Incorrect plugin name in file: %s" % config.get('plugin', 'none found'))
         elif not isinstance(config, Mapping):
             # configs are dictionaries
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
-        self.set_options(direct=config)
+        self.set_options(direct=config, var_options=self._vars)
         if 'cache' in self._options and self.get_option('cache'):
             cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
-            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
             self._cache = get_cache_plugin(self.get_option('cache_plugin'), **cache_options)
 
         return config
@@ -288,19 +293,21 @@ class DeprecatedCache(object):
         display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
                            'When expecting a KeyError, use self._cache[key] instead of using self.cache.get(key). '
                            'self._cache is a dictionary and will return a default value instead of raising a KeyError '
-                           'when the key does not exist', version='2.12')
+                           'when the key does not exist', version='2.12', collection_name='ansible.builtin')
         return self.real_cacheable._cache[key]
 
     def set(self, key, value):
         display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
                            'To set the self._cache dictionary, use self._cache[key] = value instead of self.cache.set(key, value). '
                            'To force update the underlying cache plugin with the contents of self._cache before parse() is complete, '
-                           'call self.set_cache_plugin and it will use the self._cache dictionary to update the cache plugin', version='2.12')
+                           'call self.set_cache_plugin and it will use the self._cache dictionary to update the cache plugin',
+                           version='2.12', collection_name='ansible.builtin')
         self.real_cacheable._cache[key] = value
         self.real_cacheable.set_cache_plugin()
 
     def __getattr__(self, name):
-        display.deprecated('InventoryModule should utilize self._cache instead of self.cache', version='2.12')
+        display.deprecated('InventoryModule should utilize self._cache instead of self.cache',
+                           version='2.12', collection_name='ansible.builtin')
         return self.real_cacheable._cache.__getattribute__(name)
 
 
@@ -315,7 +322,7 @@ class Cacheable(object):
     def load_cache_plugin(self):
         plugin_name = self.get_option('cache_plugin')
         cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
-        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
         self._cache = get_cache_plugin(plugin_name, **cache_options)
 
     def get_cache_key(self, path):
@@ -349,7 +356,17 @@ class Constructable(object):
     def _compose(self, template, variables):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
-        t.available_variables = variables
+
+        try:
+            use_extra = self.get_option('use_extra_vars')
+        except Exception:
+            use_extra = False
+
+        if use_extra:
+            t.available_variables = combine_vars(variables, self._vars)
+        else:
+            t.available_variables = variables
+
         return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
@@ -426,6 +443,8 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
+                            if prefix == '' and self.get_option('leading_separator') is False:
+                                sep = ''
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)

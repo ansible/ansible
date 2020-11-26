@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy collection - Preserve executable bit on build and preserve mode on install from what tar member is set to - https://github.com/ansible/ansible/issues/68415

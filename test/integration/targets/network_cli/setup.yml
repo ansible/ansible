@@ -1,0 +1,14 @@
+- hosts: vyos
+  connection: ansible.netcommon.network_cli
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Create user with password
+      register: result
+      vyos.vyos.vyos_config:
+        lines:
+          - set system login user atester full-name "Ansible Tester"
+          - set system login user atester authentication plaintext-password testymctest
+          - set system login user jsmith level admin
+          - delete service ssh disable-password-authentication

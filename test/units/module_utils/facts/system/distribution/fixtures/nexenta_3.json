@@ -1,0 +1,25 @@
+{
+    "name": "Nexenta 3",
+    "uname_v": "NexentaOS_134f",
+    "result": {
+        "distribution_release": "Open Storage Appliance v3.1.6",
+        "distribution": "Nexenta",
+        "os_family": "Solaris",
+        "distribution_version": "3.1.6"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "platform.release:": "",
+    "input": {
+        "/etc/release": "                         Open Storage Appliance v3.1.6\n           Copyright (c) 2014 Nexenta Systems, Inc.  All Rights Reserved.\n           Copyright (c) 2011 Oracle.  All Rights Reserved.\n                         Use is subject to license terms.\n"
+    },
+    "platform.system": "SunOS"
+}

@@ -24,7 +24,7 @@ except ImportError:
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -144,8 +144,12 @@ def ensure_type(value, value_type, origin=None):
             else:
                 errmsg = 'pathlist'
 
+        elif value_type in ('dict', 'dictionary'):
+            if not isinstance(value, Mapping):
+                errmsg = 'dictionary'
+
         elif value_type in ('str', 'string'):
-            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
+            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode, bool, int, float, complex)):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
@@ -231,7 +235,7 @@ def find_ini_config_file(warnings=None):
             if os.path.exists(cwd_cfg):
                 warn_cmd_public = True
         else:
-            potential_paths.append(cwd_cfg)
+            potential_paths.append(to_text(cwd_cfg, errors='surrogate_or_strict'))
     except OSError:
         # If we can't access cwd, we'll simply skip it as a possible config source
         pass
@@ -289,12 +293,6 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
-        try:
-            self.update_module_defaults_groups()
-        except Exception as e:
-            # Since this is a 2.7 preview feature, we want to have it fail as gracefully as possible when there are issues.
-            sys.stderr.write('Could not load module_defaults_groups: %s: %s\n\n' % (type(e).__name__, e))
-            self.module_defaults_groups = {}
 
     def _read_config_yaml_file(self, yml_file):
         # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
@@ -435,10 +433,12 @@ class ConfigManager(object):
         defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
+            aliases = defs[config].get('aliases', [])
+
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
             direct_aliases = []
             if direct:
-                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
+                direct_aliases = [direct[alias] for alias in aliases if alias in direct]
             if direct and config in direct:
                 value = direct[config]
                 origin = 'Direct'
@@ -453,9 +453,20 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and config in keys:
-                    value, origin = keys[config], 'keyword'
-                    origin = 'keyword: %s' % origin
+                if value is None and keys:
+                    if config in keys:
+                        value = keys[config]
+                        keyword = config
+
+                    elif aliases:
+                        for alias in aliases:
+                            if alias in keys:
+                                value = keys[alias]
+                                keyword = alias
+                                break
+
+                    if value is not None:
+                        origin = 'keyword: %s' % keyword
 
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
@@ -524,14 +535,6 @@ class ConfigManager(object):
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
-
-    def update_module_defaults_groups(self):
-        defaults_config = self._read_config_yaml_file(
-            '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
-        )
-        if defaults_config.get('version') not in ('1', '1.0', 1, 1.0):
-            raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
-        self.module_defaults_groups = defaults_config.get('groupings', {})
 
     def update_config_data(self, defs=None, configfile=None):
         ''' really: update constants '''

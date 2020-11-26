@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: together
-    author:  Bradley Young <young.bradley@gmail.com>
+    name: together
+    author:  Bradley Young (!UNKNOWN) <young.bradley@gmail.com>
     version_added: '1.3'
     short_description: merges lists into synchronized list
     description:
@@ -32,6 +32,8 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: synchronized list
+    type: list
+    elements: list
 """
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import zip_longest

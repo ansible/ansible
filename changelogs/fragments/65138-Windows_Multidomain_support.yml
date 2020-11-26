@@ -1,2 +1,0 @@
-minor_changes:
-- win_group_membership - Add multi-domain forest support - https://github.com/ansible/ansible/issues/59829

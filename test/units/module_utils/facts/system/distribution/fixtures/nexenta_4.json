@@ -1,0 +1,24 @@
+{
+    "name": "Nexenta 4",
+    "uname_v": "NexentaOS_4:cd604cd066",
+    "result": {
+        "distribution_release": "Open Storage Appliance 4.0.3-FP2",
+        "distribution": "Nexenta",
+        "os_family": "Solaris",
+        "distribution_version": "4.0.3-FP2"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "                        Open Storage Appliance 4.0.3-FP2\n           Copyright (c) 2014 Nexenta Systems, Inc.  All Rights Reserved.\n           Copyright (c) 2010 Oracle.  All Rights Reserved.\n                        Use is subject to license terms.\n"
+    },
+    "platform.system": "SunOS"
+}

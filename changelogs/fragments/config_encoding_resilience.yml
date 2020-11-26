@@ -1,2 +1,0 @@
-bugfixes:
-  - config - encoding failures on config values should be non-fatal (https://github.com/ansible/ansible/issues/63310)

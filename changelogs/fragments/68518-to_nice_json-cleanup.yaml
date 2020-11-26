@@ -1,2 +1,0 @@
-minor_changes:
-  - to_nice_json filter - Removed now-useless exception handler

@@ -1,0 +1,118 @@
+# We have a test repo set up with a valid updateinfo.xml which is referenced
+# from its repomd.xml.
+- block:
+    - set_fact:
+        updateinfo_repo: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_rpm_repo/repo-with-updateinfo
+
+    - name: Install the test repo
+      yum_repository:
+        name: test-repo-with-updateinfo
+        description: test-repo-with-updateinfo
+        baseurl: "{{ updateinfo_repo }}"
+        gpgcheck: no
+
+    - name: Install old versions of toaster and oven
+      dnf:
+        name:
+          - "{{ updateinfo_repo }}/toaster-1.2.3.4-1.el8.noarch.rpm"
+          - "{{ updateinfo_repo }}/oven-1.2.3.4-1.el8.noarch.rpm"
+        disable_gpg_check: true
+
+    - name: Ask for pending updates (check_mode)
+      dnf:
+        name:
+          - toaster
+          - oven
+        state: latest
+        update_only: true
+        disable_gpg_check: true
+      check_mode: true
+      register: update_no_filter
+
+    - assert:
+        that:
+          - update_no_filter is changed
+          - '"would have if not in check mode" in update_no_filter.msg'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_no_filter.results'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_no_filter.results'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_no_filter.results'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_no_filter.results'
+
+    - name: Ask for pending updates with security=true (check_mode)
+      dnf:
+        name:
+          - toaster
+          - oven
+        state: latest
+        update_only: true
+        disable_gpg_check: true
+        security: true
+      check_mode: true
+      register: update_security
+
+    - assert:
+        that:
+          - update_security is changed
+          - '"would have if not in check mode" in update_security.msg'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_security.results'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_security.results'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" not in update_security.results'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" not in update_security.results'
+
+    - name: Ask for pending updates with bugfix=true (check_mode)
+      dnf:
+        name:
+          - toaster
+          - oven
+        state: latest
+        update_only: true
+        disable_gpg_check: true
+        bugfix: true
+      check_mode: true
+      register: update_bugfix
+
+    - assert:
+        that:
+          - update_bugfix is changed
+          - '"would have if not in check mode" in update_bugfix.msg'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" not in update_bugfix.results'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" not in update_bugfix.results'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.results'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.results'
+
+    - name: Ask for pending updates with bugfix=true and security=true (check_mode)
+      dnf:
+        name:
+          - toaster
+          - oven
+        state: latest
+        update_only: true
+        disable_gpg_check: true
+        bugfix: true
+        security: true
+      check_mode: true
+      register: update_bugfix
+
+    - assert:
+        that:
+          - update_bugfix is changed
+          - '"would have if not in check mode" in update_bugfix.msg'
+          - '"Installed: toaster-1.2.3.5-1.el8.noarch" in update_bugfix.results'
+          - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_bugfix.results'
+          - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.results'
+          - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.results'
+
+  always:
+    - name: Remove installed packages
+      dnf:
+        name:
+          - toaster
+          - oven
+        state: absent
+
+    - name: Remove the repo
+      yum_repository:
+        name: test-repo-with-updateinfo
+        state: absent
+  tags:
+    - filters

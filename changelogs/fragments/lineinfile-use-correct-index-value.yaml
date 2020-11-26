@@ -1,2 +1,0 @@
-bugfixes:
-  - lineinfile - use correct index value when inserting a line at the end of a file (https://github.com/ansible/ansible/issues/63684)

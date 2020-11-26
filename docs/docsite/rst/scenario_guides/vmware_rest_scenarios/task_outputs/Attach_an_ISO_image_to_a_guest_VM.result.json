@@ -1,0 +1,19 @@
+{
+    "value": {
+        "start_connected": true,
+        "backing": {
+            "iso_file": "[ro_datastore] fedora.iso",
+            "type": "ISO_FILE"
+        },
+        "allow_guest_control": false,
+        "label": "CD/DVD drive 1",
+        "state": "NOT_CONNECTED",
+        "type": "SATA",
+        "sata": {
+            "bus": 0,
+            "unit": 2
+        }
+    },
+    "id": "16002",
+    "changed": true
+}

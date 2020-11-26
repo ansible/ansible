@@ -6,9 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,7 +14,7 @@ version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
-     - For Windows targets, use the M(win_stat) module instead.
+     - For Windows targets, use the M(ansible.windows.win_stat) module instead.
 options:
   path:
     description:
@@ -65,15 +62,16 @@ options:
     aliases: [ attr, attributes ]
     version_added: "2.3"
 seealso:
-- module: file
-- module: win_stat
+- module: ansible.builtin.file
+- module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
 EXAMPLES = r'''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
-- stat:
+- name: Get stats of a file
+  stat:
     path: /etc/foo.conf
   register: st
 - fail:
@@ -85,7 +83,8 @@ EXAMPLES = r'''
 # therefore, we must test whether it is defined.
 # Run this to understand the structure, the skipped ones do not pass the
 # check performed by 'when'
-- stat:
+- name: Get stats of the FS object
+  stat:
     path: /path/to/something
   register: sym
 
@@ -108,20 +107,21 @@ EXAMPLES = r'''
 
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
-- stat:
+- name: Get stats of the FS object
+  stat:
     path: /path/to/something
   register: p
 - debug:
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-# Don't do checksum
-- stat:
+- name: Don't do checksum
+  stat:
     path: /path/to/myhugefile
     get_checksum: no
 
-# Use sha256 to calculate checksum
-- stat:
+- name: Use sha256 to calculate checksum
+  stat:
     path: /path/to/something
     checksum_algorithm: sha256
 '''
@@ -513,11 +513,11 @@ def main():
         output['mimetype'] = output['charset'] = 'unknown'
         mimecmd = module.get_bin_path('file')
         if mimecmd:
-            mimecmd = [mimecmd, '-i', b_path]
+            mimecmd = [mimecmd, '--mime-type', '--mime-encoding', b_path]
             try:
                 rc, out, err = module.run_command(mimecmd)
                 if rc == 0:
-                    mimetype, charset = out.split(':')[1].split(';')
+                    mimetype, charset = out.rsplit(':', 1)[1].split(';')
                     output['mimetype'] = mimetype.strip()
                     output['charset'] = charset.split('=')[1].strip()
             except Exception:

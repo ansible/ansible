@@ -1,3 +1,0 @@
-bugfixes:
-- Force collection names to be static so that a warning is generated because
-  templating currently does not work (see https://github.com/ansible/ansible/issues/68704).

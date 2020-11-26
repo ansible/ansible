@@ -30,16 +30,17 @@ from ..util import (
     is_subdir,
     paths_to_dirs,
     get_ansible_version,
+    str_to_version,
 )
 
 from ..util_common import (
     run_command,
+    intercept_command,
     handle_layout_messages,
 )
 
 from ..ansible_util import (
     ansible_environment,
-    check_pyyaml,
 )
 
 from ..target import (
@@ -109,8 +110,6 @@ def command_sanity(args):
     total = 0
     failed = []
 
-    requirements_installed = set()  # type: t.Set[str]
-
     for test in tests:
         if args.list_tests:
             display.info(test.name)
@@ -148,8 +147,6 @@ def command_sanity(args):
                 display.warning("Skipping sanity test '%s' on Python %s due to missing interpreter." % (test.name, version))
                 result = SanitySkipped(test.name, skip_version)
             else:
-                check_pyyaml(args, version)
-
                 if test.supported_python_versions:
                     display.info("Running sanity test '%s' with Python %s" % (test.name, version))
                 else:
@@ -183,9 +180,7 @@ def command_sanity(args):
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
                 if usable_targets or test.no_targets:
-                    if version not in requirements_installed:
-                        requirements_installed.add(version)
-                        install_command_requirements(args, version)
+                    install_command_requirements(args, version, context=test.name, enable_pyyaml_check=True)
 
                     if isinstance(test, SanityCodeSmellTest):
                         result = test.test(args, sanity_targets, version)
@@ -665,7 +660,7 @@ class SanityTest(ABC):
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return tuple(python_version for python_version in SUPPORTED_PYTHON_VERSIONS if python_version.startswith('3.'))
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]  # pylint: disable=unused-argument
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if self.no_targets:
             return []
@@ -697,6 +692,8 @@ class SanityCodeSmellTest(SanityTest):
             self.files = self.config.get('files')  # type: t.List[str]
             self.text = self.config.get('text')  # type: t.Optional[bool]
             self.ignore_self = self.config.get('ignore_self')  # type: bool
+            self.intercept = self.config.get('intercept')  # type: bool
+            self.minimum_python_version = self.config.get('minimum_python_version')  # type: t.Optional[str]
 
             self.__all_targets = self.config.get('all_targets')  # type: bool
             self.__no_targets = self.config.get('no_targets')  # type: bool
@@ -709,6 +706,8 @@ class SanityCodeSmellTest(SanityTest):
             self.files = []
             self.text = None  # type: t.Optional[bool]
             self.ignore_self = False
+            self.intercept = False
+            self.minimum_python_version = None  # type: t.Optional[str]
 
             self.__all_targets = False
             self.__no_targets = True
@@ -786,6 +785,12 @@ class SanityCodeSmellTest(SanityTest):
         :type python_version: str
         :rtype: TestResult
         """
+        if self.minimum_python_version:
+            if str_to_version(python_version) < str_to_version(self.minimum_python_version):
+                display.warning("Skipping sanity test '%s' on unsupported Python %s; requires Python %s or newer." % (
+                    self.name, python_version, self.minimum_python_version))
+                return SanitySkipped(self.name, 'Test requires Python %s or newer' % (self.minimum_python_version, ))
+
         cmd = [find_python(python_version), self.path]
 
         env = ansible_environment(args, color=False)
@@ -812,7 +817,11 @@ class SanityCodeSmellTest(SanityTest):
                 display.info(data, verbosity=4)
 
         try:
-            stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
+            if self.intercept:
+                stdout, stderr = intercept_command(args, cmd, target_name='sanity.%s' % self.name, data=data, env=env, capture=True, disable_coverage=True)
+            else:
+                stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
+
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout

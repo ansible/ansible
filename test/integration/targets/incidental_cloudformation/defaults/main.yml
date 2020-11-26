@@ -1,8 +1,0 @@
-stack_name: "{{ resource_prefix }}"
-
-vpc_name: '{{ resource_prefix }}-vpc'
-vpc_seed: '{{ resource_prefix }}'
-vpc_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.0.0/16'
-subnet_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.32.0/24'
-
-ec2_ami_name: 'amzn2-ami-hvm-2.*-x86_64-gp2'

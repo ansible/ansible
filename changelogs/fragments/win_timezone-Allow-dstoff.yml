@@ -1,3 +1,0 @@
----
-bugfixes:
- - "win_timezone - Allow for _dstoff timezones"

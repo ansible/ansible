@@ -1,0 +1,5 @@
+- name: Increase the memory of a VM
+  vmware.vmware_rest.vcenter_vm_hardware_memory:
+    vm: '{{ test_vm1_info.id }}'
+    size_MiB: 1080
+  register: _result

@@ -1,3 +1,0 @@
-bugfixes:
-- debug - fixed an issue introduced in Ansible 2.4 where a loop of debug tasks
-  would lose the "changed" status on each item.

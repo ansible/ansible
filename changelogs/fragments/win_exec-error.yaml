@@ -1,2 +1,0 @@
-bugfixes:
-- win_exec_wrapper - Be more defensive when it comes to getting unhandled exceptions

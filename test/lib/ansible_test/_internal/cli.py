@@ -18,9 +18,6 @@ from .util import (
     ApplicationError,
     display,
     raw_command,
-    get_docker_completion,
-    get_network_completion,
-    get_remote_completion,
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
@@ -91,6 +88,9 @@ from .data import (
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_completion,
+    get_remote_completion,
     CommonConfig,
 )
 
@@ -183,15 +183,15 @@ def main():
         display.review_warnings()
     except ApplicationWarning as ex:
         display.warning(u'%s' % ex)
-        exit(0)
+        sys.exit(0)
     except ApplicationError as ex:
         display.error(u'%s' % ex)
-        exit(1)
+        sys.exit(1)
     except KeyboardInterrupt:
-        exit(2)
+        sys.exit(2)
     except IOError as ex:
         if ex.errno == errno.EPIPE:
-            exit(3)
+            sys.exit(3)
         raise
 
 
@@ -205,7 +205,7 @@ def parse_args():
         # install argparse without using constraints since pip may be too old to support them
         # not using the ansible-test requirements file since this install is for sys.executable rather than the delegated python (which may be different)
         # argparse has no special requirements, so upgrading pip is not required here
-        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'argparse', packages=['argparse'], use_constraints=False))
+        raw_command(generate_pip_install(generate_pip_command(sys.executable), '', packages=['argparse'], use_constraints=False))
         import argparse
 
     try:
@@ -308,6 +308,9 @@ def parse_args():
 
     test.add_argument('--metadata',
                       help=argparse.SUPPRESS)
+
+    test.add_argument('--base-branch',
+                      help='base branch used for change detection')
 
     add_changes(test, argparse)
     add_environments(test)
@@ -527,9 +530,6 @@ def parse_args():
                         choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
-    sanity.add_argument('--base-branch',
-                        help=argparse.SUPPRESS)
-
     sanity.add_argument('--enable-optional-errors',
                         action='store_true',
                         help='enable optional errors')
@@ -675,7 +675,7 @@ def key_value(argparse, value):  # type: (argparse_module, str) -> t.Tuple[str, 
     if len(parts) != 2:
         raise argparse.ArgumentTypeError('"%s" must be in the format "key=value"' % value)
 
-    return tuple(parts)
+    return parts[0], parts[1]
 
 
 # noinspection PyProtectedMember
@@ -926,6 +926,7 @@ def add_environments(parser, isolated_delegation=True):
             remote_provider=None,
             remote_aws_region=None,
             remote_terminate=None,
+            remote_endpoint=None,
             python_interpreter=None,
         )
 
@@ -947,15 +948,19 @@ def add_environments(parser, isolated_delegation=True):
 
     remote.add_argument('--remote-stage',
                         metavar='STAGE',
-                        help='remote stage to use: %(choices)s',
-                        choices=['prod', 'dev'],
-                        default='prod')
+                        help='remote stage to use: prod, dev',
+                        default='prod').completer = complete_remote_stage
 
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
                         choices=['default', 'aws', 'azure', 'parallels', 'ibmvpc', 'ibmps'],
                         default='default')
+
+    remote.add_argument('--remote-endpoint',
+                        metavar='ENDPOINT',
+                        help='remote provisioning endpoint to use (default: auto)',
+                        default=None)
 
     remote.add_argument('--remote-aws-region',
                         metavar='REGION',
@@ -988,6 +993,9 @@ def add_extra_coverage_options(parser):
                         action='store_true',
                         help='generate empty report of all python/powershell source files')
 
+    parser.add_argument('--export',
+                        help='directory to export combined coverage files to')
+
 
 def add_httptester_options(parser, argparse):
     """
@@ -998,7 +1006,7 @@ def add_httptester_options(parser, argparse):
 
     group.add_argument('--httptester',
                        metavar='IMAGE',
-                       default='quay.io/ansible/http-test-container:1.0.0',
+                       default='quay.io/ansible/http-test-container:1.3.0',
                        help='docker image to use for the httptester container')
 
     group.add_argument('--disable-httptester',
@@ -1009,6 +1017,9 @@ def add_httptester_options(parser, argparse):
 
     parser.add_argument('--inject-httptester',
                         action='store_true',
+                        help=argparse.SUPPRESS)  # internal use only
+
+    parser.add_argument('--httptester-krb5-password',
                         help=argparse.SUPPRESS)  # internal use only
 
 
@@ -1052,9 +1063,22 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    docker.add_argument('--docker-network',
+                        help='run using the specified docker network')
+
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
+
+
+# noinspection PyUnusedLocal
+def complete_remote_stage(prefix, parsed_args, **_):  # pylint: disable=unused-argument
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    return [stage for stage in ('prod', 'dev') if stage.startswith(prefix)]
 
 
 def complete_target(prefix, parsed_args, **_):

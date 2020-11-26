@@ -35,10 +35,28 @@ Installing vCenter SSL certificates for Ansible
 Installing ESXi SSL certificates for Ansible
 --------------------------------------------
 
-* Enable SSH Service on ESXi either by using Ansible VMware module `vmware_host_service_manager <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/vmware/vmware_host_config_manager.py>`_ or manually using vSphere Web interface.
+* Enable SSH Service on ESXi either by using Ansible VMware module `vmware_host_service_manager <https://github.com/ansible-collections/vmware/blob/main/plugins/modules/vmware_host_config_manager.py>`_ or manually using vSphere Web interface.
 
 * SSH to ESXi server using administrative credentials, and navigate to directory ``/etc/vmware/ssl``
 
 * Secure copy (SCP) ``rui.crt`` located in ``/etc/vmware/ssl`` directory to Ansible control node.
 
 * Install the certificate file by the process that is appropriate for your operating system.
+
+Using custom path for SSL certificates
+--------------------------------------
+
+If you need to use a custom path for SSL certificates, you can set the ``REQUESTS_CA_BUNDLE`` environment variable in your playbook.
+
+For example, if ``/var/vmware/certs/vcenter1.crt`` is the SSL certificate for your vCenter Server, you can use the :ref:`environment <playbooks_environment>` keyword to pass it to the modules:
+
+.. code-block:: yaml
+
+   - name: Gather all tags from vCenter
+     community.vmware.vmware_tag_info:
+       validate_certs: True
+       hostname: '{{ vcenter_hostname }}'
+       username: '{{ vcenter_username }}'
+       password: '{{ vcenter_password }}'
+     environment:
+       REQUESTS_CA_BUNDLE: /var/vmware/certs/vcenter1.crt

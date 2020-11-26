@@ -242,6 +242,10 @@
     follow: False
   register: file8_initial_dir_stat
 
+- name: Pause to ensure stat times are not the exact same
+  pause:
+    seconds: 1
+
 - name: Use touch with directory as dest
   file:
     dest: '{{output_dir}}/sub1'

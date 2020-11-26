@@ -1,4 +1,0 @@
-bugfixes:
-- ansible-inventory - Properly hide arguments that should not be shown
-  (https://github.com/ansible/ansible/issues/61604)
-- ansible-inventory - Restore functionality to allow ``--graph`` to be limited by a host pattern

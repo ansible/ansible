@@ -1,4 +1,0 @@
-bugfixes:
-- ansible-galaxy - Utilize ``Templar`` for templating skeleton files, so that
-  they have access to Ansible filters/tests/lookups
-  (https://github.com/ansible/ansible/issues/69104)

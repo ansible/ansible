@@ -28,6 +28,15 @@ class ImmutableDict(Hashable, Mapping):
     def __hash__(self):
         return hash(frozenset(self.items()))
 
+    def __eq__(self, other):
+        try:
+            if self.__hash__() == hash(other):
+                return True
+        except TypeError:
+            pass
+
+        return False
+
     def __repr__(self):
         return 'ImmutableDict({0})'.format(repr(self._store))
 
@@ -58,7 +67,8 @@ class ImmutableDict(Hashable, Mapping):
 
 def is_string(seq):
     """Identify whether the input has a string-like type (inclding bytes)."""
-    return isinstance(seq, (text_type, binary_type))
+    # AnsibleVaultEncryptedUnicode inherits from Sequence, but is expected to be a string like object
+    return isinstance(seq, (text_type, binary_type)) or getattr(seq, '__ENCRYPTED__', False)
 
 
 def is_iterable(seq, include_strings=False):

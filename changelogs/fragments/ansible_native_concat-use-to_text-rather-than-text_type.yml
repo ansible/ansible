@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible_native_concat() - use ``to_text`` function rather than Jinja2's ``text_type`` which has been removed in Jinja2 master branch.

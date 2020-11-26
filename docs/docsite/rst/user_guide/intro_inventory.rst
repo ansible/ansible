@@ -7,7 +7,7 @@ How to build your inventory
 
 Ansible works against multiple managed nodes or "hosts" in your infrastructure at the same time, using a list or group of lists known as inventory. Once your inventory is defined, you use :ref:`patterns <intro_patterns>` to select the hosts or groups you want Ansible to run against.
 
-The default location for inventory is a file called ``/etc/ansible/hosts``. You can specify a different inventory file at the command line using the ``-i <path>`` option. You can also use multiple inventory files at the same time, and/or pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
+The default location for inventory is a file called ``/etc/ansible/hosts``. You can specify a different inventory file at the command line using the ``-i <path>`` option. You can also use multiple inventory files at the same time, and/or pull inventory from dynamic or cloud sources or different formats (YAML, ini, and so on), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has :ref:`inventory_plugins` to make this flexible and customizable.
 
 .. contents::
@@ -72,9 +72,9 @@ Hosts in multiple groups
 
 You can (and probably will) put each host in more than one group. For example a production webserver in a datacenter in Atlanta might be included in groups called [prod] and [atlanta] and [webservers]. You can create groups that track:
 
-* What - An application, stack or microservice. (For example, database servers, web servers, etc).
-* Where - A datacenter or region, to talk to local DNS, storage, etc. (For example, east, west).
-* When - The development stage, to avoid testing on production resources. (For example, prod, test).
+* What - An application, stack or microservice (for example, database servers, web servers, and so on).
+* Where - A datacenter or region, to talk to local DNS, storage, and so on (for example, east, west).
+* When - The development stage, to avoid testing on production resources (for example, prod, test).
 
 Extending the previous YAML inventory to include what, when, and where would look like:
 
@@ -170,6 +170,24 @@ In YAML:
         hosts:
           www[01:50].example.com:
 
+You can specify a stride (increments between sequence numbers) when defining a numeric range of hosts:
+
+In INI:
+
+.. code-block:: text
+
+    [webservers]
+    www[01:50:2].example.com
+
+In YAML:
+
+.. code-block:: yaml
+
+    ...
+      webservers:
+        hosts:
+          www[01:50:2].example.com:
+
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive. You can also define alphabetic ranges:
 
 .. code-block:: text
@@ -177,10 +195,12 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
     [databases]
     db-[a:f].example.com
 
+.. _variables_in_inventory:
+
 Adding variables to inventory
 =============================
 
-You can store variable values that relate to a specific host or group in inventory. To start with, you may add variables directly to the hosts and groups in your main inventory file. As you add more and more managed nodes to your Ansible inventory, however, you will likely want to store variables in separate host and group variable files.
+You can store variable values that relate to a specific host or group in inventory. To start with, you may add variables directly to the hosts and groups in your main inventory file. As you add more and more managed nodes to your Ansible inventory, however, you will likely want to store variables in separate host and group variable files. See :ref:`define_variables_in_inventory` for details.
 
 .. _host_variables:
 
@@ -200,12 +220,13 @@ In YAML:
 .. code-block:: yaml
 
     atlanta:
-      host1:
-        http_port: 80
-        maxRequestsPerChild: 808
-      host2:
-        http_port: 303
-        maxRequestsPerChild: 909
+      hosts:    
+        host1:
+          http_port: 80
+          maxRequestsPerChild: 808
+        host2:
+          http_port: 303
+          maxRequestsPerChild: 909
 
 Unique values like non-standard SSH ports work well as host variables. You can add them to your Ansible inventory by adding the port number after the hostname with a colon:
 
@@ -248,8 +269,7 @@ In YAML:
           ansible_port: 5555
           ansible_host: 192.0.2.50
 
-In the above example, running Ansible against the host alias "jumper" will connect to 192.0.2.50 on port 5555.
-This only works for hosts with static IPs, or when you are connecting through tunnels.
+In the above example, running Ansible against the host alias "jumper" will connect to 192.0.2.50 on port 5555. See :ref:`behavioral inventory parameters <behavioral_parameters>` to further customize the connection to hosts.
 
 .. note::
    Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared:
@@ -402,7 +422,7 @@ All hosts in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
 file gets too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on some group variables.
 
-You can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. The ``ansible-playbook`` command looks for these directories in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, etc.) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line.
+You can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. The ``ansible-playbook`` command looks for these directories in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, and so on) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line.
 If you load inventory files from both the playbook directory and the inventory directory, variables in the playbook directory will override variables set in the inventory directory.
 
 Keeping your inventory file and variables in a git repo (or other version control)
@@ -420,16 +440,18 @@ By default variables are merged/flattened to the specific host before a play is 
 - child group
 - host
 
-By default Ansible merges groups at the same parent/child level alphabetically, and the last group loaded overwrites the previous groups. For example, an a_group will be merged with b_group and b_group vars that match will overwrite the ones in a_group.
+By default Ansible merges groups at the same parent/child level in ASCII order, and the last group loaded overwrites the previous groups. For example, an a_group will be merged with b_group and b_group vars that match will overwrite the ones in a_group.
 
 You can change this behavior by setting the group variable ``ansible_group_priority`` to change the merge order for groups of the same level (after the parent/child order is resolved). The larger the number, the later it will be merged, giving it higher priority. This variable defaults to ``1`` if not set. For example:
 
 .. code-block:: yaml
 
     a_group:
+      vars:
         testvar: a
         ansible_group_priority: 10
     b_group:
+      vars:
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
@@ -483,7 +505,7 @@ You can target this inventory directory simply like this:
 
 It can be useful to control the merging order of the inventory sources if there's variable
 conflicts or group of groups dependencies to the other inventory sources. The inventories
-are merged in alphabetical order according to the filenames so the result can
+are merged in ASCII order according to the filenames so the result can
 be controlled by adding prefixes to the files:
 
 .. code-block:: text
@@ -523,7 +545,7 @@ ansible_port
 ansible_user
     The user name to use when connecting to the host
 ansible_password
-    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`tip_for_variables_and_vaults`)
 
 
 Specific to the SSH connection:
@@ -555,7 +577,7 @@ ansible_become_method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
 ansible_become_password
-    Equivalent to ``ansible_sudo_password`` or ``ansible_su_password``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    Equivalent to ``ansible_sudo_password`` or ``ansible_su_password``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`tip_for_variables_and_vaults`)
 ansible_become_exe
     Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected
 ansible_become_flags
@@ -592,7 +614,7 @@ ansible_shell_executable
     This sets the shell the ansible controller will use on the target machine,
     overrides ``executable`` in :file:`ansible.cfg` which defaults to
     :command:`/bin/sh`.  You should really only change it if is not possible
-    to use :command:`/bin/sh` (i.e. :command:`/bin/sh` is not installed on the target
+    to use :command:`/bin/sh` (in other words, if :command:`/bin/sh` is not installed on the target
     machine or cannot be run from sudo.).
 
 Examples from an Ansible-INI host file:
@@ -632,23 +654,23 @@ Here is an example of how to instantly deploy to created containers:
 
 .. code-block:: yaml
 
-   - name: create jenkins container
-     docker_container:
+   - name: Create a jenkins container
+     community.general.docker_container:
        docker_host: myserver.net:4243
        name: my_jenkins
        image: jenkins
 
-   - name: add container to inventory
-     add_host:
+   - name: Add the container to inventory
+     ansible.builtin.add_host:
        name: my_jenkins
        ansible_connection: docker
        ansible_docker_extra_args: "--tlsverify --tlscacert=/path/to/ca.pem --tlscert=/path/to/client-cert.pem --tlskey=/path/to/client-key.pem -H=tcp://myserver.net:4243"
        ansible_user: jenkins
      changed_when: false
 
-   - name: create directory for ssh keys
+   - name: Create a directory for ssh keys
      delegate_to: my_jenkins
-     file:
+     ansible.builtin.file:
        path: "/var/jenkins_home/.ssh/jupiter"
        state: directory
 
@@ -708,7 +730,7 @@ To apply a playbook called :file:`site.yml`
 to all the app servers in the test environment, use the
 following command::
 
-  ansible-playbook -i inventory_test site.yml -l appservers
+  ansible-playbook -i inventory_test -l appservers site.yml
 
 .. _inventory_setup-per_function:
 
@@ -718,14 +740,14 @@ Example: Group by function
 In the previous section you already saw an example for using groups in
 order to cluster hosts that have the same function. This allows you,
 for instance, to define firewall rules inside a playbook or role
-without affecting database servers:
+affecting only database servers:
 
 .. code-block:: yaml
 
   - hosts: dbservers
     tasks:
-    - name: allow access from 10.0.0.1
-      iptables:
+    - name: Allow access from 10.0.0.1
+      ansible.builtin.iptables:
         chain: INPUT
         jump: ACCEPT
         source: 10.0.0.1

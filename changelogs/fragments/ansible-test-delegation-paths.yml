@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test now places the ansible source and collections content in separate directories when using the ``--docker`` or ``--remote`` options.

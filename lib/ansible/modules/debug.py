@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -44,8 +41,8 @@ options:
 notes:
     - This module is also supported for Windows targets.
 seealso:
-- module: assert
-- module: fail
+- module: ansible.builtin.assert
+- module: ansible.builtin.fail
 author:
 - Dag Wieers (@dagwieers)
 - Michael DeHaan

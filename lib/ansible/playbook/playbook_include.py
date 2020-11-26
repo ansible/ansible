@@ -21,7 +21,9 @@ __metaclass__ = type
 
 import os
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -29,7 +31,12 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.template import Templar
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class PlaybookInclude(Base, Conditional, Taggable):
@@ -66,10 +73,29 @@ class PlaybookInclude(Base, Conditional, Taggable):
         pb = Playbook(loader=loader)
 
         file_name = templar.template(new_obj.import_playbook)
-        if not os.path.isabs(file_name):
-            file_name = os.path.join(basedir, file_name)
 
-        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager, vars=self.vars.copy())
+        # check for FQCN
+        resource = _get_collection_playbook_path(file_name)
+        if resource is not None:
+            playbook = resource[1]
+            playbook_collection = resource[2]
+        else:
+            # not FQCN try path
+            playbook = file_name
+            if not os.path.isabs(playbook):
+                playbook = os.path.join(basedir, playbook)
+
+            # might still be collection playbook
+            playbook_collection = _get_collection_name_from_path(playbook)
+
+        if playbook_collection:
+            # it is a collection playbook, setup default collections
+            AnsibleCollectionConfig.default_collection = playbook_collection
+        else:
+            # it is NOT a collection playbook, setup adjecent paths
+            AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
+
+        pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy())
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
@@ -87,7 +113,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
             if entry._included_path is None:
-                entry._included_path = os.path.dirname(file_name)
+                entry._included_path = os.path.dirname(playbook)
 
             # Check to see if we need to forward the conditionals on to the included
             # plays. If so, we can take a shortcut here and simply prepend them to
@@ -114,7 +140,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             new_ds.ansible_pos = ds.ansible_pos
 
         for (k, v) in iteritems(ds):
-            if k in ('include', 'import_playbook'):
+            if k in C._ACTION_ALL_IMPORT_PLAYBOOKS:
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
@@ -144,8 +170,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if len(items) == 0:
             raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
         else:
-            new_ds['import_playbook'] = items[0]
+            new_ds['import_playbook'] = items[0].strip()
             if len(items) > 1:
+                display.warning('Additional parameters in import_playbook statements are not supported. This will be an error in version 2.14')
                 # rejoin the parameter portion of the arguments and
                 # then use parse_kv() to get a dict of params back
                 params = parse_kv(" ".join(items[1:]))

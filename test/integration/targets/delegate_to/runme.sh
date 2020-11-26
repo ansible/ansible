@@ -55,3 +55,22 @@ ansible-playbook delegate_and_nolog.yml -i inventory -v "$@"
 ansible-playbook delegate_facts_block.yml -i inventory -v "$@"
 
 ansible-playbook test_delegate_to_loop_caching.yml -i inventory -v "$@"
+
+# ensure we are using correct settings when delegating
+ANSIBLE_TIMEOUT=3 ansible-playbook delegate_vars_hanldling.yml -i inventory -v "$@"
+
+ansible-playbook has_hostvars.yml -i inventory -v "$@"
+
+# test ansible_x_interpreter
+# python
+source virtualenv.sh
+(
+cd "${OUTPUT_DIR}"/venv/bin
+ln -s python firstpython
+ln -s python secondpython
+)
+ansible-playbook verify_interpreter.yml -i inventory_interpreters -v "$@"
+ansible-playbook discovery_applied.yml -i inventory -v "$@"
+ansible-playbook resolve_vars.yml -i inventory -v "$@"
+ansible-playbook test_delegate_to_lookup_context.yml -i inventory -v "$@"
+ansible-playbook delegate_local_from_root.yml -i inventory -v "$@" -e 'ansible_user=root'

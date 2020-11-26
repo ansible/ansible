@@ -1,2 +1,0 @@
-bugfixes:
-  - code - removes some Python compatibility code for dealing with socket timeouts in ``wait_for``

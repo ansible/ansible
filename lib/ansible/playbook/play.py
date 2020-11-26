@@ -272,6 +272,9 @@ class Play(Base, Taggable, CollectionSearch):
             loader=self._loader
         )
 
+        for task in flush_block.block:
+            task.implicit = True
+
         block_list = []
 
         block_list.extend(self.pre_tasks)

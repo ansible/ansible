@@ -70,7 +70,7 @@ def test_discovery_interpreter_non_linux():
     assert len(mock_action.method_calls) == 2
     assert mock_action.method_calls[1][0] == '_discovery_warnings.append'
     assert u'Platform darwin on host host-fóöbär is using the discovered Python interpreter at /usr/bin/python, ' \
-           u'but future installation of another Python interpreter could change this' \
+           u'but future installation of another Python interpreter could change the meaning of that path' \
            in mock_action.method_calls[1][1][0]
 
 

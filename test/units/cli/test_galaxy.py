@@ -37,6 +37,7 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
+from ansible.utils.display import Display
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
@@ -227,7 +228,7 @@ class TestGalaxy(unittest.TestCase):
         gc.parse()
         self.assertEqual(context.CLIARGS['ignore_errors'], False)
         self.assertEqual(context.CLIARGS['no_deps'], False)
-        self.assertEqual(context.CLIARGS['role_file'], None)
+        self.assertEqual(context.CLIARGS['requirements'], None)
         self.assertEqual(context.CLIARGS['force'], False)
 
     def test_parse_list(self):
@@ -235,13 +236,6 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=["ansible-galaxy", "list"])
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
-
-    def test_parse_login(self):
-        ''' testing the options parser when the action 'login' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "login"])
-        gc.parse()
-        self.assertEqual(context.CLIARGS['verbosity'], 0)
-        self.assertEqual(context.CLIARGS['token'], None)
 
     def test_parse_remove(self):
         ''' testing the options parser when the action 'remove' is given '''
@@ -764,8 +758,8 @@ def test_collection_install_with_names(collection_install):
         in mock_warning.call_args[0][0]
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
-                                            ('namespace2.collection', '1.0.1', None)]
+    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None, None),
+                                            ('namespace2.collection', '1.0.1', None, None)]
     assert mock_install.call_args[0][1] == collection_path
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -801,8 +795,8 @@ collections:
         in mock_warning.call_args[0][0]
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None),
-                                            ('namespace2.coll', '>2.0.1', None)]
+    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None, None),
+                                            ('namespace2.coll', '>2.0.1', None, None)]
     assert mock_install.call_args[0][1] == collection_path
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -818,7 +812,7 @@ def test_collection_install_with_relative_path(collection_install, monkeypatch):
     mock_install = collection_install[0]
 
     mock_req = MagicMock()
-    mock_req.return_value = {'collections': [('namespace.coll', '*', None)]}
+    mock_req.return_value = {'collections': [('namespace.coll', '*', None, None)], 'roles': []}
     monkeypatch.setattr(ansible.cli.galaxy.GalaxyCLI, '_parse_requirements_file', mock_req)
 
     monkeypatch.setattr(os, 'makedirs', MagicMock())
@@ -830,7 +824,7 @@ def test_collection_install_with_relative_path(collection_install, monkeypatch):
     GalaxyCLI(args=galaxy_args).run()
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None)]
+    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None, None)]
     assert mock_install.call_args[0][1] == os.path.abspath(collections_path)
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -849,7 +843,7 @@ def test_collection_install_with_unexpanded_path(collection_install, monkeypatch
     mock_install = collection_install[0]
 
     mock_req = MagicMock()
-    mock_req.return_value = {'collections': [('namespace.coll', '*', None)]}
+    mock_req.return_value = {'collections': [('namespace.coll', '*', None, None)], 'roles': []}
     monkeypatch.setattr(ansible.cli.galaxy.GalaxyCLI, '_parse_requirements_file', mock_req)
 
     monkeypatch.setattr(os, 'makedirs', MagicMock())
@@ -861,7 +855,7 @@ def test_collection_install_with_unexpanded_path(collection_install, monkeypatch
     GalaxyCLI(args=galaxy_args).run()
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None)]
+    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None, None)]
     assert mock_install.call_args[0][1] == os.path.expanduser(os.path.expandvars(collections_path))
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -888,8 +882,8 @@ def test_collection_install_in_collection_dir(collection_install, monkeypatch):
     assert mock_warning.call_count == 0
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
-                                            ('namespace2.collection', '1.0.1', None)]
+    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None, None),
+                                            ('namespace2.collection', '1.0.1', None, None)]
     assert mock_install.call_args[0][1] == os.path.join(collections_path, 'ansible_collections')
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -912,7 +906,7 @@ def test_collection_install_with_url(collection_install):
     assert os.path.isdir(collection_path)
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('https://foo/bar/foo-bar-v1.0.0.tar.gz', '*', None)]
+    assert mock_install.call_args[0][0] == [('https://foo/bar/foo-bar-v1.0.0.tar.gz', '*', None, None)]
     assert mock_install.call_args[0][1] == collection_path
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -957,8 +951,8 @@ def test_collection_install_path_with_ansible_collections(collection_install):
         % collection_path in mock_warning.call_args[0][0]
 
     assert mock_install.call_count == 1
-    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
-                                            ('namespace2.collection', '1.0.1', None)]
+    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None, None),
+                                            ('namespace2.collection', '1.0.1', None, None)]
     assert mock_install.call_args[0][1] == collection_path
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
@@ -1103,7 +1097,7 @@ collections:
 def test_parse_requirements(requirements_cli, requirements_file):
     expected = {
         'roles': [],
-        'collections': [('namespace.collection1', '*', None), ('namespace.collection2', '*', None)]
+        'collections': [('namespace.collection1', '*', None, None), ('namespace.collection2', '*', None, None)]
     }
     actual = requirements_cli._parse_requirements_file(requirements_file)
 
@@ -1130,7 +1124,7 @@ def test_parse_requirements_with_extra_info(requirements_cli, requirements_file)
     assert actual['collections'][0][2].password is None
     assert actual['collections'][0][2].validate_certs is True
 
-    assert actual['collections'][1] == ('namespace.collection2', '*', None)
+    assert actual['collections'][1] == ('namespace.collection2', '*', None, None)
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1153,7 +1147,7 @@ def test_parse_requirements_with_roles_and_collections(requirements_cli, require
     assert actual['roles'][2].src == 'ssh://github.com/user/repo'
 
     assert len(actual['collections']) == 1
-    assert actual['collections'][0] == ('namespace.collection2', '*', None)
+    assert actual['collections'][0] == ('namespace.collection2', '*', None, None)
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1172,7 +1166,7 @@ def test_parse_requirements_with_collection_source(requirements_cli, requirement
 
     assert actual['roles'] == []
     assert len(actual['collections']) == 3
-    assert actual['collections'][0] == ('namespace.collection', '*', None)
+    assert actual['collections'][0] == ('namespace.collection', '*', None, None)
 
     assert actual['collections'][1][0] == 'namespace2.collection2'
     assert actual['collections'][1][1] == '*'
@@ -1180,7 +1174,7 @@ def test_parse_requirements_with_collection_source(requirements_cli, requirement
     assert actual['collections'][1][2].name == 'explicit_requirement_namespace2.collection2'
     assert actual['collections'][1][2].token is None
 
-    assert actual['collections'][2] == ('namespace3.collection3', '*', galaxy_api)
+    assert actual['collections'][2] == ('namespace3.collection3', '*', galaxy_api, None)
 
 
 @pytest.mark.parametrize('requirements_file', ['''
@@ -1215,3 +1209,133 @@ def test_parse_requirements_roles_with_include_missing(requirements_cli, require
 
     with pytest.raises(AnsibleError, match=expected):
         requirements_cli._parse_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_implicit_role_with_collections(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'install', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 1
+    assert mock_collection_install.call_args[0][0] == [('namespace.name', '*', None, None)]
+    assert mock_collection_install.call_args[0][1] == cli._get_default_collection_path()
+
+    assert mock_role_install.call_count == 1
+    assert len(mock_role_install.call_args[0][0]) == 1
+    assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains collections which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert not found
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'role', 'install', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 0
+
+    assert mock_role_install.call_count == 1
+    assert len(mock_role_install.call_args[0][0]) == 1
+    assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains collections which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert found
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'install', '-p', 'path', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 0
+
+    assert mock_role_install.call_count == 1
+    assert len(mock_role_install.call_args[0][0]) == 1
+    assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains collections which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert found
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_collection_with_roles(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 1
+    assert mock_collection_install.call_args[0][0] == [('namespace.name', '*', None, None)]
+    assert mock_collection_install.call_args[0][1] == cli._get_default_collection_path()
+
+    assert mock_role_install.call_count == 0
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains roles which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert found

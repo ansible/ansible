@@ -137,10 +137,17 @@ def list_deprecations(argument_spec, params, prefix=''):
                 sub_prefix = '%s["%s"]' % (prefix, arg_name)
             else:
                 sub_prefix = arg_name
-            if arg_opts.get('removed_in_version') is not None:
+            if arg_opts.get('removed_at_date') is not None:
                 deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
-                    'version': arg_opts.get('removed_in_version')
+                    'date': arg_opts.get('removed_at_date'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
+                })
+            elif arg_opts.get('removed_in_version') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'version': arg_opts.get('removed_in_version'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
                 })
             # Check sub-argument spec
             sub_argument_spec = arg_opts.get('options')
@@ -188,3 +195,28 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
                 params[k] = params[alias]
 
     return aliases_results, legal_inputs
+
+
+def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
+    """Check keys in module_parameters against those provided in legal_inputs
+    to ensure they contain legal values. If legal_inputs are not supplied,
+    they will be generated using the argument_spec.
+
+    :arg argument_spec: Dictionary of parameters, their type, and valid values.
+    :arg module_parameters: Dictionary of module parameters.
+    :arg legal_inputs: List of valid key names property names. Overrides values
+        in argument_spec.
+
+    :returns: Set of unsupported parameters. Empty set if no unsupported parameters
+        are found.
+    """
+
+    if legal_inputs is None:
+        aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
+
+    unsupported_parameters = set()
+    for k in module_parameters.keys():
+        if k not in legal_inputs:
+            unsupported_parameters.add(k)
+
+    return unsupported_parameters

@@ -1,2 +1,0 @@
-bugfixes:
-  - package_facts - use module warnings rather than a custom implementation for reporting warnings

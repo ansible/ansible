@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import getpass
 import os
-import re
 import subprocess
 import sys
 
@@ -26,7 +25,8 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
-from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
@@ -44,12 +44,6 @@ display = Display()
 
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
-
-    _ITALIC = re.compile(r"I\(([^)]+)\)")
-    _BOLD = re.compile(r"B\(([^)]+)\)")
-    _MODULE = re.compile(r"M\(([^)]+)\)")
-    _URL = re.compile(r"U\(([^)]+)\)")
-    _CONST = re.compile(r"C\(([^)]+)\)")
 
     PAGER = 'less'
 
@@ -101,8 +95,11 @@ class CLI(with_metaclass(ABCMeta, object)):
                 alt = ', use %s instead' % deprecated[1]['alternatives']
             else:
                 alt = ''
-            ver = deprecated[1]['version']
-            display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
+            ver = deprecated[1].get('version')
+            date = deprecated[1].get('date')
+            collection_name = deprecated[1].get('collection_name')
+            display.deprecated("%s option, %s %s" % (name, why, alt),
+                               version=ver, date=date, collection_name=collection_name)
 
     @staticmethod
     def split_vault_id(vault_id):
@@ -314,6 +311,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         # process tags
         if hasattr(options, 'tags') and not options.tags:
             # optparse defaults does not do what's expected
+            # More specifically, we want `--tags` to be additive. So we cannot
+            # simply change C.TAGS_RUN's default to ["all"] because then passing
+            # --tags foo would cause us to have ['all', 'foo']
             options.tags = ['all']
         if hasattr(options, 'tags') and options.tags:
             tags = set()
@@ -351,7 +351,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
             if verbosity_arg:
                 display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
-                                   "after the sub command", "2.13")
+                                   "after the sub command", "2.13", collection_name='ansible.builtin')
                 options.verbosity = verbosity_arg.count('v')
 
         return options
@@ -371,7 +371,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         if HAS_ARGCOMPLETE:
             argcomplete.autocomplete(self.parser)
 
-        options = self.parser.parse_args(self.args[1:])
+        try:
+            options = self.parser.parse_args(self.args[1:])
+        except SystemExit as e:
+            if(e.code != 0):
+                self.parser.exit(status=2, message=" \n%s " % self.parser.format_help())
+            raise
         options = self.post_process_args(options)
         context._init_global_context(options)
 
@@ -433,17 +438,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         except KeyboardInterrupt:
             pass
 
-    @classmethod
-    def tty_ify(cls, text):
-
-        t = cls._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-        t = cls._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-        t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = cls._URL.sub(r"\1", t)                      # U(word) => word
-        t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
-
-        return t
-
     @staticmethod
     def _play_prereqs():
         options = context.CLIARGS
@@ -455,11 +449,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         if basedir:
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
-            set_collection_playbook_paths(basedir)
-            default_collection = get_collection_name_from_path(basedir)
+            AnsibleCollectionConfig.playbook_paths = basedir
+            default_collection = _get_collection_name_from_path(basedir)
             if default_collection:
                 display.warning(u'running with default collection {0}'.format(default_collection))
-                AnsibleCollectionLoader().set_default_collection(default_collection)
+                AnsibleCollectionConfig.default_collection = default_collection
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST

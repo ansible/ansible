@@ -13,7 +13,11 @@ You can also setup a ``requirements.yml`` file to install multiple collections i
      version: 'version range identifiers (default: ``*``)'
      source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
-The ``version`` key can take in the same range identifier format documented above.
+The supported keys for collection requirement entries are ``name``, ``version``, ``source``, and ``type``.
+
+The ``version`` key can take in the same range identifier format documented above. If you're installing a collection from a git repository instead of a built collection artifact, the ``version`` key refers to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_.
+
+The ``type`` key can be set to ``galaxy``, ``url``, ``file``, and ``git``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection.
 
 Roles can also be specified and placed under the ``roles`` key. The values follow the same format as a requirements
 file used in older Ansible releases.
@@ -32,7 +36,16 @@ file used in older Ansible releases.
         version: 0.9.3
         source: https://galaxy.ansible.com
 
+To install both roles and collections at the same time with one command, run the following:
+
+.. code-block:: bash
+
+    $ ansible-galaxy install -r requirements.yml
+
+Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections,
+or roles respectively.
+
 .. note::
-    While both roles and collections can be specified in one requirements file, they need to be installed separately.
-    The ``ansible-galaxy role install -r requirements.yml`` will only install roles and
-    ``ansible-galaxy collection install -r requirements.yml`` will only install collections.
+    Installing both roles and collections from the same requirements file will not work when specifying a custom
+    collection or role install path. In this scenario the collections will be skipped and the command will process
+    each like ``ansible-galaxy role install`` would.

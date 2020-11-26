@@ -1,0 +1,5 @@
+testhost ansible_python_interpreter=firstpython
+testhost2 ansible_python_interpreter=secondpython
+
+[all:vars]
+ansible_connection=local

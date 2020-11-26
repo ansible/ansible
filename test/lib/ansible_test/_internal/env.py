@@ -6,7 +6,6 @@ import datetime
 import functools
 import os
 import platform
-import re
 import signal
 import sys
 import time
@@ -36,10 +35,6 @@ from .util_common import (
     ResultType,
 )
 
-from .git import (
-    Git,
-)
-
 from .docker_util import (
     docker_info,
     docker_version
@@ -59,6 +54,10 @@ from .test import (
 
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
+)
+
+from .ci import (
+    get_ci_provider,
 )
 
 
@@ -106,7 +105,7 @@ def show_dump_env(args):
             pwd=os.environ.get('PWD', None),
             cwd=os.getcwd(),
         ),
-        git=get_git_details(args),
+        git=get_ci_provider().get_git_details(args),
         platform=dict(
             datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             platform=platform.platform(),
@@ -292,75 +291,3 @@ def get_docker_details(args):
     )
 
     return docker_details
-
-
-def get_git_details(args):
-    """
-    :type args: CommonConfig
-    :rtype: dict[str, any]
-    """
-    commit = os.environ.get('COMMIT')
-    base_commit = os.environ.get('BASE_COMMIT')
-
-    git_details = dict(
-        base_commit=base_commit,
-        commit=commit,
-        merged_commit=get_merged_commit(args, commit),
-    )
-
-    return git_details
-
-
-# noinspection PyUnusedLocal
-def get_merged_commit(args, commit):  # pylint: disable=unused-argument
-    """
-    :type args: CommonConfig
-    :type commit: str
-    :rtype: str | None
-    """
-    if not commit:
-        return None
-
-    git = Git()
-
-    try:
-        show_commit = git.run_git(['show', '--no-patch', '--no-abbrev', commit])
-    except SubprocessError as ex:
-        # This should only fail for pull requests where the commit does not exist.
-        # Merge runs would fail much earlier when attempting to checkout the commit.
-        raise ApplicationError('Commit %s was not found:\n\n%s\n\n'
-                               'GitHub may not have fully replicated the commit across their infrastructure.\n'
-                               'It is also possible the commit was removed by a force push between job creation and execution.\n'
-                               'Find the latest run for the pull request and restart failed jobs as needed.'
-                               % (commit, ex.stderr.strip()))
-
-    head_commit = git.run_git(['show', '--no-patch', '--no-abbrev', 'HEAD'])
-
-    if show_commit == head_commit:
-        # Commit is HEAD, so this is not a pull request or the base branch for the pull request is up-to-date.
-        return None
-
-    match_merge = re.search(r'^Merge: (?P<parents>[0-9a-f]{40} [0-9a-f]{40})$', head_commit, flags=re.MULTILINE)
-
-    if not match_merge:
-        # The most likely scenarios resulting in a failure here are:
-        # A new run should or does supersede this job, but it wasn't cancelled in time.
-        # A job was superseded and then later restarted.
-        raise ApplicationError('HEAD is not commit %s or a merge commit:\n\n%s\n\n'
-                               'This job has likely been superseded by another run due to additional commits being pushed.\n'
-                               'Find the latest run for the pull request and restart failed jobs as needed.'
-                               % (commit, head_commit.strip()))
-
-    parents = set(match_merge.group('parents').split(' '))
-
-    if len(parents) != 2:
-        raise ApplicationError('HEAD is a %d-way octopus merge.' % len(parents))
-
-    if commit not in parents:
-        raise ApplicationError('Commit %s is not a parent of HEAD.' % commit)
-
-    parents.remove(commit)
-
-    last_commit = parents.pop()
-
-    return last_commit

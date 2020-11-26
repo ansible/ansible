@@ -8,10 +8,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
 DOCUMENTATION = r'''
 ---
 module: uri
@@ -19,7 +15,7 @@ short_description: Interacts with webservices
 description:
   - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
     HTTP authentication mechanisms.
-  - For Windows targets, use the M(win_uri) module instead.
+  - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 version_added: "1.1"
 options:
   url:
@@ -46,17 +42,23 @@ options:
     description:
       - The body of the http request/response to the web service. If C(body_format) is set
         to 'json' it will take an already formatted JSON string or convert a data structure
-        into JSON. If C(body_format) is set to 'form-urlencoded' it will convert a dictionary
+        into JSON.
+      - If C(body_format) is set to 'form-urlencoded' it will convert a dictionary
         or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
+      - If C(body_format) is set to 'form-multipart' it will convert a dictionary
+        into 'multipart/form-multipart' body. (Added in v2.10)
     type: raw
   body_format:
     description:
-      - The serialization format of the body. When set to C(json) or C(form-urlencoded), encodes the
-        body argument, if needed, and automatically sets the Content-Type header accordingly.
-        As of C(2.3) it is possible to override the `Content-Type` header, when
+      - The serialization format of the body. When set to C(json), C(form-multipart), or C(form-urlencoded), encodes
+        the body argument, if needed, and automatically sets the Content-Type header accordingly.
+      - As of C(2.3) it is possible to override the `Content-Type` header, when
         set to C(json) or C(form-urlencoded) via the I(headers) option.
+      - The 'Content-Type' header cannot be overridden when using C(form-multipart)
+      - C(form-urlencoded) was added in v2.7.
+      - C(form-multipart) was added in v2.10.
     type: str
-    choices: [ form-urlencoded, json, raw ]
+    choices: [ form-urlencoded, json, raw, form-multipart ]
     default: raw
     version_added: "2.0"
   method:
@@ -69,7 +71,7 @@ options:
   return_content:
     description:
       - Whether or not to return the body of the response as a "content" key in
-        the dictionary result.
+        the dictionary result no matter it succeeded or failed.
       - Independently of this option, if the reported Content-type is "application/json", then the JSON is
         always loaded into a key called C(json) in the dictionary results.
     type: bool
@@ -105,6 +107,7 @@ options:
     description:
       - A list of valid, numeric, HTTP status codes that signifies success of the request.
     type: list
+    elements: int
     default: [ 200 ]
   timeout:
     description:
@@ -146,8 +149,8 @@ options:
     version_added: '2.7'
   remote_src:
     description:
-      - If C(no), the module will search for src on originating/master machine.
-      - If C(yes) the module will use the C(src) path on the remote/target machine.
+      - If C(no), the module will search for the C(src) on the controller node.
+      - If C(yes), the module will search for the C(src) on the managed (remote) node.
     type: bool
     default: no
     version_added: '2.7'
@@ -166,19 +169,31 @@ options:
   unix_socket:
     description:
     - Path to Unix domain socket to use for connection
+    type: path
     version_added: '2.8'
   http_agent:
     description:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  use_gssapi:
+    description:
+      - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
+        authentication.
+      - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
+      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+      - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
+    type: bool
+    default: no
+    version_added: '2.11'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
-  - For Windows targets, use the M(win_uri) module instead.
+  - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 seealso:
-- module: get_url
-- module: win_uri
+- module: ansible.builtin.get_url
+- module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
 extends_documentation_fragment: files
@@ -231,6 +246,21 @@ EXAMPLES = r'''
     status_code: 302
   register: login
 
+- name: Upload a file via multipart/form-multipart
+  uri:
+    url: https://httpbin.org/post
+    method: POST
+    body_format: form-multipart
+    body:
+      file1:
+        filename: /bin/true
+        mime_type: application/octet-stream
+      file2:
+        content: text based file content
+        filename: fake.txt
+        mime_type: text/plain
+      text_form_field: value
+
 - name: Connect to website using a previously stored cookie
   uri:
     url: https://your.form.based.auth.example.com/dashboard.php
@@ -260,6 +290,20 @@ EXAMPLES = r'''
     method: POST
     src: /path/to/my/file.json
     remote_src: yes
+
+- name: Create workspaces in Log analytics Azure
+  uri:
+    url: https://www.mms.microsoft.com/Embedded/Api/ConfigDataSources/LogManagementData/Save
+    method: POST
+    body_format: json
+    status_code: [200, 202]
+    return_content: true
+    headers:
+      Content-Type: application/json
+      x-ms-client-workspace-path: /subscriptions/{{ sub_id }}/resourcegroups/{{ res_group }}/providers/microsoft.operationalinsights/workspaces/{{ w_spaces }}
+      x-ms-client-platform: ibiza
+      x-ms-client-auth-token: "{{ token_az }}"
+    body:
 
 - name: Pause play until a URL is reachable from this host
   uri:
@@ -366,14 +410,21 @@ import shutil
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.urls import fetch_url, prepare_multipart, url_argument_spec
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')
+
+# List of response key names we do not want sanitize_keys() to change.
+NO_MODIFY_KEYS = frozenset(
+    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped',
+     'changed', 'rc', 'stdout', 'stderr', 'elapsed', 'path', 'location',
+     'content_type')
+)
 
 
 def format_message(err, resp):
@@ -573,14 +624,14 @@ def main():
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
         body=dict(type='raw'),
-        body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
+        body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw', 'form-multipart']),
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
-        status_code=dict(type='list', default=[200]),
+        status_code=dict(type='list', elements='int', default=[200]),
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
@@ -594,7 +645,8 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead',
+                         version='2.13', collection_name='ansible.builtin')
 
     url = module.params['url']
     body = module.params['body']
@@ -626,6 +678,12 @@ def main():
                 module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    elif body_format == 'form-multipart':
+        try:
+            content_type, body = prepare_multipart(body)
+        except (TypeError, ValueError) as e:
+            module.fail_json(msg='failed to parse body as form-multipart: %s' % to_native(e))
+        dict_headers['Content-Type'] = content_type
 
     if creates is not None:
         # do not run the command if the line contains creates=filename
@@ -710,9 +768,15 @@ def main():
     else:
         u_content = to_text(content, encoding=content_encoding)
 
+    if module.no_log_values:
+        uresp = sanitize_keys(uresp, module.no_log_values, NO_MODIFY_KEYS)
+
     if resp['status'] not in status_code:
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
-        module.fail_json(content=u_content, **uresp)
+        if return_content:
+            module.fail_json(content=u_content, **uresp)
+        else:
+            module.fail_json(**uresp)
     elif return_content:
         module.exit_json(content=u_content, **uresp)
     else:

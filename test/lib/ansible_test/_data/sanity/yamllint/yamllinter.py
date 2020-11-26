@@ -6,6 +6,7 @@ __metaclass__ = type
 import ast
 import json
 import os
+import re
 import sys
 
 import yaml
@@ -30,10 +31,22 @@ def main():
 class TestConstructor(SafeConstructor):
     """Yaml Safe Constructor that knows about Ansible tags"""
 
+    def construct_yaml_unsafe(self, node):
+        try:
+            constructor = getattr(node, 'id', 'object')
+            if constructor is not None:
+                constructor = getattr(self, 'construct_%s' % constructor)
+        except AttributeError:
+            constructor = self.construct_object
+
+        value = constructor(node)
+
+        return value
+
 
 TestConstructor.add_constructor(
     u'!unsafe',
-    TestConstructor.construct_yaml_str)
+    TestConstructor.construct_yaml_unsafe)
 
 
 TestConstructor.add_constructor(
@@ -114,21 +127,26 @@ class YamlChecker:
         for key, value in docs.items():
             yaml_data = value['yaml']
             lineno = value['lineno']
+            fmt = value['fmt']
+
+            if fmt != 'yaml':
+                continue
 
             if yaml_data.startswith('\n'):
                 yaml_data = yaml_data[1:]
                 lineno += 1
 
-            self.check_parsable(path, yaml_data)
+            self.check_parsable(path, yaml_data, lineno)
 
             messages = list(linter.run(yaml_data, conf, path))
 
             self.messages += [self.result_to_message(r, path, lineno - 1, key) for r in messages]
 
-    def check_parsable(self, path, contents):
+    def check_parsable(self, path, contents, lineno=1):
         """
         :type path: str
         :type contents: str
+        :type lineno: int
         """
         try:
             yaml.load(contents, Loader=TestLoader)
@@ -136,7 +154,7 @@ class YamlChecker:
             self.messages += [{'code': 'unparsable-with-libyaml',
                                'message': '%s - %s' % (e.args[0], e.args[2]),
                                'path': path,
-                               'line': e.problem_mark.line + 1,
+                               'line': e.problem_mark.line + lineno,
                                'column': e.problem_mark.column + 1,
                                'level': 'error',
                                }]
@@ -176,6 +194,8 @@ class YamlChecker:
 
         docs = {}
 
+        fmt_re = re.compile(r'^# fmt:\s+(\S+)')
+
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
             for target in statement.targets:
@@ -185,10 +205,16 @@ class YamlChecker:
                 if doc_types and target.id not in doc_types:
                     continue
 
+                fmt_match = fmt_re.match(statement.value.s.lstrip())
+                fmt = 'yaml'
+                if fmt_match:
+                    fmt = fmt_match.group(1)
+
                 docs[target.id] = dict(
                     yaml=statement.value.s,
                     lineno=statement.lineno,
-                    end_lineno=statement.lineno + len(statement.value.s.splitlines())
+                    end_lineno=statement.lineno + len(statement.value.s.splitlines()),
+                    fmt=fmt.lower(),
                 )
 
         module_ast = self.parse_module(path, contents)

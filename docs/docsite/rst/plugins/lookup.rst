@@ -7,20 +7,12 @@ Lookup Plugins
    :local:
    :depth: 2
 
-Lookup plugins allow Ansible to access data from outside sources.
-This can include reading the filesystem in addition to contacting external datastores and services.
-Like all templating, these plugins are evaluated on the Ansible control machine, not on the target/remote.
-
-The data returned by a lookup plugin is made available using the standard templating system in Ansible,
-and are typically used to load variables or templates with information from those systems.
-
-Lookups are an Ansible-specific extension to the Jinja2 templating language.
+Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources.
 
 .. note::
    - Lookups are executed with a working directory relative to the role or play,
      as opposed to local tasks, which are executed relative the executed script.
-   - Since Ansible version 1.9, you can pass wantlist=True to lookups to use in Jinja2 template "for" loops.
-   - Lookup plugins are an advanced feature; to best leverage them you should have a good working knowledge of how to use Ansible plays.
+   - Pass ``wantlist=True`` to lookups to use in Jinja2 template "for" loops.
 
 .. warning::
    - Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
@@ -31,7 +23,7 @@ Lookups are an Ansible-specific extension to the Jinja2 templating language.
 Enabling lookup plugins
 -----------------------
 
-You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
+Ansible enables all lookup plugins it can find. You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside the ``plugins/lookup/`` directory of a collection you have installed, inside a standalone role, or in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_lookup:
@@ -39,22 +31,21 @@ You can activate a custom lookup by either dropping it into a ``lookup_plugins``
 Using lookup plugins
 --------------------
 
-Lookup plugins can be used anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module.
+You can use lookup plugins anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module.
 
 .. code-block:: YAML+Jinja
 
   vars:
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
-Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
-This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
+Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
 
   tasks:
     - name: count to 3
       debug: msg={{item}}
       with_items: [1, 2, 3]
 
-You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` and even each other to do some complex data generation and manipulation. For example::
+You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <playbooks_tests>` and even each other to do some complex data generation and manipulation. For example::
 
   tasks:
     - name: valid but useless and over complicated chained lookups and filters
@@ -66,16 +57,16 @@ You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` an
 
 .. versionadded:: 2.6
 
-You can now control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail. For example:
+You can control how errors behave in all lookup plugins by setting ``errors`` to ``ignore``, ``warn``, or ``strict``. The default setting is ``strict``, which causes the task to fail if the lookup returns an error. For example:
 
-To ignore errors::
+To ignore lookup errors::
 
-    - name: file doesnt exist, but i dont care .. file plugin itself warns anyways ...
-      debug: msg="{{ lookup('file', '/idontexist', errors='ignore') }}"
+    - name: if this file does not exist, I do not care .. file plugin itself warns anyway ...
+      debug: msg="{{ lookup('file', '/nosuchfile', errors='ignore') }}"
 
 .. code-block:: ansible-output
 
-    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+    [WARNING]: Unable to find '/nosuchfile' in expected paths (use -vvvvv to see paths)
 
     ok: [localhost] => {
         "msg": ""
@@ -84,43 +75,43 @@ To ignore errors::
 
 To get a warning instead of a failure::
 
-    - name: file doesnt exist, let me know, but continue
-      debug: msg="{{ lookup('file', '/idontexist', errors='warn') }}"
+    - name: if this file does not exist, let me know, but continue
+      debug: msg="{{ lookup('file', '/nosuchfile', errors='warn') }}"
 
 .. code-block:: ansible-output
 
-    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+    [WARNING]: Unable to find '/nosuchfile' in expected paths (use -vvvvv to see paths)
 
-    [WARNING]: An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /idontexist
+    [WARNING]: An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /nosuchfile
 
     ok: [localhost] => {
         "msg": ""
     }
 
 
-Fatal error (the default)::
+To get a fatal error (the default)::
 
-    - name: file doesnt exist, FAIL (this is the default)
-      debug: msg="{{ lookup('file', '/idontexist', errors='strict') }}"
+    - name: if this file does not exist, FAIL (this is the default)
+      debug: msg="{{ lookup('file', '/nosuchfile', errors='strict') }}"
 
 .. code-block:: ansible-output
 
-    [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
+    [WARNING]: Unable to find '/nosuchfile' in expected paths (use -vvvvv to see paths)
 
-    fatal: [localhost]: FAILED! => {"msg": "An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /idontexist"}
+    fatal: [localhost]: FAILED! => {"msg": "An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /nosuchfile"}
 
 
 .. _query:
 
-Invoking lookup plugins with ``query``
---------------------------------------
+Forcing lookups to return lists: ``query`` and ``wantlist=True``
+----------------------------------------------------------------
 
 .. versionadded:: 2.5
 
-In Ansible 2.5, a new jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list.
+In Ansible 2.5, a new Jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list.
 The default behavior of ``lookup`` is to return a string of comma separated values. ``lookup`` can be explicitly configured to return a list using ``wantlist=True``.
 
-This was done primarily to provide an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibility with other uses of ``lookup``.
+This feature provides an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibility with other uses of ``lookup``.
 
 The following examples are equivalent:
 
@@ -130,7 +121,7 @@ The following examples are equivalent:
 
     query('dict', dict_variable)
 
-As demonstrated above the behavior of ``wantlist=True`` is implicit when using ``query``.
+As demonstrated above, the behavior of ``wantlist=True`` is implicit when using ``query``.
 
 Additionally, ``q`` was introduced as a shortform of ``query``:
 
@@ -146,11 +137,6 @@ Plugin list
 
 You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. Use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples.
 
-
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    lookup/*
 
 .. seealso::
 

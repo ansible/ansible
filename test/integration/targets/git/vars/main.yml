@@ -43,6 +43,7 @@ known_host_files:
   - '/etc/ssh/ssh_known_hosts'
 git_version_supporting_depth: 1.9.1
 git_version_supporting_ls_remote: 1.7.5
+git_version_supporting_single_branch: 1.7.10
 # path to a SSH private key for use with github.com (tests skipped if undefined)
 # github_ssh_private_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
 git_gpg_testkey: |

@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -25,6 +22,7 @@ notes:
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
+    - It is highly recommended to add I(no_log=True) to task while handling sensitive information using this module.
 requirements:
 - debconf
 - debconf-utils
@@ -43,6 +41,7 @@ options:
   vtype:
     description:
       - The type of the value supplied.
+      - It is highly recommended to add I(no_log=True) to task while specifying I(vtype=password).
       - C(seen) was added in Ansible 2.2.
     type: str
     choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title ]
@@ -68,7 +67,7 @@ EXAMPLES = r'''
     value: fr_FR.UTF-8
     vtype: select
 
-- name: set to generate locales
+- name: Set to generate locales
   debconf:
     name: locales
     question: locales/locales_to_be_generated
@@ -85,6 +84,14 @@ EXAMPLES = r'''
 - name: Specifying package you can register/return the list of questions and current values
   debconf:
     name: tzdata
+
+- name: Pre-configure tripwire site passphrase
+  debconf:
+    name: tripwire
+    question: tripwire/site-passphrase
+    value: "{{ site_passphrase }}"
+    vtype: password
+  no_log: True
 '''
 
 from ansible.module_utils._text import to_text

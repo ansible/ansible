@@ -165,6 +165,18 @@
     - async_result is successful
     - async_result.warnings[0] is search('trailing junk after module output')
 
+- name: test stderr handling
+  async_test:
+    fail_mode: stderr
+  async: 30
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - async_result.stderr == "printed to stderr\n"
+
 # NOTE: This should report a warning that cannot be tested
 - name: test async properties on non-async task
   command: sleep 1
@@ -286,3 +298,11 @@
     {{ ansible_python_interpreter|default('/usr/bin/python') }} -c 'import os; os.fdopen(os.dup(0), "r")'
   async: 1
   poll: 1
+
+- name: run async poll callback test playbook
+  command: ansible-playbook {{ role_path }}/callback_test.yml
+  register: callback_output
+
+- assert:
+    that:
+      - '"ASYNC POLL on localhost" in callback_output.stdout'

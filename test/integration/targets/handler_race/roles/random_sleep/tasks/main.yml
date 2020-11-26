@@ -1,0 +1,8 @@
+---
+# tasks file for random_sleep
+- name: Generate sleep time
+  set_fact:
+    sleep_time: "{{ 30 | random }}"
+
+- name: Do random sleep
+  shell: sleep "{{ sleep_time }}"

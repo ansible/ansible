@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Add ``pytest < 6.0.0`` constraint for managed installations on Python 3.x to avoid issues with relative imports.

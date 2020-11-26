@@ -1,0 +1,4 @@
+bugfixes:
+- ansible-galaxy - Instead of assuming the first defined server is galaxy,
+  filter based on the servers that support the v1 API, and return the first
+  of those (https://github.com/ansible/ansible/issues/65440)

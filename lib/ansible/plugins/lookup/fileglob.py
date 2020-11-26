@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: fileglob
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: fileglob
+    author: Michael DeHaan
     version_added: "1.4"
     short_description: list files matching a pattern
     description:
@@ -19,7 +19,7 @@ DOCUMENTATION = """
     notes:
       - Patterns are only supported on files, not directory/paths.
       - Matching is against local system files on the Ansible controller.
-        To iterate a list of files on a remote node, use the M(find) module.
+        To iterate a list of files on a remote node, use the M(ansible.builtin.find) module.
       - Returns a string list of paths joined by commas, or an empty list if no files match. For a 'true list' pass C(wantlist=True) to the lookup.
 """
 
@@ -41,6 +41,8 @@ RETURN = """
   _list:
     description:
       - list of files
+    type: list
+    elements: path
 """
 
 import os

@@ -25,9 +25,6 @@ class Connection(ConnectionBase):
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)
 
-    def transport(self):
-        pass
-
     def _connect(self):
         pass
 

@@ -1,7 +1,0 @@
-minor_changes:
-- "Ansible modules created with ``add_file_common_args=True`` added a number of undocumented
-   arguments which were mostly there to ease implementing certain action plugins. The undocumented
-   arguments ``src``, ``follow``, ``force``, ``content``, ``backup``, ``remote_src``, ``regexp``,
-   ``delimiter``, and ``directory_mode`` are now no longer added. Modules relying on these options
-   to be added need to specify them by themselves. Also, action plugins relying on these extra
-   elements in ``FILE_COMMON_ARGUMENTS`` need to be adjusted."

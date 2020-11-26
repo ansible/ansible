@@ -52,7 +52,7 @@ Facts
 Static Loop Keyword
 -------------------
 
-- A simpler altenative to ``with_``, ``loop:`` only takes a list
+- A simpler alternative to ``with_``, ``loop:`` only takes a list
 - Remove complexity from loops, lookups are still available to users
 - Less confusing having a static directive vs a one that is dynamic depending on plugins loaded.
 
@@ -97,7 +97,7 @@ AWS
 
   - ec2_instance
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
-  - AWS Network Load Balancer support (NLB module, ASG support, etc)
+  - AWS Network Load Balancer support (NLB module, ASG support, and so on)
   - rds_instance
 
 Azure

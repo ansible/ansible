@@ -74,6 +74,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
         ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
+        ANSIBLE_CONTROLLER_PYTHON_WARNING='false',  # Don't show warnings in CI for old controller Python
         PYTHONPATH=get_ansible_python_path(),
         PAGER='/bin/cat',
         PATH=path,
@@ -107,7 +108,7 @@ def ansible_environment(args, color=True, ansible_config=None):
 
     if data_context().content.collection:
         env.update(dict(
-            ANSIBLE_COLLECTIONS_PATHS=data_context().content.collection.root,
+            ANSIBLE_COLLECTIONS_PATH=data_context().content.collection.root,
         ))
 
     if data_context().content.is_ansible:
@@ -127,7 +128,7 @@ def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
     collection_root = os.path.join(support_path, 'collections')
 
     env = dict(
-        ANSIBLE_COLLECTIONS_PATHS=collection_root,
+        ANSIBLE_COLLECTIONS_PATH=collection_root,
     )
 
     # provide private copies of plugins for integration tests
@@ -192,10 +193,12 @@ def get_ansible_python_path():  # type: () -> str
     return python_path
 
 
-def check_pyyaml(args, version):
+def check_pyyaml(args, version, required=True, quiet=False):
     """
     :type args: EnvironmentConfig
     :type version: str
+    :type required: bool
+    :type quiet: bool
     """
     try:
         return CHECK_YAML_VERSIONS[version]
@@ -206,15 +209,21 @@ def check_pyyaml(args, version):
     stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')],
                                  capture=True, always=True)
 
-    CHECK_YAML_VERSIONS[version] = result = json.loads(stdout)
+    result = json.loads(stdout)
 
     yaml = result['yaml']
     cloader = result['cloader']
 
-    if not yaml:
-        display.warning('PyYAML is not installed for interpreter: %s' % python)
-    elif not cloader:
-        display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
+    if yaml or required:
+        # results are cached only if pyyaml is required or present
+        # it is assumed that tests will not uninstall/re-install pyyaml -- if they do, those changes will go undetected
+        CHECK_YAML_VERSIONS[version] = result
+
+    if not quiet:
+        if not yaml and required:
+            display.warning('PyYAML is not installed for interpreter: %s' % python)
+        elif not cloader:
+            display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
 
     return result
 

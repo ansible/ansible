@@ -1,0 +1,2 @@
+minor_changes:
+  - "config - more types are now automatically coerced to string when ``type: str`` is used and the value is parsed as a different type"

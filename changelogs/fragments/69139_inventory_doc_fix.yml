@@ -1,2 +1,0 @@
-minor_changes:
-- Updated inventory script location for infoblox, ec2 and other after collection migration (https://github.com/ansible/ansible/issues/69139).

@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-doc - properly show plugin name when ``name:`` is used instead of ``<plugin_type>:`` (https://github.com/ansible/ansible/pull/71966)."

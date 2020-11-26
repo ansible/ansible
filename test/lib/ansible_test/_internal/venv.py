@@ -173,10 +173,9 @@ def run_virtualenv(args,  # type: EnvironmentConfig
                    path,  # type: str
                    ):  # type: (...) -> bool
     """Create a virtual environment using the 'virtualenv' module."""
-    cmd = [run_python, '-m', 'virtualenv']
-
-    if run_python != env_python:
-        cmd += ['--python', env_python]
+    # always specify --python to guarantee the desired interpreter is provided
+    # otherwise virtualenv may select a different interpreter than the one running virtualenv
+    cmd = [run_python, '-m', 'virtualenv', '--python', env_python]
 
     if system_site_packages:
         cmd.append('--system-site-packages')

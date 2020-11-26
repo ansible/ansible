@@ -6,7 +6,6 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: generator
-    plugin_type: inventory
     version_added: "2.6"
     short_description: Uses Jinja2 to construct hosts and groups from patterns
     description:

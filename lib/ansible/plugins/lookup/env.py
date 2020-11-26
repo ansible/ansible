@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: env
+    name: env
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "0.9"
     short_description: Read the value of environment variables

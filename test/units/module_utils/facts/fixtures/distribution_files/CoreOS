@@ -1,0 +1,10 @@
+NAME="Container Linux by CoreOS"
+ID=coreos
+VERSION=1911.5.0
+VERSION_ID=1911.5.0
+BUILD_ID=2018-12-15-2317
+PRETTY_NAME="Container Linux by CoreOS 1911.5.0 (Rhyolite)"
+ANSI_COLOR="38;5;75"
+HOME_URL="https://coreos.com/"
+BUG_REPORT_URL="https://issues.coreos.com"
+COREOS_BOARD="amd64-usr"

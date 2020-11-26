@@ -1,0 +1,5 @@
+# Ancestor is the first release after stable-2.9 was branched
+# Technically this should be 2.9.0b1, but that is not a valid
+# semantic version and the semver parser will complain.
+ancestor: 2.9.0
+releases: {}

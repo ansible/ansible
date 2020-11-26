@@ -1,2 +1,0 @@
-minor_changes:
-    - update ansible-test default-test-container from version 1.9.3 to 1.10.1

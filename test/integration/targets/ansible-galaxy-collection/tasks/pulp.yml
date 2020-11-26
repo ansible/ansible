@@ -1,0 +1,11 @@
+# These tasks configure pulp/pulp_ansible so that we can use the container
+# This will also reset pulp between iterations
+# A module is used to make the tests run quicker as this will send lots of API requests.
+- name: reset pulp content
+  reset_pulp:
+    pulp_api: '{{ pulp_api }}'
+    galaxy_ng_server: '{{ galaxy_ng_server }}'
+    url_username: '{{ pulp_user }}'
+    url_password: '{{ pulp_password }}'
+    repositories: '{{ pulp_repositories }}'
+    namespaces: '{{ collection_list|map(attribute="namespace")|unique + publish_namespaces }}'

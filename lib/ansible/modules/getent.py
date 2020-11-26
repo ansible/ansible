@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -24,20 +21,24 @@ options:
         description:
             - The name of a getent database supported by the target system (passwd, group,
               hosts, etc).
+        type: str
         required: True
     key:
         description:
             - Key from which to return values from the specified database, otherwise the
               full contents are returned.
+        type: str
         default: ''
     service:
         description:
             - Override all databases with the specified service
             - The underlying system must support the service flag which is not always available.
+        type: str
         version_added: "2.9"
     split:
         description:
             - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
+        type: str
     fail_key:
         description:
             - If a supplied key is missing this will make the task fail if C(yes).
@@ -51,36 +52,36 @@ author:
 '''
 
 EXAMPLES = '''
-# get root user info
-- getent:
+- name: Get root user info
+  getent:
     database: passwd
     key: root
 - debug:
     var: getent_passwd
 
-# get all groups
-- getent:
+- name: Get all groups
+  getent:
     database: group
     split: ':'
 - debug:
     var: getent_group
 
-# get all hosts, split by tab
-- getent:
+- name: Get all hosts, split by tab
+  getent:
     database: hosts
 - debug:
     var: getent_hosts
 
-# get http service info, no error if missing
-- getent:
+- name: Get http service info, no error if missing
+  getent:
     database: services
     key: http
     fail_key: False
 - debug:
     var: getent_services
 
-# get user password hash (requires sudo/root)
-- getent:
+- name: Get user password hash (requires sudo/root)
+  getent:
     database: shadow
     key: www-data
     split: ':'

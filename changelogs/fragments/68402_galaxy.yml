@@ -1,0 +1,2 @@
+minor_changes:
+- galaxy - add documentation about galaxy parameters in examples/ansible.cfg (https://github.com/ansible/ansible/issues/68402).

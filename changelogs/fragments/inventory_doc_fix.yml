@@ -1,2 +1,0 @@
-minor_changes:
-- Updated inventory script location for EC2, Openstack, and Cobbler after collection (https://github.com/ansible/ansible/issues/68897).

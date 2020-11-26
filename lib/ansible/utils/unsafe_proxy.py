@@ -57,6 +57,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Set
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types, binary_type, text_type
+from ansible.utils.native_jinja import NativeJinjaText
 
 
 __all__ = ['AnsibleUnsafe', 'wrap_var']
@@ -78,12 +79,16 @@ class AnsibleUnsafeText(text_type, AnsibleUnsafe):
         return AnsibleUnsafeBytes(super(AnsibleUnsafeText, self).encode(*args, **kwargs))
 
 
+class NativeJinjaUnsafeText(NativeJinjaText, AnsibleUnsafeText):
+    pass
+
+
 class UnsafeProxy(object):
     def __new__(cls, obj, *args, **kwargs):
         from ansible.utils.display import Display
         Display().deprecated(
             'UnsafeProxy is being deprecated. Use wrap_var or AnsibleUnsafeBytes/AnsibleUnsafeText directly instead',
-            version='2.13'
+            version='2.13', collection_name='ansible.builtin'
         )
         # In our usage we should only receive unicode strings.
         # This conditional and conversion exists to sanity check the values
@@ -123,6 +128,8 @@ def wrap_var(v):
         v = _wrap_set(v)
     elif is_sequence(v):
         v = _wrap_sequence(v)
+    elif isinstance(v, NativeJinjaText):
+        v = NativeJinjaUnsafeText(v)
     elif isinstance(v, binary_type):
         v = AnsibleUnsafeBytes(v)
     elif isinstance(v, text_type):

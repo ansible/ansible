@@ -1,2 +1,0 @@
-bugfixes:
-  - include_vars - fix stack trace when passing ``dirs`` in an ad-hoc command (https://github.com/ansible/ansible/issues/62633)

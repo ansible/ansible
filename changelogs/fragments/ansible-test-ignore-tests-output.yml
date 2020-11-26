@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly ignores the ``tests/output//`` directory when not using git

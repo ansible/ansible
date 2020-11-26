@@ -6,8 +6,6 @@
 #   make clean ---------------- clean up
 #   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
-#   make srpm ----------------- produce a SRPM
-#   make rpm  ----------------- produce RPMs
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
@@ -16,7 +14,7 @@
 ########################################################
 # variable section
 
-NAME = ansible
+NAME = ansible-core
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
 SDIST_DIR ?= 'dist'
@@ -35,19 +33,11 @@ endif
 PYTHON=python
 GENERATE_CLI = hacking/build-ansible.py generate-man
 
-SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
-
 # fetch version from project release.py as single source-of-truth
 VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --raw || echo error)
 ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
 endif
-
-MAJOR_VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --majorversion)
-CODENAME := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --codename)
-
-# if a specific release was not requested, set to 1 (RPMs have "fancier" logic for this further down)
-RELEASE ?= 1
 
 # Get the branch information from git
 ifneq ($(shell which git),)
@@ -97,32 +87,6 @@ PBUILDER_ARCH ?= amd64
 PBUILDER_CACHE_DIR = /var/cache/pbuilder
 PBUILDER_BIN ?= pbuilder
 PBUILDER_OPTS ?= --debootstrapopts --variant=buildd --architecture $(PBUILDER_ARCH) --debbuildopts -b
-
-# RPM build parameters
-RPMSPECDIR= packaging/rpm
-RPMSPEC = $(RPMSPECDIR)/ansible.spec
-RPMDIST = $(shell rpm --eval '%{?dist}')
-
-ifneq ($(OFFICIAL),yes)
-    RPMRELEASE = 100.git$(DATE)$(GITINFO)
-endif
-ifeq ($(PUBLISH),nightly)
-    # https://fedoraproject.org/wiki/Packaging:Versioning#Snapshots
-    RPMRELEASE = $(RELEASE).$(DATE)git.$(GIT_HASH)
-endif
-
-RPMVERSION ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --baseversion)
-RPMRELEASE ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --rpmrelease)
-RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)$(REPOTAG)"
-
-# MOCK build parameters
-MOCK_BIN ?= mock
-MOCK_CFG ?=
-
-# dynamically add repotag define only if specified
-ifneq ($(REPOTAG),)
-    EXTRA_RPM_DEFINES += --define "repotag $(REPOTAG)"
-endif
 
 # ansible-test parameters
 ANSIBLE_TEST ?= bin/ansible-test
@@ -189,8 +153,8 @@ clean:
 	rm -f test/units/.coverage*
 	rm -rf test/results/*/*
 	find test/ -type f -name '*.retry' -delete
-	@echo "Cleaning up RPM building stuff"
-	rm -rf MANIFEST rpm-build
+	@echo "Cleaning up symlink cache"
+	rm -f SYMLINK_CACHE.json
 	@echo "Cleaning up Debian building stuff"
 	rm -rf debian
 	rm -rf deb-build
@@ -233,77 +197,7 @@ sdist_upload: clean docs
 
 .PHONY: changelog
 changelog:
-	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
-
-.PHONY: rpmcommon
-rpmcommon: sdist
-	@mkdir -p rpm-build
-	@cp dist/*.gz rpm-build/
-	@cp $(RPMSPEC) rpm-build/$(NAME).spec
-
-.PHONY: mock-srpm
-mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
-	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/ \
-	--define "rpmversion $(RPMVERSION)" \
-	--define "upstream_version $(VERSION)" \
-	--define "rpmrelease $(RPMRELEASE)" \
-	$(EXTRA_RPM_DEFINES)
-	@echo "#############################################"
-	@echo "Ansible SRPM is built:"
-	@echo rpm-build/*.src.rpm
-	@echo "#############################################"
-
-.PHONY: mock-rpm
-mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
-	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --rebuild rpm-build/$(NAME)-*.src.rpm \
-	--define "rpmversion $(RPMVERSION)" \
-	--define "upstream_version $(VERSION)" \
-	--define "rpmrelease $(RPMRELEASE)" \
-	$(EXTRA_RPM_DEFINES)
-	@echo "#############################################"
-	@echo "Ansible RPM is built:"
-	@echo rpm-build/*.noarch.rpm
-	@echo "#############################################"
-
-.PHONY: srpm
-srpm: rpmcommon
-	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
-	--define "_builddir %{_topdir}" \
-	--define "_rpmdir %{_topdir}" \
-	--define "_srcrpmdir %{_topdir}" \
-	--define "_specdir $(RPMSPECDIR)" \
-	--define "_sourcedir %{_topdir}" \
-	--define "upstream_version $(VERSION)" \
-	--define "rpmversion $(RPMVERSION)" \
-	--define "rpmrelease $(RPMRELEASE)" \
-	$(EXTRA_RPM_DEFINES) \
-	-bs rpm-build/$(NAME).spec
-	@rm -f rpm-build/$(NAME).spec
-	@echo "#############################################"
-	@echo "Ansible SRPM is built:"
-	@echo "    rpm-build/$(RPMNVR).src.rpm"
-	@echo "#############################################"
-
-.PHONY: rpm
-rpm: rpmcommon
-	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
-	--define "_builddir %{_topdir}" \
-	--define "_rpmdir %{_topdir}" \
-	--define "_srcrpmdir %{_topdir}" \
-	--define "_specdir $(RPMSPECDIR)" \
-	--define "_sourcedir %{_topdir}" \
-	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
-	--define "__python `which $(PYTHON)`" \
-	--define "upstream_version $(VERSION)" \
-	--define "rpmversion $(RPMVERSION)" \
-	--define "rpmrelease $(RPMRELEASE)" \
-	$(EXTRA_RPM_DEFINES) \
-	-ba rpm-build/$(NAME).spec
-	@rm -f rpm-build/$(NAME).spec
-	@echo "#############################################"
-	@echo "Ansible RPM is built:"
-	@echo "    rpm-build/$(RPMNVR).noarch.rpm"
-	@echo "#############################################"
+	PYTHONPATH=./lib antsibull-changelog release -vv --use-ansible-doc && PYTHONPATH=./lib antsibull-changelog generate -vv --use-ansible-doc
 
 .PHONY: debian
 debian: sdist
@@ -376,10 +270,14 @@ epub:
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
 
+.PHONY: linkcheckdocs
+linkcheckdocs:
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) linkcheckdocs)
+
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
-	PYTHONPATH=./lib $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
+	$(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 
 docs: generate_rst

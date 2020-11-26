@@ -205,7 +205,7 @@ popd # ${galaxy_testdir}
 # https://github.com/ansible/ansible/issues/60167#issuecomment-585460706
 
 f_ansible_galaxy_status \
-    "list specific role not in the first path in ANSIBLE_ROLES_PATHS"
+    "list specific role not in the first path in ANSIBLE_ROLES_PATH"
 
 role_testdir=$(mktemp -d)
 pushd "${role_testdir}"
@@ -225,6 +225,18 @@ rm -fr "${role_testdir}"
 
 
 # Galaxy role info tests
+
+# Get info about role that is not installed
+
+f_ansible_galaxy_status "role info"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+    ansible-galaxy role info samdoran.fish | tee out.txt
+
+    [[ $(grep -c 'not found' out.txt ) -eq 0 ]]
+    [[ $(grep -c 'Role:.*samdoran\.fish' out.txt ) -eq 1 ]]
+
+popd # ${galaxy_testdir}
 
 f_ansible_galaxy_status \
     "role info non-existant role"
@@ -260,6 +272,13 @@ f_ansible_galaxy_status \
     sed -i.bak '/^[[:space:]]\{1,\}description: Description in galaxy_info/d' ./testroles/testdesc/meta/main.yml
     ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
     grep 'description: Top level' out.txt
+
+    # test multiple role listing
+    ansible-galaxy role init otherrole --init-path ./testroles
+    ansible-galaxy role info -p ./testroles --offline testdesc otherrole | tee out.txt
+    grep 'Role: testdesc' out.txt
+    grep 'Role: otherrole' out.txt
+
 
 popd # ${role_testdir}
 rm -fr "${role_testdir}"
@@ -336,14 +355,18 @@ sed -i -e 's#^version:.*#version: 2.5.0#' ansible_test/zoo/galaxy.yml
 ansible-galaxy collection build ansible_test/zoo
 ansible-galaxy collection install ansible_test-zoo-2.5.0.tar.gz -p ./local
 
-export ANSIBLE_COLLECTIONS_PATHS=~/.ansible/collections:${galaxy_testdir}/local
+# Test listing a collection that contains a galaxy.yml
+ansible-galaxy collection init "ansible_test.development"
+mv ./ansible_test/development "${galaxy_testdir}/local/ansible_collections/ansible_test/"
+
+export ANSIBLE_COLLECTIONS_PATH=~/.ansible/collections:${galaxy_testdir}/local
 
 f_ansible_galaxy_status \
     "collection list all collections"
 
     ansible-galaxy collection list -p ./install | tee out.txt
 
-    [[ $(grep -c ansible_test out.txt) -eq 4 ]]
+    [[ $(grep -c ansible_test out.txt) -eq 5 ]]
 
 f_ansible_galaxy_status \
     "collection list specific collection"
@@ -351,6 +374,14 @@ f_ansible_galaxy_status \
     ansible-galaxy collection list -p ./install ansible_test.airport | tee out.txt
 
     [[ $(grep -c 'ansible_test\.airport' out.txt) -eq 1 ]]
+
+f_ansible_galaxy_status \
+    "collection list specific collection which contains galaxy.yml"
+
+    ansible-galaxy collection list -p ./install ansible_test.development 2>&1 | tee out.txt
+
+    [[ $(grep -c 'ansible_test\.development' out.txt) -eq 1 ]]
+    [[ $(grep -c 'WARNING' out.txt) -eq 0 ]]
 
 f_ansible_galaxy_status \
     "collection list specific collection found in multiple places"
@@ -389,7 +420,7 @@ f_ansible_galaxy_status \
 
     rmdir emptydir
 
-unset ANSIBLE_COLLECTIONS_PATHS
+unset ANSIBLE_COLLECTIONS_PATH
 
 ## end ansible-galaxy collection list
 

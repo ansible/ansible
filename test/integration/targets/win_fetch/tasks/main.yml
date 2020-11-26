@@ -187,3 +187,26 @@
       # Doesn't fail anymore, only returns a message.
       - "fetch_dir is not changed"
       - "fetch_dir.msg"
+
+- name: create file with special characters
+  raw: Set-Content -LiteralPath '{{ remote_tmp_dir }}\abc$not var''quote‘‘' -Value 'abc'
+
+- name: fetch file with special characters
+  fetch:
+    src: '{{ remote_tmp_dir }}\abc$not var''quote‘'
+    dest: '{{ host_output_dir }}/'
+    flat: yes
+  register: fetch_special_file
+
+- name: get content of fetched file
+  command: cat {{ (host_output_dir ~ "/abc$not var'quote‘") | quote }}
+  register: fetch_special_file_actual
+  delegate_to: localhost
+
+- name: assert fetch file with special characters
+  assert:
+    that:
+    - fetch_special_file is changed
+    - fetch_special_file.checksum == '34d4150adc3347f1dd8ce19fdf65b74d971ab602'
+    - fetch_special_file.dest == host_output_dir + "/abc$not var'quote‘"
+    - fetch_special_file_actual.stdout == 'abc'

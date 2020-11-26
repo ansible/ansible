@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,7 +16,7 @@ short_description:  Manage services
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
-    - For Windows targets, use the M(win_service) module instead.
+    - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
         description:
@@ -52,6 +49,7 @@ options:
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.
         - If the string is found, the service will be assumed to be started.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         version_added: "0.7"
     enabled:
@@ -63,11 +61,13 @@ options:
         description:
         - For OpenRC init scripts (e.g. Gentoo) only.
         - The runlevel that this service belongs to.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         default: default
     arguments:
         description:
         - Additional arguments provided on the command line.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         aliases: [ args ]
     use:
@@ -80,7 +80,7 @@ options:
 notes:
     - For AIX, group subsystem names can be used.
 seealso:
-- module: win_service
+- module: ansible.windows.win_service
 author:
     - Ansible Core Team
     - Michael DeHaan

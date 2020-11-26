@@ -51,6 +51,14 @@ from ..data import (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
+
+    def __init__(self):
+        super(PylintTest, self).__init__()
+        self.optional_error_codes.update([
+            'ansible-deprecated-date',
+            'too-complex',
+        ])
+
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
@@ -218,7 +226,7 @@ class PylintTest(SanitySingleVersion):
             config = dict()
 
         disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
-        load_plugins = set(plugin_names) - disable_plugins
+        load_plugins = set(plugin_names + ['pylint.extensions.mccabe']) - disable_plugins
 
         cmd = [
             python,
@@ -226,18 +234,17 @@ class PylintTest(SanitySingleVersion):
             '--jobs', '0',
             '--reports', 'n',
             '--max-line-length', '160',
+            '--max-complexity', '20',
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(load_plugins),
         ] + paths
 
         if data_context().content.collection:
-            cmd.extend(['--is-collection', 'yes'])
+            cmd.extend(['--collection-name', data_context().content.collection.full_name])
 
             if collection_detail and collection_detail.version:
                 cmd.extend(['--collection-version', collection_detail.version])
-        else:
-            cmd.extend(['--enable', 'ansible-deprecated-version'])
 
         append_python_path = [plugin_dir]
 

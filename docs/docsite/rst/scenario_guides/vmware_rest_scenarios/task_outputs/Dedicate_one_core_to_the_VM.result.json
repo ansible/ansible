@@ -1,0 +1,10 @@
+{
+    "value": {
+        "hot_remove_enabled": false,
+        "count": 1,
+        "hot_add_enabled": false,
+        "cores_per_socket": 1
+    },
+    "id": null,
+    "changed": false
+}

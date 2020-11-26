@@ -1,0 +1,2 @@
+minor_changes:
+  - Allow an attribute to be passed to the min and max filters with Jinja 2.10+

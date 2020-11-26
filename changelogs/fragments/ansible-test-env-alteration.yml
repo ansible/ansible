@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly uses a fresh copy of environment variables for each command invocation to avoid mixing vars between commands

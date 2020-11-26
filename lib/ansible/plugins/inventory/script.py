@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: script
+    name: script
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
     options:
@@ -97,7 +97,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             display.deprecated(
                 msg="The 'cache' option is deprecated for the script inventory plugin. "
                 "External scripts implement their own caching and this option has never been used",
-                version="2.12"
+                version="2.12", collection_name='ansible.builtin'
             )
 
         # Support inventory scripts that are not prefixed with some

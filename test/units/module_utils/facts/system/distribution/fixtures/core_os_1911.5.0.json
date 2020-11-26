@@ -1,0 +1,23 @@
+{
+    "name": "Core OS",
+    "input": {
+        "/usr/lib/os-release": "NAME=\"Container Linux by CoreOS\"\nID=coreos\nVERSION=1911.5.0\nVERSION_ID=1911.5.0\nBUILD_ID=2018-12-15-2317\nPRETTY_NAME=\"Container Linux by CoreOS 1911.5.0 (Rhyolite)\"\nANSI_COLOR=\"38;5;75\"\nHOME_URL=\"https://coreos.com/\"\nBUG_REPORT_URL=\"https://issues.coreos.com\"\nCOREOS_BOARD=\"amd64-usr\"",
+        "/etc/lsb-release": "DISTRIB_ID=CoreOS\nDISTRIB_RELEASE=1911.5.0\nDISTRIB_CODENAME=\"Rhyolite\"\nDISTRIB_DESCRIPTION=\"CoreOS 1911.5.0 (Rhyolite)\""
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "Rhyolite",
+        "id": "coreos",
+        "name": "CoreOS",
+        "version": "1911.5.0",
+        "version_best": "1911.5.0",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "platform.release": "",
+    "result": {
+        "distribution": "Coreos",
+        "distribution_major_version": "1911",
+        "distribution_version": "1911.5.0"
+    }
+}

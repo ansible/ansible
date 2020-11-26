@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    cache: memory
+    name: memory
     short_description: RAM backed, non persistent
     description:
         - RAM backed cache that is not persistent.

@@ -9,9 +9,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -27,10 +24,12 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
+      type: str
       required: true
     state:
       description:
         - If the key will be imported or removed from the rpm db.
+      type: str
       default: present
       choices: [ absent, present ]
     validate_certs:
@@ -48,23 +47,23 @@ options:
 '''
 
 EXAMPLES = '''
-# Example action to import a key from a url
-- rpm_key:
+- name: Import a key from a url
+  rpm_key:
     state: present
     key: http://apt.sw.be/RPM-GPG-KEY.dag.txt
 
-# Example action to import a key from a file
-- rpm_key:
+- name: Import a key from a file
+  rpm_key:
     state: present
     key: /path/to/key.gpg
 
-# Example action to ensure a key is not present in the db
-- rpm_key:
+- name: Ensure a key is not present in the db
+  rpm_key:
     state: absent
     key: DEADB33F
 
-# Verify the key, using a fingerprint, before import
-- rpm_key:
+- name: Verify the key, using a fingerprint, before import
+  rpm_key:
     key: /path/to/RPM-GPG-KEY.dag.txt
     fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
 '''

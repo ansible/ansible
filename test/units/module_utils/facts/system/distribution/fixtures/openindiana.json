@@ -1,0 +1,24 @@
+{
+    "name": "OpenIndiana",
+    "uname_v": "oi_151a9",
+    "result": {
+        "distribution_release": "OpenIndiana Development oi_151.1.9 X86 (powered by illumos)",
+        "distribution": "OpenIndiana",
+        "os_family": "Solaris",
+        "distribution_version": "oi_151a9"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "             OpenIndiana Development oi_151.1.9 X86 (powered by illumos)\n        Copyright 2011 Oracle and/or its affiliates. All rights reserved.\n                        Use is subject to license terms.\n                           Assembled 17 January 2014\n"
+    },
+    "platform.system": "SunOS"
+}

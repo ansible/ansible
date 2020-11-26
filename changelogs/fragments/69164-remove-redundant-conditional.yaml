@@ -1,2 +1,0 @@
-bugfixes:
-- paramiko_ssh - Removed redundant conditional statement in ``_parse_proxy_command`` that always evaluated to True.

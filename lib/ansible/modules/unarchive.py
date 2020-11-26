@@ -11,9 +11,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -24,15 +21,15 @@ description:
      - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
-     - If checksum validation is desired, use M(get_url) or M(uri) instead to fetch the file and set C(remote_src=yes).
-     - For Windows targets, use the M(win_unzip) module instead.
+     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set C(remote_src=yes).
+     - For Windows targets, use the M(community.windows.win_unzip) module instead.
 options:
   src:
     description:
       - If C(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If C(remote_src=yes), path on the
         target server to existing archive file to unpack.
       - If C(remote_src=yes) and C(src) contains C(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
-        simple cases, for full download support use the M(get_url) module.
+        simple cases, for full download support use the M(ansible.builtin.get_url) module.
     type: path
     required: true
   dest:
@@ -42,7 +39,7 @@ options:
     required: true
   copy:
     description:
-      - If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine.
+      - If true, the file is copied from local controller to the managed (remote) node, otherwise, the plugin will look for src archive on the managed machine.
       - This option has been deprecated in favor of C(remote_src).
       - This option is mutually exclusive with C(remote_src).
     type: bool
@@ -62,6 +59,7 @@ options:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
     type: list
+    elements: str
     version_added: "2.1"
   keep_newer:
     description:
@@ -75,6 +73,7 @@ options:
       - Each space-separated command-line option should be a new element of the array. See examples.
       - Command-line options with multiple elements must use multiple lines in the array, one for each element.
     type: list
+    elements: str
     default: ""
     version_added: "2.1"
   remote_src:
@@ -109,9 +108,9 @@ notes:
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
 seealso:
-- module: archive
-- module: iso_extract
-- module: win_unzip
+- module: community.general.archive
+- module: community.general.iso_extract
+- module: community.windows.win_unzip
 author: Michael DeHaan
 '''
 
@@ -140,6 +139,66 @@ EXAMPLES = r'''
     extra_opts:
     - --transform
     - s/^xxx/yyy/
+'''
+
+RETURN = r'''
+dest:
+  description: Path to the destination directory.
+  returned: always
+  type: str
+  sample: /opt/software
+files:
+  description: List of all the files in the archive.
+  returned: When I(list_files) is True
+  type: list
+  sample: '["file1", "file2"]'
+gid:
+  description: Numerical ID of the group that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
+group:
+  description: Name of the group that owns the destination directory.
+  returned: always
+  type: str
+  sample: "librarians"
+handler:
+  description: Archive software handler used to extract and decompress the archive.
+  returned: always
+  type: str
+  sample: "TgzArchive"
+mode:
+  description: String that represents the octal permissions of the destination directory.
+  returned: always
+  type: str
+  sample: "0755"
+owner:
+  description: Name of the user that owns the destination directory.
+  returned: always
+  type: str
+  sample: "paul"
+size:
+  description: The size of destination directory in bytes. Does not include the size of files or subdirectories contained within.
+  returned: always
+  type: int
+  sample: 36
+src:
+  description:
+    - The source archive's path.
+    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+  returned: always
+  type: str
+  sample: "/home/paul/test.tar.gz"
+state:
+  description: State of the destination. Effectively always "directory".
+  returned: always
+  type: str
+  sample: "directory"
+uid:
+  description: Numerical ID of the user that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
 '''
 
 import binascii
@@ -223,7 +282,7 @@ class ZipArchive(object):
 #                    mode += 2 ** (9 + j)
         return (mode & ~umask)
 
-    def _legacy_file_list(self, force_refresh=False):
+    def _legacy_file_list(self):
         unzip_bin = self.module.get_bin_path('unzip')
         if not unzip_bin:
             raise UnarchiveError('Python Zipfile cannot read %s and unzip not found' % self.src)
@@ -261,8 +320,8 @@ class ZipArchive(object):
         return self._infodict[path]
 
     @property
-    def files_in_archive(self, force_refresh=False):
-        if self._files_in_archive and not force_refresh:
+    def files_in_archive(self):
+        if self._files_in_archive:
             return self._files_in_archive
 
         self._files_in_archive = []
@@ -272,7 +331,7 @@ class ZipArchive(object):
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
-                self._legacy_file_list(force_refresh)
+                self._legacy_file_list()
             else:
                 raise
         else:
@@ -333,8 +392,8 @@ class ZipArchive(object):
                 tpw = pwd.getpwnam(self.file_args['owner'])
             except KeyError:
                 try:
-                    tpw = pwd.getpwuid(self.file_args['owner'])
-                except (TypeError, KeyError):
+                    tpw = pwd.getpwuid(int(self.file_args['owner']))
+                except (TypeError, KeyError, ValueError):
                     tpw = pwd.getpwuid(run_uid)
             fut_owner = tpw.pw_name
             fut_uid = tpw.pw_uid
@@ -352,7 +411,9 @@ class ZipArchive(object):
                 tgr = grp.getgrnam(self.file_args['group'])
             except (ValueError, KeyError):
                 try:
-                    tgr = grp.getgrgid(self.file_args['group'])
+                    # no need to check isdigit() explicitly here, if we fail to
+                    # parse, the ValueError will be caught.
+                    tgr = grp.getgrgid(int(self.file_args['group']))
                 except (KeyError, ValueError, OverflowError):
                     tgr = grp.getgrgid(run_gid)
             fut_group = tgr.gr_name
@@ -567,7 +628,7 @@ class ZipArchive(object):
             except (KeyError, ValueError, OverflowError):
                 gid = st.st_gid
 
-            if run_uid != 0 and fut_gid not in groups:
+            if run_uid != 0 and (fut_group != run_group or fut_gid != run_gid) and fut_gid not in groups:
                 raise UnarchiveError('Cannot change group ownership of %s to %s, as user %s' % (path, fut_group, run_owner))
 
             if group and group != fut_group:
@@ -653,8 +714,8 @@ class TgzArchive(object):
         return tar_type
 
     @property
-    def files_in_archive(self, force_refresh=False):
-        if self._files_in_archive and not force_refresh:
+    def files_in_archive(self):
+        if self._files_in_archive:
             return self._files_in_archive
 
         cmd = [self.cmd_path, '--list', '-C', self.b_dest]
@@ -825,8 +886,8 @@ def main():
             creates=dict(type='path'),
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
-            exclude=dict(type='list', default=[]),
-            extra_opts=dict(type='list', default=[]),
+            exclude=dict(type='list', elements='str', default=[]),
+            extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
         ),
         add_file_common_args=True,

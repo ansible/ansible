@@ -51,7 +51,7 @@ ansible \
     PYTHONPATH/site-packages ===
 # This is done by injecting a module with the same FQCN
 # into another collection root.
-ANSIBLE_COLLECTIONS_PATHS="${PWD}/ansible-collection-python-dist-foo" \
+ANSIBLE_COLLECTIONS_PATH="${PWD}/ansible-collection-python-dist-foo" \
 PYTHONPATH="${PWD}/ansible-collection-python-dist-boo:$PYTHONPATH" \
 ansible \
     -m python.dist.boo \

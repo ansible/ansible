@@ -1,3 +1,0 @@
-bugfixes:
-- Role Installation - Ensure that a role containing files with non-ascii characters can be installed
-  (https://github.com/ansible/ansible/issues/69133)

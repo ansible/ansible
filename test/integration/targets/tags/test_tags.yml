@@ -31,3 +31,6 @@
     - name: Task_with_templated_tags
       debug: msg=templated
       tags: "{{ the_tags }}"
+    - name: Task_with_meta_tags
+      meta: reset_connection
+      tags: meta_tag

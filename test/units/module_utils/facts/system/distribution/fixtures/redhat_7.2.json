@@ -1,0 +1,25 @@
+{
+    "name": "RedHat 7.2",
+    "platform.dist": ["redhat", "7.2", "Maipo"],
+    "distro": {
+        "codename": "Maipo",
+        "id": "rhel",
+        "name": "RedHat Enterprise Linux",
+        "version": "7.2",
+        "version_best": "7.2",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
+        "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.2 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVERSION_ID=\"7.2\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.2 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.2:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.2\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.2\"\n",
+        "/etc/system-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n"
+    },
+    "result": {
+        "distribution_release": "Maipo",
+        "distribution": "RedHat",
+        "distribution_major_version": "7",
+        "os_family": "RedHat",
+        "distribution_version": "7.2"
+    }
+}

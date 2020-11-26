@@ -1,0 +1,29 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - debug:
+        var: inventory_hostname
+
+    - name: Test included tasks inherit from block
+      check_mode: true
+      block:
+        - ansible.builtin.include_tasks: grandchild/block_include_tasks.yml
+
+    - debug:
+        var: block_include_result
+
+    - assert:
+        that:
+          - block_include_result is skipped
+
+    - name: Test included tasks inherit deeply from import
+      ansible.builtin.import_tasks: grandchild/import.yml
+      check_mode: true
+
+    - debug:
+        var: import_include_include_result
+
+    - assert:
+        that:
+          - import_include_include_result is skipped

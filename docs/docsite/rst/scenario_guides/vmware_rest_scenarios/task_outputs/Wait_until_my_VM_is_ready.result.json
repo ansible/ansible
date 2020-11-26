@@ -1,0 +1,13 @@
+{
+    "value": {
+        "auto_update_supported": false,
+        "upgrade_policy": "MANUAL",
+        "install_attempt_count": 0,
+        "version_status": "UNMANAGED",
+        "version_number": 10346,
+        "run_state": "RUNNING",
+        "version": "10346",
+        "install_type": "OPEN_VM_TOOLS"
+    },
+    "changed": false
+}

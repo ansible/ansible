@@ -1,2 +1,0 @@
-bugfixes:
-  - core - replace a compatibility import of pycompat24.literal_eval with ast.literal_eval.

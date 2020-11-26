@@ -24,9 +24,11 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 * `Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
 * `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://ansible.meetup.com/>`_
 * `Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions, and general user discussion.
-* `Molecule List <https://groups.google.com/forum/#!forum/molecule-users>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
+* `Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
 
 To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``
+
+.. _communication_irc:
 
 IRC channels
 ============
@@ -34,6 +36,12 @@ IRC channels
 Ansible has several IRC channels on `Freenode <https://freenode.net/>`_.
 
 Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_ for instructions.
+
+To find all ``ansible`` specific channels on a freenode network, use the following command in your IRC client::
+
+   /msg alis LIST #ansible* -min 5
+
+as described in `freenode docs <https://freenode.net/kb/answer/findingchannels>`_.
 
 General channels
 ----------------
@@ -76,7 +84,7 @@ Regional and Language-specific channels
 ---------------------------------------
 
 - ``#ansible-es`` - Channel for Spanish speaking Ansible community.
-- ``#ansibleu`` - Channel for the European Ansible Community.
+- ``#ansible-eu`` - Channel for the European Ansible Community.
 - ``#ansible-fr`` - Channel for French speaking Ansible community.
 - ``#ansiblezh`` - Channel for Zurich/Swiss Ansible community.
 
@@ -93,3 +101,14 @@ Red Hat Ansible `Tower <https://www.ansible.com/products/tower>`_ is a UI, Serve
 The Red Hat Ansible Automation subscription contains support for Ansible, Ansible Tower, Ansible Automation for Networking, and more.
 
 If you have a question about Ansible Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC channel or the general project mailing list.
+
+The Bullhorn
+============
+
+**The Bullhorn** is our newsletter for the Ansible developer community. 
+If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues.
+
+Read past issues `here <https://github.com/ansible/community/wiki/News>`_.
+
+`Subscribe <http://eepurl.com/gZmiEP>`_ to receive it.
+

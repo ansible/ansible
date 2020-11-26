@@ -11,10 +11,14 @@
   retries: 10
   delay: 2
 
+# They broke their .repo file, so we set it up ourselves
 - name: Set-up repository
-  command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-  args:
-    warn: no
+  yum_repository:
+    name: docker-ce
+    description: docker-ce
+    baseurl: https://download.docker.com/linux/centos/{{ ansible_facts.distribution_major_version }}/$basearch/stable
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/centos/gpg
 
 - name: Install docker
   dnf:

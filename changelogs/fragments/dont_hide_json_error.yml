@@ -1,2 +1,0 @@
-bugfixes:
- - the default parsing will now show existing JSON errors and not just YAML (last attempted), also we avoid YAML parsing when we know we only want JSON issue #58461.

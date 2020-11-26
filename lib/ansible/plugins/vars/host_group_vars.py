@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    vars: host_group_vars
+    name: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
     requirements:

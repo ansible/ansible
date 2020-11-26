@@ -246,7 +246,7 @@
     - http_308_head is failure
     - http_308_head.json is not defined
     - http_308_head.location == 'https://{{ httpbin_host }}/anything'
-    - "http_308_head.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
+    - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_head.msg"
     - http_308_head.redirected == false
     - http_308_head.status == 308
     - http_308_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
@@ -266,7 +266,7 @@
     - http_308_get is failure
     - http_308_get.json is not defined
     - http_308_get.location == 'https://{{ httpbin_host }}/anything'
-    - "http_308_get.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
+    - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_get.msg"
     - http_308_get.redirected == false
     - http_308_get.status == 308
     - http_308_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
@@ -288,7 +288,7 @@
     - http_308_post is failure
     - http_308_post.json is not defined
     - http_308_post.location == 'https://{{ httpbin_host }}/anything'
-    - "http_308_post.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
+    - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_post.msg"
     - http_308_post.redirected == false
     - http_308_post.status == 308
     - http_308_post.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'

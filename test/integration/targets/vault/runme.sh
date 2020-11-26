@@ -521,3 +521,4 @@ ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password
 # Ensure we don't leave unencrypted temp files dangling
 ansible-playbook -v "$@" --vault-password-file vault-password test_dangling_temp.yml
 
+ansible-playbook "$@" --vault-password-file vault-password single_vault_as_string.yml

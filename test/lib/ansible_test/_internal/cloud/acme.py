@@ -28,6 +28,10 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
+    get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -45,7 +49,7 @@ class ACMEProvider(CloudProvider):
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
         else:
-            self.image = 'quay.io/ansible/acme-test-container:1.9.0'
+            self.image = 'quay.io/ansible/acme-test-container:2.0.0'
         self.container_name = ''
 
     def _wait_for_service(self, protocol, acme_host, port, local_part, name):
@@ -100,7 +104,9 @@ class ACMEProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []
@@ -116,9 +122,6 @@ class ACMEProvider(CloudProvider):
         """Create a ACME test container using docker."""
         container_id = get_docker_container_id()
 
-        if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
-
         self.container_name = self.DOCKER_SIMULATOR_NAME
 
         results = docker_inspect(self.args, self.container_name)
@@ -132,7 +135,7 @@ class ACMEProvider(CloudProvider):
         else:
             display.info('Starting a new ACME docker test container.', verbosity=1)
 
-            if not self.args.docker and not container_id:
+            if not container_id:
                 # publish the simulator ports when not running inside docker
                 publish_ports = [
                     '-p', '5000:5000',  # control port for flask app in container
@@ -152,14 +155,16 @@ class ACMEProvider(CloudProvider):
 
         if self.args.docker:
             acme_host = self.DOCKER_SIMULATOR_NAME
-            acme_host_ip = self._get_simulator_address()
         elif container_id:
             acme_host = self._get_simulator_address()
-            acme_host_ip = acme_host
             display.info('Found ACME test container address: %s' % acme_host, verbosity=1)
         else:
-            acme_host = 'localhost'
-            acme_host_ip = acme_host
+            acme_host = get_docker_hostname()
+
+        if container_id:
+            acme_host_ip = self._get_simulator_address()
+        else:
+            acme_host_ip = get_docker_hostname()
 
         self._set_cloud_config('acme_host', acme_host)
 
@@ -167,9 +172,7 @@ class ACMEProvider(CloudProvider):
         self._wait_for_service('https', acme_host_ip, 14000, 'dir', 'ACME CA endpoint')
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         raise NotImplementedError()

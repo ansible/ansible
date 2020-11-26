@@ -1,0 +1,4 @@
+etc/ansible
+etc/ansible/roles
+usr/lib/python3/dist-packages/ansible
+usr/share/ansible

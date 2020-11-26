@@ -6,7 +6,7 @@ __metaclass__ = type
 
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.template import is_template, Environment
 from ansible.utils.display import Display
 
@@ -14,7 +14,7 @@ display = Display()
 
 
 def _ensure_default_collection(collection_list=None):
-    default_collection = AnsibleCollectionLoader().default_collection
+    default_collection = AnsibleCollectionConfig.default_collection
 
     # Will be None when used as the default
     if collection_list is None:
