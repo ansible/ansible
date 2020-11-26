@@ -355,12 +355,14 @@ options:
   copr:
     description:
       - COPR user and project in the format of 'user/project'
-    version_added: "2.10"
+    version_added: "2.11"
+    type: str
   copr_api:
     description:
       - URL for COPR API
     default: https://copr.fedorainfracloud.org
-    version_added: "2.10"
+    version_added: "2.11"
+    type: str
 
 extends_documentation_fragment:
   - files
