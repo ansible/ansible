@@ -73,28 +73,28 @@ options:
     default: no
   minute:
     description:
-      - Minute when the job should run ( C(0-59), C(*), C(*/2), etc ).
+      - Minute when the job should run ( C(0-59), C(*), C(*/2), and so on ).
     type: str
     default: "*"
   hour:
     description:
-      - Hour when the job should run ( C(0-23), C(*), C(*/2), etc ).
+      - Hour when the job should run ( C(0-23), C(*), C(*/2), and so on ).
     type: str
     default: "*"
   day:
     description:
-      - Day of the month the job should run ( C(1-31), C(*), C(*/2), etc ).
+      - Day of the month the job should run ( C(1-31), C(*), C(*/2), and so on ).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run ( C(1-12), C(*), C(*/2), etc ).
+      - Month of the year the job should run ( C(1-12), C(*), C(*/2), and so on ).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run ( C(0-6) for Sunday-Saturday, C(*), etc ).
+      - Day of the week that the job should run ( C(0-6) for Sunday-Saturday, C(*), and so on ).
     type: str
     default: "*"
     aliases: [ dow ]
