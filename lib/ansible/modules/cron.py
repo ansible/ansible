@@ -33,8 +33,8 @@ options:
   name:
     description:
       - Description of a crontab entry or, if env is set, the name of environment variable.
-      - Required if C(state=absent).
-      - Note that if name is not set and C(state=present), then a
+      - Required if I(state=absent).
+      - Note that if name is not set and I(state=present), then a
         new crontab entry will always be created, regardless of existing ones.
       - This parameter will always be required in future releases.
     type: str
@@ -47,7 +47,7 @@ options:
     description:
       - The command to execute or, if env is set, the value of environment variable.
       - The command should not contain line breaks.
-      - Required if C(state=present).
+      - Required if I(state=present).
     type: str
     aliases: [ value ]
   state:
@@ -60,10 +60,10 @@ options:
     description:
       - If specified, uses this file instead of an individual user's crontab.
       - If this is a relative path, it is interpreted with respect to I(/etc/cron.d).
-      - If it is absolute, it will typically be I(/etc/crontab).
+      - If it is absolute, it will typically be C(/etc/crontab).
       - Many linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-      - To use the C(cron_file) parameter you must specify the C(user) as well.
+      - To use the I(cron_file) parameter you must specify the I(user) as well.
     type: str
   backup:
     description:
@@ -73,34 +73,34 @@ options:
     default: no
   minute:
     description:
-      - Minute when the job should run ( 0-59, *, */2, etc ).
+      - Minute when the job should run ( C(0-59), C(*), C(*/2), etc ).
     type: str
     default: "*"
   hour:
     description:
-      - Hour when the job should run ( 0-23, *, */2, etc ).
+      - Hour when the job should run ( C(0-23), C(*), C(*/2), etc ).
     type: str
     default: "*"
   day:
     description:
-      - Day of the month the job should run ( 1-31, *, */2, etc ).
+      - Day of the month the job should run ( C(1-31), C(*), C(*/2), etc ).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run ( 1-12, *, */2, etc ).
+      - Month of the year the job should run ( C(1-12), C(*), C(*/2), etc ).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run ( 0-6 for Sunday-Saturday, *, etc ).
+      - Day of the week that the job should run ( C(0-6) for Sunday-Saturday, C(*), etc ).
     type: str
     default: "*"
     aliases: [ dow ]
   reboot:
     description:
-      - If the job should be run at reboot. This option is deprecated. Users should use special_time.
+      - If the job should be run at reboot. This option is deprecated. Users should use I(special_time).
     version_added: "1.0"
     type: bool
     default: no
@@ -113,7 +113,7 @@ options:
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab.
-      - Only has effect if C(state=present).
+      - Only has effect if I(state=present).
     type: bool
     default: no
     version_added: "2.0"
@@ -121,19 +121,19 @@ options:
     description:
       - If set, manages a crontab's environment variable.
       - New variables are added on top of crontab.
-      - C(name) and C(value) parameters are the name and the value of environment variable.
+      - I(name) and I(value) parameters are the name and the value of environment variable.
     type: bool
     default: no
     version_added: "2.1"
   insertafter:
     description:
-      - Used with C(state=present) and C(env).
+      - Used with I(state=present) and I(env).
       - If specified, the environment variable will be inserted after the declaration of specified environment variable.
     type: str
     version_added: "2.1"
   insertbefore:
     description:
-      - Used with C(state=present) and C(env).
+      - Used with I(state=present) and I(env).
       - If specified, the environment variable will be inserted before the declaration of specified environment variable.
     type: str
     version_added: "2.1"
