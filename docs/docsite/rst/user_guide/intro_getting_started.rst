@@ -87,6 +87,13 @@ Now run a live command on all of your nodes:
 
    $ ansible all -a "/bin/echo hello"
 
+You should see output for each host in your inventory, similar to this:
+
+.. code-block:: ansible-output
+
+    aserver.example.org | CHANGED | rc=0 >>
+    hello
+
 Beyond the basics
 -----------------
 By default Ansible uses SFTP to transfer files. If the machine or device you want to manage does not support SFTP, you can switch to SCP mode in :ref:`intro_configuration`. The files are placed in a temporary directory and executed from there.
