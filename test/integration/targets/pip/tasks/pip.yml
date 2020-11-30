@@ -100,7 +100,7 @@
 - name: create a requirement file with an vcs url
   copy:
     dest: "{{ output_dir }}/pipreq.txt"
-    content: "-e git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
+    content: "-e git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601"
 
 - name: install the requirement file in a virtualenv
   pip:
@@ -126,7 +126,7 @@
 
 - name: install the same module from url
   pip:
-    name: "git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
+    name: "git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601"
     virtualenv: "{{ output_dir }}/pipenv"
     editable: True
   register: url_installed
@@ -464,7 +464,7 @@
 - name: test module can parse the combination of multi-packages one line and git url
   pip:
     name:
-      - git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601
+      - git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601
       - "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
 
 - name: test the invalid package name
