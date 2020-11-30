@@ -5,14 +5,14 @@
 
 - name: Make sure image is not there
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     state: absent
     force_absent: yes
   register: absent_1
 
 - name: Make sure image is not there (idempotency)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     state: absent
   register: absent_2
 
@@ -22,14 +22,14 @@
 
 - name: Make sure image is there
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     state: present
     source: pull
   register: present_1
 
 - name: Make sure image is there (idempotent)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     state: present
     source: pull
   register: present_2
@@ -41,28 +41,28 @@
 
 - name: Make sure tag is not there
   docker_image:
-    name: "hello-world:alias"
+    name: "quay.io/ansible/hey:alias"
     state: absent
 
 - name: Tag image with alias
   docker_image:
     source: local
-    name: "hello-world:latest"
-    repository: "hello-world:alias"
+    name: "quay.io/ansible/hey:latest"
+    repository: "quay.io/ansible/hey:alias"
   register: tag_1
 
 - name: Tag image with alias (idempotent)
   docker_image:
     source: local
-    name: "hello-world:latest"
-    repository: "hello-world:alias"
+    name: "quay.io/ansible/hey:latest"
+    repository: "quay.io/ansible/hey:alias"
   register: tag_2
 
 - name: Tag image with alias (force, still idempotent)
   docker_image:
     source: local
-    name: "hello-world:latest"
-    repository: "hello-world:alias"
+    name: "quay.io/ansible/hey:latest"
+    repository: "quay.io/ansible/hey:alias"
     force_tag: yes
   register: tag_3
 
@@ -74,5 +74,5 @@
 
 - name: Cleanup alias tag
   docker_image:
-    name: "hello-world:alias"
+    name: "quay.io/ansible/hey:alias"
     state: absent

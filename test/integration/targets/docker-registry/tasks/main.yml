@@ -37,7 +37,7 @@
     docker_container:
       state: stopped
       name: "{{ nginx_name }}"
-      image: nginx:alpine
+      image: quay.io/ansible/nga
       ports: 5000
       links:
         - "{{ registry_name }}:real-registry"

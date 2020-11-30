@@ -20,7 +20,7 @@
 
 - name: mounts
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -37,7 +37,7 @@
 
 - name: mounts (idempotency)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -54,7 +54,7 @@
 
 - name: mounts (less mounts)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -67,7 +67,7 @@
 
 - name: mounts (more mounts)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -85,7 +85,7 @@
 
 - name: mounts (different modes)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -103,7 +103,7 @@
 
 - name: mounts (endpoint collision)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -149,7 +149,7 @@
 
 - name: mounts + volumes
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -165,7 +165,7 @@
 
 - name: mounts + volumes (idempotency)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -181,7 +181,7 @@
 
 - name: mounts + volumes (switching)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -198,7 +198,7 @@
 
 - name: mounts + volumes (collision, should fail)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -241,7 +241,7 @@
 
 - name: volume_driver
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: local
@@ -250,7 +250,7 @@
 
 - name: volume_driver (idempotency)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: local
@@ -259,7 +259,7 @@
 
 - name: volume_driver (change)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: /
@@ -286,7 +286,7 @@
 
 - name: volumes
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -297,7 +297,7 @@
 
 - name: volumes (idempotency)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -308,7 +308,7 @@
 
 - name: volumes (less volumes)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -318,7 +318,7 @@
 
 - name: volumes (more volumes)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -330,7 +330,7 @@
 
 - name: volumes (different modes)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -342,7 +342,7 @@
 
 - name: volumes (collision)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -376,7 +376,7 @@
 
 - name: start helpers
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
@@ -390,7 +390,7 @@
 
 - name: volumes_from
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -399,7 +399,7 @@
 
 - name: volumes_from (idempotency)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -408,7 +408,7 @@
 
 - name: volumes_from (change)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started

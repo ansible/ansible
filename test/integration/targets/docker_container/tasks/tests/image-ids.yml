@@ -11,16 +11,16 @@
     name: "{{ image }}"
     source: pull
   loop:
-    - "quay.io/app-sre/busybox:latest"
-    - "quay.io/app-sre/alpine:3.8"
+    - "quay.io/ansible/bb:latest"
+    - "quay.io/ansible/mountainous:3.8"
   loop_control:
     loop_var: image
 
 - name: Get image ID of busybox and alpine images
   docker_image_info:
     name:
-    - "quay.io/app-sre/busybox:latest"
-    - "quay.io/app-sre/alpine:3.8"
+    - "quay.io/ansible/bb:latest"
+    - "quay.io/ansible/mountainous:3.8"
   register: image_info
 
 - assert:
@@ -29,7 +29,7 @@
 
 - name: Print image IDs
   debug:
-    msg: "busybox: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
+    msg: "busybox: {{ image_info.images[0].Id }}; quay.io/ansible/mountainous {{ image_info.images[1].Id }}"
 
 - name: Create container with busybox image via ID
   docker_container:
@@ -66,13 +66,13 @@
 - name: Untag image
   # Image will not be deleted since the container still uses it
   docker_image:
-    name: quay.io/app-sre/alpine:3.8
+    name: quay.io/ansible/mountainous:3.8
     force_absent: yes
     state: absent
 
 - name: Create container with alpine image via name (check mode, will pull, same image)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     name: "{{ cname }}"
     state: present
   register: create_5
@@ -80,7 +80,7 @@
 
 - name: Create container with alpine image via name (will pull, same image)
   docker_container:
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     name: "{{ cname }}"
     state: present
   register: create_6
@@ -110,7 +110,7 @@
 
 - name: Create container with busybox image via old digest
   docker_container:
-    image: "quay.io/app-sre/busybox@sha256:{{ digest_hello_world_v1_29 }}"
+    image: "quay.io/ansible/bb@sha256:{{ digest_hello_world_v1_29 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
@@ -118,7 +118,7 @@
 
 - name: Create container with busybox image via old digest (idempotent)
   docker_container:
-    image: "quay.io/app-sre/busybox@sha256:{{ digest_hello_world_v1_29 }}"
+    image: "quay.io/ansible/bb@sha256:{{ digest_hello_world_v1_29 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
@@ -126,7 +126,7 @@
 
 - name: Update container with busybox image via new digest
   docker_container:
-    image: "quay.io/app-sre/busybox@sha256:{{ digest_hello_world_v1_32 }}"
+    image: "quay.io/ansible/bb@sha256:{{ digest_hello_world_v1_32 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes

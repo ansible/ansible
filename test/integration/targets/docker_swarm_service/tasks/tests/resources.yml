@@ -15,7 +15,7 @@
 - name: limits.cpus
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
@@ -25,7 +25,7 @@
 - name: limits.cpus (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
@@ -35,7 +35,7 @@
 - name: limit_cpu (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limit_cpu: 1
@@ -44,7 +44,7 @@
 - name: limits.cpus (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
@@ -71,7 +71,7 @@
 - name: limits.memory
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
@@ -81,7 +81,7 @@
 - name: limits.memory (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
@@ -91,7 +91,7 @@
 - name: limit_memory (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limit_memory: "67108864"
@@ -100,7 +100,7 @@
 - name: limits.memory (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limit_memory: 32M
@@ -126,7 +126,7 @@
 - name: reserve_cpu
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
@@ -136,7 +136,7 @@
 - name: reserve_cpu (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
@@ -146,7 +146,7 @@
 - name: reserve_cpu (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_cpu: 1
@@ -155,7 +155,7 @@
 - name: reserve_cpu (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
@@ -182,7 +182,7 @@
 - name: reservations.memory
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
@@ -192,7 +192,7 @@
 - name: reservations.memory (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_memory: 64M
@@ -201,7 +201,7 @@
 - name: reserve_memory (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_memory: "67108864"
@@ -210,7 +210,7 @@
 - name: reservations.memory (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_memory: 32M

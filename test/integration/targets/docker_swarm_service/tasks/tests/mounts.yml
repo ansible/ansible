@@ -25,7 +25,7 @@
 - name: mounts
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -37,7 +37,7 @@
 - name: mounts (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -49,7 +49,7 @@
 - name: mounts (add)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -64,7 +64,7 @@
 - name: mounts (order idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -79,7 +79,7 @@
 - name: mounts (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts: []
@@ -88,7 +88,7 @@
 - name: mounts (empty idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts: []
@@ -116,7 +116,7 @@
 - name: mounts.readonly
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -129,7 +129,7 @@
 - name: mounts.readonly (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -141,7 +141,7 @@
 - name: mounts.readonly (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -169,7 +169,7 @@
 - name: mounts.propagation
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -183,7 +183,7 @@
 - name: mounts.propagation (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -196,7 +196,7 @@
 - name: mounts.propagation (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -225,7 +225,7 @@
 - name: mounts.labels
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -241,7 +241,7 @@
 - name: mounts.labels (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -256,7 +256,7 @@
 - name: mounts.labels (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -286,7 +286,7 @@
 - name: mounts.no_copy
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -300,7 +300,7 @@
 - name: mounts.no_copy (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -313,7 +313,7 @@
 - name: mounts.no_copy (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -342,7 +342,7 @@
 - name: mounts.driver_config
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -358,7 +358,7 @@
 - name: mounts.driver_config
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -374,7 +374,7 @@
 - name: mounts.driver_config
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -404,7 +404,7 @@
 - name: mounts.tmpfs_size
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -418,7 +418,7 @@
 - name: mounts.tmpfs_size (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -432,7 +432,7 @@
 - name: mounts.tmpfs_size (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -468,7 +468,7 @@
 - name: mounts.tmpfs_mode
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -482,7 +482,7 @@
 - name: mounts.tmpfs_mode (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -496,7 +496,7 @@
 - name: mounts.tmpfs_mode (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -532,7 +532,7 @@
 - name: mounts.source (empty for tmpfs)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -545,7 +545,7 @@
 - name: mounts.source (empty for tmpfs idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:
@@ -558,7 +558,7 @@
 - name: mounts.source (not specified for tmpfs idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     mounts:

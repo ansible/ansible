@@ -5,7 +5,7 @@
 
 - name: Determining pushed image names
   set_fact:
-    hello_world_image_base: "{{ registry_address }}/test/hello-world"
+    hello_world_image_base: "{{ registry_address }}/test/quay.io/ansible/hey"
     test_image_base: "{{ registry_address }}/test/{{ iname }}"
 
 - name: Registering image name
@@ -24,12 +24,12 @@
 
 - name: Make sure we have hello-world:latest
   docker_image:
-    name: hello-world:latest
+    name: quay.io/ansible/hey:latest
     source: pull
 
 - name: Push image to test registry
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     repository: "{{ hello_world_image_base }}"
     push: yes
     source: local
@@ -37,7 +37,7 @@
 
 - name: Push image to test registry (idempotent)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     repository: "{{ hello_world_image_base }}"
     push: yes
     source: local
@@ -45,7 +45,7 @@
 
 - name: Push image to test registry (force, still idempotent)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/hey:latest"
     repository: "{{ hello_world_image_base }}"
     push: yes
     source: local

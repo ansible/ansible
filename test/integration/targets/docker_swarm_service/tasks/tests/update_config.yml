@@ -15,7 +15,7 @@
 - name: update_config.delay
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -25,7 +25,7 @@
 - name: update_config.delay (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -35,7 +35,7 @@
 - name: update_delay (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_delay: 5000000000
@@ -44,7 +44,7 @@
 - name: update_config.delay (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -71,7 +71,7 @@
 - name: update_config.failure_action
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -81,7 +81,7 @@
 - name: update_config.failure_action (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -91,7 +91,7 @@
 - name: update_failure_action (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_failure_action: "pause"
@@ -100,7 +100,7 @@
 - name: update_config.failure_action (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -110,7 +110,7 @@
 - name: update_config.failure_action (rollback)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -121,7 +121,7 @@
 - name: update_config.failure_action (rollback idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_failure_action: "rollback"
@@ -160,7 +160,7 @@
 - name: update_config.max_failure_ratio
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -171,7 +171,7 @@
 - name: update_config.max_failure_ratio (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -182,7 +182,7 @@
 - name: update_max_failure_ratio (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_max_failure_ratio: 0.25
@@ -192,7 +192,7 @@
 - name: update_config.max_failure_ratio (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -226,7 +226,7 @@
 - name: update_config.monitor
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -237,7 +237,7 @@
 - name: update_config.monitor (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -248,7 +248,7 @@
 - name: update_monitor (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_monitor: 10s
@@ -258,7 +258,7 @@
 - name: update_config.monitor (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -292,7 +292,7 @@
 - name: update_config.order
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -303,7 +303,7 @@
 - name: update_config.order (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -314,7 +314,7 @@
 - name: update_order (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_order: "start-first"
@@ -324,7 +324,7 @@
 - name: update_config.order (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -358,7 +358,7 @@
 - name: update_config.parallelism
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -368,7 +368,7 @@
 - name: update_config.parallelism (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
@@ -378,7 +378,7 @@
 - name: update_parallelism (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_parallelism: 2
@@ -387,7 +387,7 @@
 - name: update_config.parallelism (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:

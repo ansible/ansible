@@ -35,7 +35,7 @@
   - name: Create services
     docker_swarm_service:
       name: "{{ service_name }}"
-      image: quay.io/app-sre/alpine:3.8
+      image: quay.io/ansible/mountainous:3.8
 
   - name: Try to get docker_swarm_service_info for a single service
     docker_swarm_service_info:
