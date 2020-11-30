@@ -117,7 +117,7 @@ There's also a `clever playbook <https://github.com/ansible/ansible-examples/blo
 Verifying playbooks
 ===================
 
-You may want to verify your playbooks to catch syntax errors and other problems before you run them. The :ref:`ansible-playbook` command offers several options for verification, including ``--check``, ``--diff``, ``--list-hosts``, ``list-tasks``, and ``--syntax-check``. The :ref:`validate-playbook-tools` describes other tools for validating and testing playbooks.
+You may want to verify your playbooks to catch syntax errors and other problems before you run them. The :ref:`ansible-playbook` command offers several options for verification, including ``--check``, ``--diff``, ``--list-hosts``, ``--list-tasks``, and ``--syntax-check``. The :ref:`validate-playbook-tools` describes other tools for validating and testing playbooks.
 
 .. _linting_playbooks:
 
