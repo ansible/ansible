@@ -91,7 +91,7 @@ You should see output for each host in your inventory, similar to this:
 
 .. code-block:: ansible-output
 
-    aserver.example.org | SUCCESS | rc=0 >>
+    aserver.example.org | CHANGED | rc=0 >>
     hello
 
 Beyond the basics
