@@ -12,7 +12,7 @@
 
 - name: value
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -21,7 +21,7 @@
 
 - name: value (change, ignore)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -33,7 +33,7 @@
 
 - name: value (change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -62,7 +62,7 @@
 
 - name: list
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -73,7 +73,7 @@
 
 - name: list (change, ignore)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -86,7 +86,7 @@
 
 - name: list (change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -116,7 +116,7 @@
 
 - name: set
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -127,7 +127,7 @@
 
 - name: set (change, ignore)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -142,7 +142,7 @@
 
 - name: set (change, allow_more_present)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -157,7 +157,7 @@
 
 - name: set (change, allow_more_present)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -171,7 +171,7 @@
 
 - name: set (change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -204,7 +204,7 @@
 
 - name: set(dict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -215,7 +215,7 @@
 
 - name: set(dict) (change, ignore)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -230,7 +230,7 @@
 
 - name: set(dict) (change, allow_more_present)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -245,7 +245,7 @@
 
 - name: set(dict) (change, allow_more_present)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -259,7 +259,7 @@
 
 - name: set(dict) (change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -292,7 +292,7 @@
 
 - name: dict
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -303,7 +303,7 @@
 
 - name: dict (change, ignore)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -318,7 +318,7 @@
 
 - name: dict (change, allow_more_present)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -333,7 +333,7 @@
 
 - name: dict (change, allow_more_present)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -347,7 +347,7 @@
 
 - name: dict (change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -381,12 +381,12 @@
 - name: Pull hello-world image to make sure wildcard_2 test succeeds
   # If the image isn't there, it will pull it and return 'changed'.
   docker_image:
-    name: hello-world
+    name: quay.io/ansible/hey
     pull: true
 
 - name: wildcard
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -400,7 +400,7 @@
 
 - name: wildcard (change, ignore)
   docker_container:
-    image: hello-world
+    image: quay.io/ansible/hey
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -416,7 +416,7 @@
 
 - name: wildcard (change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -433,7 +433,7 @@
 
 - name: wildcard (no change, strict)
   docker_container:
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started

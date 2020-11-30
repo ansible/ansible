@@ -17,7 +17,7 @@ service_expected_output:
   healthcheck_disabled: null
   hostname: null
   hosts: null
-  image: quay.io/app-sre/busybox
+  image: quay.io/ansible/bb
   labels: null
   limit_cpu: null
   limit_memory: null

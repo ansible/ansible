@@ -15,7 +15,7 @@
 - name: rollback_config.delay
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -26,7 +26,7 @@
 - name: rollback_config.delay (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -37,7 +37,7 @@
 - name: rollback_config.delay (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -70,7 +70,7 @@
 - name: rollback_config.failure_action
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -81,7 +81,7 @@
 - name: rollback_config.failure_action (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -92,7 +92,7 @@
 - name: rollback_config.failure_action (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -125,7 +125,7 @@
 - name: rollback_config.max_failure_ratio
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -136,7 +136,7 @@
 - name: rollback_config.max_failure_ratio (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -147,7 +147,7 @@
 - name: rollback_config.max_failure_ratio (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -180,7 +180,7 @@
 - name: rollback_config.monitor
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -191,7 +191,7 @@
 - name: rollback_config.monitor (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -202,7 +202,7 @@
 - name: rollback_config.monitor (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -235,7 +235,7 @@
 - name: rollback_config.order
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -246,7 +246,7 @@
 - name: rollback_config.order (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -257,7 +257,7 @@
 - name: rollback_config.order (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -290,7 +290,7 @@
 - name: rollback_config.parallelism
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -301,7 +301,7 @@
 - name: rollback_config.parallelism (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:
@@ -312,7 +312,7 @@
 - name: rollback_config.parallelism (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/app-sre/quay.io/app-sre/alpine:3.8
+    image: quay.io/ansible/mountainous:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     rollback_config:

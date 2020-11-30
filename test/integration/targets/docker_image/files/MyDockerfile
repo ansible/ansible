@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM quay.io/ansible/mountainous:3.7
 ENV INSTALL_PATH /newdata
 RUN mkdir -p $INSTALL_PATH
 

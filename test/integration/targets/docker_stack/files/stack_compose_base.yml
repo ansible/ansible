@@ -1,5 +1,5 @@
 version: '3'
 services:
     busybox:
-        image: quay.io/app-sre/busybox:latest
+        image: quay.io/ansible/bb:latest
         command: sleep 3600
