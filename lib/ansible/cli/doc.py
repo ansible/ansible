@@ -194,10 +194,10 @@ class RoleMixin(object):
                 doc['entry_points'][ep] = entry_spec
 
         # If we didn't add any entry points (b/c of filtering), ignore this entry.
-        if len(doc['entry_points'].keys()) > 0:
-            return (fqcn, doc)
-        else:
-            return (fqcn, None)
+        if len(doc['entry_points'].keys()) == 0:
+            doc = None
+
+        return (fqcn, doc)
 
     def _create_role_list(self, roles_path, collection_filter=None):
         """Return a dict describing the listing of all roles with arg specs.
