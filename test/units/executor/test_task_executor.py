@@ -399,7 +399,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_connection = MagicMock()
         mock_templar = MagicMock()
-        action = 'namespace.prefix_sufix'
+        action = 'namespace.prefix_suffix'
         te._task.action = action
 
         handler = te._get_action_handler(mock_connection, mock_templar)
@@ -434,8 +434,8 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_connection = MagicMock()
         mock_templar = MagicMock()
-        action = 'namespace.netconf_sufix'
-        module_prefix = action.split('.')[-1].split('_')[0]
+        action = 'namespace.netconf_suffix'
+        module_prefix = action.split('_')[0]
         te._task.action = action
 
         handler = te._get_action_handler(mock_connection, mock_templar)
@@ -445,7 +445,7 @@ class TestTaskExecutor(unittest.TestCase):
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_once_with(
-            'netconf', task=te._task, connection=mock_connection,
+            module_prefix, task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
@@ -469,8 +469,8 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_connection = MagicMock()
         mock_templar = MagicMock()
-        action = 'namespace.prefix_sufix'
-        module_prefix = action.split('.')[-1].split('_')[0]
+        action = 'namespace.prefix_suffix'
+        module_prefix = action.split('_')[0]
         te._task.action = action
         handler = te._get_action_handler(mock_connection, mock_templar)
 

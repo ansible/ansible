@@ -1,0 +1,2 @@
+bugfixes:
+  - Try to load action plugin from the same collection as the module (https://github.com/ansible/ansible/pull/66701)
