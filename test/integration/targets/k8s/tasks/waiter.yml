@@ -26,7 +26,7 @@
         wait: yes
       vars:
         wait_pod_name: wait-pod
-        wait_pod_image: alpine:3.8
+        wait_pod_image: quay.io/ansible/docker-test-containers:alpine3.8
         wait_pod_command:
           - sleep
           - "10000"
@@ -140,7 +140,7 @@
         wait_timeout: 30
       vars:
         wait_pod_name: wait-crash-pod
-        wait_pod_image: alpine:3.8
+        wait_pod_image: quay.io/ansible/docker-test-containers:alpine3.8
         wait_pod_command:
           - /bin/false
       register: crash_pod
@@ -309,7 +309,7 @@
         wait: yes
       vars:
         wait_pod_name: wait-crash-deploy
-        wait_pod_image: alpine:3.8
+        wait_pod_image: quay.io/ansible/docker-test-containers:alpine3.8
         wait_pod_command:
           - /bin/false
       register: wait_crash_deploy
