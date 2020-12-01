@@ -24,7 +24,7 @@
   - name: Make sure container exists
     docker_container:
       name: "{{ cname }}"
-      image: quay.io/ansible/mountainous:3.8
+      image: quay.io/ansible/docker-test-containers:alpine3.8
       command: '/bin/sh -c "sleep 10m"'
       state: started
       force_kill: yes

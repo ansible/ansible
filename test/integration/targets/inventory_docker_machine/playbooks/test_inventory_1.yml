@@ -47,4 +47,4 @@
   - name: run a Docker container on the target Docker Machine host to verify that Docker daemon connection settings from the docker-machine inventory plugin work as expected
     docker_container:
       name: test
-      image: quay.io/ansible/hey:latest
+      image: quay.io/ansible/docker-test-containers:hello-world

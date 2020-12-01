@@ -177,27 +177,27 @@
 
 - name: Archive image
   docker_image:
-    name: "quay.io/ansible/hey:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     archive_path: "{{ output_dir }}/image.tar"
     source: pull
   register: archive_image
 
 - name: remove image
   docker_image:
-    name: "quay.io/ansible/hey:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     state: absent
     force_absent: yes
 
 - name: load image (changed)
   docker_image:
-    name: "quay.io/ansible/hey:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     load_path: "{{ output_dir }}/image.tar"
     source: load
   register: load_image
 
 - name: load image (idempotency)
   docker_image:
-    name: "quay.io/ansible/hey:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     load_path: "{{ output_dir }}/image.tar"
     source: load
   register: load_image_1

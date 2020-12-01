@@ -15,7 +15,7 @@
 - name: logging.driver
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -25,7 +25,7 @@
 - name: logging.driver (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -35,7 +35,7 @@
 - name: log_driver (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     log_driver: json-file
@@ -44,7 +44,7 @@
 - name: logging.driver (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -71,7 +71,7 @@
 - name: logging_options
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -84,7 +84,7 @@
 - name: logging_options (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -97,7 +97,7 @@
 - name: log_driver_options (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     log_driver: json-file
@@ -109,7 +109,7 @@
 - name: logging_options (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -123,7 +123,7 @@
 - name: logging_options (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:
@@ -134,7 +134,7 @@
 - name: logging_options (empty idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     logging:

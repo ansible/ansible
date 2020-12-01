@@ -1,4 +1,4 @@
-FROM quay.io/ansible/mountainous:3.7
+FROM quay.io/ansible/docker-test-containers:alpine3.7
 ENV INSTALL_PATH /newdata
 RUN mkdir -p $INSTALL_PATH
 
