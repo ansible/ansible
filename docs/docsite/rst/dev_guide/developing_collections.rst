@@ -540,7 +540,7 @@ To migrate content from one collection to another, if the collections are parts 
 
 #. Copy content from the source (old) collection to the target collection.
 #. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. The deprecation must be released after the copied content has been included in a release of the target collection.
-#. When the next major release comes:
+#. When the next major release of the old collection is prepared:
 
   * remove the module/plugin from the source collection and its symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)
   * remove its unit and integration tests, specific module utils, and documentation fragments if there are any in the source collection
