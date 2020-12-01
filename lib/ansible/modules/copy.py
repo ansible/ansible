@@ -89,6 +89,7 @@ options:
     - If C(yes) it will search for C(src) on the managed (remote) node.
     - C(remote_src) supports recursive copying as of version 2.8.
     - C(remote_src) only works with C(mode=preserve) as of version 2.6.
+    - Autodecryption of files does not work when C(remote_src=yes).
     type: bool
     default: no
     version_added: '2.0'
