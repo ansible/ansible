@@ -29,7 +29,7 @@
 
 - name: Print image IDs
   debug:
-    msg: "quay.io/ansible/hey: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
+    msg: "quay.io/ansible/docker-test-containers:hello-world: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
 
 - name: Create container with hello-world image via ID
   docker_container:

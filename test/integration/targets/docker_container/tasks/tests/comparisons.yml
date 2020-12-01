@@ -381,7 +381,7 @@
 - name: Pull hello-world image to make sure wildcard_2 test succeeds
   # If the image isn't there, it will pull it and return 'changed'.
   docker_image:
-    name: quay.io/ansible/hey
+    name: quay.io/ansible/docker-test-containers:hello-world
     pull: true
 
 - name: wildcard
@@ -400,7 +400,7 @@
 
 - name: wildcard (change, ignore)
   docker_container:
-    image: quay.io/ansible/hey
+    image: quay.io/ansible/docker-test-containers:hello-world
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
