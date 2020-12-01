@@ -9,7 +9,7 @@
   # Create objects to be pruned
   - docker_container:
       name: "{{ cname }}"
-      image: quay.io/ansible/hey
+      image: quay.io/ansible/docker-test-containers:hello-world
       state: present
     register: container
   - docker_network:
