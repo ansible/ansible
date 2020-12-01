@@ -121,7 +121,7 @@
 - name: "Test adding a repo with custom GPG key"
   zypper_repository:
     name: "Apache_Modules"
-    repo: "http://download.opensuse.org/repositories/Apache:/Modules/openSUSE_Tumbleweed/"
+    repo: "http://download.opensuse.org/repositories/Apache:/Modules/openSUSE_Leap_{{ ansible_distribution_version }}/"
     priority: 100
     auto_import_keys: true
     state: "present"
