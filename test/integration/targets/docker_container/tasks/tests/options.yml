@@ -481,7 +481,7 @@
 - name: detach without cleanup
   docker_container:
     name: "{{ cname }}"
-    image: quay.io/ansiblequay.io/ansible/docker-test-containers:hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     detach: no
   register: detach_no_cleanup
 
@@ -495,7 +495,7 @@
 - name: detach with cleanup
   docker_container:
     name: "{{ cname }}"
-    image: quay.io/ansiblequay.io/ansible/docker-test-containers:hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     detach: no
     cleanup: yes
   register: detach_cleanup
@@ -510,7 +510,7 @@
 - name: detach with auto_remove and cleanup
   docker_container:
     name: "{{ cname }}"
-    image: quay.io/ansiblequay.io/ansible/docker-test-containers:hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     detach: no
     auto_remove: yes
     cleanup: yes
@@ -1763,7 +1763,7 @@
 - name: Pull hello-world image to make sure ignore_image test succeeds
   # If the image isn't there, it will pull it and return 'changed'.
   docker_image:
-    name: quay.io/ansiblequay.io/ansible/docker-test-containers:hello-world
+    name: quay.io/ansible/docker-test-containers:hello-world
     pull: true
 
 - name: image
@@ -1784,7 +1784,7 @@
 
 - name: ignore_image
   docker_container:
-    image: quay.io/ansiblequay.io/ansible/docker-test-containers:hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     ignore_image: yes
     name: "{{ cname }}"
     state: started
@@ -1792,7 +1792,7 @@
 
 - name: image change
   docker_container:
-    image: quay.io/ansiblequay.io/ansible/docker-test-containers:hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     name: "{{ cname }}"
     state: started
     force_kill: yes
