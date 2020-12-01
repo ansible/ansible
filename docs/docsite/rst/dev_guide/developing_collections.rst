@@ -552,7 +552,7 @@ To migrate content from one collection to another, if the collections are parts 
     * remove ``removal_version`` from there
   * remove related entries from ``tests/sanity/ignore.txt`` files if exist
   * remove changelog fragments for removed content that are not yet part of the changelog (in other words, do not modify `changelogs/changelog.yaml` and do not delete files mentioned in it)
-  * remove requirements that are no longer required in ``tests/unit/requirements.txt``
+  * remove requirements that are no longer required in ``tests/unit/requirements.txt``, ``tests/requirements.yml`` and ``galaxy.yml``
 
 According to the above, you need to create at least three PRs as follows:
 
