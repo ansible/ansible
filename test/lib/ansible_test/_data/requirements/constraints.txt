@@ -39,6 +39,7 @@ pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require pytho
 pyone == 1.1.9 # newer versions do not pass current integration tests
 botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
 setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require python 3.5 or later
+cffi != 1.14.4 # Fails on systems with older gcc. Should be fixed in the next release. https://foss.heptapod.net/pypy/cffi/-/issues/480
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.2.5
