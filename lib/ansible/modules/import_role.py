@@ -17,6 +17,7 @@ description:
     between other tasks of the play.
   - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
     you want the opposite behavior, use M(ansible.builtin.include_role) instead.
+  - Does not work in handlers.
 version_added: '2.4'
 options:
   name:

@@ -20,6 +20,7 @@ description:
   - To apply keywords to the tasks within the role, pass them using the C(apply) option or use M(ansible.builtin.import_role) instead.
   - Ignores some keywords, like C(until) and C(retries).
   - This module is also supported for Windows targets.
+  - Does not work in handlers.
 version_added: "2.2"
 options:
   apply:
