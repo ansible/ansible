@@ -28,7 +28,7 @@
       docker_swarm_service:
         name: test_service
         endpoint_mode: dnsrr
-        image: quay.io/ansible/bb
+        image: quay.io/ansible/docker-test-containers:busybox
         resolve_image: no
         args:
           - sleep
@@ -43,7 +43,7 @@
       register: output
       docker_swarm_service:
         name: test_service
-        image: quay.io/ansible/bb
+        image: quay.io/ansible/docker-test-containers:busybox
         resolve_image: no
         args:
           - sleep
@@ -58,7 +58,7 @@
       register: output
       docker_swarm_service:
         name: test_service
-        image: quay.io/ansible/bb
+        image: quay.io/ansible/docker-test-containers:busybox
         resolve_image: no
         endpoint_mode: vip
         mode: global
@@ -75,7 +75,7 @@
       register: output
       docker_swarm_service:
         name: test_service
-        image: quay.io/ansible/bb
+        image: quay.io/ansible/docker-test-containers:busybox
         resolve_image: no
         mode: global
         args:

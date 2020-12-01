@@ -15,7 +15,7 @@
 - name: restart_config.condition
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -25,7 +25,7 @@
 - name: restart_config.condition (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -35,7 +35,7 @@
 - name: restart_policy (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_policy: "on-failure"
@@ -44,7 +44,7 @@
 - name: restart_config.condition (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -71,7 +71,7 @@
 - name: restart_config.max_attempts
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -81,7 +81,7 @@
 - name: restart_config.max_attempts (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -91,7 +91,7 @@
 - name: restart_policy_attempts (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_policy_attempts: 1
@@ -100,7 +100,7 @@
 - name: restart_config.max_attempts (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -127,7 +127,7 @@
 - name: restart_config.delay
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -137,7 +137,7 @@
 - name: restart_config.delay (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -147,7 +147,7 @@
 - name: restart_policy_delay (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_policy_delay: 5000000000
@@ -156,7 +156,7 @@
 - name: restart_config.delay (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -183,7 +183,7 @@
 - name: restart_config.window
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -193,7 +193,7 @@
 - name: restart_config.window (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:
@@ -203,7 +203,7 @@
 - name: restart_policy_window (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_policy_window: 10000000000
@@ -212,7 +212,7 @@
 - name: restart_config.window (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: quay.io/ansible/mountainous:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     restart_config:

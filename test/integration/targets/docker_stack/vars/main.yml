@@ -2,7 +2,7 @@ stack_compose_base:
     version: '3'
     services:
         busybox:
-            image: quay.io/ansible/bb:latest
+            image: quay.io/ansible/docker-test-containers:busybox
             command: sleep 3600
 
 stack_compose_overrides:
