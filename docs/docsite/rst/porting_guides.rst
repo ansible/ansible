@@ -4,9 +4,8 @@
 Ansible Porting Guides
 **********************
 
-This section lists porting guides that can help you playbooks, plugins and other parts of your Ansible infrastructure from one version of Ansible to the next. Please note that this is not a complete list. If you believe any extra information would be useful in these pages, you can edit by clicking `Edit on GitHub` on the top right, or raising an issue.
+Ansible Porting Guides are maintained in the ``devel`` branch only. Please go to `the devel porting guides <https://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html>`_ for up to date information.
 
+.. note::
 
-* :ref:`Ansible 1.x to 2.0 porting guide <porting_2.0_guide>`
-* :ref:`Ansible 2.2 to 2.3 porting guide <porting_2.3_guide>`
-* :ref:`Ansible 2.3 to 2.4 porting guide <porting_2.4_guide>`
+	This link takes you to a different version of the Ansible documentation. Use the version selection on the left or your browser back button to return to this version of the documentation.
