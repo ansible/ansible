@@ -106,7 +106,7 @@
 - name: set Digests
   set_fact:
     digest_hello_world_v1_29: e004c2cc521c95383aebb1fb5893719aa7a8eae2e7a71f316a4410784edb00a9
-    digest_hello_world_v1_32: c9249fdf56138f0d929e2080ae98ee9cb2946f71498fc1484288e6a935b5e5bc
+    digest_hello_world_v1_32: ee44b399df993016003bf5466bd3eeb221305e9d0fa831606bc7902d149c775b
 
 - name: Create container with busybox image via old digest
   docker_container:
