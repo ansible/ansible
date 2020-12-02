@@ -62,20 +62,21 @@ seealso:
 - module: ansible.windows.win_group
 author:
 - Stephen Fromm (@sfromm)
+notes:
+- Supports C(check_mode).
 '''
 
 EXAMPLES = '''
 - name: Ensure group "somegroup" exists
-  group:
+  ansible.builtin.group:
     name: somegroup
     state: present
 
 - name: Ensure group "docker" exists with correct gid
-  group:
+  ansible.builtin.group:
     name: docker
     state: present
     gid: 1750
-
 '''
 
 RETURN = r'''
@@ -85,17 +86,17 @@ gid:
   type: int
   sample: 1001
 name:
-  description: Group name
+  description: Group name.
   returned: always
   type: str
   sample: users
 state:
-  description: Whether the group is present or not
+  description: Whether the group is present or not.
   returned: always
   type: str
   sample: 'absent'
 system:
-  description: Whether the group is a system group or not
+  description: Whether the group is a system group or not.
   returned: When C(state) is 'present'
   type: bool
   sample: False

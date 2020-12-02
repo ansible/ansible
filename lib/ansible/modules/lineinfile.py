@@ -125,6 +125,7 @@ extends_documentation_fragment:
     - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.blockinfile
 - module: ansible.builtin.copy
@@ -140,19 +141,19 @@ author:
 EXAMPLES = r'''
 # NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - name: Ensure SELinux is set to enforcing mode
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
     line: SELINUX=enforcing
 
 - name: Make sure group wheel is not in the sudoers configuration
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
 
 - name: Replace a localhost entry with our own
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
     line: 127.0.0.1 localhost
@@ -161,28 +162,28 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Ensure the default Apache port is 8080
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
     line: Listen 8080
 
 - name: Ensure we have our own comment added to /etc/services
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
 - name: Add a line to a file if the file does not exist, without passing regexp
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /tmp/testfile
     line: 192.168.1.99 foo.lab.net foo
     create: yes
 
 # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
 - name: Ensure the JBoss memory settings are exactly as needed
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
@@ -190,7 +191,7 @@ EXAMPLES = r'''
 
 # NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - name: Validate the sudoers file before saving
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
@@ -199,12 +200,14 @@ EXAMPLES = r'''
 
 # See https://docs.python.org/3/library/re.html for further details on syntax
 - name: Use backrefs with alternative group syntax to avoid conflicts with variable values
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /tmp/config
     regexp: ^(host=).*
     line: \g<1>{{ hostname }}
     backrefs: yes
 '''
+
+RETURN = r'''#'''
 
 import os
 import re

@@ -11,12 +11,12 @@ module: script
 version_added: "0.9"
 short_description: Runs a local script on a remote node after transferring it
 description:
-     - The C(script) module takes the script name followed by a list of space-delimited arguments.
-     - Either a free form command or C(cmd) parameter is required, see the examples.
-     - The local script at path will be transferred to the remote node and then executed.
-     - The given script will be processed through the shell environment on the remote node.
-     - This module does not require python on the remote system, much like the M(ansible.builtin.raw) module.
-     - This module is also supported for Windows targets.
+  - The C(script) module takes the script name followed by a list of space-delimited arguments.
+  - Either a free form command or C(cmd) parameter is required, see the examples.
+  - The local script at path will be transferred to the remote node and then executed.
+  - The given script will be processed through the shell environment on the remote node.
+  - This module does not require python on the remote system, much like the M(ansible.builtin.raw) module.
+  - This module is also supported for Windows targets.
 options:
   free_form:
     description:
@@ -47,41 +47,42 @@ notes:
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
   - If the path to the local script contains spaces, it needs to be quoted.
   - This module is also supported for Windows targets.
+  - Does not support C(check_mode).
 seealso:
-- module: ansible.builtin.shell
-- module: ansible.windows.win_shell
+  - module: ansible.builtin.shell
+  - module: ansible.windows.win_shell
 author:
-    - Ansible Core Team
-    - Michael DeHaan
+  - Ansible Core Team
+  - Michael DeHaan
 extends_documentation_fragment:
-    - decrypt
+  - decrypt
 '''
 
 EXAMPLES = r'''
 - name: Run a script with arguments (free form)
-  script: /some/local/script.sh --some-argument 1234
+  ansible.builtin.script: /some/local/script.sh --some-argument 1234
 
 - name: Run a script with arguments (using 'cmd' parameter)
-  script:
+  ansible.builtin.script:
     cmd: /some/local/script.sh --some-argument 1234
 
 - name: Run a script only if file.txt does not exist on the remote node
-  script: /some/local/create_file.sh --some-argument 1234
+  ansible.builtin.script: /some/local/create_file.sh --some-argument 1234
   args:
     creates: /the/created/file.txt
 
 - name: Run a script only if file.txt exists on the remote node
-  script: /some/local/remove_file.sh --some-argument 1234
+  ansible.builtin.script: /some/local/remove_file.sh --some-argument 1234
   args:
     removes: /the/removed/file.txt
 
 - name: Run a script using an executable in a non-system path
-  script: /some/local/script
+  ansible.builtin.script: /some/local/script
   args:
     executable: /some/remote/executable
 
 - name: Run a script using an executable in a system path
-  script: /some/local/script.py
+  ansible.builtin.script: /some/local/script.py
   args:
     executable: python3
 '''
