@@ -1,0 +1,233 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - devel
+      - stable-*
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - devel
+      - stable-*
+
+schedules:
+  - cron: 0 0 * * *
+    displayName: Nightly
+    always: true
+    branches:
+      include:
+        - devel
+        - stable-*
+
+variables:
+  - name: checkoutPath
+    value: ansible
+  - name: coverageBranches
+    value: devel
+  - name: pipelinesCoverage
+    value: coverage
+  - name: entryPoint
+    value: test/utils/shippable/shippable.sh
+  - name: fetchDepth
+    value: 100
+
+resources:
+  containers:
+    - container: default
+      image: quay.io/ansible/azure-pipelines-test-container:1.6.0
+
+pool: Standard
+
+stages:
+  - stage: Sanity
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Test {0}
+          testFormat: sanity/{0}
+          targets:
+            - test: 1
+            - test: 2
+            - test: 3
+            - test: 4
+            - test: 5
+  - stage: Units
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: units/{0}
+          targets:
+            - test: 2.6
+            - test: 2.7
+            - test: 3.5
+            - test: 3.6
+            - test: 3.7
+            - test: 3.8
+          groups:
+            - 1
+            - 2
+  - stage: Windows
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Server {0}
+          testFormat: windows/{0}
+          targets:
+            - test: 2012
+            - test: 2012-R2
+            - test: 2016
+            - test: 2019
+          groups:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+  - stage: Network
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: network/{0}
+          targets:
+            - test: ''
+  - stage: Remote
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          targets:
+            - name: OS X 10.11
+              test: osx/10.11
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.2
+              test: rhel/8.2
+            - name: FreeBSD 11.1
+              test: freebsd/11.1
+            - name: FreeBSD 12.0
+              test: freebsd/12.0
+          groups:
+            - 1
+            - 2
+            - 3
+            - 4
+  - stage: Docker
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: linux/{0}
+          targets:
+            - name: CentOS 6
+              test: centos6
+            - name: CentOS 7
+              test: centos7
+            - name: CentOS 8
+              test: centos8
+            - name: Fedora 30
+              test: fedora30
+            - name: Fedora 31
+              test: fedora31
+            - name: openSUSE 15 py2
+              test: opensuse15py2
+            - name: openSUSE 15 py3
+              test: opensuse15
+            - name: Ubuntu 16.04
+              test: ubuntu1604
+            - name: Ubuntu 18.04
+              test: ubuntu1804
+          groups:
+            - 1
+            - 2
+            - 3
+            - 4
+  - stage: AWS
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: aws/{0}
+          targets:
+            - test: 2.7
+            - test: 3.6
+          groups:
+            - 1
+            - 2
+  - stage: vCenter
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: vcenter/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: CloudStack
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: cs/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: Tower
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: tower/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: Cloud
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: cloud/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: Hetzner
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: hcloud/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: Summary
+    condition: succeededOrFailed()
+    dependsOn:
+      - Sanity
+      - Units
+      - Windows
+      - Network
+      - Remote
+      - Docker
+      - AWS
+      - vCenter
+      - CloudStack
+      - Tower
+      - Cloud
+      - Hetzner
+    jobs:
+      - template: templates/coverage.yml
