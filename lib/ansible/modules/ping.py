@@ -15,12 +15,12 @@ module: ping
 version_added: historical
 short_description: Try to connect to host, verify a usable python and return C(pong) on success
 description:
-   - A trivial test module, this module always returns C(pong) on successful
-     contact. It does not make sense in playbooks, but it is useful from
-     C(/usr/bin/ansible) to verify the ability to login and that a usable Python is configured.
-   - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
-   - For Windows targets, use the M(ansible.windows.win_ping) module instead.
-   - For Network targets, use the M(ansible.netcommon.net_ping) module instead.
+  - A trivial test module, this module always returns C(pong) on successful
+    contact. It does not make sense in playbooks, but it is useful from
+    C(/usr/bin/ansible) to verify the ability to login and that a usable Python is configured.
+  - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
+  - For Windows targets, use the M(ansible.windows.win_ping) module instead.
+  - For Network targets, use the M(ansible.netcommon.net_ping) module instead.
 options:
   data:
     description:
@@ -29,11 +29,13 @@ options:
     type: str
     default: pong
 seealso:
-- module: ansible.netcommon.net_ping
-- module: ansible.windows.win_ping
+  - module: ansible.netcommon.net_ping
+  - module: ansible.windows.win_ping
 author:
-    - Ansible Core Team
-    - Michael DeHaan
+  - Ansible Core Team
+  - Michael DeHaan
+notes:
+  - Supports C(check_mode).
 '''
 
 EXAMPLES = '''
@@ -41,16 +43,16 @@ EXAMPLES = '''
 # ansible webservers -m ping
 
 - name: Example from an Ansible Playbook
-  ping:
+  ansible.builtin.ping:
 
 - name: Induce an exception to see what happens
-  ping:
+  ansible.builtin.ping:
     data: crash
 '''
 
 RETURN = '''
 ping:
-    description: value provided with the data parameter
+    description: Value provided with the data parameter.
     returned: success
     type: str
     sample: pong
