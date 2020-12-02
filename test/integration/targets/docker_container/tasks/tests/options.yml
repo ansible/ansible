@@ -15,7 +15,7 @@
 
 - name: auto_remove
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "echo"'
     name: "{{ cname }}"
     state: started
@@ -52,7 +52,7 @@
 
 - name: blkio_weight
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -61,7 +61,7 @@
 
 - name: blkio_weight (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -70,7 +70,7 @@
 
 - name: blkio_weight (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -97,7 +97,7 @@
 
 - name: capabilities, cap_drop
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -109,7 +109,7 @@
 
 - name: capabilities, cap_drop (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -121,7 +121,7 @@
 
 - name: capabilities, cap_drop (less)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -132,7 +132,7 @@
 
 - name: capabilities, cap_drop (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -163,7 +163,7 @@
 
 - name: command
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -v -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -171,7 +171,7 @@
 
 - name: command (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -v -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -179,7 +179,7 @@
 
 - name: command (less parameters)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -205,7 +205,7 @@
 
 - name: cpu_period
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 90000
@@ -214,7 +214,7 @@
 
 - name: cpu_period (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 90000
@@ -223,7 +223,7 @@
 
 - name: cpu_period (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 50000
@@ -250,7 +250,7 @@
 
 - name: cpu_quota
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 150000
@@ -259,7 +259,7 @@
 
 - name: cpu_quota (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 150000
@@ -268,7 +268,7 @@
 
 - name: cpu_quota (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 50000
@@ -295,7 +295,7 @@
 
 - name: cpu_shares
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 900
@@ -304,7 +304,7 @@
 
 - name: cpu_shares (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 900
@@ -313,7 +313,7 @@
 
 - name: cpu_shares (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 1100
@@ -340,7 +340,7 @@
 
 - name: cpuset_cpus
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_cpus: "0"
@@ -349,7 +349,7 @@
 
 - name: cpuset_cpus (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_cpus: "0"
@@ -358,7 +358,7 @@
 
 - name: cpuset_cpus (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_cpus: "1"
@@ -388,7 +388,7 @@
 
 - name: cpuset_mems
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_mems: "0"
@@ -397,7 +397,7 @@
 
 - name: cpuset_mems (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_mems: "0"
@@ -406,7 +406,7 @@
 
 - name: cpuset_mems (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_mems: "1"
@@ -436,7 +436,7 @@
 
 - name: debug (create)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
@@ -452,7 +452,7 @@
 
 - name: debug (stop)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     name: "{{ cname }}"
     state: stopped
     force_kill: yes
@@ -481,7 +481,7 @@
 - name: detach without cleanup
   docker_container:
     name: "{{ cname }}"
-    image: hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     detach: no
   register: detach_no_cleanup
 
@@ -495,7 +495,7 @@
 - name: detach with cleanup
   docker_container:
     name: "{{ cname }}"
-    image: hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     detach: no
     cleanup: yes
   register: detach_cleanup
@@ -510,7 +510,7 @@
 - name: detach with auto_remove and cleanup
   docker_container:
     name: "{{ cname }}"
-    image: hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     detach: no
     auto_remove: yes
     cleanup: yes
@@ -548,7 +548,7 @@
 
 - name: devices
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -559,7 +559,7 @@
 
 - name: devices (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -570,7 +570,7 @@
 
 - name: devices (less)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -580,7 +580,7 @@
 
 - name: devices (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -610,7 +610,7 @@
 
 - name: device_read_bps
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -624,7 +624,7 @@
 
 - name: device_read_bps (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -638,7 +638,7 @@
 
 - name: device_read_bps (lesser entries)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -650,7 +650,7 @@
 
 - name: device_read_bps (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -690,7 +690,7 @@
 
 - name: device_read_iops
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -704,7 +704,7 @@
 
 - name: device_read_iops (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -718,7 +718,7 @@
 
 - name: device_read_iops (less)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -730,7 +730,7 @@
 
 - name: device_read_iops (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -770,7 +770,7 @@
 
 - name: device_write_bps and device_write_iops
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -785,7 +785,7 @@
 
 - name: device_write_bps and device_write_iops (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -800,7 +800,7 @@
 
 - name: device_write_bps device_write_iops (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -840,7 +840,7 @@
 
 - name: dns_opts
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -852,7 +852,7 @@
 
 - name: dns_opts (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -864,7 +864,7 @@
 
 - name: dns_opts (less resolv.conf options)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -875,7 +875,7 @@
 
 - name: dns_opts (more resolv.conf options)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -913,7 +913,7 @@
 
 - name: dns_search_domains
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -924,7 +924,7 @@
 
 - name: dns_search_domains (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -935,7 +935,7 @@
 
 - name: dns_search_domains (different order)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -947,7 +947,7 @@
 
 - name: dns_search_domains (changed elements)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -977,7 +977,7 @@
 
 - name: dns_servers
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -988,7 +988,7 @@
 
 - name: dns_servers (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -999,7 +999,7 @@
 
 - name: dns_servers (changed order)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1011,7 +1011,7 @@
 
 - name: dns_servers (changed elements)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1041,7 +1041,7 @@
 
 - name: domainname
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.com
@@ -1050,7 +1050,7 @@
 
 - name: domainname (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.com
@@ -1059,7 +1059,7 @@
 
 - name: domainname (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.org
@@ -1086,7 +1086,7 @@
 
 - name: entrypoint
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     entrypoint:
     - /bin/sh
     - "-v"
@@ -1098,7 +1098,7 @@
 
 - name: entrypoint (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     entrypoint:
     - /bin/sh
     - "-v"
@@ -1110,7 +1110,7 @@
 
 - name: entrypoint (change order, should not be idempotent)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     entrypoint:
     - /bin/sh
     - "-c"
@@ -1123,7 +1123,7 @@
 
 - name: entrypoint (less parameters)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     entrypoint:
     - /bin/sh
     - "-c"
@@ -1135,7 +1135,7 @@
 
 - name: entrypoint (other parameters)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     entrypoint:
     - /bin/sh
     - "-c"
@@ -1166,7 +1166,7 @@
 
 - name: env
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1180,7 +1180,7 @@
 
 - name: env (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1194,7 +1194,7 @@
 
 - name: env (less environment variables)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1204,7 +1204,7 @@
 
 - name: env (more environment variables)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1216,7 +1216,7 @@
 
 - name: env (fail unwrapped values)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1248,7 +1248,7 @@
 
 - name: env_file
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1257,7 +1257,7 @@
 
 - name: env_file (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1282,7 +1282,7 @@
 
 - name: etc_hosts
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1293,7 +1293,7 @@
 
 - name: etc_hosts (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1304,7 +1304,7 @@
 
 - name: etc_hosts (less hosts)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1314,7 +1314,7 @@
 
 - name: etc_hosts (more hosts)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1344,7 +1344,7 @@
 
 - name: exposed_ports
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1355,7 +1355,7 @@
 
 - name: exposed_ports (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1366,7 +1366,7 @@
 
 - name: exposed_ports (less ports)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1376,7 +1376,7 @@
 
 - name: exposed_ports (more ports)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1412,7 +1412,7 @@
 
 - name: groups
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1423,7 +1423,7 @@
 
 - name: groups (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1434,7 +1434,7 @@
 
 - name: groups (less groups)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1444,7 +1444,7 @@
 
 - name: groups (more groups)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1474,7 +1474,7 @@
 
 - name: healthcheck
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1492,7 +1492,7 @@
 
 - name: healthcheck (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1510,7 +1510,7 @@
 
 - name: healthcheck (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1528,7 +1528,7 @@
 
 - name: healthcheck (no change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1538,7 +1538,7 @@
 
 - name: healthcheck (disabled)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1551,7 +1551,7 @@
 
 - name: healthcheck (disabled, idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1564,7 +1564,7 @@
 
 - name: healthcheck (string in healthcheck test, changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1576,7 +1576,7 @@
 
 - name: healthcheck (string in healthcheck test, idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1617,7 +1617,7 @@
 
 - name: hostname
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.com
@@ -1626,7 +1626,7 @@
 
 - name: hostname (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.com
@@ -1635,7 +1635,7 @@
 
 - name: hostname (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.org
@@ -1662,7 +1662,7 @@
 
 - name: init
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: yes
@@ -1672,7 +1672,7 @@
 
 - name: init (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: yes
@@ -1682,7 +1682,7 @@
 
 - name: init (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: no
@@ -1717,7 +1717,7 @@
 
 - name: interactive
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: yes
@@ -1726,7 +1726,7 @@
 
 - name: interactive (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: yes
@@ -1735,7 +1735,7 @@
 
 - name: interactive (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: no
@@ -1763,12 +1763,12 @@
 - name: Pull hello-world image to make sure ignore_image test succeeds
   # If the image isn't there, it will pull it and return 'changed'.
   docker_image:
-    name: hello-world
+    name: quay.io/ansible/docker-test-containers:hello-world
     pull: true
 
 - name: image
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1776,7 +1776,7 @@
 
 - name: image (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1784,7 +1784,7 @@
 
 - name: ignore_image
   docker_container:
-    image: hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     ignore_image: yes
     name: "{{ cname }}"
     state: started
@@ -1792,7 +1792,7 @@
 
 - name: image change
   docker_container:
-    image: hello-world
+    image: quay.io/ansible/docker-test-containers:hello-world
     name: "{{ cname }}"
     state: started
     force_kill: yes
@@ -1818,7 +1818,7 @@
 
 - name: start helpers
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
@@ -1830,7 +1830,7 @@
 
 - name: ipc_mode
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1840,7 +1840,7 @@
 
 - name: ipc_mode (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1850,7 +1850,7 @@
 
 - name: ipc_mode (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1882,7 +1882,7 @@
 
 - name: kernel_memory
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 8M
@@ -1892,7 +1892,7 @@
 
 - name: kernel_memory (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 8M
@@ -1902,7 +1902,7 @@
 
 - name: kernel_memory (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 6M
@@ -1938,7 +1938,7 @@
 
 - name: labels
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1949,7 +1949,7 @@
 
 - name: labels (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1960,7 +1960,7 @@
 
 - name: labels (less labels)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -1970,7 +1970,7 @@
 
 - name: labels (more labels)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2000,7 +2000,7 @@
 
 - name: start helpers
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
@@ -2013,7 +2013,7 @@
 
 - name: links
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2024,7 +2024,7 @@
 
 - name: links (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2035,7 +2035,7 @@
 
 - name: links (less links)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2045,7 +2045,7 @@
 
 - name: links (more links)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2082,7 +2082,7 @@
 
 - name: log_driver
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2091,7 +2091,7 @@
 
 - name: log_driver (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2100,7 +2100,7 @@
 
 - name: log_driver (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2127,7 +2127,7 @@
 
 - name: log_options
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2140,7 +2140,7 @@
 
 - name: log_options (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2153,7 +2153,7 @@
 
 - name: log_options (less log options)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2164,7 +2164,7 @@
 
 - name: log_options (more log options)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2197,7 +2197,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: mac_address
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:33
@@ -2206,7 +2206,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: mac_address (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:33
@@ -2215,7 +2215,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: mac_address (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:44
@@ -2242,7 +2242,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 64M
@@ -2251,7 +2251,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 64M
@@ -2260,7 +2260,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 48M
@@ -2287,7 +2287,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_reservation
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 64M
@@ -2296,7 +2296,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_reservation (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 64M
@@ -2305,7 +2305,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_reservation (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 48M
@@ -2332,7 +2332,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_swap
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
@@ -2344,7 +2344,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_swap (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
@@ -2356,7 +2356,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_swap (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
@@ -2395,7 +2395,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_swappiness
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 40
@@ -2404,7 +2404,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_swappiness (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 40
@@ -2413,7 +2413,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: memory_swappiness (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 60
@@ -2440,7 +2440,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: oom_killer
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: yes
@@ -2449,7 +2449,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: oom_killer (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: yes
@@ -2458,7 +2458,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: oom_killer (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: no
@@ -2485,7 +2485,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: oom_score_adj
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 5
@@ -2494,7 +2494,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: oom_score_adj (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 5
@@ -2503,7 +2503,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: oom_score_adj (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 7
@@ -2536,7 +2536,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: paused
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
@@ -2550,7 +2550,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: paused (idempotent)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
@@ -2560,7 +2560,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: paused (continue)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
@@ -2593,7 +2593,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: start helpers
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname_h1 }}"
     state: started
@@ -2601,7 +2601,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: pid_mode
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2612,7 +2612,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: pid_mode (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2623,7 +2623,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: pid_mode (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2662,7 +2662,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: pids_limit
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2672,7 +2672,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: pids_limit (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2682,7 +2682,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: pids_limit (changed)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2717,7 +2717,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: privileged
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: yes
@@ -2726,7 +2726,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: privileged (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: yes
@@ -2735,7 +2735,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: privileged (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: no
@@ -2762,7 +2762,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: published_ports
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2773,7 +2773,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: published_ports (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2784,7 +2784,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: published_ports (less published_ports)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2794,7 +2794,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: published_ports (more published_ports)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2806,7 +2806,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: published_ports (ports with IP addresses)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -2843,7 +2843,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: read_only
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: yes
@@ -2852,7 +2852,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: read_only (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: yes
@@ -2861,7 +2861,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: read_only (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: no
@@ -2888,7 +2888,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: restart_policy
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: always
@@ -2897,7 +2897,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: restart_policy (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: always
@@ -2906,7 +2906,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: restart_policy (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: unless-stopped
@@ -2933,7 +2933,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: restart_retries
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
@@ -2943,7 +2943,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: restart_retries (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
@@ -2953,7 +2953,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: restart_retries (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
@@ -2981,7 +2981,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: runtime
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     runtime: runc
@@ -2991,7 +2991,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: runtime (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     runtime: runc
@@ -3040,7 +3040,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: security_opts
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3051,7 +3051,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: security_opts (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3062,7 +3062,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: security_opts (less security options)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3072,7 +3072,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: security_opts (more security options)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3102,7 +3102,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: shm_size
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 96M
@@ -3111,7 +3111,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: shm_size (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 96M
@@ -3120,7 +3120,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: shm_size (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 75M
@@ -3147,7 +3147,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: stop_signal
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_signal: "30"
@@ -3156,7 +3156,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: stop_signal (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_signal: "30"
@@ -3165,7 +3165,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: stop_signal (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_signal: "9"
@@ -3192,7 +3192,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: stop_timeout
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_timeout: 2
@@ -3201,7 +3201,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: stop_timeout (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_timeout: 2
@@ -3211,7 +3211,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 - name: stop_timeout (no change)
   # stop_timeout changes are ignored by default
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_timeout: 1
@@ -3247,7 +3247,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: sysctls
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3259,7 +3259,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: sysctls (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3271,7 +3271,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: sysctls (less sysctls)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3282,7 +3282,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: sysctls (more sysctls)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3320,7 +3320,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tmpfs
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3331,7 +3331,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tmpfs (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3342,7 +3342,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tmpfs (less tmpfs)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3352,7 +3352,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tmpfs (more tmpfs)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3388,7 +3388,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tty
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: yes
@@ -3397,7 +3397,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tty (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: yes
@@ -3406,7 +3406,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: tty (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: no
@@ -3433,7 +3433,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: ulimits
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3444,7 +3444,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: ulimits (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3455,7 +3455,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: ulimits (less ulimits)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3465,7 +3465,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: ulimits (more ulimits)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
@@ -3495,7 +3495,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: user
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: nobody
@@ -3504,7 +3504,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: user (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: nobody
@@ -3513,7 +3513,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: user (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: root
@@ -3540,7 +3540,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: userns_mode
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: host
@@ -3550,7 +3550,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: userns_mode (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: host
@@ -3560,7 +3560,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: userns_mode (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: ""
@@ -3595,7 +3595,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: uts
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: host
@@ -3605,7 +3605,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: uts (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: host
@@ -3615,7 +3615,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: uts (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: ""
@@ -3650,7 +3650,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: working_dir
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /tmp
@@ -3659,7 +3659,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: working_dir (idempotency)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /tmp
@@ -3668,7 +3668,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 
 - name: working_dir (change)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /

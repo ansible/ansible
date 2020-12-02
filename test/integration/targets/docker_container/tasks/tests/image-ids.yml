@@ -11,16 +11,16 @@
     name: "{{ image }}"
     source: pull
   loop:
-    - "hello-world:latest"
-    - "alpine:3.8"
+    - "quay.io/ansible/docker-test-containers:busybox"
+    - "quay.io/ansible/docker-test-containers:alpine3.8"
   loop_control:
     loop_var: image
 
-- name: Get image ID of hello-world and alpine images
+- name: Get image ID of busybox and alpine images
   docker_image_info:
     name:
-    - "hello-world:latest"
-    - "alpine:3.8"
+    - "quay.io/ansible/docker-test-containers:busybox"
+    - "quay.io/ansible/docker-test-containers:alpine3.8"
   register: image_info
 
 - assert:
@@ -29,9 +29,9 @@
 
 - name: Print image IDs
   debug:
-    msg: "hello-world: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
+    msg: "busybox: {{ image_info.images[0].Id }}; alpine {{ image_info.images[1].Id }}"
 
-- name: Create container with hello-world image via ID
+- name: Create container with busybox image via ID
   docker_container:
     image: "{{ image_info.images[0].Id }}"
     name: "{{ cname }}"
@@ -39,7 +39,7 @@
     force_kill: yes
   register: create_1
 
-- name: Create container with hello-world image via ID (idempotent)
+- name: Create container with busybox image via ID (idempotent)
   docker_container:
     image: "{{ image_info.images[0].Id }}"
     name: "{{ cname }}"
@@ -66,13 +66,13 @@
 - name: Untag image
   # Image will not be deleted since the container still uses it
   docker_image:
-    name: alpine:3.8
+    name: quay.io/ansible/docker-test-containers:alpine3.8
     force_absent: yes
     state: absent
 
 - name: Create container with alpine image via name (check mode, will pull, same image)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     name: "{{ cname }}"
     state: present
   register: create_5
@@ -80,7 +80,7 @@
 
 - name: Create container with alpine image via name (will pull, same image)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     name: "{{ cname }}"
     state: present
   register: create_6
@@ -105,28 +105,28 @@
 
 - name: set Digests
   set_fact:
-    digest_hello_world_2016: 0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9
-    digest_hello_world_2019: 2557e3c07ed1e38f26e389462d03ed943586f744621577a99efb77324b0fe535
+    digest_busybox_v1_29: e004c2cc521c95383aebb1fb5893719aa7a8eae2e7a71f316a4410784edb00a9
+    digest_busybox_v1_32: ee44b399df993016003bf5466bd3eeb221305e9d0fa831606bc7902d149c775b
 
-- name: Create container with hello-world image via old digest
+- name: Create container with busybox image via old digest
   docker_container:
-    image: "hello-world@sha256:{{ digest_hello_world_2016 }}"
+    image: "quay.io/ansible/docker-test-containers@sha256:{{ digest_busybox_v1_29 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
   register: digest_1
 
-- name: Create container with hello-world image via old digest (idempotent)
+- name: Create container with busybox image via old digest (idempotent)
   docker_container:
-    image: "hello-world@sha256:{{ digest_hello_world_2016 }}"
+    image: "quay.io/ansible/docker-test-containers@sha256:{{ digest_busybox_v1_29 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
   register: digest_2
 
-- name: Update container with hello-world image via new digest
+- name: Update container with busybox image via new digest
   docker_container:
-    image: "hello-world@sha256:{{ digest_hello_world_2019 }}"
+    image: "quay.io/ansible/docker-test-containers@sha256:{{ digest_busybox_v1_32 }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes

@@ -22,31 +22,31 @@
     state: absent
     force_absent: yes
 
-- name: Make sure we have hello-world:latest
+- name: Make sure we have quay.io/ansible/docker-test-containers:hello-world
   docker_image:
-    name: hello-world:latest
+    name: quay.io/ansible/docker-test-containers:hello-world
     source: pull
 
 - name: Push image to test registry
   docker_image:
-    name: "hello-world:latest"
-    repository: "{{ hello_world_image_base }}"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "{{ hello_world_image_base }}:latest"
     push: yes
     source: local
   register: push_1
 
 - name: Push image to test registry (idempotent)
   docker_image:
-    name: "hello-world:latest"
-    repository: "{{ hello_world_image_base }}"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "{{ hello_world_image_base }}:latest"
     push: yes
     source: local
   register: push_2
 
 - name: Push image to test registry (force, still idempotent)
   docker_image:
-    name: "hello-world:latest"
-    repository: "{{ hello_world_image_base }}"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "{{ hello_world_image_base }}:latest"
     push: yes
     source: local
     force_tag: yes

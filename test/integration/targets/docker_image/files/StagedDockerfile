@@ -1,7 +1,7 @@
-FROM busybox AS first
+FROM quay.io/ansible/docker-test-containers:busybox AS first
 ENV dir /first
 WORKDIR ${dir}
 
-FROM busybox AS second
+FROM quay.io/ansible/docker-test-containers:busybox AS second
 ENV dir /second
 WORKDIR ${dir}

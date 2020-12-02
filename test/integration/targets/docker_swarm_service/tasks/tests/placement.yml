@@ -16,7 +16,7 @@
 - name: placement.preferences
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -28,7 +28,7 @@
 - name: placement.preferences (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -40,7 +40,7 @@
 - name: placement.preferences (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -52,7 +52,7 @@
 - name: placement.preferences (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -63,7 +63,7 @@
 - name: placement.preferences (empty idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -98,7 +98,7 @@
 - name: placement.constraints
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -110,7 +110,7 @@
 - name: placement.constraints (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -122,7 +122,7 @@
 - name: constraints (idempotency, old name)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     constraints:
@@ -133,7 +133,7 @@
 - name: placement.constraints (change)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -145,7 +145,7 @@
 - name: placement.constraints (add)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -158,7 +158,7 @@
 - name: placement.constraints (order idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -171,7 +171,7 @@
 - name: placement.constraints (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
@@ -182,7 +182,7 @@
 - name: placement.constraints (empty idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
