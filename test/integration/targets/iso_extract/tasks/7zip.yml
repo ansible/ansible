@@ -25,7 +25,7 @@
   yum_repository:
     name: epel
     description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    mirrorlist: https://mirrors.fedoraproject.org/metalink?repo=epel-{{ ansible_distribution_major_version }}&arch=$basearch
     state: present
   when: ansible_distribution in ['CentOS']
 
