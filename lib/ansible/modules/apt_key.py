@@ -25,7 +25,7 @@ notes:
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
-    - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option).
+    - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's update_cache option).
     - Supports C(check_mode).
 requirements:
     - gpg
