@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import shutil
+import tempfile
+
 from units.compat import unittest, mock
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import FactCache, CachePluginAdjudicator
@@ -59,14 +62,14 @@ class TestCachePluginAdjudicator(unittest.TestCase):
         assert self.cache.get('foo') is None
 
     def test___getitem__(self):
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError):
             self.cache['foo']
 
     def test_pop_with_default(self):
         assert self.cache.pop('foo', 'bar') == 'bar'
 
     def test_pop_without_default(self):
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError):
             assert self.cache.pop('foo')
 
     def test_pop(self):
@@ -78,6 +81,15 @@ class TestCachePluginAdjudicator(unittest.TestCase):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
+    def test_update_cache_if_changed(self):
+        # Changes are stored in the CachePluginAdjudicator and will be
+        # persisted to the plugin when calling update_cache_if_changed()
+        # The exception is flush which flushes the plugin immediately.
+        assert len(self.cache.keys()) == 2
+        assert len(self.cache._plugin.keys()) == 0
+        self.cache.update_cache_if_changed()
+        assert len(self.cache._plugin.keys()) == 2
+
     def test_flush(self):
         # Fake that the cache already has some data in it but the adjudicator
         # hasn't loaded it in.
@@ -86,18 +98,36 @@ class TestCachePluginAdjudicator(unittest.TestCase):
         self.cache._plugin.set('another wolf', 'another animal')
 
         # The adjudicator does't know about the new entries
-        assert len(self.cache) == 2
+        assert len(self.cache.keys()) == 2
         # But the cache itself does
-        assert len(self.cache._plugin._cache) == 3
+        assert len(self.cache._plugin.keys()) == 3
 
         # If we call flush, both the adjudicator and the cache should flush
         self.cache.flush()
-        assert len(self.cache) == 0
-        assert len(self.cache._plugin._cache) == 0
+        assert len(self.cache.keys()) == 0
+        assert len(self.cache._plugin.keys()) == 0
+
+
+class TestJsonFileCache(TestCachePluginAdjudicator):
+    cache_prefix = ''
+
+    def setUp(self):
+        self.cache_dir = tempfile.mkdtemp(prefix='ansible-plugins-cache-')
+        self.cache = CachePluginAdjudicator(
+            plugin_name='jsonfile', _uri=self.cache_dir,
+            _prefix=self.cache_prefix)
+        self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
+        self.cache['cache_key_2'] = {'key': 'value'}
+
+    def tearDown(self):
+        shutil.rmtree(self.cache_dir)
+
+
+class TestJsonFileCachePrefix(TestJsonFileCache):
+    cache_prefix = 'special_'
 
 
 class TestFactCache(unittest.TestCase):
-
     def setUp(self):
         with mock.patch('ansible.constants.CACHE_PLUGIN', 'memory'):
             self.cache = FactCache()
@@ -108,6 +138,12 @@ class TestFactCache(unittest.TestCase):
         a_copy = self.cache.copy()
         self.assertEqual(type(a_copy), dict)
         self.assertEqual(a_copy, dict(avocado='fruit', daisy='flower'))
+
+    def test_flush(self):
+        self.cache['motorcycle'] = 'vehicle'
+        self.cache['sock'] = 'clothing'
+        self.cache.flush()
+        assert len(self.cache.keys()) == 0
 
     def test_plugin_load_failure(self):
         # See https://github.com/ansible/ansible/issues/18751
