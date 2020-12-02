@@ -11,16 +11,16 @@
     name: "{{ image }}"
     source: pull
   loop:
-    - "hello-world:latest"
-    - "alpine:3.8"
+    - "quay.io/ansible/docker-test-containers:hello-world"
+    - "quay.io/ansible/docker-test-containers:alpine3.8"
   loop_control:
     loop_var: image
 
 - name: Get image ID of hello-world and alpine images
   docker_image_info:
     name:
-    - "hello-world:latest"
-    - "alpine:3.8"
+    - "quay.io/ansible/docker-test-containers:hello-world"
+    - "quay.io/ansible/docker-test-containers:alpine3.8"
   register: image_info
 
 - assert:
@@ -66,13 +66,13 @@
 - name: Untag image
   # Image will not be deleted since the container still uses it
   docker_image:
-    name: alpine:3.8
+    name: quay.io/ansible/docker-test-containers:alpine3.8
     force_absent: yes
     state: absent
 
 - name: Create container with alpine image via name (check mode, will pull, same image)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     name: "{{ cname }}"
     state: present
   register: create_5
@@ -80,7 +80,7 @@
 
 - name: Create container with alpine image via name (will pull, same image)
   docker_container:
-    image: alpine:3.8
+    image: quay.io/ansible/docker-test-containers:alpine3.8
     name: "{{ cname }}"
     state: present
   register: create_6

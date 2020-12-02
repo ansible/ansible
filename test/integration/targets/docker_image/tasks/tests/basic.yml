@@ -5,14 +5,14 @@
 
 - name: Make sure image is not there
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     state: absent
     force_absent: yes
   register: absent_1
 
 - name: Make sure image is not there (idempotency)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     state: absent
   register: absent_2
 
@@ -22,14 +22,14 @@
 
 - name: Make sure image is there
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     state: present
     source: pull
   register: present_1
 
 - name: Make sure image is there (idempotent)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     state: present
     source: pull
   register: present_2
@@ -41,28 +41,28 @@
 
 - name: Make sure tag is not there
   docker_image:
-    name: "hello-world:alias"
+    name: "quay.io/ansible/docker-test-containers:alias"
     state: absent
 
 - name: Tag image with alias
   docker_image:
     source: local
-    name: "hello-world:latest"
-    repository: "hello-world:alias"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "quay.io/ansible/docker-test-containers:alias"
   register: tag_1
 
 - name: Tag image with alias (idempotent)
   docker_image:
     source: local
-    name: "hello-world:latest"
-    repository: "hello-world:alias"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "quay.io/ansible/docker-test-containers:alias"
   register: tag_2
 
 - name: Tag image with alias (force, still idempotent)
   docker_image:
     source: local
-    name: "hello-world:latest"
-    repository: "hello-world:alias"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "quay.io/ansible/docker-test-containers:alias"
     force_tag: yes
   register: tag_3
 
@@ -74,7 +74,7 @@
 
 - name: Cleanup alias tag
   docker_image:
-    name: "hello-world:alias"
+    name: "quay.io/ansible/docker-test-containers:alias"
     state: absent
 
 ####################################################################
@@ -83,13 +83,13 @@
 
 - name: Make sure image is not there
   docker_image:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
     state: absent
     force_absent: yes
 
 - name: Push image to test registry
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     repository: "{{ registry_address }}/test/hello-world"
     push: yes
     source: local
@@ -97,7 +97,7 @@
 
 - name: Push image to test registry (idempotent)
   docker_image:
-    name: "hello-world:latest"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
     repository: "{{ registry_address }}/test/hello-world"
     push: yes
     source: local
@@ -105,8 +105,8 @@
 
 - name: Push image to test registry (force, still idempotent)
   docker_image:
-    name: "hello-world:latest"
-    repository: "{{ registry_address }}/test/hello-world"
+    name: "quay.io/ansible/docker-test-containers:hello-world"
+    repository: "{{ registry_address }}/test/hello-world:latest"
     push: yes
     source: local
     force_tag: yes
@@ -120,37 +120,37 @@
 
 - name: Get facts of local image
   docker_image_info:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
   register: facts_1
 
 - name: Make sure image is not there
   docker_image:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
     state: absent
     force_absent: yes
 
 - name: Get facts of local image (absent)
   docker_image_info:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
   register: facts_2
 
 - name: Pull image from test registry
   docker_image:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
     state: present
     source: pull
   register: pull_1
 
 - name: Pull image from test registry (idempotency)
   docker_image:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
     state: present
     source: pull
   register: pull_2
 
 - name: Get facts of local image (present)
   docker_image_info:
-    name: "{{ registry_address }}/test/hello-world:latest"
+    name: "{{ registry_address }}/test/hello-world"
   register: facts_3
 
 - assert:
