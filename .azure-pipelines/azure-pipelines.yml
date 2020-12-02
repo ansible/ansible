@@ -1,0 +1,250 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - devel
+      - stable-*
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - devel
+      - stable-*
+
+schedules:
+  - cron: 0 0 * * *
+    displayName: Nightly
+    always: true
+    branches:
+      include:
+        - devel
+        - stable-*
+
+variables:
+  - name: checkoutPath
+    value: ansible
+  - name: coverageBranches
+    value: devel
+  - name: pipelinesCoverage
+    value: coverage
+  - name: entryPoint
+    value: test/utils/shippable/shippable.sh
+  - name: fetchDepth
+    value: 100
+
+resources:
+  containers:
+    - container: default
+      image: quay.io/ansible/azure-pipelines-test-container:1.6.0
+
+pool: Standard
+
+stages:
+  - stage: Sanity
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Test {0}
+          testFormat: sanity/{0}
+          targets:
+            - test: 1
+            - test: 2
+            - test: 3
+            - test: 4
+            - test: 5
+  - stage: Units
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: units/{0}
+          targets:
+            - test: 2.6
+            - test: 2.7
+            - test: 3.5
+            - test: 3.6
+            - test: 3.7
+            - test: 3.8
+            - test: 3.9
+  - stage: Windows
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Server {0}
+          testFormat: windows/{0}/1
+          targets:
+            - test: 2012
+            - test: 2012-R2
+            - test: 2016
+            - test: 2019
+  - stage: Remote
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          targets:
+            - name: macOS 10.15
+              test: macos/10.15
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.3
+              test: rhel/8.3
+            - name: FreeBSD 11.1
+              test: freebsd/11.1
+            - name: FreeBSD 12.2
+              test: freebsd/12.2
+          groups:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+  - stage: Docker
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: linux/{0}
+          targets:
+            - name: Alpine 3
+              test: alpine3
+            - name: CentOS 6
+              test: centos6
+            - name: CentOS 7
+              test: centos7
+            - name: CentOS 8
+              test: centos8
+            - name: Fedora 31
+              test: fedora31
+            - name: Fedora 32
+              test: fedora32
+            - name: openSUSE 15 py2
+              test: opensuse15py2
+            - name: openSUSE 15 py3
+              test: opensuse15
+            - name: Ubuntu 16.04
+              test: ubuntu1604
+            - name: Ubuntu 18.04
+              test: ubuntu1804
+          groups:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+  - stage: Galaxy
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: galaxy/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: Generic
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Python {0}
+          testFormat: generic/{0}/1
+          targets:
+            - test: 2.7
+            - test: 3.6
+  - stage: Incidental_Remote
+    displayName: Incidental Remote
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: i/{0}
+          targets:
+            - name: OS X 10.11
+              test: osx/10.11
+            - name: RHEL 7.9
+              test: rhel/7.9
+            - name: RHEL 8.3
+              test: rhel/8.3
+            - name: FreeBSD 11.1
+              test: freebsd/11.1
+            - name: FreeBSD 12.2
+              test: freebsd/12.2
+  - stage: Incidental_Docker
+    displayName: Incidental Docker
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: i/linux/{0}
+          targets:
+            - name: CentOS 6
+              test: centos6
+            - name: CentOS 7
+              test: centos7
+            - name: CentOS 8
+              test: centos8
+            - name: Fedora 31
+              test: fedora31
+            - name: Fedora 32
+              test: fedora32
+            - name: openSUSE 15 py2
+              test: opensuse15py2
+            - name: openSUSE 15 py3
+              test: opensuse15
+            - name: Ubuntu 16.04
+              test: ubuntu1604
+            - name: Ubuntu 18.04
+              test: ubuntu1804
+  - stage: Incidental_Windows
+    displayName: Incidental Windows
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: Server {0}
+          testFormat: i/windows/{0}
+          targets:
+            - test: 2012
+            - test: 2012-R2
+            - test: 2016
+            - test: 2019
+  - stage: Incidental
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: i/{0}/1
+          targets:
+            - name: IOS Python
+              test: ios/csr1000v/
+            - name: VyOS Python 2.7
+              test: vyos/1.1.8/2.7
+            - name: VyOS Python 3.6
+              test: vyos/1.1.8/3.6
+            - name: AWS Python 2.7
+              test: aws/2.7
+            - name: AWS Python 3.6
+              test: aws/3.6
+            - name: Cloud Python
+              test: cloud/
+  - stage: Summary
+    condition: succeededOrFailed()
+    dependsOn:
+      - Sanity
+      - Units
+      - Windows
+      - Remote
+      - Docker
+      - Galaxy
+      - Generic
+      - Incidental_Remote
+      - Incidental_Docker
+      - Incidental_Windows
+      - Incidental
+    jobs:
+      - template: templates/coverage.yml
