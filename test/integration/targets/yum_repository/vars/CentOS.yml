@@ -2,7 +2,7 @@ yum_repository_test_package: sl
 yum_repository_test_repo:
   name: epel
   description: EPEL yum repo
-  baseurl: http://download.fedoraproject.org/pub/epel/{{ ansible_facts.distribution_major_version }}/$basearch
+  baseurl: https://archives.fedoraproject.org/pub/archive/epel/{{ ansible_facts.distribution_major_version }}/$basearch
 
 yum_repository_epel:
   description: Extra Packages for Enterprise Linux {{ ansible_facts.distribution_major_version }} - $basearch
