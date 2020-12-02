@@ -40,11 +40,21 @@
       - sl_result.failed
       - "sl_result.msg==\"No package matching 'sl' found available, installed or updated\""
 
+- name: Determine EPEL baseurl (archived versions)
+  set_fact:
+    epel_baseurl: https://archives.fedoraproject.org/pub/archive/epel/{{ ansible_distribution_major_version }}/$basearch
+  when: ansible_distribution_major_version|int == 6
+
+- name: Determine EPEL baseurl (live versions)
+  set_fact:
+    epel_baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+  when: ansible_distribution_major_version|int > 6
+
 - name: re-add epel
   yum_repository:
     name: epel
     description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    baseurl: "{{ epel_baseurl }}"
     state: present
   register: epel_add
 
@@ -84,7 +94,7 @@
 - name: change configuration of epel repo
   yum_repository:
     name: epel
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    baseurl: "{{ epel_baseurl }}"
     description: New description
     async: no
     enablegroups: no
@@ -110,7 +120,7 @@
 - name: check new config doesn't change (Idempotant)
   yum_repository:
     name: epel
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    baseurl: "{{ epel_baseurl }}"
     description: New description
     async: no
     enablegroups: no
@@ -127,14 +137,14 @@
   yum_repository:
     name: epel
     description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    baseurl: "{{ epel_baseurl }}"
     state: present
 
 - name: re-enable the epel repo (Idempotant)
   yum_repository:
     name: epel
     description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    baseurl: "{{ epel_baseurl }}"
     state: present
   register: epel_add
 
@@ -147,6 +157,8 @@
     name: listtest
     description: Testing list feature
     baseurl:
+      # We don't install anything right after this test, so we don't have to
+      # account for archived epel versions ({{ epel_baseurl }}) here.
       - https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
       - https://download2.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
     gpgkey:
@@ -186,7 +198,7 @@
   yum_repository:
     name: epel
     description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    baseurl: "{{ epel_baseurl }}"
     state: present
     gpgcheck: no
 
