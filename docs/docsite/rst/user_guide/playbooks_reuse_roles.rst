@@ -122,7 +122,7 @@ When you use the ``roles`` option at the play level, for each role 'x':
 
 - If roles/x/tasks/main.yml exists, Ansible adds the tasks in that file to the play.
 - If roles/x/handlers/main.yml exists, Ansible adds the handlers in that file to the play.
-- If roles/x/vars/main.yml exists, Ansible adds the variables in that file to the play.
+- If roles/x/vars/main.yml exists, Ansible adds the variables in that file to the play (available to all tasks and all roles).
 - If roles/x/defaults/main.yml exists, Ansible adds the variables in that file to the play.
 - If roles/x/meta/main.yml exists, Ansible adds any role dependencies in that file to the list of roles.
 - Any copy, script, template or include tasks (in the role) can reference files in roles/x/{files,templates,tasks}/ (dir depends on task) without having to path them relatively or absolutely.
@@ -161,7 +161,7 @@ You can pass other keywords to the ``roles`` option:
 
 When you add a tag to the ``role`` option, Ansible applies the tag to ALL tasks within the role.
 
-When using ``vars:`` within the ``roles:`` section of a playbook, the variables are added to the play variables, making them available to all tasks within the play before and after the role. This behavior can be changed by :ref:`DEFAULT_PRIVATE_ROLE_VARS`.
+When using ``vars:`` within the ``roles:`` section of a playbook, the variables are added to the play variables, making them available to all tasks within the play before and after the role. (This is the same as for variables from roles/x/vars/main.yml) This behavior can be changed by :ref:`DEFAULT_PRIVATE_ROLE_VARS`.
 
 Including roles: dynamic reuse
 ------------------------------
@@ -217,6 +217,8 @@ You can conditionally include a role:
             name: some_role
           when: "ansible_facts['os_family'] == 'RedHat'"
 
+Variables of the role are only available to the role (except if option `public: true` is set, see :ref:`ansible.builtin.include_role_module`).
+
 Importing roles: static reuse
 -----------------------------
 
@@ -253,6 +255,8 @@ You can pass other keywords, including variables and tags, when importing roles:
             dir: '/opt/a'
             app_port: 5000
       ...
+
+Variables of the role (from section `vars:` and from `roles/x/vars/main.yml`) are available to all tasks and all roles of the play.
 
 When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
