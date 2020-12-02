@@ -140,25 +140,33 @@ import copy
 import random
 import time
 
-try:
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, respawn_module
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
+
+
+def do_apt_imports():
+    global apt, apt_pkg, aptsources_distro, distro
     import apt
     import apt_pkg
     import aptsources.distro as aptsources_distro
     distro = aptsources_distro.get_distro()
+
+
+try:
+    do_apt_imports()
     HAVE_PYTHON_APT = True
 except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
-
-
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
+    RESPAWN_PYTHON = '/usr/bin/python'
 else:
     PYTHON_APT = 'python3-apt'
+    RESPAWN_PYTHON = '/usr/bin/python3'
 
 DEFAULT_SOURCES_PERM = 0o0644
 
@@ -175,11 +183,8 @@ def install_python_apt(module):
                 module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
             rc, so, se = module.run_command([apt_get_path, 'install', PYTHON_APT, '-y', '-q'])
             if rc == 0:
-                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
-                import apt
-                import apt_pkg
-                import aptsources.distro as aptsources_distro
-                distro = aptsources_distro.get_distro()
+                global HAVE_PYTHON_APT
+                do_apt_imports()
                 HAVE_PYTHON_APT = True
             else:
                 module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
@@ -552,6 +557,11 @@ def main():
     sourceslist = None
 
     if not HAVE_PYTHON_APT:
+        # respawn is cheaper than running apt, try that first
+        if not has_respawned():
+            respawn_module(RESPAWN_PYTHON)
+            # NB: this is the end if we respawned- this process will exit once the respawned module has completed
+
         if params['install_python_apt']:
             install_python_apt(module)
         else:

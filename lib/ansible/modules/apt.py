@@ -321,6 +321,7 @@ import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.urls import fetch_file
 
@@ -350,18 +351,26 @@ CLEAN_OP_CHANGED_STR = dict(
     autoclean='Del ',
 )
 
-HAS_PYTHON_APT = True
-try:
+
+def do_apt_imports():
+    global apt, apt_pkg
     import apt
     import apt.debfile
     import apt_pkg
+
+
+try:
+    do_apt_imports()
+    HAS_PYTHON_APT = True
 except ImportError:
     HAS_PYTHON_APT = False
 
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
+    RESPAWN_PYTHON = '/usr/bin/python'
 else:
     PYTHON_APT = 'python3-apt'
+    RESPAWN_PYTHON = '/usr/bin/python3'
 
 
 class PolicyRcD(object):
@@ -1088,6 +1097,11 @@ def main():
     module.run_command_environ_update = APT_ENV_VARS
 
     if not HAS_PYTHON_APT:
+        if not has_respawned():
+            # try to respawn first to get the necessary apt libs, cheaper than running apt
+            respawn_module(RESPAWN_PYTHON)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+
         if module.check_mode:
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
@@ -1101,10 +1115,7 @@ def main():
                 module.run_command(['apt-get', 'update'], check_rc=True)
 
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
-            global apt, apt_pkg
-            import apt
-            import apt.debfile
-            import apt_pkg
+            do_apt_imports()
         except ImportError:
             module.fail_json(msg="Could not import python modules: apt, apt_pkg. "
                                  "Please install %s package." % PYTHON_APT)

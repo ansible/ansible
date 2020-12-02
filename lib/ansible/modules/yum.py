@@ -370,6 +370,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
@@ -377,6 +378,7 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 import errno
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -390,6 +392,10 @@ try:
     HAS_YUM_PYTHON = True
 except ImportError:
     HAS_YUM_PYTHON = False
+
+if (not HAS_RPM_PYTHON or not HAS_YUM_PYTHON) and sys.executable != '/usr/bin/python' and not has_respawned():
+    respawn_module('/usr/bin/python')
+    # end of the line for this process; we'll exit here once the respawned module has completed
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining

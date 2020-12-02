@@ -322,18 +322,8 @@ EXAMPLES = '''
 
 import os
 import re
+import subprocess
 import sys
-
-try:
-    import dnf
-    import dnf.cli
-    import dnf.const
-    import dnf.exceptions
-    import dnf.subject
-    import dnf.util
-    HAS_DNF = True
-except ImportError:
-    HAS_DNF = False
 
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_file
@@ -341,7 +331,25 @@ from ansible.module_utils.six import PY2, text_type
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
+
+
+def _do_dnf_imports():
+    global dnf
+    import dnf
+    import dnf.cli
+    import dnf.const
+    import dnf.exceptions
+    import dnf.subject
+    import dnf.util
+
+
+try:
+    _do_dnf_imports()
+    HAS_DNF = True
+except ImportError:
+    HAS_DNF = False
 
 
 class DnfModule(YumDnf):
@@ -508,37 +516,61 @@ class DnfModule(YumDnf):
         # print '%s, %s, %s vs %s, %s, %s = %s' % (e1, v1, r1, e2, v2, r2, rc)
         return rc
 
+    def _has_python_bindings(self, interpreter_path):
+        if not os.path.exists(interpreter_path):
+            return False
+        try:
+            rc = subprocess.call([interpreter_path, '-c', 'import dnf'])
+            return rc == 0
+        except Exception:
+            return False
+
     def _ensure_dnf(self):
         if not HAS_DNF:
-            if PY2:
-                package = 'python2-dnf'
-            else:
-                package = 'python3-dnf'
+            if not has_respawned():
+                # probe well-known system Python locations for accessible bindings, favoring py3
+                system_interpreter_pkg = [  # map interpreters to the appropriate OS package name
+                    ('/usr/libexec/platform-python', 'python3-dnf'),
+                    ('/usr/bin/python3', 'python3-dnf'),
+                    ('/usr/bin/python2', 'python2-dnf')
+                ]
+                interpreter = next((sip for sip in system_interpreter_pkg if self._has_python_bindings(sip[0])), None)
 
-            if self.module.check_mode:
-                self.module.fail_json(
-                    msg="`{0}` is not installed, but it is required"
-                    "for the Ansible dnf module.".format(package),
-                    results=[],
-                )
+                if not interpreter:
+                    # didn't find one, try to install an OS package to get the bindings
+                    if self.module.check_mode:
+                        # but not in check_mode
+                        self.module.fail_json(
+                            msg="`python(3|2)-dnf` is not installed, but is required for the Ansible dnf module.",
+                            results=[]
+                        )
 
-            rc, stdout, stderr = self.module.run_command(['dnf', 'install', '-y', package])
-            global dnf
+                    # probe for a well-known system Python interpreter, install the appropriate binding package
+                    interpreter = ((sip for sip in system_interpreter_pkg if os.path.exists(sip[0])), None)
+
+                    if not interpreter:
+                        # this is unlikely, but might as well cover it
+                        self.module.fail_json(
+                            msg="Could not locate a suitable Python interpreter location to install dnf bindings.",
+                            results=[]
+                        )
+
+                    rc, stdout, stderr = self.module.run_command(['dnf', 'install', '-y', interpreter[1]])
+
+                if sys.executable != interpreter[0]:
+                    # respawn under the interpreter where the bindings should be installed
+                    respawn_module(interpreter[0])
+                    # end of the line for this module, the process will exit here once the respawned module completes
+
             try:
-                import dnf
-                import dnf.cli
-                import dnf.const
-                import dnf.exceptions
-                import dnf.subject
-                import dnf.util
+                _do_dnf_imports()
             except ImportError:
                 self.module.fail_json(
                     msg="Could not import the dnf python module using {0} ({1}). "
-                        "Please install `{2}` package or ensure you have specified the "
-                        "correct ansible_python_interpreter.".format(sys.executable, sys.version.replace('\n', ''),
-                                                                     package),
+                        "Please install `python3-dnf` package or ensure you have specified the "
+                        "correct ansible_python_interpreter.".format(sys.executable, sys.version.replace('\n', '')),
                     results=[],
-                    cmd='dnf install -y {0}'.format(package),
+                    cmd='dnf install -y python3-dnf',
                     rc=rc,
                     stdout=stdout,
                     stderr=stderr,

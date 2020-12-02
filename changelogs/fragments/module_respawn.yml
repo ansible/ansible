@@ -1,0 +1,3 @@
+minor_changes:
+- Module API - new module_respawn API allows modules that need to run under a specific Python interpreter to respawn in place under that interpreter
+- Module API - libselinux-python is no longer required for basic module API selinux operations
