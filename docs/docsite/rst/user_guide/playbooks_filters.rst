@@ -234,7 +234,7 @@ If you are reading in some already formatted data::
 for example::
 
   tasks:
-    - name: Register JSON output as a variable 
+    - name: Register JSON output as a variable
       ansible.builtin.shell: cat /some/path/to/file.json
       register: result
 
@@ -749,8 +749,8 @@ To extract all server names::
 
 To extract ports from cluster1::
 
-    - ansible.builtin.name: Display all ports from cluster1
-      debug:
+    - name: Display all ports from cluster1
+      ansible.builtin.debug:
         var: item
       loop: "{{ domain_definition | community.general.json_query(server_name_cluster1_query) }}"
       vars:
@@ -783,6 +783,24 @@ To get a hash map with all ports and names of a cluster::
       loop: "{{ domain_definition | community.general.json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
+
+To extract ports from all clusters with name starting with 'server1'::
+
+    - name: Display all ports from cluster1
+      ansible.builtin.debug:
+        msg: "{{ domain_definition | to_json | from_json | community.general.json_query(server_name_query) }}"
+      vars:
+        server_name_query: "domain.server[?starts_with(name,'server1')].port"
+
+To extract ports from all clusters with name containing 'server1'::
+
+    - name: Display all ports from cluster1
+      ansible.builtin.debug:
+        msg: "{{ domain_definition | to_json | from_json | community.general.json_query(server_name_query) }}"
+      vars:
+        server_name_query: "domain.server[?contains(name,'server1')].port"
+
+.. note:: while using ``starts_with`` and ``contains``, you have to use `` to_json | from_json `` filter for correct parsing of data structure.
 
 
 Randomizing data
