@@ -268,8 +268,8 @@ options:
     type: str
   ctstate:
     description:
-      - C(ctstate) is a list of the connection states to match in the conntrack module.
-      - Possible states are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT)
+      - A list of the connection states to match in the conntrack module.
+      - Possible values are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
     type: list
     elements: str
     default: []
@@ -310,7 +310,7 @@ options:
   reject_with:
     description:
       - 'Specifies the error packet type to return while rejecting. It implies
-        "jump: REJECT"'
+        "jump: REJECT".'
     type: str
     version_added: "2.1"
   icmp_type:
@@ -346,14 +346,14 @@ options:
 
 EXAMPLES = r'''
 - name: Block specific IP
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     source: 8.8.8.8
     jump: DROP
   become: yes
 
 - name: Forward port 80 to 8600
-  iptables:
+  ansible.builtin.iptables:
     table: nat
     chain: PREROUTING
     in_interface: eth0
@@ -366,14 +366,14 @@ EXAMPLES = r'''
   become: yes
 
 - name: Allow related and established connections
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
   become: yes
 
 - name: Allow new incoming SYN packets on TCP port 22 (SSH)
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 22
@@ -383,14 +383,14 @@ EXAMPLES = r'''
     comment: Accept new SSH connections.
 
 - name: Match on IP ranges
-  iptables:
+  ansible.builtin.iptables:
     chain: FORWARD
     src_range: 192.168.1.100-192.168.1.199
     dst_range: 10.0.0.1-10.0.0.50
     jump: ACCEPT
 
 - name: Tag all outbound tcp packets with DSCP mark 8
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     jump: DSCP
     table: mangle
@@ -398,7 +398,7 @@ EXAMPLES = r'''
     protocol: tcp
 
 - name: Tag all outbound tcp packets with DSCP DiffServ class CS1
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     jump: DSCP
     table: mangle
@@ -406,7 +406,7 @@ EXAMPLES = r'''
     protocol: tcp
 
 - name: Insert a rule on line 5
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 8080
@@ -415,19 +415,19 @@ EXAMPLES = r'''
     rule_num: 5
 
 - name: Set the policy for the INPUT chain to DROP
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     policy: DROP
 
 - name: Reject tcp with tcp-reset
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
 
 - name: Set tcp flags
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     jump: DROP
     protocol: tcp
@@ -440,20 +440,20 @@ EXAMPLES = r'''
         - FIN
 
 - name: Iptables flush filter
-  iptables:
+  ansible.builtin.iptables:
     chain: "{{ item }}"
     flush: yes
   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
 - name: Iptables flush nat
-  iptables:
+  ansible.builtin.iptables:
     table: nat
     chain: '{{ item }}'
     flush: yes
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
 
 - name: Log packets arriving into an user-defined chain
-  iptables:
+  ansible.builtin.iptables:
     chain: LOGGING
     action: append
     state: present

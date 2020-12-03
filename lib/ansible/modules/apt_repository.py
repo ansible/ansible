@@ -20,6 +20,7 @@ description:
 notes:
     - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
+    - Supports C(check_mode).
 options:
     repo:
         description:
@@ -73,7 +74,8 @@ options:
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
-              Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+              Should usually only be set when working with a PPA on
+              a non-Ubuntu target (for example, Debian or Mint).
         type: str
         version_added: '2.3'
 author:
@@ -86,35 +88,37 @@ requirements:
 
 EXAMPLES = '''
 - name: Add specified repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Add specified repository into sources list using specified filename
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
 - name: Add source repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Remove specified repository from sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
 - name: Add nginx stable repository from PPA and install its signing key on Ubuntu target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: ppa:nginx/stable
 
 - name: Add nginx stable repository from PPA and install its signing key on Debian target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
 '''
+
+RETURN = '''#'''
 
 import glob
 import json
