@@ -269,7 +269,7 @@ options:
   ctstate:
     description:
       - A list of the connection states to match in the conntrack module.
-      - Possible states are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
+      - Possible values are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
     type: list
     elements: str
     default: []
