@@ -30,14 +30,12 @@ options:
               facts."
         type: list
         elements: str
-        required: false
         default: "all"
     gather_timeout:
         version_added: "2.2"
         description:
             - Set the default timeout in seconds for individual fact gathering.
         type: int
-        required: false
         default: 10
     filter:
         version_added: "1.1"
@@ -48,7 +46,6 @@ options:
               and the default has became an empty list. A simple string is
               still accepted and works as a single pattern. The behaviour
               prior to Ansible 2.11 remains.
-        required: false
         type: list
         elements: str
         default: []
@@ -68,7 +65,6 @@ options:
               which outputs an object. This object will be formatted by Ansible as json so the
               script should be outputting a raw hashtable, array, or other primitive object.
         type: path
-        required: false
         default: /etc/ansible/facts.d
 description:
     - This module is automatically called by playbooks to gather useful
@@ -90,6 +86,7 @@ notes:
       C(filter) as this is provided by a simpler implementation of the module.
     - This module is also supported for Windows targets.
     - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
+    - Supports C(check_mode).
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -97,51 +94,51 @@ author:
 
 EXAMPLES = """
 # Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
-# ansible all -m setup --tree /tmp/facts
+# ansible all -m ansible.builtin.setup --tree /tmp/facts
 
 # Display only facts regarding memory found by ansible on all hosts and output them.
-# ansible all -m setup -a 'filter=ansible_*_mb'
+# ansible all -m ansible.builtin.setup -a 'filter=ansible_*_mb'
 
 # Display only facts returned by facter.
-# ansible all -m setup -a 'filter=facter_*'
+# ansible all -m ansible.builtin.setup -a 'filter=facter_*'
 
 # Collect only facts returned by facter.
-# ansible all -m setup -a 'gather_subset=!all,!any,facter'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,facter'
 
 - name: Collect only facts returned by facter
-  setup:
+  ansible.builtin.setup:
     gather_subset:
       - '!all'
       - '!any'
       - facter
 
 - name: Collect only selected facts
-  setup:
+  ansible.builtin.setup:
     filter:
       - 'ansible_distribution'
       - 'ansible_machine_id'
       - 'ansible_*_mb'
 
 # Display only facts about certain interfaces.
-# ansible all -m setup -a 'filter=ansible_eth[0-2]'
+# ansible all -m ansible.builtin.setup -a 'filter=ansible_eth[0-2]'
 
 # Restrict additional gathered facts to network and virtual (includes default minimum facts)
-# ansible all -m setup -a 'gather_subset=network,virtual'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=network,virtual'
 
 # Collect only network and virtual (excludes default minimum facts)
-# ansible all -m setup -a 'gather_subset=!all,!any,network,virtual'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,network,virtual'
 
 # Do not call puppet facter or ohai even if present.
-# ansible all -m setup -a 'gather_subset=!facter,!ohai'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!facter,!ohai'
 
 # Only collect the default minimum amount of facts:
-# ansible all -m setup -a 'gather_subset=!all'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all'
 
 # Collect no facts, even the default minimum subset of facts:
-# ansible all -m setup -a 'gather_subset=!all,!min'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!min'
 
 # Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
-# ansible windows -m setup -a "fact_path='c:\\custom_facts'"
+# ansible windows -m ansible.builtin.setup -a "fact_path='c:\\custom_facts'"
 """
 
 # import module snippets
