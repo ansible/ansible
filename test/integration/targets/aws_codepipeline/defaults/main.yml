@@ -1,7 +1,7 @@
 ---
 # defaults file for aws_codepipeline
 
-codepipeline_name: "{{ resource_prefix }}-test-codepipeline"
+codepipeline_name: "{{ resource_prefix[:32] }}-test-codepipeline"
 
 # IAM role names have to be less than 64 characters
 # The 8 digit identifier at the end of resource_prefix helps determine during
