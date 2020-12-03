@@ -535,7 +535,7 @@ class Connection(ConnectionBase):
 
     def reset(self):
         if not self._connected:
-             return
+            return
         self.protocol = None
         self.shell_id = None
         self._connect()
