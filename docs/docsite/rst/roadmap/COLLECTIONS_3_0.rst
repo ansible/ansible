@@ -33,7 +33,7 @@ Release schedule
 
 .. note::
 
-  Breaking changes may be introduced in Ansible 3.0.0, although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly.
+  Breaking changes may be introduced in Ansible 3.0.0, although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before the breaking change happens.
 
 
 Ansible patch releases
