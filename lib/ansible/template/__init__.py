@@ -257,7 +257,6 @@ def _unroll_iterator(func):
             return list(ret)
         return ret
 
-    wrapper.__UNROLLED__ = True
     return _update_wrapper(wrapper, func)
 
 
