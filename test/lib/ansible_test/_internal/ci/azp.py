@@ -211,7 +211,7 @@ class AzurePipelinesChanges:
             # <rev1>...<rev2>
             # Include commits that are reachable from <rev2> but exclude those that are reachable from <rev1>.
             # see: https://git-scm.com/docs/gitrevisions
-            dot_range = '%s..%s' % (self.base_commit, self.commit)
+            dot_range = '%s...%s' % (self.base_commit, self.commit)
 
             self.paths = sorted(self.git.get_diff_names([dot_range]))
             self.diff = self.git.get_diff([dot_range])
