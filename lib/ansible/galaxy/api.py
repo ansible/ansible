@@ -273,6 +273,17 @@ class GalaxyAPI:
         """Render GalaxyAPI as a unicode/text string representation."""
         return to_text(self.name)
 
+    def __repr__(self):
+        # type: (GalaxyAPI) -> str
+        """Render GalaxyAPI as an inspectable string representation."""
+        return (
+            '<{instance!s} "{name!s}" @ {url!s} with priority {priority!s}>'.
+            format(
+                instance=self, name=self.name,
+                priority=self._priority, url=self.api_server,
+            )
+        )
+
     @property
     @g_connect(['v1', 'v2', 'v3'])
     def available_api_versions(self):
