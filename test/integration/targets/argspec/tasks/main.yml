@@ -11,7 +11,6 @@
     required:
     required_one_of_one: value
   register: argspec_required_fail_none
-  ignore_errors: true
 
 - argspec:
     required: value
@@ -482,7 +481,7 @@
       - argspec_required_one_of_fail_none is succeeded
       - "'required parameter required_one_of_one is none (null)' in argspec_required_one_of_fail_none.warnings"
 
-      - argspec_required_one_of_explicitly_allowed.warnings is not defined or argspec_required_one_of_explicitly_allowed.warnings | length == 0
+      - "'Module did not set no_log for maybe_password' in argspec_required_one_of_explicitly_allowed.warnings and argspec_required_one_of_explicitly_allowed.warnings | length == 1"
       - argspec_required_one_of_explicitly_disallowed is failed
       - argspec_required_one_of_explicitly_disallowed.msg == 'required parameter required_one_of_four cannot be none (null)'
 
