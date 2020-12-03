@@ -547,7 +547,7 @@ To migrate content from one collection to another, if the collections are parts 
   * remove related unit and integration tests
   * remove specific module utils
   * remove specific documentation fragments if there are any in the old collection
-  * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; refer to the fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ as an example
+  * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; you can see an example of a changelog fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ 
   * change ``meta/runtime.yml``:
 
     * add ``redirect`` to the corresponding module/plugin's entry
