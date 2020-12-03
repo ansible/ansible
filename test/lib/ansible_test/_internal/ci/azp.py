@@ -209,8 +209,8 @@ class AzurePipelinesChanges:
             self.base_commit = self.git.run_git(['rev-parse', self.base_commit]).strip()
 
             # <rev1>...<rev2>
-            # Include commits that are reachable from <rev2> but exclude those that are reachable from <rev1>.
-            # see: https://git-scm.com/docs/gitrevisions
+            # This form is to view the changes on the branch containing and up to the second <commit>, starting at a common ancestor of both <commit>.
+            # see: https://git-scm.com/docs/git-diff
             dot_range = '%s...%s' % (self.base_commit, self.commit)
 
             self.paths = sorted(self.git.get_diff_names([dot_range]))
