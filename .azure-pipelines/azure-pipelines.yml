@@ -13,7 +13,7 @@ pr:
       - stable-*
 
 schedules:
-  - cron: 0 0 * * *
+  - cron: 0 7 * * *
     displayName: Nightly
     always: true
     branches:
