@@ -17,7 +17,7 @@ Release schedule
 
 
 :2020-12-16: Finalize rules for net-new collections submitted for the ansible release.
-:2021-01-27: Final day for new collections to be **reviewed and approved**. They need to have been
+:2021-01-27: Final day for new collections to be **reviewed and approved**. They MUST be
     submitted prior to this to give reviewers a chance to look them over and for collection owners
     to fix any problems.
 :2021-02-02: Ansible-3.0.0-beta1 -- feature freeze [1]_
