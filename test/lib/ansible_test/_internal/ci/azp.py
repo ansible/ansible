@@ -208,7 +208,7 @@ class AzurePipelinesChanges:
         if self.base_commit:
             self.base_commit = self.git.run_git(['rev-parse', self.base_commit]).strip()
 
-            # <rev1>...<rev2>
+            # <commit>...<commit>
             # This form is to view the changes on the branch containing and up to the second <commit>, starting at a common ancestor of both <commit>.
             # see: https://git-scm.com/docs/git-diff
             dot_range = '%s...%s' % (self.base_commit, self.commit)
