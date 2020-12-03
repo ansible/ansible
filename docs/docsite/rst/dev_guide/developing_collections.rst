@@ -538,19 +538,30 @@ First, look at `Ansible Collection Checklist <https://github.com/ansible-collect
 
 To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:
 
-#. Copy content from the source (old) collection to the target collection.
-#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. The deprecation must be released after the copied content has been included in a release of the target collection.
-#. When the next major release comes:
+#. Copy content from the source (old) collection to the target (new) collection.
+#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the old collection. The deprecation must be released after the copied content has been included in a release of the new collection.
+#. When the next major release of the old collection is prepared:
 
-  * remove the module/plugin from the source collection
-  * add ``redirect`` to the corresponding entry in ``meta/runtime.yml``
-  * remove ``removal_version`` from there
+  * remove the module/plugin from the old collection
+  * remove the symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)
+  * remove related unit and integration tests
+  * remove specific module utils
+  * remove specific documentation fragments if there are any in the old collection
+  * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; you can see an example of a changelog fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ 
+  * change ``meta/runtime.yml`` in the old collection:
+
+    * add ``redirect`` to the corresponding module/plugin's entry
+    * in particular, add ``redirect`` for the removed module utils and documentation fragments if applicable
+    * remove ``removal_version`` from there
+  * remove related entries from ``tests/sanity/ignore.txt`` files if exist
+  * remove changelog fragments for removed content that are not yet part of the changelog (in other words, do not modify `changelogs/changelog.yaml` and do not delete files mentioned in it)
+  * remove requirements that are no longer required in ``tests/unit/requirements.txt``, ``tests/requirements.yml`` and ``galaxy.yml``
 
 According to the above, you need to create at least three PRs as follows:
 
-#. Create a PR against the target collection to copy the content.
-#. Deprecate the module/plugin in the source collection.
-#. Later create a PR against the source collection to remove the content according to the schedule.
+#. Create a PR against the new collection to copy the content.
+#. Deprecate the module/plugin in the old collection.
+#. Later create a PR against the old collection to remove the content according to the schedule.
 
 
 Adding the content to the new collection
