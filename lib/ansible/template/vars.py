@@ -87,7 +87,6 @@ class AnsibleJ2Vars(Mapping):
         else:
             raise KeyError("undefined variable: %s" % varname)
 
-
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
         from ansible.vars.hostvars import HostVars
