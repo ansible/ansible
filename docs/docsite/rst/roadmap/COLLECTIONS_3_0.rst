@@ -12,7 +12,7 @@ Release schedule
 
 .. note::
 
-    Ansible is switching from its traditional versioning scheme to `semantic versioning <https://semver.org/>`_ for this release.  So this version is 3.0.0 instead of 2.11.0.
+    Ansible is switching from its traditional versioning scheme to `semantic versioning <https://semver.org/>`_ starting with this release.  So this version is 3.0.0 instead of 2.11.0.
 
 
 
