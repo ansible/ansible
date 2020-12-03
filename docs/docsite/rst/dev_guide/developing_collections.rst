@@ -538,12 +538,15 @@ First, look at `Ansible Collection Checklist <https://github.com/ansible-collect
 
 To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:
 
-#. Copy content from the source (old) collection to the target collection.
-#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. The deprecation must be released after the copied content has been included in a release of the target collection.
+#. Copy content from the source (old) collection to the target (new) collection.
+#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the old collection. The deprecation must be released after the copied content has been included in a release of the new collection.
 #. When the next major release of the old collection is prepared:
 
-  * remove the module/plugin from the source collection and its symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)
-  * remove its unit and integration tests, specific module utils, and documentation fragments if there are any in the source collection
+  * remove the module/plugin from the old collection
+  * remove the symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)
+  * remove related unit and integration tests
+  * remove specific module utils
+  * remove specific documentation fragments if there are any in the old collection
   * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; refer to the fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ as an example
   * change ``meta/runtime.yml``:
 
@@ -556,9 +559,9 @@ To migrate content from one collection to another, if the collections are parts 
 
 According to the above, you need to create at least three PRs as follows:
 
-#. Create a PR against the target collection to copy the content.
-#. Deprecate the module/plugin in the source collection.
-#. Later create a PR against the source collection to remove the content according to the schedule.
+#. Create a PR against the new collection to copy the content.
+#. Deprecate the module/plugin in the old collection.
+#. Later create a PR against the old collection to remove the content according to the schedule.
 
 
 Adding the content to the new collection
