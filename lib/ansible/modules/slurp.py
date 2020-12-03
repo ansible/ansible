@@ -28,6 +28,7 @@ notes:
    - This module returns an 'in memory' base64 encoded version of the file, take
      into account that this will require at least twice the RAM as the original file size.
    - This module is also supported for Windows targets.
+   - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.fetch
 author:
@@ -37,11 +38,12 @@ author:
 
 EXAMPLES = r'''
 - name: Find out what the remote machine's mounts are
-  slurp:
+  ansible.builtin.slurp:
     src: /proc/mounts
   register: mounts
 
-- debug:
+- name: Print returned information
+  ansible.builtin.debug:
     msg: "{{ mounts['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd
@@ -55,6 +57,8 @@ EXAMPLES = r'''
 # $ echo MjE3OQo= | base64 -d
 # 2179
 '''
+
+RETURN = r'''#'''
 
 import base64
 import os

@@ -50,18 +50,18 @@ author:
 
 EXAMPLES = """
 - name: Create temporary build directory
-  tempfile:
+  ansible.builtin.tempfile:
     state: directory
     suffix: build
 
 - name: Create temporary file
-  tempfile:
+  ansible.builtin.tempfile:
     state: file
     suffix: temp
   register: tempfile_1
 
 - name: Use the registered var and the file module to remove the temporary file
-  file:
+  ansible.builtin.file:
     path: "{{ tempfile_1.path }}"
     state: absent
   when: tempfile_1.path is defined
@@ -69,7 +69,7 @@ EXAMPLES = """
 
 RETURN = '''
 path:
-  description: Path to created file or directory
+  description: Path to created file or directory.
   returned: success
   type: str
   sample: "/tmp/ansible.bMlvdk"

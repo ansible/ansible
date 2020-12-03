@@ -14,7 +14,7 @@ DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
-short_description: Template a file out to a remote server
+short_description: Template a file out to a target host
 options:
   follow:
     description:
@@ -43,7 +43,7 @@ extends_documentation_fragment:
 
 EXAMPLES = r'''
 - name: Template a file to /etc/file.conf
-  template:
+  ansible.builtin.template:
     src: /mytemplates/foo.j2
     dest: /etc/file.conf
     owner: bin
@@ -51,7 +51,7 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Template a file, using symbolic modes (equivalent to 0644)
-  template:
+  ansible.builtin.template:
     src: /mytemplates/foo.j2
     dest: /etc/file.conf
     owner: bin
@@ -59,7 +59,7 @@ EXAMPLES = r'''
     mode: u=rw,g=r,o=r
 
 - name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
-  template:
+  ansible.builtin.template:
     src: named.conf_{{ ansible_os_family }}.j2
     dest: /etc/named.conf
     group: named
@@ -67,19 +67,19 @@ EXAMPLES = r'''
     mode: 0640
 
 - name: Create a DOS-style text file from a template
-  template:
+  ansible.builtin.template:
     src: config.ini.j2
     dest: /share/windows/config.ini
     newline_sequence: '\r\n'
 
 - name: Copy a new sudoers file into place, after passing validation with visudo
-  template:
+  ansible.builtin.template:
     src: /mine/sudoers
     dest: /etc/sudoers
     validate: /usr/sbin/visudo -cf %s
 
 - name: Update sshd configuration safely, avoid locking yourself out
-  template:
+  ansible.builtin.template:
     src: etc/ssh/sshd_config.j2
     dest: /etc/ssh/sshd_config
     owner: root
