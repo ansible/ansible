@@ -95,8 +95,8 @@ GNU General Public License v3.0 or later
 
 See `COPYING <COPYING>`_ to see the full text.
 
-.. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
-   :target: https://pypi.org/project/ansible
+.. |PyPI version| image:: https://img.shields.io/pypi/v/ansible-core.svg
+   :target: https://pypi.org/project/ansible-core
 .. |Docs badge| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg
    :target: https://docs.ansible.com/ansible/latest/
 .. |Build Status| image:: https://dev.azure.com/ansible/ansible/_apis/build/status/CI?branchName=devel
