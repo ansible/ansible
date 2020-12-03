@@ -2,8 +2,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import textwrap
-import re
 import os
 
 from .. import types as t
@@ -14,6 +14,7 @@ from ..sanity import (
     SanityFailure,
     SanitySuccess,
     SanityTargets,
+    SANITY_ROOT,
 )
 
 from ..config import (
@@ -38,6 +39,8 @@ from ..io import (
 
 from ..util import (
     display,
+    find_python,
+    raw_command,
 )
 
 from ..util_common import (
@@ -48,7 +51,8 @@ from ..util_common import (
 
 class IntegrationAliasesTest(SanityVersionNeutral):
     """Sanity test to evaluate integration test aliases."""
-    SHIPPABLE_YML = 'shippable.yml'
+    CI_YML = '.azure-pipelines/azure-pipelines.yml'
+    TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
 
     DISABLED = 'disabled/'
     UNSTABLE = 'unstable/'
@@ -93,8 +97,8 @@ class IntegrationAliasesTest(SanityVersionNeutral):
     def __init__(self):
         super(IntegrationAliasesTest, self).__init__()
 
-        self._shippable_yml_lines = []  # type: t.List[str]
-        self._shippable_test_groups = {}  # type: t.Dict[str, t.Set[int]]
+        self._ci_config = {}  # type: t.Dict[str, t.Any]
+        self._ci_test_groups = {}  # type: t.Dict[str, t.List[int]]
 
     @property
     def can_ignore(self):  # type: () -> bool
@@ -106,60 +110,94 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    @property
-    def shippable_yml_lines(self):
-        """
-        :rtype: list[str]
-        """
-        if not self._shippable_yml_lines:
-            self._shippable_yml_lines = read_text_file(self.SHIPPABLE_YML).splitlines()
+    def load_ci_config(self, args):  # type: (SanityConfig) -> t.Dict[str, t.Any]
+        """Load and return the CI YAML configuration."""
+        if not self._ci_config:
+            self._ci_config = self.load_yaml(args, self.CI_YML)
 
-        return self._shippable_yml_lines
+        return self._ci_config
 
     @property
-    def shippable_test_groups(self):
-        """
-        :rtype: dict[str, set[int]]
-        """
-        if not self._shippable_test_groups:
-            matches = [re.search(r'^[ #]+- env: T=(?P<group>[^/]+)/(?P<params>.+)/(?P<number>[1-9][0-9]?)$', line) for line in self.shippable_yml_lines]
-            entries = [(match.group('group'), int(match.group('number'))) for match in matches if match]
+    def ci_test_groups(self):  # type: () -> t.Dict[str, t.List[int]]
+        """Return a dictionary of CI test names and their group(s)."""
+        if not self._ci_test_groups:
+            test_groups = {}
 
-            for key, value in entries:
-                if key not in self._shippable_test_groups:
-                    self._shippable_test_groups[key] = set()
+            for stage in self._ci_config['stages']:
+                for job in stage['jobs']:
+                    if job.get('template') != 'templates/matrix.yml':
+                        continue
 
-                self._shippable_test_groups[key].add(value)
+                    parameters = job['parameters']
 
-        return self._shippable_test_groups
+                    groups = parameters.get('groups', [])
+                    test_format = parameters.get('testFormat', '{0}')
+                    test_group_format = parameters.get('groupFormat', '{0}/{{1}}')
 
-    def format_shippable_group_alias(self, name, fallback=''):
+                    for target in parameters['targets']:
+                        test = target.get('test') or target.get('name')
+
+                        if groups:
+                            tests_formatted = [test_group_format.format(test_format).format(test, group) for group in groups]
+                        else:
+                            tests_formatted = [test_format.format(test)]
+
+                        for test_formatted in tests_formatted:
+                            parts = test_formatted.split('/')
+                            key = parts[0]
+
+                            if key in ('sanity', 'units'):
+                                continue
+
+                            try:
+                                group = int(parts[-1])
+                            except ValueError:
+                                continue
+
+                            if group < 1 or group > 99:
+                                continue
+
+                            group_set = test_groups.setdefault(key, set())
+                            group_set.add(group)
+
+            self._ci_test_groups = dict((key, sorted(value)) for key, value in test_groups.items())
+
+        return self._ci_test_groups
+
+    def format_test_group_alias(self, name, fallback=''):
         """
         :type name: str
         :type fallback: str
         :rtype: str
         """
-        group_numbers = self.shippable_test_groups.get(name, None)
+        group_numbers = self.ci_test_groups.get(name, None)
 
         if group_numbers:
             if min(group_numbers) != 1:
-                display.warning('Min test group "%s" in shippable.yml is %d instead of 1.' % (name, min(group_numbers)), unique=True)
+                display.warning('Min test group "%s" in %s is %d instead of 1.' % (name, self.CI_YML, min(group_numbers)), unique=True)
 
             if max(group_numbers) != len(group_numbers):
-                display.warning('Max test group "%s" in shippable.yml is %d instead of %d.' % (name, max(group_numbers), len(group_numbers)), unique=True)
+                display.warning('Max test group "%s" in %s is %d instead of %d.' % (name, self.CI_YML, max(group_numbers), len(group_numbers)), unique=True)
 
             if max(group_numbers) > 9:
-                alias = 'shippable/%s/group(%s)/' % (name, '|'.join(str(i) for i in range(min(group_numbers), max(group_numbers) + 1)))
+                alias = '%s/%s/group(%s)/' % (self.TEST_ALIAS_PREFIX, name, '|'.join(str(i) for i in range(min(group_numbers), max(group_numbers) + 1)))
             elif len(group_numbers) > 1:
-                alias = 'shippable/%s/group[%d-%d]/' % (name, min(group_numbers), max(group_numbers))
+                alias = '%s/%s/group[%d-%d]/' % (self.TEST_ALIAS_PREFIX, name, min(group_numbers), max(group_numbers))
             else:
-                alias = 'shippable/%s/group%d/' % (name, min(group_numbers))
+                alias = '%s/%s/group%d/' % (self.TEST_ALIAS_PREFIX, name, min(group_numbers))
         elif fallback:
-            alias = 'shippable/%s/group%d/' % (fallback, 1)
+            alias = '%s/%s/group%d/' % (self.TEST_ALIAS_PREFIX, fallback, 1)
         else:
-            raise Exception('cannot find test group "%s" in shippable.yml' % name)
+            raise Exception('cannot find test group "%s" in %s' % (name, self.CI_YML))
 
         return alias
+
+    def load_yaml(self, args, path):  # type: (SanityConfig, str) -> t.Dict[str, t.Any]
+        """Load the specified YAML file and return the contents."""
+        yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
+        python = find_python(args.python_version)
+
+        return json.loads(raw_command([python, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
 
     def test(self, args, targets):
         """
@@ -170,10 +208,10 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         if args.explain:
             return SanitySuccess(self.name)
 
-        if not os.path.isfile(self.SHIPPABLE_YML):
+        if not os.path.isfile(self.CI_YML):
             return SanityFailure(self.name, messages=[SanityMessage(
                 message='file missing',
-                path=self.SHIPPABLE_YML,
+                path=self.CI_YML,
             )])
 
         results = dict(
@@ -181,6 +219,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
             labels={},
         )
 
+        self.load_ci_config(args)
         self.check_changes(args, results)
 
         write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)
@@ -219,23 +258,23 @@ class IntegrationAliasesTest(SanityVersionNeutral):
                     messages.append(SanityMessage('invalid alias `%s`' % alias, '%s/aliases' % target.path))
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['cloud/', 'shippable/generic/'], include=False,
+            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False,
                                          directories=False, errors=False)),
-            find=self.format_shippable_group_alias('linux').replace('linux', 'posix'),
-            find_incidental=['shippable/posix/incidental/'],
+            find=self.format_test_group_alias('linux').replace('linux', 'posix'),
+            find_incidental=['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['shippable/generic/'], include=True, directories=False,
+            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], include=True, directories=False,
                                          errors=False)),
-            find=self.format_shippable_group_alias('generic'),
+            find=self.format_test_group_alias('generic'),
         )
 
         for cloud in clouds:
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
-                find=self.format_shippable_group_alias(cloud, 'cloud'),
-                find_incidental=['shippable/%s/incidental/' % cloud, 'shippable/cloud/incidental/'],
+                find=self.format_test_group_alias(cloud, 'cloud'),
+                find_incidental=['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX],
             )
 
         return messages
@@ -250,8 +289,8 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         messages += self.check_ci_group(
             targets=windows_targets,
-            find=self.format_shippable_group_alias('windows'),
-            find_incidental=['shippable/windows/incidental/'],
+            find=self.format_test_group_alias('windows'),
+            find_incidental=['%s/windows/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
         return messages
