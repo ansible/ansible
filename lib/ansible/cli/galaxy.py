@@ -8,6 +8,7 @@ __metaclass__ = type
 import os.path
 import re
 import shutil
+import sys
 import textwrap
 import time
 import yaml
@@ -119,7 +120,7 @@ class GalaxyCLI(CLI):
                     "to Galaxy. The key can be found at https://galaxy.ansible.com/me/preferences, and passed to the "
                     "ansible-galaxy CLI via a file at {0} or (insecurely) via the `--token` "
                     "command-line argument.".format(to_text(C.GALAXY_TOKEN_PATH)))
-                exit(1)
+                sys.exit(1)
 
         self.api_servers = []
         self.galaxy = None
