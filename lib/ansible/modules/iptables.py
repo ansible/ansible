@@ -268,7 +268,7 @@ options:
     type: str
   ctstate:
     description:
-      - I(ctstate) is a list of the connection states to match in the conntrack module.
+      - A list of the connection states to match in the conntrack module.
       - Possible states are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
     type: list
     elements: str
