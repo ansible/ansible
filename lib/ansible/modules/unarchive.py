@@ -64,7 +64,7 @@ options:
   include:
     description:
       - List of file entries that you would like to extract from the archive.
-    version_added: "2.7"
+    version_added: "2.11"
   keep_newer:
     description:
       - Do not replace existing files that are newer than files from the archive.
@@ -742,7 +742,7 @@ class TgzArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
 
-        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
