@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    set_mode_if_different - handle symlink if it is inside a directory with
+    sticky bit set (https://github.com/ansible/ansible/pull/45198)

@@ -116,6 +116,88 @@
     that:
       - "file6a_result.changed == false"
 
+# In order for a symlink in a sticky world writable directory to be followed, it must
+# either be owned by the follower,
+# or the directory and symlink must have the same owner.
+- name: symlink in sticky directory
+  block:
+    - name: Create remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+      register: user
+
+    - name: Create a local temporary directory
+      tempfile:
+        state: directory
+      register: tempdir
+
+    - name: Set sticky bit
+      file:
+        path: '{{ tempdir.path }}'
+        mode: o=rwXt
+
+    - name: 'Check mode: force creation soft link in sticky directory owned by another user (mode is used)'
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: true
+        follow: false
+      check_mode: true
+      register: missing_dst_no_follow_enable_force_use_mode1
+
+    - name: force creation soft link in sticky directory owned by another user (mode is used)
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: true
+        follow: false
+      register: missing_dst_no_follow_enable_force_use_mode2
+
+    - name: Get stat info for the link
+      stat:
+        path: '{{ tempdir.path }}/soft3.txt'
+        follow: false
+      register: soft3_result
+
+    - name: 'Idempotence: force creation soft link in sticky directory owned by another user (mode is used)'
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: yes
+        follow: false
+      register: missing_dst_no_follow_enable_force_use_mode3
+  always:
+    - name: Delete remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+        state: absent
+
+    - name: Delete unprivileged user home and tempdir
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '{{ tempdir.path }}'
+        - '{{ user.home }}'
+
+- name: verify that link was created
+  assert:
+    that:
+      - "missing_dst_no_follow_enable_force_use_mode1 is changed"
+      - "missing_dst_no_follow_enable_force_use_mode2 is changed"
+      - "missing_dst_no_follow_enable_force_use_mode3 is not changed"
+      - "soft3_result['stat'].islnk"
+      - "soft3_result['stat'].lnk_target == '{{ user.home }}/nonexistent'"
+
 #
 # Test creating a link to a directory https://github.com/ansible/ansible/issues/1369
 #
