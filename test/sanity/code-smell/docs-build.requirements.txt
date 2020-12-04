@@ -1,4 +1,4 @@
-jinja2
+jinja2==2.11.2
 pyyaml
 sphinx
 sphinx-notfound-page
