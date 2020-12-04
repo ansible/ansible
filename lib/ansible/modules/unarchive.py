@@ -358,8 +358,8 @@ class ZipArchive(object):
                         if self.excludes:
                             for exclude in self.excludes:
                                 if not fnmatch.fnmatch(member, exclude):
-                                    self._files_in_archive.append(to_native(member))
-                                break
+                                    exclude_flag = True
+                                    break
                         if not exclude_flag:
                             self._files_in_archive.append(to_native(member))
             except Exception:
