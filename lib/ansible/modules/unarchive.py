@@ -64,6 +64,8 @@ options:
   include:
     description:
       - List of file entries that you would like to extract from the archive.
+    type: list
+    elements: str
     version_added: "2.11"
   keep_newer:
     description:
@@ -711,6 +713,7 @@ class TgzArchive(object):
             self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = '-z'
         self._files_in_archive = []
+
         if self.cmd_path:
             self.tar_type = self._get_tar_type()
         else:
@@ -906,7 +909,7 @@ def main():
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
             exclude=dict(type='list', elements='str', default=[]),
-            include=dict(type='list', default=[]),
+            include=dict(type='list', elements='str', default=[]),
             extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
         ),
