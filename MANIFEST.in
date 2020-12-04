@@ -2,7 +2,6 @@ include README.rst
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
-include shippable.yml
 recursive-include docs *
 exclude docs/docsite/rst_warnings
 recursive-exclude docs/docsite/_build *
