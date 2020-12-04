@@ -55,7 +55,7 @@ options:
     description:
       - Do not set 'seen' flag when pre-seeding.
     type: bool
-    default: no
+    default: false
 author:
 - Brian Coca (@bcoca)
 '''
@@ -140,7 +140,7 @@ def main():
             question=dict(type='str', aliases=['selection', 'setting']),
             vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
             value=dict(type='str', aliases=['answer']),
-            unseen=dict(type='bool'),
+            unseen=dict(type='bool', default=False),
         ),
         required_together=(['question', 'vtype', 'value'],),
         supports_check_mode=True,
