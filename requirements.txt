@@ -3,7 +3,7 @@
 # packages.  Thus, this should be the loosest set possible (only required
 # packages, not optional ones, and with the widest range of versions that could
 # be suitable)
-jinja2
+jinja2==2.11.2
 PyYAML
 cryptography
 packaging
