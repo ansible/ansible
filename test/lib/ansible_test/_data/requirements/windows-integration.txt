@@ -1,5 +1,5 @@
 cryptography
-jinja2
+jinja2==2.11.2
 junit-xml
 ntlm-auth
 ordereddict ; python_version < '2.7' # ansible-test junit callback plugin requirement
