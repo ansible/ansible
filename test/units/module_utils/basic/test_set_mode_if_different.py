@@ -9,7 +9,13 @@ __metaclass__ = type
 
 import errno
 import os
+
 from itertools import product
+
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 import pytest
 
