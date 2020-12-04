@@ -58,13 +58,18 @@ options:
   exclude:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
+      - Mutually exclusive with C(include).
     type: list
+    default: []
     elements: str
     version_added: "2.1"
   include:
     description:
-      - List of file entries that you would like to extract from the archive.
+      - List of directory and file entries that you would like to extract from the archive. Only
+        files listed here will be extracted.
+      - Mutually exclusive with C(exclude).
     type: list
+    default: []
     elements: str
     version_added: "2.11"
   keep_newer:
