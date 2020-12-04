@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix for linear strategy when tasks were executed in incorrect order or even removed from execution. (https://github.com/ansible/ansible/issues/64611, https://github.com/ansible/ansible/issues/64999, https://github.com/ansible/ansible/issues/72725, https://github.com/ansible/ansible/issues/72781)

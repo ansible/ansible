@@ -92,15 +92,94 @@ class HostState:
 
     def __eq__(self, other):
         if not isinstance(other, HostState):
-            return False
+            raise AnsibleAssertionError("HostState can be compared only to another HostState, got %s" % type(other))
 
-        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-                     'run_state', 'fail_state', 'pending_setup',
-                     'tasks_child_state', 'rescue_child_state', 'always_child_state'):
-            if getattr(self, attr) != getattr(other, attr):
-                return False
+        if self.cur_block != other.cur_block:
+            return False
+        if self.run_state != other.run_state:
+            return False
+        if self.run_state == other.run_state:
+            if self.run_state == IteratingStates.SETUP:
+                # if both states are in ITERATING_SETUP then they are "equal"
+                # because setup_block only has one task and no rescue/always/child_blocks
+                return True
+            elif self.run_state == IteratingStates.TASKS:
+                if self.cur_regular_task != other.cur_regular_task:
+                    return False
+                if self.tasks_child_state is not None and other.tasks_child_state is not None:
+                    return self.tasks_child_state == other.tasks_child_state
+                if self.tasks_child_state is not None and other.tasks_child_state is None:
+                    return False
+            elif self.run_state == IteratingStates.RESCUE:
+                if self.cur_rescue_task != other.cur_rescue_task:
+                    return False
+                if self.rescue_child_state is not None and other.rescue_child_state is not None:
+                    return self.rescue_child_state == other.rescue_child_state
+                if self.rescue_child_state is not None and other.rescue_child_state is None:
+                    return False
+            elif self.run_state == IteratingStates.ALWAYS:
+                if self.cur_always_task != other.cur_always_task:
+                    return False
+                if self.always_child_state is not None and other.always_child_state is not None:
+                    return self.always_child_state == other.always_child_state
+                if self.always_child_state is not None and other.always_child_state is None:
+                    return False
 
         return True
+
+    def __lt__(self, other):
+        """This is used in the linear strategy to find the "lowest" state to
+        ensure tasks are executed in lockstep. The lowest state is a HostState
+        whose next task is defined at the lowest/most nested position in a play.
+        """
+        if not isinstance(other, HostState):
+            raise AnsibleAssertionError("HostState can be compared only to another HostState, got %s" % type(other))
+
+        if self.cur_block < other.cur_block:
+            return True
+        elif self.cur_block > other.cur_block:
+            return False
+        # NOTE if self.cur_block == other.cur_block then we need to continue comparing other properties
+
+        if self.run_state < other.run_state:
+            return True
+        elif self.run_state > other.run_state:
+            return False
+
+        if self.run_state == other.run_state:
+            if self.run_state == IteratingStates.SETUP:
+                # if both states are in ITERATING_SETUP then they are "equal"
+                # because setup_block only has one task and no rescue/always/child_blocks
+                return False
+            elif self.run_state == IteratingStates.TASKS:
+                if self.cur_regular_task < other.cur_regular_task:
+                    return True
+                elif self.cur_regular_task > other.cur_regular_task:
+                    return False
+                if self.tasks_child_state is not None and other.tasks_child_state is not None:
+                    return self.tasks_child_state < other.tasks_child_state
+                if self.tasks_child_state is not None and other.tasks_child_state is None:
+                    return True
+            elif self.run_state == IteratingStates.RESCUE:
+                if self.cur_rescue_task < other.cur_rescue_task:
+                    return True
+                elif self.cur_rescue_task > other.cur_rescue_task:
+                    return False
+                if self.rescue_child_state is not None and other.rescue_child_state is not None:
+                    return self.rescue_child_state < other.rescue_child_state
+                if self.rescue_child_state is not None and other.rescue_child_state is None:
+                    return True
+            elif self.run_state == IteratingStates.ALWAYS:
+                if self.cur_always_task < other.cur_always_task:
+                    return True
+                elif self.cur_always_task > other.cur_always_task:
+                    return False
+                if self.always_child_state is not None and other.always_child_state is not None:
+                    return self.always_child_state < other.always_child_state
+                if self.always_child_state is not None and other.always_child_state is None:
+                    return True
+
+        return False
 
     def get_current_block(self):
         return self._blocks[self.cur_block]
