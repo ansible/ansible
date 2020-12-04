@@ -64,6 +64,10 @@ coredocs: core_htmldocs
 generate_rst: collections_meta config cli keywords plugins testing
 core_generate_rst: collections_meta config cli keywords base_plugins testing
 
+# At the moment localizing the plugins and collections is not required for the ongoing
+# localisation effort. It will come at a later time.
+gettext_generate_rst: config cli keywords testing
+
 # The following two symlinks are necessary to produce two different docsets
 # from the same set of rst files (Ansible the package docs, and core docs).
 # Symlink the relevant index into place for building Ansible docs
@@ -85,6 +89,15 @@ core_structure: core_generate_rst
 	@echo "Creating symlinks in core_generate_rst"
 	-ln -sf ../rst/core_index.rst rst/index.rst
 	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
+
+# Symlink the relevant index into place for building core docs
+gettext_structure: gettext_generate_rst
+	@echo "Creating symlinks in gettext_generate_rst"
+	-ln -sf ../rst/core_index.rst rst/index.rst
+	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
+
+gettext: gettext_structure
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx gettext
 
 htmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html

@@ -58,6 +58,9 @@ DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
 CPUS ?= $(shell nproc)
 endif
 
+# Intenationalisation and Localisation
+LANGUAGES ?=
+
 # DEB build parameters
 DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
@@ -274,6 +277,26 @@ webdocs:
 .PHONY: coredocs
 coredocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) coredocs)
+
+.PHONY: gettext
+gettext:
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) gettext)
+
+.PHONY: generate-po
+generate-po:
+ifeq ($(LANGUAGES),)
+	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to suppor. (Exampe: fr,es)'
+else
+	(cd docs/docsite/; sphinx-intl update -w 0 -d rst/locales -p _build/gettext -l $(LANGUAGES))
+endif
+
+.PHONY: list-po-needs-translation
+list-po-needs-translation:
+ifeq ($(LANGUAGES),)
+	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to suppor. (Exampe: fr,es)'
+else
+	(cd docs/docsite/; sphinx-intl stat -d rst/locales -l $(LANGUAGES) | grep -E ' [1-9][0-9]* (fuzzy|untranslated)' | sort)
+endif
 
 .PHONY: linkcheckdocs
 linkcheckdocs:
