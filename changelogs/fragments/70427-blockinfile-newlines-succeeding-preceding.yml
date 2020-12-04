@@ -1,0 +1,2 @@
+minor_changes:
+  - "``blockinfile`` - add parameter ``newlines_preceding`` and ``newlines_succeeding`` (both default to ``0``) to insert newlines before and/or after the block of lines to be inserted (https://github.com/ansible/ansible/issues/70427)."

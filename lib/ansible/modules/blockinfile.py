@@ -85,6 +85,22 @@ options:
     type: str
     default: END
     version_added: '2.5'
+  newlines_preceding:
+    description:
+    - This will insert additional empty new lines before the block (if the block is not inserted at the beginning of the file).
+    - It can provide increased readability by separating the block from previous content.
+    - Existing empty lines before the insert point (lines with only spaces or tabs count as empty) will reduced the number of additional empty lines inserted.
+    - In any case, existing new lines will not be deleted.
+    type: int
+    default: 0
+  newlines_succeeding:
+    description:
+    - This will insert additional empty new lines after the block.
+    - It can provide increased readability by separating the block from subsequent content.
+    - Existing empty lines after the insert point (lines with only spaces or tabs count as empty) will reduced the number of additional empty lines inserted.
+    - In any case, existing new lines will not be deleted.
+    type: int
+    default: 0
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
@@ -146,6 +162,15 @@ EXAMPLES = r'''
     - { name: host1, ip: 10.10.1.10 }
     - { name: host2, ip: 10.10.1.11 }
     - { name: host3, ip: 10.10.1.12 }
+
+- name: Ensure two additional empty lines before and one after the block
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      host4 10.10.1.13
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+    newlines_preceding: 2
+    newlines_succeeding: 1
 '''
 
 import re
@@ -204,6 +229,8 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
+            newlines_preceding=dict(type='int', default=0),
+            newlines_succeeding=dict(type='int', default=0),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -305,6 +332,26 @@ def main():
     if n0 > 0:
         if not lines[n0 - 1].endswith(b(os.linesep)):
             lines[n0 - 1] += b(os.linesep)
+
+    # Additional empty lines before and/or after the block of lines
+    nl_preceding = params['newlines_preceding']
+    nl_succeeding = params['newlines_succeeding']
+    if n0 > 0 and nl_preceding > 0:
+        # count existing preceding empty lines and deduct
+        existing_nl_preceding = sum(
+            1 for i in range(1, nl_preceding + 1)
+            if n0 >= i
+            and re.sub(b(r"[ \t]*"), b(""), lines[n0 - i]) == b(os.linesep))
+        #       ^-- lines with only tabs and spaces count as empty lines
+        blocklines[0:0] = [b(os.linesep)] * (nl_preceding - existing_nl_preceding)
+    if nl_succeeding > 0:
+        # count existing succeding empty lines and deduct
+        existing_nl_succeeding = sum(
+            1 for i in range(1, nl_succeeding + 1)
+            if len(lines) >= (n0 + i)
+            and re.sub(b(r"[ \t]*"), b(""), lines[n0 + i]) == b(os.linesep))
+        #       ^-- lines with only tabs and spaces count as empty lines
+        blocklines.extend([b(os.linesep)] * (nl_succeeding - existing_nl_succeeding))
 
     lines[n0:n0] = blocklines
     if lines:
