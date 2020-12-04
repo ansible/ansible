@@ -1,5 +1,5 @@
 #pip packages required to build docsite
-jinja2
+jinja2==2.11.2
 PyYAML
 rstcheck
 sphinx==2.1.2 
