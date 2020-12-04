@@ -50,6 +50,17 @@
     file_names: "{{ unarchive_dir03.files | map(attribute='path') | map('basename') }}"
 
 - name: Check mutually exclusive parameters
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive-multi.tar"
+    dest: "{{ remote_tmp_dir }}/include-tar"
+    include:
+      - foo-unarchive-777.txt
+    exclude:
+      - foo
+  ignore_errors: yes
+  register: unarchive_mutually_exclusive_check
+
+- name: Check mutually exclusive parameters
   assert:
     that:
       - unarchive_mutually_exclusive_check is failed

@@ -913,6 +913,7 @@ def main():
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
         supports_check_mode=True,
+        mutually_exclusive=[('include', 'exclude')],
     )
 
     src = module.params['src']
