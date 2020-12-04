@@ -1569,8 +1569,6 @@ files:
     notified: mattclay
   hacking/report.py:
     notified: mattclay
-  shippable.yml:
-    notified: mattclay
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
