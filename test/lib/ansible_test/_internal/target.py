@@ -144,7 +144,7 @@ def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
             continue
 
         if directories and matched_directories:
-            yield DirectoryTarget(sorted(matched_directories, key=len)[0], target.modules)
+            yield DirectoryTarget(to_text(sorted(matched_directories, key=len)[0]), target.modules)
         else:
             yield target
 
@@ -278,7 +278,7 @@ def walk_integration_targets():
         paths.append(os.path.sep.join(path_tuple))
 
     for path in paths:
-        yield IntegrationTarget(path, modules, prefixes)
+        yield IntegrationTarget(to_text(path), modules, prefixes)
 
 
 def load_integration_prefixes():
@@ -327,7 +327,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
         if symlink and not include_symlinks:
             continue
 
-        yield TestTarget(file_path, module_path, prefix, path, symlink)
+        yield TestTarget(to_text(file_path), module_path, prefix, path, symlink)
 
     file_paths = []
 
