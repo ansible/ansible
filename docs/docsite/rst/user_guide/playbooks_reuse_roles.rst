@@ -360,7 +360,7 @@ Ansible treats duplicate role dependencies like duplicate roles listed under ``r
     Role deduplication does not consult the invocation signature of parent roles. Additionally, when using ``vars:`` instead of role params, there is a side effect of changing variable scoping. Using ``vars:`` results
     in those variables being scoped at the play level. In the below example, using ``vars:`` would cause ``n`` to be defined as ``4`` through the entire play, including roles called before it.
 
-    In addition to the above, users should be aware that role de-duplication occurs before variable evaluation. This means that lazy evaluation (link) may make seemingly different role invocations equivalently the same, preventing the role from running more than once.
+    In addition to the above, users should be aware that role de-duplication occurs before variable evaluation. This means that :term:`Lazy Evaluation` may make seemingly different role invocations equivalently the same, preventing the role from running more than once.
 
 
 For example, a role named ``car`` depends on a role named ``wheel`` as follows:
