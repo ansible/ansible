@@ -36,6 +36,7 @@ from ansible.utils.color import colorize, hostcolor
 # TODO: Change the default of check_mode_markers to True in a future release (2.13)
 COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
+                  ('display_includes', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
                   ('check_mode_markers', False),
@@ -335,11 +336,12 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
-        msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        label = self._get_item_label(included_file._vars)
-        if label:
-            msg += " => (item=%s)" % label
-        self._display.display(msg, color=C.COLOR_SKIP)
+        if self.display_includes:
+            msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
+            label = self._get_item_label(included_file._vars)
+            if label:
+                msg += " => (item=%s)" % label
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
         self._display.banner("PLAY RECAP")

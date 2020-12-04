@@ -36,6 +36,16 @@ class ModuleDocFragment(object):
           - key: display_ok_hosts
             section: defaults
         version_added: '2.7'
+      display_includes:
+        name: Show dynamicly included tasks
+        description: "Toggle to control displaying dynamicly included task/host results in a task"
+        type: bool
+        default: yes
+        env:
+          - name: ANSIBLE_DISPLAY_INCLUDES
+        ini:
+          - key: display_includes
+            section: defaults
       display_failed_stderr:
         name: Use STDERR for failed and unreachable tasks
         description: "Toggle to control whether failed and unreachable tasks are displayed to STDERR (vs. STDOUT)"

@@ -119,6 +119,7 @@ export ANSIBLE_NOCOLOR=1
 # Default settings
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_INCLUDES=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
 export ANSIBLE_CHECK_MODE_MARKERS=0
 
@@ -132,18 +133,21 @@ run_test hide_skipped
 # Hide skipped/ok
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 export ANSIBLE_DISPLAY_OK_HOSTS=0
+export ANSIBLE_DISPLAY_INCLUDES=0
 
 run_test hide_skipped_ok
 
 # Hide ok
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=0
+export ANSIBLE_DISPLAY_INCLUDES=0
 
 run_test hide_ok
 
 # Failed to stderr
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_INCLUDES=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
 run_test failed_to_stderr
@@ -151,6 +155,7 @@ run_test failed_to_stderr
 # Default settings with unreachable tasks
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_INCLUDES=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 export ANSIBLE_TIMEOUT=1
 
@@ -168,6 +173,7 @@ fi
 # Default settings with dry run tasks
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_INCLUDES=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 # Enable Check mode markers
 export ANSIBLE_CHECK_MODE_MARKERS=1
