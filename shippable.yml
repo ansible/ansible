@@ -21,6 +21,7 @@ matrix:
     - env: T=units/3.7
     - env: T=units/3.8
     - env: T=units/3.9
+    - env: T=units/3.10
 
     - env: T=windows/2012/1
     - env: T=windows/2012-R2/1
