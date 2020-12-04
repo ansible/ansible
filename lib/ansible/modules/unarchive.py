@@ -350,8 +350,9 @@ class ZipArchive(object):
             try:
                 for member in archive.namelist():
                     if self.include_files:
-                        if member in self.include_files:
-                            self._files_in_archive.append(to_native(member))
+                        for include in self.include_files:
+                            if fnmatch.fnmatch(member, include):
+                                self._files_in_archive.append(to_native(member))
                     else:
                         exclude_flag = False
                         if self.excludes:
