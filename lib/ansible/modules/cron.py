@@ -123,7 +123,7 @@ options:
       - New variables are added on top of crontab.
       - I(name) and I(value) parameters are the name and the value of environment variable.
     type: bool
-    default: no
+    default: false
     version_added: "2.1"
   insertafter:
     description:
@@ -576,7 +576,7 @@ def main():
             reboot=dict(type='bool', default=False),
             special_time=dict(type='str', choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"]),
             disabled=dict(type='bool', default=False),
-            env=dict(type='bool'),
+            env=dict(type='bool', default=False),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
         ),

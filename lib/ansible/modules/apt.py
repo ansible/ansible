@@ -36,9 +36,9 @@ options:
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
+      - Default is not to update the cache.
     aliases: [ update-cache ]
     type: bool
-    default: 'no'
   update_cache_retries:
     description:
       - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).

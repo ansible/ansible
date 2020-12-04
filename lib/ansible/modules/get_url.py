@@ -449,7 +449,7 @@ def main():
     argument_spec.update(
         url=dict(type='str', required=True),
         dest=dict(type='path', required=True),
-        backup=dict(type='bool'),
+        backup=dict(type='bool', default=False),
         sha256sum=dict(type='str', default=''),
         checksum=dict(type='str', default=''),
         timeout=dict(type='int', default=10),
