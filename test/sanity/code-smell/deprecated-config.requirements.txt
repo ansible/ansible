@@ -1,2 +1,2 @@
-jinja2  # ansible-core requirement
+jinja2==2.11.2  # ansible-core requirement
 pyyaml
