@@ -7,8 +7,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import os
+
 from itertools import product
+
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 import pytest
 
@@ -138,6 +145,39 @@ def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode)
         assert not m_chmod.called
     else:
         m_chmod.assert_called_with(b'/path/to/file/no_lchmod', 0o660)
+
+    mocker.resetall()
+    mocker.stopall()
+
+
+@pytest.mark.parametrize('stdin,',
+                         ({},),
+                         indirect=['stdin'])
+def test_missing_lchmod_is_link_in_sticky_dir(am, mock_stats, mocker):
+    """Some platforms have lchmod (*BSD) others do not (Linux)"""
+
+    am.check_mode = False
+    original_hasattr = hasattr
+
+    def _hasattr(obj, name):
+        if obj == os and name == 'lchmod':
+            return False
+        return original_hasattr(obj, name)
+
+    mock_lstat = mocker.MagicMock()
+    mock_lstat.st_mode = 0o777
+
+    mocker.patch('os.lstat', side_effect=[mock_lstat, mock_lstat])
+    mocker.patch.object(builtins, 'hasattr', side_effect=_hasattr)
+    mocker.patch('os.path.islink', return_value=True)
+    mocker.patch('os.path.exists', return_value=True)
+    m_stat = mocker.patch('os.stat', side_effect=OSError(errno.EACCES, 'Permission denied'))
+    m_chmod = mocker.patch('os.chmod', return_value=None)
+
+    # not changed: can't set mode on symbolic links
+    assert not am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False)
+    m_stat.assert_called_with(b'/path/to/file/no_lchmod')
+    m_chmod.assert_not_called()
 
     mocker.resetall()
     mocker.stopall()
