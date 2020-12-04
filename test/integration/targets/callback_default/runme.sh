@@ -133,14 +133,14 @@ run_test hide_skipped
 # Hide skipped/ok
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 export ANSIBLE_DISPLAY_OK_HOSTS=0
-export ANSIBLE_DISPLAY_INCLUDES=0
+export ANSIBLE_DISPLAY_INCLUDES=1
 
 run_test hide_skipped_ok
 
 # Hide ok
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=0
-export ANSIBLE_DISPLAY_INCLUDES=0
+export ANSIBLE_DISPLAY_INCLUDES=1
 
 run_test hide_ok
 
