@@ -4556,8 +4556,6 @@ files:
     notified: mattclay
   hacking/shippable/:
     notified: mattclay
-  shippable.yml:
-    notified: mattclay
   lib/ansible/modules/cloud/podman/__init__.py:
     migrated_to: containers.podman
   lib/ansible/modules/cloud/podman/podman_container_info.py:
