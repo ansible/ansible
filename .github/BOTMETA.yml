@@ -1411,8 +1411,6 @@ files:
     notified: mattclay
   hacking/report.py:
     notified: mattclay
-  shippable.yml:
-    notified: mattclay
   tox.ini:
     notified: mattclay
 macros:
