@@ -418,6 +418,8 @@ class Connection(NetworkConnectionBase):
                 self.queue_message('vvvv', 'deauthorizing connection')
 
         self._play_context = play_context
+        if self._paramiko_conn is not None:
+            self._paramiko_conn._play_context = play_context
 
         if hasattr(self, 'reset_history'):
             self.reset_history()

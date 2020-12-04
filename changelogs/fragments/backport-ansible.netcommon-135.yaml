@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - network_cli - Update paramiko play_context when network_cli's play context
+    is updated so that ssh parameters can be updated as well.
