@@ -14,3 +14,4 @@
 - import_tasks: test_symlink.yml
 - import_tasks: test_download.yml
 - import_tasks: test_unprivileged_user.yml
+- import_tasks: test_include.yml
