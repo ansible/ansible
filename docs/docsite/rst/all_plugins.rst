@@ -8,4 +8,4 @@ Indexes of all modules and plugins
    :caption: Plugin indexes
    :glob:
 
-   index_*
+   collections/index_*
