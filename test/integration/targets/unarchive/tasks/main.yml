@@ -6,6 +6,7 @@
 - import_tasks: test_tar_gz_keep_newer.yml
 - import_tasks: test_zip.yml
 - import_tasks: test_exclude.yml
+- import_tasks: test_include.yml
 - import_tasks: test_parent_not_writeable.yml
 - import_tasks: test_mode.yml
 - import_tasks: test_quotable_characters.yml

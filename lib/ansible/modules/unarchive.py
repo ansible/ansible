@@ -58,9 +58,20 @@ options:
   exclude:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
+      - Mutually exclusive with C(include).
     type: list
+    default: []
     elements: str
     version_added: "2.1"
+  include:
+    description:
+      - List of directory and file entries that you would like to extract from the archive. Only
+        files listed here will be extracted.
+      - Mutually exclusive with C(exclude).
+    type: list
+    default: []
+    elements: str
+    version_added: "2.11"
   keep_newer:
     description:
       - Do not replace existing files that are newer than files from the archive.
@@ -264,6 +275,7 @@ class ZipArchive(object):
         self.module = module
         self.excludes = module.params['exclude']
         self.includes = []
+        self.include_files = self.module.params['include']
         self.cmd_path = self.module.get_bin_path('unzip')
         self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
         self._files_in_archive = []
@@ -337,14 +349,19 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
-                    exclude_flag = False
-                    if self.excludes:
-                        for exclude in self.excludes:
-                            if fnmatch.fnmatch(member, exclude):
-                                exclude_flag = True
-                                break
-                    if not exclude_flag:
-                        self._files_in_archive.append(to_native(member))
+                    if self.include_files:
+                        for include in self.include_files:
+                            if fnmatch.fnmatch(member, include):
+                                self._files_in_archive.append(to_native(member))
+                    else:
+                        exclude_flag = False
+                        if self.excludes:
+                            for exclude in self.excludes:
+                                if not fnmatch.fnmatch(member, exclude):
+                                    exclude_flag = True
+                                    break
+                        if not exclude_flag:
+                            self._files_in_archive.append(to_native(member))
             except Exception:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
@@ -357,6 +374,8 @@ class ZipArchive(object):
         cmd = [self.zipinfocmd_path, '-T', '-s', self.src]
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
+        if self.include_files:
+            cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd)
 
         old_out = out
@@ -665,6 +684,8 @@ class ZipArchive(object):
         # cmd.extend(map(shell_escape, self.includes))
         if self.excludes:
             cmd.extend(['-x'] + self.excludes)
+        if self.include_files:
+            cmd.extend(self.include_files)
         cmd.extend(['-d', self.b_dest])
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
@@ -690,6 +711,7 @@ class TgzArchive(object):
         if self.module.check_mode:
             self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
+        self.include_files = self.module.params['include']
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
         self.cmd_path = self.module.get_bin_path('gtar', None)
         if not self.cmd_path:
@@ -726,8 +748,10 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        if self.include_files:
+            cmd.extend(self.include_files)
 
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -769,6 +793,8 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
+        if self.include_files:
+            cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
         # Check whether the differences are in something that we're
@@ -820,6 +846,8 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
+        if self.include_files:
+            cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
@@ -887,12 +915,14 @@ def main():
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
             exclude=dict(type='list', elements='str', default=[]),
+            include=dict(type='list', elements='str', default=[]),
             extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
         supports_check_mode=True,
+        mutually_exclusive=[('include', 'exclude')],
     )
 
     src = module.params['src']
