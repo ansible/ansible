@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix virt module to support list_vms with a status of paused
+    (https://github.com/ansible/ansible/issues/72059) 

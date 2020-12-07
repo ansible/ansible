@@ -577,7 +577,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['guest']),
-            state=dict(type='str', choices=['destroyed', 'pause', 'running', 'shutdown']),
+            state=dict(type='str', choices=['destroyed', 'paused', 'running', 'shutdown']),
             autostart=dict(type='bool'),
             command=dict(type='str', choices=ALL_COMMANDS),
             uri=dict(type='str', default='qemu:///system'),

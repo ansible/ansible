@@ -1521,7 +1521,6 @@ lib/ansible/modules/cloud/misc/terraform.py validate-modules:doc-default-does-no
 lib/ansible/modules/cloud/misc/terraform.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/misc/terraform.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/misc/virt.py validate-modules:undocumented-parameter
-lib/ansible/modules/cloud/misc/virt.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/cloud/misc/virt.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/misc/virt_net.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/misc/virt_pool.py validate-modules:doc-choices-do-not-match-spec
