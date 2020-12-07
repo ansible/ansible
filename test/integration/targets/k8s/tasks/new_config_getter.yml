@@ -1,0 +1,16 @@
+---
+- block:
+    - name: Create a namespace
+      k8s:
+        name: "{{ playbook_namespace }}"
+        kind: Namespace
+
+    - name: Delete namespace
+      k8s:
+        state: absent
+        definition:
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: "{{ playbook_namespace }}"
+      ignore_errors: yes
