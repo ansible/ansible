@@ -13,7 +13,7 @@ ipath=../../$(basename "${INVENTORY_PATH}")
 export INVENTORY_PATH="$ipath"
 
 # test callback
-ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
+ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
 
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
