@@ -628,9 +628,12 @@ def enforce_state(module, params):
     # for 'exclusive', make sure keys are written in the order the new keys were
     if state == "present" and exclusive:
         to_remove = frozenset(existing_keys).difference(keys_to_exist)
-        for key in to_remove:
-            del existing_keys[key]
-            do_write = True
+        if len(to_remove) != 0:
+            for key in to_remove:
+                del existing_keys[key]
+                do_write = True
+        else:
+            do_write = False
 
     if do_write:
         filename = keyfile(module, user, do_write, path, manage_dir, follow)
