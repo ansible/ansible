@@ -4,3 +4,4 @@ skip/windows/2008  # win_feature is required to install the RDS feature and that
 win_rds_cap
 win_rds_rap
 win_rds_settings
+disable  # Test takes too long to run in CI and any backports will be tested by community.windows first
