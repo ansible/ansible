@@ -91,6 +91,7 @@ lib/ansible/module_utils/six/__init__.py no-dict-itervalues
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
+lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec  # _uses_shell is undocumented
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:parameter-list-no-elements
@@ -114,6 +115,7 @@ lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/stat.py validate-modules:doc-default-does-not-match-spec  # get_md5 is undocumented
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/stat.py validate-modules:undocumented-parameter

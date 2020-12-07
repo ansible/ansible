@@ -59,8 +59,8 @@ options:
             - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
               of the system.
             - This option is deprecated and will eventually be removed in 2.11. The ``scope`` option should be used instead.
+            - The default value is C(false).
         type: bool
-        default: no
     scope:
         description:
             - run systemctl within a given service manager scope, either as the default system scope (system),

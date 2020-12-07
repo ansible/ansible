@@ -322,6 +322,7 @@ options:
       - If no chain is specified then the entire table is purged.
       - Ignores all other parameters.
     type: bool
+    default: false
     version_added: "2.2"
   policy:
     description:
