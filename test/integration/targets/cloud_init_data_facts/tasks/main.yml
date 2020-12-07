@@ -11,11 +11,23 @@
   - not (ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int == 14)
   - not (ansible_os_family == "Suse" and ansible_distribution_major_version|int != 42 and ansible_python.version.major != 3)
   block:
+  - name: Include distribution specific variables
+    include_vars: "{{ lookup('first_found', params) }}"
+    vars:
+      params:
+        files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+        paths:
+        - "{{ role_path }}/vars"
+
+  - debug:
+      var: pkgs_required
+
   - name: setup install cloud-init
     package:
-      name:
-      - cloud-init
-      - "{{ 'systemd-udev' if ansible_os_family == 'RedHat' else 'udev' }}"
+      name: "{{ pkgs_required }}"
 
   - name: setup run cloud-init
     service:
