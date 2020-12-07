@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - network_cli connection plugin - Perform privilege escalation before setting terminal.
