@@ -18,6 +18,9 @@ DOCUMENTATION = """
         description:
             - What to return if a variable is undefined.
             - If no default is set, it will result in an error if any of the variables is undefined.
+      host:
+        description:
+          - Inventory hostname context to use when looking up a variable
 """
 
 EXAMPLES = """
@@ -76,11 +79,24 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
         if variables is not None:
-            self._templar.available_variables = variables
-        myvars = getattr(self._templar, '_available_variables', {})
+            templar = self._templar.copy_with_new_env(available_variables=variables)
+        else:
+            templar = self._templar
+
+        myvars = getattr(templar, '_available_variables', {})
 
         self.set_options(direct=kwargs)
         default = self.get_option('default')
+        host = self.get_option('host')
+
+        if host:
+            newvars = {'hostvars': myvars['hostvars']}
+            try:
+                newvars.update(myvars['hostvars'][host])
+            except KeyError as e:
+                raise AnsibleError('Invalid host requested: %s' % e)
+            myvars = newvars
+            templar = templar.copy_with_new_env(available_variables=myvars)
 
         ret = []
         for term in terms:
@@ -96,7 +112,7 @@ class LookupModule(LookupBase):
                     except KeyError:
                         raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
 
-                ret.append(self._templar.template(value, fail_on_undefined=True))
+                ret.append(templar.template(value, fail_on_undefined=True))
             except AnsibleUndefinedVariable:
                 if default is not None:
                     ret.append(default)
