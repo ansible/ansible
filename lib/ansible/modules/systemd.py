@@ -414,6 +414,19 @@ def main():
                 # Check for loading error
                 if is_systemd and not is_masked and 'LoadError' in result['status']:
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
+
+        # Workaround for https://github.com/ansible/ansible/issues/71528
+        elif err and rc == 1 and 'Failed to parse bus message' in err:
+            result['status'] = parse_systemctl_show(to_native(out).split('\n'))
+
+            unit, sep, suffix = unit.partition('@')
+            unit_search = '{unit}{sep}*'.format(unit=unit, sep=sep)
+            (rc, out, err) = module.run_command("{systemctl} list-unit-files '{unit_search}'".format(systemctl=systemctl, unit_search=unit_search))
+            is_systemd = unit in out
+
+            (rc, out, err) = module.run_command("{systemctl} is-active '{unit}'".format(systemctl=systemctl, unit=unit))
+            result['status']['ActiveState'] = out.rstrip('\n')
+
         else:
             # list taken from man systemctl(1) for systemd 244
             valid_enabled_states = [
