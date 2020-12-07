@@ -37,12 +37,3 @@
   file:
     path: '{{remote_tmp_dir}}/test-unarchive-zip'
     state: absent
-
-- name: remove our test files for the archive
-  file:
-    path: '{{remote_tmp_dir}}/{{item}}'
-    state: absent
-  with_items:
-    - foo-unarchive.txt
-    - foo-unarchive-777.txt
-    - FOO-UNAR.TXT

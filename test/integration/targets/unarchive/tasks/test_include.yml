@@ -1,0 +1,83 @@
+- name: Create a tar file with multiple files
+  shell: tar cvf test-unarchive-multi.tar foo-unarchive-777.txt foo-unarchive.txt
+  args:
+    chdir: "{{ remote_tmp_dir }}"
+
+- name: Create include test directories
+  file:
+    state: directory
+    path: "{{ remote_tmp_dir }}/{{ item }}"
+  loop:
+    - include-zip
+    - include-tar
+
+- name: Unpack zip file include one file
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.zip"
+    dest: "{{ remote_tmp_dir }}/include-zip"
+    include:
+      - FOO-UNAR.TXT
+
+- name: Verify that single file was unarchived
+  find:
+    paths: "{{ remote_tmp_dir }}/include-zip"
+  register: unarchive_dir02
+
+# The map filter was added in Jinja2 2.7, which is newer than the version on RHEL/CentOS 6,
+# so we skip this validation on those hosts
+- name: Verify that zip extraction included only one file
+  assert:
+    that:
+      - file_names == ['FOO-UNAR.TXT']
+  vars:
+    file_names: "{{ unarchive_dir02.files | map(attribute='path') | map('basename') }}"
+  when:
+    - "ansible_facts.os_family == 'RedHat'"
+    - ansible_facts.distribution_major_version is version('7', '>=')
+
+- name: Unpack tar file include one file
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive-multi.tar"
+    dest: "{{ remote_tmp_dir }}/include-tar"
+    include:
+      - foo-unarchive-777.txt
+
+- name: verify that single file was unarchived from tar
+  find:
+    paths: "{{ remote_tmp_dir }}/include-tar"
+  register: unarchive_dir03
+
+- name: Verify that tar extraction included only one file
+  assert:
+    that:
+      - file_names == ['foo-unarchive-777.txt']
+  vars:
+    file_names: "{{ unarchive_dir03.files | map(attribute='path') | map('basename') }}"
+  when:
+    - "ansible_facts.os_family == 'RedHat'"
+    - ansible_facts.distribution_major_version is version('7', '>=')
+
+- name: Check mutually exclusive parameters
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive-multi.tar"
+    dest: "{{ remote_tmp_dir }}/include-tar"
+    include:
+      - foo-unarchive-777.txt
+    exclude:
+      - foo
+  ignore_errors: yes
+  register: unarchive_mutually_exclusive_check
+
+- name: Check mutually exclusive parameters
+  assert:
+    that:
+      - unarchive_mutually_exclusive_check is failed
+      - "'mutually exclusive' in unarchive_mutually_exclusive_check.msg"
+
+- name: "Remove include feature tests directory"
+  file:
+    state: absent
+    path: "{{ remote_tmp_dir }}/{{ item }}"
+  loop:
+    - 'include-zip'
+    - 'include-tar'

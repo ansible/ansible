@@ -89,4 +89,4 @@
     mode: preserve
 
 - name: prep a tar.gz file with directory
-  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir  chdir={{remote_tmp_dir}}
+  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir chdir={{remote_tmp_dir}}
