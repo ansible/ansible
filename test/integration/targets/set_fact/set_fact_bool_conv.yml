@@ -18,3 +18,18 @@
           - this_is_also_string == False
           - this_is_another_string == False
           - this_is_more_strings == False
+
+    - ansible.builtin.set_fact:
+        this_is_string_fqcn: "yes"
+        this_is_not_string_fqcn: yes
+        this_is_also_string_fqcn: "{{ string_var }}"
+        this_is_another_string_fqcn: !!str "{% set thing = '' + string_var + '' %}{{ thing }}"
+        this_is_more_strings_fqcn: '{{ string_var + "" }}'
+
+    - assert:
+        that:
+          - this_is_string_fqcn == True
+          - this_is_not_string_fqcn == True
+          - this_is_also_string_fqcn == False
+          - this_is_another_string_fqcn == False
+          - this_is_more_strings_fqcn == False
