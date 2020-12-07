@@ -793,7 +793,7 @@ def update_tags(client, module, group_id, current_tags, tags, purge_tags):
             try:
                 client.create_tags(Resources=[group_id], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
             except (BotoCoreError, ClientError) as e:
-                module.fail_json(e, msg="Unable to add tags {0}".format(tags_need_modify))
+                module.fail_json_aws(e, msg="Unable to add tags {0}".format(tags_need_modify))
 
     return bool(tags_need_modify or tags_to_delete)
 

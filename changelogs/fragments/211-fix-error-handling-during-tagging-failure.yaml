@@ -1,0 +1,2 @@
+bugfixes:
+- ec2_group - Fixes error handling during tagging failures (https://github.com/ansible-collections/amazon.aws/issues/210).
