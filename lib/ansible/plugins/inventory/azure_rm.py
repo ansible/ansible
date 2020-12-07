@@ -100,7 +100,7 @@ EXAMPLES = '''
 # resource_type: the VM's resource type, eg: 'Microsoft.Compute/virtualMachine', 'Microsoft.Compute/virtualMachineScaleSets/virtualMachines'
 # vmid: the VM's internal SMBIOS ID, eg: '36bca69d-c365-4584-8c06-a62f4a1dc5d2'
 # vmss: if the VM is a member of a scaleset (vmss), a dictionary including the id and name of the parent scaleset
-
+# availability_zone: availability zone in which VM is deployed, eg '1','2','3'
 
 # sample 'myazuresub.azure_rm.yaml'
 
@@ -533,6 +533,10 @@ class AzureHost(object):
             if 'windowsConfiguration' in self._vm_model['properties']['osProfile']:
                 system = 'windows'
 
+        av_zone = None
+        if 'zones' in self._vm_model:
+            av_zone = self._vm_model['zones']
+
         new_hostvars = dict(
             public_ipv4_addresses=[],
             public_dns_hostnames=[],
@@ -540,6 +544,7 @@ class AzureHost(object):
             id=self._vm_model['id'],
             location=self._vm_model['location'],
             name=self._vm_model['name'],
+            availability_zone=av_zone,
             powerstate=self._powerstate,
             provisioning_state=self._vm_model['properties']['provisioningState'].lower(),
             tags=self._vm_model.get('tags', {}),

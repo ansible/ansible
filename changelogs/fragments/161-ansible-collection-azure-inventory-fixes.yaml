@@ -1,0 +1,3 @@
+bugfixes:
+- azure_rm inventory plugin - update to fetch availability zone information of VM in hostvars.
+  (https://github.com/ansible-collections/azure/issues/161)
