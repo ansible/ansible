@@ -182,7 +182,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
-            check_raw = module in ('command', 'shell', 'script', 'raw')
+            check_raw = module in C._ACTION_ALLOWS_RAW_ARGS
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,

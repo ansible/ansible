@@ -20,7 +20,7 @@ class ActionModule(ActionBase):
         mod_args = self._task.args.copy()
 
         # deal with 'setup specific arguments'
-        if fact_module != 'setup':
+        if fact_module not in C._ACTION_SETUP:
 
             # network facts modules must support gather_subset
             if self._connection._load_name not in ('network_cli', 'httpapi', 'netconf'):

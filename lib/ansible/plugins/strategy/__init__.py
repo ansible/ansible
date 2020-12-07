@@ -678,7 +678,7 @@ class StrategyBase:
 
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                        if original_task.action == 'include_vars':
+                        if original_task.action in C._ACTION_INCLUDE_VARS:
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
@@ -692,9 +692,10 @@ class StrategyBase:
                                 # we set BOTH fact and nonpersistent_facts (aka hostvar)
                                 # when fact is retrieved from cache in subsequent operations it will have the lower precedence,
                                 # but for playbook setting it the 'higher' precedence is kept
-                                if original_task.action != 'set_fact' or cacheable:
+                                is_set_fact = original_task.action in C._ACTION_SET_FACT
+                                if not is_set_fact or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
-                                if original_task.action == 'set_fact':
+                                if is_set_fact:
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
@@ -746,7 +747,7 @@ class StrategyBase:
 
             # If this is a role task, mark the parent role as being run (if
             # the task was ok or failed, but not skipped or unreachable)
-            if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
+            if original_task._role is not None and role_ran:  # TODO:  and original_task.action not in C._ACTION_INCLUDE_ROLE:?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
                 for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role.get_name()]):
