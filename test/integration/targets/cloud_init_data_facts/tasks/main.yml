@@ -15,7 +15,7 @@
     package:
       name:
       - cloud-init
-      - udev
+      - "{{ 'systemd-udev' if ansible_os_family == 'RedHat' else 'udev' }}"
 
   - name: setup run cloud-init
     service:
