@@ -59,7 +59,6 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
-            term_results = []
             term_file = os.path.basename(term)
             found_paths = []
             if term_file != term:
@@ -77,8 +76,8 @@ class LookupModule(LookupBase):
             for dwimmed_path in found_paths:
                 if dwimmed_path:
                     globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
-                    term_results.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
+                    term_results = [to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g)]
                     if term_results:
+                        ret.extend(term_results)
                         break
-            ret.extend(term_results)
         return ret
