@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove an embedded function from RoleMixin and add tests for it (https://github.com/ansible/ansible/pull/72754).
