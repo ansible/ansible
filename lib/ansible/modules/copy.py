@@ -68,13 +68,18 @@ options:
     - The permissions of the destination file or directory.
     - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
-      (like C(0644) or C(01777))or quote it (like C('644') or C('1777')) so Ansible receives a string
+      (like C(0644) or C(01777)) or quote it (like C('644') or C('1777')) so Ansible receives a string
       and can do its own conversion from string into number. Giving Ansible a number without following
       one of these rules will end up with a decimal number which will have unexpected results.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
     - When doing a recursive copy, see also C(directory_mode).
+    - If C(mode) is not specified and the destination file B(does not) exist, the default C(umask) on the system will be used
+      when setting the mode for the newly created file.
+    - If C(mode) is not specified and the destination file B(does) exist, the mode of the existing file will be used.
+    - Specifying C(mode) is the best way to ensure files are created with the correct permissions.
+      See CVE-2020-1736 for further details.
   directory_mode:
     description:
     - When doing a recursive copy set the mode for the directories.
