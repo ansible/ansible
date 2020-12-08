@@ -60,8 +60,8 @@ Vault
 -----
 - Vault secrets client inc new 'keyring' client
 
-Runtime Check on Modules for Blacklisting
------------------------------------------
+Runtime Check on Modules for Disabling
+--------------------------------------
 - Filter on things like "supported_by" in module metadata
 - Provide users with an option of "warning, error or allow/ignore"
 - Configurable via ansible.cfg and environment variable
@@ -80,7 +80,7 @@ Windows
   - win_updates **(done)**
 
     - Fix win_updates to detect (or request) become
-    - Add whitelist/blacklist features to win_updates
+    - Add enable/disable features to win_updates
   - win_dsc further improvements **(done)**
 
 General Cloud
