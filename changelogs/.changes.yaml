@@ -1651,6 +1651,43 @@ releases:
     - v2.9.15rc1_summary.yaml
     - zfs-root-snapshot.yml
     release_date: '2020-10-26'
+  2.9.16rc1:
+    codename: Immigrant Song
+    fragments:
+    - 161-ansible-collection-azure-inventory-fixes.yaml
+    - 211-fix-error-handling-during-tagging-failure.yaml
+    - 32143-pause-background-hangs.yml
+    - 66701-action-plugin-load-network-modules.yaml
+    - 71496-iptables-reorder-comment-position.yml
+    - 71528-systemd-capbpf-workaround.yml
+    - 71528-systemd-improve-unit-searching.yml
+    - 71528-systemd-list-unit-files.yml
+    - 71824-action-fqcns.yml
+    - 72056-support-list-vms-with-status-paused.yaml
+    - 72316-dnf-filtering.yml
+    - 72322-wait-for-handle-errors.yml
+    - 72516-fix-aix-network-facts.yml
+    - 72569-lvol_percentage_fix.yml
+    - 72623-ansible-test-unicode-paths.yml
+    - ansible-doc-has_action.yml
+    - ansible-test-acme-test-plugin.yml
+    - ansible-test-azp-change-detection.yml
+    - ansible-test-centos6-eol.yml
+    - ansible-test-collection-classification.yml
+    - ansible-test-remote-tar-format.yml
+    - backport-ansible.netcommon-135.yaml
+    - cffi-constraint.yml
+    - collections_cb_fix.yml
+    - ensure_local_user_correctness.yml
+    - escalate_priv_before_terminal.yaml
+    - galaxy-servers.yml
+    - play_context_remove_redundant_pwd.yml
+    - ps-sanity-requirements.yml
+    - py26-multiprocess-queue-bug.yml
+    - rhel-7.9.yml
+    - set_mode_if_different-symlink-sticky-dir.yml
+    - v2.9.16rc1_summary.yaml
+    release_date: '2020-12-07'
   2.9.2:
     codename: Immigrant Song
     fragments:

@@ -5,6 +5,63 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.16rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-12-07
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-doc - provide ``has_action`` field in JSON output for modules. That information is currently only available in the text view (https://github.com/ansible/ansible/pull/72359).
+- ansible-galaxy - find any collection dependencies in the globally configured Galaxy servers and not just the server the parent collection is from.
+
+- ansible-test - Added the ``-remote rhel/7.9`` option to run tests on RHEL 7.9
+- ansible-test - Fix container hostname/IP discovery for the ``acme`` test plugin.
+- ansible-test - centos6 end of life - container image updated to point to vault base repository (https://github.com/ansible/distro-test-containers/pull/54)
+- iptables - reorder comment postition to be at the end (https://github.com/ansible/ansible/issues/71444).
+- lvol - fix idempotency issue when using lvol with ``%VG`` or ``%PVS`` size options and VG is fully allocated (https://github.com/ansible-collections/community.general/pull/229).
+
+Bugfixes
+--------
+
+- Adjust various hard-coded action names to also include their ``ansible.builtin.`` and ``ansible.legacy.`` prefixed version (https://github.com/ansible/ansible/issues/71817, https://github.com/ansible/ansible/issues/71818, https://github.com/ansible/ansible/pull/71824).
+- Collection callbacks were ignoring options and rules for stdout and adhoc cases.
+- Fix virt module to support list_vms with a status of paused (https://github.com/ansible/ansible/issues/72059)
+- Fixed issue when `netstat` is either missing or doesn't have execution permissions leading to incorrect command being executed.
+- Try to load action plugin from the same collection as the module (https://github.com/ansible/ansible/pull/66701)
+- account for bug in Python 2.6 that occurs during interpreter shutdown to avoid stack trace
+- ansible-test - Correctly detect changes in a GitHub pull request when running on Azure Pipelines.
+- ansible-test - Skip installing requirements if they are already installed.
+- ansible-test - add constraint for ``cffi`` to prevent failure on systems with older versions of ``gcc`` (https://foss.heptapod.net/pypy/cffi/-/issues/480)
+
+- ansible-test - convert target paths to unicode on Python 2 to avoid ``UnicodeDecodeError`` (https://github.com/ansible/ansible/issues/68398, https://github.com/ansible/ansible/pull/72623).
+- ansible-test - improve classification of changes to ``.gitignore``, ``COPYING``, ``LICENSE``, ``Makefile``, and all files ending with one of ``.in`, ``.md`, ``.rst``, ``.toml``, ``.txt`` in the collection root directory (https://github.com/ansible/ansible/pull/72353).
+- ansible-test now uses GNU tar format instead of the Python default when creating payloads for remote systems
+- azure_rm inventory plugin - update to fetch availability zone information of VM in hostvars. (https://github.com/ansible-collections/azure/issues/161)
+- dnf - fix filtering to avoid dependncy conflicts (https://github.com/ansible/ansible/issues/72316)
+- ec2_group - Fixes error handling during tagging failures (https://github.com/ansible-collections/amazon.aws/issues/210).
+- ensure 'local' connection always has the correct default user for actions to consume.
+- network_cli - Update paramiko play_context when network_cli's play context is updated so that ssh parameters can be updated as well.
+- network_cli connection plugin - Perform privilege escalation before setting terminal.
+- pause - Fix indefinite hang when using a pause task on a background process (https://github.com/ansible/ansible/issues/32142)
+
+- remove redundant remote_user setting in play_context for local as plugin already does it, also removes fork/thread issue from use of pwd library.
+- set_mode_if_different - handle symlink if it is inside a directory with sticky bit set (https://github.com/ansible/ansible/pull/45198)
+
+- systemd - account for templated unit files using ``@`` when searching for the unit file (https://github.com/ansible/ansible/pull/72347#issuecomment-730626228)
+
+- systemd - follow up fix to https://github.com/ansible/ansible/issues/72338 to use ``list-unit-files`` rather than ``list-units`` in order to show all units files on the system.
+
+- systemd - work around bug with ``systemd`` 245 and 5.8 kernel that does not correctly report service state (https://github.com/ansible/ansible/issues/71528)
+
+- wait_for - catch and ignore errors when getting active connections with psutil (https://github.com/ansible/ansible/issues/72322)
+
 v2.9.15
 =======
 
