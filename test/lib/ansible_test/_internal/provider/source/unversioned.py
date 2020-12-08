@@ -38,6 +38,7 @@ class UnversionedSource(SourceProvider):
             '__pycache__',
             'ansible.egg-info',
             'ansible_base.egg-info',
+            'ansible_core.egg-info',
         )
 
         kill_sub_dir = {

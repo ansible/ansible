@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
-__requires__ = ['ansible_base']
+__requires__ = ['ansible_core']
 
 
 import fcntl
