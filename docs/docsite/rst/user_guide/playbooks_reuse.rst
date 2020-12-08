@@ -24,14 +24,14 @@ Ansible offers four distributed, re-usable artifacts: variables files, task file
 Re-using playbooks
 ==================
 
-You can incorporate multiple playbooks into a master playbook. However, you can only use imports to re-use playbooks. For example:
+You can incorporate multiple playbooks into a main playbook. However, you can only use imports to re-use playbooks. For example:
 
 .. code-block:: yaml
 
     - import_playbook: webservers.yml
     - import_playbook: databases.yml
 
-Importing incorporates playbooks in other playbooks statically. Ansible runs the plays and tasks in each imported playbook in the order they are listed, just as if they had been defined directly in the master playbook.
+Importing incorporates playbooks in other playbooks statically. Ansible runs the plays and tasks in each imported playbook in the order they are listed, just as if they had been defined directly in the main playbook.
 
 Re-using files and roles
 ========================

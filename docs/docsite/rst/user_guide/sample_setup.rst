@@ -30,7 +30,7 @@ This layout organizes most tasks in roles, with a single inventory file for each
     module_utils/             # if any custom module_utils to support modules, put them here (optional)
     filter_plugins/           # if any custom filter plugins, put them here (optional)
 
-    site.yml                  # master playbook
+    site.yml                  # main playbook
     webservers.yml            # playbook for webserver tier
     dbservers.yml             # playbook for dbserver tier
     tasks/                    # task files included from playbooks

@@ -44,7 +44,7 @@ Environment Variables
 When using environment variables to manipulate tests there some limitations to keep in mind. Environment variables are:
 
 * Not propagated from the host to the test environment when using the ``--docker`` or ``--remote`` options.
-* Not exposed to the test environment unless whitelisted in ``test/lib/ansible_test/_internal/util.py`` in the ``common_environment`` function.
+* Not exposed to the test environment unless enabled in ``test/lib/ansible_test/_internal/util.py`` in the ``common_environment`` function.
 
     Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --venv``. However, using the ``--docker`` option would
     require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set
