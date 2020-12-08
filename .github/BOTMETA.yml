@@ -7167,7 +7167,7 @@ files:
   lib/ansible/plugins/doc_fragments/nios.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/nso.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/plugins/doc_fragments/oneview.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/online.py:
@@ -7703,9 +7703,9 @@ files:
   lib/ansible/module_utils/network/nos/nos.py:
     migrated_to: community.general
   lib/ansible/module_utils/network/nso/__init__.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/module_utils/network/nso/nso.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/module_utils/network/onyx/__init__.py:
     migrated_to: mellanox.onyx
   lib/ansible/module_utils/network/onyx/onyx.py:
@@ -9663,15 +9663,15 @@ files:
   lib/ansible/modules/network/nos/nos_facts.py:
     migrated_to: community.general
   lib/ansible/modules/network/nso/nso_action.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/modules/network/nso/nso_config.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/modules/network/nso/nso_query.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/modules/network/nso/nso_show.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/modules/network/nso/nso_verify.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   lib/ansible/modules/network/nuage/nuage_vspk.py:
     migrated_to: community.general
   lib/ansible/modules/network/onyx/onyx_aaa.py:
@@ -10529,9 +10529,9 @@ files:
   test/units/module_utils/network/common/__init__.py:
     migrated_to: ansible.netcommon
   test/units/module_utils/network/nso/test_nso.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/module_utils/network/nso/__init__.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/module_utils/network/nos/test_nos.py:
     migrated_to: community.general
   test/units/module_utils/network/meraki/fixtures/orgs.json:
@@ -11799,43 +11799,43 @@ files:
   test/units/modules/network/nos/test_nos_facts.py:
     migrated_to: community.general
   test/units/modules/network/nso/test_nso_action.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/l3vpn_l3vpn_endpoint_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/config_config_changes.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/sync_from_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/complex_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/config_empty_data.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/config_config.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/l3vpn_l3vpn_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/l3vpn_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/device_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/description_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/devices_schema.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/fixtures/verify_violation_data.json:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/nso_module.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/__init__.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/test_nso_config.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/test_nso_query.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/test_nso_show.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nso/test_nso_verify.py:
-    migrated_to: community.general
+    migrated_to: cisco.nso
   test/units/modules/network/nuage/test_nuage_vspk.py:
     migrated_to: community.general
   test/units/modules/network/nuage/__init__.py:
