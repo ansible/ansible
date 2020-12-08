@@ -195,10 +195,10 @@ To create a callback plugin, create a new class with the Base(Callbacks) class a
 
 .. code-block:: python
 
-  from ansible.plugins.callback import CallbackBase
+    from ansible.plugins.callback import CallbackBase
 
-  class CallbackModule(CallbackBase):
-      pass
+    class CallbackModule(CallbackBase):
+        pass
 
 From there, override the specific methods from the CallbackBase that you want to provide a callback for.
 For plugins intended for use with Ansible version 2.0 and later, you should only override methods that start with ``v2``.
@@ -210,16 +210,16 @@ but with an extra option so you can see how configuration works in Ansible versi
 
 .. code-block:: python
 
-  # Make coding more python3-ish, this is required for contributions to Ansible
-  from __future__ import (absolute_import, division, print_function)
-  __metaclass__ = type
+    # Make coding more python3-ish, this is required for contributions to Ansible
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
 
-  # not only visible to ansible-doc, it also 'declares' the options the plugin requires and how to configure them.
-  DOCUMENTATION = '''
+    # not only visible to ansible-doc, it also 'declares' the options the plugin requires and how to configure them.
+    DOCUMENTATION = '''
     callback: timer
     callback_type: aggregate
     requirements:
-      - whitelist in configuration
+        - enable in configuration
     short_description: Adds time to play stats
     version_added: "2.0"
     description:
@@ -233,24 +233,24 @@ but with an extra option so you can see how configuration works in Ansible versi
         env:
           - name: ANSIBLE_CALLBACK_TIMER_FORMAT
         default: "Playbook run took %s days, %s hours, %s minutes, %s seconds"
-  '''
-  from datetime import datetime
+    '''
+    from datetime import datetime
 
-  from ansible.plugins.callback import CallbackBase
+    from ansible.plugins.callback import CallbackBase
 
 
-  class CallbackModule(CallbackBase):
-      """
-      This callback module tells you how long your plays ran for.
-      """
-      CALLBACK_VERSION = 2.0
-      CALLBACK_TYPE = 'aggregate'
-      CALLBACK_NAME = 'namespace.collection_name.timer'
+    class CallbackModule(CallbackBase):
+        """
+        This callback module tells you how long your plays ran for.
+        """
+        CALLBACK_VERSION = 2.0
+        CALLBACK_TYPE = 'aggregate'
+        CALLBACK_NAME = 'namespace.collection_name.timer'
 
-      # only needed if you ship it and don't want to enable by default
-      CALLBACK_NEEDS_WHITELIST = True
+        # only needed if you ship it and don't want to enable by default
+        CALLBACK_NEEDS_ENABLED = True
 
-      def __init__(self):
+        def __init__(self):
 
           # make sure the expected objects are present, calling the base's __init__
           super(CallbackModule, self).__init__()
@@ -258,20 +258,21 @@ but with an extra option so you can see how configuration works in Ansible versi
           # start the timer when the plugin is loaded, the first play should start a few milliseconds after.
           self.start_time = datetime.now()
 
-      def _days_hours_minutes_seconds(self, runtime):
+        def _days_hours_minutes_seconds(self, runtime):
           ''' internal helper method for this callback '''
           minutes = (runtime.seconds // 60) % 60
           r_seconds = runtime.seconds - (minutes * 60)
           return runtime.days, runtime.seconds // 3600, minutes, r_seconds
 
-      # this is only event we care about for display, when the play shows its summary stats; the rest are ignored by the base class
-      def v2_playbook_on_stats(self, stats):
+        # this is only event we care about for display, when the play shows its summary stats; the rest are ignored by the base class
+        def v2_playbook_on_stats(self, stats):
           end_time = datetime.now()
           runtime = end_time - self.start_time
 
           # Shows the usage of a config option declared in the DOCUMENTATION variable. Ansible will have set it when it loads the plugin.
           # Also note the use of the display object to print to screen. This is available to all callbacks, and you should use this over printing yourself
           self._display.display(self._plugin_options['format_string'] % (self._days_hours_minutes_seconds(runtime)))
+
 
 Note that the ``CALLBACK_VERSION`` and ``CALLBACK_NAME`` definitions are required for properly functioning plugins for Ansible version 2.0 and later. ``CALLBACK_TYPE`` is mostly needed to distinguish 'stdout' plugins from the rest, since you can only load one plugin that writes to stdout.
 
@@ -331,35 +332,34 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
 
 .. code-block:: python
 
-  # python 3 headers, required if submitting to Ansible
-  from __future__ import (absolute_import, division, print_function)
-  __metaclass__ = type
+    # python 3 headers, required if submitting to Ansible
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
 
-  DOCUMENTATION = """
-          lookup: file
-          author: Daniel Hokka Zakrisson <daniel@hozac.com>
-          version_added: "0.9"
-          short_description: read file contents
-          description:
-              - This lookup returns the contents from a file on the Ansible controller's file system.
-          options:
-            _terms:
-              description: path(s) of files to read
-              required: True
-          notes:
-            - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
-            - this lookup does not understand globing --- use the fileglob lookup instead.
-  """
-  from ansible.errors import AnsibleError, AnsibleParserError
-  from ansible.plugins.lookup import LookupBase
-  from ansible.utils.display import Display
+    DOCUMENTATION = """
+      lookup: file
+      author: Daniel Hokka Zakrisson <daniel@hozac.com>
+      version_added: "0.9"
+      short_description: read file contents
+      description:
+          - This lookup returns the contents from a file on the Ansible controller's file system.
+      options:
+        _terms:
+          description: path(s) of files to read
+          required: True
+      notes:
+        - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
+        - this lookup does not understand globing --- use the fileglob lookup instead.
+    """
+    from ansible.errors import AnsibleError, AnsibleParserError
+    from ansible.plugins.lookup import LookupBase
+    from ansible.utils.display import Display
 
-  display = Display()
+    display = Display()
 
+    class LookupModule(LookupBase):
 
-  class LookupModule(LookupBase):
-
-      def run(self, terms, variables=None, **kwargs):
+        def run(self, terms, variables=None, **kwargs):
 
 
           # lookups in general are expected to both take a list as input and output a list
@@ -389,7 +389,10 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
 
           return ret
 
-The following is an example of how this lookup is called::
+
+The following is an example of how this lookup is called:
+
+.. code-block:: YAML
 
   ---
   - hosts: all
@@ -400,6 +403,7 @@ The following is an example of how this lookup is called::
 
        - debug:
            msg: the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}
+
 
 For example lookup plugins, see the source code for the `lookup plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
 
@@ -451,12 +455,12 @@ This ``get_vars`` method just needs to return a dictionary structure with the va
 
 Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible. Since Ansible version 2.10, vars plugin execution can be toggled by the user to run when preparing to execute a task or after importing an inventory source.
 
-Since Ansible 2.10, vars plugins can require whitelisting. Vars plugins that don't require whitelisting will run by default. To require whitelisting for your plugin set the class variable ``REQUIRES_WHITELIST``:
+You can create vars plugins that are not enabled by default using the class variable ``REQUIRES_ENABLED``. If your vars plugin resides in a collection, it cannot be enabled by default. You must use ``REQUIRES_ENABLED`` in all collections-based vars plugins. To require users to enable your plugin, set the class variable ``REQUIRES_ENABLED``:
 
 .. code-block:: python
 
     class VarsModule(BaseVarsPlugin):
-        REQUIRES_WHITELIST = True
+        REQUIRES_ENABLED = True
 
 Include the ``vars_plugin_staging`` documentation fragment to allow users to determine when vars plugins run.
 
@@ -477,8 +481,6 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
         extends_documentation_fragment:
           - vars_plugin_staging
     '''
-
-Also since Ansible 2.10, vars plugins can reside in collections. Vars plugins in collections must require whitelisting to be functional.
 
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.
