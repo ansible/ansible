@@ -1,6 +1,6 @@
 {% macro print_context_vars(value) %}
 {{ foo }}
-{{ bar }}
+{{ value }}
 {% set foo = "template-nested-level-foo" %}
 {% set bar = "template-nested-level-bar" %}
 {% from '72615-macro-nested.j2' import print_context_vars_nested with context %}
