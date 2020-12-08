@@ -1,0 +1,2 @@
+minor_changes:
+  - setup.py - Declare that Python 3.9 is now supported (https://github.com/ansible/ansible/pull/72861).
