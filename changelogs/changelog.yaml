@@ -2129,3 +2129,141 @@ releases:
     - url-lookup-ini.yml
     - v2.10.3rc1_summary.yaml
     release_date: '2020-10-26'
+  2.10.4rc1:
+    changes:
+      bugfixes:
+      - Adjust various hard-coded action names to also include their ``ansible.builtin.``
+        and ``ansible.legacy.`` prefixed version (https://github.com/ansible/ansible/issues/71817,
+        https://github.com/ansible/ansible/issues/71818, https://github.com/ansible/ansible/pull/71824).
+      - AnsibleModule - added arg ``ignore_invalid_cwd`` to ``AnsibleModule.run_command()``,
+        to control its behaviour when ``cwd`` is invalid. (https://github.com/ansible/ansible/pull/72390)
+      - Fixed issue when `netstat` is either missing or doesn't have execution permissions
+        leading to incorrect command being executed.
+      - Improve Ansible config deprecations to show the source of the deprecation
+        (ansible-base). Also remove space before a comma in config deprecations (https://github.com/ansible/ansible/pull/72697).
+      - Skip invalid collection names when listing in ansible-doc instead of throwing
+        exception. Issue#72257
+      - The ``docker`` and ``k8s`` action groups / module default groups now also
+        support the moved modules in `community.docker <https://galaxy.ansible.com/community/docker>`_,
+        `community.kubevirt <https://github.com/ansible-collections/community.kubevirt>`_,
+        `community.okd <https://galaxy.ansible.com/community/okd>`_, and `kubernetes.core
+        <https://galaxy.ansible.com/kubernetes/core>`_ (https://github.com/ansible/ansible/pull/72428).
+      - account for bug in Python 2.6 that occurs during interpreter shutdown to avoid
+        stack trace
+      - ansible-test - Correctly detect changes in a GitHub pull request when running
+        on Azure Pipelines.
+      - ansible-test - Skip installing requirements if they are already installed.
+      - 'ansible-test - add constraint for ``cffi`` to prevent failure on systems
+        with older versions of ``gcc`` (https://foss.heptapod.net/pypy/cffi/-/issues/480)
+
+        '
+      - ansible-test - convert target paths to unicode on Python 2 to avoid ``UnicodeDecodeError``
+        (https://github.com/ansible/ansible/issues/68398, https://github.com/ansible/ansible/pull/72623).
+      - ansible-test - improve classification of changes to ``.gitignore``, ``COPYING``,
+        ``LICENSE``, ``Makefile``, and all files ending with one of ``.in`, ``.md`,
+        ``.rst``, ``.toml``, ``.txt`` in the collection root directory (https://github.com/ansible/ansible/pull/72353).
+      - ansible-test validate-modules - when a module uses ``add_file_common_args=True``
+        and does not use a keyword argument for ``argument_spec`` in ``AnsibleModule()``,
+        the common file arguments were not considered added during validation (https://github.com/ansible/ansible/pull/72334).
+      - basic.AnsibleModule - AnsibleModule.run_command silently ignores a non-existent
+        directory in the ``cwd`` argument (https://github.com/ansible/ansible/pull/72390).
+      - 'blockinfile - properly insert a block at the end of a file that does not
+        have a trailing newline character (https://github.com/ansible/ansible/issues/72055)
+
+        '
+      - dnf - fix filtering to avoid dependncy conflicts (https://github.com/ansible/ansible/issues/72316)
+      - ensure 'local' connection always has the correct default user for actions
+        to consume.
+      - 'pause - Fix indefinite hang when using a pause task on a background process
+        (https://github.com/ansible/ansible/issues/32142)
+
+        '
+      - remove redundant remote_user setting in play_context for local as plugin already
+        does it, also removes fork/thread issue from use of pwd library.
+      - 'set_mode_if_different - handle symlink if it is inside a directory with sticky
+        bit set (https://github.com/ansible/ansible/pull/45198)
+
+        '
+      - 'systemd - account for templated unit files using ``@`` when searching for
+        the unit file (https://github.com/ansible/ansible/pull/72347#issuecomment-730626228)
+
+        '
+      - 'systemd - follow up fix to https://github.com/ansible/ansible/issues/72338
+        to use ``list-unit-files`` rather than ``list-units`` in order to show all
+        units files on the system.
+
+        '
+      - 'systemd - work around bug with ``systemd`` 245 and 5.8 kernel that does not
+        correctly report service state (https://github.com/ansible/ansible/issues/71528)
+
+        '
+      - wait_for - catch and ignore errors when getting active connections with psutil
+        (https://github.com/ansible/ansible/issues/72322)
+      minor_changes:
+      - ansible-doc - provide ``has_action`` field in JSON output for modules. That
+        information is currently only available in the text view (https://github.com/ansible/ansible/pull/72359).
+      - 'ansible-galaxy - find any collection dependencies in the globally configured
+        Galaxy servers and not just the server the parent collection is from.
+
+        '
+      - ansible-test - Added a ``--export`` option to the ``ansible-test coverage
+        combine`` command to facilitate multi-stage aggregation of coverage in CI
+        pipelines.
+      - ansible-test - Added the ``-remote rhel/7.9`` option to run tests on RHEL
+        7.9
+      - ansible-test - CentOS 8 container is now 8.2.2004 (https://github.com/ansible/distro-test-containers/pull/45).
+      - ansible-test - Fix container hostname/IP discovery for the ``acme`` test plugin.
+      - ansible-test - OpenSuse container now uses Leap 15.2 (https://github.com/ansible/distro-test-containers/pull/48).
+      - ansible-test - Ubuntu containers as well as ``default-test-container`` and
+        ``ansible-base-test-container`` are now slightly smaller due to apt cleanup
+        (https://github.com/ansible/distro-test-containers/pull/46).
+      - ansible-test - ``default-test-container`` and ``ansible-base-test-container``
+        now use Python 3.9.0 instead of 3.9.0rc1.
+      - ansible-test - centos6 end of life - container image updated to point to vault
+        base repository (https://github.com/ansible/distro-test-containers/pull/54)
+      - ansible-test validate-modules - no longer assume that ``default`` for ``type=bool``
+        options is ``false``, as the default is ``none`` and for some modules, ``none``
+        and ``false`` mean different things (https://github.com/ansible/ansible/issues/69561).
+      - iptables - reorder comment postition to be at the end (https://github.com/ansible/ansible/issues/71444).
+      release_summary: '| Release Date: 2020-12-07
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - 32143-pause-background-hangs.yml
+    - 71496-iptables-reorder-comment-position.yml
+    - 71528-systemd-capbpf-workaround.yml
+    - 71528-systemd-improve-unit-searching.yml
+    - 71528-systemd-list-unit-files.yml
+    - 71824-action-fqcns.yml
+    - 72055-blockinfile-fix-insert-after-line-no-linesep.yml
+    - 72316-dnf-filtering.yml
+    - 72322-wait-for-handle-errors.yml
+    - 72390-return-error-if-cwd-directory-does-not-exist.yml
+    - 72428-action-groups-docker-k8s.yml
+    - 72516-fix-aix-network-facts.yml
+    - 72623-ansible-test-unicode-paths.yml
+    - 72697-improve-config-deprecations.yml
+    - 72699-validate-modules-default-for-bools.yml
+    - ansible-base-update-containers.yml
+    - ansible-doc-has_action.yml
+    - ansible-test-acme-test-plugin.yml
+    - ansible-test-azp-change-detection.yml
+    - ansible-test-centos6-eol.yml
+    - ansible-test-collection-classification.yml
+    - ansible-test-coverage-combine-export.yml
+    - ansible-test-validate-modules-file-common-args.yml
+    - cffi-constraint.yml
+    - ensure_local_user_correctness.yml
+    - galaxy-servers.yml
+    - play_context_remove_redundant_pwd.yml
+    - ps-sanity-requirements.yml
+    - py26-multiprocess-queue-bug.yml
+    - rhel-7.9.yml
+    - run-command-cwd.yml
+    - set_mode_if_different-symlink-sticky-dir.yml
+    - skip_invalid_coll_name_when_listing.yml
+    - v2.10.4rc1_summary.yaml
+    release_date: '2020-12-07'
