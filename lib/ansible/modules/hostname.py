@@ -812,6 +812,12 @@ class CloudlinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class AlinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Alinux'
+    strategy_class = RedHatStrategy
+
+
 class CoreosHostname(Hostname):
     platform = 'Linux'
     distribution = 'Coreos'
