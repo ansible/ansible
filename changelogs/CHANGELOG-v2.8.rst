@@ -5,6 +5,31 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.18rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-12-07
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Added the ``-remote rhel/7.9`` option to run tests on RHEL 7.9
+- ansible-test - Fix container hostname/IP discovery for the ``acme`` test plugin.
+- ansible-test - centos6 end of life - container image updated to point to vault base repository (https://github.com/ansible/distro-test-containers/pull/54)
+
+Bugfixes
+--------
+
+- account for bug in Python 2.6 that occurs during interpreter shutdown to avoid stack trace
+- ansible-test - Correctly detect changes in a GitHub pull request when running on Azure Pipelines.
+- ansible-test - add constraint for ``cffi`` to prevent failure on systems with older versions of ``gcc`` (https://foss.heptapod.net/pypy/cffi/-/issues/480)
+
+
 v2.8.17
 =======
 
