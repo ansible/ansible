@@ -1,0 +1,5 @@
+- hosts: "{{ target_hosts }}"
+  gather_facts: no
+  tasks:
+    # https://github.com/ansible/ansible/issues/65812
+    - meta: reset_connection

@@ -407,6 +407,8 @@ class Connection(ConnectionBase):
         return self
 
     def reset(self):
+        if not self._connected:
+            return
         display.vvvvv("PSRP: Reset Connection", host=self._psrp_host)
         self.runspace = None
         self._connect()
