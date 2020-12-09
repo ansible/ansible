@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: localhost
   gather_facts: false
   tasks:
     - ping:
