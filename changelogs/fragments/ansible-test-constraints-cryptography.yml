@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - ``cryptography`` is now limited to 3.2 on Python 2.7+ in all cases (previously it was limited in only some scenarios)
