@@ -185,6 +185,21 @@ def create_shell_command(command):
     return cmd
 
 
+def get_openssl_version():  # type: () -> t.Optional[t.Tuple[int, int, int]]
+    """Return the openssl version."""
+    try:
+        result = raw_command(['openssl', 'version'], capture=True)[0]
+    except SubprocessError:
+        return None
+
+    match = re.search(r'^OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+)', result)
+
+    if not match:
+        return None
+
+    return tuple([int(value) for value in match.group('version').split('.')])
+
+
 def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
     """Return the setuptools version for the given python."""
     try:
@@ -199,16 +214,21 @@ def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t
 def get_cryptography_requirement(args, python_version):  # type: (EnvironmentConfig, str) -> str
     """
     Return the correct cryptography requirement for the given python version.
-    The version of cryptograpy installed depends on the python version and setuptools version.
+    The version of cryptography installed depends on the python version, setuptools version and openssl version.
     """
     python = find_python(python_version)
     setuptools_version = get_setuptools_version(args, python)
+    openssl_version = get_openssl_version()
 
     if setuptools_version >= (18, 5):
         if python_version == '2.6':
             # cryptography 2.2+ requires python 2.7+
             # see https://github.com/pyca/cryptography/blob/master/CHANGELOG.rst#22---2018-03-19
             cryptography = 'cryptography < 2.2'
+        elif openssl_version and openssl_version < (1, 1, 0):
+            # cryptography 3.2 requires openssl 1.1.x or later
+            # see https://cryptography.io/en/latest/changelog.html#v3-2
+            cryptography = 'cryptography < 3.2'
         else:
             cryptography = 'cryptography'
     else:
