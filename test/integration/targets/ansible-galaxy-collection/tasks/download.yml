@@ -4,6 +4,29 @@
     path: '{{ galaxy_dir }}/download'
     state: directory
 
+- name: download collection with multiple dependencies with --no-deps
+  command: ansible-galaxy collection download parent_dep.parent_collection --no-deps -s pulp_v2 {{ galaxy_verbosity }}
+  register: download_collection
+  args:
+    chdir: '{{ galaxy_dir }}/download'
+
+- name: get result of download collection with multiple dependencies
+  find:
+    path: '{{ galaxy_dir }}/download/collections'
+    file_type: file
+  register: download_collection_actual
+
+- name: assert download collection with multiple dependencies
+  assert:
+    that:
+    - '"Downloading collection ''parent_dep.parent_collection'' to" in download_collection.stdout'
+    - 'not "Downloading collection ''child_dep.child_collection'' to" in download_collection.stdout'
+    - 'not "Downloading collection ''child_dep.child_dep2'' to" in download_collection.stdout'
+    - download_collection_actual.examined == 2
+    - download_collection_actual.matched == 2
+    - (download_collection_actual.files[0].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
+    - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
+
 - name: download collection with multiple dependencies
   command: ansible-galaxy collection download parent_dep.parent_collection -s pulp_v2 {{ galaxy_verbosity }}
   register: download_collection

@@ -380,3 +380,16 @@
     - install_symlink_actual.results[4].stat.lnk_target == 'docs'
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
+
+- name: install collection and dep compatible with multiple requirements - {{ test_name }}
+  command: ansible-galaxy collection install parent_dep.parent_collection parent_dep2.parent_collection
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_req
+
+- name: assert install collections with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''parent_dep.parent_collection:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''parent_dep2.parent_collection:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''child_dep.child_collection:0.5.0'' to" in install_req.stdout'
