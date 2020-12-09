@@ -68,6 +68,7 @@ from .util import (
     open_zipfile,
     SUPPORTED_PYTHON_VERSIONS,
     str_to_version,
+    version_to_str,
 )
 
 from .util_common import (
@@ -185,19 +186,40 @@ def create_shell_command(command):
     return cmd
 
 
-def get_openssl_version():  # type: () -> t.Optional[t.Tuple[int, int, int]]
+def get_openssl_version(args, python, python_version):  # type: (EnvironmentConfig, str, str) -> t.Optional[t.Tuple[int, ...]]
     """Return the openssl version."""
-    try:
-        result = raw_command(['openssl', 'version'], capture=True)[0]
-    except SubprocessError:
-        return None
+    if not python_version.startswith('2.'):
+        # OpenSSL version checking only works on Python 3.x.
+        # This should be the most accurate, since it is the Python we will be using.
+        version = json.loads(run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'sslcheck.py')], capture=True, always=True)[0])['version']
 
-    match = re.search(r'^OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+)', result)
+        display.info('Detected OpenSSL version %s under Python %s.' % (version_to_str(version), python_version), verbosity=1)
 
-    if not match:
-        return None
+        if version:
+            return tuple(version)
 
-    return tuple([int(value) for value in match.group('version').split('.')])
+    # Fall back to detecting the OpenSSL version from the CLI.
+    # This should provide an adequate solution on Python 2.x.
+    openssl_path = find_executable('openssl', required=False)
+
+    if openssl_path:
+        try:
+            result = raw_command([openssl_path, 'version'], capture=True)[0]
+        except SubprocessError:
+            result = ''
+
+        match = re.search(r'^OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+)', result)
+
+        if match:
+            version = str_to_version(match.group('version'))
+
+            display.info('Detected OpenSSL version %s using the openssl CLI.' % version_to_str(version), verbosity=1)
+
+            return version
+
+    display.info('Unable to detect OpenSSL version.', verbosity=1)
+
+    return None
 
 
 def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
@@ -218,7 +240,7 @@ def get_cryptography_requirement(args, python_version):  # type: (EnvironmentCon
     """
     python = find_python(python_version)
     setuptools_version = get_setuptools_version(args, python)
-    openssl_version = get_openssl_version()
+    openssl_version = get_openssl_version(args, python, python_version)
 
     if setuptools_version >= (18, 5):
         if python_version == '2.6':
