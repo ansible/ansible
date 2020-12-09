@@ -193,9 +193,9 @@ def get_openssl_version(args, python, python_version):  # type: (EnvironmentConf
         # This should be the most accurate, since it is the Python we will be using.
         version = json.loads(run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'sslcheck.py')], capture=True, always=True)[0])['version']
 
-        display.info('Detected OpenSSL version %s under Python %s.' % (version_to_str(version), python_version), verbosity=1)
-
         if version:
+            display.info('Detected OpenSSL version %s under Python %s.' % (version_to_str(version), python_version), verbosity=1)
+
             return tuple(version)
 
     # Fall back to detecting the OpenSSL version from the CLI.
