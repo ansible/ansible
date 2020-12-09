@@ -5,18 +5,18 @@ __metaclass__ = type
 
 import json
 
+# noinspection PyBroadException
+try:
+    from ssl import OPENSSL_VERSION_INFO
+    VERSION = list(OPENSSL_VERSION_INFO[:3])
+except Exception:  # pylint: disable=broad-except
+    VERSION = None
+
 
 def main():
     """Main program entry point."""
-    # noinspection PyBroadException
-    try:
-        from ssl import OPENSSL_VERSION_INFO
-        version = list(OPENSSL_VERSION_INFO[:3])
-    except Exception:  # pylint: disable=broad-except
-        version = None
-
     print(json.dumps(dict(
-        version=version,
+        version=VERSION,
     )))
 
 
