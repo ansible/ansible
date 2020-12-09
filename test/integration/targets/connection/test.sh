@@ -21,3 +21,5 @@ then
 else
     echo "SUCCESS: Connection vars not found"
 fi
+
+ansible-playbook test_reset_connection.yml -i "${INVENTORY}" "$@"

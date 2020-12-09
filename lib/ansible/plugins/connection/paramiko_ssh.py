@@ -536,6 +536,8 @@ class Connection(ConnectionBase):
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
     def reset(self):
+        if not self._connected:
+            return
         self.close()
         self._connect()
 
