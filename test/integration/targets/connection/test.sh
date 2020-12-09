@@ -8,3 +8,5 @@ set -eux
 
                 ansible-playbook test_connection.yml -i "${INVENTORY}" "$@"
 LC_ALL=C LANG=C ansible-playbook test_connection.yml -i "${INVENTORY}" "$@"
+
+ansible-playbook test_reset_connection.yml -i "${INVENTORY}" "$@"
