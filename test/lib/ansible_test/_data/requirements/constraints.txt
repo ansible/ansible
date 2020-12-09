@@ -2,7 +2,7 @@ coverage >= 4.5.1, < 5.0.0 ; python_version <  '3.7' # coverage 4.4 required for
 coverage >= 4.5.2, < 5.0.0 ; python_version == '3.7' # coverage 4.5.2 fixes bugs in support for python 3.7, coverage 5.0+ incompatible
 coverage >= 4.5.4, < 5.0.0 ; python_version >  '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
-cryptography < 3.2 ; python_version >= '2.7'  # cryptography 3.2 drops support for OpenSSL 1.0.2 which some of our CI hosts (FreeBSD) still use
+# do not add a cryptography constraint here unless it is for python version incompatibility, see the get_cryptography_requirement function in executor.py for details
 deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
 jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.7 or later
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
