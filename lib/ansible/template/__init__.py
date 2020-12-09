@@ -425,7 +425,7 @@ class JinjaPluginIntercept(MutableMapping):
 
         if self._pluginloader.class_name == 'FilterModule':
             for plugin_name, plugin in self._delegatee.items():
-                if USE_JINJA2_NATIVE and plugin_name in C.STRING_TYPE_FILTERS:
+                if self._jinja2_native and plugin_name in C.STRING_TYPE_FILTERS:
                     self._delegatee[plugin_name] = _wrap_native_text(plugin)
                 else:
                     self._delegatee[plugin_name] = _unroll_iterator(plugin)
