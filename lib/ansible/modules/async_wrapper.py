@@ -21,7 +21,7 @@ import time
 import syslog
 import multiprocessing
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 
 PY3 = sys.version_info[0] == 3
 
@@ -114,14 +114,11 @@ def _filter_non_json_lines(data):
 
 
 def _get_interpreter(module_path):
-    module_fd = open(module_path, 'rb')
-    try:
+    with open(module_path, 'rb') as module_fd:
         head = module_fd.read(1024)
-        if head[0:2] != '#!':
+        if head[0:2] != b'#!':
             return None
-        return head[2:head.index('\n')].strip().split(' ')
-    finally:
-        module_fd.close()
+        return head[2:head.index(b'\n')].strip().split(b' ')
 
 
 def _make_temp_dir(path):
@@ -152,7 +149,7 @@ def _run_module(wrapped_cmd, jid, job_path):
     filtered_outdata = ''
     stderr = ''
     try:
-        cmd = shlex.split(wrapped_cmd)
+        cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(wrapped_cmd)]
         # call the module interpreter directly (for non-binary modules)
         # this permits use of a script for an interpreter on non-Linux platforms
         interpreter = _get_interpreter(cmd[0])
