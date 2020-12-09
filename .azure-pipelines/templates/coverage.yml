@@ -12,7 +12,7 @@ jobs:
     steps:
       - checkout: self
         fetchDepth: $(fetchDepth)
-        path: $(checkoutPath)
+        path: "$(checkoutPath)"
       - task: DownloadPipelineArtifact@2
         displayName: Download Coverage Data
         inputs:

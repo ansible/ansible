@@ -9,15 +9,15 @@ parameters:
 
 jobs:
   - ${{ each job in parameters.jobs }}:
-    - job: test_${{ replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_') }}
-      displayName: ${{ job.name }}
+    - job: "test_${{ replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_') }}"
+      displayName: "${{ job.name }}"
       container: default
       workspace:
         clean: all
       steps:
         - checkout: self
           fetchDepth: $(fetchDepth)
-          path: $(checkoutPath)
+          path: "$(checkoutPath)"
         - bash: .azure-pipelines/scripts/run-tests.sh "$(entryPoint)" "${{ job.test }}" "$(coverageBranches)"
           displayName: Run Tests
         - bash: .azure-pipelines/scripts/process-results.sh
