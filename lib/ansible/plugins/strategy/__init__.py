@@ -1192,6 +1192,13 @@ class StrategyBase:
                 skip_reason += ", continuing execution for %s" % target_host.name
                 # TODO: Nix msg here? Left for historical reasons, but skip_reason exists now.
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
+        elif meta_action == 'role_complete':
+            # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
+            # How would this work with allow_duplicates??
+            if task.implicit:
+                if target_host.name in task._role._had_task_run:
+                    task._role._completed[target_host.name] = True
+                    msg = 'role_complete for %s' % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)

@@ -437,6 +437,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         with each task, so tasks know by which route they were found, and
         can correctly take their parent's tags/conditionals into account.
         '''
+        from ansible.playbook.block import Block
+        from ansible.playbook.task import Task
 
         block_list = []
 
@@ -450,13 +452,28 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
-        for idx, task_block in enumerate(self._task_blocks):
+        for task_block in self._task_blocks:
             new_task_block = task_block.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
-            if idx == len(self._task_blocks) - 1:
-                new_task_block._eor = True
             block_list.append(new_task_block)
+
+        eor_block = Block(play=play)
+        eor_block._loader = self._loader
+        eor_block._role = self
+        eor_block._variable_manager = self._variable_manager
+        eor_block.run_once = False
+
+        eor_task = Task(block=eor_block)
+        eor_task._role = self
+        eor_task.action = 'meta'
+        eor_task.args = {'_raw_params': 'role_complete'}
+        eor_task.implicit = True
+        eor_task.tags = ['always']
+        eor_task.when = True
+
+        eor_block.block = [eor_task]
+        block_list.append(eor_block)
 
         return block_list
 
