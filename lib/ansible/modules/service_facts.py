@@ -258,6 +258,7 @@ class AIXScanService(BaseService):
             services[service_name] = {"name": service_name, "state": service_state, "source": "src"}
         return services
 
+
 class OpenBSDScanService(BaseService):
     def query_rcctl(self, cmd):
         svcs = []
@@ -268,7 +269,7 @@ class OpenBSDScanService(BaseService):
             return []
 
         for svc in stdout.split('\n'):
-            if svc is '':
+            if svc == '':
                 continue
             else:
                 svcs.append(svc)
@@ -301,6 +302,7 @@ class OpenBSDScanService(BaseService):
             services[svc].update({'state': 'failed'})
 
         return services
+
 
 def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
