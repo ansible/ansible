@@ -320,7 +320,10 @@ class PyVmomiHelper(PyVmomi):
                     disk_spec.device.backing.thinProvisioned = True
                 elif disk['disk_type'] == 'eagerzeroedthick':
                     disk_spec.device.backing.eagerlyScrub = True
-                disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
+                if not self.is_vcenter():
+                    disk_spec.device.backing.fileName = "[%s] " % (disk['datastore'].name)
+                else:
+                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
                                                                                vm_name, vm_name,
                                                                                str(scsi_controller),
                                                                                str(disk['disk_unit_number']))
