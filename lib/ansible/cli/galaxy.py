@@ -44,6 +44,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.template import Templar
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 
@@ -165,7 +166,8 @@ class GalaxyCLI(CLI):
 
         collections_path = opt_help.argparse.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collection-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
-                                      default=C.COLLECTIONS_PATHS, action=opt_help.PrependListAction,
+                                      default=AnsibleCollectionConfig.collection_paths,
+                                      action=opt_help.PrependListAction,
                                       help="One or more directories to search for collections in addition "
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
@@ -1288,7 +1290,7 @@ class GalaxyCLI(CLI):
 
         collections_search_paths = set(context.CLIARGS['collections_path'])
         collection_name = context.CLIARGS['collection']
-        default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default')
+        default_collections_path = AnsibleCollectionConfig.collection_paths
 
         warnings = []
         path_found = False
