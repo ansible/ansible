@@ -419,9 +419,9 @@ f_ansible_galaxy_status \
     "collection list with collections installed from python package"
 
     mkdir -p test-site-packages
-    ln -s ${galaxy_testdir}/local/ansible_collections test-site-packages/ansible_collections
+    ln -s "${galaxy_testdir}/local/ansible_collections" test-site-packages/ansible_collections
     ansible-galaxy collection list
-    PYTHONPATH=./test-site-packages/:$PYTHONPATH ansible-galaxy collection list | tee out.txt
+    PYTHONPATH="./test-site-packages/:$PYTHONPATH" ansible-galaxy collection list | tee out.txt
 
     grep ".ansible/collections/ansible_collections" out.txt
     grep "test-site-packages/ansible_collections" out.txt
