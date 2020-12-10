@@ -75,6 +75,10 @@ collection_list:
     name: parent_collection
     dependencies:
       child_dep.child_collection: '>=0.5.0,<1.0.0'
+  - namespace: parent_dep2
+    name: parent_collection
+    dependencies:
+      child_dep.child_collection: '0.5.0'
   - namespace: child_dep
     name: child_collection
     version: 0.4.0

@@ -335,11 +335,6 @@
 #    - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
 #    - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
 
-- name: remove test collection install directory - {{ test_name }}
-  file:
-    path: '{{ galaxy_dir }}/ansible_collections'
-    state: absent
-
 - name: install collection with symlink - {{ test_name }}
   command: ansible-galaxy collection install symlink.symlink -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:
@@ -380,3 +375,26 @@
     - install_symlink_actual.results[4].stat.lnk_target == 'docs'
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
+
+- name: remove install directory for the next test because parent_dep.parent_collection was installed - {{ test_name }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections'
+    state: absent
+
+- name: install collection and dep compatible with multiple requirements - {{ test_name }}
+  command: ansible-galaxy collection install parent_dep.parent_collection parent_dep2.parent_collection
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_req
+
+- name: assert install collections with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''parent_dep.parent_collection:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''parent_dep2.parent_collection:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''child_dep.child_collection:0.5.0'' to" in install_req.stdout'
+
+- name: remove test collection install directory - {{ test_name }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections'
+    state: absent
