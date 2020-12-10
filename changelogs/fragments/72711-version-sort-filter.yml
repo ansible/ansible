@@ -1,0 +1,2 @@
+minor_changes:
+  - add a version_sort filter which allows to sort list of version strings e.g. of package names with their versions
