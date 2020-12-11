@@ -1,0 +1,20 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+        - debug:
+      always:
+        - block:
+          - block:
+              - name: EXPECTED FAILURE ansible_failed_task works
+                fail:
+            always:
+              - name: second inner block
+                block:
+                  - debug: msg="In 1st always"
+                always:
+                  - debug: msg="In 2nd always"
+          rescue:
+            - name: Rescue message
+              debug:
+                msg: "{{ ansible_failed_task.action }}"
