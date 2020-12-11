@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - bigiq_device_info module - fix iteration bug in a _transform_name_attribute method
+minor_changes:
+  - bigiq_device_info module - add information on BIG-IQ 7.x support
