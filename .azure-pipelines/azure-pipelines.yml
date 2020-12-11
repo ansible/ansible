@@ -87,8 +87,8 @@ stages:
       - template: templates/matrix.yml
         parameters:
           targets:
-            - name: macOS 11.0.1
-              test: macos/11.0.1
+            - name: macOS 11.0
+              test: macos/11.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.3
