@@ -78,8 +78,8 @@
     build:
       path: "{{ role_path }}/files"
       container_limits:
-        memory: 5000000
-        memswap: 7000000
+        memory: 7000000
+        memswap: 8000000
       pull: no
     source: build
   register: container_limits_2
@@ -95,10 +95,10 @@
     # It *sometimes* happens that the first task does not fail.
     # For now, we work around this by
     #   a) requiring that if it fails, the message must
-    #      contain 'Minimum memory limit allowed is 4MB', and
+    #      contain 'Minimum memory limit allowed is (4|6)MB', and
     #   b) requiring that either the first task, or the second
     #      task is changed, but not both.
-    - "not container_limits_1 is failed or ('Minimum memory limit allowed is 4MB') in container_limits_1.msg"
+    - "not container_limits_1 is failed or ('Minimum memory limit allowed is ') in container_limits_1.msg"
     - "container_limits_1 is changed or container_limits_2 is changed and not (container_limits_1 is changed and container_limits_2 is changed)"
 
 ####################################################################
