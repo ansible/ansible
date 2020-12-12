@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Depend on ``typed-ast`` 1.4.1 instead of 1.4.0, for Python 3.9 support (https://github.com/ansible/ansible/pull/72861).
+  - ansible-test - Allow ``pylint`` sanity dependency to be installed on Python 3.9 (https://github.com/ansible/ansible/pull/72861).
