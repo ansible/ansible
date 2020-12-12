@@ -112,8 +112,8 @@
         - "not dnf_result.changed"
 
 # Multiple packages
-- name: uninstall sos and pciutils
-  dnf: name=sos,pciutils state=removed
+- name: uninstall sos and dos2unix
+  dnf: name=sos,dos2unix state=removed
   register: dnf_result
 
 - name: check sos with rpm
@@ -121,19 +121,19 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check pciutils with rpm
-  shell: rpm -q pciutils
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
     that:
         - "rpm_sos_result.rc != 0"
-        - "rpm_pciutils_result.rc != 0"
+        - "rpm_dos2unix_result.rc != 0"
 
-- name: install sos and pciutils as comma separated
-  dnf: name=sos,pciutils state=present
+- name: install sos and dos2unix as comma separated
+  dnf: name=sos,dos2unix state=present
   register: dnf_result
 
 - name: check sos with rpm
@@ -141,10 +141,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check pciutils with rpm
-  shell: rpm -q pciutils
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
@@ -152,17 +152,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_pciutils_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
 
-- name: uninstall sos and pciutils
-  dnf: name=sos,pciutils state=removed
+- name: uninstall sos and dos2unix
+  dnf: name=sos,dos2unix state=removed
   register: dnf_result
 
-- name: install sos and pciutils as list
+- name: install sos and dos2unix as list
   dnf:
     name:
       - sos
-      - pciutils
+      - dos2unix
     state: present
   register: dnf_result
 
@@ -171,10 +171,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check pciutils with rpm
-  shell: rpm -q pciutils
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
@@ -182,17 +182,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_pciutils_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
 
-- name: uninstall sos and pciutils
+- name: uninstall sos and dos2unix
   dnf:
-    name: "sos,pciutils"
+    name: "sos,dos2unix"
     state: removed
   register: dnf_result
 
-- name: install sos and pciutils as comma separated with spaces
+- name: install sos and dos2unix as comma separated with spaces
   dnf:
-    name: "sos, pciutils"
+    name: "sos, dos2unix"
     state: present
   register: dnf_result
 
@@ -202,9 +202,9 @@
   register: rpm_sos_result
 
 - name: check sos with rpm
-  shell: rpm -q pciutils
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
@@ -212,13 +212,13 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_pciutils_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
 
-- name: uninstall sos and pciutils (check_mode)
+- name: uninstall sos and dos2unix (check_mode)
   dnf:
     name:
       - sos
-      - pciutils
+      - dos2unix
     state: removed
   check_mode: True
   register: dnf_result
@@ -230,11 +230,11 @@
       - "dnf_result.results[0].startswith('Removed: ')"
       - "dnf_result.results[1].startswith('Removed: ')"
 
-- name: uninstall sos and pciutils
+- name: uninstall sos and dos2unix
   dnf:
     name:
       - sos
-      - pciutils
+      - dos2unix
     state: removed
   register: dnf_result
 
