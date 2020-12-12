@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add support for running tests on Fedora 33 (https://github.com/ansible/ansible/pull/72861).
