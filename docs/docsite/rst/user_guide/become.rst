@@ -202,14 +202,14 @@ module. If you have security rules that constrain your sudo/pbrun/doas environme
 to running specific command paths only, use Ansible from a special account that
 does not have this constraint, or use :ref:`ansible_tower` to manage indirect access to SSH credentials.
 
-Become variables not added to play context
-------------------------------------------
+Become variables not available for templating
+---------------------------------------------
 
 As a security precaution, Ansible ``*become*`` magic variables such as
 ``ansible_become_pass`` are *not* available for templating. For instance, even
 if using ``--ask-become-pass``/``-K`` or ``--become-user`` from the command
 line, ``{{ ansible_become_pass }}`` and ``{{ ansible_become_method }}`` will
-not be available in the play context.
+not be available to use in template strings.
 
 May not access environment variables populated by pamd_systemd
 --------------------------------------------------------------
