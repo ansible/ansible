@@ -98,7 +98,7 @@ def get_ansible_version():
     """Return current ansible-core version"""
     from ansible.release import __version__
 
-    return LooseVersion(__version__)
+    return LooseVersion('.'.join(__version__.split('.')[:3]))
 
 
 def get_collection_version():
