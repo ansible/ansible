@@ -32,6 +32,12 @@
       - tar.warnings | length() == 1
       - '"Consider using the unarchive module rather than running ''tar''" in tar.warnings[0]'
 
+- name: use command with `ansible.builtin.` FQCN
+  ansible.builtin.command: /bin/ls
+
+- name: use command with `ansible.legacy.` FQCN
+  ansible.legacy.command: /bin/ls
+
 - name: use command to execute chown
   command: chown -h
   register: chown

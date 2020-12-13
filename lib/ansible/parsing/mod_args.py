@@ -30,14 +30,14 @@ from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
-FREEFORM_ACTIONS = frozenset((
+FREEFORM_ACTIONS = frozenset(add_internal_fqcns((
     'command',
     'win_command',
     'shell',
     'win_shell',
     'script',
     'raw'
-))
+)))
 
 RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
     'include',
