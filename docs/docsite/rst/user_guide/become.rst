@@ -205,12 +205,11 @@ does not have this constraint, or use :ref:`ansible_tower` to manage indirect ac
 Become variables not added to play context
 ------------------------------------------
 
-As a security precaution, Ansible ``*become*`` magic variables are
-not set into the scope of the play context and so are not available
-for use within template strings. For instance, even if using
-``--ask-become-pass``/``-K`` or ``--become-user`` from the command
-line, ``{{ ansible_become_pass }}`` and ``{{ ansible_become_method }}``
-will not be available in the play context.
+As a security precaution, Ansible ``*become*`` magic variables such as
+``ansible_become_pass`` are *not* available for templating. For instance, even
+if using ``--ask-become-pass``/``-K`` or ``--become-user`` from the command
+line, ``{{ ansible_become_pass }}`` and ``{{ ansible_become_method }}`` will
+not be available in the play context.
 
 May not access environment variables populated by pamd_systemd
 --------------------------------------------------------------
