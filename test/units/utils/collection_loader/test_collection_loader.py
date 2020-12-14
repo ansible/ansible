@@ -41,7 +41,7 @@ def test_finder_setup():
 
     configured_paths = ['/bogus']
     playbook_paths = ['/playbookdir']
-    with patch.object(sys, 'path', ['/bogus', '/playbookdir']):
+    with patch.object(sys, 'path', ['/bogus', '/playbookdir']) and patch('os.path.isdir', side_effect=lambda x: b'bogus' in x):
         f = _AnsibleCollectionFinder(paths=configured_paths)
         assert f._n_collection_paths == configured_paths
 
