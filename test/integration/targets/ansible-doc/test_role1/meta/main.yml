@@ -1,0 +1,8 @@
+---
+dependencies:
+galaxy_info:
+
+argument_specs:
+    main:
+        short_description: test_role1 from playbook dir
+        description: This should not appear in `ansible-doc --list` output.
