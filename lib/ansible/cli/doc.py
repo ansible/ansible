@@ -91,7 +91,7 @@ class RoleMixin(object):
         try:
             with open(path, 'r') as f:
                 data = from_yaml(f.read(), file_name=path)
-                return data.get('argument_spec', {})
+                return data.get('argument_specs', {})
         except (IOError, OSError) as e:
             raise AnsibleParserError("An error occurred while trying to read the file '%s': %s" % (path, to_native(e)), orig_exc=e)
 
