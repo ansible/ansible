@@ -34,9 +34,10 @@ def test_finder_setup():
     assert isinstance(f._n_collection_paths, list)
 
     # ensure sys.path paths that have an ansible_collections dir are added to the end of the collections paths
-    with patch.object(sys, 'path', ['/bogus', default_test_collection_paths[1], '/morebogus', default_test_collection_paths[0], '/explicit', '/other']):
-        f = _AnsibleCollectionFinder(paths=['/explicit', '/other'])
-        assert f._n_collection_paths == ['/explicit', '/other', default_test_collection_paths[1], default_test_collection_paths[0]]
+    with patch.object(sys, 'path', ['/bogus', default_test_collection_paths[1], '/morebogus', default_test_collection_paths[0]]):
+        with patch('os.path.isdir', side_effect=lambda x: b'bogus' not in x):
+            f = _AnsibleCollectionFinder(paths=['/explicit', '/other'])
+            assert f._n_collection_paths == ['/explicit', '/other', default_test_collection_paths[1], default_test_collection_paths[0]]
 
     configured_paths = ['/bogus']
     playbook_paths = ['/playbookdir']
