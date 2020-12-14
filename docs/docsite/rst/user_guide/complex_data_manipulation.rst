@@ -156,7 +156,7 @@ This example uses `Python argument list unpacking <https://docs.python.org/3/tut
             dest: "/tmp/{{ item }}"
           loop: '{{ q("fileglob", *globlist) }}'
           vars:
-            globlist: '{{ mygroups | map("regex_replace", "^(.*)$", "files/\1/*.conf" | list }}'
+            globlist: '{{ mygroups | map("regex_replace", "^(.*)$", "files/\1/*.conf") | list }}'
 
 
 .. _complex_type_transformations:
