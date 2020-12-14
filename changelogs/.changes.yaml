@@ -1651,6 +1651,11 @@ releases:
     - v2.9.15rc1_summary.yaml
     - zfs-root-snapshot.yml
     release_date: '2020-10-26'
+  2.9.16:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.16_summary.yaml
+    release_date: '2020-12-14'
   2.9.16rc1:
     codename: Immigrant Song
     fragments:
