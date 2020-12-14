@@ -1,0 +1,2 @@
+minor_changes:
+- Module iptables multiport destination support added (https://github.com/ansible/ansible/pull/72928)
