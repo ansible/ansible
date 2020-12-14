@@ -418,6 +418,106 @@ Ansible can also be installed inside a new or existing ``virtualenv``::
     $ source ansible/bin/activate   # Activate the virtual environment
     $ python -m pip install ansible
 
+.. _with_docker:
+
+Installing Ansible with Docker
+------------------------------
+
+This installation method simply uses ansible inside a docker container with ``docker run --rm -it -v <current-location>:/ansible willhallonline/ansible:2.9-alpine ansible``. To reduce the amount of text to write, simply create an alias.
+
+Windows
+^^^^^^^
+1. Create a Powershell Profile::
+
+    PS> New-Item -Type file -Path $Profile -Force
+
+2. Copy the following script into the newly created file:
+    .. code-block:: 
+
+      function Invoke-Ansible {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible $args
+      }
+      Set-Alias -Name ansible -Value Invoke-Ansible
+
+      function Invoke-AnsibleConfig {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-config $args
+      }
+      Set-Alias -Name ansible-config -Value Invoke-AnsibleConfig
+
+      function Invoke-AnsibleConnection {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-connection $args
+      }
+      Set-Alias -Name ansible-connection -Value Invoke-AnsibleConnectioin
+
+      function Invoke-AnsibleConsole {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-console $args
+      }
+      Set-Alias -Name ansible-console -Value Invoke-AnsibleConsole
+
+      function Invoke-AnsibleDoc {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-doc $args
+      }
+      Set-Alias -Name ansible-doc -Value Invoke-AnsibleDoc
+
+      function Invoke-AnsibleGalaxy {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-galaxy $args
+      }
+      Set-Alias -Name ansible-galaxy -Value Invoke-AnsibleGalaxy
+
+      function Invoke-AnsibleInventory {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-inventory $args
+      }
+      Set-Alias -Name ansible-inventory -Value Invoke-AnsibleInventory
+
+      function Invoke-AnsibleLint {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-lint $args
+      }
+      Set-Alias -Name ansible-lint -Value Invoke-AnsibleLint
+
+      function Invoke-AnsiblePlaybook {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-playbook $args
+      }
+      Set-Alias -Name ansible-playbook -Value Invoke-AnsiblePlaybook
+
+      function Invoke-AnsiblePull {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-pull $args
+      }
+      Set-Alias -Name ansible-pull -Value Invoke-AnsiblePull
+
+      function Invoke-AnsibleTest {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-test $args
+      }
+      Set-Alias -Name ansible-test -Value Invoke-AnsibleTets
+
+      function Invoke-AnsibleVault {
+          docker run --rm -it -v ${PWD}:/ansible willhallonline/ansible:2.9-alpine ansible-vault $args
+      }
+      Set-Alias -Name ansible-vault -Value Invoke-AnsibleVault
+
+3. Use the new Powershell profile::
+
+    PS> . <path_to_created_file>
+
+Linux and macOS
+^^^^^^^^^^^^^^^
+
+Put the following into your .bashrc or .zshrc:
+
+.. code-block:: bash
+
+    alias ansible='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible'
+    alias ansible-config='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-config'
+    alias ansible-connection='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-connection'
+    alias ansible-console='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-console'
+    alias ansible-doc='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-doc'
+    alias ansible-galaxy='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-galaxy'
+    alias ansible-inventory='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-inventory'
+    alias ansible-lint='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-lint'
+    alias ansible-playbook='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-playbook'
+    alias ansible-pull='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-pull'
+    alias ansible-test='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-test'
+    alias ansible-vault='docker run --rm -it -v $(pwd):/ansible willhallonline/ansible:2.9-alpine ansible-vault'
+
 .. _from_source:
 
 Running ``ansible-base`` from source (devel)
