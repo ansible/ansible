@@ -5,13 +5,13 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
-v2.10.4rc1
-==========
+v2.10.4
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2020-12-07
+| Release Date: 2020-12-14
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -43,6 +43,7 @@ Bugfixes
 - account for bug in Python 2.6 that occurs during interpreter shutdown to avoid stack trace
 - ansible-test - Correctly detect changes in a GitHub pull request when running on Azure Pipelines.
 - ansible-test - Skip installing requirements if they are already installed.
+- ansible-test - ``cryptography`` is now limited to versions prior to 3.2 only when an incompatible OpenSSL version (earlier than 1.1.0) is detected
 - ansible-test - add constraint for ``cffi`` to prevent failure on systems with older versions of ``gcc`` (https://foss.heptapod.net/pypy/cffi/-/issues/480)
 - ansible-test - convert target paths to unicode on Python 2 to avoid ``UnicodeDecodeError`` (https://github.com/ansible/ansible/issues/68398, https://github.com/ansible/ansible/pull/72623).
 - ansible-test - improve classification of changes to ``.gitignore``, ``COPYING``, ``LICENSE``, ``Makefile``, and all files ending with one of ``.in`, ``.md`, ``.rst``, ``.toml``, ``.txt`` in the collection root directory (https://github.com/ansible/ansible/pull/72353).
