@@ -1728,6 +1728,11 @@ releases:
     - galaxy_login_bye.yml
     - v2.8.17rc1_summary.yaml
     release_date: '2020-10-26'
+  2.8.18:
+    codename: How Many More Times
+    fragments:
+    - v2.8.18_summary.yaml
+    release_date: '2020-12-14'
   2.8.18rc1:
     codename: How Many More Times
     fragments:
