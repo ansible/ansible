@@ -20,13 +20,6 @@
 ## systemctl
 ##
 
-- name: check for systemctl command
-  shell: which systemctl
-  failed_when: False
-  register: systemctl_check
-
-- meta: end_host
-  when: systemctl_check.rc != 0
 
 - set_fact:
     ssh_service: '{{ "ssh" if ansible_os_family == "Debian" else "sshd" }}'
@@ -84,6 +77,9 @@
           state: started
       environment:
           SYSTEMD_OFFLINE: 1
+- name: End if this system does not use systemd
+  meta: end_host
+  when: ansible_facts.service_mgr != 'systemd'
 
 - name: Disable ssh 1
   systemd:
