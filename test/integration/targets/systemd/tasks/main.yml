@@ -117,3 +117,5 @@
       - systemd_disable_ssh_2 is not changed
       - systemd_enable_ssh_1 is changed
       - systemd_enable_ssh_2 is not changed
+
+- import_tasks: test_unit_template.yml
