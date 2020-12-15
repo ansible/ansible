@@ -69,33 +69,34 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
     collections = defaultdict(dict)
     for path in list_valid_collection_paths(search_paths):
 
-        b_path = to_bytes(path)
-        if os.path.isdir(b_path):
-            b_coll_root = to_bytes(os.path.join(path, 'ansible_collections'))
+        if os.path.basename(path) != 'ansible_collections':
+            path = os.path.join(path, 'ansible_collections')
 
-            if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
+        b_coll_root = to_bytes(path, errors='surrogate_or_strict')
 
-                if namespace is None:
-                    namespaces = os.listdir(b_coll_root)
-                else:
-                    namespaces = [namespace]
+        if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
 
-                for ns in namespaces:
-                    b_namespace_dir = os.path.join(b_coll_root, to_bytes(ns))
+            if namespace is None:
+                namespaces = os.listdir(b_coll_root)
+            else:
+                namespaces = [namespace]
 
-                    if os.path.isdir(b_namespace_dir):
+            for ns in namespaces:
+                b_namespace_dir = os.path.join(b_coll_root, to_bytes(ns))
 
-                        if collection is None:
-                            colls = os.listdir(b_namespace_dir)
-                        else:
-                            colls = [collection]
+                if os.path.isdir(b_namespace_dir):
 
-                        for mycoll in colls:
+                    if collection is None:
+                        colls = os.listdir(b_namespace_dir)
+                    else:
+                        colls = [collection]
 
-                            # skip dupe collections as they will be masked in execution
-                            if mycoll not in collections[ns]:
-                                b_coll = to_bytes(mycoll)
-                                b_coll_dir = os.path.join(b_namespace_dir, b_coll)
-                                if is_collection_path(b_coll_dir):
-                                    collections[ns][mycoll] = b_coll_dir
-                                    yield b_coll_dir
+                    for mycoll in colls:
+
+                        # skip dupe collections as they will be masked in execution
+                        if mycoll not in collections[ns]:
+                            b_coll = to_bytes(mycoll)
+                            b_coll_dir = os.path.join(b_namespace_dir, b_coll)
+                            if is_collection_path(b_coll_dir):
+                                collections[ns][mycoll] = b_coll_dir
+                                yield b_coll_dir
