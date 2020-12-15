@@ -83,14 +83,7 @@ You can memorize your vault password, or manually copy vault passwords from any 
 Storing passwords in files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To store a vault password in a file, enter the password as a string on a single line in the file. Make sure the permissions on the file are appropriate. Do not add password files to source control. If you have multiple passwords, you can store them all in a single file, as long as they all have vault IDs. For each password, create a separate line and enter the vault ID, a space, then the password as a string. For example:
-
-.. code-block:: text
-
-   dev my_dev_pass
-   test my_test_pass
-   prod my_prod_pass
-
+To store a vault password in a file, enter the password as a string on a single line in the file. Make sure the permissions on the file are appropriate. Do not add password files to source control.
 
 .. _vault_password_client_scripts:
 
