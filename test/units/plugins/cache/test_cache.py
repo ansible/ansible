@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import shutil
 import tempfile
 
@@ -119,12 +120,46 @@ class TestJsonFileCache(TestCachePluginAdjudicator):
         self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
         self.cache['cache_key_2'] = {'key': 'value'}
 
+    def test_keys(self):
+        # A cache without a prefix will consider all files in the cache
+        # directory as valid cache entries.
+        self.cache._plugin._dump(
+            'no prefix', os.path.join(self.cache_dir, 'no_prefix'))
+        self.cache._plugin._dump(
+            'special cache', os.path.join(self.cache_dir, 'special_test'))
+
+        # The plugin does not know the CachePluginAdjudicator entries.
+        assert sorted(self.cache._plugin.keys()) == [
+            'no_prefix', 'special_test']
+
+        assert 'no_prefix' in self.cache
+        assert 'special_test' in self.cache
+        assert 'test' not in self.cache
+        assert self.cache['no_prefix'] == 'no prefix'
+        assert self.cache['special_test'] == 'special cache'
+
     def tearDown(self):
         shutil.rmtree(self.cache_dir)
 
 
 class TestJsonFileCachePrefix(TestJsonFileCache):
     cache_prefix = 'special_'
+
+    def test_keys(self):
+        # For caches with a prefix only files that match the prefix are
+        # considered. The prefix is removed from the key name.
+        self.cache._plugin._dump(
+            'no prefix', os.path.join(self.cache_dir, 'no_prefix'))
+        self.cache._plugin._dump(
+            'special cache', os.path.join(self.cache_dir, 'special_test'))
+
+        # The plugin does not know the CachePluginAdjudicator entries.
+        assert sorted(self.cache._plugin.keys()) == ['test']
+
+        assert 'no_prefix' not in self.cache
+        assert 'special_test' not in self.cache
+        assert 'test' in self.cache
+        assert self.cache['test'] == 'special cache'
 
 
 class TestFactCache(unittest.TestCase):
