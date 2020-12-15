@@ -2,7 +2,7 @@
 Description=Basic service to use as a template
 
 [Service]
-ExecStart=/usr/bin/sleep %i
+ExecStart={{ sleep_bin_path }} %i
 
 [Install]
 WantedBy=multi-user.target

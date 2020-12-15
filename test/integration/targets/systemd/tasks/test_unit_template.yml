@@ -1,11 +1,15 @@
 - name: Copy service file
-  copy:
+  template:
     src: sleeper@.service
     dest: /etc/systemd/system/sleeper@.service
     owner: root
     group: root
     mode: '0644'
   notify: remove unit file
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
 
 - name: Start and enable service using unit template
   systemd:
