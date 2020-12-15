@@ -73,13 +73,8 @@ You should see output for each host in your inventory, similar to this:
 
 .. code-block:: ansible-output
 
-   aserver.example.org | SUCCESS => {
-       "ansible_facts": {
-           "discovered_interpreter_python": "/usr/bin/python"
-       },
-       "changed": false,
-       "ping": "pong"
-   }
+   aserver.example.org | CHANGED | rc=0 >>
+   hello
 
 Now run a live command on all of your nodes:
 
