@@ -394,6 +394,26 @@
     - '"Installing ''parent_dep2.parent_collection:1.0.0'' to" in install_req.stdout'
     - '"Installing ''child_dep.child_collection:0.5.0'' to" in install_req.stdout'
 
+- name: install a collection to a directory that contains another collection with no metadata
+  block:
+
+    # Collections are usable in ansible without a galaxy.yml or MANIFEST.json
+    - name: create a collection directory
+      file:
+        state: directory
+        path: '{{ galaxy_dir }}/ansible_collections/unrelated_namespace/collection_without_metadata/plugins'
+
+    - name: install a collection to the same installation directory - {{ test_name }}
+      command: ansible-galaxy collection install namespace1.name1
+      environment:
+        ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+      register: install_req
+
+    - name: assert installed collections with ansible-galaxy install - {{ test_name }}
+      assert:
+        that:
+          - '"Installing ''namespace1.name1:1.0.9'' to" in install_req.stdout'
+
 - name: remove test collection install directory - {{ test_name }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections'
