@@ -20,13 +20,20 @@
 ## systemctl
 ##
 
-
-- set_fact:
-    ssh_service: '{{ "ssh" if ansible_os_family == "Debian" else "sshd" }}'
-
 - name: End if this system does not use systemd
   meta: end_host
   when: ansible_facts.service_mgr != 'systemd'
+
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - vars
 
 - name: get a list of running services
   shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
