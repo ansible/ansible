@@ -317,7 +317,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
 
-You can install roles and collections from the same requirements files, with some caveats.
+You can install roles and collections from the same requirements files
 
 .. code-block:: yaml
 
@@ -332,10 +332,6 @@ You can install roles and collections from the same requirements files, with som
       - name: geerlingguy.php_roles
         version: 0.9.3
         source: https://galaxy.ansible.com
-
-.. note::
-   While both roles and collections can be specified in one requirements file, they need to be installed separately.
-   The ``ansible-galaxy role install -r requirements.yml`` will only install roles and  ``ansible-galaxy collection install -r requirements.yml -p ./`` will only install collections.
 
 Installing multiple roles from multiple files
 ---------------------------------------------
