@@ -61,19 +61,22 @@ class _AnsibleCollectionFinder:
         # expand any placeholders in configured paths
         paths = [os.path.expanduser(to_native(p, errors='surrogate_or_strict')) for p in paths]
 
+        # add syspaths if needed
         if scan_sys_paths:
-            # append all sys.path entries with an ansible_collections package
-            for path in sys.path:
-                if (
-                        path not in paths and
-                        os.path.isdir(to_bytes(
-                            os.path.join(path, 'ansible_collections'),
-                            errors='surrogate_or_strict',
-                        ))
-                ):
-                    paths.append(path)
+            paths.extend(sys.path)
 
-        self._n_configured_paths = paths
+        good_paths = []
+        # expand any placeholders in configured paths
+        for p in paths:
+
+            # ensure we alway shave ansible_collections
+            if os.path.basename(p) == 'ansible_collections':
+                p = os.path.dirname(p)
+
+            if p not in good_paths and os.path.isdir(to_bytes(os.path.join(p, 'ansible_collections'), errors='surrogate_or_strict')):
+                good_paths.append(p)
+
+        self._n_configured_paths = good_paths
         self._n_cached_collection_paths = None
         self._n_cached_collection_qualified_paths = None
 
@@ -111,8 +114,14 @@ class _AnsibleCollectionFinder:
         path = to_native(path)
         interesting_paths = self._n_cached_collection_qualified_paths
         if not interesting_paths:
-            interesting_paths = [os.path.join(p, 'ansible_collections') for p in
-                                 self._n_collection_paths]
+            interesting_paths = []
+            for p in self._n_collection_paths:
+                if os.path.basename(p) != 'ansible_collections':
+                    p = os.path.join(p, 'ansible_collections')
+
+                if p not in interesting_paths:
+                    interesting_paths.append(p)
+
             interesting_paths.insert(0, self._ansible_pkg_path)
             self._n_cached_collection_qualified_paths = interesting_paths
 
