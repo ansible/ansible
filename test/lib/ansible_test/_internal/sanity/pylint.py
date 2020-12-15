@@ -64,6 +64,14 @@ class PylintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
+    @property
+    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
+        # Python 3.9 is not supported on pylint < 2.5.0.
+        # Unfortunately pylint 2.5.0 and later include an unfixed regression.
+        # See: https://github.com/PyCQA/pylint/issues/3701
+        return tuple(python_version for python_version in super(PylintTest, self).supported_python_versions if python_version not in ('3.9',))
+
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
