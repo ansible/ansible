@@ -31,7 +31,7 @@ variables:
   - name: entryPoint
     value: test/utils/shippable/shippable.sh
   - name: fetchDepth
-    value: 100
+    value: 500
 
 resources:
   containers:
