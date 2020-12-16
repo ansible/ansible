@@ -44,6 +44,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.local = args.local is True
         self.venv = args.venv
+        self.venv_system_site_packages = args.venv_system_site_packages
 
         if args.tox is True or args.tox is False or args.tox is None:
             self.tox = args.tox is True
@@ -319,6 +320,7 @@ class CoverageConfig(EnvironmentConfig):
         self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
+        self.export = args.export if 'export' in args else None  # type: str
         self.coverage = False  # temporary work-around to support intercept_command in cover.py
 
 

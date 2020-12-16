@@ -38,6 +38,7 @@ from .util import (
 from .util_common import (
     intercept_command,
     ResultType,
+    write_json_file,
     write_text_test_results,
     write_json_test_results,
 )
@@ -151,7 +152,12 @@ def _command_coverage_combine_python(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
+    if args.export:
+        coverage_file = os.path.join(args.export, '')
+        suffix = '=coverage.combined'
+    else:
+        coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
+        suffix = ''
 
     for group in sorted(groups):
         arc_data = groups[group]
@@ -178,7 +184,7 @@ def _command_coverage_combine_python(args):
             updated.add_arcs(dict((source[0], []) for source in sources))
 
         if not args.explain:
-            output_file = coverage_file + group
+            output_file = coverage_file + group + suffix
             updated.write_file(output_file)
             output_files.append(output_file)
 
@@ -436,11 +442,20 @@ def get_coverage_group(args, coverage_file):
         version=parts[3],
     )
 
+    export_names = dict(
+        version=parts[3],
+    )
+
     group = ''
 
     for part in COVERAGE_GROUPS:
         if part in args.group_by:
             group += '=%s' % names[part]
+        elif args.export:
+            group += '=%s' % export_names.get(part, 'various')
+
+    if args.export:
+        group = group.lstrip('=')
 
     return group
 
@@ -495,6 +510,14 @@ def _command_coverage_combine_powershell(args):
             if not filename:
                 continue
 
+            if isinstance(hit_info, dict) and not hit_info.get('Line'):
+                # Input data was previously aggregated and thus uses the standard ansible-test output format for PowerShell coverage.
+                # This format differs from the more verbose format of raw coverage data from the remote Windows hosts.
+                hit_info = dict((int(key), value) for key, value in hit_info.items())
+
+                coverage_data[filename] = hit_info
+                continue
+
             if filename not in coverage_data:
                 coverage_data[filename] = {}
 
@@ -536,6 +559,12 @@ def _command_coverage_combine_powershell(args):
                 coverage_data[source] = _default_stub_value(source_line_count)
 
         if not args.explain:
+            if args.export:
+                output_file = os.path.join(args.export, group + '=coverage.combined')
+                write_json_file(output_file, coverage_data)
+                output_files.append(output_file)
+                continue
+
             output_file = COVERAGE_OUTPUT_FILE_NAME + group + '-powershell'
 
             write_json_test_results(ResultType.COVERAGE, output_file, coverage_data)
