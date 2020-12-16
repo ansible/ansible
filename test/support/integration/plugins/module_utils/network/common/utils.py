@@ -40,6 +40,7 @@ from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils import basic
+from ansible.module_utils.common.parameters import CHECK_ARGUMENT_TYPES_DISPATCHER
 from ansible.module_utils.parsing.convert_bool import boolean
 
 # Backwards compatibility for 3rd party modules
@@ -209,7 +210,7 @@ class Entity(object):
 
             if value[name] is not None:
                 value_type = attr.get('type', 'str')
-                type_checker = self._module._CHECK_ARGUMENT_TYPES_DISPATCHER[value_type]
+                type_checker = CHECK_ARGUMENT_TYPES_DISPATCHER[value_type]
                 type_checker(value[name])
             elif value.get(name):
                 value[name] = self._module.params[name]

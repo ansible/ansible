@@ -163,7 +163,6 @@ from ansible.module_utils.common.parameters import (
     list_no_log_values,
     PASS_VARS,
     PASS_BOOLS,
-    CHECK_ARGUMENT_TYPES_DISPATCHER,
 )
 
 from ansible.module_utils.six import (
@@ -741,20 +740,6 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
-        self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
-            'str': self._check_type_str,
-            'list': self._check_type_list,
-            'dict': self._check_type_dict,
-            'bool': self._check_type_bool,
-            'int': self._check_type_int,
-            'float': self._check_type_float,
-            'path': self._check_type_path,
-            'raw': self._check_type_raw,
-            'jsonarg': self._check_type_jsonarg,
-            'json': self._check_type_jsonarg,
-            'bytes': self._check_type_bytes,
-            'bits': self._check_type_bits,
-        }
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()
