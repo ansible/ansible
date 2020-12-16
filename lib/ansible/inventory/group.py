@@ -247,7 +247,7 @@ class Group:
             self.set_priority(int(value))
         else:
             if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
-                self.vars[key] = combine_vars(self.vars[key], value)
+                self.vars = combine_vars(self.vars, {key: value})
             else:
                 self.vars[key] = value
 
