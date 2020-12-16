@@ -254,13 +254,13 @@ Now that you've enabled caching, loaded the correct plugin, and retrieved a uniq
             except KeyError:
                 # This occurs if the cache_key is not in the cache or if the cache_key expired, so the cache needs to be updated
                 cache_needs_update = True
-
-        if cache_needs_update:
+        if not attempt_to_read_cache or cache_needs_update:
+            # parse the provided inventory source
             results = self.get_inventory()
-
-            # set the cache
+        if cache_needs_update:
             self._cache[cache_key] = results
 
+        # submit the parsed data to the inventory object (add_host, set_variable, etc)
         self.populate(results)
 
 After the ``parse`` method is complete, the contents of ``self._cache`` is used to set the cache plugin if the contents of the cache have changed.
