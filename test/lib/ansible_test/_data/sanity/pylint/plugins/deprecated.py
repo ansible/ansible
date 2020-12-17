@@ -242,7 +242,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     this_collection = collection_name == (self.collection_name or 'ansible.builtin')
                     if not this_collection:
                         self.add_message('wrong-collection-deprecated', node=node, args=(collection_name,))
-                else:
+                elif self.collection_name is not None:
                     self.add_message('ansible-deprecated-no-collection-name', node=node)
 
                 if date:
