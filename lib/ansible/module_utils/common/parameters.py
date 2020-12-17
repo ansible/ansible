@@ -55,7 +55,7 @@ PASS_VARS = {
 
 PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'no_log')
 
-CHECK_ARGUMENT_TYPES_DISPATCHER = {
+DEFAULT_TYPE_VALIDATORS = {
     'str': check_type_str,
     'list': check_type_list,
     'dict': check_type_dict,
@@ -254,7 +254,7 @@ def get_type_validator(wanted):
     """Returns the callable used to validate a wanted type and the type name.
 
     :arg wanted: String or callable. If a string, get the corresponding
-        validation function from CHECK_ARGUMENT_TYPES_DISPATCHER. If callable,
+        validation function from DEFAULT_TYPE_VALIDATORS. If callable,
         get the name of the custom callable and return that for the type_checker.
 
     :returns: Tuple of callable function or None, and a string that is the name
@@ -267,7 +267,7 @@ def get_type_validator(wanted):
             # Default type for parameters
             wanted = 'str'
 
-        type_checker = CHECK_ARGUMENT_TYPES_DISPATCHER.get(wanted)
+        type_checker = DEFAULT_TYPE_VALIDATORS.get(wanted)
 
     # Use the custom callable for validation.
     else:

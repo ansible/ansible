@@ -161,7 +161,7 @@ from ansible.module_utils.common.parameters import (
     handle_aliases,
     list_deprecations,
     list_no_log_values,
-    CHECK_ARGUMENT_TYPES_DISPATCHER,
+    DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
 )
@@ -742,7 +742,7 @@ class AnsibleModule(object):
         self._set_defaults(pre=True)
 
         # This is for backwards compatibility only.
-        self._CHECK_ARGUMENT_TYPES_DISPATCHER = CHECK_ARGUMENT_TYPES_DISPATCHER
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
 
         if not bypass_checks:
             self._check_required_arguments()
