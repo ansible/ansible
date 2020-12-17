@@ -14,6 +14,11 @@ jobs:
         fetchDepth: $(fetchDepth)
         path: $(checkoutPath)
       - task: DownloadPipelineArtifact@2
+        displayName: Download JUnit Data
+        inputs:
+          path: junit/
+          patterns: "JUnit */*"
+      - task: DownloadPipelineArtifact@2
         displayName: Download Coverage Data
         inputs:
           path: coverage/
