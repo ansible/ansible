@@ -42,6 +42,10 @@ EXAMPLES = r'''
 - name: Include a play after another play
   import_playbook: otherplays.yaml
 
+- name: Set variables on an imported playbook
+  import_playbook: otherplays.yml
+  vars:
+    service: httpd
 
 - name: This DOES NOT WORK
   hosts: all
