@@ -1,0 +1,2 @@
+minor_changes:
+  - create ``get_type_validator`` standalone function and move that functionality out of ``AnsibleModule`` (https://github.com/ansible/ansible/pull/72667)

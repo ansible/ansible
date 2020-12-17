@@ -41,6 +41,7 @@ import yaml
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
@@ -1362,7 +1363,7 @@ class ModuleValidator(Validator):
                 if callable(_type):
                     _type_checker = _type
                 else:
-                    _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
+                    _type_checker = DEFAULT_TYPE_VALIDATORS.get(_type)
                 try:
                     with CaptureStd():
                         dummy = _type_checker(value)
@@ -1691,7 +1692,7 @@ class ModuleValidator(Validator):
             if callable(_type):
                 _type_checker = _type
             else:
-                _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
+                _type_checker = DEFAULT_TYPE_VALIDATORS.get(_type)
 
             _elements = data.get('elements')
             if (_type == 'list') and not _elements:
@@ -1706,7 +1707,7 @@ class ModuleValidator(Validator):
                 )
             if _elements:
                 if not callable(_elements):
-                    module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_elements)
+                    DEFAULT_TYPE_VALIDATORS.get(_elements)
                 if _type != 'list':
                     msg = "Argument '%s' in argument_spec" % arg
                     if context:
