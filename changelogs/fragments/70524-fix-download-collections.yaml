@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection download - fix downloading tar.gz files and collections in git repositories (https://github.com/ansible/ansible/issues/70429)

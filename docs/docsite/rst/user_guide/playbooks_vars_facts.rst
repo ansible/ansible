@@ -14,13 +14,15 @@ Ansible facts
 
 Ansible facts are data related to your remote systems, including operating systems, IP addresses, attached filesystems, and more. You can access this data in the ``ansible_facts`` variable. By default, you can also access some Ansible facts as top-level variables with the ``ansible_`` prefix. You can disable this behavior using the :ref:`INJECT_FACTS_AS_VARS` setting. To see all available facts, add this task to a play::
 
-    - debug: var=ansible_facts
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
 
 To see the 'raw' information as gathered, run this command at the command line::
 
-    ansible <hostname> -m setup
+    ansible <hostname> -m ansible.builtin.setup
 
-Facts include a large amount of variable data, which may look like this on Ansible 2.7:
+Facts include a large amount of variable data, which may look like this:
 
 .. code-block:: json
 
@@ -491,6 +493,15 @@ To reference the system hostname::
 
 You can use facts in conditionals (see :ref:`playbooks_conditionals`) and also in templates. You can also use facts to create dynamic groups of hosts that match particular criteria, see the :ref:`group_by module <group_by_module>` documentation for details.
 
+.. _fact_requirements:
+
+Package requirements for fact gathering
+---------------------------------------
+
+On some distros, you may see missing fact values or facts set to default values because the packages that support gathering those facts are not installed by default. You can install the necessary packages on your remote hosts using the OS package manager. Known dependencies include:
+
+* Linux Network fact gathering -  Depends on  the ``ip`` binary, commonly included in the ``iproute2`` package.
+
 .. _fact_caching:
 
 Caching facts
@@ -509,7 +520,7 @@ Fact caching can improve performance. If you manage thousands of hosts, you can 
 Disabling facts
 ---------------
 
-By default, Ansible gathers facts at the beginning of each play. If you do not need to gather facts (for example, if you know know everything about your systems centrally), you can turn off fact gathering at the play level to improve scalability. Disabling facts may particularly improve performance in push mode with very large numbers of systems, or if you are using Ansible on experimental platforms. To disable fact gathering::
+By default, Ansible gathers facts at the beginning of each play. If you do not need to gather facts (for example, if you know everything about your systems centrally), you can turn off fact gathering at the play level to improve scalability. Disabling facts may particularly improve performance in push mode with very large numbers of systems, or if you are using Ansible on experimental platforms. To disable fact gathering::
 
     - hosts: whatever
       gather_facts: no
@@ -517,7 +528,7 @@ By default, Ansible gathers facts at the beginning of each play. If you do not n
 Adding custom facts
 -------------------
 
-The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``set_fact`` task, or provide permanent custom facts using the facts.d directory.
+The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``ansible.builtin.set_fact`` task, or provide permanent custom facts using the facts.d directory.
 
 .. _local_facts:
 
@@ -530,15 +541,17 @@ You can add static custom facts by adding static files to facts.d, or add dynami
 
 To use facts.d, create an ``/etc/ansible/facts.d`` directory on the remote host or hosts. If you prefer a different directory, create it and specify it using the ``fact_path`` play keyword. Add files to the directory to supply your custom facts. All file names must end with ``.fact``. The files can be JSON, INI, or executable files returning JSON.
 
-To add static facts, simply add a file with the ``.facts`` extension. For example, create ``/etc/ansible/facts.d/preferences.fact`` with this content::
+To add static facts, simply add a file with the ``.fact`` extension. For example, create ``/etc/ansible/facts.d/preferences.fact`` with this content::
 
     [general]
     asdf=1
     bar=2
 
+.. note:: Make sure the file is not executable as this will break the ``ansible.builtin.setup`` module.
+
 The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following::
 
-    ansible <hostname> -m setup -a "filter=ansible_local"
+    ansible <hostname> -m ansible.builtin.setup -a "filter=ansible_local"
 
 And you will see your custom fact added::
 
@@ -573,14 +586,20 @@ By default, fact gathering runs once at the beginning of each play. If you creat
   - hosts: webservers
     tasks:
 
-      - name: create directory for ansible custom facts
-        file: state=directory recurse=yes path=/etc/ansible/facts.d
+      - name: Create directory for ansible custom facts
+        ansible.builtin.file:
+          state: directory
+          recurse: yes
+          path: /etc/ansible/facts.d
 
-      - name: install custom ipmi fact
-        copy: src=ipmi.fact dest=/etc/ansible/facts.d
+      - name: Install custom ipmi fact
+        ansible.builtin.copy:
+          src: ipmi.fact
+          dest: /etc/ansible/facts.d
 
-      - name: re-read facts after adding custom fact
-        setup: filter=ansible_local
+      - name: Re-read facts after adding custom fact
+        ansible.builtin.setup:
+          filter: ansible_local
 
 If you use this pattern frequently, a custom facts module would be more efficient than facts.d.
 
@@ -655,9 +674,9 @@ Ansible version
 To adapt playbook behavior to different versions of Ansible, you can use the variable ``ansible_version``, which has the following structure::
 
     "ansible_version": {
-        "full": "2.0.0.2",
+        "full": "2.10.1",
         "major": 2,
-        "minor": 0,
-        "revision": 0,
-        "string": "2.0.0.2"
+        "minor": 10,
+        "revision": 1,
+        "string": "2.10.1"
     }

@@ -54,7 +54,8 @@ EXAMPLES = r'''
     jid: '{{ yum_sleeper.ansible_job_id }}'
   register: job_result
   until: job_result.finished
-  retries: 30
+  retries: 100
+  delay: 10
 '''
 
 RETURN = r'''

@@ -1,0 +1,63 @@
+- set_fact:
+    krb5_config: '{{ remote_tmp_dir }}/krb5.conf'
+    krb5_realm: '{{ httpbin_host.split(".")[1:] | join(".") | upper }}'
+    krb5_provider: '{{ (ansible_facts.os_family == "FreeBSD" or ansible_facts.distribution == "MacOSX") | ternary("Heimdal", "MIT") }}'
+
+- set_fact:
+    krb5_username: admin@{{ krb5_realm }}
+
+- name: Create krb5.conf file
+  template:
+    src: krb5.conf.j2
+    dest: '{{ krb5_config }}'
+
+- name: Include distribution specific variables
+  include_vars: '{{ lookup("first_found", params) }}'
+  vars:
+    params:
+      files:
+      - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml'
+      - '{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml'
+      - '{{ ansible_facts.distribution }}.yml'
+      - '{{ ansible_facts.os_family }}.yml'
+      - default.yml
+      paths:
+      - '{{ role_path }}/vars'
+
+- name: Install Kerberos sytem packages
+  package:
+    name: '{{ krb5_packages }}'
+    state: present
+  when: ansible_facts.distribution not in ['Alpine', 'MacOSX']
+
+# apk isn't available on ansible-core so just call command
+- name: Alpine - Install Kerberos system packages
+  command: apk add {{ krb5_packages | join(' ') }}
+  when: ansible_facts.distribution == 'Alpine'
+
+- name: Install python gssapi
+  pip:
+    name:
+    - gssapi
+    - importlib ; python_version < '2.7'
+    state: present
+    extra_args: '-c {{ remote_constraints }}'
+  environment:
+    # Put /usr/local/bin for FreeBSD as we need to use the heimdal port over the builtin version
+    # https://github.com/pythongssapi/python-gssapi/issues/228
+    # Need the /usr/lib/mit/bin custom path for OpenSUSE as krb5-config is placed there
+    PATH: '/usr/local/bin:{{ ansible_facts.env.PATH }}:/usr/lib/mit/bin'
+  notify: Remove python gssapi
+
+- name: test the environment to make sure Kerberos is working properly
+  httptester_kinit:
+    username: '{{ krb5_username }}'
+    password: '{{ krb5_password }}'
+  environment:
+    KRB5_CONFIG: '{{ krb5_config }}'
+    KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+
+- name: remove test credential cache
+  file:
+    path: '{{ remote_tmp_dir }}/krb5.cc'
+    state: absent

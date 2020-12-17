@@ -1,0 +1,10 @@
+- name: handle case from issue 72541
+  hosts: testhost
+  gather_facts: false
+  remote_user: root
+  tasks:
+  - name: ensure we copy w/o errors due to remote user not being overriden
+    copy:
+      src: testfile
+      dest: "{{ playbook_dir }}"
+    delegate_to: localhost

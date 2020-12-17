@@ -1,0 +1,7 @@
+- name: Create a new disk
+  vmware.vmware_rest.vcenter_vm_hardware_disk:
+    vm: '{{ test_vm1_info.id }}'
+    type: SATA
+    new_vmdk:
+      capacity: 320000
+  register: my_new_disk

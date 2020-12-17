@@ -13,28 +13,28 @@ As you design and develop modules, follow these basic conventions and tips for c
 Scoping your module(s)
 ======================
 
-Especially if you want to contribute your module(s) back to Ansible Core, make sure each module includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
+Especially if you want to contribute your module(s) to an existing Ansible Collection, make sure each module includes enough logic and functionality, but not too much. If these guidelines seem confusing, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 * Do not add ``get``, ``list`` or ``info`` state options to an existing module - create a new ``_info`` or ``_facts`` module.
-* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
+* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module option cannot be documented, the module does not belong in Ansible Core.
 * Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
 * Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role.
 
 Designing module interfaces
 ===========================
 
-* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
+* If your module is addressing an object, the option for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
 * Modules accepting boolean status should accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
 * Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
 
 General guidelines & tips
 =========================
 
-* Each module should be self-contained in one file, so it can be auto-transferred by Ansible.
-* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
+* Each module should be self-contained in one file, so it can be auto-transferred by ``ansible-base``.
+* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent ``ansible-base`` from importing your module.
 * Always use the ``hacking/test-module.py`` script when developing modules - it will warn you about common pitfalls.
-* If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
+* If you have a local module that returns information specific to your installations, a good name for this module is ``site_info``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
 * Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
@@ -46,14 +46,13 @@ Functions and Methods
 * Each function should be concise and should describe a meaningful amount of work.
 * "Don't repeat yourself" is generally a good philosophy.
 * Function names should use underscores: ``my_function_name``.
-* Each function's name should describes what it does.
+* The name of each function should describe what the function does.
 * Each function should have a docstring.
 * If your code is too nested, that's usually a sign the loop body could benefit from being a function. Parts of our existing code are not the best examples of this at times.
 
 Python tips
 ===========
 
-* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
 * Call your ``main`` function from a conditional so you can import it into unit tests - for example:
 
@@ -135,8 +134,8 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 * Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
 * Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
 * Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
-* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.
-* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
+* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, and so on) are serializable.
+* Do not return an object using exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 * Results from many hosts will be aggregated at once, so your module should return only relevant output. Returning the entire contents of a log file is generally bad form.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output will still be shown in Ansible, but the command will not succeed.
@@ -149,12 +148,12 @@ Following Ansible conventions
 Ansible conventions offer a predictable user interface across all modules, playbooks, and roles. To follow Ansible conventions in your module development:
 
 * Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
-* Use consistent parameters (arguments) within your module(s).
-* Do not use 'message' or 'syslog_facility' as a parameter name, as this is used internally by Ansible.
-* Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your parameters so the user can choose which names to use in tasks and playbooks.
+* Use consistent options (arguments) within your module(s).
+* Do not use 'message' or 'syslog_facility' as an option name, because this is used internally by Ansible.
+* Normalize options with other modules - if Ansible and the API your module connects to use different names for the same option, add aliases to your options so the user can choose which names to use in tasks and playbooks.
 * Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
 * Implement ``check_mode`` in all ``*_info`` and ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``supports_check_mode=True`` when instantiating ``AnsibleModule``.
-* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use a module-specific environment variable like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
+* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use a module-specific environment variable like :code:`API_<MODULENAME>_USERNAME` to avoid conflicts between modules.
 * Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
 * Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.
 * If you want to pass complex data to an option, write an expert module that allows this, along with several smaller modules that provide a more 'atomic' operation against the underlying APIs and services. Complex operations require complex data. Let the user choose whether to reflect that complexity in tasks and plays or in  vars files.
@@ -174,3 +173,4 @@ Module Security
 * If you must use the shell, you must pass ``use_unsafe_shell=True`` to ``module.run_command``.
 * If any variables in your module can come from user input with ``use_unsafe_shell=True``, you must wrap them with ``pipes.quote(x)``.
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
+* Sensitive values marked with ``no_log=True`` will automatically have that value stripped from module return values. If your module could return these sensitive values as part of a dictionary key name, you should call the ``ansible.module_utils.basic.sanitize_keys()`` function to strip the values from the keys. See the ``uri`` module for an example.

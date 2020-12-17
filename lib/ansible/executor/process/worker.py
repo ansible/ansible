@@ -166,41 +166,38 @@ class WorkerProcess(multiprocessing_context.Process):
             display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(
+
+            # put the result on the result queue
+            display.debug("sending task result for task %s" % self._task._uuid)
+            self._final_q.send_task_result(
                 self._host.name,
                 self._task._uuid,
                 executor_result,
                 task_fields=self._task.dump_attrs(),
             )
-
-            # put the result on the result queue
-            display.debug("sending task result for task %s" % self._task._uuid)
-            self._final_q.put(task_result)
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(
+            self._final_q.send_task_result(
                 self._host.name,
                 self._task._uuid,
                 dict(unreachable=True),
                 task_fields=self._task.dump_attrs(),
             )
-            self._final_q.put(task_result, block=False)
 
         except Exception as e:
             if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(
+                    self._final_q.send_task_result(
                         self._host.name,
                         self._task._uuid,
                         dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
                         task_fields=self._task.dump_attrs(),
                     )
-                    self._final_q.put(task_result, block=False)
                 except Exception:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))

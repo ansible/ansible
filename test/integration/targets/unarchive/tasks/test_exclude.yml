@@ -1,0 +1,39 @@
+- name: "Create {{ remote_tmp_dir }}/exclude directory"
+  file:
+    state: directory
+    path: "{{ remote_tmp_dir }}/exclude-{{item}}"
+  with_items:
+    - zip
+    - tar
+
+- name: Unpack archive file excluding regular and glob files.
+  unarchive:
+    src: "{{ remote_tmp_dir }}/unarchive-00.{{item}}"
+    dest: "{{ remote_tmp_dir }}/exclude-{{item}}"
+    remote_src: yes
+    exclude:
+      - "exclude/exclude-*.txt"
+      - "other/exclude-1.ext"
+  with_items:
+    - zip
+    - tar
+
+- name: verify that the file was unarchived
+  shell: find {{ remote_tmp_dir }}/exclude-{{item}} chdir={{ remote_tmp_dir }}
+  register: unarchive00
+  with_items:
+    - zip
+    - tar
+
+- name: verify that archive extraction excluded the files
+  assert:
+    that:
+      - "'exclude/exclude-1.txt' not in item.stdout"
+      - "'other/exclude-1.ext' not in item.stdout"
+  with_items:
+    - "{{ unarchive00.results }}"
+
+- name: remove our zip unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-zip'
+    state: absent

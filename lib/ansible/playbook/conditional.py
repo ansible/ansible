@@ -88,16 +88,30 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        result = True
         try:
             for conditional in self.when:
-                if not self._check_conditional(conditional, templar, all_vars):
-                    return False
-        except Exception as e:
-            raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
-            )
 
-        return True
+                # do evaluation
+                if conditional is None or conditional == '':
+                    res = True
+                elif isinstance(conditional, bool):
+                    res = conditional
+                else:
+                    res = self._check_conditional(conditional, templar, all_vars)
+
+                # only update if still true, preserve false
+                if result:
+                    result = res
+
+                display.debug("Evaluated conditional (%s): %s " % (conditional, res))
+                if not result:
+                    break
+
+        except Exception as e:
+            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
+
+        return result
 
     def _check_conditional(self, conditional, templar, all_vars):
         '''
@@ -107,12 +121,6 @@ class Conditional:
         '''
 
         original = conditional
-        if conditional is None or conditional == '':
-            return True
-
-        # this allows for direct boolean assignments to conditionals "when: False"
-        if isinstance(conditional, bool):
-            return conditional
 
         if templar.is_template(conditional):
             display.warning('conditional statements should not include jinja2 '
@@ -133,8 +141,10 @@ class Conditional:
             disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if bare_vars_warning and not isinstance(conditional, bool):
-                display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add |bool'
-                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle' % original,
+                display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add " | bool"'
+                                   ' (if you would like to evaluate input string from prompt) or " is truthy"'
+                                   ' (if you would like to apply Python\'s evaluation method) to the expression in the future. '
+                                   'Also see CONDITIONAL_BARE_VARS configuration toggle' % original,
                                    version="2.12", collection_name='ansible.builtin')
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional

@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -28,6 +29,8 @@ display = Display()
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+
+    BUILTIN_PKG_MGR_MODULES = set([manager['name'] for manager in PKG_MGRS])
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
@@ -51,13 +54,15 @@ class ActionModule(ActionBase):
 
         try:
             if module == 'auto':
-                facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'), task_vars=task_vars)
+                facts = self._execute_module(
+                    module_name='ansible.legacy.setup',
+                    module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
+                    task_vars=task_vars)
                 display.debug("Facts %s" % facts)
                 module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
 
             if module != 'auto':
-
-                if module not in self._shared_loader_obj.module_loader:
+                if not self._shared_loader_obj.module_loader.has_plugin(module):
                     raise AnsibleActionFail('Could not find a module for %s.' % module)
                 else:
                     # run the 'package' module
@@ -69,6 +74,10 @@ class ActionModule(ActionBase):
                     new_module_args = get_action_args_with_defaults(
                         module, new_module_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list
                     )
+
+                    if module in self.BUILTIN_PKG_MGR_MODULES:
+                        # prefix with ansible.legacy to eliminate external collisions while still allowing library/ override
+                        module = 'ansible.legacy.' + module
 
                     display.vvvv("Running %s" % module)
                     result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))

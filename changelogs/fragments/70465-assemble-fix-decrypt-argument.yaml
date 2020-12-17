@@ -1,0 +1,2 @@
+bugfixes:
+  - assemble - fix decrypt argument in the module (https://github.com/ansible/ansible/issues/65450).

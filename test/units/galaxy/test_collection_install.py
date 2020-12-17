@@ -648,9 +648,10 @@ def test_install_collection(collection_artifact, monkeypatch):
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == 0o0644
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == 0o0755
 
-    assert mock_display.call_count == 1
+    assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
         % to_text(collection_path)
+    assert mock_display.mock_calls[1][1][0] == "ansible_namespace.collection (0.1.0) was installed successfully"
 
 
 def test_install_collection_with_download(galaxy_server, collection_artifact, monkeypatch):
@@ -683,9 +684,10 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
-    assert mock_display.call_count == 1
+    assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
         % to_text(collection_path)
+    assert mock_display.mock_calls[1][1][0] == "ansible_namespace.collection (0.1.0) was installed successfully"
 
     assert mock_download.call_count == 1
     assert mock_download.mock_calls[0][1][0] == 'https://downloadme.com'
@@ -721,7 +723,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 3
+    assert len(display_msgs) == 4
     assert display_msgs[0] == "Process install dependency map"
     assert display_msgs[1] == "Starting collection install process"
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
@@ -807,7 +809,8 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 3
+    assert len(display_msgs) == 4
     assert display_msgs[0] == "Process install dependency map"
     assert display_msgs[1] == "Starting collection install process"
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
+    assert display_msgs[3] == "ansible_namespace.collection (0.1.0) was installed successfully"

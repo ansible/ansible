@@ -25,7 +25,8 @@ notes:
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
-    - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
+    - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's update_cache option).
+    - Supports C(check_mode).
 requirements:
     - gpg
 options:
@@ -35,26 +36,33 @@ options:
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
             - This parameter is required when C(state) is set to C(absent).
+        type: str
     data:
         description:
             - The keyfile contents to add to the keyring.
+        type: str
     file:
         description:
             - The path to a keyfile on the remote server to add to the keyring.
+        type: path
     keyring:
         description:
-            - The full path to specific keyring file in /etc/apt/trusted.gpg.d/
+            - The full path to specific keyring file in C(/etc/apt/trusted.gpg.d/).
+        type: path
         version_added: "1.3"
     url:
         description:
             - The URL to retrieve key from.
+        type: str
     keyserver:
         description:
             - The keyserver to retrieve key from.
+        type: str
         version_added: "1.6"
     state:
         description:
             - Ensures that the key is present (added) or absent (revoked).
+        type: str
         choices: [ absent, present ]
         default: present
     validate_certs:
@@ -67,45 +75,46 @@ options:
 
 EXAMPLES = '''
 - name: Add an apt key by id from a keyserver
-  apt_key:
+  ansible.builtin.apt_key:
     keyserver: keyserver.ubuntu.com
     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
 - name: Add an Apt signing key, uses whichever key is at the URL
-  apt_key:
+  ansible.builtin.apt_key:
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Add an Apt signing key, will not download if present
-  apt_key:
+  ansible.builtin.apt_key:
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Remove a Apt specific signing key, leading 0x is valid
-  apt_key:
+  ansible.builtin.apt_key:
     id: 0x9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     state: absent
 
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
-- name: Add a key from a file on the Ansible server.
-  apt_key:
+- name: Add a key from a file on the Ansible server
+  ansible.builtin.apt_key:
     data: "{{ lookup('file', 'apt.asc') }}"
     state: present
 
 - name: Add an Apt signing key to a specific keyring file
-  apt_key:
+  ansible.builtin.apt_key:
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
 - name: Add Apt signing key on remote server to keyring
-  apt_key:
+  ansible.builtin.apt_key:
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     file: /tmp/apt.gpg
     state: present
 '''
 
+RETURN = '''#'''
 
 # FIXME: standardize into module_common
 from traceback import format_exc
@@ -267,14 +276,14 @@ def main():
             url=dict(type='str'),
             data=dict(type='str'),
             file=dict(type='path'),
-            key=dict(type='str'),
+            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
-        mutually_exclusive=(('data', 'filename', 'keyserver', 'url'),),
+        mutually_exclusive=(('data', 'file', 'keyserver', 'url'),),
     )
 
     key_id = module.params['id']

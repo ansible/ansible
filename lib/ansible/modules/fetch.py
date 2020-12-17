@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: fetch
 short_description: Fetch files from remote nodes
 description:
-- This module works like M(copy), but in reverse.
+- This module works like M(ansible.builtin.copy), but in reverse.
 - It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname.
 - Files that already exist at I(dest) will be overwritten if they are different than the I(src).
 - This module is also supported for Windows targets.
@@ -58,7 +58,7 @@ options:
     type: bool
     default: no
 notes:
-- When running fetch with C(become), the M(slurp) module will also be
+- When running fetch with C(become), the M(ansible.builtin.slurp) module will also be
   used to fetch the contents of the file for determining the remote
   checksum. This effectively doubles the transfer size, and
   depending on the file size can consume all available memory on the
@@ -71,9 +71,10 @@ notes:
   also explicitly set C(fail_on_missing) to C(no) to get the
   non-failing behaviour.
 - This module is also supported for Windows targets.
+- Supports C(check_mode).
 seealso:
-- module: copy
-- module: slurp
+- module: ansible.builtin.copy
+- module: ansible.builtin.slurp
 author:
 - Ansible Core Team
 - Michael DeHaan
@@ -81,24 +82,24 @@ author:
 
 EXAMPLES = r'''
 - name: Store file into /tmp/fetched/host.example.com/tmp/somefile
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/somefile
     dest: /tmp/fetched
 
 - name: Specifying a path directly
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/somefile
     dest: /tmp/prefix-{{ inventory_hostname }}
     flat: yes
 
 - name: Specifying a destination path
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: /tmp/special/
     flat: yes
 
 - name: Storing in a path relative to the playbook
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
     flat: yes

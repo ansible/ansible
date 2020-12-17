@@ -16,6 +16,9 @@ set -eux
 run_test() {
 	local testname=$1
 
+	# outout was recorded w/o cowsay, ensure we reproduce the same
+	export ANSIBLE_NOCOWS=1
+
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
 	{ ansible-playbook -i inventory test.yml \
@@ -24,6 +27,8 @@ run_test() {
 	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
 	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
     sed -i -e 's/included: .*\/test\/integration/included: ...\/test\/integration/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
@@ -33,6 +38,9 @@ run_test_dryrun() {
 	local testname=$1
 	# optional, pass --check to run a dry run
 	local chk=${2:-}
+
+	# outout was recorded w/o cowsay, ensure we reproduce the same
+	export ANSIBLE_NOCOWS=1
 
 	# This needed to satisfy shellcheck that can not accept unquoted variable
 	cmd="ansible-playbook -i inventory ${chk} test_dryrun.yml"
@@ -178,3 +186,9 @@ run_test_dryrun check_nomarkers_wet
 
 # Test the dry run without check markers
 run_test_dryrun check_nomarkers_dry --check
+
+# Make sure implicit meta tasks are not printed
+ansible-playbook -i host1,host2 no_implicit_meta_banners.yml > meta_test.out
+cat meta_test.out
+[ "$(grep -c 'TASK \[meta\]' meta_test.out)" -eq 0 ]
+rm -f meta_test.out

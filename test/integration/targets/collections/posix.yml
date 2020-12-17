@@ -73,6 +73,29 @@
     testns.testcoll.uses_nested_same_as_module:
     register: from_nested_module
 
+  # module using a bunch of collection-level redirected module_utils
+  - name: exec module using a bunch of collection-level redirected module_utils
+    testns.testcoll.uses_collection_redirected_mu:
+    register: from_redirected_mu
+
+  # module with bogus MU
+  - name: exec module with bogus MU
+    testns.testcoll.uses_mu_missing:
+    ignore_errors: true
+    register: from_missing_mu
+
+  # module with redirected MU, redirect collection not found
+  - name: exec module with a missing redirect target collection
+    testns.testcoll.uses_mu_missing_redirect_collection:
+    ignore_errors: true
+    register: from_missing_redir_collection
+
+  # module with redirected MU, redirect module not found
+  - name: exec module with a missing redirect target module
+    testns.testcoll.uses_mu_missing_redirect_module:
+    ignore_errors: true
+    register: from_missing_redir_module
+
   - assert:
       that:
       - testmodule_out.source == 'user'
@@ -91,8 +114,20 @@
       - from_out.mu2_result == 'thingtocall in secondary'
       - from_out.mu3_result == 'thingtocall in subpkg.submod'
       - from_out.mu4_result == 'thingtocall in subpkg_with_init'
+      - from_out.mu5_result == 'thingtocall in mod_in_subpkg_with_init'
+      - from_out.mu6_result == 'thingtocall in subpkg.submod'
       - from_nested_func.mu_result == 'hello from nested_same'
       - from_nested_module.mu_result == 'hello from nested_same'
+      - from_redirected_mu.mu_result == 'hello from ansible_collections.testns.content_adj.plugins.module_utils.sub1.foomodule'
+      - from_redirected_mu.mu_result2 == 'hello from testns.othercoll.formerly_testcoll_pkg.thing'
+      - from_redirected_mu.mu_result3 == 'hello from formerly_testcoll_pkg.submod.thing'
+      - from_missing_mu is failed
+      - "'Could not find imported module support' in from_missing_mu.msg"
+      - from_missing_redir_collection is failed
+      - "'unable to locate collection bogusns.boguscoll' in from_missing_redir_collection.msg"
+      - from_missing_redir_module is failed
+      - "'Could not find imported module support code for ansible_collections.testns.testcoll.plugins.modules.uses_mu_missing_redirect_module' in from_missing_redir_module.msg"
+
 
 - hosts: testhost
   tasks:

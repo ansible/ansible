@@ -4,6 +4,7 @@
   become_method: su
   user:
     name: "{{ become_test_user }}"
+    group: '{{ "staff" if ansible_facts.distribution == "MacOSX" else omit }}'
 
 - name: test becoming user (become_method=su)
   shell: whoami

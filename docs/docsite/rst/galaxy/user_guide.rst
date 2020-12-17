@@ -160,7 +160,7 @@ This returns everything found in Galaxy for the role:
         scm: None
         src: username.repo_name
         stargazers_count: 0
-        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=master
+        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=main
         version:
         watchers_count: 1
 
@@ -173,9 +173,9 @@ Installing roles from Galaxy
 The ``ansible-galaxy`` command comes bundled with Ansible, and you can use it to install roles from Galaxy or directly from a git based SCM. You can
 also use it to create a new role, remove roles, or perform tasks on the Galaxy website.
 
-The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. Since the `Galaxy project <https://github.com/ansible/galaxy>`_
-is an open source project, you may be running your own internal Galaxy server and wish to override the default server address. You can do this using the *--server* option
-or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
+The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. If you run your own internal Galaxy server
+and want to use it instead of the default one, pass the ``--server`` option following the address of this galaxy server. You can set permanently this option by setting
+the Galaxy server value in your ``ansible.cfg`` file to use it . For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
 
 
 Installing roles
@@ -195,8 +195,8 @@ By default, Ansible downloads roles to the first writable directory in the defau
 You can override this with one of the following options:
 
 * Set the environment variable :envvar:`ANSIBLE_ROLES_PATH` in your session.
-* Define ``roles_path`` in an ``ansible.cfg`` file.
 * Use the ``--roles-path`` option for the ``ansible-galaxy`` command.
+* Define ``roles_path`` in an ``ansible.cfg`` file.
 
 The following provides an example of using ``--roles-path`` to install the role into the current working directory:
 
@@ -212,7 +212,8 @@ The following provides an example of using ``--roles-path`` to install the role 
 Installing a specific version of a role
 ---------------------------------------
 
-When the Galaxy server imports a role, it imports any git tags matching the Semantic Version format as versions. In turn, you can download a specific version of a role by specifying one of the imported tags.
+When the Galaxy server imports a role, it imports any git tags matching the `Semantic Version <https://semver.org/>`_ format as versions.
+In turn, you can download a specific version of a role by specifying one of the imported tags.
 
 To see the available versions for a role:
 
@@ -269,13 +270,16 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     # from galaxy
     - name: yatesr.timezone
 
+    # from locally cloned git repository (file:// requires full paths)
+    - src: file:///home/bennojoy/nginx
+
     # from GitHub
     - src: https://github.com/bennojoy/nginx
 
     # from GitHub, overriding the name and specifying a specific tag
     - name: nginx_role
       src: https://github.com/bennojoy/nginx
-      version: master
+      version: main
 
     # from GitHub, specifying a specific commit hash
     - src: https://github.com/bennojoy/nginx
@@ -283,15 +287,15 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
     # from a webserver, where the role is packaged in a tar.gz
     - name: http-role-gz
-      src: https://some.webserver.example.com/files/master.tar.gz
+      src: https://some.webserver.example.com/files/main.tar.gz
 
     # from a webserver, where the role is packaged in a tar.bz2
     - name: http-role-bz2
-      src: https://some.webserver.example.com/files/master.tar.bz2
+      src: https://some.webserver.example.com/files/main.tar.bz2
 
     # from a webserver, where the role is packaged in a tar.xz (Python 3.x only)
     - name: http-role-xz
-      src: https://some.webserver.example.com/files/master.tar.xz
+      src: https://some.webserver.example.com/files/main.tar.xz
 
     # from Bitbucket
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
@@ -313,7 +317,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
 
-You can install roles and collections from the same requirements files, with some caveats.
+You can install roles and collections from the same requirements files
 
 .. code-block:: yaml
 
@@ -328,10 +332,6 @@ You can install roles and collections from the same requirements files, with som
       - name: geerlingguy.php_roles
         version: 0.9.3
         source: https://galaxy.ansible.com
-
-.. note::
-   While both roles and collections can be specified in one requirements file, they need to be installed separately.
-   The ``ansible-galaxy role install -r requirements.yml`` will only install roles and  ``ansible-galaxy collection install -r requirements.yml -p ./`` will only install collections.
 
 Installing multiple roles from multiple files
 ---------------------------------------------

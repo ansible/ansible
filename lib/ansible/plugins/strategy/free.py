@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: free
+    name: free
     short_description: Executes tasks without waiting for all hosts
     description:
         - Task execution is as fast as possible per batch as defined by C(serial) (default all).
@@ -92,6 +92,9 @@ class StrategyModule(StrategyBase):
 
         self._set_hosts_cache(iterator._play)
 
+        if iterator._play.max_fail_percentage is not None:
+            display.warning("Using max_fail_percentage with the free strategy is not supported, as tasks are executed independently on each host")
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
@@ -156,7 +159,7 @@ class StrategyModule(StrategyBase):
                         (state, task) = iterator.get_next_task_for_host(host)
 
                         try:
-                            action = action_loader.get(task.action, class_only=True)
+                            action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
                         except KeyError:
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin
@@ -189,7 +192,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action == 'meta':
+                        if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
@@ -259,7 +262,7 @@ class StrategyModule(StrategyBase):
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent,
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
                                                                     _hosts=self._hosts_cache,
                                                                     _hosts_all=self._hosts_cache_all)
                         final_block = new_block.filter_tagged_tasks(task_vars)

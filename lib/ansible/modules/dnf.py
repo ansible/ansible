@@ -25,6 +25,7 @@ options:
         When using state=latest, this can be '*' which means run: dnf -y update.
         You can also pass a url or a local path to a rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
     required: true
     aliases:
         - pkg
@@ -34,6 +35,7 @@ options:
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+    type: str
 
   state:
     description:
@@ -41,27 +43,35 @@ options:
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
     choices: ['absent', 'present', 'installed', 'removed', 'latest']
+    type: str
 
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
+    type: list
+    elements: str
 
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
+    type: list
+    elements: str
 
   conf_file:
     description:
       - The remote dnf configuration file to use for the transaction.
+    type: str
 
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
+      - This setting affects packages installed from a repository as well as
+        "local" packages installed from the filesystem or a URL.
     type: bool
     default: 'no'
 
@@ -71,12 +81,14 @@ options:
         will be installed.
     version_added: "2.3"
     default: "/"
+    type: str
 
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
     version_added: "2.6"
+    type: str
 
   autoremove:
     description:
@@ -91,6 +103,8 @@ options:
       - Package name(s) to exclude when state=present, or latest. This can be a
         list or a comma separated string.
     version_added: "2.7"
+    type: list
+    elements: str
   skip_broken:
     description:
       - Skip packages with broken dependencies(devsolve) and are causing problems.
@@ -115,12 +129,14 @@ options:
   security:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+      - Note that, similar to ``dnf upgrade-minimal``, this filter applies to dependencies as well.
     type: bool
     default: "no"
     version_added: "2.7"
   bugfix:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - Note that, similar to ``dnf upgrade-minimal``, this filter applies to dependencies as well.
     default: "no"
     type: bool
     version_added: "2.7"
@@ -129,11 +145,15 @@ options:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
     version_added: "2.7"
+    type: list
+    elements: str
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     version_added: "2.7"
+    type: list
+    elements: str
   disable_excludes:
     description:
       - Disable the excludes defined in DNF config files.
@@ -141,6 +161,7 @@ options:
       - If set to C(main), disable excludes defined in [main] in dnf.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     version_added: "2.7"
+    type: str
   validate_certs:
     description:
       - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
@@ -200,6 +221,13 @@ options:
     type: bool
     default: "no"
     version_added: "2.10"
+  nobest:
+    description:
+      - Set best option to False, so that transactions are not limited to best candidates only.
+    required: false
+    type: bool
+    default: "no"
+    version_added: "2.11"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -222,6 +250,11 @@ EXAMPLES = '''
   dnf:
     name: httpd
     state: latest
+
+- name: Install Apache >= 2.4
+  dnf:
+    name: httpd>=2.4
+    state: present
 
 - name: Install the latest version of Apache and MariaDB
   dnf:
@@ -331,6 +364,7 @@ class DnfModule(YumDnf):
 
         # DNF specific args that are not part of YumDnf
         self.allowerasing = self.module.params['allowerasing']
+        self.nobest = self.module.params['nobest']
 
     def is_lockfile_pid_valid(self):
         # FIXME? it looks like DNF takes care of invalid lock files itself?
@@ -574,6 +608,10 @@ class DnfModule(YumDnf):
         if self.skip_broken:
             conf.strict = 0
 
+        # Set best
+        if self.nobest:
+            conf.best = 0
+
         if self.download_only:
             conf.downloadonly = True
             if self.download_dir:
@@ -640,12 +678,16 @@ class DnfModule(YumDnf):
                 results=[],
                 rc=1
             )
+
+        filters = []
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
-            base._update_security_filters = [base.sack.query().filter(**key)]
+            filters.append(base.sack.query().upgrades().filter(**key))
         if self.security:
             key = {'advisory_type__eq': 'security'}
-            base._update_security_filters = [base.sack.query().filter(**key)]
+            filters.append(base.sack.query().upgrades().filter(**key))
+        if filters:
+            base._update_security_filters = filters
 
         return base
 
@@ -1146,6 +1188,18 @@ class DnfModule(YumDnf):
                 self.module.exit_json(**response)
             else:
                 response['changed'] = True
+
+                # If packages got installed/removed, add them to the results.
+                # We do this early so we can use it for both check_mode and not.
+                if self.download_only:
+                    install_action = 'Downloaded'
+                else:
+                    install_action = 'Installed'
+                for package in self.base.transaction.install_set:
+                    response['results'].append("{0}: {1}".format(install_action, package))
+                for package in self.base.transaction.remove_set:
+                    response['results'].append("Removed: {0}".format(package))
+
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.fail_json(**failure_response)
@@ -1165,16 +1219,32 @@ class DnfModule(YumDnf):
                         results=[],
                     )
 
-                if self.download_only:
+                # Validate GPG. This is NOT done in dnf.Base (it's done in the
+                # upstream CLI subclass of dnf.Base)
+                if not self.disable_gpg_check:
                     for package in self.base.transaction.install_set:
-                        response['results'].append("Downloaded: {0}".format(package))
+                        fail = False
+                        gpgres, gpgerr = self.base._sig_check_pkg(package)
+                        if gpgres == 0:  # validated successfully
+                            continue
+                        elif gpgres == 1:  # validation failed, install cert?
+                            try:
+                                self.base._get_key_for_package(package)
+                            except dnf.exceptions.Error as e:
+                                fail = True
+                        else:  # fatal error
+                            fail = True
+
+                        if fail:
+                            msg = 'Failed to validate GPG signature for {0}'.format(package)
+                            self.module.fail_json(msg)
+
+                if self.download_only:
+                    # No further work left to do, and the results were already updated above.
+                    # Just return them.
                     self.module.exit_json(**response)
                 else:
                     self.base.do_transaction()
-                    for package in self.base.transaction.install_set:
-                        response['results'].append("Installed: {0}".format(package))
-                    for package in self.base.transaction.remove_set:
-                        response['results'].append("Removed: {0}".format(package))
 
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
@@ -1273,6 +1343,7 @@ def main():
     # Extend yumdnf_argument_spec with dnf-specific features that will never be
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
+    yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
 
     module = AnsibleModule(
         **yumdnf_argument_spec

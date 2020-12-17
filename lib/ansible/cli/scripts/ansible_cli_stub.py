@@ -22,7 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-__requires__ = ['ansible_base']
+__requires__ = ['ansible_core']
 
 
 import errno
@@ -38,6 +38,7 @@ from ansible.module_utils._text import to_text
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
+_PY38_MIN = sys.version_info[:2] >= (3, 8)
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
 _PY2_MIN = (2, 6) <= sys.version_info[:2] < (3,)
 _PY_MIN = _PY3_MIN or _PY2_MIN
@@ -60,16 +61,27 @@ if __name__ == '__main__':
 
     try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
         import ansible.constants as C
-        from ansible.utils.display import Display
+        from ansible.utils.display import Display, initialize_locale
     except AnsibleOptionsError as e:
         display.error(to_text(e), wrap_text=False)
         sys.exit(5)
+
+    initialize_locale()
 
     cli = None
     me = os.path.basename(sys.argv[0])
 
     try:
         display = Display()
+        if C.CONTROLLER_PYTHON_WARNING and not _PY38_MIN:
+            display.deprecated(
+                (
+                    'Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12. '
+                    'Current version: %s' % ''.join(sys.version.splitlines())
+                ),
+                version='2.12',
+                collection_name='ansible.builtin',
+            )
         display.debug("starting run")
 
         sub = None

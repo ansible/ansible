@@ -70,6 +70,9 @@ elif [ "${platform}" = "rhel" ]; then
 
         install_pip
     fi
+
+    # pin packaging and pyparsing to match the downstream vendored versions
+    "${python_interpreter}" -m pip install packaging==20.4 pyparsing==2.4.7 --disable-pip-version-check
 elif [ "${platform}" = "centos" ]; then
     while true; do
         yum install -q -y \
@@ -85,6 +88,14 @@ elif [ "${platform}" = "centos" ]; then
     done
 
     install_pip
+elif [ "${platform}" = "macos" ]; then
+    while true; do
+        pip3 install --disable-pip-version-check --quiet \
+            'virtualenv<20' \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
 elif [ "${platform}" = "osx" ]; then
     while true; do
         pip install --disable-pip-version-check --quiet \
@@ -144,5 +155,8 @@ EOF
 
 # Make sure ~/ansible/ is the starting directory for interactive shells.
 if [ "${platform}" = "osx" ]; then
+    echo "cd ~/ansible/" >> ~/.bashrc
+elif [ "${platform}" = "macos" ] ; then
+    echo "export BASH_SILENCE_DEPRECATION_WARNING=1" >> ~/.bashrc
     echo "cd ~/ansible/" >> ~/.bashrc
 fi

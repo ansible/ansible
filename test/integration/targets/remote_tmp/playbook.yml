@@ -1,10 +1,12 @@
 - name: Test temp dir on de escalation
   hosts: testhost
-  gather_facts: false
   become: yes
   tasks:
     - name: create test user
-      user: name=tmptest state=present
+      user:
+        name: tmptest
+        state: present
+        group: '{{ "staff" if ansible_facts.distribution == "MacOSX" else omit }}'
 
     - name: execute test case
       become_user: tmptest
@@ -31,11 +33,11 @@
   tasks:
     - file:
         state: touch
-        path: "/{{ output_dir }}/65393"
+        path: "{{ output_dir }}/65393"
 
     - copy:
-        src: "/{{ output_dir }}/65393"
-        dest: "/{{ output_dir }}/65393.2"
+        src: "{{ output_dir }}/65393"
+        dest: "{{ output_dir }}/65393.2"
         remote_src: true
 
     - find:

@@ -1,7 +1,7 @@
 Ansible documentation
 =====================
 
-This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/).
+This project hosts the source behind the general pages of [docs.ansible.com](https://docs.ansible.com/). Module-specific documentation is hosted in the various collections repositories. See [Ansible Galaxy](https://galaxy.ansible.com/), the list of [Ansible-maintained collections](https://docs.ansible.com/ansible/devel/community/contributing_maintained_collections.html), and the [ansible-collections organization](https://github.com/ansible-collections) for collections sources.
 
 To create clear, concise, and consistent contributions to Ansible documentation, please refer to the following information.
 
@@ -11,7 +11,7 @@ Contributions to the documentation are welcome.
 
 The Ansible community produces guidance on contributions, building documentation, and submitting pull requests, which you can find in [Contributing to the Ansible Documentation](https://docs.ansible.com/ansible/latest/community/documentation_contributions.html).
 
-You can also join the [Docs Working Group](https://github.com/ansible/community/wiki/Docs).
+You can also join the [Docs Working Group](https://github.com/ansible/community/wiki/Docs) and/or the ``#ansible-docs`` channel on freenode IRC.
 
 Ansible style guide
 ===================
@@ -23,4 +23,4 @@ The Ansible community uses a range of tools and programs for working with Ansibl
 
 GitHub
 ======
-[Ansible documentation](https://github.com/ansible/ansible/tree/devel/docs/docsite) is hosted on the Ansible GitHub project. For GitHub workflows and other information, see the [GitHub Guides](https://guides.github.com/).
+[Ansible documentation](https://github.com/ansible/ansible/tree/devel/docs/docsite) is hosted on the Ansible GitHub project and various collection repositories, especially those in the [ansible-collections organization](https://github.com/ansible-collections). For general GitHub workflows and other information, see the [GitHub Guides](https://guides.github.com/).

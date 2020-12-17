@@ -19,7 +19,7 @@ version_added: "2.0"
 short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
-    - For Windows targets, use the M(win_find) module instead.
+    - For Windows targets, use the M(ansible.windows.win_find) module instead.
 options:
     age:
         description:
@@ -57,6 +57,15 @@ options:
         description:
             - A regular expression or pattern which should be matched against the file content.
         type: str
+    read_whole_file:
+        description:
+            - When doing a C(contains) search, determines whether the whole file should be read into
+              memory or if the regex should be applied to the file line-by-line.
+            - Setting this to C(true) can have performance and memory implications for large files.
+            - This uses C(re.search()) instead of C(re.match()).
+        type: bool
+        default: false
+        version_added: "2.11"
     paths:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
@@ -119,7 +128,7 @@ options:
         type: int
         version_added: "2.6"
 seealso:
-- module: win_find
+- module: ansible.windows.win_find
 '''
 
 
@@ -219,16 +228,17 @@ import re
 import stat
 import time
 
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
     '''filter using glob patterns'''
-    if patterns is None and excludes is None:
+    if not patterns and not excludes:
         return True
 
     if use_regex:
-        if patterns and excludes is None:
+        if patterns and not excludes:
             for p in patterns:
                 r = re.compile(p)
                 if r.match(f):
@@ -245,7 +255,7 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
                     return True
 
     else:
-        if patterns and excludes is None:
+        if patterns and not excludes:
             for p in patterns:
                 if fnmatch.fnmatch(f, p):
                     return True
@@ -283,11 +293,12 @@ def sizefilter(st, size):
     return False
 
 
-def contentfilter(fsname, pattern):
+def contentfilter(fsname, pattern, read_whole_file=False):
     """
     Filter files which contain the given expression
     :arg fsname: Filename to scan for lines matching a pattern
     :arg pattern: Pattern to look for inside of line
+    :arg read_whole_file: If true, the whole file is read into memory before the regex is applied against it. Otherwise, the regex is applied line-by-line.
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
     """
@@ -298,6 +309,9 @@ def contentfilter(fsname, pattern):
 
     try:
         with open(fsname) as f:
+            if read_whole_file:
+                return bool(prog.search(f.read()))
+
             for line in f:
                 if prog.match(line):
                     return True
@@ -363,6 +377,7 @@ def main():
             patterns=dict(type='list', default=['*'], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
+            read_whole_file=dict(type='bool', default=False),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
@@ -408,7 +423,10 @@ def main():
     looked = 0
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
-        if os.path.isdir(npath):
+        try:
+            if not os.path.isdir(npath):
+                raise Exception("'%s' is not a directory" % to_native(npath))
+
             for root, dirs, files in os.walk(npath, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
@@ -423,8 +441,8 @@ def main():
 
                     try:
                         st = os.lstat(fsname)
-                    except Exception:
-                        msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
+                    except (IOError, OSError) as e:
+                        msg += "Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e))
                         continue
 
                     r = {'path': fsname}
@@ -445,7 +463,7 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains']):
+                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -460,8 +478,10 @@ def main():
 
                 if not params['recurse']:
                     break
-        else:
-            msg += "%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
+        except Exception as e:
+            warn = "Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e))
+            module.warn(warn)
+            msg += warn
 
     matched = len(filelist)
     module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)

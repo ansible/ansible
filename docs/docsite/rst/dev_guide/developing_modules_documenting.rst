@@ -5,7 +5,7 @@
 Module format and documentation
 *******************************
 
-If you want to contribute your module to Ansible, you must write your module in Python and follow the standard format described below. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) In addition to following this format, you should review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python 2 and Python 3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request.
+If you want to contribute your module to most Ansible collections, you must write your module in Python and follow the standard format described below. (Unless you're writing a Windows module, in which case the :ref:`Windows guidelines <developing_modules_general_windows>` apply.) In addition to following this format, you should review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python 2 and Python 3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request.
 
 Every Ansible module written in Python must begin with seven standard sections in a particular order, followed by the code. The sections in order are:
 
@@ -19,22 +19,21 @@ Every Ansible module written in Python must begin with seven standard sections i
 
 .. warning:: **Copy old modules with care!**
 
-  Some older modules in Ansible Core have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``DOCUMENTATION`` fields in the wrong order. These are legacy files that need updating - do not copy them into new modules. Over time we're updating and correcting older modules. Please follow the guidelines on this page!
+  Some older Ansible modules have ``imports`` at the bottom of the file, ``Copyright`` notices with the full GPL prefix, and/or ``DOCUMENTATION`` fields in the wrong order. These are legacy files that need updating - do not copy them into new modules. Over time we are updating and correcting older modules. Please follow the guidelines on this page!
 
 .. _shebang:
 
 Python shebang & UTF-8 coding
 ===============================
 
-Every Ansible module must begin with ``#!/usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work.
-This is immediately followed by ``# -*- coding: utf-8 -*-`` to clarify that the file is UTF-8 encoded.
+Begin your Ansible module with ``#!/usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work. Follow the shebang immediately with ``# -*- coding: utf-8 -*-`` to clarify that the file is UTF-8 encoded.
 
 .. _copyright:
 
 Copyright and license
 =====================
 
-After the shebang and UTF-8 coding, there should be a `copyright line <https://www.gnu.org/licenses/gpl-howto.en.html>`_ with the original copyright holder and a license declaration. The license declaration should be ONLY one line, not the full GPL prefix.:
+After the shebang and UTF-8 coding, add a `copyright line <https://www.gnu.org/licenses/gpl-howto.en.html>`_ with the original copyright holder and a license declaration. The license declaration should be ONLY one line, not the full GPL prefix.:
 
 .. code-block:: python
 
@@ -44,7 +43,9 @@ After the shebang and UTF-8 coding, there should be a `copyright line <https://w
     # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Major additions to the module (for instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is not necessary. When adding a second copyright line for a significant feature or rewrite, add the newer line above the older one:
+Major additions to the module (for instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is not necessary.
+Please do not edit the existing copyright year. This simplifies project administration and is unlikely to cause any interesting legal issues.
+When adding a second copyright line for a significant feature or rewrite, add the newer line above the older one:
 
 .. code-block:: python
 
@@ -78,6 +79,8 @@ Module documentation should briefly and accurately define what each module and o
     * If an option is only sometimes required, describe the conditions. For example, "Required when I(state=present)."
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
+To create clear, concise, consistent, and useful documentation, follow the :ref:`style guide <style_guide>`.
+
 Each documentation field is described below. Before committing your module documentation, please test it at the command line and as HTML:
 
 * As long as your module file is :ref:`available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation at the command line. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command.
@@ -95,7 +98,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
 :short_description:
 
-  * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
+  * A short description which is displayed on the :ref:`list_of_collections` page and ``ansible-doc -l``.
   * The ``short_description`` is displayed by ``ansible-doc -l`` without any category grouping,
     so it needs enough detail to explain the module's purpose without the context of the directory structure in which it lives.
   * Unlike ``description:``, ``short_description`` should not have a trailing period/full stop.
@@ -103,7 +106,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :description:
 
   * A detailed description (generally two or more sentences).
-  * Must be written in full sentences, i.e. with capital letters and periods/full stops.
+  * Must be written in full sentences, in other words, with capital letters and periods/full stops.
   * Shouldn't mention the module name.
   * Make use of multiple entries rather than using one long paragraph.
   * Don't quote complete values unless it is required by YAML.
@@ -111,7 +114,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :version_added:
 
   * The version of Ansible when the module was added.
-  * This is a string, and not a float, i.e. ``version_added: '2.1'``
+  * This is a string, and not a float, for example, ``version_added: '2.1'``
 
 :author:
 
@@ -177,13 +180,13 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   :version_added:
 
-    * Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-    * This is a string, and not a float, i.e. ``version_added: '2.3'``.
+    * Only needed if this option was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
+    * This is a string, and not a float, for example, ``version_added: '2.3'``.
 
   :suboptions:
 
     * If this option takes a dict or list of dicts, you can define the structure here.
-    * See :ref:`azure_rm_securitygroup_module`, :ref:`azure_rm_azurefirewall_module` and :ref:`os_ironic_node_module` for examples.
+    * See :ref:`ansible_collections.azure.azcollection.azure_rm_securitygroup_module`, :ref:`ansible_collections.azure.azcollection.azure_rm_azurefirewall_module`, and :ref:`ansible_collections.openstack.cloud.baremetal_node_action_module` for examples.
 
 :requirements:
 
@@ -193,6 +196,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :seealso:
 
   * A list of references to other modules, documentation or Internet resources
+  * In Ansible 2.10 and later, references to modules must use  the FQCN or ``ansible.builtin`` for modules in ``ansible-base``.
   * A reference can be one of the following formats:
 
 
@@ -201,10 +205,10 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         seealso:
 
         # Reference by module name
-        - module: aci_tenant
+        - module: cisco.aci.aci_tenant
 
         # Reference by module name, including description
-        - module: aci_tenant
+        - module: cisco.aci.aci_tenant
           description: ACI module to create tenants on a Cisco ACI fabric.
 
         # Reference by rST documentation anchor
@@ -222,35 +226,47 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   * For example, whether ``check_mode`` is or is not supported.
 
 
-Linking within module documentation
------------------------------------
+Linking and other format macros within module documentation
+-----------------------------------------------------------
 
-You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet. The correct formats for these links are:
+You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet with the help of some pre-defined macros. The correct formats for these macros are:
 
 * ``L()`` for links with a heading. For example: ``See L(Ansible Tower,https://www.ansible.com/products/tower).`` As of Ansible 2.10, do not use ``L()`` for relative links between Ansible documentation and collection documentation.
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/tower) for an overview.``
 * ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
-* ``I()`` for option names. For example: ``Required if I(state=present).``
-* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
-* ``M()`` for module names. For example: ``See also M(win_copy) or M(win_template).``
+* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``.
+
+There are also some macros which do not create links but we use them to display certain types of
+content in a uniform way:
+
+* ``I()`` for option names. For example: ``Required if I(state=present).``  This is italicized in
+  the documentation.
+* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``  This displays with a mono-space font in the documentation.
+* ``B()`` currently has no standardized usage.  It is displayed in boldface in the documentation.
+* ``HORIZONTALLINE`` is used sparingly as a separator in long descriptions.  It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation.
 
 .. note::
 
-  For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
+  For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
 
+
+.. note::
+    - To refer to a group of modules in a collection, use ``R()``.  When a collection is not the right granularity, use ``C(..)``:
+
+        - ``Refer to the R(community.kubernetes collection, plugins_in_community.kubernetes) for information on managing kubernetes clusters.``
+        - ``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
 
 
 .. note::
 
-    - To refer a group of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
-    - Because it stands out better, using ``seealso`` is preferred for general references over the use of notes or adding links to the description.
+   Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description.
 
 .. _module_docs_fragments:
 
 Documentation fragments
 -----------------------
 
-If you're writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
+If you are writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_ or the equivalent directory in a collection. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module documentation. Use the fully qualified collection name for the FRAGMENT_NAME (for example, ``community.kubernetes.k8s_auth_options``).
 
 Modules should only use items from a doc fragment if the module will implement all of the interface documented there in a manner that behaves the same as the existing modules which import that fragment. The goal is that items imported from the doc fragment will behave identically when used in another module that imports the doc fragment.
 
@@ -316,12 +332,14 @@ Per playbook best practices, each example should include a ``name:`` line::
 
     EXAMPLES = r'''
     - name: Ensure foo is installed
-      modulename:
+      namespace.collection.modulename:
         name: foo
         state: present
     '''
 
 The ``name:`` line should be capitalized and not include a trailing dot.
+
+Use a fully qualified collection name (FQCN) as a part of the module's name like in the example above. For modules in ``ansible-base``, use the ``ansible.builtin.`` identifier, for example ``ansible.builtin.debug``.
 
 If your examples use boolean options, use yes/no values. Since the documentation generates boolean values as yes/no, having the examples use these values as well makes the module documentation more consistent.
 
@@ -351,8 +369,8 @@ Otherwise, for each value returned, provide the following fields. All fields are
   :sample:
     One or more examples.
   :version_added:
-    Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-    This is a string, and not a float, i.e. ``version_added: '2.3'``.
+    Only needed if this return was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
+    This is a string, and not a float, for example, ``version_added: '2.3'``.
   :contains:
     Optional. To describe nested return values, set ``type: complex``, ``type: dict``, or ``type: list``/``elements: dict`` and repeat the elements above for each sub-field.
 
@@ -378,12 +396,12 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
 
     RETURN = r'''
     packages:
-        description: Information about package requirements
+        description: Information about package requirements.
         returned: success
         type: complex
         contains:
             missing:
-                description: Packages that are missing from the system
+                description: Packages that are missing from the system.
                 returned: success
                 type: list
                 sample:

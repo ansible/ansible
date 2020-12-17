@@ -1,0 +1,72 @@
+# Set up a repo of unsigned rpms
+- block:
+    - name: Ensure our test package isn't already installed
+      dnf:
+        name:
+          - fpaste
+        state: absent
+
+    - name: Install rpm-sign
+      dnf:
+        name:
+          - rpm-sign
+        state: present
+
+    - name: Create directory to use as local repo
+      file:
+        path: "{{ remote_tmp_dir }}/unsigned"
+        state: directory
+
+    - name: Download an RPM
+      get_url:
+        url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/fpaste-0.3.9.1-1.fc27.noarch.rpm
+        dest: "{{ remote_tmp_dir }}/unsigned/fpaste-0.3.9.1-1.fc27.noarch.rpm"
+        mode: 0644
+
+    - name: Unsign the RPM
+      command: rpmsign --delsign "{{ remote_tmp_dir }}/unsigned/fpaste-0.3.9.1-1.fc27.noarch.rpm"
+
+    - name: createrepo
+      command: createrepo .
+      args:
+        chdir: "{{ remote_tmp_dir }}/unsigned"
+
+    - name: Add the repo
+      yum_repository:
+        name: unsigned
+        description: unsigned rpms
+        baseurl: "file://{{ remote_tmp_dir }}/unsigned/"
+        # we want to ensure that signing is verified
+        gpgcheck: true
+
+    - name: Install fpaste from above
+      dnf:
+        name:
+          - fpaste
+        disablerepo: '*'
+        enablerepo: unsigned
+      register: res
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - res is failed
+          - "'Failed to validate GPG signature' in res.msg"
+
+  always:
+    - name: Remove rpm-sign (and fpaste if it got installed)
+      dnf:
+        name:
+          - rpm-sign
+          - fpaste
+        state: absent
+
+    - name: Remove test repo
+      yum_repository:
+        name: unsigned
+        state: absent
+
+    - name: Remove repo dir
+      file:
+        path: "{{ remote_tmp_dir }}/unsigned"
+        state: absent

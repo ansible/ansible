@@ -36,6 +36,9 @@ from ..docker_util import (
     docker_pull,
     docker_network_inspect,
     get_docker_container_id,
+    get_docker_preferred_network_name,
+    get_docker_hostname,
+    is_docker_user_defined_network,
 )
 
 
@@ -88,7 +91,7 @@ class OpenShiftCloudProvider(CloudProvider):
         :rtype: list[str]
         """
         if self.managed:
-            return ['-R', '8443:localhost:8443']
+            return ['-R', '8443:%s:8443' % get_docker_hostname()]
 
         return []
 
@@ -96,7 +99,9 @@ class OpenShiftCloudProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
             return ['--link', self.DOCKER_CONTAINER_NAME]
 
         return []
@@ -141,11 +146,10 @@ class OpenShiftCloudProvider(CloudProvider):
         container_id = get_docker_container_id()
 
         if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
             host = self._get_container_address()
             display.info('Found OpenShift container address: %s' % host, verbosity=1)
         else:
-            host = 'localhost'
+            host = get_docker_hostname()
 
         port = 8443
         endpoint = 'https://%s:%s/' % (host, port)
@@ -157,6 +161,8 @@ class OpenShiftCloudProvider(CloudProvider):
         else:
             if self.args.docker:
                 host = self.DOCKER_CONTAINER_NAME
+            elif self.args.remote:
+                host = 'localhost'
 
             server = 'https://%s:%s' % (host, port)
             config = self._get_config(server)
@@ -164,11 +170,12 @@ class OpenShiftCloudProvider(CloudProvider):
         self._write_config(config)
 
     def _get_container_address(self):
-        networks = docker_network_inspect(self.args, 'bridge')
+        current_network = get_docker_preferred_network_name(self.args)
+        networks = docker_network_inspect(self.args, current_network)
 
         try:
-            bridge = [network for network in networks if network['Name'] == 'bridge'][0]
-            containers = bridge['Containers']
+            network = [network for network in networks if network['Name'] == current_network][0]
+            containers = network['Containers']
             container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_CONTAINER_NAME][0]
             return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
         except Exception:

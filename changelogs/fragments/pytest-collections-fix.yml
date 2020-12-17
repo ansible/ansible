@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test units - fixed collection location code to work under pytest >= 6.0.0

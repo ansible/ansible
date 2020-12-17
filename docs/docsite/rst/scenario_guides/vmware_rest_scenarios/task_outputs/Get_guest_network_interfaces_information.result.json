@@ -1,0 +1,23 @@
+{
+    "value": [
+        {
+            "mac_address": "00:50:56:b3:49:5c",
+            "ip": {
+                "ip_addresses": [
+                    {
+                        "ip_address": "192.168.122.242",
+                        "prefix_length": 24,
+                        "state": "PREFERRED"
+                    },
+                    {
+                        "ip_address": "fe80::b8d0:511b:897f:65a2",
+                        "prefix_length": 64,
+                        "state": "UNKNOWN"
+                    }
+                ]
+            },
+            "nic": "4000"
+        }
+    ],
+    "changed": false
+}

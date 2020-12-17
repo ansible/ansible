@@ -198,7 +198,7 @@ Here's another example, from the same template:
 This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for
 each monitoring hosts' default IPv4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
-You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you
+You can learn a lot more about Jinja2 and its capabilities `here <https://jinja.palletsprojects.com/>`_, and you
 can read more about Ansible variables in general in the :ref:`playbooks_variables` section.
 
 .. _lamp_rolling_upgrade:
@@ -219,7 +219,7 @@ Looking at the playbook, you can see it is made up of two plays. The first play 
    - hosts: monitoring
      tasks: []
 
-What's going on here, and why are there no tasks? You might know that Ansible gathers "facts" from the servers before operating upon them. These facts are useful for all sorts of things: networking information, OS/distribution versions, etc. In our case, we need to know something about all of the monitoring servers in our environment before we perform the update, so this simple play forces a fact-gathering step on our monitoring servers. You will see this pattern sometimes, and it's a useful trick to know.
+What's going on here, and why are there no tasks? You might know that Ansible gathers "facts" from the servers before operating upon them. These facts are useful for all sorts of things: networking information, OS/distribution versions, and so on. In our case, we need to know something about all of the monitoring servers in our environment before we perform the update, so this simple play forces a fact-gathering step on our monitoring servers. You will see this pattern sometimes, and it's a useful trick to know.
 
 The next part is the update play. The first part looks like this:
 

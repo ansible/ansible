@@ -1,5 +1,5 @@
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -9,8 +9,6 @@ import sys
 import warnings
 
 from collections import defaultdict
-from distutils.command.build_scripts import build_scripts as BuildScripts
-from distutils.command.sdist import sdist as SDist
 
 try:
     from setuptools import setup, find_packages
@@ -23,8 +21,103 @@ except ImportError:
           " install setuptools).", file=sys.stderr)
     sys.exit(1)
 
-sys.path.insert(0, os.path.abspath('lib'))
-from ansible.release import __version__, __author__
+# `distutils` must be imported after `setuptools` or it will cause explosions
+# with `setuptools >=48.0.0, <49.1`.
+# Refs:
+# * https://github.com/ansible/ansible/issues/70456
+# * https://github.com/pypa/setuptools/issues/2230
+# * https://github.com/pypa/setuptools/commit/bd110264
+from distutils.command.build_scripts import build_scripts as BuildScripts
+from distutils.command.sdist import sdist as SDist
+
+
+def find_package_info(*file_paths):
+    try:
+        with open(os.path.join(*file_paths), 'r') as f:
+            info_file = f.read()
+    except Exception:
+        raise RuntimeError("Unable to find package info.")
+
+    # The version line must have the form
+    # __version__ = 'ver'
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              info_file, re.M)
+    author_match = re.search(r"^__author__ = ['\"]([^'\"]*)['\"]",
+                             info_file, re.M)
+
+    if version_match and author_match:
+        return version_match.group(1), author_match.group(1)
+    raise RuntimeError("Unable to find package info.")
+
+
+def _validate_install_ansible_core():
+    """Validate that we can install ansible-core. This checks if
+    ansible<=2.9 or ansible-base>=2.10 are installed.
+    """
+    # Skip common commands we can ignore
+    # Do NOT add bdist_wheel here, we don't ship wheels
+    # and bdist_wheel is the only place we can prevent pip
+    # from installing, as pip creates a wheel, and installs the wheel
+    # and we have no influence over installation within a wheel
+    if set(('sdist', 'egg_info')).intersection(sys.argv):
+        return
+
+    if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', '0'):
+        return
+
+    # Save these for later restoring things to pre invocation
+    sys_modules = sys.modules.copy()
+    sys_modules_keys = set(sys_modules)
+
+    # Make sure `lib` isn't in `sys.path` that could confuse this
+    sys_path = sys.path[:]
+    abspath = os.path.abspath
+    sys.path[:] = [p for p in sys.path if abspath(p) != abspath('lib')]
+
+    try:
+        from ansible.release import __version__
+    except ImportError:
+        pass
+    else:
+        version_tuple = tuple(int(v) for v in __version__.split('.')[:2])
+        if version_tuple >= (2, 11):
+            return
+        elif version_tuple == (2, 10):
+            ansible_name = 'ansible-base'
+        else:
+            ansible_name = 'ansible'
+
+        stars = '*' * 76
+        raise RuntimeError(
+            '''
+
+    %s
+
+    Cannot install ansible-core with a pre-existing %s==%s
+    installation.
+
+    Installing ansible-core with ansible-2.9 or older, or ansible-base-2.10
+    currently installed with pip is known to cause problems. Please uninstall
+    %s and install the new version:
+
+        pip uninstall %s
+        pip install ansible-core
+
+    If you want to skip the conflict checks and manually resolve any issues
+    afterwards, set the ANSIBLE_SKIP_CONFLICT_CHECK environment variable:
+
+        ANSIBLE_SKIP_CONFLICT_CHECK=1 pip install ansible-core
+
+    %s
+            ''' % (stars, ansible_name, __version__, ansible_name, ansible_name, stars))
+    finally:
+        sys.path[:] = sys_path
+        for key in sys_modules_keys.symmetric_difference(sys.modules):
+            sys.modules.pop(key, None)
+        sys.modules.update(sys_modules)
+
+
+_validate_install_ansible_core()
 
 
 SYMLINK_CACHE = 'SYMLINK_CACHE.json'
@@ -247,6 +340,8 @@ def get_dynamic_setup_params():
     }
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+__version__, __author__ = find_package_info(here, 'lib', 'ansible', 'release.py')
 static_setup_params = dict(
     # Use the distutils SDist so that symlinks are not expanded
     # Use a custom Build for the same reason
@@ -257,7 +352,7 @@ static_setup_params = dict(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible-base',
+    name='ansible-core',
     version=__version__,
     description='Radically simple IT automation',
     author=__author__,

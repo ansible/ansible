@@ -1,7 +1,7 @@
 .. _network_advanced:
 
 **********************************
-Network Automation Advanced Topics
+Network Advanced Topics
 **********************************
 
 Once you have mastered the basics of network automation with Ansible, as presented in :ref:`network_getting_started`, use this guide understand platform-specific details, optimization, and troubleshooting tips for Ansible for network automation.
@@ -17,8 +17,9 @@ If you're new to Ansible, or new to using Ansible for network automation, start 
    :caption: Advanced Topics
 
    network_resource_modules
-   faq
    network_best_practices_2.5
+   cli_parsing
    network_debug_troubleshooting
    network_working_with_command_output
+   faq
    platform_index

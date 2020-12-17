@@ -16,7 +16,7 @@ short_description: Return service state information as fact data
 description:
      - Return service state information as fact data for various service management utilities
 version_added: "2.5"
-requirements: ["Any of the following supported init systems: systemd, sysv, upstart"]
+requirements: ["Any of the following supported init systems: systemd, sysv, upstart, AIX SRC"]
 
 notes:
   - When accessing the C(ansible_facts.services) facts collected by this module,
@@ -25,6 +25,7 @@ notes:
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
+  - AIX SRC was added in version 2.11.
 
 author:
   - Adam Miller (@maxamillion)
@@ -53,7 +54,7 @@ ansible_facts:
         source:
           description:
           - Init system of the service.
-          - One of C(systemd), C(sysv), C(upstart).
+          - One of C(systemd), C(sysv), C(upstart), C(src).
           returned: always
           type: str
           sample: sysv
@@ -79,6 +80,7 @@ ansible_facts:
 '''
 
 
+import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
 
@@ -230,10 +232,37 @@ class SystemctlScanService(BaseService):
         return services
 
 
+class AIXScanService(BaseService):
+
+    def gather_services(self):
+        services = {}
+        if platform.system() != 'AIX':
+            return None
+        lssrc_path = self.module.get_bin_path("lssrc")
+        if lssrc_path is None:
+            return None
+        rc, stdout, stderr = self.module.run_command("%s -a" % lssrc_path)
+        for line in stdout.split('\n'):
+            line_data = line.split()
+            if len(line_data) < 2:
+                continue  # Skipping because we expected more data
+            if line_data[0] == "Subsystem":
+                continue  # Skip header
+            service_name = line_data[0]
+            if line_data[-1] == "active":
+                service_state = "running"
+            elif line_data[-1] == "inoperative":
+                service_state = "stopped"
+            else:
+                service_state = "unknown"
+            services[service_name] = {"name": service_name, "state": service_state, "source": "src"}
+        return services
+
+
 def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
     module.run_command_environ_update = dict(LANG="C", LC_ALL="C")
-    service_modules = (ServiceScanService, SystemctlScanService)
+    service_modules = (ServiceScanService, SystemctlScanService, AIXScanService)
     all_services = {}
     incomplete_warning = False
     for svc_module in service_modules:

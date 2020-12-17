@@ -120,7 +120,7 @@ When you choose to use your username and password, your password is not sent to 
 It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
 destroyed.
 
-If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create.
+If you do not want to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create.
 
 
 Import a role
@@ -141,7 +141,7 @@ By default the command will wait for Galaxy to complete the import process, disp
       Successfully submitted import request 41
       Starting import 41: role_name=myrole repo=githubuser/ansible-role-repo ref=
       Retrieving GitHub repo githubuser/ansible-role-repo
-      Accessing branch: master
+      Accessing branch: devel
       Parsing and validating meta/main.yml
       Parsing galaxy_tags
       Parsing platforms

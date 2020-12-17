@@ -75,9 +75,9 @@ options:
     type: str
     version_added: '2.0'
 seealso:
-- module: copy
-- module: template
-- module: win_copy
+- module: ansible.builtin.copy
+- module: ansible.builtin.template
+- module: ansible.windows.win_copy
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
@@ -87,22 +87,24 @@ extends_documentation_fragment:
 
 EXAMPLES = r'''
 - name: Assemble from fragments from a directory
-  assemble:
+  ansible.builtin.assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
-- name: Inserted provided delimiter in between each fragment
-  assemble:
+- name: Insert the provided delimiter between fragments
+  ansible.builtin.assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
     delimiter: '### START FRAGMENT ###'
 
 - name: Assemble a new "sshd_config" file into place, after passing validation with sshd
-  assemble:
+  ansible.builtin.assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: /usr/sbin/sshd -t -f %s
 '''
+
+RETURN = r'''#'''
 
 import codecs
 import os

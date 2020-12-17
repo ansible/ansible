@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - include exception message from apt python library in error output

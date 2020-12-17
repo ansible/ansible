@@ -1,3 +1,7 @@
+- name: skip unsupported distros
+  meta: end_host
+  when: ansible_distribution in ['Alpine']
+
 - name: install the test daemon script
   copy:
     src: ansible_test_service.py

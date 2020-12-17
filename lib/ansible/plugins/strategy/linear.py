@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: linear
+    name: linear
     short_description: Executes tasks in a linear fashion
     description:
         - Task execution is in lockstep per host batch as defined by C(serial) (default all).
@@ -31,6 +31,7 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.module_utils.six import iteritems
@@ -74,6 +75,7 @@ class StrategyModule(StrategyBase):
         self.noop_task = Task()
         self.noop_task.action = 'meta'
         self.noop_task.args['_raw_params'] = 'noop'
+        self.noop_task.implicit = True
         self.noop_task.set_loader(iterator._play._loader)
 
         return self._create_noop_block_from(original_block, parent)
@@ -88,6 +90,7 @@ class StrategyModule(StrategyBase):
         noop_task = Task()
         noop_task.action = 'meta'
         noop_task.args['_raw_params'] = 'noop'
+        noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 
         host_tasks = {}
@@ -263,17 +266,17 @@ class StrategyModule(StrategyBase):
                     task.action = templar.template(task.action)
 
                     try:
-                        action = action_loader.get(task.action, class_only=True)
+                        action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
                         action = None
 
-                    if task.action == 'meta':
+                    if task.action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host'):
+                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete'):
                             run_once = True
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
@@ -364,7 +367,7 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=new_block._parent,
+                                    task=new_block.get_first_parent_include(),
                                     _hosts=self._hosts_cache,
                                     _hosts_all=self._hosts_cache_all,
                                 )
@@ -407,7 +410,7 @@ class StrategyModule(StrategyBase):
                 for res in results:
                     # execute_meta() does not set 'failed' in the TaskResult
                     # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
+                    if (res.is_failed() or res._task.action in C._ACTION_META) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)

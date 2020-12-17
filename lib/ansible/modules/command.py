@@ -20,12 +20,12 @@ description:
      - The command(s) will not be
        processed through the shell, so variables like C($HOSTNAME) and operations
        like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
-       Use the M(shell) module if you need these features.
+       Use the M(ansible.builtin.shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
        arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
        or use C(cmd) parameter.
      - Either a free form command or C(cmd) parameter is required, see the examples.
-     - For Windows targets, use the M(win_command) module instead.
+     - For Windows targets, use the M(ansible.windows.win_command) module instead.
 options:
   free_form:
     description:
@@ -37,6 +37,7 @@ options:
       - The command to run.
   argv:
     type: list
+    elements: str
     description:
       - Passes the command as a list rather than a string.
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
@@ -58,13 +59,16 @@ options:
     version_added: "0.6"
   warn:
     description:
-      - Enable or disable task warnings.
+      - (deprecated) Enable or disable task warnings.
+      - This feature is deprecated and will be removed in 2.14.
+      - As of version 2.11, this option is now disabled by default.
     type: bool
-    default: yes
+    default: no
     version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
+    type: str
     version_added: "2.4"
   stdin_add_newline:
     type: bool
@@ -79,21 +83,21 @@ options:
     type: bool
     default: yes
 notes:
-    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
+    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
        use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
     -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
-    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
-    -  For Windows targets, use the M(win_command) module instead.
-    -  For rebooting systems, use the M(reboot) or M(win_reboot) module.
+    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
+    -  For Windows targets, use the M(ansible.windows.win_command) module instead.
+    -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
 seealso:
-- module: raw
-- module: script
-- module: shell
-- module: win_command
+- module: ansible.builtin.raw
+- module: ansible.builtin.script
+- module: ansible.builtin.shell
+- module: ansible.windows.win_command
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -253,13 +257,13 @@ def main():
         argument_spec=dict(
             _raw_params=dict(),
             _uses_shell=dict(type='bool', default=False),
-            argv=dict(type='list'),
+            argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=True),
+            warn=dict(type='bool', default=False, removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),

@@ -209,6 +209,8 @@ class ActionModule(ActionBase):
         # NOTE: adding invocation arguments here needs to be kept in sync with
         # any no_log specified in the argument_spec in the module.
         # This is not automatic.
+        # NOTE: do not add to this. This should be made a generic function for action plugins.
+        # This should also use the same argspec as the module instead of keeping it in sync.
         if 'invocation' not in result:
             if self._play_context.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
@@ -218,8 +220,11 @@ class ActionModule(ActionBase):
                 result['invocation'] = self._task.args.copy()
                 result['invocation']['module_args'] = self._task.args.copy()
 
-        if isinstance(result['invocation'], dict) and 'content' in result['invocation']:
-            result['invocation']['content'] = 'CENSORED: content is a no_log parameter'
+        if isinstance(result['invocation'], dict):
+            if 'content' in result['invocation']:
+                result['invocation']['content'] = 'CENSORED: content is a no_log parameter'
+            if result['invocation'].get('module_args', {}).get('content') is not None:
+                result['invocation']['module_args']['content'] = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
         return result
 
@@ -333,7 +338,7 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
-            module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
 
         else:
             # no need to transfer the file, already correct hash, but still need to call
@@ -372,7 +377,7 @@ class ActionModule(ActionBase):
                 new_module_args['mode'] = lmode
 
             # Execute the file module.
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
 
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
@@ -448,7 +453,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(module_name='copy', task_vars=task_vars))
+            result.update(self._execute_module(module_name='ansible.legacy.copy', task_vars=task_vars))
             return self._ensure_invocation(result)
         else:
             # find_needle returns a path that may not have a trailing slash on
@@ -543,7 +548,7 @@ class ActionModule(ActionBase):
             new_module_args['recurse'] = False
             del new_module_args['src']
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
 
             if module_return.get('failed'):
                 result.update(module_return)
@@ -569,7 +574,7 @@ class ActionModule(ActionBase):
             if new_module_args.get('mode', None) == 'preserve':
                 new_module_args.pop('mode')
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
 
             if module_return.get('failed'):

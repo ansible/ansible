@@ -14,7 +14,7 @@ module: slurp
 version_added: historical
 short_description: Slurps a file from remote nodes
 description:
-     - This module works like M(fetch). It is used for fetching a base64-
+     - This module works like M(ansible.builtin.fetch). It is used for fetching a base64-
        encoded blob containing the data in a remote file.
      - This module is also supported for Windows targets.
 options:
@@ -25,11 +25,12 @@ options:
     required: true
     aliases: [ path ]
 notes:
-   - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
-     original file size.
+   - This module returns an 'in memory' base64 encoded version of the file, take
+     into account that this will require at least twice the RAM as the original file size.
    - This module is also supported for Windows targets.
+   - Supports C(check_mode).
 seealso:
-- module: fetch
+- module: ansible.builtin.fetch
 author:
     - Ansible Core Team
     - Michael DeHaan (@mpdehaan)
@@ -37,11 +38,12 @@ author:
 
 EXAMPLES = r'''
 - name: Find out what the remote machine's mounts are
-  slurp:
+  ansible.builtin.slurp:
     src: /proc/mounts
   register: mounts
 
-- debug:
+- name: Print returned information
+  ansible.builtin.debug:
     msg: "{{ mounts['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd
@@ -55,6 +57,8 @@ EXAMPLES = r'''
 # $ echo MjE3OQo= | base64 -d
 # 2179
 '''
+
+RETURN = r'''#'''
 
 import base64
 import os

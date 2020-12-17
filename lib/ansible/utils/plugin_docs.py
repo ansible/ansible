@@ -18,7 +18,7 @@ display = Display()
 
 
 # modules that are ok that they do not have documentation strings
-BLACKLIST = {
+REJECTLIST = {
     'MODULE': frozenset(('async_wrapper',)),
     'CACHE': frozenset(('base',)),
 }
@@ -41,15 +41,16 @@ def merge_fragment(target, source):
 
 
 def _process_versions_and_dates(fragment, is_module, return_docs, callback):
-    def process_deprecation(deprecation):
+    def process_deprecation(deprecation, top_level=False):
+        collection_name = 'removed_from_collection' if top_level else 'collection_name'
         if not isinstance(deprecation, MutableMapping):
             return
-        if is_module and 'removed_in' in deprecation:  # used in module deprecations
-            callback(deprecation, 'removed_in', 'removed_from_collection')
+        if (is_module or top_level) and 'removed_in' in deprecation:  # used in module deprecations
+            callback(deprecation, 'removed_in', collection_name)
         if 'removed_at_date' in deprecation:
-            callback(deprecation, 'removed_at_date', 'removed_from_collection')
-        if not is_module and 'version' in deprecation:  # used in plugin option deprecations
-            callback(deprecation, 'version', 'removed_from_collection')
+            callback(deprecation, 'removed_at_date', collection_name)
+        if not (is_module or top_level) and 'version' in deprecation:  # used in plugin option deprecations
+            callback(deprecation, 'version', collection_name)
 
     def process_option_specifiers(specifiers):
         for specifier in specifiers:
@@ -73,6 +74,8 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
                     process_option_specifiers(option['ini'])
                 if isinstance(option.get('vars'), list):
                     process_option_specifiers(option['vars'])
+                if isinstance(option.get('deprecated'), MutableMapping):
+                    process_deprecation(option['deprecated'])
             if isinstance(option.get('suboptions'), MutableMapping):
                 process_options(option['suboptions'])
 
@@ -95,7 +98,7 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
     if 'version_added' in fragment:
         callback(fragment, 'version_added', 'version_added_collection')
     if isinstance(fragment.get('deprecated'), MutableMapping):
-        process_deprecation(fragment['deprecated'])
+        process_deprecation(fragment['deprecated'], top_level=True)
     if isinstance(fragment.get('options'), MutableMapping):
         process_options(fragment['options'])
 

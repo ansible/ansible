@@ -25,7 +25,7 @@ import os
 from units.compat import unittest
 from units.compat.builtins import BUILTINS
 from units.compat.mock import patch, MagicMock
-from ansible.plugins.loader import PluginLoader
+from ansible.plugins.loader import PluginLoader, PluginPathContext
 
 
 class TestErrors(unittest.TestCase):
@@ -59,7 +59,8 @@ class TestErrors(unittest.TestCase):
 
     def test_plugins__get_paths(self):
         pl = PluginLoader('test', '', 'test', 'test_plugin')
-        pl._paths = ['/path/one', '/path/two']
+        pl._paths = [PluginPathContext('/path/one', False),
+                     PluginPathContext('/path/two', True)]
         self.assertEqual(pl._get_paths(), ['/path/one', '/path/two'])
 
         # NOT YET WORKING

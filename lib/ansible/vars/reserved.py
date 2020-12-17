@@ -65,12 +65,17 @@ def get_reserved_names(include_private=True):
     return result
 
 
-def warn_if_reserved(myvars):
+def warn_if_reserved(myvars, additional=None):
     ''' this function warns if any variable passed conflicts with internally reserved names '''
+
+    if additional is None:
+        reserved = _RESERVED_NAMES
+    else:
+        reserved = _RESERVED_NAMES.union(additional)
 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
-    for varname in varnames.intersection(_RESERVED_NAMES):
+    for varname in varnames.intersection(reserved):
         display.warning('Found variable using reserved name: %s' % varname)
 
 

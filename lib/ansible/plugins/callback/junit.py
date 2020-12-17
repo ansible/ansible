@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: junit
+    name: junit
     type: aggregate
     short_description: write playbook output to a JUnit file.
     version_added: historical
@@ -81,6 +81,7 @@ import os
 import time
 import re
 
+from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 
@@ -150,7 +151,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'junit'
-    CALLBACK_NEEDS_WHITELIST = True
+    CALLBACK_NEEDS_ENABLED = True
 
     def __init__(self):
         super(CallbackModule, self).__init__()
@@ -290,7 +291,7 @@ class CallbackModule(CallbackBase):
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
-            if task_data.action == 'setup' and self._include_setup_tasks_in_report == 'false':
+            if task_data.action in C._ACTION_SETUP and self._include_setup_tasks_in_report == 'false':
                 continue
 
             for host_uuid, host_data in task_data.host_data.items():

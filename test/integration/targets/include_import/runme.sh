@@ -5,7 +5,7 @@ set -eux
 export ANSIBLE_ROLES_PATH=./roles
 
 function gen_task_files() {
-    for i in $(seq -f '%03g' 1 39); do
+    for i in $(printf "%03d " {1..39}); do
         echo -e "- name: Hello Message\n  debug:\n    msg: Task file ${i}" > "tasks/hello/tasks-file-${i}.yml"
     done
 }
@@ -49,23 +49,29 @@ test "$(grep -E -c 'Expected a string for vars_from but got' test_include_role_v
 ## Max Recursion Depth
 # https://github.com/ansible/ansible/issues/23609
 ANSIBLE_STRATEGY='linear' ansible-playbook test_role_recursion.yml -i inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook test_role_recursion_fqcn.yml -i inventory "$@"
 
 ## Nested tasks
 # https://github.com/ansible/ansible/issues/34782
 ANSIBLE_STRATEGY='linear' ansible-playbook test_nested_tasks.yml  -i inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook test_nested_tasks_fqcn.yml  -i inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook test_nested_tasks.yml  -i inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook test_nested_tasks_fqcn.yml  -i inventory "$@"
 
 ## Tons of top level include_tasks
 # https://github.com/ansible/ansible/issues/36053
 # Fixed by https://github.com/ansible/ansible/pull/36075
 gen_task_files
 ANSIBLE_STRATEGY='linear' ansible-playbook test_copious_include_tasks.yml  -i inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook test_copious_include_tasks_fqcn.yml  -i inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks.yml  -i inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks_fqcn.yml  -i inventory "$@"
 rm -f tasks/hello/*.yml
 
 # Inlcuded tasks should inherit attrs from non-dynamic blocks in parent chain
 # https://github.com/ansible/ansible/pull/38827
 ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance_fqcn.yml -i inventory "$@"
 
 # undefined_var
 ANSIBLE_STRATEGY='linear' ansible-playbook undefined_var/playbook.yml  -i inventory "$@"
@@ -80,6 +86,9 @@ if [[ -z "$OUT" ]]; then
     echo "apply on import_tasks did not cause error"
     exit 1
 fi
+
+ANSIBLE_STRATEGY='linear' ANSIBLE_PLAYBOOK_VARS_ROOT=all ansible-playbook apply/include_apply_65710.yml -i inventory "$@"
+ANSIBLE_STRATEGY='free' ANSIBLE_PLAYBOOK_VARS_ROOT=all ansible-playbook apply/include_apply_65710.yml -i inventory "$@"
 
 # Test that duplicate items in loop are not deduped
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_include_dupe_loop.yml -i inventory "$@" | tee test_include_dupe_loop.out
@@ -114,3 +123,6 @@ test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
 
 # https://github.com/ansible/ansible/issues/66764
 ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml
+
+ansible-playbook test_include_loop.yml "$@"
+ansible-playbook test_include_loop_fqcn.yml "$@"

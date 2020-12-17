@@ -6,6 +6,7 @@ changes_file: changelog.yaml
 changes_format: combined
 keep_fragments: true
 always_refresh: true
+ignore_other_fragment_extensions: true
 mention_ancestor: false
 notesdir: fragments
 prelude_section_name: release_summary

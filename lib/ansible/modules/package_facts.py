@@ -19,10 +19,12 @@ options:
       - The package manager used by the system so we can query the package information.
       - Since 2.8 this is a list and can support multiple package managers per system.
       - The 'portage' and 'pkg' options were added in version 2.8.
+      - The 'apk' option was added in version 2.11.
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
     required: False
     type: list
+    elements: str
   strategy:
     description:
       - This option controls how the module queries the package managers on the system.
@@ -30,6 +32,7 @@ options:
         C(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
+    type: str
     version_added: "2.8"
 version_added: "2.5"
 requirements:
@@ -42,11 +45,11 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Gather the rpm package facts
+- name: Gather the package facts
   package_facts:
     manager: auto
 
-- name: Print the rpm package facts
+- name: Print the package facts
   debug:
     var: ansible_facts.packages
 
@@ -376,6 +379,29 @@ class PORTAGE(CLIMgr):
         return dict(zip(self.atoms, package.split()))
 
 
+class APK(CLIMgr):
+
+    CLI = 'apk'
+
+    def list_installed(self):
+        rc, out, err = module.run_command([self._cli, 'info', '-v'])
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+        raw_pkg_details = {'name': package, 'version': '', 'release': ''}
+        nvr = package.rsplit('-', 2)
+        try:
+            return {
+                'name': nvr[0],
+                'version': nvr[1],
+                'release': nvr[2],
+            }
+        except IndexError:
+            return raw_pkg_details
+
+
 def main():
 
     # get supported pkg managers
@@ -384,7 +410,7 @@ def main():
 
     # start work
     global module
-    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'default': ['auto']},
+    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto']},
                                               strategy={'choices': ['first', 'all'], 'default': 'first'}),
                            supports_check_mode=True)
     packages = {}

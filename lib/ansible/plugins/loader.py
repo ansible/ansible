@@ -39,12 +39,6 @@ except ImportError:
     Version = None
 
 try:
-    # use C version if possible for speedup
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
-
-try:
     import importlib.util
     imp = None
 except ImportError:
@@ -61,7 +55,7 @@ def get_all_plugin_loaders():
 
 def add_all_plugin_dirs(path):
     ''' add any existing plugin dirs in the path provided '''
-    b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_path = os.path.expanduser(to_bytes(path, errors='surrogate_or_strict'))
     if os.path.isdir(b_path):
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
@@ -112,6 +106,12 @@ def add_dirs_to_loader(which_loader, paths):
         loader.add_directory(path, with_subdir=True)
 
 
+class PluginPathContext(object):
+    def __init__(self, path, internal):
+        self.path = path
+        self.internal = internal
+
+
 class PluginLoadContext(object):
     def __init__(self):
         self.original_name = None
@@ -123,6 +123,7 @@ class PluginLoadContext(object):
         self.exit_reason = None
         self.plugin_resolved_path = None
         self.plugin_resolved_name = None
+        self.plugin_resolved_collection = None  # empty string for resolved plugins from user-supplied paths
         self.deprecated = False
         self.removal_date = None
         self.removal_version = None
@@ -152,10 +153,11 @@ class PluginLoadContext(object):
         self.deprecation_warnings.append(warning_text)
         return self
 
-    def resolve(self, resolved_name, resolved_path, exit_reason):
+    def resolve(self, resolved_name, resolved_path, resolved_collection, exit_reason):
         self.pending_redirect = None
         self.plugin_resolved_name = resolved_name
         self.plugin_resolved_path = resolved_path
+        self.plugin_resolved_collection = resolved_collection
         self.exit_reason = exit_reason
         self.resolved = True
         return self
@@ -304,13 +306,13 @@ class PluginLoader:
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
-            self.package_path = os.path.dirname(m.__file__)
+            self.package_path = to_text(os.path.dirname(m.__file__), errors='surrogate_or_strict')
         if subdirs:
             return self._all_directories(self.package_path)
         return [self.package_path]
 
-    def _get_paths(self, subdirs=True):
-        ''' Return a list of paths to search for plugins in '''
+    def _get_paths_with_context(self, subdirs=True):
+        ''' Return a list of PluginPathContext objects to search for plugins in '''
 
         # FIXME: This is potentially buggy if subdirs is sometimes True and sometimes False.
         # In current usage, everything calls this with subdirs=True except for module_utils_loader and ansible-doc
@@ -318,24 +320,27 @@ class PluginLoader:
         if self._paths is not None:
             return self._paths
 
-        ret = self._extra_dirs[:]
+        ret = [PluginPathContext(p, False) for p in self._extra_dirs]
 
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
             for path in self.config:
-                path = os.path.realpath(os.path.expanduser(path))
+                path = os.path.abspath(os.path.expanduser(path))
                 if subdirs:
                     contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                     for c in contents:
+                        c = to_text(c, errors='surrogate_or_strict')
                         if os.path.isdir(c) and c not in ret:
-                            ret.append(c)
+                            ret.append(PluginPathContext(c, False))
+
+                path = to_text(path, errors='surrogate_or_strict')
                 if path not in ret:
-                    ret.append(path)
+                    ret.append(PluginPathContext(path, False))
 
         # look for any plugins installed in the package subtree
         # Note package path always gets added last so that every other type of
         # path is searched before it.
-        ret.extend(self._get_package_paths(subdirs=subdirs))
+        ret.extend([PluginPathContext(p, True) for p in self._get_package_paths(subdirs=subdirs)])
 
         # HACK: because powershell modules are in the same directory
         # hierarchy as other modules we have to process them last.  This is
@@ -353,11 +358,17 @@ class PluginLoader:
         # The expected sort order is paths in the order in 'ret' with paths ending in '/windows' at the end,
         # also in the original order they were found in 'ret'.
         # The .sort() method is guaranteed to be stable, so original order is preserved.
-        ret.sort(key=lambda p: p.endswith('/windows'))
+        ret.sort(key=lambda p: p.path.endswith('/windows'))
 
         # cache and return the result
         self._paths = ret
         return ret
+
+    def _get_paths(self, subdirs=True):
+        ''' Return a list of paths to search for plugins in '''
+
+        paths_with_context = self._get_paths_with_context(subdirs=subdirs)
+        return [path_with_context.path for path_with_context in paths_with_context]
 
     def _load_config_defs(self, name, module, path):
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
@@ -487,7 +498,8 @@ class PluginLoader:
 
         # FIXME: and is file or file link or ...
         if os.path.exists(n_resource_path):
-            return plugin_load_context.resolve(full_name, to_text(n_resource_path), 'found exact match for {0} in {1}'.format(full_name, acr.collection))
+            return plugin_load_context.resolve(
+                full_name, to_text(n_resource_path), acr.collection, 'found exact match for {0} in {1}'.format(full_name, acr.collection))
 
         if extension:
             # the request was extension-specific, don't try for an extensionless match
@@ -505,7 +517,8 @@ class PluginLoader:
             # TODO: warn?
             pass
 
-        return plugin_load_context.resolve(full_name, to_text(found_files[0]), 'found fuzzy extension match for {0} in {1}'.format(full_name, acr.collection))
+        return plugin_load_context.resolve(
+            full_name, to_text(found_files[0]), acr.collection, 'found fuzzy extension match for {0} in {1}'.format(full_name, acr.collection))
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
         ''' Find a plugin named name '''
@@ -626,8 +639,10 @@ class PluginLoader:
         # requested mod_type
         pull_cache = self._plugin_path_cache[suffix]
         try:
-            plugin_load_context.plugin_resolved_path = pull_cache[name]
+            path_with_context = pull_cache[name]
+            plugin_load_context.plugin_resolved_path = path_with_context.path
             plugin_load_context.plugin_resolved_name = name
+            plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
             plugin_load_context.resolved = True
             return plugin_load_context
         except KeyError:
@@ -638,16 +653,19 @@ class PluginLoader:
         #       self._searched_paths we could use an iterator.  Before enabling that
         #       we need to make sure we don't want to add additional directories
         #       (add_directory()) once we start using the iterator.
-        #       We can use _get_paths() since add_directory() forces a cache refresh.
-        for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+        #       We can use _get_paths_with_context() since add_directory() forces a cache refresh.
+        for path_with_context in (p for p in self._get_paths_with_context() if p.path not in self._searched_paths and os.path.isdir(to_bytes(p.path))):
+            path = path_with_context.path
+            b_path = to_bytes(path)
             display.debug('trying %s' % path)
             plugin_load_context.load_attempts.append(path)
+            internal = path_with_context.internal
             try:
-                full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                full_paths = (os.path.join(b_path, f) for f in os.listdir(b_path))
             except OSError as e:
                 display.warning("Error accessing plugin paths: %s" % to_text(e))
 
-            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
+            for full_path in (to_native(f) for f in full_paths if os.path.isfile(f) and not f.endswith(b'__init__.py')):
                 full_name = os.path.basename(full_path)
 
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
@@ -655,7 +673,6 @@ class PluginLoader:
                 # For all other plugins we want .pyc and .pyo should be valid
                 if any(full_path.endswith(x) for x in C.MODULE_IGNORE_EXTS):
                     continue
-
                 splitname = os.path.splitext(full_name)
                 base_name = splitname[0]
                 try:
@@ -663,23 +680,27 @@ class PluginLoader:
                 except IndexError:
                     extension = ''
 
+                # everything downstream expects unicode
+                full_path = to_text(full_path, errors='surrogate_or_strict')
                 # Module found, now enter it into the caches that match this file
                 if base_name not in self._plugin_path_cache['']:
-                    self._plugin_path_cache[''][base_name] = full_path
+                    self._plugin_path_cache[''][base_name] = PluginPathContext(full_path, internal)
 
                 if full_name not in self._plugin_path_cache['']:
-                    self._plugin_path_cache[''][full_name] = full_path
+                    self._plugin_path_cache[''][full_name] = PluginPathContext(full_path, internal)
 
                 if base_name not in self._plugin_path_cache[extension]:
-                    self._plugin_path_cache[extension][base_name] = full_path
+                    self._plugin_path_cache[extension][base_name] = PluginPathContext(full_path, internal)
 
                 if full_name not in self._plugin_path_cache[extension]:
-                    self._plugin_path_cache[extension][full_name] = full_path
+                    self._plugin_path_cache[extension][full_name] = PluginPathContext(full_path, internal)
 
             self._searched_paths.add(path)
             try:
-                plugin_load_context.plugin_resolved_path = pull_cache[name]
+                path_with_context = pull_cache[name]
+                plugin_load_context.plugin_resolved_path = path_with_context.path
                 plugin_load_context.plugin_resolved_name = name
+                plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
                 plugin_load_context.resolved = True
                 return plugin_load_context
             except KeyError:
@@ -691,12 +712,14 @@ class PluginLoader:
             alias_name = '_' + name
             # We've already cached all the paths at this point
             if alias_name in pull_cache:
-                if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
+                path_with_context = pull_cache[alias_name]
+                if not ignore_deprecated and not os.path.islink(path_with_context.path):
                     # FIXME: this is not always the case, some are just aliases
                     display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
                                        'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))
-                plugin_load_context.plugin_resolved_path = pull_cache[alias_name]
+                plugin_load_context.plugin_resolved_path = path_with_context.path
                 plugin_load_context.plugin_resolved_name = alias_name
+                plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
                 plugin_load_context.resolved = True
                 return plugin_load_context
 
@@ -871,7 +894,7 @@ class PluginLoader:
         found_in_cache = True
 
         for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+            all_matches.extend(glob.glob(to_native(os.path.join(i, "*.py"))))
 
         loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):

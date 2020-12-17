@@ -1,0 +1,4 @@
+- name: List the SCSI adapter of a given VM
+  vmware.vmware_rest.vcenter_vm_hardware_adapter_scsi_info:
+    vm: '{{ test_vm1_info.id }}'
+  register: _result

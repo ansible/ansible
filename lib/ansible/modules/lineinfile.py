@@ -18,9 +18,9 @@ description:
   - This module ensures a particular line is in a file, or replace an
     existing line using a back-referenced regular expression.
   - This is primarily useful when you want to change a single line in a file only.
-  - See the M(replace) module if you want to change multiple, similar lines
-    or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
-    For other cases, see the M(copy) or M(template) modules.
+  - See the M(ansible.builtin.replace) module if you want to change multiple, similar lines
+    or check M(ansible.builtin.blockinfile) if you want to insert/update/remove a block of lines in a file.
+    For other cases, see the M(ansible.builtin.copy) or M(ansible.builtin.template) modules.
 version_added: "0.7"
 options:
   path:
@@ -40,7 +40,7 @@ options:
         settings.
       - When modifying a line the regexp should typically match both the initial state of
         the line as well as its state after replacement by C(line) to ensure idempotence.
-      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
+      - Uses Python regular expressions. See U(https://docs.python.org/3/library/re.html).
     type: str
     aliases: [ regex ]
     version_added: '1.7'
@@ -118,20 +118,21 @@ options:
     version_added: "2.5"
   others:
     description:
-      - All arguments accepted by the M(file) module also work here.
+      - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
 extends_documentation_fragment:
     - files
     - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Supports C(check_mode).
 seealso:
-- module: blockinfile
-- module: copy
-- module: file
-- module: replace
-- module: template
-- module: win_lineinfile
+- module: ansible.builtin.blockinfile
+- module: ansible.builtin.copy
+- module: ansible.builtin.file
+- module: ansible.builtin.replace
+- module: ansible.builtin.template
+- module: community.windows.win_lineinfile
 author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)
@@ -140,19 +141,19 @@ author:
 EXAMPLES = r'''
 # NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - name: Ensure SELinux is set to enforcing mode
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
     line: SELINUX=enforcing
 
 - name: Make sure group wheel is not in the sudoers configuration
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
 
 - name: Replace a localhost entry with our own
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
     line: 127.0.0.1 localhost
@@ -161,28 +162,28 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Ensure the default Apache port is 8080
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
     line: Listen 8080
 
 - name: Ensure we have our own comment added to /etc/services
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
 - name: Add a line to a file if the file does not exist, without passing regexp
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /tmp/testfile
     line: 192.168.1.99 foo.lab.net foo
     create: yes
 
 # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
 - name: Ensure the JBoss memory settings are exactly as needed
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
@@ -190,7 +191,7 @@ EXAMPLES = r'''
 
 # NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - name: Validate the sudoers file before saving
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
@@ -199,12 +200,14 @@ EXAMPLES = r'''
 
 # See https://docs.python.org/3/library/re.html for further details on syntax
 - name: Use backrefs with alternative group syntax to avoid conflicts with variable values
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /tmp/config
     regexp: ^(host=).*
     line: \g<1>{{ hostname }}
     backrefs: yes
 '''
+
+RETURN = r'''#'''
 
 import os
 import re
@@ -212,7 +215,7 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def write_changes(module, b_lines, dest):
@@ -267,7 +270,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s (%s)' % (to_text(b_destpath), to_text(e)))
 
         b_lines = []
     else:

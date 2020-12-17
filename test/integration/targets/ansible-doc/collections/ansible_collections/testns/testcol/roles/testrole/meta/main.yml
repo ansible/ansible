@@ -1,0 +1,26 @@
+---
+dependencies:
+galaxy_info:
+
+argument_specs:
+    main:
+        short_description: testns.testcol.testrole short description for main entry point
+        description:
+            - Longer description for testns.testcol.testrole main entry point.
+        author: Ansible Core (@ansible)
+        options:
+            opt1:
+                description: opt1 description
+                type: "str"
+                required: true
+
+    alternate:
+        short_description: testns.testcol.testrole short description for alternate entry point
+        description:
+            - Longer description for testns.testcol.testrole alternate entry point.
+        author: Ansible Core (@ansible)
+        options:
+            altopt1:
+                description: altopt1 description
+                type: "int"
+                required: true

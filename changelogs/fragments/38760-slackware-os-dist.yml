@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - account for Slackware OS with ``+`` in the name (https://github.com/ansible/ansible/issues/38760)

@@ -229,6 +229,10 @@ class TestWinRMKerbAuth(object):
          (["kinit2", "user@domain"],)],
         [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
          (["kinit", "-f", "user@domain"],)],
+        [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
+         (["kinit", "-f", "-p", "user@domain"],)],
+        [{"_extras": {}, 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
+         (["kinit", "-p", "user@domain"],)]
     ])
     def test_kinit_success_subprocess(self, monkeypatch, options, expected):
         def mock_communicate(input=None, timeout=None):
@@ -261,6 +265,10 @@ class TestWinRMKerbAuth(object):
          ("kinit2", ["user@domain"],)],
         [{"_extras": {'ansible_winrm_kerberos_delegation': True}},
          ("kinit", ["-f", "user@domain"],)],
+        [{"_extras": {}, 'ansible_winrm_kinit_args': '-f -p'},
+         ("kinit", ["-f", "-p", "user@domain"],)],
+        [{"_extras": {}, 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
+         ("kinit", ["-p", "user@domain"],)]
     ])
     def test_kinit_success_pexpect(self, monkeypatch, options, expected):
         pytest.importorskip("pexpect")

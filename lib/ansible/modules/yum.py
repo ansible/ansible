@@ -18,7 +18,7 @@ version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
-     - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
+     - This module only works on Python 2. If you require Python 3 support see the M(ansible.builtin.dnf) module.
 options:
   use_backend:
     description:
@@ -28,10 +28,12 @@ options:
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
     choices: [ auto, yum, yum4, dnf ]
+    type: str
     version_added: "2.7"
   name:
     description:
       - A package name or package specifier with version, like C(name-1.0).
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
       - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be C('*') which means run C(yum -y update).
@@ -43,12 +45,15 @@ options:
   exclude:
     description:
       - Package name(s) to exclude when state=present, or latest
+    type: list
+    elements: str
     version_added: "2.0"
   list:
     description:
       - "Package name to run the equivalent of yum list --show-duplicates <package> against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
       - This parameter is mutually exclusive with C(name).
+    type: str
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
@@ -57,6 +62,7 @@ options:
       - C(absent) and C(removed) will remove the specified package.
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
+    type: str
     choices: [ absent, installed, latest, present, removed ]
   enablerepo:
     description:
@@ -65,6 +71,8 @@ options:
         When specifying multiple repos, separate them with a C(",").
       - As of Ansible 2.7, this can alternatively be a list instead of C(",")
         separated string
+    type: list
+    elements: str
     version_added: "0.9"
   disablerepo:
     description:
@@ -73,10 +81,13 @@ options:
         When specifying multiple repos, separate them with a C(",").
       - As of Ansible 2.7, this can alternatively be a list instead of C(",")
         separated string
+    type: list
+    elements: str
     version_added: "0.9"
   conf_file:
     description:
       - The remote yum configuration file to use for the transaction.
+    type: str
     version_added: "0.6"
   disable_gpg_check:
     description:
@@ -121,6 +132,7 @@ options:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
     default: "/"
+    type: str
     version_added: "2.3"
   security:
     description:
@@ -132,6 +144,7 @@ options:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
     default: "no"
+    type: bool
     version_added: "2.6"
   allow_downgrade:
     description:
@@ -150,16 +163,21 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
+    type: list
+    elements: str
     version_added: "2.5"
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
+    type: list
+    elements: str
     version_added: "2.5"
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
+    type: str
     version_added: "2.7"
   autoremove:
     description:
@@ -176,6 +194,7 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
+    type: str
     version_added: "2.7"
   download_only:
     description:
@@ -258,6 +277,11 @@ EXAMPLES = '''
   yum:
     name: httpd
     state: latest
+
+- name: Install Apache >= 2.4
+  yum:
+    name: httpd>=2.4
+    state: present
 
 - name: Install a list of packages (suitable replacement for 2.11 loop deprecation warning)
   yum:

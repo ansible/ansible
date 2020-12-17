@@ -14,7 +14,7 @@
 ########################################################
 # variable section
 
-NAME = ansible-base
+NAME = ansible-core
 OS = $(shell uname -s)
 PREFIX ?= '/usr/local'
 SDIST_DIR ?= 'dist'
@@ -153,6 +153,8 @@ clean:
 	rm -f test/units/.coverage*
 	rm -rf test/results/*/*
 	find test/ -type f -name '*.retry' -delete
+	@echo "Cleaning up symlink cache"
+	rm -f SYMLINK_CACHE.json
 	@echo "Cleaning up Debian building stuff"
 	rm -rf debian
 	rm -rf deb-build
@@ -275,7 +277,7 @@ linkcheckdocs:
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
-	PYTHONPATH=./lib $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
+	$(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 
 docs: generate_rst

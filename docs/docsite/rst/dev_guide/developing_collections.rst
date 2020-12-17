@@ -5,12 +5,11 @@
 Developing collections
 **********************
 
-
 Collections are a distribution format for Ansible content. You can use collections to package and distribute playbooks, roles, modules, and plugins.
 You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 * For details on how to *use* collections see :ref:`collections`.
-* For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/master/README.rst>`_.
+* For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
 
 .. contents::
    :local:
@@ -26,6 +25,8 @@ Collections follow a simple data structure. None of the directories are required
     collection/
     ├── docs/
     ├── galaxy.yml
+    ├── meta/
+    │   └── runtime.yml
     ├── plugins/
     │   ├── modules/
     │   │   └── module1.py
@@ -79,7 +80,7 @@ The ``ansible-doc`` command requires the fully qualified collection name (FQCN) 
 plugins directory
 ------------------
 
-Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
 Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
@@ -91,9 +92,9 @@ module_utils
 When coding with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting Python import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
 The following example snippets show a Python and PowerShell module using both default Ansible ``module_utils`` and
-those provided by a collection. In this example the namespace is ``ansible_example``, the collection is ``community``.
+those provided by a collection. In this example the namespace is ``community``, the collection is ``test_collection``.
 In the Python example the ``module_util`` in question is called ``qradar`` such that the FQCN is
-``ansible_example.community.plugins.module_utils.qradar``:
+``community.test_collection.plugins.module_utils.qradar``:
 
 .. code-block:: python
 
@@ -102,7 +103,7 @@ In the Python example the ``module_util`` in question is called ``qradar`` such 
 
     from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
     from ansible.module_utils.six.moves.urllib.error import HTTPError
-    from ansible_collections.ansible_example.community.plugins.module_utils.qradar import QRadarRequest
+    from ansible_collections.community.test_collection.plugins.module_utils.qradar import QRadarRequest
 
     argspec = dict(
         name=dict(required=True, type='str'),
@@ -127,13 +128,13 @@ Note that importing something from an ``__init__.py`` file requires using the fi
     from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
 
 In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
-``ansible_example.community.plugins.module_utils.hyperv``:
+``community.test_collection.plugins.module_utils.hyperv``:
 
 .. code-block:: powershell
 
     #!powershell
     #AnsibleRequires -CSharpUtil Ansible.Basic
-    #AnsibleRequires -PowerShell ansible_collections.ansible_example.community.plugins.module_utils.hyperv
+    #AnsibleRequires -PowerShell ansible_collections.community.test_collection.plugins.module_utils.hyperv
 
     $spec = @{
         name = @{ required = $true; type = "str" }
@@ -195,6 +196,64 @@ command completion, or environment variables are presented throughout the
 Ansible Collection Testing because the act of installing the stable release of
 Ansible containing `ansible-test` is expected to setup those things for you.
 
+.. _meta_runtime_yml:
+
+meta directory
+--------------
+
+A collection can store some additional metadata in a ``runtime.yml`` file in the collection's ``meta`` directory. The ``runtime.yml`` file supports the top level keys:
+
+- *requires_ansible*:
+
+  The version of Ansible required to use the collection. Multiple versions can be separated with a comma.
+
+  .. code:: yaml
+
+     requires_ansible: ">=2.10,<2.11"
+
+  .. note:: although the version is a `PEP440 Version Specifier <https://www.python.org/dev/peps/pep-0440/#version-specifiers>`_ under the hood, Ansible deviates from PEP440 behavior by truncating prerelease segments from the Ansible version. This means that Ansible 2.11.0b1 is compatible with something that ``requires_ansible: ">=2.11"``.
+
+- *plugin_routing*:
+
+  Content in a collection that Ansible needs to load from another location or that has been deprecated/removed.
+  The top level keys of ``plugin_routing`` are types of plugins, with individual plugin names as subkeys.
+  To define a new location for a plugin, set the ``redirect`` field to another name.
+  To deprecate a plugin, use the ``deprecation`` field to provide a custom warning message and the removal version or date. If the plugin has been renamed or moved to a new location, the ``redirect`` field should also be provided. If a plugin is being removed entirely, ``tombstone`` can be used for the fatal error message and removal version or date.
+
+  .. code:: yaml
+
+     plugin_routing:
+       inventory:
+         kubevirt:
+           redirect: community.general.kubevirt
+         my_inventory:
+           tombstone:
+             removal_version: "2.0.0"
+             warning_text: my_inventory has been removed. Please use other_inventory instead.
+       modules:
+         my_module:
+           deprecation:
+             removal_date: "2021-11-30"
+             warning_text: my_module will be removed in a future release of this collection. Use another.collection.new_module instead.
+           redirect: another.collection.new_module
+         podman_image:
+           redirect: containers.podman.podman_image
+       module_utils:
+         ec2:
+           redirect: amazon.aws.ec2
+         util_dir.subdir.my_util:
+           redirect: namespace.name.my_util
+
+- *import_redirection*
+
+  A mapping of names for Python import statements and their redirected locations.
+
+  .. code:: yaml
+
+     import_redirection:
+       ansible.module_utils.old_utility:
+         redirect: ansible_collections.namespace_name.collection_name.plugins.module_utils.new_location
+
 
 .. _creating_collections_skeleton:
 
@@ -209,7 +268,7 @@ To start a new collection:
 
 .. note::
 
-	Both the namespace and collection names have strict requirements. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
+	Both the namespace and collection names use the same strict set of requirements. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for those requirements.
 
 Once the skeleton exists, you can populate the directories with the content you want inside the collection. See `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org to get a better idea of what you can place inside a collection.
 
@@ -234,7 +293,7 @@ Currently the ``ansible-galaxy collection`` command implements the following sub
 * ``publish``: Publish a built collection artifact to Galaxy.
 * ``install``: Install one or more collections.
 
-To learn more about the ``ansible-galaxy`` cli tool, see the :ref:`ansible-galaxy` man page.
+To learn more about the ``ansible-galaxy`` command-line tool, see the :ref:`ansible-galaxy` man page.
 
 
 .. _docfragments_collections:
@@ -280,7 +339,7 @@ This creates a tarball of the built collection in the current directory which ca
     └── ...
 
 .. note::
-   * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
+   * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not want to distribute.
    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
    * The current Galaxy maximum tarball size is 2 MB.
 
@@ -300,7 +359,7 @@ By default the build step will include all the files in the collection directory
 * ``*.retry``
 * ``tests/output``
 * previously built artifacts in the root directory
-* Various version control directories like ``.git/``
+* various version control directories like ``.git/``
 
 To exclude other files and folders when building the collection, you can set a list of file glob-like patterns in the
 ``build_ignore`` key in the collection's ``galaxy.yml`` file. These patterns use the following special characters for
@@ -340,6 +399,8 @@ access the collection:
 You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will
 expect to find collections when attempting to use them. If you don't specify a path value, ``ansible-galaxy collection install``
 installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``.
+
+If you want to use a collection directly out of a checked out git repository, see :ref:`hacking_collections`.
 
 Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`
 
@@ -431,7 +492,7 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 	The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
 
 The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
-The command waits until the import process completes before reporting the status back. If you wish to continue
+The command waits until the import process completes before reporting the status back. If you want to continue
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
@@ -465,29 +526,88 @@ will be the version displayed everywhere in Galaxy; however, users will still be
 Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
 
 * Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
-* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
+* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
 * Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
 
 .. _migrate_to_collection:
 
-Migrating Ansible content to a collection
-=========================================
+Migrating Ansible content to a different collection
+====================================================
 
-You can experiment with migrating existing modules into a collection using the `content_collector tool <https://github.com/ansible/content_collector>`_. The ``content_collector`` is a playbook that helps you migrate content from an Ansible distribution into a collection.
+First, look at `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
+
+To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:
+
+#. Copy content from the source (old) collection to the target (new) collection.
+#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the old collection. The deprecation must be released after the copied content has been included in a release of the new collection.
+#. When the next major release of the old collection is prepared:
+
+  * remove the module/plugin from the old collection
+  * remove the symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)
+  * remove related unit and integration tests
+  * remove specific module utils
+  * remove specific documentation fragments if there are any in the old collection
+  * add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; you can see an example of a changelog fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_ 
+  * change ``meta/runtime.yml`` in the old collection:
+
+    * add ``redirect`` to the corresponding module/plugin's entry
+    * in particular, add ``redirect`` for the removed module utils and documentation fragments if applicable
+    * remove ``removal_version`` from there
+  * remove related entries from ``tests/sanity/ignore.txt`` files if exist
+  * remove changelog fragments for removed content that are not yet part of the changelog (in other words, do not modify `changelogs/changelog.yaml` and do not delete files mentioned in it)
+  * remove requirements that are no longer required in ``tests/unit/requirements.txt``, ``tests/requirements.yml`` and ``galaxy.yml``
+
+According to the above, you need to create at least three PRs as follows:
+
+#. Create a PR against the new collection to copy the content.
+#. Deprecate the module/plugin in the old collection.
+#. Later create a PR against the old collection to remove the content according to the schedule.
+
+
+Adding the content to the new collection
+----------------------------------------
+
+Create a PR in the new collection to:
+
+#. Copy ALL the related files from the old collection.
+#. If it is an action plugin, include the corresponding module with documentation.
+#. If it is a module, check if it has a corresponding action plugin that should move with it.
+#. Check ``meta/`` for relevant updates to ``runtime.yml`` if it exists.
+#. Carefully check the moved ``tests/integration`` and ``tests/units`` and update for FQCN.
+#. Review ``tests/sanity/ignore-*.txt`` entries in the old collection.
+#. Update ``meta/runtime.yml`` in the old collection.
+
+
+Removing the content from the old collection
+--------------------------------------------
+
+Create a PR against the source collection repository to remove the modules, module_utils, plugins, and docs_fragments related to this migration:
+
+#. If you are removing an action plugin, remove the corresponding module that contains the documentation.
+#. If you are removing a module, remove any corresponding action plugin that should stay with it.
+#. Remove any entries about removed plugins from ``meta/runtime.yml``. Ensure they are added into the new repo.
+#. Remove sanity ignore lines from ``tests/sanity/ignore\*.txt``
+#. Remove associated integration tests from ``tests/integrations/targets/`` and unit tests from ``tests/units/plugins/``.
+#. if you are removing from content from ``community.general`` or ``community.network``, remove entries from ``.github/BOTMETA.yml``.
+#. Carefully review ``meta/runtime.yml`` for any entries you may need to remove or update, in particular deprecated entries.
+#. Update ``meta/runtime.yml`` to contain redirects for EVERY PLUGIN, pointing to the new collection name.
 
 .. warning::
 
-	This tool is in active development and is provided only for experimentation and feedback at this point.
+	Maintainers for the old collection have to make sure that the PR is merged in a way that it does not break user experience and semantic versioning:
 
-See the `content_collector README <https://github.com/ansible/content_collector>`_ for full details and usage guidelines.
+	#. A new version containing the merged PR must not be released before the collection the content has been moved to has been released again, with that content contained in it. Otherwise the redirects cannot work and users relying on that content will experience breakage.
+	#. Once 1.0.0 of the collection from which the content has been removed has been released, such PRs can only be merged for a new **major** version (in other words, 2.0.0, 3.0.0, and so on).
+
 
 BOTMETA.yml
 -----------
 
-The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ in the ansible/ansible GitHub repository is the source of truth for:
+The ``BOTMETA.yml``, for example in `community.general collection repository <https://github.com/ansible-collections/community.general/blob/main/.github/BOTMETA.yml>`_, is the source of truth for:
 
 * ansibullbot
-* the docs build for collections-based modules
+
+If the old and/or new collection has ``ansibullbot``, its ``BOTMETA.yml`` must be updated correspondingly.
 
 Ansibulbot will know how to redirect existing issues and PRs to the new repo.
 The build process for docs.ansible.com will know where to find the module docs.
@@ -609,10 +729,76 @@ If you clone a fork, add the original repository as a remote ``upstream``::
     cd ~/dev/ansible/collections/ansible_collections/community/general
     git remote add upstream git@github.com:ansible-collections/community.general.git
 
-Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of the ``devel`` branch.
+Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of ``ansible/ansible``'s ``devel`` branch.
 
 For collections hosted in the ``ansible_collections`` GitHub org, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
+.. _collection_changelogs:
+
+Generating changelogs for a collection
+======================================
+
+We recommend that you use the `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ tool to generate Ansible-compatible changelogs for your collection. The Ansible changelog uses the output of this tool to collate all the collections included in an Ansible release into one combined changelog for the release.
+
+.. note::
+
+	Ansible here refers to the Ansible 2.10 or later release that includes a curated set of collections.
+
+Understanding antsibull-changelog
+---------------------------------
+
+The ``antsibull-changelog`` tool allows you to create and update changelogs for Ansible collections that are compatible with the combined Ansible changelogs. This is an update to the changelog generator used in prior Ansible releases. The tool adds three new changelog fragment categories: ``breaking_changes``, ``security_fixes`` and ``trivial``. The tool also generates the ``changelog.yaml`` file that Ansible uses to create the combined ``CHANGELOG.rst`` file and Porting Guide for the release.
+
+See :ref:`changelogs_how_to` and the `antsibull-changelog documentation <https://github.com/ansible-community/antsibull-changelog/tree/main/docs>`_ for complete details.
+
+.. note::
+
+	The collection maintainers set the changelog policy for their collections. See the individual collection contributing guidelines for complete details.
+
+Generating changelogs
+---------------------
+
+To initialize changelog generation:
+
+#. Install ``antsibull-changelog``: :code:`pip install antsibull-changelog`.
+#. Initialize changelogs for your repository: :code:`antsibull-changelog init <path/to/your/collection>`.
+#. Optionally, edit the ``changelogs/config.yaml`` file to customize the location of the generated changelog ``.rst`` file or other options. See `Bootstrapping changelogs for collections <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#bootstrapping-changelogs-for-collections>`_ for details.
+
+To generate changelogs from the changelog fragments you created:
+
+#. Optionally, validate your changelog fragments: :code:`antsibull-changelog lint`.
+#. Generate the changelog for your release: :code:`antsibull-changelog release [--version version_number]`.
+
+.. note::
+
+  Add the  ``--reload-plugins`` option if you ran the ``antsibull-changelog release`` command previously and the version of the collection has not changed. ``antsibull-changelog`` caches the information on all plugins and does not update its cache until the collection version changes.
+
+
+Porting Guide entries
+----------------------
+
+The following changelog fragment categories are consumed by the Ansible changelog generator into the Ansible Porting Guide:
+
+* ``major_changes``
+* ``breaking_changes``
+* ``deprecated_features``
+* ``removed_features``
+
+Including collection changelogs into Ansible
+=============================================
+
+
+If your collection is part of Ansible, use one of the following three options  to include your changelog into the Ansible release changelog:
+
+* Use the ``antsibull-changelog`` tool.
+
+* If are not using this tool, include the properly formatted ``changelog.yaml`` file  into your collection. See the `changelog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
+
+* Add a link to own changelogs or release notes in any format by opening an issue at https://github.com/ansible-community/ansible-build-data/ with the HTML link to that information.
+
+.. note::
+
+  For the first two options, Ansible pulls the changelog details from Galaxy so your changelogs must be included in the collection version on Galaxy that is included in the upcoming Ansible release.
 
 .. seealso::
 

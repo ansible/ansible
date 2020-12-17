@@ -141,7 +141,7 @@ To provision the environment as is, run the following:
 Unlike setting up a single Windows instance with Vagrant, these hosts can also
 be accessed using the IP address directly as well as through the forwarded
 ports. It is easier to access it over the host only network adapter as the
-normal protocol ports are used, e.g. RDP is still over ``3389``. In cases where
+normal protocol ports are used, for example RDP is still over ``3389``. In cases where
 the host cannot be resolved using the host only network IP, the following
 protocols can be access over ``127.0.0.1`` using these forwarded ports:
 
@@ -179,8 +179,8 @@ When creating a new module there are a few things to keep in mind:
 - Ensure the code runs under Powershell v3 and higher on Windows Server 2008 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
 - Ansible runs modules under strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
 - Favor native Powershell cmdlets over executable calls if possible
-- Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
-- Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
+- Use the full cmdlet name instead of aliases, for example ``Remove-Item`` over ``rm``
+- Use named parameters with cmdlets, for example ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
 A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
 
@@ -213,7 +213,7 @@ options set:
 - ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
 - ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
 - ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
-- ``removed_at_date``: States the date when a deprecated module option will be removed, a warning is displayed to the end user if set
+- ``removed_at_date``: States the date (YYYY-MM-DD) when a deprecated module option will be removed, a warning is displayed to the end user if set
 - ``removed_from_collection``: States from which collection the deprecated module option will be removed; must be specified if one of ``removed_in_version`` and ``removed_at_date`` is specified
 - ``required``: Will fail when the module option is not set
 - ``type``: The type of the module option, if not set then it defaults to ``str``. The valid types are;
@@ -347,7 +347,7 @@ A combination of these flags help to make a module util interoperable on both
 The following is a list of module_utils that are packaged with Ansible and a general description of what
 they do:
 
-- ArgvParser: Utiliy used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
+- ArgvParser: Utility used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
 - CamelConversion: Utility used to convert camelCase strings/lists/dicts to snake_case.
 - CommandUtil: Utility used to execute a Windows process and return the stdout/stderr and rc as separate objects.
 - FileUtil: Utility that expands on the ``Get-ChildItem`` and ``Test-Path`` to work with special files like ``C:\pagefile.sys``.
@@ -395,12 +395,12 @@ Exposing shared module options
 
 PowerShell module utils can easily expose common module options that a module can use when building its argument spec.
 This allows common features to be stored and maintained in one location and have those features used by multiple
-modules with minimal effort. Any new features or bugifxes added to one of these utils are then automatically used by
+modules with minimal effort. Any new features or bugfixes added to one of these utils are then automatically used by
 the various modules that call that util.
 
 An example of this would be to have a module util that handles authentication and communication against an API This
 util can be used by multiple modules to expose a common set of module options like the API endpoint, username,
-password, timeout, cert validation, etc, without having to add those options to each module spec.
+password, timeout, cert validation, and so on without having to add those options to each module spec.
 
 The standard convention for a module util that has a shared argument spec would have
 
@@ -628,7 +628,7 @@ tests for win_stat:
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
 - :ref:`Install the required Python modules <windows_winrm>` to support WinRM and a configured authentication method.
-- To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
+- To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you want to test.
 
 This will execute all the tests currently defined for that role. You can set
 the verbosity level using the ``-v`` argument just as you would with

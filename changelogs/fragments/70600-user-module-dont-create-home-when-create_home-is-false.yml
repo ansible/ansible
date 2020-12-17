@@ -1,0 +1,2 @@
+bugfixes:
+- "user - don't create home directory and missing parents when create_home == false (https://github.com/ansible/ansible/pull/70600)."

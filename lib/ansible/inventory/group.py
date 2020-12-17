@@ -45,7 +45,6 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
             else:
                 if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
                     display.vvvv('Not replacing %s' % msg)
-                    warn = True
                     warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
     if warn:
@@ -248,7 +247,7 @@ class Group:
             self.set_priority(int(value))
         else:
             if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
-                self.vars[key] = combine_vars(self.vars[key], value)
+                self.vars = combine_vars(self.vars, {key: value})
             else:
                 self.vars[key] = value
 

@@ -1,0 +1,2 @@
+bugfixes:
+- api - time.clock is removed in Python 3.8, add backward compatible code (https://github.com/ansible/ansible/issues/70649).

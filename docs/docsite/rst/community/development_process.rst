@@ -4,15 +4,19 @@
 The Ansible Development Cycle
 *****************************
 
-The Ansible development cycle happens on two levels. At a macro level, the team plans releases and tracks progress with roadmaps and projects. At a micro level, each PR has its own lifecycle.
+Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections.
+
+Development on ``ansible-base`` occurs on two levels. At the macro level, the ``ansible-base`` developers and maintainers plan releases and track progress with roadmaps and projects. At the micro level, each PR has its own lifecycle.
+
+Development on collections also occurs at the macro and micro levels. Each collection has its own macro development cycle. For more information on the collections development cycle, see :ref:`contributing_maintained_collections`. The micro-level lifecycle of a PR is similar in collections and in ``ansible-base``.
 
 .. contents::
    :local:
 
-Macro development: roadmaps, releases, and projects
-===================================================
+Macro development: ``ansible-base`` roadmaps, releases, and projects
+=====================================================================
 
-If you want to follow the conversation about what features will be added to Ansible for upcoming releases and what bugs are being fixed, you can watch these resources:
+If you want to follow the conversation about what features will be added to ``ansible-base`` for upcoming releases and what bugs are being fixed, you can watch these resources:
 
 * the :ref:`roadmaps`
 * the :ref:`Ansible Release Schedule <release_and_maintenance>`
@@ -27,7 +31,7 @@ If you want to follow the conversation about what features will be added to Ansi
 Micro development: the lifecycle of a PR
 ========================================
 
-Ansible accepts code through **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
+If you want to contribute a feature or fix a bug in ``ansible-base`` or in a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-base``.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
@@ -43,7 +47,7 @@ Here's an overview of the PR lifecycle:
 Automated PR review: ansibullbot
 --------------------------------
 
-Because Ansible receives many pull requests, and because we love automating things, we've automated several steps of the process of reviewing and merging pull requests with a tool called Ansibullbot, or Ansibot for short.
+Because Ansible receives many pull requests, and because we love automating things, we have automated several steps of the process of reviewing and merging pull requests with a tool called Ansibullbot, or Ansibot for short.
 
 `Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ serves many functions:
 
@@ -132,18 +136,14 @@ Once a human applies the ``shipit`` label, the :ref:`committers <community_commi
 Making your PR merge-worthy
 ===========================
 
-We don't merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
+We do not merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
 
 .. _community_changelogs:
 
 Changelogs
 ----------
 
-Changelogs help users and developers keep up with changes to Ansible.
-Ansible builds a changelog for each release from fragments.
-You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base.
-You don't have to add a changelog fragment for PRs that add new
-modules and plugins, because our tooling does that for you automatically.
+Changelogs help users and developers keep up with changes to Ansible. Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base. You do not have to add a changelog fragment for PRs that add new modules and plugins, because our tooling does that for you automatically.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
@@ -152,35 +152,29 @@ We build short summary changelogs for minor releases as well as for major releas
 Creating a changelog fragment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A basic changelog fragment is a ``.yaml`` file placed in the
-``changelogs/fragments/`` directory.  Each file contains a yaml dict with
-keys like ``bugfixes`` or ``major_changes`` followed by a list of
-changelog entries of bugfixes or features.  Each changelog entry is
-rst embedded inside of the yaml file which means that certain
-constructs would need to be escaped so they can be interpreted by rst
-and not by yaml (or escaped for both yaml and rst if that's your
-desire).  Each PR **must** use a new fragment file rather than adding to
-an existing one, so we can trace the change back to the PR that introduced it.
+A basic changelog fragment is a ``.yaml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it.
 
-To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of corresponding repository.
-The file name should include the PR number and a description of the change.
-It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
+To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
-A single changelog fragment may contain multiple sections but most will only contain one section.
-The toplevel keys (bugfixes, major_changes, and so on) are defined in the
-`config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
+A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:
+
+**breaking_changes**
+  Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **major_changes**
-  Major changes to Ansible itself. Generally does not include module or plugin changes.
+  Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **minor_changes**
   Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
 
 **deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release.
+  Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **removed_features**
-  Features that were previously deprecated and are now removed.
+  Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+**security_fixes**
+  Fixes that address CVEs or resolve security concerns. Include links to CVE information.
 
 **bugfixes**
   Fixes that resolve issues.
@@ -188,8 +182,7 @@ The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 **known_issues**
   Known issues that are currently not fixed or will not be fixed.
 
-Each changelog entry must contain a link to its issue between parentheses at the end.
-If there is no corresponding issue, the entry must contain a link to the PR itself.
+Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
 Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and the following sentence with a lowercase letter.
 
@@ -209,22 +202,20 @@ Here are some examples:
 .. code-block:: yaml
 
   bugfixes:
-    - copy module - The copy module was attempting to change the mode of files for
+    - copy - the module was attempting to change the mode of files for
       remote_src=True even if mode was not set as a parameter.  This failed on
       filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
-You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.9/changelogs/fragments>`_ for the 2.9 release.
+You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.10/changelogs/fragments>`_ for the 2.10 release.
 
-Once you've written the changelog fragment for your PR, commit the file and include it with the pull request.
+After you have written the changelog fragment for your PR, commit the file and include it with the pull request.
 
 .. _backport_process:
 
-Backporting merged PRs
-======================
+Backporting merged PRs in ``ansible-base``
+===========================================
 
-All Ansible PRs must be merged to the ``devel`` branch first.
-After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a
-pull request to backport the change to a previous stable branch.
+All ``ansible-base`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
 
 We do **not** backport features.
 
@@ -232,7 +223,7 @@ We do **not** backport features.
 
    These instructions assume that:
 
-    * ``stable-2.9`` is the targeted release branch for the backport
+    * ``stable-2.10`` is the targeted release branch for the backport
     * ``https://github.com/ansible/ansible.git`` is configured as a
       ``git remote`` named ``upstream``. If you do not use
       a ``git remote`` named ``upstream``, adjust the instructions accordingly.
@@ -245,7 +236,7 @@ We do **not** backport features.
    ::
 
        git fetch upstream
-       git checkout -b backport/2.9/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.9
+       git checkout -b backport/2.10/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.10
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature
    branch, handling merge conflicts as necessary:
@@ -260,10 +251,10 @@ We do **not** backport features.
 
    ::
 
-       git push origin backport/2.9/[PR_NUMBER_FROM_DEVEL]
+       git push origin backport/2.10/[PR_NUMBER_FROM_DEVEL]
 
-#. Submit the pull request for ``backport/2.9/[PR_NUMBER_FROM_DEVEL]``
-   against the ``stable-2.9`` branch
+#. Submit the pull request for ``backport/2.10/[PR_NUMBER_FROM_DEVEL]``
+   against the ``stable-2.10`` branch
 
 #. The Release Manager will decide whether to merge the backport PR before
    the next minor release. There isn't any need to follow up. Just ensure that the automated
@@ -271,7 +262,7 @@ We do **not** backport features.
 
 .. note::
 
-    The choice to use ``backport/2.9/[PR_NUMBER_FROM_DEVEL]`` as the
+    The choice to use ``backport/2.10/[PR_NUMBER_FROM_DEVEL]`` as the
     name for the feature branch is somewhat arbitrary, but conveys meaning
     about the purpose of that branch. It is not required to use this format,
     but it can be helpful, especially when making multiple backport PRs for

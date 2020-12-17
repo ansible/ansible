@@ -16,7 +16,7 @@ short_description:  Manage services
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
-    - For Windows targets, use the M(win_service) module instead.
+    - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
         description:
@@ -49,6 +49,7 @@ options:
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.
         - If the string is found, the service will be assumed to be started.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         version_added: "0.7"
     enabled:
@@ -60,11 +61,13 @@ options:
         description:
         - For OpenRC init scripts (e.g. Gentoo) only.
         - The runlevel that this service belongs to.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         default: default
     arguments:
         description:
         - Additional arguments provided on the command line.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         aliases: [ args ]
     use:
@@ -76,8 +79,9 @@ options:
         version_added: 2.2
 notes:
     - For AIX, group subsystem names can be used.
+    - Supports C(check_mode).
 seealso:
-- module: win_service
+    - module: ansible.windows.win_service
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -85,42 +89,44 @@ author:
 
 EXAMPLES = r'''
 - name: Start service httpd, if not started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: started
 
 - name: Stop service httpd, if started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: stopped
 
 - name: Restart service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: restarted
 
 - name: Reload service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: reloaded
 
 - name: Enable service httpd, and not touch the state
-  service:
+  ansible.builtin.service:
     name: httpd
     enabled: yes
 
 - name: Start service foo, based on running process /usr/bin/foo
-  service:
+  ansible.builtin.service:
     name: foo
     pattern: /usr/bin/foo
     state: started
 
 - name: Restart network service for interface eth0
-  service:
+  ansible.builtin.service:
     name: network
     state: restarted
     args: eth0
 '''
+
+RETURN = r'''#'''
 
 import glob
 import json

@@ -353,7 +353,7 @@ class NetconfBase(AnsiblePlugin):
         operations['supports_startup'] = ':startup' in capabilities
         operations['supports_xpath'] = ':xpath' in capabilities
         operations['supports_writable_running'] = ':writable-running' in capabilities
-        operations['supports_validate'] = ':writable-validate' in capabilities
+        operations['supports_validate'] = ':validate' in capabilities
 
         operations['lock_datastore'] = []
         if operations['supports_writable_running']:

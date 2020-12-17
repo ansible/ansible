@@ -1,25 +1,15 @@
-docs/bin/find-plugin-refs.py future-import-boilerplate
-docs/bin/find-plugin-refs.py metaclass-boilerplate
-docs/docsite/_extensions/pygments_lexer.py future-import-boilerplate
-docs/docsite/_extensions/pygments_lexer.py metaclass-boilerplate
-docs/docsite/_themes/sphinx_rtd_theme/__init__.py future-import-boilerplate
-docs/docsite/_themes/sphinx_rtd_theme/__init__.py metaclass-boilerplate
-docs/docsite/rst/conf.py future-import-boilerplate
-docs/docsite/rst/conf.py metaclass-boilerplate
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/play.yml shebang
+examples/scripts/my_test.py shebang # example module but not in a normal module location
+examples/scripts/my_test_facts.py shebang # example module but not in a normal module location
+examples/scripts/my_test_info.py shebang # example module but not in a normal module location
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-examples/scripts/uptime.py future-import-boilerplate
-examples/scripts/uptime.py metaclass-boilerplate
 hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-3.5!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/commands.py compile-2.6!skip # release and docs process only, 3.6+ required
-hacking/build_library/build_ansible/commands.py compile-2.7!skip # release and docs process only, 3.6+ required
-hacking/build_library/build_ansible/commands.py compile-3.5!skip # release and docs process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.6!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.7!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/dump_config.py compile-3.5!skip # docs build only, 3.6+ required
@@ -29,9 +19,6 @@ hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-3.5
 hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.6!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.7!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/generate_man.py compile-3.5!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.6!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.7!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-3.5!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-3.5!skip # release process only, 3.6+ required
@@ -41,18 +28,10 @@ hacking/build_library/build_ansible/command_plugins/release_announcement.py comp
 hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.6!skip # release process and docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.7!skip # release process and docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-3.5!skip # release process and docs build only, 3.6+ required
-hacking/fix_test_syntax.py future-import-boilerplate
-hacking/fix_test_syntax.py metaclass-boilerplate
-hacking/get_library.py future-import-boilerplate
-hacking/get_library.py metaclass-boilerplate
-hacking/report.py future-import-boilerplate
-hacking/report.py metaclass-boilerplate
-hacking/return_skeleton_generator.py future-import-boilerplate
-hacking/return_skeleton_generator.py metaclass-boilerplate
-hacking/test-module.py future-import-boilerplate
-hacking/test-module.py metaclass-boilerplate
-hacking/tests/gen_distribution_version_testcase.py future-import-boilerplate
-hacking/tests/gen_distribution_version_testcase.py metaclass-boilerplate
+hacking/build_library/build_ansible/commands.py compile-2.6!skip # release and docs process only, 3.6+ required
+hacking/build_library/build_ansible/commands.py compile-2.7!skip # release and docs process only, 3.6+ required
+hacking/build_library/build_ansible/commands.py compile-3.5!skip # release and docs process only, 3.6+ required
+lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/cli/console.py pylint:blacklisted-name
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
@@ -61,21 +40,11 @@ lib/ansible/executor/playbook_executor.py pylint:blacklisted-name
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/executor/task_executor.py pylint:ansible-deprecated-version
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
-lib/ansible/galaxy/collection.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
-lib/ansible/module_utils/_text.py future-import-boilerplate
-lib/ansible/module_utils/_text.py metaclass-boilerplate
-lib/ansible/module_utils/api.py future-import-boilerplate
-lib/ansible/module_utils/api.py metaclass-boilerplate
-lib/ansible/module_utils/basic.py metaclass-boilerplate
-lib/ansible/module_utils/common/network.py future-import-boilerplate
-lib/ansible/module_utils/common/network.py metaclass-boilerplate
+lib/ansible/galaxy/collection/__init__.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
-lib/ansible/module_utils/connection.py future-import-boilerplate
-lib/ansible/module_utils/connection.py metaclass-boilerplate
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
@@ -83,15 +52,6 @@ lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:blacklisted-name
-lib/ansible/module_utils/facts/sysctl.py future-import-boilerplate
-lib/ansible/module_utils/facts/sysctl.py metaclass-boilerplate
-lib/ansible/module_utils/facts/system/distribution.py pylint:ansible-bad-function
-lib/ansible/module_utils/facts/utils.py future-import-boilerplate
-lib/ansible/module_utils/facts/utils.py metaclass-boilerplate
-lib/ansible/module_utils/json_utils.py future-import-boilerplate
-lib/ansible/module_utils/json_utils.py metaclass-boilerplate
-lib/ansible/module_utils/parsing/convert_bool.py future-import-boilerplate
-lib/ansible/module_utils/parsing/convert_bool.py metaclass-boilerplate
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
@@ -100,11 +60,7 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSP
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
-lib/ansible/module_utils/pycompat24.py future-import-boilerplate
-lib/ansible/module_utils/pycompat24.py metaclass-boilerplate
 lib/ansible/module_utils/pycompat24.py no-get-exception
-lib/ansible/module_utils/service.py future-import-boilerplate
-lib/ansible/module_utils/service.py metaclass-boilerplate
 lib/ansible/module_utils/six/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/six/__init__.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/six/__init__.py metaclass-boilerplate # ignore bundled
@@ -113,119 +69,68 @@ lib/ansible/module_utils/six/__init__.py no-dict-iteritems
 lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
 lib/ansible/module_utils/six/__init__.py replace-urlopen
-lib/ansible/module_utils/splitter.py future-import-boilerplate
-lib/ansible/module_utils/splitter.py metaclass-boilerplate
-lib/ansible/module_utils/urls.py future-import-boilerplate
-lib/ansible/module_utils/urls.py metaclass-boilerplate
 lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
-lib/ansible/module_utils/yumdnf.py future-import-boilerplate
-lib/ansible/module_utils/yumdnf.py metaclass-boilerplate
-lib/ansible/modules/command.py validate-modules:doc-missing-type
-lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/command.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/command.py validate-modules:undocumented-parameter
-lib/ansible/modules/expect.py validate-modules:doc-missing-type
-lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/blockinfile.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/blockinfile.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/copy.py pylint:blacklisted-name
-lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/copy.py validate-modules:doc-type-does-not-match-spec
-lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/copy.py validate-modules:undocumented-parameter
-lib/ansible/modules/file.py pylint:ansible-bad-function
-lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/file.py validate-modules:undocumented-parameter
-lib/ansible/modules/find.py use-argspec-type-path # fix needed
-lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/stat.py validate-modules:parameter-invalid
-lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/stat.py validate-modules:undocumented-parameter
-lib/ansible/modules/unarchive.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/unarchive.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/get_url.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/uri.py pylint:blacklisted-name
-lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
-lib/ansible/modules/uri.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/uri.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/pip.py pylint:blacklisted-name
-lib/ansible/modules/pip.py validate-modules:doc-elements-mismatch
-lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
-lib/ansible/modules/apt.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
-lib/ansible/modules/apt.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt.py validate-modules:undocumented-parameter
-lib/ansible/modules/apt_key.py validate-modules:mutually_exclusive-unknown
 lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt_key.py validate-modules:undocumented-parameter
 lib/ansible/modules/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt_repository.py validate-modules:undocumented-parameter
-lib/ansible/modules/dnf.py validate-modules:doc-missing-type
+lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/async_status.py use-argspec-type-path
+lib/ansible/modules/async_status.py validate-modules!skip
+lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
+lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
+lib/ansible/modules/async_wrapper.py use-argspec-type-path
+lib/ansible/modules/blockinfile.py validate-modules:doc-choices-do-not-match-spec
+lib/ansible/modules/blockinfile.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec  # _uses_shell is undocumented
+lib/ansible/modules/command.py validate-modules:doc-missing-type
+lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/command.py validate-modules:undocumented-parameter
+lib/ansible/modules/copy.py pylint:blacklisted-name
+lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
-lib/ansible/modules/dnf.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/dnf.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/dpkg_selections.py validate-modules:doc-missing-type
-lib/ansible/modules/dpkg_selections.py validate-modules:doc-required-mismatch
-lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/package_facts.py validate-modules:doc-missing-type
-lib/ansible/modules/package_facts.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/rpm_key.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/yum.py pylint:blacklisted-name
-lib/ansible/modules/yum.py validate-modules:doc-missing-type
-lib/ansible/modules/yum.py validate-modules:parameter-invalid
-lib/ansible/modules/yum.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/yum.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/yum_repository.py validate-modules:doc-missing-type
-lib/ansible/modules/yum_repository.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
+lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/file.py validate-modules:undocumented-parameter
+lib/ansible/modules/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/git.py pylint:blacklisted-name
 lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-missing-type
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
-lib/ansible/modules/git.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/git.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/subversion.py validate-modules:doc-required-mismatch
-lib/ansible/modules/subversion.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/subversion.py validate-modules:undocumented-parameter
-lib/ansible/modules/getent.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/hostname.py validate-modules:invalid-ansiblemodule-schema
-lib/ansible/modules/hostname.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/iptables.py pylint:blacklisted-name
-lib/ansible/modules/iptables.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/known_hosts.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/known_hosts.py validate-modules:doc-missing-type
-lib/ansible/modules/known_hosts.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
+lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
+lib/ansible/modules/pip.py pylint:blacklisted-name
+lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
+lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/setup.py validate-modules:doc-missing-type
-lib/ansible/modules/setup.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/setup.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/systemd.py pylint:ansible-deprecated-version
+lib/ansible/modules/stat.py validate-modules:doc-default-does-not-match-spec  # get_md5 is undocumented
+lib/ansible/modules/stat.py validate-modules:parameter-invalid
+lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/stat.py validate-modules:undocumented-parameter
 lib/ansible/modules/systemd.py validate-modules:parameter-invalid
-lib/ansible/modules/systemd.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/systemd.py validate-modules:return-syntax-error
-lib/ansible/modules/sysvinit.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/sysvinit.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
+lib/ansible/modules/unarchive.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/uri.py pylint:blacklisted-name
+lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:doc-default-incompatible-type
-lib/ansible/modules/user.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/async_status.py use-argspec-type-path
-lib/ansible/modules/async_status.py validate-modules!skip
-lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
-lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function
-lib/ansible/modules/async_wrapper.py use-argspec-type-path
-lib/ansible/modules/wait_for.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/yum.py pylint:blacklisted-name
+lib/ansible/modules/yum.py validate-modules:parameter-invalid
+lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
@@ -233,69 +138,27 @@ lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
-lib/ansible/plugins/callback/__init__.py pylint:ansible-deprecated-version
-lib/ansible/plugins/doc_fragments/backup.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/backup.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/constructed.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/constructed.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/decrypt.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/decrypt.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/default_callback.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/default_callback.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/files.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/files.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/inventory_cache.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/inventory_cache.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/return_common.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/return_common.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/shell_common.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/shell_common.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/shell_windows.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/shell_windows.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/url.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/url.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/validate.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/validate.py metaclass-boilerplate
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
-lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
-setup.py future-import-boilerplate
-setup.py metaclass-boilerplate
-test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-boilerplate
-test/integration/targets/ansible-runner/files/adhoc_example1.py metaclass-boilerplate
-test/integration/targets/ansible-runner/files/playbook_example1.py future-import-boilerplate
-test/integration/targets/ansible-runner/files/playbook_example1.py metaclass-boilerplate
-test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/filter/check_pylint.py pylint:blacklisted-name
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
-test/integration/targets/async/library/async_test.py future-import-boilerplate
-test/integration/targets/async/library/async_test.py metaclass-boilerplate
-test/integration/targets/async_fail/library/async_test.py future-import-boilerplate
-test/integration/targets/async_fail/library/async_test.py metaclass-boilerplate
-test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate
+test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
+test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate  # testing Python 2.x implicit relative imports
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util3.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
-test/integration/targets/expect/files/test_command.py future-import-boilerplate
-test/integration/targets/expect/files/test_command.py metaclass-boilerplate
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
-test/integration/targets/get_url/files/testserver.py future-import-boilerplate
-test/integration/targets/get_url/files/testserver.py metaclass-boilerplate
-test/integration/targets/group/files/gidget.py future-import-boilerplate
-test/integration/targets/group/files/gidget.py metaclass-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py future-import-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py metaclass-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py future-import-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py metaclass-boilerplate
-test/integration/targets/incidental_script_inventory_vmware_inventory/vmware_inventory.py future-import-boilerplate
-test/integration/targets/incidental_script_inventory_vmware_inventory/vmware_inventory.py metaclass-boilerplate
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip
@@ -303,70 +166,27 @@ test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/DSCResources/AN
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1 pslint!skip
 test/integration/targets/incidental_win_ping/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
+test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
-test/integration/targets/module_precedence/lib_with_extension/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/lib_with_extension/ping.py metaclass-boilerplate
-test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py metaclass-boilerplate
-test/integration/targets/module_precedence/multiple_roles/foo/library/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/multiple_roles/foo/library/ping.py metaclass-boilerplate
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
-test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test.py future-import-boilerplate
-test/integration/targets/module_utils/library/test.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test_env_override.py future-import-boilerplate
-test/integration/targets/module_utils/library/test_env_override.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test_failure.py future-import-boilerplate
-test/integration/targets/module_utils/library/test_failure.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test_override.py future-import-boilerplate
-test/integration/targets/module_utils/library/test_override.py metaclass-boilerplate
+test/integration/targets/module_utils/library/test.py future-import-boilerplate # allow testing of Python 2.x implicit relative imports
 test/integration/targets/module_utils/module_utils/bar0/foo.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/foo.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:blacklisted-name
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
-test/integration/targets/pause/test-pause.py future-import-boilerplate
-test/integration/targets/pause/test-pause.py metaclass-boilerplate
-test/integration/targets/pip/files/ansible_test_pip_chdir/__init__.py future-import-boilerplate
-test/integration/targets/pip/files/ansible_test_pip_chdir/__init__.py metaclass-boilerplate
-test/integration/targets/pip/files/setup.py future-import-boilerplate
-test/integration/targets/pip/files/setup.py metaclass-boilerplate
-test/integration/targets/run_modules/library/test.py future-import-boilerplate
-test/integration/targets/run_modules/library/test.py metaclass-boilerplate
-test/integration/targets/script/files/no_shebang.py future-import-boilerplate
-test/integration/targets/script/files/no_shebang.py metaclass-boilerplate
-test/integration/targets/service/files/ansible_test_service.py future-import-boilerplate
-test/integration/targets/service/files/ansible_test_service.py metaclass-boilerplate
-test/integration/targets/setup_rpm_repo/files/create-repo.py future-import-boilerplate
-test/integration/targets/setup_rpm_repo/files/create-repo.py metaclass-boilerplate
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
 test/integration/targets/template/files/foo.dos.txt line-endings
-test/integration/targets/template/role_filter/filter_plugins/myplugin.py future-import-boilerplate
-test/integration/targets/template/role_filter/filter_plugins/myplugin.py metaclass-boilerplate
 test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
-test/integration/targets/infra/library/test.py future-import-boilerplate
-test/integration/targets/infra/library/test.py metaclass-boilerplate
 test/integration/targets/unicode/unicode.yml no-smart-quotes
-test/integration/targets/uri/files/testserver.py future-import-boilerplate
-test/integration/targets/uri/files/testserver.py metaclass-boilerplate
-test/integration/targets/var_precedence/ansible-var-precedence-check.py future-import-boilerplate
-test/integration/targets/var_precedence/ansible-var-precedence-check.py metaclass-boilerplate
-test/integration/targets/builtin_vars_prompt/test-vars_prompt.py future-import-boilerplate
-test/integration/targets/builtin_vars_prompt/test-vars_prompt.py metaclass-boilerplate
-test/integration/targets/vault/test-vault-client.py future-import-boilerplate
-test/integration/targets/vault/test-vault-client.py metaclass-boilerplate
-test/integration/targets/wait_for/files/testserver.py future-import-boilerplate
-test/integration/targets/wait_for/files/testserver.py metaclass-boilerplate
-test/integration/targets/want_json_modules_posix/library/helloworld.py future-import-boilerplate
-test/integration/targets/want_json_modules_posix/library/helloworld.py metaclass-boilerplate
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
+test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
@@ -381,12 +201,6 @@ test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPat
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
 test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
-test/support/integration/plugins/module_utils/ansible_tower.py future-import-boilerplate
-test/support/integration/plugins/module_utils/ansible_tower.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common.py future-import-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common_rest.py future-import-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common_rest.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
@@ -394,18 +208,13 @@ test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boil
 test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/integration/plugins/module_utils/database.py future-import-boilerplate
 test/support/integration/plugins/module_utils/database.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/k8s/common.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/k8s/raw.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/net_tools/nios/api.py future-import-boilerplate
-test/support/integration/plugins/module_utils/net_tools/nios/api.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
 test/support/integration/plugins/modules/lvg.py pylint:blacklisted-name
-test/support/integration/plugins/modules/synchronize.py pylint:blacklisted-name
 test/support/integration/plugins/modules/timezone.py pylint:blacklisted-name
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py metaclass-boilerplate
@@ -454,10 +263,6 @@ test/support/network-integration/collections/ansible_collections/vyos/vyos/plugi
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_config.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_logging.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_logging.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_static_route.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_static_route.py metaclass-boilerplate
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
@@ -469,109 +274,26 @@ test/support/windows-integration/plugins/modules/win_regedit.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_security_policy.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_shell.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_wait_for.ps1 pslint!skip
-test/units/config/manager/test_find_ini_config_file.py future-import-boilerplate
 test/units/executor/test_play_iterator.py pylint:blacklisted-name
-test/units/inventory/test_group.py future-import-boilerplate
-test/units/inventory/test_group.py metaclass-boilerplate
-test/units/inventory/test_host.py future-import-boilerplate
-test/units/inventory/test_host.py metaclass-boilerplate
-test/units/mock/path.py future-import-boilerplate
-test/units/mock/path.py metaclass-boilerplate
-test/units/mock/yaml_helper.py future-import-boilerplate
-test/units/mock/yaml_helper.py metaclass-boilerplate
-test/units/module_utils/basic/test__symbolic_mode_to_octal.py future-import-boilerplate
-test/units/module_utils/basic/test_deprecate_warn.py future-import-boilerplate
-test/units/module_utils/basic/test_deprecate_warn.py metaclass-boilerplate
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-version
-test/units/module_utils/basic/test_exit_json.py future-import-boilerplate
-test/units/module_utils/basic/test_get_file_attributes.py future-import-boilerplate
-test/units/module_utils/basic/test_heuristic_log_sanitize.py future-import-boilerplate
-test/units/module_utils/basic/test_run_command.py future-import-boilerplate
 test/units/module_utils/basic/test_run_command.py pylint:blacklisted-name
-test/units/module_utils/basic/test_safe_eval.py future-import-boilerplate
-test/units/module_utils/basic/test_tmpdir.py future-import-boilerplate
-test/units/module_utils/common/test_dict_transformations.py future-import-boilerplate
-test/units/module_utils/common/test_dict_transformations.py metaclass-boilerplate
-test/units/module_utils/conftest.py future-import-boilerplate
-test/units/module_utils/conftest.py metaclass-boilerplate
-test/units/module_utils/facts/base.py future-import-boilerplate
-test/units/module_utils/facts/hardware/test_sunos_get_uptime_facts.py future-import-boilerplate
-test/units/module_utils/facts/hardware/test_sunos_get_uptime_facts.py metaclass-boilerplate
-test/units/module_utils/facts/network/test_generic_bsd.py future-import-boilerplate
-test/units/module_utils/facts/other/test_facter.py future-import-boilerplate
-test/units/module_utils/facts/other/test_ohai.py future-import-boilerplate
-test/units/module_utils/facts/system/test_lsb.py future-import-boilerplate
-test/units/module_utils/facts/test_ansible_collector.py future-import-boilerplate
-test/units/module_utils/facts/test_collector.py future-import-boilerplate
-test/units/module_utils/facts/test_collectors.py future-import-boilerplate
-test/units/module_utils/facts/test_facts.py future-import-boilerplate
-test/units/module_utils/facts/test_timeout.py future-import-boilerplate
-test/units/module_utils/facts/test_utils.py future-import-boilerplate
-test/units/module_utils/json_utils/test_filter_non_json_lines.py future-import-boilerplate
-test/units/module_utils/parsing/test_convert_bool.py future-import-boilerplate
-test/units/module_utils/test_distro.py future-import-boilerplate
-test/units/module_utils/test_distro.py metaclass-boilerplate
 test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
 test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
-test/units/modules/conftest.py future-import-boilerplate
-test/units/modules/conftest.py metaclass-boilerplate
-test/units/modules/test_copy.py future-import-boilerplate
-test/units/modules/test_pip.py future-import-boilerplate
-test/units/modules/test_pip.py metaclass-boilerplate
-test/units/modules/test_apt.py future-import-boilerplate
-test/units/modules/test_apt.py metaclass-boilerplate
 test/units/modules/test_apt.py pylint:blacklisted-name
-test/units/modules/test_yum.py future-import-boilerplate
-test/units/modules/test_yum.py metaclass-boilerplate
-test/units/modules/test_iptables.py future-import-boilerplate
-test/units/modules/test_iptables.py metaclass-boilerplate
-test/units/modules/test_known_hosts.py future-import-boilerplate
-test/units/modules/test_known_hosts.py metaclass-boilerplate
-test/units/modules/test_known_hosts.py pylint:ansible-bad-function
-test/units/modules/test_systemd.py future-import-boilerplate
-test/units/modules/test_systemd.py metaclass-boilerplate
-test/units/modules/utils.py future-import-boilerplate
-test/units/modules/utils.py metaclass-boilerplate
-test/units/parsing/utils/test_addresses.py future-import-boilerplate
-test/units/parsing/utils/test_addresses.py metaclass-boilerplate
 test/units/parsing/vault/test_vault.py pylint:blacklisted-name
 test/units/playbook/role/test_role.py pylint:blacklisted-name
-test/units/playbook/test_attribute.py future-import-boilerplate
-test/units/playbook/test_attribute.py metaclass-boilerplate
-test/units/playbook/test_conditional.py future-import-boilerplate
-test/units/playbook/test_conditional.py metaclass-boilerplate
-test/units/plugins/inventory/test_constructed.py future-import-boilerplate
-test/units/plugins/inventory/test_constructed.py metaclass-boilerplate
-test/units/plugins/loader_fixtures/import_fixture.py future-import-boilerplate
-test/units/plugins/shell/test_cmd.py future-import-boilerplate
-test/units/plugins/shell/test_cmd.py metaclass-boilerplate
-test/units/plugins/shell/test_powershell.py future-import-boilerplate
-test/units/plugins/shell/test_powershell.py metaclass-boilerplate
 test/units/plugins/test_plugins.py pylint:blacklisted-name
 test/units/template/test_templar.py pylint:blacklisted-name
-test/units/test_constants.py future-import-boilerplate
-test/units/test_context.py future-import-boilerplate
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py future-import-boilerplate
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py metaclass-boilerplate
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_other_util.py future-import-boilerplate
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_other_util.py metaclass-boilerplate
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py future-import-boilerplate
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py metaclass-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py future-import-boilerplate # test expects no boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py metaclass-boilerplate # test expects no boilerplate
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
-test/units/utils/test_cleanup_tmp_file.py future-import-boilerplate
-test/units/utils/test_encrypt.py future-import-boilerplate
-test/units/utils/test_encrypt.py metaclass-boilerplate
-test/units/utils/test_helpers.py future-import-boilerplate
-test/units/utils/test_helpers.py metaclass-boilerplate
-test/units/utils/test_shlex.py future-import-boilerplate
-test/units/utils/test_shlex.py metaclass-boilerplate
 test/utils/shippable/check_matrix.py replace-urlopen
 test/utils/shippable/timing.py shebang

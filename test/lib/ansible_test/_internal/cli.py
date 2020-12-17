@@ -926,6 +926,7 @@ def add_environments(parser, isolated_delegation=True):
             remote_provider=None,
             remote_aws_region=None,
             remote_terminate=None,
+            remote_endpoint=None,
             python_interpreter=None,
         )
 
@@ -947,15 +948,19 @@ def add_environments(parser, isolated_delegation=True):
 
     remote.add_argument('--remote-stage',
                         metavar='STAGE',
-                        help='remote stage to use: %(choices)s',
-                        choices=['prod', 'dev'],
-                        default='prod')
+                        help='remote stage to use: prod, dev',
+                        default='prod').completer = complete_remote_stage
 
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
                         choices=['default', 'aws', 'azure', 'parallels', 'ibmvpc', 'ibmps'],
                         default='default')
+
+    remote.add_argument('--remote-endpoint',
+                        metavar='ENDPOINT',
+                        help='remote provisioning endpoint to use (default: auto)',
+                        default=None)
 
     remote.add_argument('--remote-aws-region',
                         metavar='REGION',
@@ -988,6 +993,9 @@ def add_extra_coverage_options(parser):
                         action='store_true',
                         help='generate empty report of all python/powershell source files')
 
+    parser.add_argument('--export',
+                        help='directory to export combined coverage files to')
+
 
 def add_httptester_options(parser, argparse):
     """
@@ -998,7 +1006,7 @@ def add_httptester_options(parser, argparse):
 
     group.add_argument('--httptester',
                        metavar='IMAGE',
-                       default='quay.io/ansible/http-test-container:1.0.0',
+                       default='quay.io/ansible/http-test-container:1.3.0',
                        help='docker image to use for the httptester container')
 
     group.add_argument('--disable-httptester',
@@ -1009,6 +1017,9 @@ def add_httptester_options(parser, argparse):
 
     parser.add_argument('--inject-httptester',
                         action='store_true',
+                        help=argparse.SUPPRESS)  # internal use only
+
+    parser.add_argument('--httptester-krb5-password',
                         help=argparse.SUPPRESS)  # internal use only
 
 
@@ -1052,9 +1063,22 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    docker.add_argument('--docker-network',
+                        help='run using the specified docker network')
+
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
+
+
+# noinspection PyUnusedLocal
+def complete_remote_stage(prefix, parsed_args, **_):  # pylint: disable=unused-argument
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    return [stage for stage in ('prod', 'dev') if stage.startswith(prefix)]
 
 
 def complete_target(prefix, parsed_args, **_):

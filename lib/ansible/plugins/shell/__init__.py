@@ -107,6 +107,13 @@ class ShellBase(AnsiblePlugin):
 
         return ' '.join(cmd)
 
+    def chgrp(self, paths, group):
+        cmd = ['chgrp', group]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
+
+        return ' '.join(cmd)
+
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
@@ -157,7 +164,7 @@ class ShellBase(AnsiblePlugin):
 
         # use mkdir -p to ensure parents exist, but mkdir fullpath to ensure last one is created by us
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmpdir, self._SHELL_SUB_RIGHT)
-        cmd += '%s mkdir %s' % (self._SHELL_AND, basetmp)
+        cmd += '%s mkdir %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
         cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 
         # change the umask in a subshell to achieve the desired mode

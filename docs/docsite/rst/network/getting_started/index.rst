@@ -1,10 +1,10 @@
 .. _network_getting_started:
 
 **********************************
-Network Automation Getting Started
+Network Getting Started
 **********************************
 
-Ansible modules support a wide range of vendors, device types, and actions, so you can manage your entire network with a single automation tool. With Ansible, you can:
+Ansible collections support a wide range of vendors, device types, and actions, so you can manage your entire network with a single automation tool. With Ansible, you can:
 
 - Automate repetitive tasks to speed routine network changes and free up your time for more strategic work
 - Leverage the same simple, powerful, and agentless automation tool for network tasks that operations and development use

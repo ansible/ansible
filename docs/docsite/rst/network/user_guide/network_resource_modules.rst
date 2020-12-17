@@ -1,20 +1,14 @@
 .. _resource_modules:
 
 ************************
-Network resource modules
+Network Resource Modules
 ************************
 
-Ansible 2.9 introduced network resource modules to simplify and standardize how you manage different network devices.
+Ansible network resource modules simplify and standardize how you manage different network devices. Network devices separate configuration into sections (such as interfaces and VLANs) that apply to a network service. Ansible network resource modules take advantage of this to allow you to configure subsections or *resources* within the network device configuration. Network resource modules provide a consistent experience across different network devices.
 
 
 .. contents::
    :local:
-
-Understanding network resource modules
-=======================================
-
-Network devices separate configuration into sections (such as interfaces, VLANS, etc) that apply to a network service. Ansible network resource modules take advantage of this to allow you to configure subsections or *resources* within the network device configuration. Network resource modules provide a consistent experience across different network devices.
-
 
 Network resource module states
 ===============================
@@ -45,12 +39,12 @@ parsed
 Using network resource modules
 ==============================
 
-This example configures L3 interface resource on a Cisco IOS device, based on different state settings.
+This example configures the L3 interface resource on a Cisco IOS device, based on different state settings.
 
- .. code-block:: YAML
+ .. code-block:: yaml
 
    - name: configure l3 interface
-     ios_l3_interfaces:
+     cisco.ios.ios_l3_interfaces:
        config: "{{ config }}"
        state: <state>
 
@@ -127,7 +121,7 @@ Network resource modules return the following details:
 Example: Verifying the network device configuration has not changed
 ====================================================================
 
-The following playbook uses the :ref:`eos_l3_interfaces <eos_l3_interfaces_module>` module to gather a subset of the network device configuration (Layer 3 interfaces only) and verifies the information is accurate and has not changed. This playbook passes the results of :ref:`eos_facts <eos_facts_module>` directly to the ``eos_l3_interfaces`` module.
+The following playbook uses the :ref:`arista.eos.eos_l3_interfaces <ansible_collections.arista.eos.eos_l3_interfaces_module>` module to gather a subset of the network device configuration (Layer 3 interfaces only) and verifies the information is accurate and has not changed. This playbook passes the results of :ref:`arista.eos.eos_facts <ansible_collections.arista.eos.eos_facts_module>` directly to the ``arista.eos.eos_l3_interfaces`` module.
 
 
 .. code-block:: yaml
@@ -137,18 +131,62 @@ The following playbook uses the :ref:`eos_l3_interfaces <eos_l3_interfaces_modul
     gather_facts: false
     tasks:
       - name: grab arista eos facts
-        eos_facts:
+        arista.eos.eos_facts:
           gather_subset: min
           gather_network_resources: l3_interfaces
 
   - name: Ensure that the IP address information is accurate.
-    eos_l3_interfaces:
+    arista.eos.eos_l3_interfaces:
       config: "{{ ansible_network_resources['l3_interfaces'] }}"
       register: result
 
   - name: Ensure config did not change.
     assert:
       that: not result.changed
+
+Example: Acquiring and updating VLANs on a network device
+==========================================================
+
+This example shows how you can use resource modules to:
+
+#. Retrieve the current configuration on a network device.
+#. Save that configuration locally.
+#. Update that configuration and apply it to the network device.
+
+This example uses the ``cisco.ios.ios_vlans`` resource module to retrieve and update the VLANs on an IOS device.
+
+1. Retrieve the current IOS VLAN configuration:
+
+.. code-block:: yaml
+
+  - name: Gather VLAN information as structured data
+    cisco.ios.ios_facts:
+       gather_subset:
+        - '!all'
+        - '!min'
+       gather_network_resources:
+       - 'vlans'
+
+2. Store the VLAN configuration locally:
+
+.. code-block:: yaml
+
+  - name: Store VLAN facts to host_vars
+    copy:
+      content: "{{ ansible_network_resources | to_nice_yaml }}"
+      dest: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}"
+
+3. Modify the stored file to update the VLAN configuration locally.
+
+4. Merge the updated VLAN configuration with the existing configuration on the device:
+
+.. code-block:: yaml
+
+  - name: Make VLAN config changes by updating stored facts on the controller.
+    cisco.ios.ios_vlans:
+      config: "{{ vlans }}"
+      state: merged
+    tags: update_config
 
 .. seealso::
 

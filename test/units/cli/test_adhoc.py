@@ -63,7 +63,7 @@ def test_play_ds_positive():
     adhoc_cli.parse()
     ret = adhoc_cli._play_ds('command', 10, 2)
     assert ret['name'] == 'Ansible Ad-Hoc'
-    assert ret['tasks'] == [{'action': {'module': 'command', 'args': {}}, 'async_val': 10, 'poll': 2}]
+    assert ret['tasks'] == [{'action': {'module': 'command', 'args': {}}, 'async_val': 10, 'poll': 2, 'timeout': 0}]
 
 
 def test_play_ds_with_include_role():
@@ -104,10 +104,13 @@ def test_ansible_version(capsys, mocker):
         # Python 2.6 does return a named tuple, so get the first item
         version_lines = version[0].splitlines()
 
-    assert len(version_lines) == 6, 'Incorrect number of lines in "ansible --version" output'
+    assert len(version_lines) == 9, 'Incorrect number of lines in "ansible --version" output'
     assert re.match('ansible [0-9.a-z]+$', version_lines[0]), 'Incorrect ansible version line in "ansible --version" output'
     assert re.match('  config file = .*$', version_lines[1]), 'Incorrect config file line in "ansible --version" output'
     assert re.match('  configured module search path = .*$', version_lines[2]), 'Incorrect module search path in "ansible --version" output'
     assert re.match('  ansible python module location = .*$', version_lines[3]), 'Incorrect python module location in "ansible --version" output'
-    assert re.match('  executable location = .*$', version_lines[4]), 'Incorrect executable locaction in "ansible --version" output'
-    assert re.match('  python version = .*$', version_lines[5]), 'Incorrect python version in "ansible --version" output'
+    assert re.match('  ansible collection location = .*$', version_lines[4]), 'Incorrect collection location in "ansible --version" output'
+    assert re.match('  executable location = .*$', version_lines[5]), 'Incorrect executable locaction in "ansible --version" output'
+    assert re.match('  python version = .*$', version_lines[6]), 'Incorrect python version in "ansible --version" output'
+    assert re.match('  jinja version = .*$', version_lines[7]), 'Incorrect jinja version in "ansible --version" output'
+    assert re.match('  libyaml = .*$', version_lines[8]), 'Missing libyaml in "ansible --version" output'

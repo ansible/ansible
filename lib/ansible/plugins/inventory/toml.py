@@ -4,8 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = '''
-    inventory: toml
+DOCUMENTATION = r'''
+    name: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
     description:
@@ -15,75 +15,75 @@ DOCUMENTATION = '''
         - Requires the 'toml' python library
 '''
 
-EXAMPLES = '''
-example1: |
-    [all.vars]
-    has_java = false
+EXAMPLES = r'''# fmt: toml
+# Example 1
+[all.vars]
+has_java = false
 
-    [web]
-    children = [
-        "apache",
-        "nginx"
-    ]
-    vars = { http_port = 8080, myvar = 23 }
+[web]
+children = [
+    "apache",
+    "nginx"
+]
+vars = { http_port = 8080, myvar = 23 }
 
-    [web.hosts]
-    host1 = {}
-    host2 = { ansible_port = 222 }
+[web.hosts]
+host1 = {}
+host2 = { ansible_port = 222 }
 
-    [apache.hosts]
-    tomcat1 = {}
-    tomcat2 = { myvar = 34 }
-    tomcat3 = { mysecret = "03#pa33w0rd" }
+[apache.hosts]
+tomcat1 = {}
+tomcat2 = { myvar = 34 }
+tomcat3 = { mysecret = "03#pa33w0rd" }
 
-    [nginx.hosts]
-    jenkins1 = {}
+[nginx.hosts]
+jenkins1 = {}
 
-    [nginx.vars]
-    has_java = true
+[nginx.vars]
+has_java = true
 
-example2: |
-    [all.vars]
-    has_java = false
+# Example 2
+[all.vars]
+has_java = false
 
-    [web]
-    children = [
-        "apache",
-        "nginx"
-    ]
+[web]
+children = [
+    "apache",
+    "nginx"
+]
 
-    [web.vars]
-    http_port = 8080
-    myvar = 23
+[web.vars]
+http_port = 8080
+myvar = 23
 
-    [web.hosts.host1]
-    [web.hosts.host2]
-    ansible_port = 222
+[web.hosts.host1]
+[web.hosts.host2]
+ansible_port = 222
 
-    [apache.hosts.tomcat1]
+[apache.hosts.tomcat1]
 
-    [apache.hosts.tomcat2]
-    myvar = 34
+[apache.hosts.tomcat2]
+myvar = 34
 
-    [apache.hosts.tomcat3]
-    mysecret = "03#pa33w0rd"
+[apache.hosts.tomcat3]
+mysecret = "03#pa33w0rd"
 
-    [nginx.hosts.jenkins1]
+[nginx.hosts.jenkins1]
 
-    [nginx.vars]
-    has_java = true
+[nginx.vars]
+has_java = true
 
-example3: |
-    [ungrouped.hosts]
-    host1 = {}
-    host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
-    host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
+# Example 3
+[ungrouped.hosts]
+host1 = {}
+host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
+host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
 
-    [g1.hosts]
-    host4 = {}
+[g1.hosts]
+host4 = {}
 
-    [g2.hosts]
-    host4 = {}
+[g2.hosts]
+host4 = {}
 '''
 
 import os
@@ -97,6 +97,7 @@ from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 try:
     import toml
@@ -105,11 +106,6 @@ except ImportError:
     HAS_TOML = False
 
 display = Display()
-
-WARNING_MSG = (
-    'The TOML inventory format is marked as preview, which means that it is not guaranteed to have a backwards '
-    'compatible interface.'
-)
 
 
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
@@ -120,6 +116,8 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
             self.dump_funcs.update({
                 AnsibleSequence: self.dump_funcs.get(list),
                 AnsibleUnicode: self.dump_funcs.get(str),
+                AnsibleUnsafeBytes: self.dump_funcs.get(str),
+                AnsibleUnsafeText: self.dump_funcs.get(str),
             })
     toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())
 else:
@@ -155,7 +153,7 @@ class InventoryModule(BaseFileInventoryPlugin):
     NAME = 'toml'
 
     def _parse_group(self, group, group_data):
-        if not isinstance(group_data, (MutableMapping, type(None))):
+        if group_data is not None and not isinstance(group_data, MutableMapping):
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
             return
 
@@ -231,8 +229,6 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError(
                 'The TOML inventory plugin requires the python "toml" library'
             )
-
-        display.warning(WARNING_MSG)
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()

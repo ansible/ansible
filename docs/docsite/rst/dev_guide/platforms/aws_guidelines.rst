@@ -4,12 +4,7 @@
 Guidelines for Ansible Amazon AWS module development
 ****************************************************
 
-The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
-further information see
-the `AWS working group community page <https://github.com/ansible/community/wiki/aws>`_.
-If you are planning to contribute AWS modules to Ansible then getting in touch with the working
-group will be a good way to start, especially because a similar module may already be under
-development.
+The Ansible AWS collection (on `Galaxy <https://galaxy.ansible.com/community/aws>`_, source code `repository <https://github.com/ansible-collections/community.aws>`_) is maintained by the Ansible AWS Working Group.  For further information see the `AWS working group community page <https://github.com/ansible/community/wiki/aws>`_. If you are planning to contribute AWS modules to Ansible then getting in touch with the working group is a good way to start, especially because a similar module may already be under development.
 
 .. contents::
    :local:
@@ -31,7 +26,7 @@ want to implement some functionality that uses a new feature of boto3, it should
 feature actually needs to be run, with a message stating the missing feature and minimum required
 version of boto3.
 
-Use feature testing (e.g. ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
+Use feature testing (for example, ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
 supports a feature rather than version checking. For example, from the ``ec2`` module:
 
 .. code-block:: python
@@ -156,7 +151,7 @@ or:
 Supporting Module Defaults
 --------------------------
 
-The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common 
+The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common
 authentication parameters.  To do the same for your new module, add an entry for it in
 ``lib/ansible/config/module_defaults.yml``.  These entries take the form of:
 
@@ -580,7 +575,7 @@ boto3_tag_list_to_ansible_dict
 Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys
 called 'Key' and 'Value' by default.  This key names can be overridden when calling the function.
 For example, if you have already camel_cased your list of tags you may want to pass lowercase key
-names instead i.e. 'key' and 'value'.
+names instead, in other words, 'key' and 'value'.
 
 This function converts the list in to a single dict where the dict key is the tag key and the dict
 value is the tag value.
@@ -616,7 +611,7 @@ is True by default.  If purge is False then any existing tags will not be modifi
 
 This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the
 other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag dict before
-calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
+calling this function. Since the AWS APIs are not uniform (for example, EC2 is different from Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
 (such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
 
@@ -678,13 +673,13 @@ AWS Permissions for Integration Tests
 -------------------------------------
 
 As explained in the :ref:`Integration Test guide <testing_integration>`
-there are defined IAM policies in ``hacking/aws_config/testing_policies/`` that contain the necessary permissions
-to run the AWS integration test. The permissions used by CI are more restrictive than those in ``hacking/aws_config/testing_policies``; for CI we want
-the most restrictive policy possible that still allows the given tests to pass.
+there are defined IAM policies in `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ that contain the necessary permissions
+to run the AWS integration test.
 
 If your module interacts with a new service or otherwise requires new permissions, tests will fail when you submit a pull request and the
 `Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ will tag your PR as needing revision.
-We do not automatically grant additional permissions to the roles used by the continuous integration builds. You must provide the minimum IAM permissions required to run your integration test.
+We do not automatically grant additional permissions to the roles used by the continuous integration builds.
+You will need to raise a Pull Request against `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ to add them.
 
 If your PR has test failures, check carefully to be certain the failure is only due to the missing permissions. If you've ruled out other sources of failure, add a comment with the `ready_for_review`
 tag and explain that it's due to missing permissions.
@@ -705,7 +700,7 @@ To start with the most permissive IAM policy:
 3) Modify your policy to allow only the actions your tests use. Restrict account, region, and prefix where possible. Wait a few minutes for your policy to update.
 4) Run the tests again with a user or role that allows only the new policy.
 5) If the tests fail, troubleshoot (see tips below), modify the policy, run the tests again, and repeat the process until the tests pass with a restrictive policy.
-6) Open a pull request proposing the minimum required policy to the `testing policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
+6) Open a pull request proposing the minimum required policy to the `CI policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
 
 To start from the least permissive IAM policy:
 
@@ -722,7 +717,7 @@ To start from the least permissive IAM policy:
 3) Add the action or resource that caused the failure to `an IAM policy <https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start>`_. Wait a few minutes for your policy to update.
 4) Run the tests again with this policy attached to your user or role.
 5) If the tests still fail at the same place with the same error you will need to troubleshoot (see tips below). If the first test passes, repeat steps 2 and 3 for the next error. Repeat the process until the tests pass with a restrictive policy.
-6) Open a pull request proposing the minimum required policy to the `testing policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
+6) Open a pull request proposing the minimum required policy to the `CI policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
 
 Troubleshooting IAM policies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -737,7 +732,23 @@ Troubleshooting IAM policies
 - Use a search engine.
 - Ask in the Ansible IRC channel #ansible-aws (on freenode IRC).
 
+Unsupported Integration tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are a limited number of reasons why it may not be practical to run integration
+tests for a module within CI.  Where these apply you should add the keyword
+`unsupported` to the aliases file in `test/integration/targets/MODULE_NAME/aliases`.
+
 Some cases where tests should be marked as unsupported:
 1) The tests take longer than 10 or 15 minutes to complete
 2) The tests create expensive resources
 3) The tests create inline policies
+4) The tests require the existence of external resources
+5) The tests manage Account level security policies such as the password policy or AWS Organizations.
+
+Where one of these reasons apply you should open a pull request proposing the minimum required policy to the
+`unsupported test policies <https://github.com/mattclay/aws-terminator/tree/master/hacking/aws_config/test_policies>`_.
+
+Unsupported integration tests will not be automatically run by CI.  However, the
+necessary policies should be available so that the tests can be manually run by
+someone performing a PR review or writing a patch.

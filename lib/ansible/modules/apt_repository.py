@@ -20,26 +20,31 @@ description:
 notes:
     - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
+    - Supports C(check_mode).
 options:
     repo:
         description:
             - A source string for the repository.
+        type: str
         required: true
     state:
         description:
             - A source string state.
+        type: str
         choices: [ absent, present ]
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d
-        default: '0644'
+            - The octal mode for newly created files in sources.list.d.
+            - Default is what system uses (probably 0644).
+        type: raw
         version_added: "1.6"
     update_cache:
         description:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
+        aliases: [ update-cache ]
     update_cache_retries:
         description:
         - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -64,11 +69,14 @@ options:
             - Sets the name of the source list file in sources.list.d.
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
+        type: str
         version_added: '2.1'
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
-              Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+              Should usually only be set when working with a PPA on
+              a non-Ubuntu target (for example, Debian or Mint).
+        type: str
         version_added: '2.3'
 author:
 - Alexander Saltanov (@sashka)
@@ -80,35 +88,37 @@ requirements:
 
 EXAMPLES = '''
 - name: Add specified repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Add specified repository into sources list using specified filename
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
 - name: Add source repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Remove specified repository from sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
 - name: Add nginx stable repository from PPA and install its signing key on Ubuntu target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: ppa:nginx/stable
 
 - name: Add nginx stable repository from PPA and install its signing key on Debian target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
 '''
+
+RETURN = '''#'''
 
 import glob
 import json
@@ -405,6 +415,12 @@ class UbuntuSourcesList(SourcesList):
         self.add_ppa_signing_keys_callback = add_ppa_signing_keys_callback
         self.codename = module.params['codename'] or distro.codename
         super(UbuntuSourcesList, self).__init__(module)
+
+    def __deepcopy__(self, memo=None):
+        return UbuntuSourcesList(
+            self.module,
+            add_ppa_signing_keys_callback=self.add_ppa_signing_keys_callback
+        )
 
     def _get_ppa_info(self, owner_name, ppa_name):
         lp_api = self.LP_API % (owner_name, ppa_name)

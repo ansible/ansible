@@ -211,6 +211,8 @@ class ManagePosixCI:
                 self.become = ['sudo', '-in', 'sh', '-c']
             else:
                 raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
+        elif self.core_ci.platform == 'macos':
+            self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH', 'sh', '-c']
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel' or self.core_ci.platform == 'centos':

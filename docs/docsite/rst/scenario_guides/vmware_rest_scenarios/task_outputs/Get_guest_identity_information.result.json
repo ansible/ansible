@@ -1,0 +1,14 @@
+{
+    "value": {
+        "full_name": {
+            "args": [],
+            "default_message": "Red Hat Fedora (64-bit)",
+            "id": "vmsg.guestos.fedora64Guest.label"
+        },
+        "name": "FEDORA_64",
+        "ip_address": "192.168.122.242",
+        "family": "LINUX",
+        "host_name": "localhost.localdomain"
+    },
+    "changed": false
+}

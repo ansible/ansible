@@ -23,6 +23,7 @@ options:
     description:
       - The command module takes command to run.
     required: true
+    type: str
   creates:
     type: path
     description:
@@ -66,12 +67,12 @@ notes:
     response will be repeated. If you need different responses for successive
     question matches, instead of a string response, use a list of strings as
     the response. The list functionality is new in 2.1.
-  - The M(expect) module is designed for simple scenarios. For more complex
-    needs, consider the use of expect code with the M(shell) or M(script)
-    modules. (An example is part of the M(shell) module documentation)
+  - The M(ansible.builtin.expect) module is designed for simple scenarios.
+    For more complex needs, consider the use of expect code with the M(ansible.builtin.shell)
+    or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation)
 seealso:
-- module: script
-- module: shell
+- module: ansible.builtin.script
+- module: ansible.builtin.shell
 author: "Matt Martz (@sivel)"
 '''
 

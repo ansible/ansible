@@ -22,6 +22,7 @@ options:
       - The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of the remote package.
       - This can be a list (since 2.2) and contain version specifiers (since 2.7).
     type: list
+    elements: str
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.

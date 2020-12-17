@@ -15,7 +15,7 @@ short_description: Interacts with webservices
 description:
   - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
     HTTP authentication mechanisms.
-  - For Windows targets, use the M(win_uri) module instead.
+  - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 version_added: "1.1"
 options:
   url:
@@ -107,6 +107,7 @@ options:
     description:
       - A list of valid, numeric, HTTP status codes that signifies success of the request.
     type: list
+    elements: int
     default: [ 200 ]
   timeout:
     description:
@@ -148,8 +149,8 @@ options:
     version_added: '2.7'
   remote_src:
     description:
-      - If C(no), the module will search for src on originating/master machine.
-      - If C(yes) the module will use the C(src) path on the remote/target machine.
+      - If C(no), the module will search for the C(src) on the controller node.
+      - If C(yes), the module will search for the C(src) on the managed (remote) node.
     type: bool
     default: no
     version_added: '2.7'
@@ -168,19 +169,31 @@ options:
   unix_socket:
     description:
     - Path to Unix domain socket to use for connection
+    type: path
     version_added: '2.8'
   http_agent:
     description:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  use_gssapi:
+    description:
+      - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
+        authentication.
+      - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
+      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+      - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
+    type: bool
+    default: no
+    version_added: '2.11'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
-  - For Windows targets, use the M(win_uri) module instead.
+  - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 seealso:
-- module: get_url
-- module: win_uri
+- module: ansible.builtin.get_url
+- module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
 extends_documentation_fragment: files
@@ -277,6 +290,20 @@ EXAMPLES = r'''
     method: POST
     src: /path/to/my/file.json
     remote_src: yes
+
+- name: Create workspaces in Log analytics Azure
+  uri:
+    url: https://www.mms.microsoft.com/Embedded/Api/ConfigDataSources/LogManagementData/Save
+    method: POST
+    body_format: json
+    status_code: [200, 202]
+    return_content: true
+    headers:
+      Content-Type: application/json
+      x-ms-client-workspace-path: /subscriptions/{{ sub_id }}/resourcegroups/{{ res_group }}/providers/microsoft.operationalinsights/workspaces/{{ w_spaces }}
+      x-ms-client-platform: ibiza
+      x-ms-client-auth-token: "{{ token_az }}"
+    body:
 
 - name: Pause play until a URL is reachable from this host
   uri:
@@ -383,7 +410,7 @@ import shutil
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
@@ -391,6 +418,13 @@ from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, prepare_multipart, url_argument_spec
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')
+
+# List of response key names we do not want sanitize_keys() to change.
+NO_MODIFY_KEYS = frozenset(
+    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped',
+     'changed', 'rc', 'stdout', 'stderr', 'elapsed', 'path', 'location',
+     'content_type')
+)
 
 
 def format_message(err, resp):
@@ -597,7 +631,7 @@ def main():
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
-        status_code=dict(type='list', default=[200]),
+        status_code=dict(type='list', elements='int', default=[200]),
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
@@ -733,6 +767,9 @@ def main():
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:
         u_content = to_text(content, encoding=content_encoding)
+
+    if module.no_log_values:
+        uresp = sanitize_keys(uresp, module.no_log_values, NO_MODIFY_KEYS)
 
     if resp['status'] not in status_code:
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))

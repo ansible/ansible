@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - check ``fut_gid`` against ``run_gid`` in addition to supplemental groups (https://github.com/ansible/ansible/issues/49284)

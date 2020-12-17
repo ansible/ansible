@@ -136,7 +136,7 @@ class DistributionFiles:
             parsed, dist_file_dict = distfunc(name, dist_file_content, path, collected_facts)
             return parsed, dist_file_dict
         except AttributeError as exc:
-            print('exc: %s' % exc)
+            self.module.debug('exc: %s' % exc)
             # this should never happen, but if it does fail quietly and not with a traceback
             return False, dist_file_dict
 
@@ -211,7 +211,7 @@ class DistributionFiles:
         if 'Slackware' not in data:
             return False, slackware_facts  # TODO: remove
         slackware_facts['distribution'] = name
-        version = re.findall(r'\w+[.]\w+', data)
+        version = re.findall(r'\w+[.]\w+\+?', data)
         if version:
             slackware_facts['distribution_version'] = version[0]
         return True, slackware_facts
@@ -271,10 +271,6 @@ class DistributionFiles:
                     else:
                         release = "0"  # no minor number, so it is the first release
                     suse_facts['distribution_release'] = release
-                # Starting with SLES4SAP12 SP3 NAME reports 'SLES' instead of 'SLES_SAP'
-                # According to SuSe Support (SR101182877871) we should use the CPE_NAME to detect SLES4SAP
-                if re.search("^CPE_NAME=.*sles_sap.*$", line):
-                    suse_facts['distribution'] = 'SLES_SAP'
         elif path == '/etc/SuSE-release':
             if 'open' in data.lower():
                 data = data.splitlines()
@@ -296,6 +292,10 @@ class DistributionFiles:
                     if release:
                         suse_facts['distribution_release'] = release.group(1)
                         suse_facts['distribution_version'] = collected_facts['distribution_version'] + '.' + release.group(1)
+
+        # See https://www.suse.com/support/kb/doc/?id=000019341 for SLES for SAP
+        if os.path.islink('/etc/products.d/baseproduct') and os.path.realpath('/etc/products.d/baseproduct').endswith('SLES_SAP.prod'):
+            suse_facts['distribution'] = 'SLES_SAP'
 
         return True, suse_facts
 
@@ -321,9 +321,12 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
-        elif path in ('/etc/lsb-release', '/etc/os-release') and 'Kali' in data:
-            # Kali does not provide /etc/lsb-release anymore
-            debian_facts['distribution'] = 'Kali'
+        elif path in ('/etc/lsb-release', '/etc/os-release') and ('Kali' in data or 'Parrot' in data):
+            if 'Kali' in data:
+                # Kali does not provide /etc/lsb-release anymore
+                debian_facts['distribution'] = 'Kali'
+            elif 'Parrot' in data:
+                debian_facts['distribution'] = 'Parrot'
             release = re.search('DISTRIB_RELEASE=(.*)', data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
@@ -488,7 +491,7 @@ class Distribution(object):
                                 'EulerOS', 'openEuler'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', ],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
@@ -503,7 +506,9 @@ class Distribution(object):
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
                      'FreeBSD': ['FreeBSD', 'TrueOS'],
-                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
+                     'DragonFly': ['DragonflyBSD', 'DragonFlyBSD', 'Gentoo/DragonflyBSD', 'Gentoo/DragonFlyBSD'],
+                     'NetBSD': ['NetBSD'], }
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -601,13 +606,28 @@ class Distribution(object):
         return openbsd_facts
 
     def get_distribution_DragonFly(self):
-        return {}
+        dragonfly_facts = {
+            'distribution_release': platform.release()
+        }
+        rc, out, dummy = self.module.run_command("/sbin/sysctl -n kern.version")
+        match = re.search(r'v(\d+)\.(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', out)
+        if match:
+            dragonfly_facts['distribution_major_version'] = match.group(1)
+            dragonfly_facts['distribution_version'] = '%s.%s.%s' % match.groups()[:3]
+        return dragonfly_facts
 
     def get_distribution_NetBSD(self):
         netbsd_facts = {}
-        # FIXME: poking at self.facts, should eventually make these each a collector
         platform_release = platform.release()
-        netbsd_facts['distribution_major_version'] = platform_release.split('.')[0]
+        netbsd_facts['distribution_release'] = platform_release
+        rc, out, dummy = self.module.run_command("/sbin/sysctl -n kern.version")
+        match = re.match(r'NetBSD\s(\d+)\.(\d+)\s\((GENERIC)\).*', out)
+        if match:
+            netbsd_facts['distribution_major_version'] = match.group(1)
+            netbsd_facts['distribution_version'] = '%s.%s' % match.groups()[:2]
+        else:
+            netbsd_facts['distribution_major_version'] = platform_release.split('.')[0]
+            netbsd_facts['distribution_version'] = platform_release
         return netbsd_facts
 
     def get_distribution_SMGL(self):

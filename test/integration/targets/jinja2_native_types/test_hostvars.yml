@@ -1,4 +1,4 @@
-- hosts: host1
+- hosts: localhost
   gather_facts: no
   tasks:
     - name: Print vars

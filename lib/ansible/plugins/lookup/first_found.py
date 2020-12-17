@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: first_found
-    author: Seth Vidal <skvidal@fedoraproject.org>
+    name: first_found
+    author: Seth Vidal (!UNKNOWN) <skvidal@fedoraproject.org>
     version_added: historical
     short_description: return first file found from list
     description:
@@ -99,6 +99,8 @@ RETURN = """
   _raw:
     description:
       - path to file found
+    type: list
+    elements: path
 """
 import os
 

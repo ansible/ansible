@@ -1,0 +1,2 @@
+bugfixes:
+  - Be smarter about collection paths ending with ansible_collections, emulating a-galaxy behaviour. Issue 72628

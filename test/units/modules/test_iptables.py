@@ -1,3 +1,6 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.modules import iptables
@@ -872,4 +875,81 @@ class TestIptables(ModuleTestCase):
             '7.8.9.10/42',
             '-j',
             'ACCEPT'
+        ])
+
+    def test_comment_position_at_end(self):
+        """Test flush without parameters"""
+        set_module_args({
+            'chain': 'INPUT',
+            'jump': 'ACCEPT',
+            'action': 'insert',
+            'ctstate': ['NEW'],
+            'comment': 'this is a comment',
+            '_ansible_check_mode': True,
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'INPUT',
+            '-j',
+            'ACCEPT',
+            '-m',
+            'conntrack',
+            '--ctstate',
+            'NEW',
+            '-m',
+            'comment',
+            '--comment',
+            'this is a comment'
+        ])
+        self.assertEqual(run_command.call_args[0][0][14], 'this is a comment')
+
+    def test_destination_ports(self):
+        """ Test multiport module usage with multiple ports """
+        set_module_args({
+            'chain': 'INPUT',
+            'protocol': 'tcp',
+            'in_interface': 'eth0',
+            'source': '192.168.0.1/32',
+            'destination_ports': ['80', '443', '8081:8085'],
+            'jump': 'ACCEPT',
+            'comment': 'this is a comment',
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-C', 'INPUT',
+            '-p', 'tcp',
+            '-s', '192.168.0.1/32',
+            '-j', 'ACCEPT',
+            '-m', 'multiport',
+            '--dports', '80,443,8081:8085',
+            '-i', 'eth0',
+            '-m', 'comment',
+            '--comment', 'this is a comment'
         ])

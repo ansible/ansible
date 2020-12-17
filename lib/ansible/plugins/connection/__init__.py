@@ -232,7 +232,7 @@ class ConnectionBase(AnsiblePlugin):
     # NOTE: these password functions are all become specific, the name is
     # confusing as it does not handle 'protocol passwords'
     # DEPRECATED:
-    # These are kept for backwards compatiblity
+    # These are kept for backwards compatibility
     # Use the methods provided by the become plugins instead
     def check_become_success(self, b_output):
         display.deprecated(

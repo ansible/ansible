@@ -1,0 +1,2 @@
+minor_changes:
+  - subversion - ``validate_certs`` option, which, when true, will avoid passing ``--trust-server-cert`` to ``svn`` commands (https://github.com/ansible/ansible/issues/22599).

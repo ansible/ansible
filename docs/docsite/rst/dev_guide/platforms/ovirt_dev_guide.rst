@@ -3,8 +3,7 @@
 oVirt Ansible Modules
 =====================
 
-This is a set of modules for interacting with oVirt/RHV. This document
-serves as developer coding guidelines for creating oVirt/RHV modules.
+The set of modules for interacting with oVirt/RHV are currently part of the community.general collection (on `Galaxy <https://galaxy.ansible.com/community/general>`_, source code `repository <https://github.com/ansible-collections/community.general/tree/main/plugins/modules/cloud/ovirt>`_). This document serves as developer coding guidelines for creating oVirt/RHV modules.
 
 .. contents::
    :local:
@@ -126,7 +125,7 @@ entity of the SDK.
     )
 
     # Create the Ansible module, please always implement the
-    # feautre called 'check_mode', for 'create', 'update' and
+    # feature called 'check_mode', for 'create', 'update' and
     # 'delete' operations it's implemented by default in BaseModule:
     module = AnsibleModule(
         argument_spec=argument_spec,

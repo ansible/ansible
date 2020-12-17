@@ -87,7 +87,8 @@ $bootstrap_wrapper = {
 $bootstrap_wrapper = $bootstrap_wrapper.ToString().Replace('$pipe_name = ""', "`$pipe_name = `"$pipe_name`"")
 $bootstrap_wrapper = $bootstrap_wrapper.Replace('$bytes_length = 0', "`$bytes_length = $($payload_bytes.Count)")
 $encoded_command = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bootstrap_wrapper))
-$exec_args = "powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command"
+$pwsh_path = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+$exec_args = "`"$pwsh_path`" -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command"
 
 # create a named pipe that is set to allow only the current user read access
 $current_user = ([Security.Principal.WindowsIdentity]::GetCurrent()).User

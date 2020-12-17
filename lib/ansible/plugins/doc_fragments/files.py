@@ -2,6 +2,8 @@
 
 # Copyright: (c) 2014, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 class ModuleDocFragment(object):
@@ -23,8 +25,11 @@ options:
       number which will have unexpected results.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
       C(u=rw,g=r,o=r)).
-    - As of Ansible 2.6, the mode may also be the special string C(preserve).
-    - When set to C(preserve) the file will be given the same permissions as the source file.
+    - If C(mode) is not specified and the destination file B(does not) exist, the default C(umask) on the system will be used
+      when setting the mode for the newly created file.
+    - If C(mode) is not specified and the destination file B(does) exist, the mode of the existing file will be used.
+    - Specifying C(mode) is the best way to ensure files are created with the correct permissions.
+      See CVE-2020-1736 for further details.
     type: raw
   owner:
     description:

@@ -1,0 +1,2 @@
+minor_changes:
+  - Add yum/dnf version comparison documentation for package install

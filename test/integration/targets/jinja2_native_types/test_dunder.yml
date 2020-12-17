@@ -20,4 +20,4 @@
 
 - assert:
     that:
-        - 'const_dunder|type_debug in ["str", "unicode"]'
+        - 'const_dunder|type_debug in ["str", "unicode", "NativeJinjaText"]'

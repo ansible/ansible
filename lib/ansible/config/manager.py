@@ -24,7 +24,7 @@ except ImportError:
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -144,8 +144,12 @@ def ensure_type(value, value_type, origin=None):
             else:
                 errmsg = 'pathlist'
 
+        elif value_type in ('dict', 'dictionary'):
+            if not isinstance(value, Mapping):
+                errmsg = 'dictionary'
+
         elif value_type in ('str', 'string'):
-            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
+            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode, bool, int, float, complex)):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
@@ -262,6 +266,20 @@ def find_ini_config_file(warnings=None):
     return path
 
 
+def _add_base_defs_deprecations(base_defs):
+    '''Add deprecation source 'ansible.builtin' to deprecations in base.yml'''
+    def process(entry):
+        if 'deprecated' in entry:
+            entry['deprecated']['collection_name'] = 'ansible.builtin'
+
+    for dummy, data in base_defs.items():
+        process(data)
+        for section in ('ini', 'env', 'vars'):
+            if section in data:
+                for entry in data[section]:
+                    process(entry)
+
+
 class ConfigManager(object):
 
     DEPRECATED = []
@@ -277,6 +295,7 @@ class ConfigManager(object):
         self.data = ConfigData()
 
         self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
+        _add_base_defs_deprecations(self._base_defs)
 
         if self._config_file is None:
             # set config using ini
@@ -429,10 +448,12 @@ class ConfigManager(object):
         defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
+            aliases = defs[config].get('aliases', [])
+
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
             direct_aliases = []
             if direct:
-                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
+                direct_aliases = [direct[alias] for alias in aliases if alias in direct]
             if direct and config in direct:
                 value = direct[config]
                 origin = 'Direct'
@@ -447,9 +468,20 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and config in keys:
-                    value, origin = keys[config], 'keyword'
-                    origin = 'keyword: %s' % origin
+                if value is None and keys:
+                    if config in keys:
+                        value = keys[config]
+                        keyword = config
+
+                    elif aliases:
+                        for alias in aliases:
+                            if alias in keys:
+                                value = keys[alias]
+                                keyword = alias
+                                break
+
+                    if value is not None:
+                        origin = 'keyword: %s' % keyword
 
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):

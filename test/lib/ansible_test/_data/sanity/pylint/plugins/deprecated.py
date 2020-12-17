@@ -55,14 +55,14 @@ MSGS = {
               "ansible-deprecated-no-collection-name",
               "The current collection name in format `namespace.name` must "
               "be provided as collection_name when calling Display.deprecated "
-              "or AnsibleModule.deprecate (`ansible.builtin` for ansible-base)",
+              "or AnsibleModule.deprecate (`ansible.builtin` for ansible-core)",
               {'minversion': (2, 6)}),
     'E9507': ("Wrong collection name (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "wrong-collection-deprecated",
               "The name of the current collection must be passed to the "
               "Display.deprecated resp. AnsibleModule.deprecate calls "
-              "(`ansible.builtin` for ansible-base)",
+              "(`ansible.builtin` for ansible-core)",
               {'minversion': (2, 6)}),
     'E9508': ("Expired date (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
@@ -80,6 +80,13 @@ MSGS = {
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-deprecated-both-version-and-date",
               "Only one of version and date must be specified",
+              {'minversion': (2, 6)}),
+    'E9511': ("Removal version (%r) must be a major release, not a minor or "
+              "patch release (see the specification at https://semver.org/)",
+              "removal-version-must-be-major",
+              "Used when a call to Display.deprecated or "
+              "AnsibleModule.deprecate for a collection specifies a version "
+              "which is not of the form x.0.0",
               {'minversion': (2, 6)}),
 }
 
@@ -189,6 +196,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
                 if collection_name == self.collection_name and self.collection_version is not None:
                     if self.collection_version >= semantic_version:
                         self.add_message('collection-deprecated-version', node=node, args=(version,))
+                if semantic_version.major != 0 and (semantic_version.minor != 0 or semantic_version.patch != 0):
+                    self.add_message('removal-version-must-be-major', node=node, args=(version,))
             except ValueError:
                 self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
 

@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: oneline
+    name: oneline
     type: stdout
     short_description: oneline Ansible screen output
     version_added: historical

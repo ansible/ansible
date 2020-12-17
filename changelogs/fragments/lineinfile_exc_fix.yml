@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - fix not subscriptable error in exception handling around file creation

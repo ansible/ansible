@@ -1,3 +1,5 @@
+.. _base_roadmap_2_10:
+
 =================
 Ansible-base 2.10
 =================
@@ -19,8 +21,10 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 - 2020-06-16 Beta 1 **Feature freeze**
   No new functionality (including modules/plugins) to any code
 
-- 2020-07-14 Release Candidate 1
-- 2020-??-?? Release Candidate 2 if needed
+- 2020-07-21 Release Candidate 1 (bumped from 2020-07-14)
+- 2020-07-24 Release Candidate 2
+- 2020-07-25 Release Candidate 3
+- 2020-07-30 Release Candidate 4
 - 2020-08-13 Release
 
 Release Manager
@@ -44,4 +48,4 @@ moving much of the plugins into smaller collection repositories that will be shi
 The following links have more information about this process:
 
 - https://groups.google.com/d/msg/ansible-devel/oKqgCeYTs-M/cHrOgMw8CAAJ
-- https://github.com/ansible-collections/overview/blob/master/README.rst
+- https://github.com/ansible-collections/overview/blob/main/README.rst

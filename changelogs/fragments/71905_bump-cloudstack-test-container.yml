@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Implemented CloudStack test container selection by ENV variable `ANSIBLE_CLOUDSTACK_CONTAINER` with a default to `quay.io/ansible/cloudstack-test-container:1.4.0`.

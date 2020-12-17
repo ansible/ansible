@@ -45,7 +45,7 @@ After stepping through the tutorial you will have:
 * Your Client ID, which is found in the "client id" box in the "Configure" page of your application in the Azure portal
 * Your Secret key, generated when you created the application. You cannot show the key after creation.
   If you lost the key, you must create a new one in the "Configure" page of your application.
-* And finally, a tenant ID. It's a UUID (e.g. ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
+* And finally, a tenant ID. It's a UUID (for example, ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
   application. You will find it in the URL from within the Azure portal, or in the "view endpoints" of any given URL.
 
 
@@ -132,7 +132,7 @@ Or, pass the following parameters for Active Directory username/password:
 * password
 * subscription_id
 
-Or, pass the following parameters for ADFS username/pasword:
+Or, pass the following parameters for ADFS username/password:
 
 * ad_user
 * password
@@ -286,14 +286,14 @@ Dynamic Inventory Script
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
-The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
+The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
 create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash
 
-    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.py
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py
     $ ./azure_rm.py --help
 
 As with all dynamic inventory scripts, the script can be executed directly, passed as a parameter to the ansible command,
@@ -364,7 +364,7 @@ azure_rm.ini file in your current working directory.
 
 NOTE: An .ini file will take precedence over environment variables.
 
-NOTE: The name of the .ini file is the basename of the inventory script (i.e. 'azure_rm') with a '.ini'
+NOTE: The name of the .ini file is the basename of the inventory script (in other words, 'azure_rm') with a '.ini'
 extension. This allows you to copy, rename and customize the inventory script and have matching .ini files all in
 the same directory.
 
@@ -397,7 +397,7 @@ If you don't need the powerstate, you can improve performance by turning off pow
 * AZURE_INCLUDE_POWERSTATE=no
 
 A sample azure_rm.ini file is included along with the inventory script in
-`here <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.ini>`_.
+`here <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.ini>`_.
 An .ini file will contain the following:
 
 .. code-block:: ini
@@ -432,7 +432,7 @@ Here are some examples using the inventory script:
 .. code-block:: bash
 
     # Download inventory script
-    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.py
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py
 
     # Execute /bin/uname on all instances in the Testing resource group
     $ ansible -i azure_rm.py Testing -m shell -a "/bin/uname -a"

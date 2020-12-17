@@ -17,6 +17,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
+from ansible.utils.fqcn import add_internal_fqcns
 
 
 def _warning(msg):
@@ -39,32 +40,6 @@ def _deprecated(msg, version='2.8'):
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
 
 
-def mk_boolean(value):
-    ''' moved to module_utils'''
-    _deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead')
-    return boolean(value, strict=False)
-
-
-def get_config(parser, section, key, env_var, default_value, value_type=None, expand_relative_paths=False):
-    ''' kept for backwarsd compatibility, but deprecated '''
-    _deprecated('ansible.constants.get_config() is deprecated. There is new config API, see porting docs.')
-
-    value = None
-    # small reconstruction of the old code env/ini/default
-    value = os.environ.get(env_var, None)
-    if value is None:
-        try:
-            value = get_ini_config_value(parser, {'key': key, 'section': section})
-        except Exception:
-            pass
-    if value is None:
-        value = default_value
-
-    value = ensure_type(value, value_type)
-
-    return value
-
-
 def set_constant(name, value, export=vars()):
     ''' sets constants and returns resolved options dict '''
     export[name] = value
@@ -85,17 +60,8 @@ class _DeprecatedSequenceConstant(Sequence):
         return self._value[y]
 
 
-# Deprecated constants
-BECOME_METHODS = _DeprecatedSequenceConstant(
-    ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable', 'machinectl'],
-    ('ansible.constants.BECOME_METHODS is deprecated, please use '
-     'ansible.plugins.loader.become_loader. This list is statically '
-     'defined and may not include all become methods'),
-    '2.10'
-)
-
 # CONSTANTS ### yes, actual ones
-BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
+REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
 DEFAULT_BECOME_PASS = None
@@ -109,10 +75,10 @@ DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = ('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                       'ansible.windows.win_shell', 'raw', 'script')
-MODULE_NO_JSON = ('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                  'ansible.windows.win_shell', 'raw')
+MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
+                                                'ansible.windows.win_shell', 'raw', 'script')))
+MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
+                                           'ansible.windows.win_shell', 'raw')))
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
@@ -199,3 +165,28 @@ for setting in config.data.get_settings():
 
 for warn in config.WARNINGS:
     _warning(warn)
+
+
+# The following are hard-coded action names
+_ACTION_DEBUG = add_internal_fqcns(('debug', ))
+_ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
+_ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
+_ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
+_ACTION_INCLUDE = add_internal_fqcns(('include', ))
+_ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
+_ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
+_ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_META = add_internal_fqcns(('meta', ))
+_ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
+_ACTION_SETUP = add_internal_fqcns(('setup', ))
+_ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
+_ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
+_ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_ALL_IMPORT_PLAYBOOKS = _ACTION_INCLUDE + _ACTION_IMPORT_PLAYBOOK
+_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
+_ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
+_ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
+_ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS

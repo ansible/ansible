@@ -20,8 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 import tempfile
+import threading
 import time
+import multiprocessing.queues
 
 from ansible import constants as C
 from ansible import context
@@ -29,24 +32,53 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
+from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.collection_loader import AnsibleCollectionRef
-from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
+from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 __all__ = ['TaskQueueManager']
 
 display = Display()
+
+
+class CallbackSend:
+    def __init__(self, method_name, *args, **kwargs):
+        self.method_name = method_name
+        self.args = args
+        self.kwargs = kwargs
+
+
+class FinalQueue(multiprocessing.queues.Queue):
+    def __init__(self, *args, **kwargs):
+        if PY3:
+            kwargs['ctx'] = multiprocessing_context
+        super(FinalQueue, self).__init__(*args, **kwargs)
+
+    def send_callback(self, method_name, *args, **kwargs):
+        self.put(
+            CallbackSend(method_name, *args, **kwargs),
+            block=False
+        )
+
+    def send_task_result(self, *args, **kwargs):
+        if isinstance(args[0], TaskResult):
+            tr = args[0]
+        else:
+            tr = TaskResult(*args, **kwargs)
+        self.put(
+            tr,
+            block=False
+        )
 
 
 class TaskQueueManager:
@@ -98,9 +130,11 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         try:
-            self._final_q = multiprocessing_context.Queue()
+            self._final_q = FinalQueue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
+
+        self._callback_lock = threading.Lock()
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -138,49 +172,70 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        loaded_callbacks = set()
+        # get all configured loadable callbacks (adjacent, builtin)
+        callback_list = list(callback_loader.all(class_only=True))
 
-        # first, load callbacks in the core distribution and configured callback paths
-        for callback_plugin in callback_loader.all(class_only=True):
+        # add enabled callbacks that refer to collections, which might not appear in normal listing
+        for c in C.CALLBACKS_ENABLED:
+            # load all, as collection ones might be using short/redirected names and not a fqcn
+            plugin = callback_loader.get(c, class_only=True)
+
+            # TODO: check if this skip is redundant, loader should handle bad file/plugin cases already
+            if plugin:
+                # avoids incorrect and dupes possible due to collections
+                if plugin not in callback_list:
+                    callback_list.append(plugin)
+            else:
+                display.warning("Skipping callback plugin '%s', unable to load" % c)
+
+        # for each callback in the list see if we should add it to 'active callbacks' used in the play
+        for callback_plugin in callback_list:
+
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
-            callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+            callback_needs_enabled = getattr(callback_plugin, 'CALLBACK_NEEDS_ENABLED', getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False))
+
+            # try to get colleciotn world name first
+            cnames = getattr(callback_plugin, '_redirected_names', [])
+            if cnames:
+                # store the name the plugin was loaded as, as that's what we'll need to compare to the configured callback list later
+                callback_name = cnames[0]
+            else:
+                # fallback to 'old loader name'
+                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+
+            display.vvvvv("Attempting to use '%s' callback." % (callback_name))
             if callback_type == 'stdout':
                 # we only allow one callback of type 'stdout' to be loaded,
                 if callback_name != self._stdout_callback or stdout_callback_loaded:
+                    display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_name))
                     continue
                 stdout_callback_loaded = True
             elif callback_name == 'tree' and self._run_tree:
-                # special case for ansible cli option
+                # TODO: remove special case for tree, which is an adhoc cli option --tree
                 pass
-            # eg, ad-hoc doesn't allow non-default callbacks
-            elif not self._run_additional_callbacks or (callback_needs_whitelist and (
-                    C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
-                # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+            elif not self._run_additional_callbacks or (callback_needs_enabled and (
+                # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
+                    C.CALLBACKS_ENABLED is None or callback_name not in C.CALLBACKS_ENABLED)):
+                # 2.x plugins shipped with ansible should require enabling, older or non shipped should load automatically
                 continue
 
-            callback_obj = callback_plugin()
-            loaded_callbacks.add(callback_name)  # mark as loaded so we skip in second pass
-            callback_obj.set_options()
-            self._callback_plugins.append(callback_obj)
-
-        # eg, ad-hoc doesn't allow non-default callbacks
-        if self._run_additional_callbacks:
-            # Second pass over everything in the whitelist we haven't already loaded, try to explicitly load. This will catch
-            # collection-hosted callbacks, as well as formerly-core callbacks that have been redirected to collections.
-            for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if c not in loaded_callbacks):
-                # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-                callback_obj, plugin_load_context = callback_loader.get_with_context(callback_plugin_name)
+            try:
+                callback_obj = callback_plugin()
+                # avoid bad plugin not returning an object, only needed cause we do class_only load and bypass loader checks,
+                # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
-                    loaded_as_name = callback_obj._redirected_names[-1]
-                    if loaded_as_name in loaded_callbacks:
-                        display.warning("Skipping callback '%s', already loaded as '%s'." % (callback_plugin_name, loaded_as_name))
-                        continue
-                    loaded_callbacks.add(loaded_as_name)
-                    callback_obj.set_options()
-                    self._callback_plugins.append(callback_obj)
+                    # skip initializing if we already did the work for the same plugin (even with diff names)
+                    if callback_obj not in self._callback_plugins:
+                        callback_obj.set_options()
+                        self._callback_plugins.append(callback_obj)
+                    else:
+                        display.vv("Skipping callback '%s', already loaded as '%s'." % (callback_plugin, callback_name))
                 else:
-                    display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
+                    display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
+                    continue
+            except Exception as e:
+                display.warning("Skipping callback '%s', unable to load due to: %s" % (callback_name, to_native(e)))
+                continue
 
         self._callbacks_loaded = True
 
@@ -197,8 +252,8 @@ class TaskQueueManager:
             self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(play=play)
-        warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
+        warn_if_reserved(all_vars, templar.environment.globals.keys())
 
         new_play = play.copy()
         new_play.post_validate(templar)
@@ -256,14 +311,16 @@ class TaskQueueManager:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out
-        play_return = strategy.run(iterator, play_context)
+        try:
+            play_return = strategy.run(iterator, play_context)
+        finally:
+            strategy.cleanup()
+            self._cleanup_processes()
 
         # now re-save the hosts that failed from the iterator to our internal list
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
 
-        strategy.cleanup()
-        self._cleanup_processes()
         return play_return
 
     def cleanup(self):
@@ -271,6 +328,22 @@ class TaskQueueManager:
         self.terminate()
         self._final_q.close()
         self._cleanup_processes()
+
+        # A bug exists in Python 2.6 that causes an exception to be raised during
+        # interpreter shutdown. This is only an issue in our CI testing but we
+        # hit it frequently enough to add a small sleep to avoid the issue.
+        # This can be removed once we have split controller available in CI.
+        #
+        # Further information:
+        #     Issue: https://bugs.python.org/issue4106
+        #     Fix:   https://hg.python.org/cpython/rev/d316315a8781
+        #
+        try:
+            if (2, 6) == (sys.version_info[0:2]):
+                time.sleep(0.0001)
+        except (IndexError, AttributeError):
+            # In case there is an issue getting the version info, don't raise an Exception
+            pass
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
@@ -319,12 +392,17 @@ class TaskQueueManager:
                 defunct = True
         return defunct
 
+    @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
                 continue
+
+            # a plugin can opt in to implicit tasks (such as meta). It does this
+            # by declaring self.wants_implicit_tasks = True.
+            wants_implicit_tasks = getattr(callback_plugin, 'wants_implicit_tasks', False)
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
@@ -337,6 +415,12 @@ class TaskQueueManager:
 
             # send clean copies
             new_args = []
+
+            # If we end up being given an implicit task, we'll set this flag in
+            # the loop below. If the plugin doesn't care about those, then we
+            # check and continue to the next iteration of the outer loop.
+            is_implicit_task = False
+
             for arg in args:
                 # FIXME: add play/task cleaners
                 if isinstance(arg, TaskResult):
@@ -345,6 +429,12 @@ class TaskQueueManager:
                 # elif isinstance(arg, Task):
                 else:
                     new_args.append(arg)
+
+                if isinstance(arg, Task) and arg.implicit:
+                    is_implicit_task = True
+
+            if is_implicit_task and not wants_implicit_tasks:
+                continue
 
             for method in methods:
                 try:

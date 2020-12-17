@@ -114,6 +114,7 @@
         file: "{{ yum_repository_test_repo.name ~ 2 }}"
         ip_resolve: 4
         keepalive: no
+        module_hotfixes: no
       register: test_repo_add1
 
     - name: check that options are correctly getting written to the repo file
@@ -124,6 +125,7 @@
           - "'enablegroups = 0' in repo_file_contents"
           - "'ip_resolve = 4' in repo_file_contents"
           - "'keepalive = 0' in repo_file_contents"
+          - "'module_hotfixes = 0' in repo_file_contents"
       vars:
         repo_file: "{{ '/etc/yum.repos.d/' ~ yum_repository_test_repo.name ~ '2.repo' }}"
         repo_file_contents: "{{ lookup('file', repo_file) }}"
@@ -138,6 +140,7 @@
         file: "{{ yum_repository_test_repo.name ~ 2 }}"
         ip_resolve: 4
         keepalive: no
+        module_hotfixes: no
       register: test_repo_add2
 
     - name: check Idempotant

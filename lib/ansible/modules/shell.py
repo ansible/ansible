@@ -19,9 +19,9 @@ short_description: Execute shell commands on targets
 description:
      - The C(shell) module takes the command name followed by a list of space-delimited arguments.
      - Either a free form command or C(cmd) parameter is required, see the examples.
-     - It is almost exactly like the M(command) module but runs
+     - It is almost exactly like the M(ansible.builtin.command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
-     - For Windows targets, use the M(win_shell) module instead.
+     - For Windows targets, use the M(ansible.windows.win_shell) module instead.
 version_added: "0.2"
 options:
   free_form:
@@ -73,10 +73,10 @@ options:
     version_added: "2.8"
 notes:
   - If you want to execute a command securely and predictably, it may be
-    better to use the M(command) module instead. Best practices when writing
-    playbooks will follow the trend of using M(command) unless the C(shell)
-    module is explicitly required. When running ad-hoc commands, use your best
-    judgement.
+    better to use the M(ansible.builtin.command) module instead. Best practices
+    when writing playbooks will follow the trend of using M(ansible.builtin.command)
+    unless the M(ansible.builtin.shell) module is explicitly required. When running ad-hoc
+    commands, use your best judgement.
   - Check mode is supported when passing C(creates) or C(removes). If running
     in check mode and either of these are specified, the module will check for
     the existence of the file and report the correct changed status. If these
@@ -85,13 +85,13 @@ notes:
     C({{ var | quote }}) instead of just C({{ var }}) to make sure they
     do not include evil things like semicolons.
   - An alternative to using inline shell scripts with this module is to use
-    the M(script) module possibly together with the M(template) module.
-  - For rebooting systems, use the M(reboot) or M(win_reboot) module.
+    the M(ansible.builtin.script) module possibly together with the M(ansible.builtin.template) module.
+  - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
 seealso:
-- module: command
-- module: raw
-- module: script
-- module: win_shell
+- module: ansible.builtin.command
+- module: ansible.builtin.raw
+- module: ansible.builtin.script
+- module: ansible.windows.win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -99,37 +99,37 @@ author:
 
 EXAMPLES = r'''
 - name: Execute the command in remote shell; stdout goes to the specified file on the remote
-  shell: somescript.sh >> somelog.txt
+  ansible.builtin.shell: somescript.sh >> somelog.txt
 
 - name: Change the working directory to somedir/ before executing the command
-  shell: somescript.sh >> somelog.txt
+  ansible.builtin.shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
 
 # You can also use the 'args' form to provide the options.
 - name: This command will change the working directory to somedir/ and will only run when somedir/somelog.txt doesn't exist
-  shell: somescript.sh >> somelog.txt
+  ansible.builtin.shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
     creates: somelog.txt
 
 # You can also use the 'cmd' parameter instead of free form format.
 - name: This command will change the working directory to somedir/
-  shell:
+  ansible.builtin.shell:
     cmd: ls -l | grep log
     chdir: somedir/
 
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
-  shell: cat < /tmp/*txt
+  ansible.builtin.shell: cat < /tmp/*txt
   args:
     executable: /bin/bash
 
 - name: Run a command using a templated variable (always use quote filter to avoid injection)
-  shell: cat {{ myfile|quote }}
+  ansible.builtin.shell: cat {{ myfile|quote }}
 
 # You can use shell to run other executables to perform actions inline
 - name: Run expect to wait for a successful PXE boot via out-of-band CIMC
-  shell: |
+  ansible.builtin.shell: |
     set timeout 300
     spawn ssh admin@{{ cimc_host }}
 
@@ -149,7 +149,7 @@ EXAMPLES = r'''
 
 # Disabling warnings
 - name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning
-  shell: curl --socks5 localhost:9000 http://www.ansible.com
+  ansible.builtin.shell: curl --socks5 localhost:9000 http://www.ansible.com
   args:
     warn: no
 '''
@@ -161,47 +161,47 @@ msg:
     type: bool
     sample: True
 start:
-    description: The command execution start time
+    description: The command execution start time.
     returned: always
     type: str
     sample: '2016-02-25 09:18:26.429568'
 end:
-    description: The command execution end time
+    description: The command execution end time.
     returned: always
     type: str
     sample: '2016-02-25 09:18:26.755339'
 delta:
-    description: The command execution delta time
+    description: The command execution delta time.
     returned: always
     type: str
     sample: '0:00:00.325771'
 stdout:
-    description: The command standard output
+    description: The command standard output.
     returned: always
     type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 stderr:
-    description: The command standard error
+    description: The command standard error.
     returned: always
     type: str
     sample: 'ls: cannot access foo: No such file or directory'
 cmd:
-    description: The command executed by the task
+    description: The command executed by the task.
     returned: always
     type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
-    description: The command return code (0 means success)
+    description: The command return code (0 means success).
     returned: always
     type: int
     sample: 0
 stdout_lines:
-    description: The command standard output split in lines
+    description: The command standard output split in lines.
     returned: always
     type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
 stderr_lines:
-    description: The command standard error split in lines
+    description: The command standard error split in lines.
     returned: always
     type: list
     sample: [u'ls cannot access foo: No such file or directory', u'ls …']

@@ -83,6 +83,76 @@ import yaml
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
+from functools import partial
+from multiprocessing import dummy as threading
+
+
+def publish_collection(module, collection):
+    namespace = collection['namespace']
+    name = collection['name']
+    version = collection['version']
+    dependencies = collection['dependencies']
+    use_symlink = collection['use_symlink']
+
+    result = {}
+    collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (namespace, name, version))
+    b_collection_dir = to_bytes(collection_dir, errors='surrogate_or_strict')
+    os.mkdir(b_collection_dir)
+
+    with open(os.path.join(b_collection_dir, b'README.md'), mode='wb') as fd:
+        fd.write(b"Collection readme")
+
+    galaxy_meta = {
+        'namespace': namespace,
+        'name': name,
+        'version': version,
+        'readme': 'README.md',
+        'authors': ['Collection author <name@email.com'],
+        'dependencies': dependencies,
+        'license': ['GPL-3.0-or-later'],
+        'repository': 'https://ansible.com/',
+    }
+    with open(os.path.join(b_collection_dir, b'galaxy.yml'), mode='wb') as fd:
+        fd.write(to_bytes(yaml.safe_dump(galaxy_meta), errors='surrogate_or_strict'))
+
+    with tempfile.NamedTemporaryFile(mode='wb') as temp_fd:
+        temp_fd.write(b"data")
+
+        if use_symlink:
+            os.mkdir(os.path.join(b_collection_dir, b'docs'))
+            os.mkdir(os.path.join(b_collection_dir, b'plugins'))
+            b_target_file = b'RE\xc3\x85DM\xc3\x88.md'
+            with open(os.path.join(b_collection_dir, b_target_file), mode='wb') as fd:
+                fd.write(b'data')
+
+            os.symlink(b_target_file, os.path.join(b_collection_dir, b_target_file + b'-link'))
+            os.symlink(temp_fd.name, os.path.join(b_collection_dir, b_target_file + b'-outside-link'))
+            os.symlink(os.path.join(b'..', b_target_file), os.path.join(b_collection_dir, b'docs', b_target_file))
+            os.symlink(os.path.join(b_collection_dir, b_target_file),
+                       os.path.join(b_collection_dir, b'plugins', b_target_file))
+            os.symlink(b'docs', os.path.join(b_collection_dir, b'docs-link'))
+
+        release_filename = '%s-%s-%s.tar.gz' % (namespace, name, version)
+        collection_path = os.path.join(collection_dir, release_filename)
+        rc, stdout, stderr = module.run_command(['ansible-galaxy', 'collection', 'build'], cwd=collection_dir)
+        result['build'] = {
+            'rc': rc,
+            'stdout': stdout,
+            'stderr': stderr,
+        }
+
+    publish_args = ['ansible-galaxy', 'collection', 'publish', collection_path, '--server', module.params['server']]
+    if module.params['token']:
+        publish_args.extend(['--token', module.params['token']])
+
+    rc, stdout, stderr = module.run_command(publish_args)
+    result['publish'] = {
+        'rc': rc,
+        'stdout': stdout,
+        'stderr': stderr,
+    }
+
+    return result
 
 
 def run_module():
@@ -110,68 +180,9 @@ def run_module():
 
     result = dict(changed=True, results=[])
 
-    for idx, collection in enumerate(module.params['collections']):
-        collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (collection['namespace'], collection['name'],
-                                                                   collection['version']))
-        b_collection_dir = to_bytes(collection_dir, errors='surrogate_or_strict')
-        os.mkdir(b_collection_dir)
-
-        with open(os.path.join(b_collection_dir, b'README.md'), mode='wb') as fd:
-            fd.write(b"Collection readme")
-
-        galaxy_meta = {
-            'namespace': collection['namespace'],
-            'name': collection['name'],
-            'version': collection['version'],
-            'readme': 'README.md',
-            'authors': ['Collection author <name@email.com'],
-            'dependencies': collection['dependencies'],
-            'license': ['GPL-3.0-or-later'],
-        }
-        with open(os.path.join(b_collection_dir, b'galaxy.yml'), mode='wb') as fd:
-            fd.write(to_bytes(yaml.safe_dump(galaxy_meta), errors='surrogate_or_strict'))
-
-        with tempfile.NamedTemporaryFile(mode='wb') as temp_fd:
-            temp_fd.write(b"data")
-
-            if collection['use_symlink']:
-                os.mkdir(os.path.join(b_collection_dir, b'docs'))
-                os.mkdir(os.path.join(b_collection_dir, b'plugins'))
-                b_target_file = b'RE\xc3\x85DM\xc3\x88.md'
-                with open(os.path.join(b_collection_dir, b_target_file), mode='wb') as fd:
-                    fd.write(b'data')
-
-                os.symlink(b_target_file, os.path.join(b_collection_dir, b_target_file + b'-link'))
-                os.symlink(temp_fd.name, os.path.join(b_collection_dir, b_target_file + b'-outside-link'))
-                os.symlink(os.path.join(b'..', b_target_file), os.path.join(b_collection_dir, b'docs', b_target_file))
-                os.symlink(os.path.join(b_collection_dir, b_target_file),
-                           os.path.join(b_collection_dir, b'plugins', b_target_file))
-                os.symlink(b'docs', os.path.join(b_collection_dir, b'docs-link'))
-
-            release_filename = '%s-%s-%s.tar.gz' % (collection['namespace'], collection['name'], collection['version'])
-            collection_path = os.path.join(collection_dir, release_filename)
-            rc, stdout, stderr = module.run_command(['ansible-galaxy', 'collection', 'build'], cwd=collection_dir)
-            result['results'].append({
-                'build': {
-                    'rc': rc,
-                    'stdout': stdout,
-                    'stderr': stderr,
-                }
-            })
-
-        # To save on time, skip the import wait until the last collection is being uploaded.
-        publish_args = ['ansible-galaxy', 'collection', 'publish', collection_path, '--server',
-                        module.params['server']]
-        if module.params['token']:
-            publish_args.extend(['--token', module.params['token']])
-        if idx != (len(module.params['collections']) - 1):
-            publish_args.append('--no-wait')
-        rc, stdout, stderr = module.run_command(publish_args)
-        result['results'][-1]['publish'] = {
-            'rc': rc,
-            'stdout': stdout,
-            'stderr': stderr,
-        }
+    pool = threading.Pool(4)
+    publish_func = partial(publish_collection, module)
+    result['results'] = pool.map(publish_func, module.params['collections'])
 
     failed = bool(sum(
         r['build']['rc'] + r['publish']['rc'] for r in result['results']

@@ -4,9 +4,9 @@
 Using Variables
 ***************
 
-Ansible uses variables to manage differences between systems. With Ansible, you can execute tasks and playbooks on multiple different systems with a single command. To represent the variations among those different systems, you can create variables with standard YAML syntax, including lists and dictionaries. You can set these variables in your playbooks, in your :ref:`inventory <intro_inventory>`, in re-usable :ref:`files <playbooks_reuse>` or :ref:`roles <playbooks_reuse_roles>`, or at the command line. You can also create variables during a playbook run by registering the return value or values of a task as a new variable.
+Ansible uses variables to manage differences between systems. With Ansible, you can execute tasks and playbooks on multiple different systems with a single command. To represent the variations among those different systems, you can create variables with standard YAML syntax, including lists and dictionaries. You can define these variables in your playbooks, in your :ref:`inventory <intro_inventory>`, in re-usable :ref:`files <playbooks_reuse>` or :ref:`roles <playbooks_reuse_roles>`, or at the command line. You can also create variables during a playbook run by registering the return value or values of a task as a new variable.
 
-You can use the variables you created in module arguments, in :ref:`conditional "when" statements <playbooks_conditionals>`, in :ref:`templates <playbooks_templating>`, and in :ref:`loops <playbooks_loops>`. The `ansible-examples github repository <https://github.com/ansible/ansible-examples>`_ contains many examples of using variables in Ansible.
+After you create variables, either by defining them in a file, passing them at the command line, or registering the return value or values of a task as a new variable, you can use those variables in module arguments, in :ref:`conditional "when" statements <playbooks_conditionals>`, in :ref:`templates <playbooks_templating>`, and in :ref:`loops <playbooks_loops>`. The `ansible-examples github repository <https://github.com/ansible/ansible-examples>`_ contains many examples of using variables in Ansible.
 
 Once you understand the concepts and examples on this page, read about :ref:`Ansible facts <vars_and_facts>`, which are variables you retrieve from remote systems.
 
@@ -18,9 +18,11 @@ Once you understand the concepts and examples on this page, read about :ref:`Ans
 Creating valid variable names
 =============================
 
-Not all strings are valid Ansible variable names. A variable name can only include letters, numbers, and underscores. `Python keywords`_ and :ref:`playbook keywords<playbook_keywords>` are not valid variable names. A variable name cannot begin with a number.
+Not all strings are valid Ansible variable names. A variable name can only include letters, numbers, and underscores. `Python keywords`_ or :ref:`playbook keywords<playbook_keywords>` are not valid variable names. A variable name cannot begin with a number.
 
 Variable names can begin with an underscore. In many programming languages, variables that begin with an underscore are private. This is not true in Ansible. Variables that begin with an underscore are treated exactly the same as any other variable. Do not rely on this convention for privacy or security.
+
+This table gives examples of valid and invalid variable names:
 
 .. table::
    :class: documentation-table
@@ -42,7 +44,7 @@ Variable names can begin with an underscore. In many programming languages, vari
 Simple variables
 ================
 
-Simple variables combine a variable name with a single value. You can use this syntax (and the syntax for lists and dictionaries shown below) in a variety of places. See :ref:`setting_variables` for information on where to set variables.
+Simple variables combine a variable name with a single value. You can use this syntax (and the syntax for lists and dictionaries shown below) in a variety of places. For details about setting variables in inventory, in playbooks, in reusable files, in roles, or at the command line, see :ref:`setting_variables`.
 
 Defining simple variables
 -------------------------
@@ -54,9 +56,11 @@ You can define a simple variable using standard YAML syntax. For example::
 Referencing simple variables
 ----------------------------
 
-Once you have defined a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example::
+After you define a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example::
 
-    template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
+    ansible.builtin.template:
+      src: foo.cfg.j2
+      dest: '{{ remote_install_path }}/foo.cfg'
 
 In this example, the variable defines the location of a file, which can vary from one system to another.
 
@@ -69,7 +73,7 @@ In this example, the variable defines the location of a file, which can vary fro
 When to quote variables (a YAML gotcha)
 =======================================
 
-If you start a value with ``{{ foo }}``, you must quote the whole expression to create valid YAML syntax. If you do not quote the whole expression, the YAML parser cannot interpret the syntax - it might be a variable or it might be the start of a YAML dictionary. See the :ref:`yaml_syntax` documentation for more guidance on writing YAML.
+If you start a value with ``{{ foo }}``, you must quote the whole expression to create valid YAML syntax. If you do not quote the whole expression, the YAML parser cannot interpret the syntax - it might be a variable or it might be the start of a YAML dictionary. For guidance on writing YAML, see the :ref:`yaml_syntax` documentation.
 
 If you use a variable without quotes like this::
 
@@ -82,6 +86,13 @@ You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ans
     - hosts: app_servers
       vars:
            app_path: "{{ base_path }}/22"
+
+.. _list_variables:
+
+List variables
+==============
+
+A list variable combines a variable name with multiple values. The multiple values can be stored as an itemized list or in square brackets ``[]``, separated with commas.
 
 Defining variables as lists
 ---------------------------
@@ -102,8 +113,12 @@ When you use variables defined as a list (also called an array), you can use ind
 
 The value of this expression would be "northeast".
 
+.. _dictionary_variables:
+
 Dictionary variables
 ====================
+
+A dictionary stores the data in key-value pairs. Usually, dictionaries are used to store related data, such as the information contained in an ID or a user profile.
 
 Defining variables as key:value dictionaries
 --------------------------------------------
@@ -137,14 +152,16 @@ You can create variables from the output of an Ansible task with the task keywor
 
      tasks:
 
-        - shell: /usr/bin/foo
+        - name: Run a shell command and register its output as a variable
+          ansible.builtin.shell: /usr/bin/foo
           register: foo_result
-          ignore_errors: True
+          ignore_errors: true
 
-        - shell: /usr/bin/bar
+        - name: Run a shell command using output of the previous task
+          ansible.builtin.shell: /usr/bin/bar
           when: foo_result.rc == 5
 
-See :ref:`playbooks_conditionals` for more examples. Registered variables may be simple variables, list variables, dictionary variables, or complex nested data structures. The documentation for each module includes a ``RETURN`` section describing the return values for that module. To see the values for a particular task, run your playbook with ``-v``.
+For more examples of using registered variables in conditions on later tasks, see :ref:`playbooks_conditionals`. Registered variables may be simple variables, list variables, dictionary variables, or complex nested data structures. The documentation for each module includes a ``RETURN`` section describing the return values for that module. To see the values for a particular task, run your playbook with ``-v``.
 
 Registered variables are stored in memory. You cannot cache registered variables for use in future plays. Registered variables are only valid on the host for the rest of the current playbook run.
 
@@ -161,7 +178,7 @@ Many registered variables (and :ref:`facts <vars_and_facts>`) are nested YAML or
 
     {{ ansible_facts["eth0"]["ipv4"]["address"] }}
 
-Using the dot notation::
+To reference an IP address from your facts using the dot notation::
 
     {{ ansible_facts.eth0.ipv4.address }}
 
@@ -171,26 +188,26 @@ Using the dot notation::
 Transforming variables with Jinja2 filters
 ==========================================
 
-Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies many more filters. See :ref:`playbooks_filters` for examples.
+Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <https://jinja.palletsprojects.com/templates/#builtin-filters>`_ and Ansible supplies many more filters. To find more examples of filters, see :ref:`playbooks_filters`.
 
 .. _setting_variables:
 
 Where to set variables
 ======================
 
-You can set variables in a variety of places, including in inventory, in playbooks, in re-usable files, in roles, and at the command line. Ansible loads every possible variable it finds, then chooses the variable to apply based on :ref:`variable precedence rules <ansible_variable_precedence>`.
+You can define variables in a variety of places, such as in inventory, in playbooks, in reusable files, in roles, and at the command line. Ansible loads every possible variable it finds, then chooses the variable to apply based on :ref:`variable precedence rules <ansible_variable_precedence>`.
 
-.. _variables_in_inventory:
+.. _define_variables_in_inventory:
 
-Setting variables in inventory
-------------------------------
+Defining variables in inventory
+-------------------------------
 
-You can set different variables for each individual host, or set shared variables for a group of hosts in your inventory. For example, if all machines in the ``[Boston]`` group use 'boston.ntp.example.com' as an NTP server, you can set a group variable. The :ref:`intro_inventory` page has details on setting :ref:`host variables <host_variables>` and :ref:`group variables <group_variables>` in inventory.
+You can define different variables for each individual host, or set shared variables for a group of hosts in your inventory. For example, if all machines in the ``[Boston]`` group use 'boston.ntp.example.com' as an NTP server, you can set a group variable. The :ref:`intro_inventory` page has details on setting :ref:`host variables <host_variables>` and :ref:`group variables <group_variables>` in inventory.
 
 .. _playbook_variables:
 
-Setting variables in a playbook
--------------------------------
+Defining variables in a playbook
+--------------------------------
 
 You can define variables directly in a playbook::
 
@@ -198,17 +215,17 @@ You can define variables directly in a playbook::
      vars:
        http_port: 80
 
-When you set variables in a playbook, they are visible to anyone who runs that playbook. This is especially useful if you share playbooks widely.
+When you define variables in a playbook, they are visible to anyone who runs that playbook. This is especially useful if you share playbooks widely.
 
 .. _included_variables:
 .. _variable_file_separation_details:
 
-Setting variables in included files and roles
----------------------------------------------
+Defining variables in included files and roles
+----------------------------------------------
 
-You can set variables in re-usable variables files and/or in re-usable roles. See :ref:`playbooks_reuse` for more details.
+You can define variables in reusable variables files and/or in reusable roles. When you define variables in reusable variable files, the sensitive variables are separated from playbooks. This separation enables you to store your playbooks in a source control software and even share the playbooks, without the risk of exposing passwords or other sensitive and personal data. For information about creating reusable files and roles, see :ref:`playbooks_reuse`.
 
-Setting variables in included variables files lets you separate sensitive variables from playbooks, so you can keep your playbooks under source control and even share them without exposing passwords or other private information. You can do this by using an external variables file, or files, just like this::
+This example shows how you can include variables defined in an external file::
 
     ---
 
@@ -221,10 +238,10 @@ Setting variables in included variables files lets you separate sensitive variab
 
       tasks:
 
-      - name: this is just a placeholder
-        command: /bin/echo foo
+      - name: This is just a placeholder
+        ansible.builtin.command: /bin/echo foo
 
-The contents of each variables file is a simple YAML dictionary, like this::
+The contents of each variables file is a simple YAML dictionary. For example::
 
     ---
     # in the above example, this would be vars/external_vars.yml
@@ -232,19 +249,19 @@ The contents of each variables file is a simple YAML dictionary, like this::
     password: magic
 
 .. note::
-   You can keep per-host and per-group variables in similar files, see :ref:`splitting_out_vars`.
+   You can keep per-host and per-group variables in similar files. To learn about organizing your variables, see :ref:`splitting_out_vars`.
 
 .. _passing_variables_on_the_command_line:
 
-Setting variables at runtime
-----------------------------
+Defining variables at runtime
+-----------------------------
 
-You can set variables when you run your playbook by passing variables at the command line using the ``--extra-vars`` (or ``-e``) argument. You can also request user input with a ``vars_prompt`` (see :ref:`playbooks_prompts`). When you pass variables at the command line, use a single quoted string (containing one or more variables) in one of the formats below.
+You can define variables when you run your playbook by passing variables at the command line using the ``--extra-vars`` (or ``-e``) argument. You can also request user input with a ``vars_prompt`` (see :ref:`playbooks_prompts`). When you pass variables at the command line, use a single quoted string, that contains one or more variables, in one of the formats below.
 
 key=value format
 ^^^^^^^^^^^^^^^^
 
-Values passed in using the ``key=value`` syntax are interpreted as strings. Use the JSON format if you need to pass non-string values (Booleans, integers, floats, lists, and so on).
+Values passed in using the ``key=value`` syntax are interpreted as strings. Use the JSON format if you need to pass non-string values such as Booleans, integers, floats, lists, and so on.
 
 .. code-block:: text
 
@@ -258,7 +275,7 @@ JSON string format
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
-When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (e.g. JSON), and for your shell::
+When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (for example, JSON), and for your shell::
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
@@ -281,11 +298,14 @@ Variable precedence: Where should I put a variable?
 
 You can set multiple variables with the same name in many different places. When you do this, Ansible loads every possible variable it finds, then chooses the variable to apply based on variable precedence. In other words, the different variables will override each other in a certain order.
 
-Ansible configuration, command-line options, and playbook keywords can also affect Ansible behavior. In general, variables take precedence, so that host-specific settings can override more general settings. For examples and more details on the precedence of these various settings, see :ref:`general_precedence_rules`.
+Teams and projects that agree on guidelines for defining variables (where to define certain types of variables) usually avoid variable precedence concerns. We suggest that you define each variable in one place: figure out where to define a variable, and keep it simple. For examples, see :ref:`variable_examples`.
 
-Teams and projects that agree on guidelines for defining variables (where to define certain types of variables) usually avoid variable precedence concerns. We suggest you define each variable in one place: figure out where to define a variable, and keep it simple. However, this is not always possible.
+Some behavioral parameters that you can set in variables you can also set in Ansible configuration, as command-line options, and using playbook keywords. For example, you can define the user Ansible uses to connect to remote devices as a variable with ``ansible_user``, in a configuration file with ``DEFAULT_REMOTE_USER``, as a command-line option with ``-u``, and with the playbook keyword ``remote_user``. If you define the same parameter in a variable and by another method, the variable overrides the other setting. This approach allows host-specific settings to override more general settings. For examples and more details on the precedence of these various settings, see :ref:`general_precedence_rules`.
 
-Ansible does apply variable precedence, and you might have a use for it. Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
+Understanding variable precedence
+---------------------------------
+
+Ansible does apply variable precedence, and you might have a use for it. Here is the order of precedence from least to greatest (the last listed variables override all other variables):
 
   #. command line values (for example, ``-u my_user``, these are not variables)
   #. role defaults (defined in role/defaults/main.yml) [1]_
@@ -310,19 +330,19 @@ Ansible does apply variable precedence, and you might have a use for it. Here is
   #. include params
   #. extra vars (for example, ``-e "user=my_user"``)(always win precedence)
 
-In general, Ansible gives higher precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but do not override explicit includes like the vars directory or an ``include_vars`` task.
+In general, Ansible gives precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but explicit includes such as the vars directory or an ``include_vars`` task override inventory variables.
 
-Ansible merges different variables set in inventory so that more specific settings override more generic settings. For example, ``ansible_ssh_user`` specified as a group_var has a higher precedence than ``ansible_user`` specified as a host_var. See :ref:`how_we_merge` for more details on the precedence of variables set in inventory.
+Ansible merges different variables set in inventory so that more specific settings override more generic settings. For example, ``ansible_ssh_user`` specified as a group_var is overridden by ``ansible_user`` specified as a host_var. For details about the precedence of variables set in inventory, see :ref:`how_we_merge`.
 
 .. rubric:: Footnotes
 
-.. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
+.. [1] Tasks in each role see their own role's defaults. Tasks defined outside of a role see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
 .. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
-.. [4] When created with set_facts's cacheable option, variables will have the high precedence in the play,
-       but will be the same as a host facts precedence when they come from the cache.
+.. [4] When created with set_facts's cacheable option, variables have the high precedence in the play,
+       but are the same as a host facts precedence when they come from the cache.
 
-.. note:: Within any section, redefining a var will override the previous instance.
+.. note:: Within any section, redefining a var overrides the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
@@ -338,7 +358,7 @@ You can decide where to set a variable based on the scope you want that value to
  * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
  * Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs
 
-Inside a template you automatically have access to all variables that are in scope for a host, plus any registered variables, facts, and magic variables.
+Inside a template, you automatically have access to all variables that are in scope for a host, plus any registered variables, facts, and magic variables.
 
 .. _variable_examples:
 
@@ -347,7 +367,7 @@ Tips on where to set variables
 
 You should choose where to define a variable based on the kind of control you might want over values.
 
-Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember:  Child groups override parent groups, and host variables override group variables. See :ref:`variables_in_inventory` for details on setting host and group variables.
+Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember: child groups override parent groups, and host variables override group variables. See :ref:`define_variables_in_inventory` for details on setting host and group variables.
 
 Set common defaults in a ``group_vars/all`` file. See :ref:`splitting_out_vars` for details on how to organize host and group variables in your inventory. Group variables are generally placed alongside your inventory file, but they can also be returned by dynamic inventory (see :ref:`intro_dynamic_inventory`) or defined in :ref:`ansible_tower` from the UI or API::
 
@@ -437,7 +457,7 @@ For information about advanced YAML syntax used to declare variables and have mo
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    :ref:`special_variables`
        List of special variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_

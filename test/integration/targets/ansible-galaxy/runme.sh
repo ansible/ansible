@@ -273,6 +273,13 @@ f_ansible_galaxy_status \
     ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
     grep 'description: Top level' out.txt
 
+    # test multiple role listing
+    ansible-galaxy role init otherrole --init-path ./testroles
+    ansible-galaxy role info -p ./testroles --offline testdesc otherrole | tee out.txt
+    grep 'Role: testdesc' out.txt
+    grep 'Role: otherrole' out.txt
+
+
 popd # ${role_testdir}
 rm -fr "${role_testdir}"
 
@@ -414,6 +421,17 @@ f_ansible_galaxy_status \
     rmdir emptydir
 
 unset ANSIBLE_COLLECTIONS_PATH
+
+f_ansible_galaxy_status \
+    "collection list with collections installed from python package"
+
+    mkdir -p test-site-packages
+    ln -s "${galaxy_testdir}/local/ansible_collections" test-site-packages/ansible_collections
+    ansible-galaxy collection list
+    PYTHONPATH="./test-site-packages/:$PYTHONPATH" ansible-galaxy collection list | tee out.txt
+
+    grep ".ansible/collections/ansible_collections" out.txt
+    grep "test-site-packages/ansible_collections" out.txt
 
 ## end ansible-galaxy collection list
 

@@ -14,7 +14,7 @@ version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
-     - For Windows targets, use the M(win_stat) module instead.
+     - For Windows targets, use the M(ansible.windows.win_stat) module instead.
 options:
   path:
     description:
@@ -62,8 +62,8 @@ options:
     aliases: [ attr, attributes ]
     version_added: "2.3"
 seealso:
-- module: file
-- module: win_stat
+- module: ansible.builtin.file
+- module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
@@ -294,14 +294,14 @@ stat:
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
         md5:
-            description: md5 hash of the path; this will be removed in Ansible 2.9 in
+            description: md5 hash of the file; this will be removed in Ansible 2.9 in
                 favor of the checksum return value
             returned: success, path exists and user can read stats and path
                 supports hashing and md5 is supported
             type: str
             sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
-            description: hash of the path
+            description: hash of the file
             returned: success, path exists, user can read stats, path supports
                 hashing and supplied checksum algorithm is available
             type: str
@@ -513,11 +513,11 @@ def main():
         output['mimetype'] = output['charset'] = 'unknown'
         mimecmd = module.get_bin_path('file')
         if mimecmd:
-            mimecmd = [mimecmd, '-i', b_path]
+            mimecmd = [mimecmd, '--mime-type', '--mime-encoding', b_path]
             try:
                 rc, out, err = module.run_command(mimecmd)
                 if rc == 0:
-                    mimetype, charset = out.split(':')[1].split(';')
+                    mimetype, charset = out.rsplit(':', 1)[1].split(';')
                     output['mimetype'] = mimetype.strip()
                     output['charset'] = charset.split('=')[1].strip()
             except Exception:

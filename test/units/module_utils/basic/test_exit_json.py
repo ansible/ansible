@@ -3,16 +3,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
 import sys
+import datetime
 
 import pytest
 
 
 EMPTY_INVOCATION = {u'module_args': {}}
+DATETIME = datetime.datetime.strptime('2020-07-13 12:50:00', '%Y-%m-%d %H:%M:%S')
 
 
 class TestAnsibleModuleExitJson:
@@ -26,6 +28,10 @@ class TestAnsibleModuleExitJson:
          {'msg': 'success', 'changed': True, 'invocation': EMPTY_INVOCATION}),
         ({'msg': 'nochange', 'changed': False},
          {'msg': 'nochange', 'changed': False, 'invocation': EMPTY_INVOCATION}),
+        ({'msg': 'message', 'date': DATETIME.date()},
+         {'msg': 'message', 'date': DATETIME.date().isoformat(), 'invocation': EMPTY_INVOCATION}),
+        ({'msg': 'message', 'datetime': DATETIME},
+         {'msg': 'message', 'datetime': DATETIME.isoformat(), 'invocation': EMPTY_INVOCATION}),
     )
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511

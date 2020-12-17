@@ -15,15 +15,15 @@ The content on this page has been moved to :ref:`playbooks_reuse`.
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
    :ref:`playbooks_best_practices`
-       Various tips about managing playbooks in the real world
+       Tips and tricks for playbooks
    :ref:`playbooks_variables`
        All about variables in playbooks
    :ref:`playbooks_conditionals`
        Conditionals in playbooks
    :ref:`playbooks_loops`
        Loops in playbooks
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_

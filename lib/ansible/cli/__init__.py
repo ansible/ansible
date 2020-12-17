@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import getpass
 import os
-import re
 import subprocess
 import sys
 
@@ -45,12 +44,6 @@ display = Display()
 
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
-
-    _ITALIC = re.compile(r"I\(([^)]+)\)")
-    _BOLD = re.compile(r"B\(([^)]+)\)")
-    _MODULE = re.compile(r"M\(([^)]+)\)")
-    _URL = re.compile(r"U\(([^)]+)\)")
-    _CONST = re.compile(r"C\(([^)]+)\)")
 
     PAGER = 'less'
 
@@ -105,7 +98,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             ver = deprecated[1].get('version')
             date = deprecated[1].get('date')
             collection_name = deprecated[1].get('collection_name')
-            display.deprecated("%s option, %s %s" % (name, why, alt),
+            display.deprecated("%s option, %s%s" % (name, why, alt),
                                version=ver, date=date, collection_name=collection_name)
 
     @staticmethod
@@ -318,6 +311,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         # process tags
         if hasattr(options, 'tags') and not options.tags:
             # optparse defaults does not do what's expected
+            # More specifically, we want `--tags` to be additive. So we cannot
+            # simply change C.TAGS_RUN's default to ["all"] because then passing
+            # --tags foo would cause us to have ['all', 'foo']
             options.tags = ['all']
         if hasattr(options, 'tags') and options.tags:
             tags = set()
@@ -441,17 +437,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             pass
         except KeyboardInterrupt:
             pass
-
-    @classmethod
-    def tty_ify(cls, text):
-
-        t = cls._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-        t = cls._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-        t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = cls._URL.sub(r"\1", t)                      # U(word) => word
-        t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
-
-        return t
 
     @staticmethod
     def _play_prereqs():

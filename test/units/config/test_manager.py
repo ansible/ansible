@@ -60,6 +60,18 @@ ensure_test_data = [
     ('a', 'string', string_types),
     ('Café', 'string', string_types),
     ('', 'string', string_types),
+    ('29', 'str', string_types),
+    ('13.37', 'str', string_types),
+    ('123j', 'string', string_types),
+    ('0x123', 'string', string_types),
+    ('true', 'string', string_types),
+    ('True', 'string', string_types),
+    (0, 'str', string_types),
+    (29, 'str', string_types),
+    (13.37, 'str', string_types),
+    (123j, 'string', string_types),
+    (0x123, 'string', string_types),
+    (True, 'string', string_types),
     ('None', 'none', type(None))
 ]
 
@@ -122,7 +134,7 @@ class TestConfigManager:
     def test_entry_as_vault_var(self):
         class MockVault:
 
-            def decrypt(self, value):
+            def decrypt(self, value, filename=None, obj=None):
                 return value
 
         vault_var = AnsibleVaultEncryptedUnicode(b"vault text")
@@ -135,7 +147,7 @@ class TestConfigManager:
     @pytest.mark.parametrize("value_type", ("str", "string", None))
     def test_ensure_type_with_vaulted_str(self, value_type):
         class MockVault:
-            def decrypt(self, value):
+            def decrypt(self, value, filename=None, obj=None):
                 return value
 
         vault_var = AnsibleVaultEncryptedUnicode(b"vault text")

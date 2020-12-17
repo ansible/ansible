@@ -133,6 +133,40 @@ We use:
       """"""""""""""""""""""""""""
 
 
+Syntax highlighting - Pygments
+------------------------------
+
+The Ansible documentation supports a range of `Pygments lexers <https://pygments.org/>`_
+for `syntax highlighting <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#code-examples>`_ to make our code examples look good. Each code-block must be correctly indented and surrounded by blank lines.
+
+The Ansible documentation allows the following values:
+
+* none (no highlighting)
+* ansible-output (a custom lexer for Ansible output)
+* bash
+* console
+* csharp
+* ini
+* json
+* powershell
+* python
+* rst
+* sh
+* shell
+* shell-session
+* text
+* yaml
+* yaml+jinja
+
+For example, you can highlight Python code using following syntax:
+
+.. code-block:: rst
+
+      .. code-block:: python
+
+         def my_beautiful_python_code():
+            pass
+
 Internal navigation
 -------------------
 
@@ -171,20 +205,40 @@ The second example adds custom text for the link.
 Adding links to modules and plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Module links use the module name followed by ``_module`` for the anchor.
-* Plugin links use the plugin name followed by the plugin type. For example, :ref:`enable become plugin <enable_become>`).
+Ansible 2.10 and later require the extended Fully Qualified Collection Name (FQCN) as part of the links:
+
+.. code-block:: text
+
+  ansible_collections. + FQCN + _module
+
+For example:
+
+  .. code-block:: rst
+
+   :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`
+
+displays as :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`.
+
+Modules require different suffixes from other plugins:
+
+* Module links use this extended FQCN module name with ``_module`` for the anchor.
+* Plugin links use this extended FQCN plugin name with the plugin type (``_connection`` for example).
 
 .. code-block:: rst
 
-   :ref:`this module <this_module>``
-   :ref:`that connection plugin <that_connection>`
+   :ref:`arista.eos.eos_config <ansible_collections.arista.eos.eos_config_module>`
+   :ref:`community.kubernetes.kubectl connection plugin <ansible_collections.community.kubernetes.kubectl_connection>`
+
+.. note::
+
+	``ansible.builtin`` is the FQCN for modules included in ``ansible.base``. Documentation links are the only place you prepend ``ansible_collections`` to the FQCN. This is used by the documentation build scripts to correctly fetch documentation from collections on Ansible Galaxy.
 
 .. _local_toc:
 
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
 
-The page you're reading includes a `local TOC <http://docutils.sourceforge.net/docs/ref/rst/directives.html#table-of-contents>`_.
+The page you're reading includes a `local TOC <https://docutils.sourceforge.io/docs/ref/rst/directives.html#table-of-contents>`_.
 If you include a local TOC:
 
 * place it below, not above, the main heading and (optionally) introductory text

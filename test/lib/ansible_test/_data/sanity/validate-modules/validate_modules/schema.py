@@ -9,6 +9,7 @@ __metaclass__ = type
 import re
 
 from distutils.version import StrictVersion
+from functools import partial
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
@@ -142,6 +143,37 @@ def options_with_apply_defaults(v):
     return v
 
 
+def check_removal_version(v, version_field, collection_name_field, error_code='invalid-removal-version'):
+    version = v.get(version_field)
+    collection_name = v.get(collection_name_field)
+    if not isinstance(version, string_types) or not isinstance(collection_name, string_types):
+        # If they are not strings, schema validation will have already complained.
+        return v
+    if collection_name == 'ansible.builtin':
+        try:
+            parsed_version = StrictVersion()
+            parsed_version.parse(version)
+        except ValueError as exc:
+            raise _add_ansible_error_code(
+                Invalid('%s (%r) is not a valid ansible-core version: %s' % (version_field, version, exc)),
+                error_code=error_code)
+        return v
+    try:
+        parsed_version = SemanticVersion()
+        parsed_version.parse(version)
+        if parsed_version.major != 0 and (parsed_version.minor != 0 or parsed_version.patch != 0):
+            raise _add_ansible_error_code(
+                Invalid('%s (%r) must be a major release, not a minor or patch release (see specification at '
+                        'https://semver.org/)' % (version_field, version)),
+                error_code='removal-version-must-be-major')
+    except ValueError as exc:
+        raise _add_ansible_error_code(
+            Invalid('%s (%r) is not a valid collection version (see specification at https://semver.org/): '
+                    '%s' % (version_field, version, exc)),
+            error_code=error_code)
+    return v
+
+
 def option_deprecation(v):
     if v.get('removed_in_version') or v.get('removed_at_date'):
         if v.get('removed_in_version') and v.get('removed_at_date'):
@@ -153,6 +185,10 @@ def option_deprecation(v):
                 Invalid('If removed_in_version or removed_at_date is specified, '
                         'removed_from_collection must be specified as well'),
                 error_code='deprecation-collection-missing')
+        check_removal_version(v,
+                              version_field='removed_in_version',
+                              collection_name_field='removed_from_collection',
+                              error_code='invalid-removal-version')
         return
     if v.get('removed_from_collection'):
         raise Invalid('removed_from_collection cannot be specified without either '
@@ -179,17 +215,23 @@ def argument_spec_schema(for_collection):
             'removed_at_date': date(),
             'removed_from_collection': collection_name,
             'options': Self,
-            'deprecated_aliases': Any([Any(
-                {
-                    Required('name'): Any(*string_types),
-                    Required('date'): date(),
-                    Required('collection_name'): collection_name,
-                },
-                {
-                    Required('name'): Any(*string_types),
-                    Required('version'): version(for_collection),
-                    Required('collection_name'): collection_name,
-                },
+            'deprecated_aliases': Any([All(
+                Any(
+                    {
+                        Required('name'): Any(*string_types),
+                        Required('date'): date(),
+                        Required('collection_name'): collection_name,
+                    },
+                    {
+                        Required('name'): Any(*string_types),
+                        Required('version'): version(for_collection),
+                        Required('collection_name'): collection_name,
+                    },
+                ),
+                partial(check_removal_version,
+                        version_field='version',
+                        collection_name_field='collection_name',
+                        error_code='invalid-removal-version')
             )]),
         }
     }
@@ -226,7 +268,7 @@ json_value = Schema(Any(
 ))
 
 
-def version_added(v):
+def version_added(v, error_code='version-added-invalid', accept_historical=False):
     if 'version_added' in v:
         version_added = v.get('version_added')
         if isinstance(version_added, string_types):
@@ -234,24 +276,32 @@ def version_added(v):
             # - or we have a float and we are in ansible/ansible, in which case we're
             # also happy.
             if v.get('version_added_collection') == 'ansible.builtin':
+                if version_added == 'historical' and accept_historical:
+                    return v
                 try:
                     version = StrictVersion()
                     version.parse(version_added)
                 except ValueError as exc:
                     raise _add_ansible_error_code(
-                        Invalid('version_added (%r) is not a valid ansible-base version: '
+                        Invalid('version_added (%r) is not a valid ansible-core version: '
                                 '%s' % (version_added, exc)),
-                        error_code='deprecation-either-date-or-version')
+                        error_code=error_code)
             else:
                 try:
                     version = SemanticVersion()
                     version.parse(version_added)
+                    if version.major != 0 and version.patch != 0:
+                        raise _add_ansible_error_code(
+                            Invalid('version_added (%r) must be a major or minor release, '
+                                    'not a patch release (see specification at '
+                                    'https://semver.org/)' % (version_added, )),
+                            error_code='version-added-must-be-major-or-minor')
                 except ValueError as exc:
                     raise _add_ansible_error_code(
                         Invalid('version_added (%r) is not a valid collection version '
                                 '(see specification at https://semver.org/): '
                                 '%s' % (version_added, exc)),
-                        error_code='deprecation-either-date-or-version')
+                        error_code=error_code)
     elif 'version_added_collection' in v:
         # Must have been manual intervention, since version_added_collection is only
         # added automatically when version_added is present
@@ -304,7 +354,7 @@ def list_dict_option_schema(for_collection):
     option_version_added = Schema(
         All({
             'suboptions': Any(None, *[{str_type: Self} for str_type in string_types]),
-        }, version_added),
+        }, partial(version_added, error_code='option-invalid-version-added')),
         extra=ALLOW_EXTRA
     )
 
@@ -343,7 +393,7 @@ def return_schema(for_collection):
                 }
             ),
             Schema(return_contains),
-            Schema(version_added),
+            Schema(partial(version_added, error_code='option-invalid-version-added')),
         ),
         Schema(type(None)),
     )
@@ -371,7 +421,7 @@ def return_schema(for_collection):
                 }
             ),
             Schema({any_string_types: return_contains}),
-            Schema({any_string_types: version_added}),
+            Schema({any_string_types: partial(version_added, error_code='option-invalid-version-added')}),
         ),
         Schema(type(None)),
     )
@@ -405,21 +455,37 @@ def deprecation_schema(for_collection):
         }
     version_schema.update(main_fields)
 
-    return Any(
+    result = Any(
         Schema(version_schema, extra=PREVENT_EXTRA),
         Schema(date_schema, extra=PREVENT_EXTRA),
     )
 
+    if for_collection:
+        result = All(
+            result,
+            partial(check_removal_version,
+                    version_field='removed_in',
+                    collection_name_field='removed_from_collection',
+                    error_code='invalid-removal-version'))
+
+    return result
+
 
 def author(value):
+    if value is None:
+        return value  # let schema checks handle
 
     if not is_iterable(value):
         value = [value]
 
     for line in value:
+        if not isinstance(line, string_types):
+            continue  # let schema checks handle
         m = author_line.search(line)
         if not m:
             raise Invalid("Invalid author")
+
+    return value
 
 
 def doc_schema(module_name, for_collection=False, deprecated_module=False):
@@ -454,8 +520,13 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
 
         doc_schema_dict.update(deprecation_required_scheme)
     return Schema(
-        doc_schema_dict,
-        extra=PREVENT_EXTRA
+        All(
+            Schema(
+                doc_schema_dict,
+                extra=PREVENT_EXTRA
+            ),
+            partial(version_added, error_code='module-invalid-version-added', accept_historical=not for_collection),
+        )
     )
 
 

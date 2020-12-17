@@ -22,6 +22,8 @@ notes:
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
+    - It is highly recommended to add I(no_log=True) to task while handling sensitive information using this module.
+    - Supports C(check_mode).
 requirements:
 - debconf
 - debconf-utils
@@ -40,6 +42,7 @@ options:
   vtype:
     description:
       - The type of the value supplied.
+      - It is highly recommended to add I(no_log=True) to task while specifying I(vtype=password).
       - C(seen) was added in Ansible 2.2.
     type: str
     choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title ]
@@ -52,37 +55,47 @@ options:
     description:
       - Do not set 'seen' flag when pre-seeding.
     type: bool
-    default: no
+    default: false
 author:
 - Brian Coca (@bcoca)
 '''
 
 EXAMPLES = r'''
 - name: Set default locale to fr_FR.UTF-8
-  debconf:
+  ansible.builtin.debconf:
     name: locales
     question: locales/default_environment_locale
     value: fr_FR.UTF-8
     vtype: select
 
 - name: Set to generate locales
-  debconf:
+  ansible.builtin.debconf:
     name: locales
     question: locales/locales_to_be_generated
     value: en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8
     vtype: multiselect
 
 - name: Accept oracle license
-  debconf:
+  ansible.builtin.debconf:
     name: oracle-java7-installer
     question: shared/accepted-oracle-license-v1-1
     value: 'true'
     vtype: select
 
 - name: Specifying package you can register/return the list of questions and current values
-  debconf:
+  ansible.builtin.debconf:
     name: tzdata
+
+- name: Pre-configure tripwire site passphrase
+  ansible.builtin.debconf:
+    name: tripwire
+    question: tripwire/site-passphrase
+    value: "{{ site_passphrase }}"
+    vtype: password
+  no_log: True
 '''
+
+RETURN = r'''#'''
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -127,7 +140,7 @@ def main():
             question=dict(type='str', aliases=['selection', 'setting']),
             vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
             value=dict(type='str', aliases=['answer']),
-            unseen=dict(type='bool'),
+            unseen=dict(type='bool', default=False),
         ),
         required_together=(['question', 'vtype', 'value'],),
         supports_check_mode=True,

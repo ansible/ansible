@@ -9,4 +9,4 @@
     - assert:
         that:
             - time is failed
-            - '"The command action failed to execute in the expected time frame" in time["msg"]'
+            - '"The shell action failed to execute in the expected time frame" in time["msg"]'

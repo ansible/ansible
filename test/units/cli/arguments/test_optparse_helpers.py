@@ -29,6 +29,7 @@ VERSION_OUTPUT = opt_help.version(prog=FAKE_PROG)
         u'config file = %s' % C.CONFIG_FILE,
         u'configured module search path = %s' % cpath,
         u'ansible python module location = %s' % ':'.join(ansible_path),
+        u'ansible collection location = %s' % ':'.join(C.COLLECTIONS_PATHS),
         u'executable location = ',
         u'python version = %s' % ''.join(sys.version.splitlines()),
     ]

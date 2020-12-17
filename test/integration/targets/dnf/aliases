@@ -4,3 +4,4 @@ skip/aix
 skip/power/centos
 skip/freebsd
 skip/osx
+skip/macos

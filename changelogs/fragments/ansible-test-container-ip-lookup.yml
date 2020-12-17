@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Prefer container IP at ``.NetworkSettings.Networks.{NetworkName}.IPAddress`` over ``.NetworkSettings.IPAddress``.

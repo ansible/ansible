@@ -1,0 +1,29 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug: msg={{item}}
+      with_dict: '{{myundef}}'
+      when:
+       - myundef is defined
+      register: shouldskip
+
+    - name: check if skipped
+      assert:
+        that:
+          - shouldskip is skipped
+
+    - debug: msg={{item}}
+      loop: '{{myundef|dict2items}}'
+      when:
+       - myundef is defined
+
+    - debug: msg={{item}}
+      with_dict: '{{myundef}}'
+      register: notskipped
+      ignore_errors: true
+
+    - name: check it failed
+      assert:
+        that:
+          - notskipped is not skipped
+          - notskipped is failed

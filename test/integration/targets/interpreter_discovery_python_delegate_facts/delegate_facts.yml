@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Test python interpreter discovery with delegate_to without delegate_facts
+      ping:
+      delegate_to: testhost
+    - name: Test python interpreter discovery with delegate_to with delegate_facts
+      ping:
+      delegate_to: testhost
+      delegate_facts: yes

@@ -5,11 +5,12 @@
 Using collections
 *****************
 
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins.
+Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. As modules move from the core Ansible repository into collections, the module documentation will move to the :ref:`collections pages <list_of_collections>`.
+
 You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 * For details on how to *develop* collections see :ref:`developing_collections`.
-* For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_.
+* For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
 
 .. contents::
    :local:
@@ -129,7 +130,7 @@ To list installed collections, run ``ansible-galaxy collection list``. This show
       cisco.aci                  0.0.5
       cisco.mso                  0.0.4
       sandwiches.ham             *
-      splunk.enterprise_security 0.0.5
+      splunk.es                  0.0.5
 
       # /usr/share/ansible/collections/ansible_collections
       Collection        Version
@@ -179,7 +180,7 @@ To search other paths for collections, use the ``-p`` option. Specify multiple s
       cisco.mso                  0.0.4
       fortinet.fortios           1.0.1
       sandwiches.ham             *
-      splunk.enterprise_security 0.0.5
+      splunk.es                  0.0.5
 
       # /usr/share/ansible/collections/ansible_collections
       Collection        Version
@@ -273,7 +274,7 @@ Simplifying module names with the ``collections`` keyword
 The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook.
 
 .. warning::
-   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. See below for details.
+   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. This is one of the reasons we recommend you always use FQCN. See below for roles details.
 
 Using ``collections`` in roles
 ------------------------------
@@ -309,7 +310,7 @@ In a playbook, you can control the collections Ansible searches for modules and 
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
-The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (e.g., lookups, filters, tests).
+The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (for example, lookups, filters, tests).
 
 .. seealso::
 
