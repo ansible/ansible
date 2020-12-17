@@ -13,7 +13,7 @@ import string
 
 # Python 3.9 fails with pylint 2.3.1 or 2.4.4 with astroid 2.3.3 but works with pylint 2.5.0 and astroid 2.4.0
 #   'Call' object has no attribute 'value'
-result = {}[{}.get('something')]
+result = {None: None}[{}.get('something')]
 
 # pylint 2.3.1 and 2.4.4 report the following error but 2.5.0 and 2.6.0 do not
 #   blacklisted-name: Black listed name "foo"
