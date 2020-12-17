@@ -56,8 +56,8 @@ options:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to C(yes)
         the variables will be available to tasks following the C(include_role) task. This functionality differs from
-        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed at
-        playbook parsing time, and available to earlier roles and tasks as well.
+        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed
+        to the play at playbook parsing time, and available to earlier roles and tasks as well.
     type: bool
     default: no
     version_added: '2.7'
