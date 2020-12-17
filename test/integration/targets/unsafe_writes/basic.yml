@@ -4,23 +4,41 @@
     testudir: '{{output_dir}}/unsafe_writes_test'
     testufile: '{{testudir}}/unreplacablefile.txt'
   tasks:
-    - name: create target dir
-      file: path={{testudir}} state=directory
-    - name: setup test file
-      copy: content=ORIGINAL dest={{testufile}}
-    - name: make target dir immutable (cannot write to file w/o unsafe_writes)
-      file: path={{testudir}} state=directory attributes="+i"
-      become: yes
+    - name: test unsafe_writes on immutable dir (file cannot be atomically replaced)
+      block:
+      - name: create target dir
+        file: path={{testudir}} state=directory
+      - name: setup test file
+        copy: content=ORIGINAL dest={{testufile}}
+      - name: make target dir immutable (cannot write to file w/o unsafe_writes)
+        file: path={{testudir}} state=directory attributes="+i"
+        become: yes
 
-    - name: test overwriting file w/o unsafe
-      copy: content=NEW dest={{testufile}} unsafe_writes=False
-      ignore_errors: true
-      register: first
+      - name: test overwriting file w/o unsafe
+        copy: content=NEW dest={{testufile}} unsafe_writes=False
+        ignore_errors: true
+        register: copy_without
 
-    - name: ensure we properly failed
-      assert:
-        that:
-          - first is failed
+      - name: ensure we properly failed
+        assert:
+          that:
+            - copy_without is failed
 
-    - name: test overwriting file with unsafe
-      copy: content=NEW dest={{testufile}} unsafe_writes=True
+      - name: test overwriting file with unsafe
+        copy: content=NEW dest={{testufile}} unsafe_writes=True
+        register: copy_with
+
+      - name: ensure we properly changed
+        assert:
+          that:
+            - copy_with is changed
+      always:
+      - name: remove immutable flag from dir
+        file: path={{testudir}} state=directory attributes="-i"
+        become: yes
+
+      - name: cleanup files
+        file: path={{item}} state=absent
+        loop:
+          - '{{testufile}}'
+          - '{{testudir}}'
