@@ -1,0 +1,50 @@
+- name: Copy service file
+  template:
+    src: sleeper@.service
+    dest: /etc/systemd/system/sleeper@.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: remove unit file
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Start and enable service using unit template
+  systemd:
+    name: sleeper@100.service
+    state: started
+    enabled: yes
+  register: template_test_1
+
+- name: Start and enable service using unit template again
+  systemd:
+    name: sleeper@100.service
+    state: started
+    enabled: yes
+  register: template_test_2
+
+- name: Stop and disable service using unit template
+  systemd:
+    name: sleeper@100.service
+    state: stopped
+    enabled: no
+  register: template_test_3
+
+- name: Stop and disable service using unit template again
+  systemd:
+    name: sleeper@100.service
+    state: stopped
+    enabled: no
+  register: template_test_4
+
+- name:
+  assert:
+    that:
+      - template_test_1 is changed
+      - template_test_1 is success
+      - template_test_2 is not changed
+      - template_test_2 is success
+      - template_test_3 is changed
+      - template_test_4 is not changed
