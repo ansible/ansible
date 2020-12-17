@@ -161,6 +161,7 @@ from ansible.module_utils.common.parameters import (
     handle_aliases,
     list_deprecations,
     list_no_log_values,
+    CHECK_ARGUMENT_TYPES_DISPATCHER,
     PASS_VARS,
     PASS_BOOLS,
 )
@@ -739,6 +740,9 @@ class AnsibleModule(object):
             self._check_mutually_exclusive(mutually_exclusive)
 
         self._set_defaults(pre=True)
+
+        # This is for backwards compatibility only.
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER = CHECK_ARGUMENT_TYPES_DISPATCHER
 
         if not bypass_checks:
             self._check_required_arguments()
@@ -1836,7 +1840,11 @@ class AnsibleModule(object):
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
-        type_checker, wanted = get_validator(wanted)
+        # Use the private method for 'str' type to handle the string conversion warning.
+        if wanted == 'str':
+            type_checker, wanted = self._check_type_str, 'str'
+        else:
+            type_checker, wanted = get_validator(wanted)
         if type_checker is None:
             self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
@@ -1855,10 +1863,6 @@ class AnsibleModule(object):
                 kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
-                # FIXME: Since this is now calling check_type_str directly, need to figure
-                # out how to deal with the string conversion behavior that was kept
-                # in the private method, _check_type_str(), to avoid complicating the
-                # standalone function.
                 validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param

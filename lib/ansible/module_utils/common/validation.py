@@ -332,7 +332,7 @@ def safe_eval(value, locals=None, include_exceptions=False):
         return value
 
 
-def check_type_str(value, allow_conversion=True, param=None):
+def check_type_str(value, allow_conversion=True):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,
