@@ -493,9 +493,15 @@ def main():
                     "ignore",
                     "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
                     " and will be removed in a future release.")
+                warnings.filterwarnings(
+                    "ignore",
+                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
+                    " and will be removed in the next release.")
             if sys.version_info[:2] == (3, 5):
                 warnings.filterwarnings(
                     "ignore", "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
+                warnings.filterwarnings(
+                    "ignore", "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
 
             try:
                 yield
