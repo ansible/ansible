@@ -17,7 +17,7 @@ ansible -m include_role -a name=role1 localhost
 ## Import (static)
 
 # Playbook
-test "$(ansible-playbook -i ../../inventory playbook/test_import_playbook.yml "$@" 2>&1 | grep -c '\[WARNING\]: Additional parameters in import_playbook')" = 1
+test "$(ANSIBLE_DEPRECATION_WARNINGS=1 ansible-playbook -i ../../inventory playbook/test_import_playbook.yml "$@" 2>&1 | grep -c '\[DEPRECATION WARNING\]: Additional parameters in import_playbook')" = 1
 
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
 

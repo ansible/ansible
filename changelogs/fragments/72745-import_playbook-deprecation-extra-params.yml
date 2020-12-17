@@ -1,0 +1,2 @@
+bugfixes:
+  - import_playbook - change warning about extra parameters to deprecation (https://github.com/ansible/ansible/issues/72745)
