@@ -157,9 +157,11 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
+    get_type_validator,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
+    DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
 )
@@ -739,20 +741,9 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
-        self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
-            'str': self._check_type_str,
-            'list': self._check_type_list,
-            'dict': self._check_type_dict,
-            'bool': self._check_type_bool,
-            'int': self._check_type_int,
-            'float': self._check_type_float,
-            'path': self._check_type_path,
-            'raw': self._check_type_raw,
-            'jsonarg': self._check_type_jsonarg,
-            'json': self._check_type_jsonarg,
-            'bytes': self._check_type_bytes,
-            'bits': self._check_type_bits,
-        }
+        # This is for backwards compatibility only.
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
+
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()
@@ -1853,20 +1844,13 @@ class AnsibleModule(object):
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
-        if not callable(wanted):
-            if wanted is None:
-                # Mostly we want to default to str.
-                # For values set to None explicitly, return None instead as
-                # that allows a user to unset a parameter
-                wanted = 'str'
-            try:
-                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-            except KeyError:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+        # Use the private method for 'str' type to handle the string conversion warning.
+        if wanted == 'str':
+            type_checker, wanted = self._check_type_str, 'str'
         else:
-            # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
-            type_checker = wanted
-            wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+            type_checker, wanted = get_type_validator(wanted)
+        if type_checker is None:
+            self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
         return type_checker, wanted
 
