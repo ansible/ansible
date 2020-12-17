@@ -250,7 +250,7 @@ def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=No
     return unsupported_parameters
 
 
-def get_validator(wanted):
+def get_type_validator(wanted):
     """Returns the callable used to validate a wanted type and the type name.
 
     :arg wanted: String or callable. If a string, get the corresponding

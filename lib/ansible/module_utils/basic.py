@@ -157,7 +157,7 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
-    get_validator,
+    get_type_validator,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
@@ -1844,7 +1844,7 @@ class AnsibleModule(object):
         if wanted == 'str':
             type_checker, wanted = self._check_type_str, 'str'
         else:
-            type_checker, wanted = get_validator(wanted)
+            type_checker, wanted = get_type_validator(wanted)
         if type_checker is None:
             self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
