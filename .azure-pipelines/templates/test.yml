@@ -26,6 +26,12 @@ jobs:
         - bash: .azure-pipelines/scripts/aggregate-coverage.sh "$(Agent.TempDirectory)"
           condition: eq(variables.haveCoverageData, 'true')
           displayName: Aggregate Coverage Data
+        - task: PublishPipelineArtifact@1
+          condition: eq(variables.haveTestResults, 'true')
+          displayName: Publish Raw Test Results
+          inputs:
+            targetPath: "$(outputPath)/junit/"
+            artifactName: "JUnit $(System.JobAttempt) $(System.StageDisplayName) $(System.JobDisplayName)"
         - task: PublishTestResults@2
           condition: eq(variables.haveTestResults, 'true')
           inputs:
