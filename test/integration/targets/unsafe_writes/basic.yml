@@ -33,12 +33,6 @@
           that:
             - copy_with is changed
       always:
-      - name: remove immutable flag from dir
+      - name: remove immutable flag from dir to prevent issues with cleanup
         file: path={{testudir}} state=directory attributes="-i"
         become: yes
-
-      - name: cleanup files
-        file: path={{item}} state=absent
-        loop:
-          - '{{testufile}}'
-          - '{{testudir}}'
