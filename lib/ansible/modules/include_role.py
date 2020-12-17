@@ -15,7 +15,7 @@ module: include_role
 short_description: Load and execute a role
 description:
   - Dynamically loads and executes a specified role as a task.
-  - May be used only where Ansible tasks are allowed - inside C(pre_tasks), C(tasks), or C(post_tasks) playbook objects, or as a task inside a role.
+  - May be used only where Ansible tasks are allowed - inside C(pre_tasks), C(tasks), or C(post_tasks) play objects, or as a task inside a role.
   - Task-level keywords, loops, and conditionals apply only to the C(include_role) statement itself.
   - To apply keywords to the tasks within the role, pass them using the C(apply) option or use M(ansible.builtin.import_role) instead.
   - Ignores some keywords, like C(until) and C(retries).
@@ -54,10 +54,10 @@ options:
     default: yes
   public:
     description:
-      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the playbook. If set to C(yes)
+      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to C(yes)
         the variables will be available to tasks following the C(include_role) task. This functionality differs from
-        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed at
-        playbook parsing time, and available to earlier roles and tasks as well.
+        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed
+        to the play at playbook parsing time, and available to earlier roles and tasks as well.
     type: bool
     default: no
     version_added: '2.7'
