@@ -20,37 +20,47 @@
 ## systemctl
 ##
 
-- name: check for systemctl command
-  shell: which systemctl
-  failed_when: False
-  register: systemctl_check
+- name: End if this system does not use systemd
+  meta: end_host
+  when: ansible_facts.service_mgr != 'systemd'
 
-- block:
-    - name: get a list of running services
-      shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
-      register: running_names
-    - debug: var=running_names
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - vars
 
-    - name: check running state
-      systemd:
-          name: "{{ running_names.stdout_lines|random }}"
-          state: started
-      register: systemd_test0
-    - debug: var=systemd_test0
-    - name: validate results for test0
-      assert:
-          that:
-              - 'systemd_test0.changed is defined'
-              - 'systemd_test0.name is defined'
-              - 'systemd_test0.state is defined'
-              - 'systemd_test0.status is defined'
-              - 'not systemd_test0.changed'
-              - 'systemd_test0.state == "started"'
+- name: get a list of running services
+  shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
+  register: running_names
+- debug: var=running_names
 
-    - name: check that the module works even when systemd is offline (eg in chroot)
-      systemd:
-          name: "{{ running_names.stdout_lines|random }}"
-          state: started
-      environment:
-          SYSTEMD_OFFLINE: 1
-  when: 'systemctl_check.rc == 0'
+- name: check running state
+  systemd:
+      name: "{{ running_names.stdout_lines|random }}"
+      state: started
+  register: systemd_test0
+- debug: var=systemd_test0
+- name: validate results for test0
+  assert:
+      that:
+          - 'systemd_test0.changed is defined'
+          - 'systemd_test0.name is defined'
+          - 'systemd_test0.state is defined'
+          - 'systemd_test0.status is defined'
+          - 'not systemd_test0.changed'
+          - 'systemd_test0.state == "started"'
+
+- name: check that the module works even when systemd is offline (eg in chroot)
+  systemd:
+      name: "{{ running_names.stdout_lines|random }}"
+      state: started
+  environment:
+      SYSTEMD_OFFLINE: 1
+
+- import_tasks: test_unit_template.yml
