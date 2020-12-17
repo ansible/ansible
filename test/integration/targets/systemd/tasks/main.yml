@@ -20,70 +20,73 @@
 ## systemctl
 ##
 
-- name: check for systemctl command
-  shell: which systemctl
-  failed_when: False
-  register: systemctl_check
+- name: End if this system does not use systemd
+  meta: end_host
+  when: ansible_facts.service_mgr != 'systemd'
 
-- meta: end_host
-  when: systemctl_check.rc != 0
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - vars
 
-- set_fact:
-    ssh_service: '{{ "ssh" if ansible_os_family == "Debian" else "sshd" }}'
+- name: get a list of running services
+  shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
+  register: running_names
+- debug: var=running_names
 
-- block:
-    - name: get a list of running services
-      shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
-      register: running_names
-    - debug: var=running_names
+- name: check running state
+  systemd:
+      name: "{{ running_names.stdout_lines|random }}"
+      state: started
+  register: systemd_test0
+- debug: var=systemd_test0
+- name: validate results for test0
+  assert:
+      that:
+          - 'systemd_test0.changed is defined'
+          - 'systemd_test0.name is defined'
+          - 'systemd_test0.state is defined'
+          - 'systemd_test0.status is defined'
+          - 'not systemd_test0.changed'
+          - 'systemd_test0.state == "started"'
 
-    - name: check running state
-      systemd:
-          name: "{{ running_names.stdout_lines|random }}"
-          state: started
-      register: systemd_test0
-    - debug: var=systemd_test0
-    - name: validate results for test0
-      assert:
-          that:
-              - 'systemd_test0.changed is defined'
-              - 'systemd_test0.name is defined'
-              - 'systemd_test0.state is defined'
-              - 'systemd_test0.status is defined'
-              - 'not systemd_test0.changed'
-              - 'systemd_test0.state == "started"'
+- name: the module must fail when a service is not found
+  systemd:
+      name: '{{ fake_service }}'
+      state: stopped
+  register: result
+  ignore_errors: yes
 
-    - name: the module must fail when a service is not found
-      systemd:
-          name: '{{ fake_service }}'
-          state: stopped
-      register: result
-      ignore_errors: yes
+- assert:
+      that:
+          - result is failed
+          - 'result is search("Could not find the requested service {{ fake_service }}")'
 
-    - assert:
-          that:
-              - result is failed
-              - 'result is search("Could not find the requested service {{ fake_service }}")'
+- name: the module must fail in check_mode as well when a service is not found
+  systemd:
+      name: '{{ fake_service }}'
+      state: stopped
+  register: result
+  check_mode: yes
+  ignore_errors: yes
 
-    - name: the module must fail in check_mode as well when a service is not found
-      systemd:
-          name: '{{ fake_service }}'
-          state: stopped
-      register: result
-      check_mode: yes
-      ignore_errors: yes
+- assert:
+      that:
+          - result is failed
+          - 'result is search("Could not find the requested service {{ fake_service }}")'
 
-    - assert:
-          that:
-              - result is failed
-              - 'result is search("Could not find the requested service {{ fake_service }}")'
-
-    - name: check that the module works even when systemd is offline (eg in chroot)
-      systemd:
-          name: "{{ running_names.stdout_lines|random }}"
-          state: started
-      environment:
-          SYSTEMD_OFFLINE: 1
+- name: check that the module works even when systemd is offline (eg in chroot)
+  systemd:
+      name: "{{ running_names.stdout_lines|random }}"
+      state: started
+  environment:
+      SYSTEMD_OFFLINE: 1
 
 - name: Disable ssh 1
   systemd:
@@ -114,3 +117,5 @@
       - systemd_disable_ssh_2 is not changed
       - systemd_enable_ssh_1 is changed
       - systemd_enable_ssh_2 is not changed
+
+- import_tasks: test_unit_template.yml

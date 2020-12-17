@@ -1,0 +1,4 @@
+- name: remove unit file
+  file:
+    path: /etc/systemd/system/sleeper@.service
+    state: absent
