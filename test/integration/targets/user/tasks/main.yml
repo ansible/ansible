@@ -869,29 +869,57 @@
         name: ansibulluser
         password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
 
-    - name: Lock account
+    - name: Lock account without password parameter
       user:
         name: ansibulluser
         password_lock: yes
       register: password_lock_1
 
-    - name: Lock account again
+    - name: Lock account without password parameter again
       user:
         name: ansibulluser
         password_lock: yes
       register: password_lock_2
 
-    - name: Unlock account
+    - name: Unlock account without password parameter
       user:
         name: ansibulluser
         password_lock: no
       register: password_lock_3
 
-    - name: Unlock account again
+    - name: Unlock account without password parameter again
       user:
         name: ansibulluser
         password_lock: no
       register: password_lock_4
+
+    - name: Lock account with password parameter
+      user:
+        name: ansibulluser
+        password_lock: yes
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+      register: password_lock_5
+
+    - name: Lock account with password parameter again
+      user:
+        name: ansibulluser
+        password_lock: yes
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+      register: password_lock_6
+
+    - name: Unlock account with password parameter
+      user:
+        name: ansibulluser
+        password_lock: no
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+      register: password_lock_7
+
+    - name: Unlock account with password parameter again
+      user:
+        name: ansibulluser
+        password_lock: no
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+      register: password_lock_8
 
     - name: Ensure task reported changes appropriately
       assert:
@@ -901,6 +929,10 @@
           - password_lock_2 is not changed
           - password_lock_3 is changed
           - password_lock_4 is not changed
+          - password_lock_5 is changed
+          - password_lock_6 is not changed
+          - password_lock_7 is changed
+          - password_lock_8 is not changed
 
     - name: Lock account
       user:

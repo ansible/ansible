@@ -1,0 +1,2 @@
+bugfixes:
+  - user - do not set the password hash when ``password_lock=True`` (https://github.com/ansible/ansible/issues/72992)

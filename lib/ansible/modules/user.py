@@ -846,9 +846,10 @@ class User(object):
             # usermod will refuse to unlock a user with no password, module shows 'changed' regardless
             cmd.append('-U')
 
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            cmd.append('-p')
-            cmd.append(self.password)
+        if not self.password_lock and self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            if '-U' not in cmd:
+                cmd.append('-p')
+                cmd.append(self.password)
 
         (rc, out, err) = (None, '', '')
 
