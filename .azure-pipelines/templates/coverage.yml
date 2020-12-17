@@ -19,7 +19,6 @@ jobs:
           path: junit/
           patterns: "JUnit */*"
       - task: PublishTestResults@2
-        condition: eq(variables.haveTestResults, 'true')
         inputs:
           testResultsFiles: "junit/*/*.xml"
         displayName: Publish Test Results
