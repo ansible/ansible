@@ -151,6 +151,29 @@ Another way is to avoid adding elements to the list in the first place, so you c
           - "bar"
 
 
+Custom Fileglob Based on a Variable
+-----------------------------------
+
+This example uses `Python argument list unpacking <https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists>`_ to create a custom list of fileglobs based on a variable.
+
+.. code-block:: YAML+Jinja
+  :caption: Using fileglob with a list based on a variable.
+
+    - hosts: all
+      vars:
+        mygroups
+          - prod
+          - web
+      tasks:
+        - name: Copy a glob of files based on a list of groups
+          copy:
+            src: "{{ item }}"
+            dest: "/tmp/{{ item }}"
+          loop: '{{ q("fileglob", *globlist) }}'
+          vars:
+            globlist: '{{ mygroups | map("regex_replace", "^(.*)$", "files/\1/*.conf") | list }}'
+
+
 .. _complex_type_transformations:
 
 Complex Type transformations
