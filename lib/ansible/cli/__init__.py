@@ -241,16 +241,20 @@ class CLI(with_metaclass(ABCMeta, object)):
         become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op['become_method'].upper()
 
         try:
+            become_prompt = "%s password: " % become_prompt_method
             if op['ask_pass']:
                 sshpass = getpass.getpass(prompt="SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
-            else:
-                become_prompt = "%s password: " % become_prompt_method
+            elif op['connection_password_file']:
+                sshpass = CLI.get_password_from_file(op['connection_password_file'])
 
             if op['become_ask_pass']:
                 becomepass = getpass.getpass(prompt=become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
+            elif op['become_password_file']:
+                becomepass = CLI.get_password_from_file('become_password_file')
+
         except EOFError:
             pass
 
@@ -492,3 +496,40 @@ class CLI(with_metaclass(ABCMeta, object)):
             raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts
+
+    @staticmethod
+    def get_password_from_file(pwd_file):
+
+        secret = None
+        if not os.path.exists(pwd_file):
+            raise AnsibleError("The password file %s was not found" % pwd_file)
+
+        if os.path.is_executable(pwd_file):
+            display.vvvv(u'The password file %s is a script.' % to_text(pwd_file))
+            cmd = [pwd_file]
+
+            try:
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
+                                   " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
+
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise AnsibleError("The password script %s returned and error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
+            secret = stdout
+
+        else:
+            try:
+                f = open(pwd_file, "rb")
+                secret = f.read().strip()
+                f.close()
+            except (OSError, IOError) as e:
+                raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
+
+        secret = secret.strip(b'\r\n')
+
+        if not secret:
+            raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
+
+        return secret
