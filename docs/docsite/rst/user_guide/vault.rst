@@ -199,11 +199,11 @@ The command above creates this content::
               6664656334373166630a363736393262666465663432613932613036303963343263623137386239
               6330
 
-To encrypt the string 'letmein' read from stdin, add the vault ID 'test' using the 'test' vault password stored in `a_password_file`, and name the variable 'test_db_password':
+To encrypt the string 'letmein' read from stdin, add the vault ID 'dev' using the 'dev' vault password stored in `a_password_file`, and name the variable 'db_password':
 
 .. code-block:: bash
 
-    echo -n 'letmein' | ansible-vault encrypt_string --vault-id test@a_password_file --stdin-name 'test_db_password'
+    echo -n 'letmein' | ansible-vault encrypt_string --vault-id dev@a_password_file --stdin-name 'db_password'
 
 .. warning::
 
