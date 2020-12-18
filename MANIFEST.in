@@ -3,6 +3,7 @@ include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
 recursive-include docs *
+include docs/docsite/rst/collections/all_plugins.rst
 exclude docs/docsite/rst_warnings
 recursive-exclude docs/docsite/_build *
 recursive-exclude docs/docsite/_extensions *.pyc *.pyo

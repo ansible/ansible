@@ -94,7 +94,11 @@ clean:
 	rm -f rst/reference_appendices/playbooks_keywords.rst
 	rm -f rst/dev_guide/collections_galaxy_meta.rst
 	rm -f rst/cli/*.rst
-	rm -rf rst/collections/*
+	for filename in `ls rst/collections/` ; do \
+		if test x"$$filename" != x'all_plugins.rst' ; then \
+			rm -rf "rst/collections/$$filename"; \
+		fi \
+	done
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
 	rm -f rst/plugins/*/*.rst
