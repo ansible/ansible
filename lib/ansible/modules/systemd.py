@@ -58,8 +58,8 @@ options:
         version_added: "2.8"
     scope:
         description:
-            - run systemctl within a given service manager scope, either as the default system scope (system),
-              the current user's scope (user), or the scope of all users (global).
+            - Run systemctl within a given service manager scope, either as the default system scope C(system),
+              the current user's scope C(user), or the scope of all users C(global).
             - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
             - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
@@ -81,54 +81,55 @@ notes:
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
     - Before 2.4 you always required 'name'.
     - Globs are not supported in name, i.e ``postgres*.service``.
+    - Supports C(check_mode).
 requirements:
     - A system managed by systemd.
 '''
 
 EXAMPLES = '''
 - name: Make sure a service is running
-  systemd:
+  ansible.builtin.systemd:
     state: started
     name: httpd
 
 - name: Stop service cron on debian, if running
-  systemd:
+  ansible.builtin.systemd:
     name: cron
     state: stopped
 
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-  systemd:
+  ansible.builtin.systemd:
     state: restarted
     daemon_reload: yes
     name: crond
 
 - name: Reload service httpd, in all cases
-  systemd:
+  ansible.builtin.systemd:
     name: httpd
     state: reloaded
 
 - name: Enable service httpd and ensure it is not masked
-  systemd:
+  ansible.builtin.systemd:
     name: httpd
     enabled: yes
     masked: no
 
 - name: Enable a timer for dnf-automatic
-  systemd:
+  ansible.builtin.systemd:
     name: dnf-automatic.timer
     state: started
     enabled: yes
 
 - name: Just force systemd to reread configs (2.4 and above)
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: yes
 
 - name: Just force systemd to re-execute itself (2.8 and above)
-  systemd:
+  ansible.builtin.systemd:
     daemon_reexec: yes
 
-- name: run a user service when XDG_RUNTIME_DIR is not set on remote login.
-  systemd:
+- name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
+  ansible.builtin.systemd:
     name: myservice
     state: started
     scope: user
@@ -138,7 +139,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
-    description: A dictionary with the key=value pairs returned from `systemctl show`
+    description: A dictionary with the key=value pairs returned from `systemctl show`.
     returned: success
     type: complex
     sample: {

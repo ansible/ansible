@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 ---
 module: unarchive
 version_added: '1.4'
-short_description: Unpacks an archive after (optionally) copying it from the local machine.
+short_description: Unpacks an archive after (optionally) copying it from the local machine
 description:
      - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
@@ -118,6 +118,7 @@ notes:
       are not touched. This is the same behavior as a normal archive extraction.
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
+    - Supports C(check_mode).
 seealso:
 - module: community.general.archive
 - module: community.general.iso_extract
@@ -127,24 +128,24 @@ author: Michael DeHaan
 
 EXAMPLES = r'''
 - name: Extract foo.tgz into /var/lib/foo
-  unarchive:
+  ansible.builtin.unarchive:
     src: foo.tgz
     dest: /var/lib/foo
 
 - name: Unarchive a file that is already on the remote machine
-  unarchive:
+  ansible.builtin.unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
     remote_src: yes
 
 - name: Unarchive a file that needs to be downloaded (added in 2.0)
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
 
 - name: Unarchive a file with extra options
-  unarchive:
+  ansible.builtin.unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
     extra_opts:
