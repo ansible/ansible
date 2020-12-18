@@ -13,7 +13,7 @@ module: gather_facts
 version_added: 2.8
 short_description: Gathers facts about remote hosts
 description:
-     - This module takes care of executing the configured facts modules, the default is to use the M(ansible.builtin.setup) module.
+     - This module takes care of executing the R(configured facts modules,FACTS_MODULES), the default is to use the M(ansible.builtin.setup) module.
      - This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks.
      - It can also be executed directly by C(/usr/bin/ansible) to check what variables are available to a host.
      - Ansible provides many I(facts) about the system, automatically.
@@ -38,6 +38,6 @@ RETURN = """
 """
 
 EXAMPLES = """
-# Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+# Display facts from all hosts and store them indexed by hostname at /tmp/facts.
 # ansible all -m gather_facts --tree /tmp/facts
 """
