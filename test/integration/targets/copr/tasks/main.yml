@@ -1,0 +1,64 @@
+---
+- block:
+  - name: enable copr project
+    copr:
+      host: copr.fedorainfracloud.org
+      state: enabled
+      name: '@copr/integration_tests'
+      chroot: centos-stream-x86_64
+    register: result
+
+  - name: assert that the copr project was enabled
+    assert:
+      that:
+        - 'result is changed'
+        - result.msg == 'enabled'
+        - result.info == 'Please note that this repository is not part of the main distribution'
+
+  - name: enable copr project
+    check_mode: yes
+    copr:
+      state: enabled
+      name: '@copr/integration_tests'
+      chroot: centos-stream-x86_64
+    register: result
+
+  - name: assert that the copr project was enabled
+    assert:
+      that:
+        - result.state == 'enabled'
+        - result.chroot == 'centos-stream-x86_64'
+        - result.host == 'copr.fedorainfracloud.org'
+
+  - name: remove copr project
+    copr:
+      state: absent
+      name: '@copr/integration_tests'
+    register: result
+
+  - name: assert that the copr project was enabled
+    assert:
+      that:
+        - 'result is changed'
+        - result.msg == 'absent'
+
+  - name: disable copr project
+    copr:
+      state: disabled
+      name: '@copr/integration_tests'
+      chroot: centos-stream-x86_64
+    register: result
+
+  - name: assert that the copr project was disabled
+    assert:
+      that:
+        - 'result is changed'
+        - result.msg == 'disabled'
+
+  always:
+    - name: clean up
+      copr:
+        host: copr.fedorainfracloud.org
+        state: absent
+        name: '@copr/integration_tests'
+        chroot: centos-stream-x86_64
