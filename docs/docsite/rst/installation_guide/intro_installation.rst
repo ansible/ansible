@@ -169,7 +169,7 @@ Installing Ansible on Debian
 
 Debian users may leverage the same source as the Ubuntu PPA.
 
-Add the following line to /etc/apt/sources.list:
+Add the following line to ``/etc/apt/sources.list``:
 
 .. code-block:: bash
 
