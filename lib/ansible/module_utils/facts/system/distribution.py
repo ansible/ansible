@@ -55,6 +55,7 @@ class DistributionFiles:
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
+        {'path': '/etc/centos-release', 'name': 'CentOS'},
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
         {'path': '/etc/vmware-release', 'name': 'VMwareESX', 'allowempty': True},
         {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
@@ -440,6 +441,15 @@ class DistributionFiles:
             clear_facts['distribution_release'] = release.groups()[0]
         return True, clear_facts
 
+    def parse_distribution_file_CentOS(self, name, data, path, collected_facts):
+        centos_facts = {}
+
+        if 'CentOS Stream' in data:
+            centos_facts['distribution_release'] = 'Stream'
+            return True, centos_facts
+
+        return False, centos_facts
+
 
 class Distribution(object):
     """
@@ -449,40 +459,6 @@ class Distribution(object):
 
     This is unit tested. Please extend the tests to cover all distributions if you have them available.
     """
-
-    # every distribution name mentioned here, must have one of
-    #  - allowempty == True
-    #  - be listed in SEARCH_STRING
-    #  - have a function get_distribution_DISTNAME implemented
-    OSDIST_LIST = (
-        {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
-        {'path': '/etc/slackware-version', 'name': 'Slackware'},
-        {'path': '/etc/redhat-release', 'name': 'RedHat'},
-        {'path': '/etc/vmware-release', 'name': 'VMwareESX', 'allowempty': True},
-        {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
-        {'path': '/etc/system-release', 'name': 'Amazon'},
-        {'path': '/etc/alpine-release', 'name': 'Alpine'},
-        {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
-        {'path': '/etc/os-release', 'name': 'SUSE'},
-        {'path': '/etc/SuSE-release', 'name': 'SUSE'},
-        {'path': '/etc/gentoo-release', 'name': 'Gentoo'},
-        {'path': '/etc/os-release', 'name': 'Debian'},
-        {'path': '/etc/lsb-release', 'name': 'Mandriva'},
-        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
-        {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
-        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
-        {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
-        {'path': '/etc/os-release', 'name': 'NA'},
-    )
-
-    SEARCH_STRING = {
-        'OracleLinux': 'Oracle Linux',
-        'RedHat': 'Red Hat',
-        'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
-        'SMGL': 'Source Mage GNU/Linux',
-    }
 
     # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
