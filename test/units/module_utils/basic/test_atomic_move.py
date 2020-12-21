@@ -23,6 +23,7 @@ def atomic_am(am, mocker):
     am.selinux_context = mocker.MagicMock()
     am.selinux_default_context = mocker.MagicMock()
     am.set_context_if_different = mocker.MagicMock()
+    am._unsafe_writes = mocker.MagicMock()
 
     yield am
 
