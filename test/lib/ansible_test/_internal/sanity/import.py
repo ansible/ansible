@@ -43,6 +43,7 @@ from ..ansible_util import (
 
 from ..executor import (
     generate_pip_install,
+    install_cryptography,
 )
 
 from ..config import (
@@ -156,6 +157,7 @@ class ImportTest(SanityMultipleVersion):
 
             # make sure requirements are installed if needed
             if requirements_file:
+                install_cryptography(args, virtualenv_python, python_version, virtualenv_pip)
                 run_command(args, generate_pip_install(virtualenv_pip, 'sanity', context='import-plugins'), env=env, capture=capture_pip)
 
             # make sure coverage is available in the virtual environment if needed
