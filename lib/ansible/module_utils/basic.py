@@ -2369,8 +2369,7 @@ class AnsibleModule(object):
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)),
-                               exception=traceback.format_exc())
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
             else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
@@ -2380,14 +2379,13 @@ class AnsibleModule(object):
                 error_msg = None
                 tmp_dest_name = None
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp',
-                                                                  dir=b_dest_dir, suffix=b_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
                 except TypeError:
                     # We expect that this is happening because python3.4.x and
-                    # below can't handle byte strings in mkstemp().  Traceback
-                    # would end in something like:
+                    # below can't handle byte strings in mkstemp().
+                    # Traceback would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
                     error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
@@ -2431,11 +2429,12 @@ class AnsibleModule(object):
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
                                     self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)),
-                                                   exception=traceback.format_exc())
+                                                       (src, dest, b_tmp_dest_name, to_native(e)), exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
-                            self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)),
-                                           exception=traceback.format_exc())
+                            if unsafe_writes:
+                                self._unsafe_writes(b_src, b_dest)
+                            else:
+                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
                     finally:
                         self.cleanup(b_tmp_dest_name)
 

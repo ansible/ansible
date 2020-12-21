@@ -630,7 +630,7 @@ def main():
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
-            module.atomic_move(tmpsrc, dest)
+            module.atomic_move(tmpsrc, dest, unsafe_writes=module.params['unsafe_writes'])
         except Exception as e:
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)
