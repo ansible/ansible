@@ -120,7 +120,7 @@ class GalaxyToken(object):
     def _read(self):
         action = 'Opened'
         if not os.path.isfile(self.b_file):
-            # token file not found, create and chomd u+rw
+            # token file not found, create and chmod u+rw
             open(self.b_file, 'w').close()
             os.chmod(self.b_file, S_IRUSR | S_IWUSR)  # owner has +rw
             action = 'Created'
@@ -129,6 +129,10 @@ class GalaxyToken(object):
             config = yaml.safe_load(f)
 
         display.vvv('%s %s' % (action, to_text(self.b_file)))
+
+        if config and not isinstance(config, dict):
+            display.vvv('Galaxy token file %s malformed, unable to read it' % to_text(self.b_file))
+            return {}
 
         return config or {}
 
