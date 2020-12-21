@@ -1,0 +1,2 @@
+minor_changes:
+- galaxy - handle token as dict while loading from yaml file (https://github.com/ansible/ansible/issues/70887).
