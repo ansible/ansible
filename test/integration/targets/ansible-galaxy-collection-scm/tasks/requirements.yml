@@ -49,7 +49,7 @@
 - assert:
     that:
       - result.failed
-      - '"ERROR! - command /bin/git clone ansible.nope ansible.nope failed" in result.stderr'
+      - 'result.stderr is search("ERROR! - command /.*/git clone ansible.nope ansible.nope failed")'
 
 - name: test using name as a git repo without git+ prefix
   command: 'ansible-galaxy collection install -r name_without_type.yml'
