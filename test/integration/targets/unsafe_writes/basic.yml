@@ -49,4 +49,5 @@
       always:
       - name: remove immutable flag from dir to prevent issues with cleanup
         file: path={{testudir}} state=directory attributes="-i"
+        ignore_errors: true
         become: yes
