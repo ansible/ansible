@@ -244,8 +244,8 @@ options:
         pass yum repository credentials (username and password) safely to
         C(yum).
       - See
-        U(https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/ch-yum#sec-Using_Yum_Variables) or C(man 5 yum.conf)
-        for more details.
+        U(https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/ch-yum#sec-Using_Yum_Variables)
+        or C(man 5 yum.conf) for more details.
     required: false
     version_added: "2.11"
     type: dict
