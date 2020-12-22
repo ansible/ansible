@@ -382,6 +382,14 @@
     port: '{{ http_port }}'
     state: started
 
+- name: download src with sha1 checksum url in check mode
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_check_mode
+  check_mode: True
+
 - name: download src with sha1 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
@@ -473,6 +481,7 @@
 - name: Assert that the file was downloaded
   assert:
     that:
+      - result_sha1_check_mode is changed
       - result_sha1 is changed
       - result_sha256 is changed
       - result_sha256_with_dot is changed
