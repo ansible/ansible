@@ -30,7 +30,7 @@ plugin_routing:
     lxd:
       redirect: community.general.lxd
     oc:
-      redirect: community.general.oc
+      redirect: community.okd.oc
     qubes:
       redirect: community.general.qubes
     saltstack:
