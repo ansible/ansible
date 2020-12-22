@@ -2451,15 +2451,15 @@ plugin_routing:
     nos_facts:
       redirect: community.network.nos_facts
     nso_action:
-      redirect: community.network.nso_action
+      redirect: cisco.nso.nso_action
     nso_config:
-      redirect: community.network.nso_config
+      redirect: cisco.nso.nso_config
     nso_query:
-      redirect: community.network.nso_query
+      redirect: cisco.nso.nso_query
     nso_show:
-      redirect: community.network.nso_show
+      redirect: cisco.nso.nso_show
     nso_verify:
-      redirect: community.network.nso_verify
+      redirect: cisco.nso.nso_verify
     nuage_vspk:
       redirect: community.network.nuage_vspk
     onyx_aaa:
@@ -8484,9 +8484,9 @@ plugin_routing:
     network.nos.nos:
       redirect: community.network.network.nos.nos
     network.nso:
-      redirect: community.network.network.nso
+      redirect: cisco.nso.nso
     network.nso.nso:
-      redirect: community.network.network.nso.nso
+      redirect: cisco.nso.nso
     network.nxos:
       redirect: cisco.nxos.network.nxos
     network.nxos.argspec:
@@ -9266,7 +9266,7 @@ plugin_routing:
     nios:
       redirect: community.general.nios
     nso:
-      redirect: community.network.nso
+      redirect: cisco.nso.nso
     oneview:
       redirect: community.general.oneview
     online:
