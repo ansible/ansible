@@ -1403,49 +1403,49 @@ plugin_routing:
     mysql_variables:
       redirect: community.mysql.mysql_variables
     postgresql_copy:
-      redirect: community.general.postgresql_copy
+      redirect: community.postgresql.postgresql_copy
     postgresql_db:
-      redirect: community.general.postgresql_db
+      redirect: community.postgresql.postgresql_db
     postgresql_ext:
-      redirect: community.general.postgresql_ext
+      redirect: community.postgresql.postgresql_ext
     postgresql_idx:
-      redirect: community.general.postgresql_idx
+      redirect: community.postgresql.postgresql_idx
     postgresql_info:
-      redirect: community.general.postgresql_info
+      redirect: community.postgresql.postgresql_info
     postgresql_lang:
-      redirect: community.general.postgresql_lang
+      redirect: community.postgresql.postgresql_lang
     postgresql_membership:
-      redirect: community.general.postgresql_membership
+      redirect: community.postgresql.postgresql_membership
     postgresql_owner:
-      redirect: community.general.postgresql_owner
+      redirect: community.postgresql.postgresql_owner
     postgresql_pg_hba:
-      redirect: community.general.postgresql_pg_hba
+      redirect: community.postgresql.postgresql_pg_hba
     postgresql_ping:
-      redirect: community.general.postgresql_ping
+      redirect: community.postgresql.postgresql_ping
     postgresql_privs:
-      redirect: community.general.postgresql_privs
+      redirect: community.postgresql.postgresql_privs
     postgresql_publication:
-      redirect: community.general.postgresql_publication
+      redirect: community.postgresql.postgresql_publication
     postgresql_query:
-      redirect: community.general.postgresql_query
+      redirect: community.postgresql.postgresql_query
     postgresql_schema:
-      redirect: community.general.postgresql_schema
+      redirect: community.postgresql.postgresql_schema
     postgresql_sequence:
-      redirect: community.general.postgresql_sequence
+      redirect: community.postgresql.postgresql_sequence
     postgresql_set:
-      redirect: community.general.postgresql_set
+      redirect: community.postgresql.postgresql_set
     postgresql_slot:
-      redirect: community.general.postgresql_slot
+      redirect: community.postgresql.postgresql_slot
     postgresql_subscription:
-      redirect: community.general.postgresql_subscription
+      redirect: community.postgresql.postgresql_subscription
     postgresql_table:
-      redirect: community.general.postgresql_table
+      redirect: community.postgresql.postgresql_table
     postgresql_tablespace:
-      redirect: community.general.postgresql_tablespace
+      redirect: community.postgresql.postgresql_tablespace
     postgresql_user:
-      redirect: community.general.postgresql_user
+      redirect: community.postgresql.postgresql_user
     postgresql_user_obj_stat_info:
-      redirect: community.general.postgresql_user_obj_stat_info
+      redirect: community.postgresql.postgresql_user_obj_stat_info
     proxysql_backend_servers:
       redirect: community.proxysql.proxysql_backend_servers
     proxysql_global_variables:
@@ -8782,7 +8782,7 @@ plugin_routing:
     podman.common:
       redirect: containers.podman.podman.common
     postgres:
-      redirect: community.general.postgres
+      redirect: community.postgresql.postgres
     pure:
       redirect: community.general.pure
     rabbitmq:
@@ -9294,7 +9294,7 @@ plugin_routing:
     panos:
       redirect: community.network.panos
     postgres:
-      redirect: community.general.postgres
+      redirect: community.postgresql.postgres
     proxysql:
       redirect: community.proxysql.proxysql
     purestorage:
