@@ -142,9 +142,19 @@ def get_platform_subclass(cls):
 
     this_platform = platform.system()
     distribution = get_distribution()
+    distribution_version = get_distribution_version()
     subclass = None
+    # set default value for this platform subclass
+    for default_platform_key in ["distribution_version", "distribution", "platform"]:
+        if not hasattr(cls,default_platform_key):
+            setattr(cls, default_platform_key, None)
 
     # get the most specific superclass for this platform
+    if distribution_version is not None:
+        for sc in get_all_subclasses(cls):
+            if sc.distribution_version is not None and sc.distribution_version == distribution_version and sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
+                subclass = sc
+
     if distribution is not None:
         for sc in get_all_subclasses(cls):
             if sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
