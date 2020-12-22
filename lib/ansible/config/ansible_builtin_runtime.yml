@@ -1659,13 +1659,13 @@ plugin_routing:
     haproxy:
       redirect: community.general.haproxy
     hetzner_failover_ip:
-      redirect: community.general.hetzner_failover_ip
+      redirect: community.hrobot.failover_ip
     hetzner_failover_ip_info:
-      redirect: community.general.hetzner_failover_ip_info
+      redirect: community.hrobot.failover_ip_info
     hetzner_firewall:
-      redirect: community.general.hetzner_firewall
+      redirect: community.hrobot.firewall
     hetzner_firewall_info:
-      redirect: community.general.hetzner_firewall_info
+      redirect: community.hrobot.firewall_info
     infinity:
       redirect: community.general.infinity
     ip_netns:
@@ -7659,7 +7659,7 @@ plugin_routing:
     heroku:
       redirect: community.general.heroku
     hetzner:
-      redirect: community.general.hetzner
+      redirect: community.hrobot.robot
     hwc_utils:
       redirect: community.general.hwc_utils
     ibm_sa_utils:
@@ -9230,7 +9230,7 @@ plugin_routing:
     gcp:
       redirect: google.cloud.gcp
     hetzner:
-      redirect: community.general.hetzner
+      redirect: community.hrobot.robot
     hpe3par:
       redirect: community.general.hpe3par
     hwc:
