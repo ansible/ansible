@@ -1,9 +1,6 @@
 # We have a test repo set up with a valid updateinfo.xml which is referenced
 # from its repomd.xml.
 - block:
-    - set_fact:
-        updateinfo_repo: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_rpm_repo/repo-with-updateinfo
-
     - name: Install the test repo
       yum_repository:
         name: test-repo-with-updateinfo

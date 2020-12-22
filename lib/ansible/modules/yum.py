@@ -236,6 +236,19 @@ options:
     version_added: "1.5"
     default: "yes"
     type: bool
+  config_environment:
+    description:
+      - Yum allows for replacing C($YUM0, ..., $YUM9) with the contents of an
+        environment variable defined before C(yum) is executed.
+      - These variables can be defined here and used, for example, as a way to
+        pass yum repository credentials (username and password) safely to
+        C(yum).
+      - See
+        U(https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/ch-yum#sec-Using_Yum_Variables) or C(man 5 yum.conf)
+        for more details.
+    required: false
+    version_added: "2.11"
+    type: dict
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -367,6 +380,16 @@ EXAMPLES = '''
       - nginx
     state: latest
     download_only: true
+
+# Using a repository which, for example, defines:
+#   baseurl=https://$YUM1:$YUM2@server/path/to/repo/
+- name: Install package with a private repo enabled
+  yum:
+    name: sos
+    enablerepo: protected-repo
+    config_environment:
+      YUM1: "{{ yum_user }}"
+      YUM2: "{{ yum_password }}"
 '''
 
 from ansible.module_utils.basic import AnsibleModule

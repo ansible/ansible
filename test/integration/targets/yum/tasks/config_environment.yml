@@ -1,0 +1,39 @@
+- block:
+    - name: Add repository
+      yum_repository:
+        name: yum1test
+        description: bar
+        baseurl: $YUM1
+        gpgcheck: no
+
+    - yum:
+        name: toaster
+        state: present
+        config_environment:
+          NOT_YUM1: oops
+      ignore_errors: true
+      register: invalid_var
+
+    - assert:
+        that:
+          - invalid_var is failed
+          - "'only be used to set' in invalid_var.msg"
+
+    - yum:
+        name: toaster
+        state: present
+        disablerepo: '*'
+        enablerepo: yum1test
+        config_environment:
+          YUM1: "{{ updateinfo_repo }}"
+
+  always:
+    - name: Nix repository
+      yum_repository:
+        name: yum1test
+        state: absent
+
+    - name: Nix package
+      yum:
+        name: toaster
+        state: absent

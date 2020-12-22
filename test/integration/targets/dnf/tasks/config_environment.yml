@@ -1,0 +1,68 @@
+- name: Test DNF[0-9] style variables
+  block:
+    - name: Add repository
+      yum_repository:
+        name: dnf1test
+        description: bar
+        baseurl: $DNF1
+        gpgcheck: no
+
+    - dnf:
+        name: toaster
+        state: present
+        config_environment:
+          NOT_DNF1: oops
+      ignore_errors: true
+      register: invalid_var
+
+    - assert:
+        that:
+          - invalid_var is failed
+          - "'only be used to set' in invalid_var.msg"
+
+    - dnf:
+        name: toaster
+        state: present
+        disablerepo: '*'
+        enablerepo: dnf1test
+        config_environment:
+          DNF1: "{{ updateinfo_repo }}"
+
+  always:
+    - name: Nix repository
+      yum_repository:
+        name: dnf1test
+        state: absent
+
+    - name: Nix package
+      dnf:
+        name: toaster
+        state: absent
+
+- name: Test DNF_VAR_ style variables
+  block:
+    - name: Add repository
+      yum_repository:
+        name: dnf1test
+        description: bar
+        baseurl: $MY_BASEURL
+        gpgcheck: no
+
+    - dnf:
+        name: toaster
+        state: present
+        disablerepo: '*'
+        enablerepo: dnf1test
+        config_environment:
+          DNF_VAR_MY_BASEURL: "{{ updateinfo_repo }}"
+
+  always:
+    - name: Nix repository
+      yum_repository:
+        name: dnf1test
+        state: absent
+
+    - name: Nix package
+      dnf:
+        name: toaster
+        state: absent

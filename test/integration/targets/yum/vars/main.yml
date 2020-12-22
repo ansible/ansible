@@ -1,6 +1,1 @@
-dnf_log_files:
-    - /var/log/dnf.log
-    - /var/log/dnf.rpm.log
-    - /var/log/dnf.librepo.log
-
 updateinfo_repo: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_rpm_repo/repo-with-updateinfo

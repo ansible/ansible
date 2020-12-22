@@ -228,6 +228,17 @@ options:
     type: bool
     default: "no"
     version_added: "2.11"
+  config_environment:
+    description:
+      - Dnf allows for replacing C($DNF0, ..., $DNF9) and C($DNF_VAR_*) with the
+         contents of an environment variable defined before C(dnf) is executed.
+      - These variables can be defined here and used, for example, as a way to
+        pass dnf repository credentials (username and password) safely to dnf.
+      - See U(https://dnf.readthedocs.io/en/latest/conf_ref.html#repo-variables)
+        for more details.
+    required: false
+    version_added: "2.11"
+    type: dict
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -318,6 +329,17 @@ EXAMPLES = '''
   dnf:
     name: '@postgresql/client'
     state: present
+
+# Using a repository which, for example, defines:
+#   baseurl=https://$DNF1:$DNF2@$HOSTNAME/path/to/repo/
+- name: Install package with a private repo enabled
+  dnf:
+    name: sos
+    enablerepo: protected-repo
+    config_environment:
+      DNF1: "{{ dnf_user }}"
+      DNF2: "{{ dnf_password }}"
+      DNF_VAR_HOSTNAME: server.example.com
 '''
 
 import os

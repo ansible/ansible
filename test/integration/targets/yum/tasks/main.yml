@@ -10,7 +10,7 @@
       name:
       - sos
       state: absent
-    
+
   - import_tasks: yum.yml
   always:
     - name: remove installed packages
@@ -67,5 +67,10 @@
 
 
 - import_tasks: lock.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+
+
+- import_tasks: config_environment.yml
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']

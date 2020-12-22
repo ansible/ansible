@@ -1,0 +1,3 @@
+minor_changes:
+  - dnf - Added ``config_environment`` parameter to module, to allow safely passing ``$DNF[0-9]`` and ``$DNF_VAR_<foo>`` environment variables to dnf config files (https://github.com/ansible/ansible/issues/72916).
+  - yum - Added ``config_environment`` parameter to module, to allow safely passing ``YUM[0-9]`` environment variables to yum config files (https://github.com/ansible/ansible/issues/72916).

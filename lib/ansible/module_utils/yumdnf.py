@@ -16,6 +16,7 @@ import os
 import time
 import glob
 import tempfile
+import re
 from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils._text import to_native
@@ -26,6 +27,7 @@ yumdnf_argument_spec = dict(
         allow_downgrade=dict(type='bool', default=False),
         autoremove=dict(type='bool', default=False),
         bugfix=dict(required=False, type='bool', default=False),
+        config_environment=dict(required=False, type='dict', default={}),
         conf_file=dict(type='str'),
         disable_excludes=dict(type='str', default=None),
         disable_gpg_check=dict(type='bool', default=False),
@@ -56,6 +58,10 @@ yumdnf_argument_spec = dict(
     supports_check_mode=True,
 )
 
+# yum allows only $YUM0, ..., $YUM9
+# dnf allows $DNF0, ..., $DNF9, but also $DNF_VAR_<whatever>
+YUM_DNF_VAR_RE = re.compile(r'^(?:(?:YUM|DNF)[0-9]|DNF_VAR_.+)$')
+
 
 class YumDnf(with_metaclass(ABCMeta, object)):
     """
@@ -72,6 +78,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.autoremove = self.module.params['autoremove']
         self.bugfix = self.module.params['bugfix']
         self.conf_file = self.module.params['conf_file']
+        self.config_environment = self.module.params['config_environment']
         self.disable_excludes = self.module.params['disable_excludes']
         self.disable_gpg_check = self.module.params['disable_gpg_check']
         self.disable_plugin = self.module.params['disable_plugin']
@@ -124,6 +131,16 @@ class YumDnf(with_metaclass(ABCMeta, object)):
                 msg="Autoremove should be used alone or with state=absent",
                 results=[],
             )
+
+        # Sanity checking for config_environment. We aren't a free-for-all env
+        # var setter, we only set $YUM[0-9] and $DNF[0-9].
+        for name, val in self.config_environment.items():
+            if YUM_DNF_VAR_RE.match(name) is None:
+                self.module.fail_json(
+                    msg=('config_environment can only be used to set yum or '
+                         'dnf configuration environment variables ($YUM0, ..., '
+                         '$YUM9, $DNF0, ..., $DNF9, $DNF_VAR_FOO)'))
+            os.environ[name] = val
 
         # This should really be redefined by both the yum and dnf module but a
         # default isn't a bad idea
