@@ -14,7 +14,7 @@ plugin_routing:
     chroot:
       redirect: community.general.chroot
     docker:
-      redirect: community.general.docker
+      redirect: community.docker.docker
     funcd:
       redirect: community.general.funcd
     iocage:
@@ -719,47 +719,47 @@ plugin_routing:
     docker_service:
       redirect: community.general.docker_service
     docker_compose:
-      redirect: community.general.docker_compose
+      redirect: community.docker.docker_compose
     docker_config:
-      redirect: community.general.docker_config
+      redirect: community.docker.docker_config
     docker_container:
-      redirect: community.general.docker_container
+      redirect: community.docker.docker_container
     docker_container_info:
-      redirect: community.general.docker_container_info
+      redirect: community.docker.docker_container_info
     docker_host_info:
-      redirect: community.general.docker_host_info
+      redirect: community.docker.docker_host_info
     docker_image:
-      redirect: community.general.docker_image
+      redirect: community.docker.docker_image
     docker_image_info:
-      redirect: community.general.docker_image_info
+      redirect: community.docker.docker_image_info
     docker_login:
-      redirect: community.general.docker_login
+      redirect: community.docker.docker_login
     docker_network:
-      redirect: community.general.docker_network
+      redirect: community.docker.docker_network
     docker_network_info:
-      redirect: community.general.docker_network_info
+      redirect: community.docker.docker_network_info
     docker_node:
-      redirect: community.general.docker_node
+      redirect: community.docker.docker_node
     docker_node_info:
-      redirect: community.general.docker_node_info
+      redirect: community.docker.docker_node_info
     docker_prune:
-      redirect: community.general.docker_prune
+      redirect: community.docker.docker_prune
     docker_secret:
-      redirect: community.general.docker_secret
+      redirect: community.docker.docker_secret
     docker_stack:
-      redirect: community.general.docker_stack
+      redirect: community.docker.docker_stack
     docker_swarm:
-      redirect: community.general.docker_swarm
+      redirect: community.docker.docker_swarm
     docker_swarm_info:
-      redirect: community.general.docker_swarm_info
+      redirect: community.docker.docker_swarm_info
     docker_swarm_service:
-      redirect: community.general.docker_swarm_service
+      redirect: community.docker.docker_swarm_service
     docker_swarm_service_info:
-      redirect: community.general.docker_swarm_service_info
+      redirect: community.docker.docker_swarm_service_info
     docker_volume:
-      redirect: community.general.docker_volume
+      redirect: community.docker.docker_volume
     docker_volume_info:
-      redirect: community.general.docker_volume_info
+      redirect: community.docker.docker_volume_info
     gcdns_record:
       redirect: community.general.gcdns_record
     gcdns_zone:
@@ -7626,11 +7626,11 @@ plugin_routing:
     dimensiondata:
       redirect: community.general.dimensiondata
     docker:
-      redirect: community.general.docker
+      redirect: community.docker.common
     docker.common:
-      redirect: community.general.docker.common
+      redirect: community.docker.common
     docker.swarm:
-      redirect: community.general.docker.swarm
+      redirect: community.docker.swarm
     ec2:
       redirect: amazon.aws.ec2
     ecs:
@@ -9220,7 +9220,7 @@ plugin_routing:
     dimensiondata_wait:
       redirect: community.general.dimensiondata_wait
     docker:
-      redirect: community.general.docker
+      redirect: community.docker.docker
     emc:
       redirect: community.general.emc
     enos:
@@ -9511,9 +9511,9 @@ plugin_routing:
     cloudscale:
       redirect: cloudscale_ch.cloud.inventory
     docker_machine:
-      redirect: community.general.docker_machine
+      redirect: community.docker.docker_machine
     docker_swarm:
-      redirect: community.general.docker_swarm
+      redirect: community.docker.docker_swarm
     gitlab_runners:
       redirect: community.general.gitlab_runners
     kubevirt:
