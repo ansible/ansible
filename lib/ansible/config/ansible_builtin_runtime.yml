@@ -2593,9 +2593,9 @@ plugin_routing:
     vdirect_runnable:
       redirect: community.network.vdirect_runnable
     routeros_command:
-      redirect: community.network.routeros_command
+      redirect: community.routeros.command
     routeros_facts:
-      redirect: community.network.routeros_facts
+      redirect: community.routeros.facts
     slxos_command:
       redirect: community.network.slxos_command
     slxos_config:
@@ -8658,9 +8658,9 @@ plugin_routing:
     network.restconf.restconf:
       redirect: ansible.netcommon.network.restconf.restconf
     network.routeros:
-      redirect: community.network.network.routeros
+      redirect: community.routeros.routeros
     network.routeros.routeros:
-      redirect: community.network.network.routeros.routeros
+      redirect: community.routeros.routeros
     network.skydive:
       redirect: community.skydive.network.skydive
     network.skydive.api:
@@ -8878,7 +8878,7 @@ plugin_routing:
     onyx:
       redirect: mellanox.onyx.onyx
     routeros:
-      redirect: community.network.routeros
+      redirect: community.routeros.routeros
     slxos:
       redirect: community.network.slxos
     voss:
@@ -8937,7 +8937,7 @@ plugin_routing:
     onyx:
       redirect: mellanox.onyx.onyx
     routeros:
-      redirect: community.network.routeros
+      redirect: community.routeros.routeros
     slxos:
       redirect: community.network.slxos
     sros:
