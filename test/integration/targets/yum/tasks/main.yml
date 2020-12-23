@@ -74,3 +74,4 @@
 - import_tasks: config_environment.yml
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+    - ansible_distribution_major_version|int < 8
