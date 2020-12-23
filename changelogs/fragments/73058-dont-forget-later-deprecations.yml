@@ -1,0 +1,2 @@
+bugfixes:
+- "Deprecations for plugins that are loaded after CLI init, like lookup plugins, are now reported (https://github.com/ansible/ansible/issues/73051, https://github.com/ansible/ansible/pull/73058)."
