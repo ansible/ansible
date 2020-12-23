@@ -1,0 +1,2 @@
+bugxies:
+  - service - update ``enabled`` parameter's implementation for NetBSD (https://github.com/ansible/ansible/pull/73056)
