@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-lookup: bar
+lookup: lookup_1
 author: Felix Fontein
 short_description: Test lookup
 description:
@@ -13,7 +13,7 @@ options:
     type: str
     deprecated:
       why: this option should not be used
-      version: 1.0.0
+      version: 10.0.0
       alternatives: no option instead
 '''
 

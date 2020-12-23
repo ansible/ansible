@@ -3,8 +3,8 @@
   tasks:
     - name: Lookup option deprecation (local)
       debug:
-        msg: "{{ lookup('foo', deprecated_option='') }}"
+        msg: "{{ lookup('lookup_1', deprecated_option='') }}"
 
     - name: Lookup option deprecation (collection)
       debug:
-        msg: "{{ lookup('foo_ns.bar.bar', deprecated_option='') }}"
+        msg: "{{ lookup('foo_ns.bar.lookup_2', deprecated_option='') }}"
