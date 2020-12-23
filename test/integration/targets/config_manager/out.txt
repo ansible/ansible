@@ -1,0 +1,25 @@
+[WARNING]: You are running the development version of Ansible. You should only
+run Ansible from "devel" if you are modifying the Ansible engine, or trying out
+features under development. This is a rapidly changing source of code and can
+become unstable at any point.
+[WARNING]: No inventory was parsed, only implicit localhost is available
+[WARNING]: provided hosts list is empty, only localhost is available. Note that
+the implicit localhost does not match 'all'
+
+PLAY [localhost] ***************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [localhost]
+
+TASK [Lookup option deprecation] ***********************************************
+[DEPRECATION WARNING]: deprecated_option option, this option should not be 
+used, use no option instead instead. This feature will be removed in version 
+10.0.0. Deprecation warnings can be disabled by setting 
+deprecation_warnings=False in ansible.cfg.
+ok: [localhost] => {
+    "msg": []
+}
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Lookup option deprecation
+      debug:
+        msg: "{{ lookup('foo', deprecated_option='') }}"
