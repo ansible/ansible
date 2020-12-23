@@ -1,6 +1,10 @@
 ---
 - hosts: localhost
   tasks:
-    - name: Lookup option deprecation
+    - name: Lookup option deprecation (local)
       debug:
         msg: "{{ lookup('foo', deprecated_option='') }}"
+
+    - name: Lookup option deprecation (collection)
+      debug:
+        msg: "{{ lookup('foo_ns.bar.bar', deprecated_option='') }}"
