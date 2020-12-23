@@ -31,6 +31,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils import py3compat
+from ansible.utils.deprecation import show_deprecation
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
@@ -290,6 +291,8 @@ class ConfigManager(object):
         self._base_defs = {}
         self._plugins = {}
         self._parsers = {}
+        self._directly_show_deprecation = False
+        self._directly_show_deprecation_display = None
 
         self._config_file = conf_file
         self.data = ConfigData()
@@ -397,6 +400,18 @@ class ConfigManager(object):
 
         return ret
 
+    def stop_collecting_deprecations(self, display):
+        ''' stop to collect deprecations in self.DEPRECATED, print them instead '''
+        self._directly_show_deprecation = True
+        self._directly_show_deprecation_display = display
+
+    def _add_deprecation(self, name, deprecation):
+        ''' add deprecation '''
+        if self._directly_show_deprecation:
+            show_deprecation(self._directly_show_deprecation_display, name, deprecation)
+        else:
+            self.DEPRECATED.append((name, deprecation))
+
     def _loop_entries(self, container, entry_list):
         ''' repeat code for value entry assignment '''
 
@@ -419,7 +434,7 @@ class ConfigManager(object):
 
                 # deal with deprecation of setting source, if used
                 if 'deprecated' in entry:
-                    self.DEPRECATED.append((entry['name'], entry['deprecated']))
+                    self._add_deprecation(entry['name'], entry['deprecated'])
 
         return value, origin
 
@@ -504,7 +519,7 @@ class ConfigManager(object):
                                         value = temp_value
                                         origin = cfile
                                         if 'deprecated' in ini_entry:
-                                            self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                                            self._add_deprecation('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated'])
                             except Exception as e:
                                 sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                         elif ftype == 'yaml':
@@ -538,7 +553,7 @@ class ConfigManager(object):
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
-                self.DEPRECATED.append((config, defs[config].get('deprecated')))
+                self._add_deprecation(config, defs[config].get('deprecated'))
         else:
             raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 

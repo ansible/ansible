@@ -27,6 +27,7 @@ from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
+from ansible.utils.deprecation import show_deprecation
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
@@ -89,17 +90,9 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # warn about deprecated config options
         for deprecated in C.config.DEPRECATED:
-            name = deprecated[0]
-            why = deprecated[1]['why']
-            if 'alternatives' in deprecated[1]:
-                alt = ', use %s instead' % deprecated[1]['alternatives']
-            else:
-                alt = ''
-            ver = deprecated[1].get('version')
-            date = deprecated[1].get('date')
-            collection_name = deprecated[1].get('collection_name')
-            display.deprecated("%s option, %s%s" % (name, why, alt),
-                               version=ver, date=date, collection_name=collection_name)
+            show_deprecation(display, deprecated[0], deprecated[1])
+
+        C.config.stop_collecting_deprecations(display)
 
     @staticmethod
     def split_vault_id(vault_id):
