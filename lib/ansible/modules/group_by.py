@@ -31,7 +31,9 @@ options:
 notes:
 - Spaces in group names are converted to dashes '-'.
 - This module is also supported for Windows targets.
-- Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
+- Though this module does not change the remote host,
+  we do provide 'changed' status as it can be useful
+  for those trying to track inventory changes.
 seealso:
 - module: ansible.builtin.add_host
 author:
@@ -40,20 +42,20 @@ author:
 
 EXAMPLES = r'''
 - name: Create groups based on the machine architecture
-  group_by:
+  ansible.builtin.group_by:
     key: machine_{{ ansible_machine }}
 
 - name: Create groups like 'virt_kvm_host'
-  group_by:
+  ansible.builtin.group_by:
     key: virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
 
 - name: Create nested groups
-  group_by:
+  ansible.builtin.group_by:
     key: el{{ ansible_distribution_major_version }}-{{ ansible_architecture }}
     parents:
       - el{{ ansible_distribution_major_version }}
 
-# Add all active hosts to a static group
-- group_by:
+- name: Add all active hosts to a static group
+  ansible.builtin.group_by:
     key: done
 '''
