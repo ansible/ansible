@@ -83,7 +83,8 @@ options:
     type: bool
     default: yes
 notes:
-    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on), you actually want the M(ansible.builtin.shell) module instead.
+    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
+       you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
        use the C(command) module when possible.
     -  C(creates), C(removes), and C(chdir) can be specified after the command.
