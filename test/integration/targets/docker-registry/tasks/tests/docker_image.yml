@@ -10,7 +10,7 @@
 
 - name: Registering image name
   set_fact:
-    inames: "{{ inames + [iname, test_image_base ~ ':latest', hello_world_image_base ~ ':latest'] }}"
+    inames: "{{ inames + [iname, test_image_base ~ ':latest', hello_world_image_base ~ ':latest', hello_world_image_base ~ ':newtag', hello_world_image_base ~ ':newtag2'] }}"
 
 ####################################################################
 ## interact with test registry #####################################
@@ -100,6 +100,82 @@
     - facts_1.images | length == 1
     - facts_2.images | length == 0
     - facts_3.images | length == 1
+
+- name: Tag different image with new tag
+  docker_image:
+    name: quay.io/ansible/docker-test-containers:alpine3.8
+    repository: "{{ hello_world_image_base }}:newtag"
+    push: no
+    source: pull
+
+- name: Push different image with new tag
+  docker_image:
+    name: "{{ hello_world_image_base }}"
+    repository: "{{ hello_world_image_base }}"
+    tag: newtag
+    push: yes
+    source: local
+  register: push_1_different
+
+- name: Push different image with new tag (idempotent)
+  docker_image:
+    name: "{{ hello_world_image_base }}"
+    repository: "{{ hello_world_image_base }}"
+    tag: newtag
+    push: yes
+    source: local
+  register: push_2_different
+
+- assert:
+    that:
+    - push_1_different is changed
+    - push_2_different is not changed
+
+- name: Tag same image with new tag
+  docker_image:
+    name: quay.io/ansible/docker-test-containers:alpine3.8
+    repository: "{{ hello_world_image_base }}:newtag2"
+    push: no
+    source: pull
+
+- name: Push same image with new tag
+  docker_image:
+    name: "{{ hello_world_image_base }}"
+    repository: "{{ hello_world_image_base }}"
+    tag: newtag2
+    push: yes
+    source: local
+  register: push_1_same
+
+- name: Push same image with new tag (idempotent)
+  docker_image:
+    name: "{{ hello_world_image_base }}"
+    repository: "{{ hello_world_image_base }}"
+    tag: newtag2
+    push: yes
+    source: local
+  register: push_2_same
+
+- assert:
+    that:
+    # NOTE: This should be:
+    #   - push_1_same is changed
+    # Unfortunately docker does *NOT* report whether the tag already existed or not.
+    # Here are the logs returned by client.push() for both tasks (which are exactly the same):
+    #   push_1_same:
+    #     {"status": "The push refers to repository [localhost:32796/test/hello-world]"},
+    #     {"id": "3fc64803ca2d", "progressDetail": {}, "status": "Preparing"},
+    #     {"id": "3fc64803ca2d", "progressDetail": {}, "status": "Layer already exists"},
+    #     {"status": "newtag2: digest: sha256:92251458088c638061cda8fd8b403b76d661a4dc6b7ee71b6affcf1872557b2b size: 528"},
+    #     {"aux": {"Digest": "sha256:92251458088c638061cda8fd8b403b76d661a4dc6b7ee71b6affcf1872557b2b", "Size": 528, "Tag": "newtag2"}, "progressDetail": {}}
+    #   push_2_same:
+    #     {"status": "The push refers to repository [localhost:32796/test/hello-world]"},
+    #     {"id": "3fc64803ca2d", "progressDetail": {}, "status": "Preparing"},
+    #     {"id": "3fc64803ca2d", "progressDetail": {}, "status": "Layer already exists"},
+    #     {"status": "newtag2: digest: sha256:92251458088c638061cda8fd8b403b76d661a4dc6b7ee71b6affcf1872557b2b size: 528"},
+    #     {"aux": {"Digest": "sha256:92251458088c638061cda8fd8b403b76d661a4dc6b7ee71b6affcf1872557b2b", "Size": 528, "Tag": "newtag2"}, "progressDetail": {}}
+    - push_1_same is not changed
+    - push_2_same is not changed
 
 ####################################################################
 ## repository ######################################################
