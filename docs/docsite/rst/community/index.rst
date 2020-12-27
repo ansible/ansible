@@ -6,9 +6,9 @@ Ansible Community Guide
 
 Welcome to the Ansible Community Guide!
 
-The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and necessary to Ansible's continued success.
+The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and we are hoping your enthusiastic work will be definetly ensured Ansible's continued success.
 
-This page outlines the most common situations and questions that bring readers to this section. If you prefer a :ref:`traditional table of contents <community_toc>`, you can find one at the bottom of the page.
+This page guide you to start your open source contribution journey via the most common situations and questions that bring readers to this section. If you prefer a :ref:`traditional table of contents <community_toc>`, you can find one at the bottom of the page.
 
 
 Getting started
@@ -33,7 +33,7 @@ Getting started
 Going deeper
 ============
 
-* I think Ansible is broken. How do I :ref:`report a bug <reporting_bugs>`?
+* I think Ansible is having some bugs. How do I :ref:`report a bug <reporting_bugs>`?
 * I need functionality that Ansible does not offer. How do I :ref:`request a feature <request_features>`?
 * How do I :ref:`contribute to an Ansible-maintained collection <contributing_maintained_collections>`?
 * I am waiting for a particular feature. How do I see what is :ref:`planned for future Ansible Releases <roadmaps>`?
