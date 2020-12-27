@@ -786,17 +786,45 @@ class ImageManager(DockerBaseClass):
 
         :return: image dict
         '''
+        # Load image(s) from file
+        load_output = []
         try:
             self.log("Opening image %s" % self.load_path)
             with open(self.load_path, 'rb') as image_tar:
                 self.log("Loading image from %s" % self.load_path)
-                self.client.load_image(image_tar)
+                for line in self.client.load_image(image_tar):
+                    self.log(line, pretty_print=True)
+                    if "stream" in line or "status" in line:
+                        load_line = line.get("stream") or line.get("status") or ''
+                        load_output.append(load_line)
         except EnvironmentError as exc:
             if exc.errno == errno.ENOENT:
-                self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
-            self.fail("Error loading image %s - %s" % (self.name, str(exc)))
+                self.client.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
+            self.client.fail("Error loading image %s - %s" % (self.name, str(exc)), stdout='\n'.join(load_output))
         except Exception as exc:
-            self.fail("Error loading image %s - %s" % (self.name, str(exc)))
+            self.client.fail("Error loading image %s - %s" % (self.name, str(exc)), stdout='\n'.join(load_output))
+
+        # Collect loaded images
+        loaded_images = set()
+        for line in load_output:
+            if line.startswith('Loaded image:'):
+                loaded_images.add(line[len('Loaded image:'):].strip())
+
+        if not loaded_images:
+            self.client.fail("Detected no loaded images. Archive potentially corrupt?", stdout='\n'.join(load_output))
+
+        expected_image = '%s:%s' % (self.name, self.tag)
+        if expected_image not in loaded_images:
+            self.client.fail(
+                "The archive did not contain image '%s'. Instead, found %s." % (
+                    expected_image, ', '.join(["'%s'" % image for image in sorted(loaded_images)])),
+                stdout='\n'.join(load_output))
+        loaded_images.remove(expected_image)
+
+        if loaded_images:
+            self.client.module.warn(
+                "The archive contained more images than specified: %s" % (
+                    ', '.join(["'%s'" % image for image in sorted(loaded_images)]), ))
 
         return self.client.find_image(self.name, self.tag)
 
