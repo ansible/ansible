@@ -58,7 +58,23 @@ EXAMPLES = r'''
 # 2179
 '''
 
-RETURN = r'''#'''
+RETURN = r'''
+content:
+  description: Slurpped file's content in base64.
+  returned: always
+  type: str
+  sample: "SnVzdCBtb3JlIGNvZmZlZQo="
+source:
+  description: Path to the slurpped file.
+  returned: always
+  type: str
+  sample: /home/paul/shopping-list.txt
+encoding:
+  description: Encoding scheme of the returned data in I(content).
+  returned: always
+  type: str
+  sample: "base64"
+'''
 
 import base64
 import os
