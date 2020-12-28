@@ -6,6 +6,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.command import get_command_args
+
 __metaclass__ = type
 
 
@@ -254,20 +256,7 @@ def main():
     # the command module is the one ansible module that does not take key=value args
     # hence don't copy this one if you are looking to build others!
     module = AnsibleModule(
-        argument_spec=dict(
-            _raw_params=dict(),
-            _uses_shell=dict(type='bool', default=False),
-            argv=dict(type='list', elements='str'),
-            chdir=dict(type='path'),
-            executable=dict(),
-            creates=dict(type='path'),
-            removes=dict(type='path'),
-            # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=False, removed_in_version='2.14', removed_from_collection='ansible.builtin'),
-            stdin=dict(required=False),
-            stdin_add_newline=dict(type='bool', default=True),
-            strip_empty_ends=dict(type='bool', default=True),
-        ),
+        argument_spec=get_command_args(),
         supports_check_mode=True,
     )
     shell = module.params['_uses_shell']
@@ -371,7 +360,6 @@ def main():
         module.fail_json(msg='non-zero return code', **result)
 
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

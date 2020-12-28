@@ -25,7 +25,7 @@ import re
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text
 from ansible.parsing.quoting import unquote
-
+from ansible.module_utils.command import get_command_args
 
 # Decode escapes adapted from rspeer's answer here:
 # http://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
@@ -87,9 +87,7 @@ def parse_kv(args, check_raw=False):
                 k = x[:pos]
                 v = x[pos + 1:]
 
-                # FIXME: make the retrieval of this list of shell/command
-                #        options a function, so the list is centralized
-                if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
+                if check_raw and k not in get_command_args().keys():
                     raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
