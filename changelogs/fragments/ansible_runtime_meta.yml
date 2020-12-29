@@ -5,3 +5,4 @@ minor_changes:
 - "Collection routing: PostgreSQL content from community.general migrated to community.postgresql (https://github.com/ansible/ansible/pull/73046)."
 - "Collection routing: RouterOS content from community.network migrated to community.routeros (https://github.com/ansible/ansible/pull/73046)."
 - "Collection routing: Hetzner Robot content from community.general migrated to community.hrobot (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: Google content from community.general migrated to community.google (https://github.com/ansible/ansible/pull/73046)."

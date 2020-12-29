@@ -885,31 +885,31 @@ plugin_routing:
     gcspanner:
       redirect: community.general.gcspanner
     gc_storage:
-      redirect: community.general.gc_storage
+      redirect: community.google.gc_storage
     gce_eip:
-      redirect: community.general.gce_eip
+      redirect: community.google.gce_eip
     gce_img:
-      redirect: community.general.gce_img
+      redirect: community.google.gce_img
     gce_instance_template:
-      redirect: community.general.gce_instance_template
+      redirect: community.google.gce_instance_template
     gce_labels:
-      redirect: community.general.gce_labels
+      redirect: community.google.gce_labels
     gce_lb:
-      redirect: community.general.gce_lb
+      redirect: community.google.gce_lb
     gce_mig:
-      redirect: community.general.gce_mig
+      redirect: community.google.gce_mig
     gce_net:
-      redirect: community.general.gce_net
+      redirect: community.google.gce_net
     gce_pd:
-      redirect: community.general.gce_pd
+      redirect: community.google.gce_pd
     gce_snapshot:
-      redirect: community.general.gce_snapshot
+      redirect: community.google.gce_snapshot
     gce_tag:
-      redirect: community.general.gce_tag
+      redirect: community.google.gce_tag
     gcpubsub:
-      redirect: community.general.gcpubsub
+      redirect: community.google.gcpubsub
     gcpubsub_info:
-      redirect: community.general.gcpubsub_info
+      redirect: community.google.gcpubsub_info
     heroku_collaborator:
       redirect: community.general.heroku_collaborator
     hwc_ecs_instance:
@@ -7645,11 +7645,11 @@ plugin_routing:
     firewalld:
       redirect: ansible.posix.firewalld
     gcdns:
-      redirect: community.general.gcdns
+      redirect: community.google.gcdns
     gce:
-      redirect: community.general.gce
+      redirect: community.google.gce
     gcp:
-      redirect: community.general.gcp
+      redirect: community.google.gcp
     gcp_utils:
       redirect: google.cloud.gcp_utils
     gitlab:
@@ -9583,7 +9583,7 @@ plugin_routing:
     flattened:
       redirect: community.general.flattened
     gcp_storage_file:
-      redirect: community.general.gcp_storage_file
+      redirect: community.google.gcp_storage_file
     hashi_vault:
       redirect: community.general.hashi_vault
     hiera:
