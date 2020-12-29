@@ -485,7 +485,7 @@ def copy_common_dirs(src, dest, module):
             changed = True
 
         # recurse into subdirectory
-        changed = changed or copy_common_dirs(os.path.join(src, item), os.path.join(dest, item), module)
+        changed = copy_common_dirs(os.path.join(src, item), os.path.join(dest, item), module) or changed
     return changed
 
 
