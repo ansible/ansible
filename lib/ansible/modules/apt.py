@@ -268,6 +268,21 @@ EXAMPLES = '''
   apt:
     autoremove: yes
 
+# A common issue, particularly during early boot or at specific clock times
+# is that apt will be locked by another process, perhaps trying to autoupdate
+# or just a race condition on a thread. This work-around (which can also be
+# applied to any of the above statements) ensures that if there is a lock file
+# engaged, which is trapped by the `msg` value, triggers a repeat until the
+# lock file is released.
+- name: Install packages only when the apt process isn't locked
+  apt:
+    name: foo
+    state: present
+  register: apt_action
+  retries: 100
+  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
+
 '''
 
 RETURN = '''
