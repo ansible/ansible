@@ -85,7 +85,8 @@ class Connection(ConnectionBase):
         # privileges or the command otherwise needs a pty)
         try:
             master, stdin = pty.openpty()
-        except:
+        except (IOError, OSError) as e:
+            display.debug("Unable to open pty: %s" % to_native(e))
             master = None
             stdin = subprocess.PIPE
 
