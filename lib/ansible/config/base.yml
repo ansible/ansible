@@ -135,6 +135,15 @@ BECOME_ALLOW_SAME_USER:
   - {key: become_allow_same_user, section: privilege_escalation}
   type: boolean
   yaml: {key: privilege_escalation.become_allow_same_user}
+BECOME_PASSWORD_FILE:
+  name: Become password file
+  default: ~
+  description: 'The password file to use for the become plugin. --become-password-file.'
+  env: [{name: ANSIBLE_CONNECTION_PASSWORD_FILE}]
+  ini:
+  - {key: become_password_file, section: defaults}
+  type: path
+  version_added: '2.11'
 AGNOSTIC_BECOME_PROMPT:
   name: Display an agnostic become prompt
   default: True
@@ -335,6 +344,15 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+CONNECTION_PASSWORD_FILE:
+  name: Connection password file
+  default: ~
+  description: 'The password file to use for the connection plugin. --connection-password-file.'
+  env: [{name: ANSIBLE_CONNECTION_PASSWORD_FILE}]
+  ini:
+  - {key: connection_password_file, section: defaults}
+  type: path
+  version_added: '2.11'
 COVERAGE_REMOTE_OUTPUT:
   name: Sets the output directory and filename prefix to generate coverage run info.
   description:

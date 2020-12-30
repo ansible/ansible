@@ -268,7 +268,7 @@ def add_connect_options(parser):
     connect_password_group = parser.add_mutually_exclusive_group()
     connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                                         help='ask for connection password')
-    connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=None, dest='connection_password_file',
+    connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=C.CONNECTION_PASSWORD_FILE, dest='connection_password_file',
                                         help="Connection password file", type=unfrack_path(), action='store')
 
     parser.add_argument_group(connect_password_group)
@@ -352,7 +352,7 @@ def add_runas_prompt_options(parser, runas_group=None):
     runas_pass_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
                                   default=C.DEFAULT_BECOME_ASK_PASS,
                                   help='ask for privilege escalation password')
-    runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=None, dest='become_password_file',
+    runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=C.BECOME_PASSWORD_FILE, dest='become_password_file',
                                   help="Become password file", type=unfrack_path(), action='store')
 
     parser.add_argument_group(runas_pass_group)
