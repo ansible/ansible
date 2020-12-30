@@ -59,6 +59,7 @@ EXAMPLES = """
 
 - name: the final countdown
 <<<<<<< HEAD
+<<<<<<< HEAD
   debug: msg={{item}} seconds to detonation
   with_sequence: end=0 start=10
 
@@ -69,7 +70,10 @@ EXAMPLES = """
   vars:
     - end_at: 10
 =======
-  debug: 
+  debug:
+=======
+  debug:
+>>>>>>> Remove trailing whitespace
     msg: "{{item}} seconds to detonation"
   with_sequence: start=10 end=0 stride=-1
 >>>>>>> Fix example with backwards counting  
