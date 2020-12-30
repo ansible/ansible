@@ -115,10 +115,10 @@ For working with a plain Docker Daemon, that is without Swarm, there are connect
     docker_api connection plugin
         The :ref:`community.docker.docker_api connection plugin <ansible_collections.community.docker.docker_api_connection>` allows to connect to Docker containers and execute modules in them by talking directly to the Docker Daemon.
 
-    docker inventory plugin
-        The :ref:`community.docker.docker inventory plugin <ansible_collections.community.docker.docker_inventory>` allows to dynamically add Docker containers from a Docker Daemon to Ansible's inventory. See :ref:`dynamic_inventory` for details on dynamic inventories.
+    docker_containers inventory plugin
+        The :ref:`community.docker.docker_containers inventory plugin <ansible_collections.community.docker.docker_containers_inventory>` allows to dynamically add Docker containers from a Docker Daemon to Ansible's inventory. See :ref:`dynamic_inventory` for details on dynamic inventories.
 
-        There is also a `docker inventory script <https://github.com/ansible-collections/community.general/blob/main/scripts/inventory/docker.py>`_. It is considered deprecated, please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect docker containers from multiple Docker Daemons, you need to add every Docker Dameon as an individual inventory source.
+        There is also a `docker inventory script <https://github.com/ansible-collections/community.general/blob/main/scripts/inventory/docker.py>`_. It is considered deprecated, please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect Docker containers from multiple Docker Daemons, you need to add every Docker Dameon as an individual inventory source.
 
     docker_host_info module
         The :ref:`community.docker.docker_host_info module <ansible_collections.community.docker.docker_host_info_module>` allows to retrieve information on a Docker Daemon, like all containers, images, volumes, networks and so on.
