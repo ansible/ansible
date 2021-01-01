@@ -43,6 +43,11 @@ options:
       - A filename, when it does not exist, this step will B(not) be run.
     type: path
     version_added: "0.8"
+  changes:
+    description:
+      - A filename, when it does not exist, this step will B(not) be run.
+    type: path
+    version_added: "2.11"
   chdir:
     description:
       - Change into this directory before running the command.
@@ -77,7 +82,7 @@ notes:
     when writing playbooks will follow the trend of using M(ansible.builtin.command)
     unless the M(ansible.builtin.shell) module is explicitly required. When running ad-hoc
     commands, use your best judgement.
-  - Check mode is supported when passing C(creates) or C(removes). If running
+  - Check mode is supported when passing C(creates), C(removes) or C(changes). If running
     in check mode and either of these are specified, the module will check for
     the existence of the file and report the correct changed status. If these
     are not supplied, the task will be skipped.
@@ -95,6 +100,7 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
+    - Jose Angel Munoz
 '''
 
 EXAMPLES = r'''

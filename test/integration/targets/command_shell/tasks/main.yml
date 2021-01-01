@@ -167,6 +167,33 @@
     that:
       - command_result3 is not changed
 
+# changes
+
+- name: Verify that afile.txt content has changed
+  assert:
+    that: "'win' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
+
+- name: Changes afile.txt content
+  command: "perl -pi -e 's/win/won/g' {{ output_dir_test }}/afile.txt"
+  args:
+    chdir: "{{ output_dir_test }}"
+    changes: "{{ output_dir_test }}/afile.txt"
+
+- name: Verify that afile.txt content has changed
+  assert:
+    that: "'won' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
+
+- name: re-run previous command using creates with globbing
+  command: "perl -pi -e 's/win/won/g' {{ output_dir_test }}/afile.txt"
+  args:
+    changes: "{{ output_dir_test }}/afile.*"
+  register: command_result4
+
+- name: assert that changes with globbing is working
+  assert:
+    that:
+      - command_result4 is not changed
+
 # removes
 
 - name: remove afile.txt with remote_afile.sh via command
@@ -181,23 +208,23 @@
   command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
   args:
     removes: "{{ output_dir_test }}/afile.*"
-  register: command_result4
+  register: command_result5
 
 - name: assert that removes with globbing is working
   assert:
     that:
-      - command_result4.changed != True
+      - command_result5.changed != True
 
 - name: pass stdin to cat via command
   command: cat
   args:
     stdin: 'foobar'
-  register: command_result5
+  register: command_result6
 
 - name: assert that stdin is passed
   assert:
     that:
-      - command_result5.stdout == 'foobar'
+      - command_result6.stdout == 'foobar'
 
 - name: send to stdin literal multiline block
   command: "{{ ansible_python.executable }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, \"buffer\") else sys.stdin).read()).hexdigest())'"
@@ -208,12 +235,12 @@
 
       this line is after an empty line
       this line is the last line
-  register: command_result6
+  register: command_result7
 
 - name: assert the multiline input was passed correctly
   assert:
     that:
-      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
+      - "command_result7.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 ##
 ## shell
@@ -281,6 +308,22 @@
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: file
+
+# changes
+
+- name: Verify that afile.txt content has changed
+  assert:
+    that: "'win' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
+
+- name: Changes afile.txt content
+  shell: "perl -pi -e 's/win/won/g' {{ output_dir_test }}/afile.txt"
+  args:
+    chdir: "{{ output_dir_test }}"
+    changes: "{{ output_dir_test }}/afile.txt"
+
+- name: Verify that afile.txt content has changed
+  assert:
+    that: "'won' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
 
 # multiline
 

@@ -52,6 +52,11 @@ options:
     description:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
     version_added: "0.8"
+  changes:
+    type: path
+    description:
+      - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
+    version_added: "2.11"
   chdir:
     type: path
     description:
@@ -86,9 +91,9 @@ notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
        use the C(command) module when possible.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command.
+    -  " C(creates), C(removes), C(changes) and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
-    -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
+    -  Check mode is supported when passing C(creates), C(removes) or C(changes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
@@ -101,6 +106,7 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
+    - Jose Angel Munoz
 '''
 
 EXAMPLES = r'''
@@ -205,6 +211,7 @@ stderr_lines:
 
 import datetime
 import glob
+import hashlib
 import os
 import shlex
 
@@ -262,6 +269,7 @@ def main():
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
+            changes=dict(type='path'),
             # The default for this really comes from the action plugin
             warn=dict(type='bool', default=False, removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             stdin=dict(required=False),
@@ -277,6 +285,7 @@ def main():
     argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
+    changes = module.params['changes']
     warn = module.params['warn']
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
@@ -336,14 +345,34 @@ def main():
                 rc=0
             )
 
+    if changes:
+        # do not run the command if the line contains changes=filename
+        # and the filename does not exist.  This allows idempotence
+        # of command executions.
+        if not glob.glob(changes):
+            module.exit_json(
+                cmd=args,
+                stdout="skipped, since %s does not exist" % changes,
+                changed=False,
+                rc=0
+            )
+        else:
+            basehashes = []
+            for filename in glob.glob(changes):
+                basefile = open(filename, 'rb')
+                basedata = basefile.read(65536)
+                basehash = hashlib.sha1(basedata).hexdigest()
+                basehashes.append(basehash)
+
     if warn:
         check_command(module, args)
 
+    changed = True
     startd = datetime.datetime.now()
 
     if not module.check_mode:
         rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin, binary_data=(not stdin_add_newline))
-    elif creates or removes:
+    elif creates or removes or changes:
         rc = 0
         out = err = b'Command would have run if not in check mode'
     else:
@@ -356,6 +385,17 @@ def main():
         out = out.rstrip(b"\r\n")
         err = err.rstrip(b"\r\n")
 
+    if changes:
+        finalhashes = []
+        for filename in glob.glob(changes):
+            finalfile = open(filename, 'rb')
+            finaldata = finalfile.read(65536)
+            finalhash = hashlib.sha1(finaldata).hexdigest()
+            finalhashes.append(finalhash)
+
+        if finalhashes == basehashes:
+            changed = False
+
     result = dict(
         cmd=args,
         stdout=out,
@@ -364,7 +404,7 @@ def main():
         start=str(startd),
         end=str(endd),
         delta=str(delta),
-        changed=True,
+        changed=changed,
     )
 
     if rc != 0:
