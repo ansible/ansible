@@ -100,7 +100,6 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-    - Jose Angel Munoz
 '''
 
 EXAMPLES = r'''
