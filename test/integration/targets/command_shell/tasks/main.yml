@@ -90,6 +90,18 @@
     dest: "{{ output_dir_test }}"
     mode: '0755'
 
+- name: prep our test script
+  copy:
+    src: change_afile.sh
+    dest: "{{ output_dir_test }}"
+    mode: '0755'
+
+- name: prep our test script
+  copy:
+    src: change_test.sh
+    dest: "{{ output_dir_test }}"
+    mode: '0755'
+
 - name: locate bash
   shell: which bash
   register: bash
@@ -174,9 +186,8 @@
     that: "'win' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
 
 - name: Changes afile.txt content
-  command: "perl -pi -e 's/win/won/g' {{ output_dir_test }}/afile.txt"
+  command: "{{ output_dir_test }}/change_afile.sh {{output_dir_test }}/afile.txt"
   args:
-    chdir: "{{ output_dir_test }}"
     changes: "{{ output_dir_test }}/afile.txt"
 
 - name: Verify that afile.txt content has changed
@@ -184,7 +195,7 @@
     that: "'won' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
 
 - name: re-run previous command using creates with globbing
-  command: "perl -pi -e 's/win/won/g' {{ output_dir_test }}/afile.txt"
+  command: "{{ output_dir_test }}/change_afile.sh {{output_dir_test }}/afile.txt"
   args:
     changes: "{{ output_dir_test }}/afile.*"
   register: command_result4
@@ -315,8 +326,8 @@
   assert:
     that: "'win' in lookup('file', '{{ output_dir_test }}/afile.txt') | b64encode | b64decode"
 
-- name: Changes afile.txt content
-  shell: "perl -pi -e 's/win/won/g' {{ output_dir_test }}/afile.txt"
+- name: Execute the test.sh script with chdir
+  shell: "{{ output_dir_test }}/change_test.sh > {{ output_dir_test }}/afile.txt"
   args:
     chdir: "{{ output_dir_test }}"
     changes: "{{ output_dir_test }}/afile.txt"
