@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 - name: Install test requirements
-  pip:
-    name: pexpect
-    state: present
+  import_role:
+    name: setup_pexpect
 
 - name: record the test_command file
   set_fact: test_command_file={{output_dir | expanduser}}/test_command.py

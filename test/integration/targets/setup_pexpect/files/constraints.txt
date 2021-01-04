@@ -1,0 +1,2 @@
+pexpect == 4.8.0
+ptyprocess < 0.7.0 ; python_version < '2.7'  # ptyprocess >= 0.7.0 not compatible with Python 2.6
