@@ -134,7 +134,7 @@ options:
     recursive:
         description:
             - if C(no), repository will be cloned without the --recursive
-              option, skipping sub-modules.
+              option, skipping submodules.
         type: bool
         default: 'yes'
         version_added: "1.6"
