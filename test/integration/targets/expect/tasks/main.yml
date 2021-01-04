@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 - name: Install test requirements
   import_role:
-    name: setup_pexect
+    name: setup_pexpect
 
 - name: record the test_command file
   set_fact: test_command_file={{output_dir | expanduser}}/test_command.py
