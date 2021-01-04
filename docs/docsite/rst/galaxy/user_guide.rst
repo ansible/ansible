@@ -270,8 +270,8 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     # from galaxy
     - name: yatesr.timezone
 
-    # from locally cloned git repository (file:// requires full paths)
-    - src: file:///home/bennojoy/nginx
+    # from locally cloned git repository (git+file:// requires full paths)
+    - src: git+file:///home/bennojoy/nginx
 
     # from GitHub
     - src: https://github.com/bennojoy/nginx
