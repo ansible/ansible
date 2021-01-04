@@ -105,7 +105,7 @@ For plugins, they have to be set for the environment Ansible itself runs in. For
 
 
 Plain Docker daemon: images, networks, volumes, and containers
--------------------------------------------------------------
+--------------------------------------------------------------
 
 For working with a plain Docker daemon, that is without Swarm, there are connection plugins, an inventory plugin, and several modules available:
 
