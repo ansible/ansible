@@ -49,7 +49,7 @@ This is an example of how to run this script from PowerShell:
     &$file -Version 5.1 -Username $username -Password $password -Verbose
 
 Once completed, you will need to remove auto logon
-and set the execution policy back to the default of ``RemoteSigned``. You can
+and set the execution policy back to the default (``Restricted `` for Windows clients, or ``RemoteSigned`` for Windows servers). You can
 do this with the following PowerShell commands:
 
 .. code-block:: powershell
