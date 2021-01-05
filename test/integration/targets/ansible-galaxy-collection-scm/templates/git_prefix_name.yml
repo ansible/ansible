@@ -1,0 +1,2 @@
+collections:
+  - name: git+file://{{ galaxy_dir }}/development/amazon.aws/.git
