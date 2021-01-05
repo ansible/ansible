@@ -1,0 +1,2 @@
+bugfixes:
+  - distribution facts - Allow ``distribution_major_version`` and ``distribution_version`` to work for RC and PRERELEASE versions of FreeBSD (and derived distributions) (https://github.com/ansible/ansible/issues/72331).

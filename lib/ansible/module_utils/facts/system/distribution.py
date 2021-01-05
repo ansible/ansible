@@ -586,7 +586,7 @@ class Distribution(object):
     def get_distribution_FreeBSD(self):
         freebsd_facts = {}
         freebsd_facts['distribution_release'] = platform.release()
-        data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', freebsd_facts['distribution_release'])
+        data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT|RC|PRERELEASE).*', freebsd_facts['distribution_release'])
         if 'trueos' in platform.version():
             freebsd_facts['distribution'] = 'TrueOS'
         if data:
