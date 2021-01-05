@@ -40,7 +40,7 @@ DOCUMENTATION = """
           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
           - "Other valid values include 'ascii_lowercase', 'ascii_uppercase', 'digits', 'hexdigits', 'octdigits', 'printable', 'punctuation' and 'whitespace'."
-          - Be aware that Python's 'hexdigits' includes lower and upper case version of a-f, so it is not good choice as it doubles
+          - Be aware that Python's 'hexdigits' includes lower and upper case version of a-f, so it is not a good choice as it doubles
             the chances of those values for systems that won't distinguish case, distorting the expected entropy.
           - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
         type: string
