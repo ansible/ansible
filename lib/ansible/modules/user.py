@@ -660,7 +660,10 @@ class User(object):
 
         if self.password is not None:
             cmd.append('-p')
-            cmd.append(self.password)
+            if self.password_lock:
+                cmd.append('!%s' % self.password)
+            else:
+                cmd.append(self.password)
 
         if self.create_home:
             if not self.local:
