@@ -1,0 +1,2 @@
+bugfixes:
+- service - Fix for the BSD rcconf code using a Python 2 specific string replace function
