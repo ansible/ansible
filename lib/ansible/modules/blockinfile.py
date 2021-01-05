@@ -85,20 +85,19 @@ options:
     type: str
     default: END
     version_added: '2.5'
-  newlines_preceding:
+  newlines_before:
     description:
-    - This will insert additional empty new lines before the block (if the block is not inserted at the beginning of the file).
-    - It can provide increased readability by separating the block from previous content.
-    - Existing empty lines before the insert point (lines with only spaces or tabs count as empty) will reduced the number of additional empty lines inserted.
-    - In any case, existing new lines will not be deleted.
+    - Insert the given number of additional empty lines before the block. Provides increased readability by separating the block from previous content.
+    - If the block is inserted at the beginning of the file, or if only empty lines exist before the insert point, no empty lines are added.
+    - The number of existing empty lines before the block are deducted from the number of additional empty lines to be inserted. Existing lines having only spaces or tabs count as empty.
+    - Existing empty lines in excess are left untouched.
     type: int
     default: 0
-  newlines_succeeding:
+  newlines_after:
     description:
-    - This will insert additional empty new lines after the block.
-    - It can provide increased readability by separating the block from subsequent content.
-    - Existing empty lines after the insert point (lines with only spaces or tabs count as empty) will reduced the number of additional empty lines inserted.
-    - In any case, existing new lines will not be deleted.
+    - Insert the given number of additional empty lines after the block. Provides increased readability by separating the block from subsequent content.
+    - The number of existing empty lines after the block are deducted from the number of additional empty lines to be inserted. Existing lines having only spaces or tabs count as empty.
+    - Existing empty lines in excess are left untouched.
     type: int
     default: 0
 notes:
@@ -168,14 +167,15 @@ EXAMPLES = r'''
     path: /etc/hosts
     block: |
       host4 10.10.1.13
-    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
-    newlines_preceding: 2
-    newlines_succeeding: 1
+    marker: "# {mark} ANSIBLE MANAGED BLOCK host4"
+    newlines_before: 2
+    newlines_after: 1
 '''
 
 import re
 import os
 import tempfile
+from itertools import takewhile, islice
 from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
@@ -229,8 +229,8 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
-            newlines_preceding=dict(type='int', default=0),
-            newlines_succeeding=dict(type='int', default=0),
+            newlines_before=dict(type='int', default=0),
+            newlines_after=dict(type='int', default=0),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -333,25 +333,29 @@ def main():
         if not lines[n0 - 1].endswith(b(os.linesep)):
             lines[n0 - 1] += b(os.linesep)
 
-    # Additional empty lines before and/or after the block of lines
-    nl_preceding = params['newlines_preceding']
-    nl_succeeding = params['newlines_succeeding']
-    if n0 > 0 and nl_preceding > 0:
-        # count existing preceding empty lines and deduct
-        existing_nl_preceding = sum(
-            1 for i in range(1, nl_preceding + 1)
-            if n0 >= i
-            and re.sub(b(r"[ \t]*"), b(""), lines[n0 - i]) == b(os.linesep))
-        #       ^-- lines with only tabs and spaces count as empty lines
-        blocklines[0:0] = [b(os.linesep)] * (nl_preceding - existing_nl_preceding)
-    if nl_succeeding > 0:
-        # count existing succeding empty lines and deduct
-        existing_nl_succeeding = sum(
-            1 for i in range(1, nl_succeeding + 1)
-            if len(lines) >= (n0 + i)
-            and re.sub(b(r"[ \t]*"), b(""), lines[n0 + i]) == b(os.linesep))
-        #       ^-- lines with only tabs and spaces count as empty lines
-        blocklines.extend([b(os.linesep)] * (nl_succeeding - existing_nl_succeeding))
+    # Add additional empty lines before and/or after the block of lines
+    newlines_before = params['newlines_before']
+    newlines_after = params['newlines_after']
+    if n0 > 0 and newlines_before > 0:
+        # Count existing empty lines before the insert point n0 and deduct
+        # Existing lines containing only tabs and spaces count as empty lines
+        # Use takewhile to stop counting at first non-empty line found
+        existing_newlines_before = len(list(
+            takewhile(lambda line: re.sub(b(r"[ \t]*"), b(""), line) == b(os.linesep),
+                      [line for line in islice(
+                          reversed(lines[max(0, n0 - 1 - newlines_before):n0]),
+                          newlines_before)])))
+        # Skip if file starts with empty lines before the insert point n0
+        if n0 > existing_newlines_before:
+            blocklines[0:0] = [b(os.linesep)] * (newlines_before - existing_newlines_before)
+    if newlines_after > 0:
+        # Count existing empty lines after the insert point n0 and deduct
+        # Existing lines containing only tabs and spaces count as empty lines
+        # Use takewhile to stop counting at first non-empty line found
+        existing_newlines_after = len(list(
+            takewhile(lambda line: re.sub(b(r"[ \t]*"), b(""), line) == b(os.linesep),
+                      [line for line in lines[n0:min(len(lines), n0 + newlines_after)]])))
+        blocklines.extend([b(os.linesep)] * (newlines_after - existing_newlines_after))
 
     lines[n0:n0] = blocklines
     if lines:
