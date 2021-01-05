@@ -255,6 +255,27 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 self.collections.append(default_append_collection)
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
+
+        # If we have role argument specs defined for the given role entrypoint (defaults to 'main'),
+        # we create a new task for validation that will be inserted as the first role task.
+        if self._metadata.argument_specs:
+            # Determine the role entrypoint so we can retrieve the correct argument spec.
+            entrypoint = self._from_files.get('tasks', 'main')
+            entrypoint_arg_spec = self._metadata.argument_specs.get(entrypoint)
+            if entrypoint_arg_spec:
+                arg_spec_validation_task = self._create_arg_spec_validation_task_data(entrypoint_arg_spec,
+                                                                                      entrypoint,
+                                                                                      role_name=self._role_name,
+                                                                                      role_path=self._role_path,
+                                                                                      role_params=self._role_params)
+
+                # Prepend our validate_arg_spec action to happen before any tasks provided by the role.
+                # 'any tasks' can and does include 0 or None tasks, in which cases we create a list of tasks and add our
+                # validate_arg_spec task
+                 if not task_data:
+                    task_data = []
+                 task_data.insert(0, arg_spec_validation_task)
+
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
@@ -270,6 +291,25 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             except AssertionError as e:
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=handler_data, orig_exc=e)
+
+    def _create_arg_spec_validation_task_data(self, argument_spec, entrypoint_name,
+          role_name, role_path, role_params):
+        # If the arg spec provides a short description, use it to flesh out the validation task name
+        task_name = "Validating arguments against arg spec '%s'" % entrypoint_name
+        if 'short_description' in argument_spec:
+            task_name = task_name + ' - ' + argument_spec['short_description'])
+
+        arg_spec_task = {'action': {'module': 'validate_arg_spec',
+                                    'argument_spec': argument_spec,
+                                    'provided_arguments': role_params,
+                                    'validate_args_context': {'type': 'role',
+                                                              'name': role_name,
+                                                              'argument_spec_name': argument_spec_name,
+                                                              'path': role_path},
+                                    },
+                         'name': task_name,
+                         }
+        return arg_spec_task
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
         '''
