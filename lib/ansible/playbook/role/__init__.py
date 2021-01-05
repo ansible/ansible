@@ -256,25 +256,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
-        # If we have role argument specs defined for the given role entrypoint (defaults to 'main'),
-        # we create a new task for validation that will be inserted as the first role task.
-        if self._metadata.argument_specs:
-            # Determine the role entrypoint so we can retrieve the correct argument spec.
-            entrypoint = self._from_files.get('tasks', 'main')
-            entrypoint_arg_spec = self._metadata.argument_specs.get(entrypoint)
-            if entrypoint_arg_spec:
-                arg_spec_validation_task = self._create_arg_spec_validation_task_data(entrypoint_arg_spec,
-                                                                                      entrypoint,
-                                                                                      role_name=self._role_name,
-                                                                                      role_path=self._role_path,
-                                                                                      role_params=self._role_params)
-
-                # Prepend our validate_arg_spec action to happen before any tasks provided by the role.
-                # 'any tasks' can and does include 0 or None tasks, in which cases we create a list of tasks and add our
-                # validate_arg_spec task
-                 if not task_data:
-                    task_data = []
-                 task_data.insert(0, arg_spec_validation_task)
+        self._prepend_validation_task(task_data)
 
         if task_data:
             try:
@@ -292,24 +274,58 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=handler_data, orig_exc=e)
 
-    def _create_arg_spec_validation_task_data(self, argument_spec, entrypoint_name,
-          role_name, role_path, role_params):
+    def _prepend_validation_task(self, task_data):
+        '''Insert a role validation task if we have a role argument spec.
+
+        This method will prepend a validation task to the front of the role task
+        list to perform argument spec validation before any other tasks, if an arg spec
+        exists for the entry point. Entry point defaults to `main`.
+
+        :param task_data: List of tasks loaded from the role.
+        '''
+        if self._metadata.argument_specs:
+            # Determine the role entry point so we can retrieve the correct argument spec.
+            # This comes from the `tasks_from` value to include_role or import_role.
+            entrypoint = self._from_files.get('tasks', 'main')
+            entrypoint_arg_spec = self._metadata.argument_specs.get(entrypoint)
+
+            if entrypoint_arg_spec:
+                validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint)
+
+                # Prepend our validate_arg_spec action to happen before any tasks provided by the role.
+                # 'any tasks' can and does include 0 or None tasks, in which cases we create a list of tasks and add our
+                # validate_arg_spec task
+                if not task_data:
+                    task_data = []
+                task_data.insert(0, validation_task)
+
+    def _create_validation_task(self, argument_spec, entrypoint_name):
+        '''Create a new task data structure that uses the validate_arg_spec action plugin.
+
+        :param argument_spec: The arg spec definition for a particular role entry point.
+        :param entrypoint_name: The name of the role entry point associated with the
+            supplied `argument_spec`.
+        '''
+
         # If the arg spec provides a short description, use it to flesh out the validation task name
         task_name = "Validating arguments against arg spec '%s'" % entrypoint_name
         if 'short_description' in argument_spec:
             task_name = task_name + ' - ' + argument_spec['short_description'])
 
-        arg_spec_task = {'action': {'module': 'validate_arg_spec',
-                                    'argument_spec': argument_spec,
-                                    'provided_arguments': role_params,
-                                    'validate_args_context': {'type': 'role',
-                                                              'name': role_name,
-                                                              'argument_spec_name': argument_spec_name,
-                                                              'path': role_path},
-                                    },
-                         'name': task_name,
-                         }
-        return arg_spec_task
+        return {
+            'action': {
+                'module': 'validate_arg_spec',
+                'argument_spec': argument_spec,
+                'provided_arguments': self._role_params,
+                'validate_args_context': {
+                    'type': 'role',
+                    'name': self._role_name,
+                    'argument_spec_name': entrypoint_name,
+                    'path': self._role_path
+                },
+            },
+            'name': task_name,
+        }
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
         '''
