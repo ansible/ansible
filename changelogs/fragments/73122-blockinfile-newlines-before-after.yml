@@ -1,0 +1,3 @@
+# -*- coding: utf-8 -*-
+minor_changes:
+  - "``blockinfile`` - add parameters ``newlines_before`` and ``newlines_after`` (both default to ``0``) to insert empty newlines before and/or after the block of lines to be inserted for increased readability (feature request: https://github.com/ansible/ansible/issues/70427, PR #73122)."
