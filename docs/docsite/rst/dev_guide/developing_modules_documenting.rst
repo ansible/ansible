@@ -279,11 +279,11 @@ content in a uniform way:
 Semantic markup within module documentation
 -------------------------------------------
 
-You can use semantic markup to highlight option names, option values, and environment variables. The publication process formats these terms in a uniform way, without creating links. With semantic markup, we can change the look of the output without changing the underlying code. The correct formats for semantic markup are:
+You can use semantic markup to highlight option names, option values, and environment variables. The publication process formats these terms in a uniform way. With semantic markup, we can change the look of the output without changing the underlying code. The correct formats for semantic markup are:
 
 * ``O()`` for option names, whether mentioned alone or with values. For example: ``Required if O(state=present).`` and ``Use with O(force) to require secure access.``
 * ``V()`` for option values when mentioned alone. For example: ``Possible values include V(monospace) and V(pretty).``
-* ``E()`` for environment variables. For example: ``If not set the environment variable E(ACME_PASSWORD) will be used.``
+* ``E()`` for environment variables. For example: ``If not set, the environment variable E(ACME_PASSWORD) will be used.``
 
 Format macros within module documentation
 -----------------------------------------
