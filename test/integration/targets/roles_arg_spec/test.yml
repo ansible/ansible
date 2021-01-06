@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  gather_facts: false
+  roles:
+      - { role: a, var1: "foo" }

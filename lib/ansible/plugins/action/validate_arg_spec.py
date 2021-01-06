@@ -101,14 +101,6 @@ class ActionModule(ActionBase):
         # get the task var called argument_spec
         argument_spec_data = self._task.args.get('argument_spec')
 
-        # include arg spec data dict in return, use a copy since we 'pop' from it
-        # and modify it in place later.
-        orig_argument_spec_data = argument_spec_data.copy()
-
-        # then get the 'argument_spec' item from the dict in the argument_spec task var
-        # everything left in argument_spec_data is modifiers
-        argument_spec = argument_spec_data.pop('argument_spec', [])
-
         # the values that were passed in and will be checked against argument_spec
         provided_arguments = self._task.args.get('provided_arguments', {})
 
@@ -118,6 +110,14 @@ class ActionModule(ActionBase):
         if not isinstance(provided_arguments, dict):
             raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
 
+        # include arg spec data dict in return, use a copy since we 'pop' from it
+        # and modify it in place later.
+        orig_argument_spec_data = argument_spec_data.copy()
+
+        # then get the 'options' item from the dict in the argument_spec task var
+        # everything left in argument_spec_data is modifiers
+        argument_spec = argument_spec_data.pop('options', {})
+
         module_params = provided_arguments
 
         # apply any defaults from the arg spec and setup aliases
@@ -125,7 +125,6 @@ class ActionModule(ActionBase):
         module_params.update(built_args)
 
         module_args = {}
-        module_args.update(argument_spec_data)
         module_args['argument_spec'] = argument_spec
         module_args['params'] = module_params
 

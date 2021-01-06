@@ -310,7 +310,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # If the arg spec provides a short description, use it to flesh out the validation task name
         task_name = "Validating arguments against arg spec '%s'" % entrypoint_name
         if 'short_description' in argument_spec:
-            task_name = task_name + ' - ' + argument_spec['short_description'])
+            task_name = task_name + ' - ' + argument_spec['short_description']
 
         return {
             'action': {
