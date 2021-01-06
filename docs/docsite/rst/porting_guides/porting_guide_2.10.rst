@@ -98,6 +98,79 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v2.10.5
+=========================
+
+Breaking Changes
+----------------
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- hashi_vault - the ``VAULT_ADDR`` environment variable is now checked last for the ``url`` parameter. For details on which use cases are impacted, see (https://github.com/ansible-collections/community.hashi_vault/issues/8).
+
+Major Changes
+-------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- For community.general 2.0.0, the Google modules will be moved to the `community.google <https://galaxy.ansible.com/community/google>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use Google modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.google.`` instead of ``community.general.``,
+  for example replace ``community.general.gcpubsub`` in a task by ``community.google.gcpubsub``.
+
+  If you use ansible-base and installed ``community.general`` manually and rely on the Google modules, you have to make sure to install the ``community.google`` collection as well.
+  If you are using FQCNs, for example ``community.general.gcpubsub`` instead of ``gcpubsub``, it will continue working, but we still recommend to adjust the FQCNs as well.
+- For community.general 2.0.0, the OC connection plugin will be moved to the `community.okd <https://galaxy.ansible.com/community/okd>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use OC connection plugin from this collection, you will need to adjust your playbooks and roles to use FQCNs ``community.okd.oc`` instead of ``community.general.oc``.
+
+  If you use ansible-base and installed ``community.general`` manually and rely on the OC connection plugin, you have to make sure to install the ``community.okd`` collection as well.
+  If you are using FQCNs, in other words ``community.general.oc`` instead of ``oc``, it will continue working, but we still recommend to adjust this FQCN as well.
+- For community.general 2.0.0, the hashi_vault lookup plugin will be moved to the `community.hashi_vault <https://galaxy.ansible.com/community/hashi_vault>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use hashi_vault lookup plugin from this collection, you will need to adjust your playbooks and roles to use FQCNs ``community.hashi_vault.hashi_vault`` instead of ``community.general.hashi_vault``.
+
+  If you use ansible-base and installed ``community.general`` manually and rely on the hashi_vault lookup plugin, you have to make sure to install the ``community.hashi_vault`` collection as well.
+  If you are using FQCNs, in other words ``community.general.hashi_vault`` instead of ``hashi_vault``, it will continue working, but we still recommend to adjust this FQCN as well.
+
+netbox.netbox
+~~~~~~~~~~~~~
+
+- nb_inventory - Add ``dns_name`` option that adds ``dns_name`` to the host when ``True`` and device has a primary IP address. (#394)
+- nb_inventory - Add ``status`` as a ``group_by`` option. (398)
+- nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwite. (#377)
+- nb_inventory - Services are now a list of integers due to NetBox 2.10 changes. (#396)
+- nb_lookup - Allow ID to be passed in and use ``.get`` instead of ``.filter``. (#376)
+- nb_lookup - Allow ``api_endpoint`` and ``token`` to be found via env. (#391)
+
+Deprecated Features
+-------------------
+
+community.aws
+~~~~~~~~~~~~~
+
+- ec2_vpc_igw_info - After 2022-06-22 the ``convert_tags`` parameter default value will change from ``False`` to ``True`` to match the collection standard behavior (https://github.com/ansible-collections/community.aws/pull/318).
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- docker_container - currently ``published_ports`` can contain port mappings next to the special value ``all``, in which case the port mappings are ignored. This behavior is deprecated for community.docker 2.0.0, at which point it will either be forbidden, or this behavior will be properly implemented similar to how the Docker CLI tool handles this (https://github.com/ansible-collections/community.docker/issues/8, https://github.com/ansible-collections/community.docker/pull/60).
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- hashi_vault - ``VAULT_ADDR`` environment variable for option ``url`` will have its precedence lowered in 1.0.0; use ``ANSIBLE_HASHI_VAULT_ADDR`` to intentionally override a config value (https://github.com/ansible-collections/community.hashi_vault/issues/8).
+- hashi_vault - ``VAULT_AUTH_METHOD`` environment variable for option ``auth_method`` will be removed in 2.0.0, use ``ANSIBLE_HASHI_VAULT_AUTH_METHOD`` instead (https://github.com/ansible-collections/community.hashi_vault/issues/17).
+- hashi_vault - ``VAULT_ROLE_ID`` environment variable for option ``role_id`` will be removed in 2.0.0, use ``ANSIBLE_HASHI_VAULT_ROLE_ID`` instead (https://github.com/ansible-collections/community.hashi_vault/issues/20).
+- hashi_vault - ``VAULT_SECRET_ID`` environment variable for option ``secret_id`` will be removed in 2.0.0, use ``ANSIBLE_HASHI_VAULT_SECRET_ID`` instead (https://github.com/ansible-collections/community.hashi_vault/issues/20).
+- hashi_vault - ``VAULT_TOKEN_FILE`` environment variable for option ``token_file`` will be removed in 2.0.0, use ``ANSIBLE_HASHI_VAULT_TOKEN_FILE`` instead (https://github.com/ansible-collections/community.hashi_vault/issues/15).
+- hashi_vault - ``VAULT_TOKEN_PATH`` environment variable for option ``token_path`` will be removed in 2.0.0, use ``ANSIBLE_HASHI_VAULT_TOKEN_PATH`` instead (https://github.com/ansible-collections/community.hashi_vault/issues/15).
+
 Porting Guide for v2.10.4
 =========================
 
