@@ -1,112 +1,62 @@
 Docker Guide
 ============
 
-Ansible offers the following modules for orchestrating Docker containers:
+The `community.docker collection <https://galaxy.ansible.com/community/docker>`_ offers several modules and plugins for orchestrating Docker containers and Docker Swarm.
 
-    docker_compose
-        Use your existing Docker compose files to orchestrate containers on a single Docker daemon or on
-        Swarm. Supports compose versions 1 and 2.
+.. contents::
+   :local:
+   :depth: 1
 
-    docker_container
-        Manages the container lifecycle by providing the ability to create, update, stop, start and destroy a
-        container.
-
-    docker_image
-        Provides full control over images, including: build, pull, push, tag and remove.
-
-    docker_image_info
-        Inspects one or more images in the Docker host's image cache, providing the information for making
-        decision or assertions in a playbook.
-
-    docker_login
-        Authenticates with Docker Hub or any Docker registry and updates the Docker Engine config file, which
-        in turn provides password-free pushing and pulling of images to and from the registry.
-
-    docker (dynamic inventory)
-        Dynamically builds an inventory of all the available containers from a set of one or more Docker hosts.
-
-
-Ansible 2.1.0 includes major updates to the Docker modules, marking the start of a project to create a complete and
-integrated set of tools for orchestrating containers. In addition to the above modules, we are also working on the
-following:
-
-Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_,
-and start building images from your Ansible playbooks.
-
-Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_
-to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully
-scalable app in the cloud with Kubernetes in just a few moments.
-
-There's more planned. See the latest ideas and thinking at the `Ansible proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
 
 Requirements
 ------------
 
-Using the docker modules requires having the `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_
-installed on the host running Ansible. You will need to have >= 1.7.0 installed. For Python 2.7 or
-Python 3, you can install it as follows:
+Most of the modules and plugins in community.docker require the `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_. The SDK needs to be installed on the machines where the modules and plugins are executed, and for the Python version(s) with which the modules and plugins are executed. You can use the :ref:`community.general.python_requirements_info module <ansible_collections.community.general.python_requirements_info_module>` to make sure that the Docker SDK for Python is installed on the correct machine and for the Python version used by Ansible.
+
+Note that plugins (inventory plugins and connection plugins) are always executed in the context of Ansible itself. If you use a plugin that requires the Docker SDK for Python, you need to install it on the machine running ``ansible`` or ``ansible-playbook`` and for the same Python interpreter used by Ansible. To see which Python is used, run ``ansible --version``.
+
+You can install the Docker SDK for Python for Python 2.7 or Python 3 as follows:
 
 .. code-block:: bash
 
     $ pip install docker
 
-For Python 2.6, you need a version before 2.0. For these versions, the SDK was called ``docker-py``,
-so you need to install it as follows:
+For Python 2.6, you need a version before 2.0. For these versions, the SDK was called ``docker-py``, so you need to install it as follows:
 
 .. code-block:: bash
 
-    $ pip install 'docker-py>=1.7.0'
+    $ pip install 'docker-py>=1.10.0'
 
-Please note that only one of ``docker`` and ``docker-py`` must be installed. Installing both will result in
-a broken installation. If this happens, Ansible will detect it and inform you about it::
+Please install only one of ``docker`` or ``docker-py``. Installing both will result in a broken installation. If this happens, Ansible will detect it and inform you about it. If that happens, you must uninstall both and reinstall the correct version.
 
-    Cannot have both the docker-py and docker python modules installed together as they use the same
-    namespace and cause a corrupt installation. Please uninstall both packages, and re-install only
-    the docker-py or docker python module. It is recommended to install the docker module if no support
-    for Python 2.6 is required. Please note that simply uninstalling one of the modules can leave the
-    other module in a broken state.
-
-The docker_compose module also requires `docker-compose <https://github.com/docker/compose>`_
-
-.. code-block:: bash
-
-   $ pip install 'docker-compose>=1.7.0'
+If in doubt, always install ``docker`` and never ``docker-py``.
 
 
 Connecting to the Docker API
 ----------------------------
 
-You can connect to a local or remote API using parameters passed to each task or by setting environment variables.
-The order of precedence is command line parameters and then environment variables. If neither a command line
-option or an environment variable is found, a default value will be used. The default values are provided under
-`Parameters`_
+You can connect to a local or remote API using parameters passed to each task or by setting environment variables. The order of precedence is command line parameters and then environment variables. If neither a command line option nor an environment variable is found, Ansible uses the default value  provided under `Parameters`_.
 
 
 Parameters
 ..........
 
-Control how modules connect to the Docker API by passing the following parameters:
+Most plugins and modules can be configured by the following parameters:
 
     docker_host
-        The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``.
-        To connect to a remote host, provide the TCP connection string. For example: ``tcp://192.0.2.23:2376``. If
-        TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the
-        connection URL with 'https'.
+        The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``. To connect to a remote host, provide the TCP connection string (for example: ``tcp://192.0.2.23:2376``). If TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the connection URL with 'https'.
 
     api_version
-        The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported
-        by docker-py.
+        The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by the Docker SDK for Python installed.
 
     timeout
         The maximum amount of time in seconds to wait on a response from the API. Defaults to 60 seconds.
 
     tls
-        Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server.
-        Defaults to False.
+        Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Defaults to ``false``.
 
-    tls_verify
-        Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
-        Default is False.
+    validate_certs
+        Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server. Default is ``false``.
 
     cacert_path
         Use a CA certificate when performing server verification by providing the path to a CA certificate file.
@@ -118,19 +68,18 @@ Control how modules connect to the Docker API by passing the following parameter
         Path to the client's TLS key file.
 
     tls_hostname
-        When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults
-        to 'localhost'.
+        When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults to ``localhost``.
 
     ssl_version
-        Provide a valid SSL version number. Default value determined by docker-py, which at the time of this writing
-        was 1.0
+        Provide a valid SSL version number. The default value is determined by the Docker SDK for Python.
 
 
-Environment Variables
+Environment variables
 .....................
 
-Control how the modules connect to the Docker API by setting the following variables in the environment of the host
-running Ansible:
+You can also control how the plugins and modules connect to the Docker API by setting the following environment variables.
+
+For plugins, they have to be set for the environment Ansible itself runs in. For modules, they have to be set for the environment the modules are executed in. For modules running on remote machines, the environment variables have to be set on that machine for the user used to execute the modules with.
 
     DOCKER_HOST
         The URL or Unix socket path used to connect to the Docker API.
@@ -155,176 +104,124 @@ running Ansible:
         Secure the connection to the API by using TLS and verify the authenticity of the Docker Host.
 
 
-Dynamic Inventory Script
-------------------------
-The inventory script generates dynamic inventory by making API requests to one or more Docker APIs. It's dynamic
-because the inventory is generated at run-time rather than being read from a static file. The script generates the
-inventory by connecting to one or many Docker APIs and inspecting the containers it finds at each API. Which APIs the
-script contacts can be defined using environment variables or a configuration file.
+Plain Docker daemon: images, networks, volumes, and containers
+--------------------------------------------------------------
 
-Groups
-......
-The script will create the following host groups:
+For working with a plain Docker daemon, that is without Swarm, there are connection plugins, an inventory plugin, and several modules available:
 
- - container id
- - container name
- - container short id
- - image_name  (image_<image name>)
- - docker_host
- - running
- - stopped
+    docker connection plugin
+        The :ref:`community.docker.docker connection plugin <ansible_collections.community.docker.docker_connection>` uses the Docker CLI utility to connect to Docker containers and execute modules in them. It essentially wraps ``docker exec`` and ``docker cp``. This connection plugin is supported by the :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>`.
 
-Examples
-........
+    docker_api connection plugin
+        The :ref:`community.docker.docker_api connection plugin <ansible_collections.community.docker.docker_api_connection>` talks directly to the Docker daemon to connect to Docker containers and execute modules in them.
 
-You can run the script interactively from the command line or pass it as the inventory to a playbook. Here are few
-examples to get you started:
+    docker_containers inventory plugin
+        The :ref:`community.docker.docker_containers inventory plugin <ansible_collections.community.docker.docker_containers_inventory>` allows you to dynamically add Docker containers from a Docker Daemon to your Ansible inventory. See :ref:`dynamic_inventory` for details on dynamic inventories.
 
-.. code-block:: bash
+        The `docker inventory script <https://github.com/ansible-collections/community.general/blob/main/scripts/inventory/docker.py>`_ is deprecated. Please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect Docker containers from multiple Docker daemons, you need to add every Docker daemon as an individual inventory source.
 
-    # Connect to the Docker API on localhost port 4243 and format the JSON output
-    DOCKER_HOST=tcp://localhost:4243 ./docker.py --pretty
+    docker_host_info module
+        The :ref:`community.docker.docker_host_info module <ansible_collections.community.docker.docker_host_info_module>` allows you to retrieve information on a Docker daemon, such as all containers, images, volumes, networks and so on.
 
-    # Any container's ssh port exposed on 0.0.0.0 will be mapped to
-    # another IP address (where Ansible will attempt to connect via SSH)
-    DOCKER_DEFAULT_IP=192.0.2.5 ./docker.py --pretty
+    docker_login module
+        The :ref:`community.docker.docker_login module <ansible_collections.community.docker.docker_login_module>` allows you to log in and out of a remote registry, such as Docker Hub or a private registry. It provides similar functionality to the ``docker login`` and ``docker logout`` CLI commands.
 
-    # Run as input to a playbook:
-    ansible-playbook -i ./docker.py docker_inventory_test.yml
+    docker_prune module
+        The :ref:`community.docker.docker_prune module <ansible_collections.community.docker.docker_prune_module>` allows  you to prune no longer needed containers, images, volumes and so on. It provides similar functionality to the ``docker prune`` CLI command.
 
-    # Simple playbook to invoke with the above example:
+    docker_image module
+        The :ref:`community.docker.docker_image module <ansible_collections.community.docker.docker_image_module>` provides full control over images, including: build, pull, push, tag and remove.
 
-        - name: Test docker_inventory, this will not connect to any hosts
-          hosts: all
-          gather_facts: no
-          tasks:
-            - debug:
-                msg: "Container - {{ inventory_hostname }}"
+    docker_image_info module
+        The :ref:`community.docker.docker_image_info module <ansible_collections.community.docker.docker_image_info_module>` allows you to list and inspect images.
 
-Configuration
-.............
-You can control the behavior of the inventory script by defining environment variables, or
-creating a docker.yml file (sample provided in https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/docker.py). The order of precedence is the docker.yml
-file and then environment variables.
+    docker_network module
+        The :ref:`community.docker.docker_network module <ansible_collections.community.docker.docker_network_module>` provides full control over Docker networks.
+
+    docker_network_info module
+        The :ref:`community.docker.docker_network_info module <ansible_collections.community.docker.docker_network_info_module>` allows you to inspect Docker networks.
+
+    docker_volume_info module
+        The :ref:`community.docker.docker_volume_info module <ansible_collections.community.docker.docker_volume_info_module>` provides full control over Docker volumes.
+
+    docker_volume module
+        The :ref:`community.docker.docker_volume module <ansible_collections.community.docker.docker_volume_module>` allows you to inspect Docker volumes.
+
+    docker_container module
+        The :ref:`community.docker.docker_container module <ansible_collections.community.docker.docker_container_module>` manages the container lifecycle by providing the ability to create, update, stop, start and destroy a Docker container.
+
+    docker_container_info module
+        The :ref:`community.docker.docker_container_info module <ansible_collections.community.docker.docker_container_info_module>` allows you to inspect a Docker container.
 
 
-Environment Variables
-;;;;;;;;;;;;;;;;;;;;;;
+Docker Compose
+--------------
 
-To connect to a single Docker API the following variables can be defined in the environment to control the connection
-options. These are the same environment variables used by the Docker modules.
+The :ref:`community.docker.docker_compose module <ansible_collections.community.docker.docker_compose_module>`
+allows you to use your existing Docker compose files to orchestrate containers on a single Docker daemon or on Swarm.
+Supports compose versions 1 and 2.
 
-    DOCKER_HOST
-        The URL or Unix socket path used to connect to the Docker API. Defaults to unix://var/run/docker.sock.
-
-    DOCKER_API_VERSION:
-        The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported
-        by docker-py.
-
-    DOCKER_TIMEOUT:
-        The maximum amount of time in seconds to wait on a response from the API. Defaults to 60 seconds.
-
-    DOCKER_TLS:
-        Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server.
-        Defaults to False.
-
-    DOCKER_TLS_VERIFY:
-        Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
-        Default is False
-
-    DOCKER_TLS_HOSTNAME:
-        When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults
-        to localhost.
-
-    DOCKER_CERT_PATH:
-        Path to the directory containing the client certificate, client key and CA certificate.
-
-    DOCKER_SSL_VERSION:
-        Provide a valid SSL version number. Default value determined by docker-py, which at the time of this writing
-        was 1.0
-
-In addition to the connection variables there are a couple variables used to control the execution and output of the
-script:
-
-    DOCKER_CONFIG_FILE
-        Path to the configuration file. Defaults to ./docker.yml.
-
-    DOCKER_PRIVATE_SSH_PORT:
-        The private port (container port) on which SSH is listening for connections. Defaults to 22.
-
-    DOCKER_DEFAULT_IP:
-        The IP address to assign to ansible_host when the container's SSH port is mapped to interface '0.0.0.0'.
+Next to Docker SDK for Python, you need to install `docker-compose <https://github.com/docker/compose>`_ on the remote machines to use the module.
 
 
-Configuration File
-;;;;;;;;;;;;;;;;;;
+Docker Machine
+--------------
 
-Using a configuration file provides a means for defining a set of Docker APIs from which to build an inventory.
+The :ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` allows you to dynamically add Docker Machine hosts to your Ansible inventory.
 
-The default name of the file is derived from the name of the inventory script. By default the script will look for
-basename of the script (in other words, docker) with an extension of '.yml'.
 
-You can also override the default name of the script by defining DOCKER_CONFIG_FILE in the environment.
+Docker stack
+------------
 
-Here's what you can define in docker_inventory.yml:
+The :ref:`community.docker.docker_stack module <ansible_collections.community.docker.docker_stack_module>` module allows you to control Docker stacks. Information on stacks can be retrieved by the :ref:`community.docker.docker_stack_info module <ansible_collections.community.docker.docker_stack_info_module>`, and information on stack tasks can be retrieved by the :ref:`community.docker.docker_stack_task_info module <ansible_collections.community.docker.docker_stack_task_info_module>`.
 
-    defaults
-        Defines a default connection. Defaults will be taken from this and applied to any values not provided
-        for a host defined in the hosts list.
 
-    hosts
-        If you wish to get inventory from more than one Docker host, define a hosts list.
+Docker Swarm
+------------
 
-For the default host and each host in the hosts list define the following attributes:
+The community.docker collection provides multiple plugins and modules for managing Docker Swarms.
 
-.. code-block:: yaml
+Swarm management
+................
 
-  host:
-      description: The URL or Unix socket path used to connect to the Docker API.
-      required: yes
+One inventory plugin and several modules are provided to manage Docker Swarms:
 
-  tls:
-     description: Connect using TLS without verifying the authenticity of the Docker host server.
-     default: false
-     required: false
+    docker_swarm inventory plugin
+        The :ref:`community.docker.docker_swarm inventory plugin <ansible_collections.community.docker.docker_swarm_inventory>` allows  you to dynamically add all Docker Swarm nodes to your Ansible inventory.
 
-  tls_verify:
-     description: Connect using TLS without verifying the authenticity of the Docker host server.
-     default: false
-     required: false
+    docker_swarm module
+        The :ref:`community.docker.docker_swarm module <ansible_collections.community.docker.docker_swarm_module>` allows you to globally configure Docker Swarm manager nodes to join and leave swarms, and to change the Docker Swarm configuration.
 
-  cert_path:
-     description: Path to the client's TLS certificate file.
-     default: null
-     required: false
+    docker_swarm_info module
+        The :ref:`community.docker.docker_swarm_info module <ansible_collections.community.docker.docker_swarm_info_module>` allows  you to retrieve information on Docker Swarm.
 
-  cacert_path:
-     description: Use a CA certificate when performing server verification by providing the path to a CA certificate file.
-     default: null
-     required: false
+    docker_node module
+        The :ref:`community.docker.docker_node module <ansible_collections.community.docker.docker_node_module>` allows you to manage Docker Swarm nodes.
 
-  key_path:
-     description: Path to the client's TLS key file.
-     default: null
-     required: false
+    docker_node_info module
+        The :ref:`community.docker.docker_node_info module <ansible_collections.community.docker.docker_node_info_module>` allows you to retrieve information on Docker Swarm nodes.
 
-  version:
-     description: The Docker API version.
-     required: false
-     default: will be supplied by the docker-py module.
+Configuration management
+........................
 
-  timeout:
-     description: The amount of time in seconds to wait on an API response.
-     required: false
-     default: 60
+The community.docker collection offers modules to manage Docker Swarm configurations and secrets:
 
-  default_ip:
-     description: The IP address to assign to ansible_host when the container's SSH port is mapped to interface
-     '0.0.0.0'.
-     required: false
-     default: 127.0.0.1
+    docker_config module
+        The :ref:`community.docker.docker_config module <ansible_collections.community.docker.docker_config_module>` allows you to create and modify Docker Swarm configs.
 
-  private_ssh_port:
-     description: The port containers use for SSH
-     required: false
-     default: 22
+    docker_secret module
+        The :ref:`community.docker.docker_secret module <ansible_collections.community.docker.docker_secret_module>` allows you to create and modify Docker Swarm secrets.
+
+
+Swarm services
+..............
+
+Docker Swarm services can be created and updated with the :ref:`community.docker.docker_swarm_service module <ansible_collections.community.docker.docker_swarm_service_module>`, and information on them can be queried by the :ref:`community.docker.docker_swarm_service_info module <ansible_collections.community.docker.docker_swarm_service_info_module>`.
+
+
+Helpful links
+-------------
+
+Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_, and start building images from your Ansible playbooks.
+
+Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully scalable app in the cloud with Kubernetes in just a few moments.
