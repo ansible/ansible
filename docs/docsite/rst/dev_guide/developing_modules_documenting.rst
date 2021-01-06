@@ -243,8 +243,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
 .. _module_documents_linking:
 
-Linking and other format macros within module documentation
------------------------------------------------------------
+Linking within module documentation
+-----------------------------------
 
 You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet with the help of some pre-defined macros. The correct formats for these macros are:
 
@@ -272,22 +272,28 @@ content in a uniform way:
     - ``Refer to the R(kubernetes.core collection, plugins_in_kubernetes.core) for information on managing kubernetes clusters.``
     - ``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
 
-Call out option names, option values, and environment variables in the module documentation using semantic markup. These macros display the content in a uniform way without creating links. With semantic markup, we can change the look of the output without changing the underlying code. The correct formats for semantic markup are:
-
-* ``O()`` for option names, whether mentioned alone or with values. For example: ``Required if O(state=present).``
-* ``V()`` for option values when mentioned alone. For example: ``Possible values include V(monospace) and V(pretty).``
-* ``E()`` for environment variables. For example: ``If not set the environment variable E(ACME_PASSWORD) will be used.``
-
-You can also use standard Python formatting to control the look of other terms in module documentation:
-
-* ``C()`` for monospace (code) font. For example: ``This module functions like the unix command C(foo).``
-* ``B()`` for bold font.
-* ``I()`` for italic font.
-* ``HORIZONTALLINE`` for a horizontal rule (the ``<hr>`` html tag) to separate long descriptions.
-
 .. note::
 
    Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description.
+
+Semantic markup within module documentation
+-------------------------------------------
+
+You can use semantic markup to highlight option names, option values, and environment variables. The publication process formats these terms in a uniform way, without creating links. With semantic markup, we can change the look of the output without changing the underlying code. The correct formats for semantic markup are:
+
+* ``O()`` for option names, whether mentioned alone or with values. For example: ``Required if O(state=present).`` and ``Use with O(force) to require secure access.``
+* ``V()`` for option values when mentioned alone. For example: ``Possible values include V(monospace) and V(pretty).``
+* ``E()`` for environment variables. For example: ``If not set the environment variable E(ACME_PASSWORD) will be used.``
+
+Format macros within module documentation
+-----------------------------------------
+
+You can also use standard Python formatting to control the look of other terms in module documentation. Use these macros sparingly. The available macros include:
+
+* ``C()`` for ``monospace`` (code) text. For example: ``This module functions like the unix command C(foo).``
+* ``B()`` for bold text.
+* ``I()`` for italic text.
+* ``HORIZONTALLINE`` for a horizontal rule (the ``<hr>`` html tag) to separate long descriptions.
 
 .. _module_docs_fragments:
 
