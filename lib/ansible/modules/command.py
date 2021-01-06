@@ -55,7 +55,9 @@ options:
   changes:
     type: path
     description:
-      - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
+      - Path to a file or glob pattern. If a match exists and it is a file, the command will B(always) be run except in
+        check mode. If any files matching the path or pattern are changed after running the command, the task will
+        report a change.
     version_added: "2.11"
   chdir:
     type: path
@@ -93,7 +95,7 @@ notes:
        use the C(command) module when possible.
     -  " C(creates), C(removes), C(changes) and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
-    -  Check mode is supported when passing C(creates), C(removes) or C(changes). If running in check mode and either of these are specified, the module will
+    -  Check mode is supported when passing C(creates), C(removes) or C(changes). If running in check mode and any of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
@@ -345,9 +347,7 @@ def main():
             )
 
     if changes:
-        # do not run the command if the line contains changes=filename
-        # and the filename does not exist.  This allows idempotence
-        # of command executions.
+        # Do not run the command and exit now if the file does not exist
         if not glob.glob(changes):
             module.exit_json(
                 cmd=args,

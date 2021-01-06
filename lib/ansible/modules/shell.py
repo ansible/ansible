@@ -45,7 +45,9 @@ options:
     version_added: "0.8"
   changes:
     description:
-      - A filename, when it does not exist, this step will B(not) be run.
+      - Path to a file or glob pattern. If a match exists and it is a file, the command will B(always) be run except in
+        check mode. If any files matching the path or pattern are changed after running the command, the task will
+        report a change.
     type: path
     version_added: "2.11"
   chdir:
@@ -83,7 +85,7 @@ notes:
     unless the M(ansible.builtin.shell) module is explicitly required. When running ad-hoc
     commands, use your best judgement.
   - Check mode is supported when passing C(creates), C(removes) or C(changes). If running
-    in check mode and either of these are specified, the module will check for
+    in check mode and any of these are specified, the module will check for
     the existence of the file and report the correct changed status. If these
     are not supplied, the task will be skipped.
   - To sanitize any variables passed to the shell module, you should use
