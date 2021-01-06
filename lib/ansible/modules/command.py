@@ -358,9 +358,7 @@ def main():
         else:
             basehashes = []
             for filename in glob.glob(changes):
-                basefile = open(filename, 'rb')
-                basedata = basefile.read(65536)
-                basehash = hashlib.sha1(basedata).hexdigest()
+                basehash = module.digest_from_file(filename, 'sha1')
                 basehashes.append(basehash)
 
     if warn:
@@ -387,9 +385,7 @@ def main():
     if changes:
         finalhashes = []
         for filename in glob.glob(changes):
-            finalfile = open(filename, 'rb')
-            finaldata = finalfile.read(65536)
-            finalhash = hashlib.sha1(finaldata).hexdigest()
+            finalhash = module.digest_from_file(filename, 'sha1')
             finalhashes.append(finalhash)
 
         if finalhashes == basehashes:
