@@ -105,9 +105,7 @@ class RoleRequirement(RoleDefinition):
                     role["src"] = "git+" + role["src"]
 
                 if '+' in role["src"]:
-                    (scm, src) = role["src"].split('+')
-                    role["scm"] = scm
-                    role["src"] = src
+                    role["scm"], dummy, role["src"] = role["src"].partition('+')
 
                 if 'name' not in role:
                     role["name"] = RoleRequirement.repo_url_to_role_name(role["src"])
