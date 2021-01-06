@@ -1214,6 +1214,31 @@ class FreeBsdUser(User):
     SHADOWFILE_EXPIRE_INDEX = 6
     DATE_FORMAT = '%d-%b-%Y'
 
+    def _handle_lock(self):
+        info = self.user_info()
+        if self.password_lock and not info[1].startswith('*LOCKED*'):
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'lock',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
+        elif self.password_lock is False and info[1].startswith('*LOCKED*'):
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'unlock',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
+
+        return (None, '', '')
+
     def remove_user(self):
         cmd = [
             self.module.get_bin_path('pw', True),
@@ -1284,9 +1309,17 @@ class FreeBsdUser(User):
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
-        (rc, out, err) = self.execute_command(cmd)
-        if rc is not None and rc != 0:
-            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Collect all return codes in a set to later determine if any command was run
+        (rc, out, err) = set(), '', ''
+
+        (_rc, _out, _err) = self.execute_command(cmd)
+        rc.add(_rc)
+        out += _out
+        err += _err
+
+        if _rc is not None and _rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=_rc)
 
         # we have to set the password in a second command
         if self.password is not None:
@@ -1296,7 +1329,22 @@ class FreeBsdUser(User):
                 self.password,
                 self.name
             ]
-            return self.execute_command(cmd)
+            _rc, _out, _err = self.execute_command(cmd)
+            rc.add(_rc)
+            out += _out
+            err += _err
+
+        # we have to lock/unlock the password in a distinct command
+        _rc, _out, _err = self._handle_lock()
+        rc.add(_rc)
+        out += _out
+        err += _err
+
+        # Select any rc value other than None
+        try:
+            rc = rc.difference([None]).pop()
+        except KeyError:
+            rc = None
 
         return (rc, out, err)
 
@@ -1400,45 +1448,43 @@ class FreeBsdUser(User):
                     cmd.append('-e')
                     cmd.append(str(calendar.timegm(self.expires)))
 
+        # Collect all return codes in a set to later determine if any command was run
+        (rc, out, err) = (set(), '', '')
+
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
-            (rc, out, err) = self.execute_command(cmd)
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
-        else:
-            (rc, out, err) = (None, '', '')
+            (_rc, _out, _err) = self.execute_command(cmd)
+            rc.add(_rc)
+            out += _out
+            err += _err
+
+            if _rc is not None and _rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=_rc)
 
         # we have to set the password in a second command
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1].lstrip('*LOCKED*') != self.password.lstrip('*LOCKED*'):
             cmd = [
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
                 self.name
             ]
-            return self.execute_command(cmd)
+            _rc, _out, _err = self.execute_command(cmd)
+            rc.add(_rc)
+            out += _out
+            err += _err
 
         # we have to lock/unlock the password in a distinct command
-        if self.password_lock and not info[1].startswith('*LOCKED*'):
-            cmd = [
-                self.module.get_bin_path('pw', True),
-                'lock',
-                self.name
-            ]
-            if self.uid is not None and info[2] != int(self.uid):
-                cmd.append('-u')
-                cmd.append(self.uid)
-            return self.execute_command(cmd)
-        elif self.password_lock is False and info[1].startswith('*LOCKED*'):
-            cmd = [
-                self.module.get_bin_path('pw', True),
-                'unlock',
-                self.name
-            ]
-            if self.uid is not None and info[2] != int(self.uid):
-                cmd.append('-u')
-                cmd.append(self.uid)
-            return self.execute_command(cmd)
+        _rc, _out, _err = self._handle_lock()
+        rc.add(_rc)
+        out += _out
+        err += _err
+
+        try:
+            rc = rc.difference([None]).pop()
+        except KeyError:
+            rc = None
+
         return (rc, out, err)
 
 
