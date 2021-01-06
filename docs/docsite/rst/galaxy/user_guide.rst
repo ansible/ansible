@@ -226,7 +226,7 @@ To install a specific version of a role from Galaxy, append a comma and the valu
 
 .. code-block:: bash
 
-   $ ansible-galaxy install geerlingguy.apache,v1.0.0
+   $ ansible-galaxy install geerlingguy.apache,1.0.0
 
 It is also possible to point directly to the git repository and specify a branch name or commit hash as the version. For example, the following will
 install a specific commit:
