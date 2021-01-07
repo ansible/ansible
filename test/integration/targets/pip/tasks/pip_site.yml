@@ -1,0 +1,72 @@
+---
+
+- name: "Testing site location variation {{ item }}"
+  debug:
+    msg: "Testing site location variation: {{ item }}"
+
+- name: Set pathable or not
+  set_fact:
+    pathable: "{{ (item not in ('system', 'user')) | bool }}"
+
+- name: "make sure the location does not exist"
+  file:
+    state: absent
+    name: "{{ output_dir }}/pipenv"
+
+- name: "[{{ item }}] Create temp location"
+  when: pathable
+  tempfile:
+    state: directory
+  register: tmp_prefix_loc
+
+- name: "[{{ item }}] install sample project"
+  pip:
+    name: "{{ pip_test_package }}"
+    site: "{{ item }}"
+    path: "{{ tmp_prefix_loc.path | default(omit) }}"
+    state: present
+  register: site_test_pkg
+  ignore_errors: "{{ pathable }}"
+
+- name: "[{{ item }}] ensure sample project was installed"
+  when: "site_test_pkg is failed and item == 'prefix'"
+  assert:
+    that:
+      - "site_test_pkg.msg == 'This version of pip does not support the site you provided: --prefix'"
+
+- name: "[{{ item }}] ensure sample project was installed"
+  when: "item != 'prefix'"
+  assert:
+    that:
+      - "site_test_pkg is success"
+
+- name: "[{{ item }}] only continue remaining tests if site supported..."
+  when: "site_test_pkg is success"
+  block:
+
+    - name: "[{{ item }}] remove sample project from system"
+      pip:
+        name: "{{ pip_test_package }}"
+        site: "{{ item }}"
+        path: "{{ tmp_prefix_loc.path | default(omit) }}"
+        state: absent
+      register: site_test_pkg_remove
+      ignore_errors: "{{ pathable }}"
+
+    - name: "[{{ item }}] ensure sample project was removed"
+      when: "not pathable"
+      assert:
+        that:
+          - "site_test_pkg_remove is success"
+
+    - name: "[{{ item }}] ensure sample project was NOT removed"
+      when: "pathable"
+      assert:
+        that:
+          - "site_test_pkg_remove is failed"
+
+    - name: manually remove prefixed location
+      when: "pathable"
+      file:
+        state: absent
+        name: "{{ tmp_prefix_loc.path }}"

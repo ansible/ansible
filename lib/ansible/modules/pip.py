@@ -112,6 +112,24 @@ options:
         to specify desired umask mode as an octal string, (e.g., "0022").
     type: str
     version_added: "2.1"
+  site:
+    description:
+      - Install packages to the specified site - see Python documentation for more detailed explanations.
+      - C(system) (by default) will install the system site-packages, or virtualenv if activated.
+      - C(user) will install to the user's site (not compatible with virtualenv) (C(--user)).
+      - C(root) will install to the directory specified by C(path) (C(--root)).
+      - C(prefix) will install bin, lib, and other top-level folders under the dir specified by C(path) (C(--prefix)).
+      - C(target) will install packages to the dir specified by C(path) but will not replace existing files/folders (C(--target)).
+    type: str
+    choices: [ system, user, root, prefix, target ]
+    default: system
+    version_added: "2.11"
+  path:
+    description:
+      - When choosing an alternative site, use the path specified here with the relevant option (e.g. root, prefix, target)
+      - The path must already exist and will not be created by this module
+    type: path
+    version_added: "2.11"
 notes:
    - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
@@ -191,7 +209,13 @@ EXAMPLES = '''
 - name: Install bottle within a user home directory
   pip:
     name: bottle
-    extra_args: --user
+    site: user
+
+- name: Install bottle within a prefixed directory
+  pip:
+    name: bottle
+    site: prefix
+    path: /tmp/prefixed-path
 
 - name: Install specified python requirements
   pip:
@@ -590,6 +614,14 @@ def main():
         forcereinstall=['install', '-U', '--force-reinstall'],
     )
 
+    site_map = dict(
+        system='--system',
+        user='--user',
+        root='--root',
+        prefix='--prefix',
+        target='--target'
+    )
+
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', default='present', choices=state_map.keys()),
@@ -605,9 +637,16 @@ def main():
             chdir=dict(type='path'),
             executable=dict(type='path'),
             umask=dict(type='str'),
+            site=dict(type='str', default='system', choices=site_map.keys()),
+            path=dict(type='path')
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
+        required_if=[
+            ["site", "prefix", ["path"]],
+            ["site", "root", ["path"]],
+            ["site", "target", ["path"]]
+        ],
         supports_check_mode=True,
     )
 
@@ -623,6 +662,8 @@ def main():
     chdir = module.params['chdir']
     umask = module.params['umask']
     env = module.params['virtualenv']
+    site = module.params['site']
+    path = module.params['path']
 
     venv_created = False
     if env and chdir:
@@ -657,6 +698,8 @@ def main():
         pip = _get_pip(module, env, module.params['executable'])
 
         cmd = [pip] + state_map[state]
+
+        cmd_opts = _get_cmd_options(module, ' '.join(cmd))
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
@@ -705,6 +748,41 @@ def main():
 
         if extra_args:
             cmd.extend(shlex.split(extra_args))
+
+        # Determine where to install packages
+        if site:
+            if site == 'system' and path is not None:
+                module.warn("path has been specified but will be ignored as no relevant site option was specified")
+
+            # Simple check to ensure path is there
+            if path and not os.path.exists(path):
+                module.fail_json(msg="path does not exist")
+
+            # Simple check to avoid adding install location instructions when using a virtualenv
+            if site != 'system' and env is not None:
+                module.fail_json(msg="site must be system when virtualenv is in use")
+
+            # pip only uses sites when installing
+            if state == 'absent':
+                if site == 'user':
+                    # Technically we should warn on 'system' too but as this is the default, it could be spammy to warn on that
+                    module.warn("pip does not use site when uninstalling")
+                if site not in ('system', 'user'):
+                    module.fail_json(msg="pip can only uninstall from user or system locations. "
+                                     "Remove packages in other locations using an alternate method")
+            else:
+                # Detect support for different sites
+                supports_system_prefix = site_map['system'] in cmd_opts
+                supports_specified_prefix = site_map[site] in cmd_opts
+                if supports_system_prefix:
+                    cmd.extend([site_map['system']])
+                if site != 'system':
+                    if supports_specified_prefix:
+                        cmd.extend([site_map[site]])
+                        if site in ['root', 'target', 'prefix']:
+                            cmd.extend([path])
+                    else:
+                        module.fail_json(msg="This version of pip does not support the site you provided: " + site_map[site])
 
         if name:
             cmd.extend(to_native(p) for p in packages)

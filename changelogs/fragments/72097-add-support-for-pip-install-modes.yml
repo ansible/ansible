@@ -1,0 +1,2 @@
+minor_changes:
+  - pip - add support for different install sites (user, system, prefix, target, and root) (https://github.com/ansible/ansible/pull/72097).

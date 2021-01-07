@@ -11,3 +11,9 @@ pip_test_pkg_ver_unsatisfied:
 pip_test_modules:
   - sample
   - jiphy
+pip_test_site_data:
+  - system
+  - user
+  - root
+  - prefix
+  - target

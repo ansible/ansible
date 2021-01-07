@@ -1,6 +1,10 @@
 # Current pip unconditionally uses md5.
 # We can re-enable if pip switches to a different hash or allows us to not check md5.
 
+- name: install virtualenv
+  pip:
+    name: virtualenv
+
 - name: find virtualenv command
   command: "which virtualenv virtualenv-{{ ansible_python.version.major }}.{{ ansible_python.version.minor }}"
   register: command
