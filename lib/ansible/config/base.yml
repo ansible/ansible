@@ -72,7 +72,11 @@ ANSIBLE_NOCOLOR:
   name: Suppress color output
   default: False
   description: This setting allows suppressing colorizing output, which is used to give a better indication of failure and status information.
-  env: [{name: ANSIBLE_NOCOLOR}]
+  env:
+    - name: ANSIBLE_NOCOLOR
+      # this is generic convention for CLI programs
+    - name: NO_COLOR
+      version_added: '2.11'
   ini:
   - {key: nocolor, section: defaults}
   type: boolean
