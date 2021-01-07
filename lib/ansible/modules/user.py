@@ -1309,17 +1309,10 @@ class FreeBsdUser(User):
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
+        (rc, out, err) = self.execute_command(cmd)
 
-        # Collect all return codes in a set to later determine if any command was run
-        (rc, out, err) = set(), '', ''
-
-        (_rc, _out, _err) = self.execute_command(cmd)
-        rc.add(_rc)
-        out += _out
-        err += _err
-
-        if _rc is not None and _rc != 0:
-            self.module.fail_json(name=self.name, msg=err, rc=_rc)
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # we have to set the password in a second command
         if self.password is not None:
@@ -1330,21 +1323,17 @@ class FreeBsdUser(User):
                 self.name
             ]
             _rc, _out, _err = self.execute_command(cmd)
-            rc.add(_rc)
+            if rc is None:
+                rc = _rc
             out += _out
             err += _err
 
         # we have to lock/unlock the password in a distinct command
         _rc, _out, _err = self._handle_lock()
-        rc.add(_rc)
+        if rc is None:
+            rc = _rc
         out += _out
         err += _err
-
-        # Select any rc value other than None
-        try:
-            rc = rc.difference([None]).pop()
-        except KeyError:
-            rc = None
 
         return (rc, out, err)
 
@@ -1448,18 +1437,16 @@ class FreeBsdUser(User):
                     cmd.append('-e')
                     cmd.append(str(calendar.timegm(self.expires)))
 
-        # Collect all return codes in a set to later determine if any command was run
-        (rc, out, err) = (set(), '', '')
+        (rc, out, err) = (None, '', '')
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
-            (_rc, _out, _err) = self.execute_command(cmd)
-            rc.add(_rc)
+            (rc, _out, _err) = self.execute_command(cmd)
             out += _out
             err += _err
 
-            if _rc is not None and _rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=_rc)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # we have to set the password in a second command
         if self.update_password == 'always' and self.password is not None and info[1].lstrip('*LOCKED*') != self.password.lstrip('*LOCKED*'):
@@ -1470,20 +1457,17 @@ class FreeBsdUser(User):
                 self.name
             ]
             _rc, _out, _err = self.execute_command(cmd)
-            rc.add(_rc)
+            if rc is None:
+                rc = _rc
             out += _out
             err += _err
 
         # we have to lock/unlock the password in a distinct command
         _rc, _out, _err = self._handle_lock()
-        rc.add(_rc)
+        if rc is None:
+            rc = _rc
         out += _out
         err += _err
-
-        try:
-            rc = rc.difference([None]).pop()
-        except KeyError:
-            rc = None
 
         return (rc, out, err)
 
