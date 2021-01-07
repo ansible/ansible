@@ -1,7 +1,7 @@
 argument_specs:
     main:
-        short_description: Main entry point for role A.
+        short_description: Main entry point for role B.
         options:
-            varA:
+            varB:
                 type: "str"
                 required: true

@@ -2,4 +2,32 @@
 - hosts: localhost
   gather_facts: false
   roles:
-      - { role: a, var1: "foo" }
+      - { role: a, varA: "roles" }
+
+  tasks:
+
+      - name: "Valid role usage with include_role"
+        include_role:
+            name: a
+        vars:
+            varA: "include_role"
+
+      - name: "Valid role usage with import_role"
+        import_role:
+            name: a
+        vars:
+            varA: "import_role"
+
+      - block:
+            - name: "Invalid role usage"
+              include_role:
+                  name: b
+            - fail:
+                msg: "Should not get here"
+        rescue:
+            - name: "Validate failure"
+              assert:
+                that:
+                    - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
+                    - ansible_failed_result.argument_errors | length == 1
+                    - "'missing required arguments: varB' in ansible_failed_result.argument_errors"
