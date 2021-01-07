@@ -64,6 +64,7 @@ if [ "${platform}" = "freebsd" ]; then
             bash \
             curl \
             gtar \
+            libyaml \
             "python${py_version}" \
             ${jinja2_pkg} \
             ${cryptography_pkg} \
