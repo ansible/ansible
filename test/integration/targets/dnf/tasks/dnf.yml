@@ -772,3 +772,53 @@
     that:
       - wildcard_absent is successful
       - wildcard_absent is not changed
+
+- name: Test removing with various package specs
+  block:
+    - name: Ensure sos is installed
+      dnf:
+        name: sos
+        state: present
+
+    - name: Determine version of sos
+      command: rpm -q --queryformat=%{version} sos
+      register: sos_version_command
+
+    - name: Determine release of sos
+      command: rpm -q --queryformat=%{release} sos
+      register: sos_release_command
+
+    - name: Determine arch of sos
+      command: rpm -q --queryformat=%{arch} sos
+      register: sos_arch_command
+
+    - set_fact:
+        sos_version: "{{ sos_version_command.stdout | trim }}"
+        sos_release: "{{ sos_release_command.stdout | trim }}"
+        sos_arch: "{{ sos_arch_command.stdout | trim }}"
+
+    # We are just trying to remove the package by specifying its spec in a
+    # bunch of different ways. Each "item" here is a test (a name passed, to make
+    # sure it matches, with how we call Hawkey in the dnf module).
+    - include_tasks: test_sos_removal.yml
+      with_items:
+        - sos
+        - sos-{{ sos_version }}
+        - sos-{{ sos_version }}-{{ sos_release }}
+        - sos-{{ sos_version }}-{{ sos_release }}.{{ sos_arch }}
+        - sos-*-{{ sos_release }}
+        - sos-{{ sos_version[0] }}*
+        - sos-{{ sos_version[0] }}*-{{ sos_release }}
+        - sos-{{ sos_version[0] }}*{{ sos_arch }}
+
+    - name: Ensure deleting a non-existing package fails correctly
+      dnf:
+        name: a-non-existent-package
+        state: absent
+      ignore_errors: true
+      register: nonexisting
+
+    - assert:
+        that:
+          - nonexisting is success
+          - nonexisting.msg == 'Nothing to do'

@@ -1,0 +1,19 @@
+# These are safe to just check in check_mode, because in the module, the
+# logic to match packages will happen anyway. check_mode will just prevent
+# the transaction from actually running once the matches are found.
+- name: Remove {{ item }}
+  dnf:
+    name: "{{ item }}"
+    state: absent
+  check_mode: true
+  register: sos_rm
+
+- debug:
+    var: sos_rm
+
+- assert:
+    that:
+      - sos_rm is successful
+      - sos_rm is changed
+      - "'Removed: sos-{{ sos_version }}-{{ sos_release }}' in sos_rm.results[0]"
+      - sos_rm.results|length == 1

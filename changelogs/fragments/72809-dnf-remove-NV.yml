@@ -1,0 +1,2 @@
+minor_changes:
+  - "dnf - When ``state: absent``, package names are now matched similarly to how the ``dnf`` CLI matches them (https://github.com/ansible/ansible/issues/72809)."
