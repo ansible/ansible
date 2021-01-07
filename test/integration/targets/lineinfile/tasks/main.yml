@@ -256,9 +256,7 @@
 ###################################################################
 # 1st literal tests
 
-- import_tasks: test_string.yml
-  vars:
-    stage: first
+- import_tasks: test_string01.yml
 
 # end of literal tests
 ###################################################################
@@ -819,9 +817,7 @@
 ###################################################################
 # Test insertbefore and insertafter with literal
 
-- import_tasks: test_string.yml
-  vars:
-    stage: second
+- import_tasks: test_string02.yml
 
 # End of literal tests
 ###################################################################
