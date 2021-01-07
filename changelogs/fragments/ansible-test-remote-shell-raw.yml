@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - The ``--raw`` option for ``ansible-test shell --remote`` now uses ``sh`` for the shell instead of ``bash``, which may not be present.
