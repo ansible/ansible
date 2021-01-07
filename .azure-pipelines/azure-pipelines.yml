@@ -36,7 +36,7 @@ variables:
 resources:
   containers:
     - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:1.6.0
+      image: quay.io/ansible/azure-pipelines-test-container:1.7.1
 
 pool: Standard
 
@@ -118,10 +118,10 @@ stages:
               test: centos7
             - name: CentOS 8
               test: centos8
-            - name: Fedora 31
-              test: fedora31
             - name: Fedora 32
               test: fedora32
+            - name: Fedora 33
+              test: fedora33
             - name: openSUSE 15 py2
               test: opensuse15py2
             - name: openSUSE 15 py3
@@ -188,10 +188,10 @@ stages:
               test: centos7
             - name: CentOS 8
               test: centos8
-            - name: Fedora 31
-              test: fedora31
             - name: Fedora 32
               test: fedora32
+            - name: Fedora 33
+              test: fedora33
             - name: openSUSE 15 py2
               test: opensuse15py2
             - name: openSUSE 15 py3
