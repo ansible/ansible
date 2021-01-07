@@ -268,13 +268,9 @@ EXAMPLES = '''
   apt:
     autoremove: yes
 
-# A common issue, particularly during early boot or at specific clock times
-# is that apt will be locked by another process, perhaps trying to autoupdate
-# or just a race condition on a thread. This work-around (which can also be
-# applied to any of the above statements) ensures that if there is a lock file
-# engaged, which is trapped by the `msg` value, triggers a repeat until the
-# lock file is released.
-- name: Install packages only when the apt process isn't locked
+# Sometimes apt tasks fail because apt is locked by an autoupdate or by a race condition on a thread.
+# To check for a lock file before executing, and keep trying until the lock file is released:
+- name: Install packages only when the apt process is not locked
   apt:
     name: foo
     state: present
