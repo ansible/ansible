@@ -448,7 +448,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage = ManagePosixCI(core_ci)
             manage.setup(python_version)
 
-            cmd = create_shell_command(['bash'])
+            cmd = create_shell_command(['sh'])
         else:
             manage = ManagePosixCI(core_ci)
             pwd = manage.setup(python_version)
