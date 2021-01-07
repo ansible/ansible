@@ -12,7 +12,7 @@
   assert:
     that:
       - result is changed
-      - "result.checksum == '418fb335843de684c5c78e8edf5442a4ee282635'"
+      - "result.checksum == '481c2b73fe062390afdd294063a4f8285d69ac85'"
       - "result.state == 'file'"
 
 - name: insert a line at the beginning of the file, and back it up
@@ -37,7 +37,7 @@
     dest: "{{ output_dir }}/teststring.txt"
     state: present
     line: "Thi$ i^ [ine 3"
-    search_string: "REF this is a line to be replaced REF"
+    search_string: (\\w)(\\s+)([\\.,])
   register: backrefs_result1
 
 - name: Replace a line again using string
@@ -45,7 +45,7 @@
     dest: "{{ output_dir }}/teststring.txt"
     state: present
     line: "Thi$ i^ [ine 3"
-    search_string: "REF this is a line to be replaced REF"
+    search_string: (\\w)(\\s+)([\\.,])
   register: backrefs_result2
 
 - command: cat {{ output_dir }}/teststring.txt
@@ -65,7 +65,7 @@
 - name: assert test checksum matches after backref line was replaced
   assert:
     that:
-      - "result.stat.checksum == '642e1c13a8453a42fa5035b5f4f14937b6904fab'"
+      - "result.stat.checksum == '8084519b53e268920a46592a112297715951f167'"
 
 - name: remove the middle line using string
   lineinfile:
@@ -88,13 +88,13 @@
 - name: assert test checksum matches after the middle line was removed
   assert:
     that:
-      - "result.stat.checksum == '87af6beb4be7ec9f68f7accd2f20367cb6eca934'"
+      - "result.stat.checksum == '89919ef2ef91e48ad02e0ca2bcb76dfc2a86d516'"
 
 - name: run a validation script that succeeds using string
   lineinfile:
     dest: "{{ output_dir }}/teststring.txt"
     state: absent
-    search_string: "This is line 5"
+    search_string: <FilesMatch ".py[45]?$">
     validate: "true %s"
   register: result
 

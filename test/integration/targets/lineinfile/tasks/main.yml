@@ -876,7 +876,7 @@
   assert:
     that:
       - result is changed
-      - result.checksum == '418fb335843de684c5c78e8edf5442a4ee282635'
+      - result.checksum == '481c2b73fe062390afdd294063a4f8285d69ac85'
       - result.state == 'file'
 
 - name: Insert a line in the file using an empty string as a regular expression
@@ -896,7 +896,7 @@
     that:
       - insert_empty_literal is changed
       - warning_message in insert_empty_literal.warnings
-      - result.stat.checksum == '84707f49687bb941e03cd2c814157ed7c43ff225'
+      - result.stat.checksum == 'eaa79f878557d4bd8d96787a850526a0facab342'
   vars:
     warning_message: >-
       The regular expression is an empty string, which will match every line in the file.
