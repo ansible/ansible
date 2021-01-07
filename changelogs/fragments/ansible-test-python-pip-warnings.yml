@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - A warning is no longer emitted when a ``pip*`` or ``python*`` binary is found without a matching couterpart.
