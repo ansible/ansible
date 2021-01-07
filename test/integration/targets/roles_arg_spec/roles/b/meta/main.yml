@@ -2,6 +2,12 @@ argument_specs:
     main:
         short_description: Main entry point for role B.
         options:
-            varB:
+            b_str:
                 type: "str"
+                required: true
+            b_int:
+                type: "int"
+                required: true
+            b_bool:
+                type: "bool"
                 required: true

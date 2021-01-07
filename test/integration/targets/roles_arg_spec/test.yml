@@ -2,32 +2,51 @@
 - hosts: localhost
   gather_facts: false
   roles:
-      - { role: a, varA: "roles" }
+      - { role: a, a_str: "roles" }
 
   tasks:
 
-      - name: "Valid role usage with include_role"
+      - name: "Valid simple role usage with include_role"
         include_role:
-            name: a
+          name: a
         vars:
-            varA: "include_role"
+          a_str: "include_role"
 
-      - name: "Valid role usage with import_role"
+      - name: "Valid simple role usage with import_role"
         import_role:
-            name: a
+          name: a
         vars:
-            varA: "import_role"
+            a_str: "import_role"
 
+      - name: "Valid complex role usage"
+        include_role:
+          name: b
+        vars:
+          b_str: "xyz"
+          b_int: 5
+          b_bool: true
+
+- name: "New play to reset vars"
+  hosts: localhost
+  gather_facts: false
+  tasks:
       - block:
-            - name: "Invalid role usage"
-              include_role:
-                  name: b
-            - fail:
-                msg: "Should not get here"
+        - name: "Invalid role usage"
+          include_role:
+            name: b
+          vars:
+            b_bool: 7
+
+        - fail:
+            msg: "Should not get here"
+
         rescue:
-            - name: "Validate failure"
-              assert:
-                that:
-                    - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
-                    - ansible_failed_result.argument_errors | length == 1
-                    - "'missing required arguments: varB' in ansible_failed_result.argument_errors"
+          - debug:
+              var: ansible_failed_result
+
+          - name: "Validate failure"
+            assert:
+              that:
+                - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
+                - ansible_failed_result.argument_errors | length == 2
+                - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"

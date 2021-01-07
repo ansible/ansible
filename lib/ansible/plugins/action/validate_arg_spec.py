@@ -17,7 +17,8 @@ class AnsibleArgSpecError(AnsibleModuleError):
 
 
 class ArgSpecValidatingAnsibleModule(basic.AnsibleModule):
-    '''AnsibleModule but with overridden _load_params so it doesnt read from stdin/ANSIBLE_ARGS'''
+    '''AnsibleModule but with overridden _load_params so it doesn't read from stdin/ANSIBLE_ARGS'''
+
     def __init__(self, *args, **kwargs):
         self._params = kwargs.pop('params', {})
         # remove meta fields that aren't valid AnsibleModule args
@@ -48,7 +49,7 @@ class ArgSpecValidatingAnsibleModule(basic.AnsibleModule):
 
 
 class ActionModule(ActionBase):
-    ''' Validate a arg spec'''
+    ''' Validate an arg spec'''
 
     TRANSFERS_FILES = False
 
