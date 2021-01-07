@@ -56,13 +56,21 @@ if [ "${platform}" = "freebsd" ]; then
     fi
 elif [ "${platform}" = "rhel" ]; then
     if grep '8\.' /etc/redhat-release; then
+        py_version="$(echo "${python_version}" | tr -d '.')"
+
+        if [ "${py_version}" = "36" ]; then
+            py_pkg_prefix="python3"
+        else
+            py_pkg_prefix="python${py_version}"
+        fi
+
         while true; do
-            yum module install -q -y python36 && \
+            yum module install -q -y "python${py_version}" && \
             yum install -q -y \
                 gcc \
-                python3-devel \
-                python3-jinja2 \
-                python3-cryptography \
+                "${py_pkg_prefix}-devel" \
+                "${py_pkg_prefix}-jinja2" \
+                "${py_pkg_prefix}-cryptography" \
                 iptables \
             && break
             echo "Failed to install packages. Sleeping before trying again..."
