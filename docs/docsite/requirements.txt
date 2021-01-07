@@ -2,8 +2,8 @@
 jinja2
 PyYAML
 rstcheck
-sphinx==2.1.2 
-sphinx-notfound-page
+sphinx==2.1.2
+sphinx-notfound-page >= 0.6
 Pygments >= 2.4.0
 straight.plugin # Needed for hacking/build-ansible.py which is the backend build script
-antsibull >= 0.15.0
+antsibull >= 0.25.0
