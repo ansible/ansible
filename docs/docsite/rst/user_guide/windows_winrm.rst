@@ -281,6 +281,7 @@ The following example shows host vars configured for Kerberos authentication:
     ansible_user: username@MY.DOMAIN.COM
     ansible_password: Password
     ansible_connection: winrm
+    ansible_port: 5985
     ansible_winrm_transport: kerberos
 
 As of Ansible version 2.3, the Kerberos ticket will be created based on
