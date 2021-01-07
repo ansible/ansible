@@ -1,0 +1,2 @@
+minor_changes:
+  - Added NO_COLOR environment var to ansible color configuration, allowing it to integrate with existing convention.
