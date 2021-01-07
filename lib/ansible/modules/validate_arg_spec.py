@@ -19,7 +19,7 @@ module: validate_arg_spec
 short_description: Validate Arg Specs
 description:
      - This module validate args specs
-version_added: "2.8"
+version_added: "2.11"
 options:
   argument_spec:
     description:
@@ -29,8 +29,7 @@ options:
     description:
         - A dictionary of the arguments that will be validated according to argument_spec
 author:
-    - "Ansible Core Team"
-    - "Adrian Likins"
+    - Ansible Core Team
 '''
 
 EXAMPLES = '''
