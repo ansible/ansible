@@ -2044,16 +2044,8 @@ class EnvironmentDescription:
         pip_path = pip_paths.get(version)
         python_path = python_paths.get(version)
 
-        if not python_path and not pip_path:
-            # neither python or pip is present for this version
-            return
-
-        if not python_path:
-            warnings.append('A %s interpreter was not found, yet a matching pip was found at "%s".' % (python_label, pip_path))
-            return
-
-        if not pip_path:
-            warnings.append('A %s interpreter was found at "%s", yet a matching pip was not found.' % (python_label, python_path))
+        if not python_path or not pip_path:
+            # skip checks when either python or pip are missing for this version
             return
 
         pip_shebang = pip_interpreters.get(version)
