@@ -53,7 +53,7 @@ options:
     version_added: '2.10'
   cache_valid_time:
     description:
-      - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
+      - Update the apt cache if it is older than the I(cache_valid_time). This option is set in seconds.
       - As of Ansible 2.4, if explicitly set, this sets I(update_cache=yes).
     type: int
     default: 0
