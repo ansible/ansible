@@ -159,23 +159,11 @@ EXAMPLES = r'''
     regexp: '^SELINUX='
     line: SELINUX=enforcing
 
-- name: Ensure SELinux is set to enforcing mode with literal string
-  lineinfile:
-    path: /etc/selinux/config
-    search_string: 'SELINUX='
-    line: SELINUX=enforcing
-
 - name: Make sure group wheel is not in the sudoers configuration
   ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
-
-- name: Make sure group wheel is not in the sudoers configuration with literal string
-  lineinfile:
-    path: /etc/sudoers
-    state: absent
-    search_string: '%wheel'
 
 - name: Replace a localhost entry with our own
   ansible.builtin.lineinfile:
@@ -186,7 +174,7 @@ EXAMPLES = r'''
     group: root
     mode: '0644'
 
-- name: Replace a localhost entry with our own with literal string
+- name: Replace a localhost entry searching for a literal string to avoid escaping
   lineinfile:
     path: /etc/hosts
     search_string: '127.0.0.1'
