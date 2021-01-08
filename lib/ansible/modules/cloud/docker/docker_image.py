@@ -715,8 +715,8 @@ class ImageManager(DockerBaseClass):
                 if image and image['Id'] == self.results['image']['Id']:
                     self.results['changed'] = False
 
-                if push:
-                    self.push_image(repo, repo_tag)
+        if push:
+            self.push_image(repo, repo_tag)
 
     def build_image(self):
         '''
