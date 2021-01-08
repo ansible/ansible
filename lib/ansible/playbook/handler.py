@@ -29,8 +29,6 @@ class Handler(Task):
     listen = FieldAttribute(isa='list', default=list, listof=string_types, static=True)
 
     def __init__(self, block=None, role=None, task_include=None):
-        self.notified_hosts = []
-
         self.cached_name = False
 
         super(Handler, self).__init__(block=block, role=role, task_include=task_include)
@@ -43,15 +41,6 @@ class Handler(Task):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Handler(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
-
-    def notify_host(self, host):
-        if not self.is_host_notified(host):
-            self.notified_hosts.append(host)
-            return True
-        return False
-
-    def is_host_notified(self, host):
-        return host in self.notified_hosts
 
     def serialize(self):
         result = super(Handler, self).serialize()

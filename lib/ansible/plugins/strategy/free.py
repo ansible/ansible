@@ -35,6 +35,8 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.executor.play_iterator import IteratingStates
+from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
@@ -50,23 +52,17 @@ class StrategyModule(StrategyBase):
     # This strategy manages throttling on its own, so we don't want it done in queue_task
     ALLOW_BASE_THROTTLING = False
 
-    def _filter_notified_failed_hosts(self, iterator, notified_hosts):
-
-        # If --force-handlers is used we may act on hosts that have failed
-        return [host for host in notified_hosts if iterator.is_failed(host)]
-
-    def _filter_notified_hosts(self, notified_hosts):
-        '''
-        Filter notified hosts accordingly to strategy
-        '''
-
-        # We act only on hosts that are ready to flush handlers
-        return [host for host in notified_hosts
-                if host in self._flushed_hosts and self._flushed_hosts[host]]
-
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
+
+    def _flush_handlers(self, iterator, host):
+        host_state = iterator.host_states[host.name]
+
+        # prevent meta: flush_handlers in a handler
+        if host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
+            host_state.pre_flushing_run_state = host_state.run_state
+            host_state.run_state = IteratingStates.HANDLERS
 
     def run(self, iterator, play_context):
         '''
@@ -186,7 +182,7 @@ class StrategyModule(StrategyBase):
 
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
-                        if task._role and task._role.has_run(host):
+                        if not isinstance(task, Handler) and task._role and task._role.has_run(host):
                             # If there is no metadata, the default behavior is to not allow duplicates,
                             # if there is metadata, check to see if the allow_duplicates flag was set to true
                             if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
@@ -203,7 +199,10 @@ class StrategyModule(StrategyBase):
                                 if task.any_errors_fatal:
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
                                                     "as tasks are executed independently on each host")
-                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                                if isinstance(task, Handler):
+                                    self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+                                else:
+                                    self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
                                 # each task is counted as a worker being busy
                                 workers_free -= 1
@@ -246,6 +245,7 @@ class StrategyModule(StrategyBase):
                 all_blocks = dict((host, []) for host in hosts_left)
                 for included_file in included_files:
                     display.debug("collecting new blocks for %s" % included_file)
+                    is_handler = False
                     try:
                         if included_file._is_role:
                             new_ir = self._copy_included_file(included_file)
@@ -256,7 +256,8 @@ class StrategyModule(StrategyBase):
                                 loader=self._loader,
                             )
                         else:
-                            new_blocks = self._load_included_file(included_file, iterator=iterator)
+                            is_handler = isinstance(included_file._task, Handler)
+                            new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
                     except AnsibleParserError:
                         raise
                     except AnsibleError as e:
@@ -268,11 +269,20 @@ class StrategyModule(StrategyBase):
                         display.warning(to_text(e))
                         continue
 
+                    if is_handler:
+                        # TODO filter tags
+                        iterator._play.handlers.extend(new_blocks)
+
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
-                                                                    _hosts=self._hosts_cache,
-                                                                    _hosts_all=self._hosts_cache_all)
-                        final_block = new_block.filter_tagged_tasks(task_vars)
+                        if is_handler:
+                            # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
+                            #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                            final_block = new_block
+                        else:
+                            task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
+                                                                        _hosts=self._hosts_cache,
+                                                                        _hosts_all=self._hosts_cache_all)
+                            final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)

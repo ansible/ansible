@@ -123,3 +123,14 @@ grep out.txt -e "ERROR! Using 'include_role' as a handler is not supported."
 ansible-playbook test_notify_included.yml "$@"  2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'I was included')" = "1" ]
 grep out.txt -e "ERROR! The requested handler 'handler_from_include' was not found in either the main handlers list nor in the listening handlers list"
+
+ansible-playbook test_handlers_meta.yml -i inventory.handlers -vv "$@"
+
+# https://github.com/ansible/ansible/issues/46447
+set +e
+test "$(ansible-playbook 46447.yml -i inventory.handlers -vv "$@" 2>&1 | grep -c 'SHOULD NOT GET HERE')"
+set -e
+
+# https://github.com/ansible/ansible/issues/52561
+ansible-playbook 52561.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler1 ran')" = "1" ]

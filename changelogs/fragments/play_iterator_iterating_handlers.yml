@@ -1,0 +1,7 @@
+major_changes:
+  - "Move handler processing into new ``PlayIterator`` phase to use the configured strategy (https://github.com/ansible/ansible/issues/65067)"
+minor_changes:
+  - "Allow meta tasks to be used as handlers."
+bugfixes:
+  - "Ensure handlers observe ``any_errors_fatal`` (https://github.com/ansible/ansible/issues/46447)"
+  - "Bug fix for when handlers were ran on failed hosts after an ``always`` section was executed (https://github.com/ansible/ansible/issues/52561)"

@@ -1,0 +1,13 @@
+- hosts: A
+  gather_facts: no
+  tasks:
+    - shell: echo
+      notify:
+        - noop_handler
+        - flush_handlers_handler
+  handlers:
+    - name: noop_handler
+      meta: noop
+
+    - name: flush_handlers_handler
+      meta: flush_handlers
