@@ -73,10 +73,7 @@ lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
-lib/ansible/modules/apt_repository.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt_repository.py validate-modules:undocumented-parameter
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/async_status.py use-argspec-type-path
 lib/ansible/modules/async_status.py validate-modules!skip
