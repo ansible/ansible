@@ -37,3 +37,15 @@ ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never ansible-playbook -i ../../inventory 
 
 # test extra vars
 ansible-inventory -i testhost, -i ./extra_vars_constructed.yml --list -e 'from_extras=hey ' "$@"|grep '"example": "hellohey"'
+
+# test parse inventory fail is not an error per config
+ANSIBLE_INVENTORY_UNPARSED_FAILED=False ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=False ansible -m ping localhost -i /idontexist "$@"
+
+# test no inventory parse is an error with var
+[ "$(ANSIBLE_INVENTORY_UNPARSED_FAILED=True ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=False ansible -m ping localhost -i /idontexist)" != "0" ]
+
+# test single inventory no parse is not an error with var
+ANSIBLE_INVENTORY_UNPARSED_FAILED=True ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=False ansible -m ping localhost -i /idontexist -i ../../invenotory "$@"
+
+# test single inventory no parse is an error with any var
+[ "$(ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=True ansible -m ping localhost -i /idontexist -i ../../invenotory)" != "0" ]
