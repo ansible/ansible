@@ -521,7 +521,7 @@
 ### test virtualenv_command begin ###
 
 - name: Test virtualenv command with arguments
-  when: "ansible_system == 'Linux'"
+  when: ansible_python.version.major == 2
   block:
     - name: make sure the virtualenv does not exist
       file:
@@ -533,7 +533,7 @@
       pip:
         name: "{{ pip_test_package }}"
         virtualenv: "{{ output_dir }}/pipenv"
-        virtualenv_command: "virtualenv --verbose"
+        virtualenv_command: "{{ command.stdout_lines[0] | basename }} --verbose"
         state: present
       register: version13
 
