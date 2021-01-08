@@ -36,6 +36,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserErr
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
+from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader
@@ -47,8 +48,6 @@ display = Display()
 
 
 class StrategyModule(StrategyBase):
-
-    noop_task = None
 
     def _replace_with_noop(self, target):
         if self.noop_task is None:
@@ -63,7 +62,7 @@ class StrategyModule(StrategyBase):
         return result
 
     def _create_noop_block_from(self, original_block, parent):
-        noop_block = Block(parent_block=parent)
+        noop_block = original_block.__class__(parent_block=parent)
         noop_block.block = self._replace_with_noop(original_block.block)
         noop_block.always = self._replace_with_noop(original_block.always)
         noop_block.rescue = self._replace_with_noop(original_block.rescue)
@@ -78,6 +77,14 @@ class StrategyModule(StrategyBase):
         self.noop_task.set_loader(iterator._play._loader)
 
         return self._create_noop_block_from(original_block, parent)
+
+    def _flush_handlers(self, iterator, host):
+        for host in self._inventory.get_hosts(iterator._play.hosts):
+            host_state = iterator.get_state_for_host(host.name)
+            # prevent flush_handlers in a handler
+            if host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
+                host_state.pre_flushing_run_state = host_state.run_state
+                host_state.run_state = IteratingStates.HANDLERS
 
     def _get_next_task_lockstep(self, hosts, iterator):
         '''
@@ -102,6 +109,7 @@ class StrategyModule(StrategyBase):
         num_tasks = 0
         num_rescue = 0
         num_always = 0
+        num_handlers = 0
 
         display.debug("counting tasks in each state of execution")
         host_tasks_to_run = [(host, state_task)
@@ -136,6 +144,8 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == IteratingStates.ALWAYS:
                 num_always += 1
+            elif s.run_state == IteratingStates.HANDLERS:
+                num_handlers += 1
         display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
                                                                                                                                                   num_tasks,
                                                                                                                                                   num_rescue,
@@ -160,7 +170,8 @@ class StrategyModule(StrategyBase):
                 s = iterator.get_active_state(state)
                 if task is None:
                     continue
-                if s.run_state == cur_state and s.cur_block == cur_block:
+                # if (s.run_state == cur_state and s.cur_block == cur_block):# or state.run_state == IteratingStates.HANDLERS:
+                if (s.run_state == cur_state and s.cur_block == cur_block):
                     iterator.set_state_for_host(host.name, state)
                     rvals.append((host, task))
                 else:
@@ -192,7 +203,11 @@ class StrategyModule(StrategyBase):
             display.debug("advancing hosts in ALWAYS")
             return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
 
-        # at this point, everything must be COMPLETE, so we
+        if num_handlers:
+            display.debug("advancing hosts in HANDLERS")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.HANDLERS)
+
+        # at this point, everything must be IteratingStates.COMPLETE, so we
         # return None for all hosts in the list
         display.debug("all hosts are done, so returning None's for all hosts")
         return [(host, None) for host in hosts]
@@ -221,7 +236,6 @@ class StrategyModule(StrategyBase):
                 callback_sent = False
                 work_to_do = False
 
-                host_results = []
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
 
                 # skip control
@@ -244,7 +258,7 @@ class StrategyModule(StrategyBase):
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
-                    if task._role and task._role.has_run(host):
+                    if not isinstance(task, Handler) and task._role and task._role.has_run(host):
                         # If there is no metadata, the default behavior is to not allow duplicates,
                         # if there is metadata, check to see if the allow_duplicates flag was set to true
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
@@ -305,7 +319,10 @@ class StrategyModule(StrategyBase):
                                 # we don't care if it just shows the raw name
                                 display.debug("templating failed for some reason")
                             display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                            if isinstance(task, Handler):
+                                self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+                            else:
+                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             task.name = saved_name
                             callback_sent = True
                             display.debug("sending task start callback")
@@ -318,7 +335,7 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1)))
+                    results.extend(self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1))))
 
                 # go to next host/task group
                 if skip_rest:
@@ -326,14 +343,14 @@ class StrategyModule(StrategyBase):
 
                 display.debug("done queuing things up, now waiting for results queue to drain")
                 if self._pending_results > 0:
-                    results += self._wait_on_pending_results(iterator)
-
-                host_results.extend(results)
+                    results.extend(self._wait_on_pending_results(iterator))
 
                 self.update_active_connections(results)
 
+                self._lock_step_handlers(results, iterator)
+
                 included_files = IncludedFile.process_include_results(
-                    host_results,
+                    results,
                     iterator=iterator,
                     loader=self._loader,
                     variable_manager=self._variable_manager
@@ -349,6 +366,7 @@ class StrategyModule(StrategyBase):
                         display.debug("processing included file: %s" % included_file._filename)
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
+                        is_handler = False
                         try:
                             if included_file._is_role:
                                 new_ir = self._copy_included_file(included_file)
@@ -359,19 +377,29 @@ class StrategyModule(StrategyBase):
                                     loader=self._loader,
                                 )
                             else:
-                                new_blocks = self._load_included_file(included_file, iterator=iterator)
+                                is_handler = isinstance(included_file._task, Handler)
+                                new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
+
+                            if is_handler:
+                                # TODO filter tags
+                                iterator._play.handlers.extend(new_blocks)
 
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
-                                task_vars = self._variable_manager.get_vars(
-                                    play=iterator._play,
-                                    task=new_block.get_first_parent_include(),
-                                    _hosts=self._hosts_cache,
-                                    _hosts_all=self._hosts_cache_all,
-                                )
-                                display.debug("filtering new block on tags")
-                                final_block = new_block.filter_tagged_tasks(task_vars)
-                                display.debug("done filtering new block on tags")
+                                if is_handler:
+                                    # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
+                                    #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                                    final_block = new_block
+                                else:
+                                    task_vars = self._variable_manager.get_vars(
+                                        play=iterator._play,
+                                        task=new_block.get_first_parent_include(),
+                                        _hosts=self._hosts_cache,
+                                        _hosts_all=self._hosts_cache_all,
+                                    )
+                                    display.debug("filtering new block on tags")
+                                    final_block = new_block.filter_tagged_tasks(task_vars)
+                                    display.debug("done filtering new block on tags")
 
                                 noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
 
@@ -462,3 +490,55 @@ class StrategyModule(StrategyBase):
         # and runs any outstanding handlers which have been triggered
 
         return super(StrategyModule, self).run(iterator, play_context, result)
+
+    def _lock_step_handlers(self, results, iterator):
+        display.debug("making sure handlers are executed in lock-step by adding noop handlers")
+
+        # NOTE: notified handlers are stored in a list-like data structure (deque) per host,
+        #       on a HostState object, see play_iterator.py
+
+        notified_hosts = []
+        not_notified_hosts = []
+        max_handlers_notified = 0
+        # go through task results and find which hosts were(not) notified
+        # also find max number of handlers notified in any of the hosts
+        for r in results:
+            handlers_notified = len(r._result.get('_ansible_notify', []))
+            max_handlers_notified = max(max_handlers_notified, handlers_notified)
+            if handlers_notified:
+                notified_hosts.append(r._host)
+            else:
+                not_notified_hosts.append(r._host)
+
+        # create a noop handler
+        noop_handler = Handler()
+        noop_handler.action = 'meta'
+        noop_handler.args['_raw_params'] = 'noop'
+        noop_handler.implicit = True
+        noop_handler.set_loader(iterator._play._loader)
+        self.noop_task = noop_handler
+
+        # we need to add noop handlers only if there are both notified hosts and host that were not notified (skipped for any reason)
+        # because otherwise they all have the same number of notified handlers, either non-zero or no handlers
+        if notified_hosts and not_notified_hosts:
+            noop_handlers = []
+            # ASSUMPTION: all notified hosts have the same number of notified handlers, which is max_handlers_notified from above
+            # so based on the assumption, take the first notified host and its last max_handlers_notified handlers
+            # FIXME does this assumption not hold for when handler names in notify are variables? or $other?
+            notified_handlers = list(iterator.host_states[notified_hosts[0].name].handlers)[-max_handlers_notified:]
+
+            # use the above handlers to create their noop copies
+            for handler in notified_handlers:
+                if isinstance(handler, Handler):
+                    noop_handlers.append(noop_handler)
+                else:
+                    raise AnsibleAssertionError('Expected handler to be Handler, was "%s"' % type(handler))
+            # FIXME when handler names are templated then two hosts may have notified different handlers and the noop copy above would
+            #       differ from the actual handler (in its structure) which may or may not cause issue with the lock-step?
+
+            # finally noop handlers are added for hosts that were not notified to ensure lock-step
+            for host in not_notified_hosts:
+                iterator.host_states[host.name]._notified_handlers.extend(noop_handlers)  # access _notified_handlers directly so we can call extend on it FIXME
+
+        # done, that was horrible! FIXME
+        display.debug("done making sure handlers are executed in lock-step by adding noop handlers")
