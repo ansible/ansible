@@ -268,6 +268,17 @@ EXAMPLES = '''
   apt:
     autoremove: yes
 
+# Sometimes apt tasks fail because apt is locked by an autoupdate or by a race condition on a thread.
+# To check for a lock file before executing, and keep trying until the lock file is released:
+- name: Install packages only when the apt process is not locked
+  apt:
+    name: foo
+    state: present
+  register: apt_action
+  retries: 100
+  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
+
 '''
 
 RETURN = '''
