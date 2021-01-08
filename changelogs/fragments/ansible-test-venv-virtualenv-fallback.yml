@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - virtualenv helper scripts now prefer ``venv`` on Python 3 over ``virtualenv`` if the ``ANSIBLE_TEST_PREFER_VENV`` environment variable is set
