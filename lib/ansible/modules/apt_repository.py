@@ -80,12 +80,12 @@ options:
         version_added: '2.3'
     install_python_apt:
         description:
-            - Whether to automatically try to install Python apt or not, if it is not already installed.
+            - Whether to automatically try to install the Python apt library or not, if it is not already installed.
               Without this library, the module does not work.
-            - Note that it is installed by running C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
-              If you are using a Python on the remote that is not the system Python 2 or Python 3, this will not work.
-              In that case, you should set I(install_python_apt=false) and you need to ensure that the Python apt library
-              for your Python version is installed some other way.
+            - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
+            - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
+               the system Python, set I(install_python_apt=false) and ensure that the Python apt library
+               for your Python version is installed some other way.
         type: bool
         default: true
 author:
