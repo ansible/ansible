@@ -1037,10 +1037,6 @@ def main():
         else:
             res_args['changed'] = True
 
-    top_folder_name = handler.files_in_archive[0].split('/')[0]
-    file_args['path'] = "%s/%s" % (dest, top_folder_name)
-    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-
     # Get diff if required
     if check_results.get('diff', False):
         res_args['diff'] = {'prepared': check_results['diff']}
