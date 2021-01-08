@@ -19,6 +19,14 @@ install_pip () {
 if [ "${platform}" = "freebsd" ]; then
     py_version="$(echo "${python_version}" | tr -d '.')"
 
+    if [ "${py_version}" = "27" ]; then
+        # on Python 2.7 our only option is to use virtualenv
+        virtualenv_pkg="py27-virtualenv"
+    else
+        # on Python 3.x we'll use the built-in venv instead
+        virtualenv_pkg=""
+    fi
+
     while true; do
         env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
         pkg install -q -y \
@@ -27,8 +35,8 @@ if [ "${platform}" = "freebsd" ]; then
             gtar \
             "python${py_version}" \
             "py${py_version}-Jinja2" \
-            "py${py_version}-virtualenv" \
             "py${py_version}-cryptography" \
+            ${virtualenv_pkg} \
             sudo \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
@@ -49,7 +57,6 @@ elif [ "${platform}" = "rhel" ]; then
                 gcc \
                 python3-devel \
                 python3-jinja2 \
-                python3-virtualenv \
                 python3-cryptography \
                 iptables \
             && break
@@ -109,7 +116,8 @@ elif [ "${platform}" = "aix" ]; then
             python-jinja2 \
             python-cryptography \
             python-pip && \
-        pip install --disable-pip-version-check --quiet virtualenv \
+        pip install --disable-pip-version-check --quiet \
+            'virtualenv==16.7.10' \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
