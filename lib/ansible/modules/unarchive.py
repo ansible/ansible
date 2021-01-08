@@ -1037,10 +1037,6 @@ def main():
         else:
             res_args['changed'] = True
 
-    top_folder_name = handler.files_in_archive[0].split('/')[0]
-    file_args['path'] = "%s/%s" % (dest, top_folder_name)
-    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-
     # Get diff if required
     if check_results.get('diff', False):
         res_args['diff'] = {'prepared': check_results['diff']}
@@ -1048,6 +1044,10 @@ def main():
     # Run only if we found differences (idempotence) or diff was missing
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
+        if handler.files_in_archive and '/' in handler.files_in_archive[0]:
+            top_folder_name = handler.files_in_archive[0].split('/')[0]
+            file_args['path'] = "%s/%s" % (dest, top_folder_name)
+            res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
