@@ -127,7 +127,7 @@ Note that importing something from an ``__init__.py`` file requires using the fi
 
     from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
 
-In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
+In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FQCN is
 ``community.test_collection.plugins.module_utils.hyperv``:
 
 .. code-block:: powershell
