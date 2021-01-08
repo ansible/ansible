@@ -273,7 +273,7 @@ COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   default: warning
 _COLOR_DEFAULTS: &color
   name: placeholder for color settings' defaults
-  allowed: ['black', 'bright gray', 'blue', 'white', 'green', 'bright blue', 'cyan', 'bright green', 'red', 'bright cyan', 'purple', 'bright red', 'yellow', 'bright purple', 'dark gray', 'bright yellow', 'magenta', 'bright magenta', 'normal']
+  choices: ['black', 'bright gray', 'blue', 'white', 'green', 'bright blue', 'cyan', 'bright green', 'red', 'bright cyan', 'purple', 'bright red', 'yellow', 'bright purple', 'dark gray', 'bright yellow', 'magenta', 'bright magenta', 'normal']
 COLOR_CHANGED:
   <<: *color
   name: Color for 'changed' task status

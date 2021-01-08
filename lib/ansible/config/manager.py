@@ -537,10 +537,10 @@ class ConfigManager(object):
                                               (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
             # deal with restricted values
-            if value is not None and 'allowed' in defs[config] and defs[config]['allowed'] is not None:
-                if value not in defs[config]['allowed']:
+            if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
+                if value not in defs[config]['choices']:
                     raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
-                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), defs[config]['allowed']))
+                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), defs[config]['choices']))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
