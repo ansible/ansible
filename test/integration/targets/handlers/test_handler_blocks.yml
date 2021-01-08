@@ -1,0 +1,62 @@
+- hosts: A
+  gather_facts: no
+  tasks:
+    - shell: echo
+      notify:
+        - included_handlers
+        - imported_handler
+        - imported_block_handler
+        - "listening_handlers"
+        - handler1
+        - handler2
+        - handler3
+  handlers:
+    - name: included_handlers
+      include_tasks: test_handler_blocks_include.yml
+
+    - import_tasks: test_handler_blocks_import.yml
+
+    - name: handler1
+      listen: "listening_handlers"
+      set_fact:
+        handler1: True
+
+    - name: handler2
+      listen: "listening_handlers"
+      block:
+        - set_fact:
+            handler2: True
+
+        - name: EXPECTED FAILURE
+          fail:
+            msg: handler2 fails
+      rescue:
+        - set_fact:
+            handler2_rescue: True
+      always:
+        - set_fact:
+            handler2_always: True
+
+    - name: handler3
+      set_fact:
+        handler3: True
+
+
+- hosts: A
+  gather_facts: no
+  tasks:
+    - assert:
+        that:
+          - included_handler
+          - included_block_handler
+          - included_block_handler_rescue
+          - included_block_handler_always
+          - imported_handler
+          - imported_block_handler
+          - imported_block_handler_rescue
+          - imported_block_handler_always
+          - handler1
+          - handler2
+          - handler2_rescue
+          - handler2_always
+          - handler3

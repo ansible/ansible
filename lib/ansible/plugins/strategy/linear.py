@@ -36,6 +36,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserErr
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
+from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader
@@ -79,6 +80,13 @@ class StrategyModule(StrategyBase):
 
         return self._create_noop_block_from(original_block, parent)
 
+    def _flush_handlers(self, iterator, host):
+        for host in self._inventory.get_hosts(iterator._play.hosts):
+            host_state = iterator.get_state_for_host(host.name)
+            if host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
+                host_state.pre_flushing_run_state = host_state.run_state
+                host_state.run_state = IteratingStates.HANDLERS
+
     def _get_next_task_lockstep(self, hosts, iterator):
         '''
         Returns a list of (host, task) tuples, where the task may
@@ -102,6 +110,7 @@ class StrategyModule(StrategyBase):
         num_tasks = 0
         num_rescue = 0
         num_always = 0
+        num_handlers = 0
 
         display.debug("counting tasks in each state of execution")
         host_tasks_to_run = [(host, state_task)
@@ -136,6 +145,8 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == IteratingStates.ALWAYS:
                 num_always += 1
+            elif s.run_state == IteratingStates.HANDLERS:
+                num_handlers += 1
         display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
                                                                                                                                                   num_tasks,
                                                                                                                                                   num_rescue,
@@ -192,7 +203,11 @@ class StrategyModule(StrategyBase):
             display.debug("advancing hosts in ALWAYS")
             return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
 
-        # at this point, everything must be COMPLETE, so we
+        if num_handlers:
+            display.debug("advancing hosts in HANDLERS")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.HANDLERS)
+
+        # at this point, everything must be IteratingStates.COMPLETE, so we
         # return None for all hosts in the list
         display.debug("all hosts are done, so returning None's for all hosts")
         return [(host, None) for host in hosts]
@@ -244,7 +259,7 @@ class StrategyModule(StrategyBase):
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
-                    if task._role and task._role.has_run(host):
+                    if not isinstance(task, Handler) and task._role and task._role.has_run(host):
                         # If there is no metadata, the default behavior is to not allow duplicates,
                         # if there is metadata, check to see if the allow_duplicates flag was set to true
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
@@ -305,7 +320,10 @@ class StrategyModule(StrategyBase):
                                 # we don't care if it just shows the raw name
                                 display.debug("templating failed for some reason")
                             display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                            if isinstance(task, Handler):
+                                self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+                            else:
+                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             task.name = saved_name
                             callback_sent = True
                             display.debug("sending task start callback")
@@ -332,6 +350,23 @@ class StrategyModule(StrategyBase):
 
                 self.update_active_connections(results)
 
+                # handlers are special, similarly to included tasks,
+                # in that whether they are executed is known at runtime
+                # and as such noop tasks need to be added after each lock-step
+                # because we have no way of indicating which handler is "first"
+                # in the PlayIterator
+                noop_handler = Handler()
+                noop_handler.action = 'meta'
+                noop_handler.args['_raw_params'] = 'noop'
+                noop_handler.implicit = True
+                noop_handler.set_loader(iterator._play._loader)
+                if iterator.host_states:
+                    max_len = max(len(host_state._handlers) for host_name, host_state in iterator.host_states.items())
+                    for host_name, host_state in iterator.host_states.items():
+                        num_handlers = len(host_state._handlers)
+                        for _ in range(0, max_len - num_handlers):
+                            host_state._handlers.append(noop_handler)
+
                 included_files = IncludedFile.process_include_results(
                     host_results,
                     iterator=iterator,
@@ -342,13 +377,11 @@ class StrategyModule(StrategyBase):
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
 
-                    display.debug("generating all_blocks data")
-                    all_blocks = dict((host, []) for host in hosts_left)
-                    display.debug("done generating all_blocks data")
+                    display.debug("generating final_task_blocks data")
+                    final_task_blocks = dict((host, []) for host in hosts_left)
+                    display.debug("done generating final_task_blocks data")
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
-                        # included hosts get the task list while those excluded get an equal-length
-                        # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             if included_file._is_role:
                                 new_ir = self._copy_included_file(included_file)
@@ -359,7 +392,17 @@ class StrategyModule(StrategyBase):
                                     loader=self._loader,
                                 )
                             else:
-                                new_blocks = self._load_included_file(included_file, iterator=iterator)
+                                if isinstance(included_file._task, Handler):
+                                    new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=True)
+                                    # TODO filter tags to allow tags on handlers
+                                    iterator._play.handlers.extend(new_blocks)
+                                    for host in included_file._hosts:
+                                        if host in hosts_left:
+                                            iterator.add_included_handlers(host, new_blocks)
+                                    # short-circuit the loop here because we already added included handlers into iterator
+                                    continue
+                                else:
+                                    new_blocks = self._load_included_file(included_file, iterator=iterator)
 
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
@@ -373,13 +416,15 @@ class StrategyModule(StrategyBase):
                                 final_block = new_block.filter_tagged_tasks(task_vars)
                                 display.debug("done filtering new block on tags")
 
+                                # included hosts get the task list while those excluded get an equal-length
+                                # list of noop tasks, to make sure that they continue running in lock-step
                                 noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
 
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        all_blocks[host].append(final_block)
+                                        final_task_blocks[host].append(final_block)
                                     else:
-                                        all_blocks[host].append(noop_block)
+                                        final_task_blocks[host].append(noop_block)
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
@@ -397,8 +442,8 @@ class StrategyModule(StrategyBase):
                     # accumulated blocks to their list of tasks
                     display.debug("extending task lists for all hosts with included blocks")
 
-                    for host in hosts_left:
-                        iterator.add_tasks(host, all_blocks[host])
+                    for host, tasks in final_task_blocks.items():
+                        iterator.add_tasks(host, tasks)
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")

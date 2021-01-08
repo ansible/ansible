@@ -1,0 +1,16 @@
+- name: imported_handler
+  set_fact:
+    imported_handler: True
+
+- name: imported_block_handler
+  block:
+    - set_fact:
+        imported_block_handler: True
+    - name: EXPECTED FAILURE
+      fail:
+  rescue:
+    - set_fact:
+        imported_block_handler_rescue: True
+  always:
+    - set_fact:
+        imported_block_handler_always: True

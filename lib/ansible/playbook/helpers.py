@@ -39,6 +39,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
+    from ansible.playbook.handler_block import HandlerBlock
 
     if not isinstance(ds, (list, type(None))):
         raise AnsibleAssertionError('%s should be a list or None but is %s' % (ds, type(ds)))
@@ -65,14 +66,18 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
             # Loop both implicit blocks and block_ds as block_ds is the next in the list
             for b in (implicit_blocks, block_ds):
                 if b:
+                    if use_handlers:
+                        block_class = HandlerBlock
+                    else:
+                        block_class = Block
+
                     block_list.append(
-                        Block.load(
+                        block_class.load(
                             b,
                             play=play,
                             parent_block=parent_block,
                             role=role,
                             task_include=task_include,
-                            use_handlers=use_handlers,
                             variable_manager=variable_manager,
                             loader=loader,
                         )
@@ -89,6 +94,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
+    from ansible.playbook.handler_block import HandlerBlock
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
     from ansible.playbook.task_include import TaskInclude
@@ -106,13 +112,18 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             raise AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
-            t = Block.load(
+
+            if use_handlers:
+                block_class = HandlerBlock
+            else:
+                block_class = Block
+
+            t = block_class.load(
                 task_ds,
                 play=play,
                 parent_block=block,
                 role=role,
                 task_include=task_include,
-                use_handlers=use_handlers,
                 variable_manager=variable_manager,
                 loader=loader,
             )
@@ -263,13 +274,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         b.tags = list(set(b.tags).union(tags))
                     # END FIXME
 
-                    # FIXME: handlers shouldn't need this special handling, but do
-                    #        right now because they don't iterate blocks correctly
-                    if use_handlers:
-                        for b in included_blocks:
-                            task_list.extend(b.block)
-                    else:
-                        task_list.extend(included_blocks)
+                    task_list.extend(included_blocks)
                 else:
                     t.is_static = False
                     task_list.append(t)

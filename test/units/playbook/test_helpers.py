@@ -27,7 +27,7 @@ from units.mock.loader import DictDataLoader
 
 from ansible import errors
 from ansible.playbook.block import Block
-from ansible.playbook.handler import Handler
+from ansible.playbook.handler_block import HandlerBlock
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role.include import RoleInclude
@@ -246,7 +246,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
                                          use_handlers=True,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Handler)
+        self.assertIsInstance(res[0], HandlerBlock)
 
     def test_one_parent_include_use_handlers(self):
         ds = [{'include': '/dev/null/includes/test_include.yml'}]
@@ -254,7 +254,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
                                          use_handlers=True,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Handler)
+        self.assertIsInstance(res[0], HandlerBlock)
 
         # default for Handler
         self.assertEqual(res[0].listen, [])

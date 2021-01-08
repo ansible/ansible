@@ -1,0 +1,14 @@
+- set_fact:
+    included_handler: True
+
+- block:
+    - set_fact:
+        included_block_handler: True
+    - name: EXPECTED FAILURE
+      fail:
+  rescue:
+    - set_fact:
+        included_block_handler_rescue: True
+  always:
+    - set_fact:
+        included_block_handler_always: True
