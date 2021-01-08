@@ -1,0 +1,2 @@
+bugfixes:
+- "Documentation change to the apt module to reference lock files (https://github.com/ansible/ansible/issues/73079)."
