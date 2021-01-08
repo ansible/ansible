@@ -64,6 +64,8 @@ options:
 seealso:
 - module: ansible.builtin.file
 - module: ansible.windows.win_stat
+notes:
+- Supports C(check_mode).
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
@@ -71,10 +73,11 @@ EXAMPLES = r'''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
 - name: Get stats of a file
-  stat:
+  ansible.builtin.stat:
     path: /etc/foo.conf
   register: st
-- fail:
+- name: Fail if the file does not belong to 'root'
+  ansible.builtin.fail:
     msg: "Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
@@ -84,23 +87,27 @@ EXAMPLES = r'''
 # Run this to understand the structure, the skipped ones do not pass the
 # check performed by 'when'
 - name: Get stats of the FS object
-  stat:
+  ansible.builtin.stat:
     path: /path/to/something
   register: sym
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "islnk isn't defined (path doesn't exist)"
   when: sym.stat.islnk is not defined
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "islnk is defined (path must exist)"
   when: sym.stat.islnk is defined
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "Path exists and is a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "Path exists and isn't a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk == False
 
@@ -108,27 +115,28 @@ EXAMPLES = r'''
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
 - name: Get stats of the FS object
-  stat:
+  ansible.builtin.stat:
     path: /path/to/something
   register: p
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-- name: Don't do checksum
-  stat:
+- name: Don not do checksum
+  ansible.builtin.stat:
     path: /path/to/myhugefile
     get_checksum: no
 
 - name: Use sha256 to calculate checksum
-  stat:
+  ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
 '''
 
 RETURN = r'''
 stat:
-    description: dictionary containing all the stat data, some platforms might add additional fields
+    description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
     type: complex
     contains:

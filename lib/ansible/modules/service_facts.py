@@ -14,7 +14,7 @@ DOCUMENTATION = r'''
 module: service_facts
 short_description: Return service state information as fact data
 description:
-     - Return service state information as fact data for various service management utilities
+     - Return service state information as fact data for various service management utilities.
 version_added: "2.5"
 requirements: ["Any of the following supported init systems: systemd, sysv, upstart"]
 
@@ -25,6 +25,7 @@ notes:
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
+  - Supports C(check_mode).
 
 author:
   - Adam Miller (@maxamillion)
@@ -32,11 +33,11 @@ author:
 
 EXAMPLES = r'''
 - name: Populate service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
-- debug:
+- name: Print service facts
+  ansible.builtin.debug:
     var: ansible_facts.services
-
 '''
 
 RETURN = r'''
