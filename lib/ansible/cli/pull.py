@@ -125,7 +125,7 @@ class PullCLI(CLI):
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
             options.dest = os.path.join('~/.ansible/pull', hostname)
-        options.dest = os.path.expandvars(os.path.expanduser(options.dest))
+        options.dest = os.path.abspath(os.path.expandvars(os.path.expanduser(options.dest)))
 
         if os.path.exists(options.dest) and not os.path.isdir(options.dest):
             raise AnsibleOptionsError("%s is not a valid or accessible directory." % options.dest)
