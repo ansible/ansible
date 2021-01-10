@@ -25,8 +25,8 @@
       TEST2: val2
       TEST3: "True"
     container_limits:
-      memory: 5000000
-      memswap: 7000000
+      memory: 7000000
+      memswap: 8000000
     source: build
   register: build
 
