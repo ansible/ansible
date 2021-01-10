@@ -538,6 +538,8 @@ class Connection(ConnectionBase):
         f.close()
 
     def reset(self):
+        if not self._connected:
+            return
         self.close()
         self._connect()
 
