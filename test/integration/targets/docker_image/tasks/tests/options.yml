@@ -182,6 +182,11 @@
     source: pull
   register: archive_image
 
+- name: Create invalid archive
+  copy:
+    dest: "{{ output_dir }}/image-invalid.tar"
+    content: "this is not a valid image"
+
 - name: remove image
   docker_image:
     name: "quay.io/ansible/docker-test-containers:hello-world"
@@ -202,11 +207,32 @@
     source: load
   register: load_image_1
 
+- name: load image (wrong name)
+  docker_image:
+    name: foo:bar
+    load_path: "{{ output_dir }}/image.tar"
+    source: load
+  register: load_image_2
+  ignore_errors: true
+
+- name: load image (invalid image)
+  docker_image:
+    name: foo:bar
+    load_path: "{{ output_dir }}/image-invalid.tar"
+    source: load
+  register: load_image_3
+  ignore_errors: true
+
 - assert:
     that:
     - load_image is changed
-    - load_image_1 is not changed
     - archive_image['image']['Id'] == load_image['image']['Id']
+    - load_image_1 is not changed
+    - load_image_2 is failed
+    - >-
+      "The archive did not contain image 'foo:bar'. Instead, found 'quay.io/ansible/docker-test-containers:hello-world'." == load_image_2.msg
+    - load_image_3 is failed
+    - '"Detected no loaded images. Archive potentially corrupt?" == load_image_3.msg'
 
 ####################################################################
 ## path ############################################################
