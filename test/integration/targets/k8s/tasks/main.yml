@@ -70,6 +70,40 @@
     state: absent
   no_log: yes
 
+# Test works with kubernetes==11.* and kubernetes>11
+
+- pip:
+    name:
+      - openshift
+      - kubernetes==11.*
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: basic_validation.yml
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+  no_log: yes
+
+- pip:
+    name:
+      - openshift
+      - kubernetes>11
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: basic_validation.yml
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+  no_log: yes
+
 # Run full test suite
 
 - pip:

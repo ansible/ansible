@@ -1,0 +1,8 @@
+---
+
+# just test that authentication works
+- name: Ensure testing1 namespace exists
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: testing1
