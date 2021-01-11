@@ -24,10 +24,11 @@ notes:
     - This module does B(NOT) modify C(/etc/hosts). You need to modify it yourself using other modules like M(template) or M(replace).
     - On macOS, this module uses C(scutil) to set C(HostName), C(ComputerName), and C(LocalHostName). Since C(LocalHostName)
       cannot contain spaces or most special characters, this module will replace characters when setting C(LocalHostName).
+    - Supports C(check_mode).
 options:
     name:
         description:
-            - Name of the host
+            - Name of the host.
             - If the value is a fully qualified domain name that does not resolve from the given host,
               this will cause the module to hang for a few seconds while waiting for the name resolution attempt to timeout.
         type: str
@@ -36,6 +37,7 @@ options:
         description:
             - Which strategy to use to update the hostname.
             - If not set we try to autodetect, but this can be problematic, particularly with containers as they can present misleading information.
+            - Note that 'systemd' should be specified for RHEL/EL/CentOS 7+. Older distributions should use 'redhat'.
         choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'macosx', 'darwin', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
         type: str
         version_added: '2.9'
@@ -43,11 +45,11 @@ options:
 
 EXAMPLES = '''
 - name: Set a hostname
-  hostname:
+  ansible.builtin.hostname:
     name: web01
 
 - name: Set a hostname specifying strategy
-  hostname:
+  ansible.builtin.hostname:
     name: web01
     strategy: systemd
 '''

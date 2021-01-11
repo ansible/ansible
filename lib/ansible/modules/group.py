@@ -45,7 +45,7 @@ options:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
             - This is useful in environments that use centralized authentication when you want to manipulate the local groups.
-              (e.g. it uses C(lgroupadd) instead of C(groupadd)).
+              (for example, it uses C(lgroupadd) instead of C(groupadd)).
             - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
         type: bool
         default: no

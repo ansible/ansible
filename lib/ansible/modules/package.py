@@ -39,9 +39,8 @@ options:
     required: true
   use:
     description:
-      - The required package manager module to use (`yum`, `apt`, etc). The default 'auto' will use existing facts or try to autodetect it.
+      - The required package manager module to use (`yum`, `apt`, and so on). The default 'auto' will use existing facts or try to autodetect it.
       - You should only use this field if the automatic selection is not working for some reason.
-    required: false
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
@@ -51,18 +50,18 @@ notes:
 '''
 EXAMPLES = '''
 - name: Install ntpdate
-  package:
+  ansible.builtin.package:
     name: ntpdate
     state: present
 
 # This uses a variable as this changes per distribution.
 - name: Remove the apache package
-  package:
+  ansible.builtin.package:
     name: "{{ apache }}"
     state: absent
 
 - name: Install the latest version of Apache and MariaDB
-  package:
+  ansible.builtin.package:
     name:
       - httpd
       - mariadb-server
