@@ -136,7 +136,7 @@ class AzureCloudProvider(CloudProvider):
         """
         :rtype: AnsibleCoreCI
         """
-        return AnsibleCoreCI(self.args, 'azure', 'azure', persist=False, stage=self.args.remote_stage, provider=self.args.remote_provider)
+        return AnsibleCoreCI(self.args, 'azure', 'azure', persist=False, stage=self.args.remote_stage, provider='azure', internal=True)
 
 
 class AzureCloudEnvironment(CloudEnvironment):

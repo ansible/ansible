@@ -54,7 +54,44 @@ class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
     DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
 
-    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None):
+    # Assign a default provider for each VM platform supported.
+    # This is used to determine the provider from the platform when no provider is specified.
+    # The keys here also serve as the list of providers which users can select from the command line.
+    #
+    # Entries can take one of two formats:
+    #   {platform}
+    #   {platform} arch={arch}
+    #
+    # Entries with an arch are only used as a default if the value for --remote-arch matches the {arch} specified.
+    # This allows arch specific defaults to be distinct from the default used when no arch is specified.
+
+    PROVIDERS = dict(
+        aws=(
+            'freebsd',
+            'ios',
+            'rhel',
+            'tower',
+            'vyos',
+            'windows',
+        ),
+        azure=(
+        ),
+        ibmps=(
+            'aix',
+            'ibmi',
+        ),
+        parallels=(
+            'macos',
+            'osx',
+        ),
+    )
+
+    # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
+    # The list below identifies which platforms accept an arch, and which one. These platforms can only be used with the specified arch.
+    PROVIDER_ARCHES = dict(
+    )
+
+    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None, internal=False):
         """
         :type args: EnvironmentConfig
         :type platform: str
@@ -64,6 +101,7 @@ class AnsibleCoreCI:
         :type load: bool
         :type provider: str | None
         :type arch: str | None
+        :type internal: bool
         """
         self.args = args
         self.arch = arch
@@ -84,62 +122,26 @@ class AnsibleCoreCI:
         else:
             self.name = '%s-%s' % (self.platform, self.version)
 
-        # Assign each supported platform to one provider.
-        # This is used to determine the provider from the platform when no provider is specified.
-        providers = dict(
-            aws=(
-                'aws',
-                'windows',
-                'freebsd',
-                'vyos',
-                'junos',
-                'ios',
-                'tower',
-                'rhel',
-                'hetzner',
-            ),
-            azure=(
-                'azure',
-            ),
-            ibmps=(
-                'aix',
-                'ibmi',
-            ),
-            ibmvpc=(
-                'centos arch=power',  # avoid ibmvpc as default for no-arch centos to avoid making centos default to power
-            ),
-            parallels=(
-                'macos',
-                'osx',
-            ),
-        )
-
-        # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
-        # The list below identifies which platforms accept an arch, and which one. These platforms can only be used with the specified arch.
-        provider_arches = dict(
-            ibmvpc='power',
-        )
-
         if provider:
             # override default provider selection (not all combinations are valid)
             self.provider = provider
         else:
             self.provider = None
 
-            for candidate in providers:
+            for candidate in self.PROVIDERS:
                 choices = [
                     platform,
                     '%s arch=%s' % (platform, arch),
                 ]
 
-                if any(choice in providers[candidate] for choice in choices):
+                if any(choice in self.PROVIDERS[candidate] for choice in choices):
                     # assign default provider based on platform
                     self.provider = candidate
                     break
 
         # If a provider has been selected, make sure the correct arch (or none) has been selected.
         if self.provider:
-            required_arch = provider_arches.get(self.provider)
+            required_arch = self.PROVIDER_ARCHES.get(self.provider)
 
             if self.arch != required_arch:
                 if required_arch:
@@ -152,19 +154,13 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure', 'parallels', 'ibmps', 'ibmvpc'):
-            self.ssh_key = SshKey(args)
-
-            if self.provider == 'ibmps':
-                # Additional retries are neededed to accommodate images transitioning
-                # to the active state in the IBM cloud. This operation can take up to
-                # 90 seconds
-                self.retries = 7
-        else:
+        if self.provider not in self.PROVIDERS and not internal:
             if self.arch:
                 raise ApplicationError('Provider not detected for platform "%s" on arch "%s".' % (self.platform, self.arch))
 
             raise ApplicationError('Provider not detected for platform "%s" with no arch specified.' % self.platform)
+
+        self.ssh_key = SshKey(args)
 
         if persist and load and self._load():
             try:
@@ -339,7 +335,7 @@ class AnsibleCoreCI:
             config=dict(
                 platform=self.platform,
                 version=self.version,
-                public_key=self.ssh_key.pub_contents if self.ssh_key else None,
+                public_key=self.ssh_key.pub_contents,
                 query=False,
                 winrm_config=winrm_config,
             )

@@ -79,6 +79,10 @@ from .cloud import (
     initialize_cloud_plugins,
 )
 
+from .core_ci import (
+    AnsibleCoreCI,
+)
+
 from .data import (
     data_context,
 )
@@ -949,7 +953,7 @@ def add_environments(parser, isolated_delegation=True):
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
-                        choices=['default', 'aws', 'azure', 'parallels', 'ibmvpc', 'ibmps'],
+                        choices=['default'] + sorted(AnsibleCoreCI.PROVIDERS.keys()),
                         default='default')
 
     remote.add_argument('--remote-endpoint',
