@@ -152,22 +152,14 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure', 'ibmps', 'ibmvpc'):
+        if self.provider in ('aws', 'azure', 'parallels', 'ibmps', 'ibmvpc'):
             self.ssh_key = SshKey(args)
-
-            if self.platform == 'windows':
-                self.port = 5986
-            else:
-                self.port = 22
 
             if self.provider == 'ibmps':
                 # Additional retries are neededed to accommodate images transitioning
                 # to the active state in the IBM cloud. This operation can take up to
                 # 90 seconds
                 self.retries = 7
-        elif self.provider == 'parallels':
-            self.ssh_key = SshKey(args)
-            self.port = None
         else:
             if self.arch:
                 raise ApplicationError('Provider not detected for platform "%s" on arch "%s".' % (self.platform, self.arch))
@@ -285,7 +277,7 @@ class AnsibleCoreCI:
             self.connection = InstanceConnection(
                 running=True,
                 hostname='cloud.example.com',
-                port=self.port or 12345,
+                port=12345,
                 username='username',
                 password='password' if self.platform == 'windows' else None,
             )
@@ -298,7 +290,7 @@ class AnsibleCoreCI:
                 self.connection = InstanceConnection(
                     running=status == 'running',
                     hostname=con['hostname'],
-                    port=int(con.get('port', self.port)),
+                    port=int(con['port']),
                     username=con['username'],
                     password=con.get('password'),
                     response_json=response_json,
