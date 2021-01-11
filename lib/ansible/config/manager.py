@@ -384,7 +384,7 @@ class ConfigManager(object):
 
         return ret
 
-    def get_configuration_definitions(self, plugin_type=None, name=None):
+    def get_configuration_definitions(self, plugin_type=None, name=None, ignore_private=False):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
         ret = {}
@@ -394,6 +394,11 @@ class ConfigManager(object):
             ret = self._plugins.get(plugin_type, {})
         else:
             ret = self._plugins.get(plugin_type, {}).get(name, {})
+
+        if ignore_private:
+            for cdef in ret:
+                if cdef.startswith('_'):
+                    del ret[cdef]
 
         return ret
 
