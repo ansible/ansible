@@ -63,6 +63,7 @@ ansible-playbook has_hostvars.yml -i inventory -v "$@"
 
 # test ansible_x_interpreter
 # python
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 (
 cd "${OUTPUT_DIR}"/venv/bin

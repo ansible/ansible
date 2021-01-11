@@ -5,7 +5,7 @@ set -eux -o pipefail
 
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 
-
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 
 

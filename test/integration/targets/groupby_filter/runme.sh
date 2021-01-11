@@ -2,6 +2,7 @@
 
 set -eux
 
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 
 pip install -U jinja2==2.9.4

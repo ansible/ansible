@@ -2,6 +2,7 @@
 
 set -eux
 
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 
 # Requirements have to be installed prior to running ansible-playbook
