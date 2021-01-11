@@ -920,7 +920,6 @@ def add_environments(parser, isolated_delegation=True):
             remote=None,
             remote_stage=None,
             remote_provider=None,
-            remote_aws_region=None,
             remote_terminate=None,
             remote_endpoint=None,
             python_interpreter=None,
@@ -956,12 +955,6 @@ def add_environments(parser, isolated_delegation=True):
     remote.add_argument('--remote-endpoint',
                         metavar='ENDPOINT',
                         help='remote provisioning endpoint to use (default: auto)',
-                        default=None)
-
-    remote.add_argument('--remote-aws-region',
-                        metavar='REGION',
-                        help='remote aws region to use: %(choices)s (default: auto)',
-                        choices=['us-east-1'],
                         default=None)
 
     remote.add_argument('--remote-terminate',

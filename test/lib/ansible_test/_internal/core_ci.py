@@ -153,17 +153,6 @@ class AnsibleCoreCI:
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if self.provider in ('aws', 'azure', 'ibmps', 'ibmvpc'):
-            if args.remote_aws_region:
-                display.warning('The --remote-aws-region option is obsolete and will be removed in a future version of ansible-test.')
-                # permit command-line override of region selection
-                region = args.remote_aws_region
-                # use a dedicated CI key when overriding the region selection
-                self.auth_context.region = args.remote_aws_region
-            else:
-                region = 'us-east-1'
-
-            self.path = "%s-%s" % (self.path, region)
-
             self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
