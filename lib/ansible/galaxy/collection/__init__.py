@@ -25,6 +25,7 @@ from distutils.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from itertools import chain
+from resolvelib.resolvers import InconsistentCandidate
 from yaml.error import YAMLError
 
 # NOTE: Adding type ignores is a hack for mypy to shut up wrt bug #1153
@@ -475,14 +476,42 @@ def install_collections(
         for coll in preferred_requirements
     }
     with _display_progress("Process install dependency map"):
-        dependency_map = _resolve_depenency_map(
-            collections,
-            galaxy_apis=apis,
-            preferred_candidates=preferred_collections,
-            concrete_artifacts_manager=artifacts_manager,
-            no_deps=no_deps,
-            allow_pre_release=allow_pre_release,
-        )
+        try:
+            dependency_map = _resolve_depenency_map(
+                collections,
+                galaxy_apis=apis,
+                preferred_candidates=preferred_collections,
+                concrete_artifacts_manager=artifacts_manager,
+                no_deps=no_deps,
+                allow_pre_release=allow_pre_release,
+            )
+        except InconsistentCandidate as inconsistent_candidate_exc:
+            # FIXME: Processing this error is hacky and should be removed along
+            # FIXME: with implementing the automatic replacement for installed
+            # FIXME: collections.
+            if not all(
+                    inconsistent_candidate_exc.candidate.fqcn == r.fqcn
+                    for r in inconsistent_candidate_exc.criterion.iter_requirement()
+            ):
+                raise
+
+            req_info = inconsistent_candidate_exc.criterion.information[0]
+            force_flag = (
+                '--force' if req_info.parent is None
+                else '--force-with-deps'
+            )
+            raise_from(
+                AnsibleError(
+                    'Cannot meet requirement {collection!s} as it is already '
+                    "installed at version '{installed_ver!s}'. "
+                    'Use {force_flag!s} to overwrite'.format(
+                        collection=req_info.requirement,
+                        force_flag=force_flag,
+                        installed_ver=inconsistent_candidate_exc.candidate.ver,
+                    )
+                ),
+                inconsistent_candidate_exc,
+            )
 
     with _display_progress("Starting collection install process"):
         for fqcn, concrete_coll_pin in dependency_map.items():
