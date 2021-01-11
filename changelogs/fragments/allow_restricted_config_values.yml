@@ -1,2 +1,2 @@
 minor_changes:
-  - new 'allowed' keyword in config definitions allows restricting valid values for the entry.
+  - Now 'choices' keyword in config definitions also restricts valid values for the entry.
