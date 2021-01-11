@@ -23,16 +23,6 @@
         var: hostvars['host1']['test_inventory_host_hash']
         verbosity: 2
 
-    - assert:
-        that:
-          - hostvars['host1']['test_inventory_host_hash'] == host_hash_replaced
-      when: "lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') == 'replace'"
-
-    - assert:
-        that:
-          - hostvars['host1']['test_inventory_host_hash'] == host_hash_merged
-      when: "lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') == 'merge'"
-
     - name: debug test_inventory_group_hash
       debug:
         var: test_inventory_group_hash
@@ -40,10 +30,12 @@
 
     - assert:
         that:
+          - hostvars['host1']['test_inventory_host_hash'] == host_hash_replaced
           - test_inventory_group_hash == group_hash_replaced
       when: "lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') == 'replace'"
 
     - assert:
         that:
+          - hostvars['host1']['test_inventory_host_hash'] == host_hash_merged
           - test_inventory_group_hash == group_hash_merged
       when: "lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') == 'merge'"
