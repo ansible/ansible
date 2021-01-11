@@ -1,0 +1,26 @@
+# test adding user with uid
+# https://github.com/ansible/ansible/issues/62969
+- name: remove the test user
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: try to create a user with uid
+  user:
+    name: ansibulluser
+    state: present
+    uid: 572
+  register: user_test01_0
+
+- name: create the user again
+  user:
+    name: ansibulluser
+    state: present
+    uid: 572
+  register: user_test01_1
+
+- name: validate results for testcase 0
+  assert:
+    that:
+      - user_test01_0 is changed
+      - user_test01_1 is not changed
