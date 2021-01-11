@@ -1,0 +1,169 @@
+## Check local mode
+# Even if we don't have a system that is bound to a directory, it's useful
+# to run with local: true to exercise the code path that reads through the local
+# user database file.
+# https://github.com/ansible/ansible/issues/50947
+
+- name: Create /etc/gshadow
+  file:
+    path: /etc/gshadow
+    state: touch
+  when: ansible_facts.os_family == 'Suse'
+  tags:
+    - user_test_local_mode
+
+- name: Create /etc/libuser.conf
+  file:
+    path: /etc/libuser.conf
+    state: touch
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - ansible_facts.distribution_major_version is version_compare('16', '==')
+  tags:
+    - user_test_local_mode
+
+- name: Ensure luseradd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Create local account that already exists to check for warning
+  user:
+    name: root
+    local: yes
+  register: local_existing
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_1
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_2
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_remove_1
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_remove_2
+  tags:
+    - user_test_local_mode
+
+- name: Create test groups
+  group:
+    name: "{{ item }}"
+  loop:
+    - testgroup1
+    - testgroup2
+    - testgroup3
+    - testgroup4
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser with groups
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: ['testgroup1', 'testgroup2']
+  register: local_user_test_3
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: ['testgroup3', 'testgroup4']
+    append: yes
+  register: local_user_test_4
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Test append without groups for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+  register: local_user_test_5
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Remove test groups
+  group:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - testgroup1
+    - testgroup2
+    - testgroup3
+    - testgroup4
+  tags:
+    - user_test_local_mode
+
+- name: Ensure local user accounts were created and removed properly
+  assert:
+    that:
+      - local_user_test_1 is changed
+      - local_user_test_2 is not changed
+      - local_user_test_3 is changed
+      - local_user_test_4 is changed
+      - local_user_test_remove_1 is changed
+      - local_user_test_remove_2 is not changed
+  tags:
+    - user_test_local_mode
+
+- name: Ensure warnings were displayed properly
+  assert:
+    that:
+      - local_user_test_1['warnings'] | length > 0
+      - local_user_test_1['warnings'] | first is search('The local user account may already exist')
+      - local_user_test_5['warnings'] is search("'append' is set, but no 'groups' are specified. Use 'groups'")
+      - local_existing['warnings'] is not defined
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Test expires for local users
+  import_tasks: test_local_expires.yml
