@@ -5,6 +5,43 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.17rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-01-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Added a ``--export`` option to the ``ansible-test coverage combine`` command to facilitate multi-stage aggregation of coverage in CI pipelines.
+- ansible-test - added a ``--venv-system-site-packages`` option for use with the ``--venv`` option
+- ansible-test - virtualenv helper scripts now prefer ``venv`` on Python 3 over ``virtualenv`` if the ``ANSIBLE_TEST_PREFER_VENV`` environment variable is set
+- bigiq_device_info module - add information on BIG-IQ 7.x support
+
+Bugfixes
+--------
+
+- Fix bytestring vs string comparison in module_utils.basic.is_special_selinux_path() so that special-cased filesystems which don't support SELinux context attributes still allow files to be manipulated on them. (https://github.com/ansible/ansible/issues/70244)
+- Freeform actions did not work with ``ansible.builtin.`` or ``ansible.legacy.`` FQCN (https://github.com/ansible/ansible/pull/72958).
+- async - Fix Python 3 interpreter parsing from module by comparing with bytes (https://github.com/ansible/ansible/issues/70690)
+- bigiq_device_info module - fix iteration bug in a _transform_name_attribute method
+- docker_image - if ``push=true`` is used with ``repository``, and the image does not need to be tagged, still push. This can happen if ``repository`` and ``name`` are equal (https://github.com/ansible-collections/community.docker/issues/52, https://github.com/ansible-collections/community.docker/pull/53).
+- docker_image - report error when loading a broken archive that contains no image (https://github.com/ansible-collections/community.docker/issues/46, https://github.com/ansible-collections/community.docker/pull/55).
+- docker_image - report error when the loaded archive does not contain the specified image (https://github.com/ansible-collections/community.docker/issues/41, https://github.com/ansible-collections/community.docker/pull/55).
+- inventory - pass the vars dictionary to combine_vars instead of an individual key's value (https://github.com/ansible/ansible/issues/72975).
+- k8s - add support for python-kubernetes v12 and later - backport of support in community.kubernetes
+- paramiko connection plugin - Ensure we only reset the connection when one has been previously established (https://github.com/ansible/ansible/issues/65812)
+- systemd - preserve the full unit name when using a templated service and ``systemd`` failed to parse dbus due to a known bug in ``systemd`` (https://github.com/ansible/ansible/pull/72985)
+
+- unsafe_proxy - Ensure that data within a tuple is marked as unsafe (https://github.com/ansible/ansible/issues/65722)
+- user - do the right thing when ``password_lock=True`` and ``password`` are used together (https://github.com/ansible/ansible/issues/72992)
+
+
 v2.9.16
 =======
 

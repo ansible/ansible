@@ -1693,6 +1693,26 @@ releases:
     - set_mode_if_different-symlink-sticky-dir.yml
     - v2.9.16rc1_summary.yaml
     release_date: '2020-12-07'
+  2.9.17rc1:
+    codename: Immigrant Song
+    fragments:
+    - 65722-unsafe-tuples.yml
+    - 65812-paramiko-attribute-error.yml
+    - 70244-selinux-special-fs.yml
+    - 70690-async-interpreter.yml
+    - 72958-fix-freeform-actions.yml
+    - 72979-fix-inventory-merge-hash-replace.yaml
+    - 72992-user-account-lock-always-changes.yml
+    - ansible-test-coverage-combine-export.yml
+    - ansible-test-venv-system-site-packages.yml
+    - ansible-test-venv-virtualenv-fallback.yml
+    - community.docker-53-docker_image-tag-push.yml
+    - community.docker-55-docker_image-loading.yml
+    - fix-bigiq-device-info.yaml
+    - k8s-support-kubernetes-v12.yml
+    - systemd-preserve-full-unit-name.yml
+    - v2.9.17rc1_summary.yaml
+    release_date: '2021-01-11'
   2.9.2:
     codename: Immigrant Song
     fragments:
