@@ -37,6 +37,7 @@ options:
         description:
             - Which strategy to use to update the hostname.
             - If not set we try to autodetect, but this can be problematic, particularly with containers as they can present misleading information.
+            - Note that 'systemd' should be specified for RHEL/EL/CentOS 7+. Older distributions should use 'redhat'.
         choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'macosx', 'darwin', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
         type: str
         version_added: '2.9'
