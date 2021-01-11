@@ -682,7 +682,7 @@ class TaskExecutor:
                 if not isidentifier(self._task.register):
                     raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % self._task.register)
 
-                vars_copy[self._task.register] = wrap_var(result)
+                vars_copy[self._task.register] = result = wrap_var(result)
 
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
@@ -740,7 +740,7 @@ class TaskExecutor:
             # This gives changed/failed_when access to additional recently modified
             # attributes of result
             if self._task.register:
-                vars_copy[self._task.register] = wrap_var(result)
+                vars_copy[self._task.register] = result = wrap_var(result)
 
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
@@ -771,7 +771,7 @@ class TaskExecutor:
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
         if self._task.register:
-            variables[self._task.register] = wrap_var(result)
+            variables[self._task.register] = result = wrap_var(result)
 
         if 'ansible_facts' in result:
             if self._task.action in C._ACTION_WITH_CLEAN_FACTS:

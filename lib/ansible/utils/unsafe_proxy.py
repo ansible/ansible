@@ -54,7 +54,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set
+from ansible.module_utils.common._collections_compat import Mapping, Set
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types, binary_type, text_type
 
 
@@ -93,21 +94,19 @@ class UnsafeProxy(object):
 
 
 def _wrap_dict(v):
-    for k in v.keys():
-        if v[k] is not None:
-            v[wrap_var(k)] = wrap_var(v[k])
-    return v
+    return dict((wrap_var(k), wrap_var(item)) for k, item in v.items())
 
 
-def _wrap_list(v):
-    for idx, item in enumerate(v):
-        if item is not None:
-            v[idx] = wrap_var(item)
-    return v
+def _wrap_sequence(v):
+    """Wraps a sequence with unsafe, not meant for strings, primarily
+    ``tuple`` and ``list``
+    """
+    v_type = type(v)
+    return v_type(wrap_var(item) for item in v)
 
 
 def _wrap_set(v):
-    return set(item if item is None else wrap_var(item) for item in v)
+    return set(wrap_var(item) for item in v)
 
 
 def wrap_var(v):
@@ -116,10 +115,10 @@ def wrap_var(v):
 
     if isinstance(v, Mapping):
         v = _wrap_dict(v)
-    elif isinstance(v, MutableSequence):
-        v = _wrap_list(v)
     elif isinstance(v, Set):
         v = _wrap_set(v)
+    elif is_sequence(v):
+        v = _wrap_sequence(v)
     elif isinstance(v, binary_type):
         v = AnsibleUnsafeBytes(v)
     elif isinstance(v, text_type):
