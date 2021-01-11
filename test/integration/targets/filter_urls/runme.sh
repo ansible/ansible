@@ -6,6 +6,7 @@ export ANSIBLE_ROLES_PATH=../
 
 ansible-playbook runme.yml "$@"
 
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 
 # This is necessary for installing Jinja 2.6. We need this because Jinja 2.6

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 set -euvx
+
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 
 

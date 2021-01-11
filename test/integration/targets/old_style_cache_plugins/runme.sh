@@ -2,6 +2,7 @@
 
 set -eux
 
+export ANSIBLE_TEST_PREFER_VENV=1
 source virtualenv.sh
 
 # Run test if dependencies are installed
