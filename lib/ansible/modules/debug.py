@@ -34,7 +34,7 @@ options:
     type: str
   verbosity:
     description:
-    - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above
+    - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above.
     type: int
     default: 0
     version_added: '2.1'

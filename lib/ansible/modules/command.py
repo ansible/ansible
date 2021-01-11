@@ -46,7 +46,7 @@ options:
   creates:
     type: path
     description:
-      - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(won't) be run.
+      - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
   removes:
     type: path
     description:
@@ -83,11 +83,12 @@ options:
     type: bool
     default: yes
 notes:
-    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(ansible.builtin.shell) module instead.
+    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
+       you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
        use the C(command) module when possible.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command.
-       For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  C(creates), C(removes), and C(chdir) can be specified after the command.
+       For instance, if you only want to run a command if a certain file does not exist, use this.
     -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
@@ -105,28 +106,28 @@ author:
 
 EXAMPLES = r'''
 - name: Return motd to registered var
-  command: cat /etc/motd
+  ansible.builtin.command: cat /etc/motd
   register: mymotd
 
 # free-form (string) arguments, all arguments on one line
 - name: Run command if /path/to/database does not exist (without 'args')
-  command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
+  ansible.builtin.command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
 # free-form (string) arguments, some arguments on separate lines with the 'args' keyword
 # 'args' is a task keyword, passed at the same level as the module
 - name: Run command if /path/to/database does not exist (with 'args' keyword)
-  command: /usr/bin/make_database.sh db_user db_name
+  ansible.builtin.command: /usr/bin/make_database.sh db_user db_name
   args:
     creates: /path/to/database
 
 # 'cmd' is module parameter
 - name: Run command if /path/to/database does not exist (with 'cmd' parameter)
-  command:
+  ansible.builtin.command:
     cmd: /usr/bin/make_database.sh db_user db_name
     creates: /path/to/database
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist
-  command: /usr/bin/make_database.sh db_user db_name
+  ansible.builtin.command: /usr/bin/make_database.sh db_user db_name
   become: yes
   become_user: db_owner
   args:
@@ -136,7 +137,7 @@ EXAMPLES = r'''
 # argv (list) arguments, each argument on a separate line, 'args' keyword not necessary
 # 'argv' is a parameter, indented one level from the module
 - name: Use 'argv' to send a command as a list - leave 'command' empty
-  command:
+  ansible.builtin.command:
     argv:
       - /usr/bin/make_database.sh
       - Username with whitespace
@@ -144,7 +145,7 @@ EXAMPLES = r'''
     creates: /path/to/database
 
 - name: Safely use templated variable to run command. Always use the quote filter to avoid injection issues
-  command: cat {{ myfile|quote }}
+  ansible.builtin.command: cat {{ myfile|quote }}
   register: myoutput
 '''
 
@@ -155,49 +156,49 @@ msg:
   type: bool
   sample: True
 start:
-  description: The command execution start time
+  description: The command execution start time.
   returned: always
   type: str
   sample: '2017-09-29 22:03:48.083128'
 end:
-  description: The command execution end time
+  description: The command execution end time.
   returned: always
   type: str
   sample: '2017-09-29 22:03:48.084657'
 delta:
-  description: The command execution delta time
+  description: The command execution delta time.
   returned: always
   type: str
   sample: '0:00:00.001529'
 stdout:
-  description: The command standard output
+  description: The command standard output.
   returned: always
   type: str
   sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 stderr:
-  description: The command standard error
+  description: The command standard error.
   returned: always
   type: str
   sample: 'ls cannot access foo: No such file or directory'
 cmd:
-  description: The command executed by the task
+  description: The command executed by the task.
   returned: always
   type: list
   sample:
   - echo
   - hello
 rc:
-  description: The command return code (0 means success)
+  description: The command return code (0 means success).
   returned: always
   type: int
   sample: 0
 stdout_lines:
-  description: The command standard output split in lines
+  description: The command standard output split in lines.
   returned: always
   type: list
   sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
 stderr_lines:
-  description: The command standard error split in lines
+  description: The command standard error split in lines.
   returned: always
   type: list
   sample: [u'ls cannot access foo: No such file or directory', u'ls …']
