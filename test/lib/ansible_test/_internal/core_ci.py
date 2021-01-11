@@ -230,27 +230,6 @@ class AnsibleCoreCI:
 
             display.sensitive.add(self.instance_id)
 
-    def _get_parallels_endpoints(self):
-        """
-        :rtype: tuple[str]
-        """
-        client = HttpClient(self.args, always=True)
-        display.info('Getting available endpoints...', verbosity=1)
-        sleep = 3
-
-        for _iteration in range(1, 10):
-            response = client.get('https://ansible-ci-files.s3.amazonaws.com/ansible-test/parallels-endpoints.txt')
-
-            if response.status_code == 200:
-                endpoints = tuple(response.response.splitlines())
-                display.info('Available endpoints (%d):\n%s' % (len(endpoints), '\n'.join(' - %s' % endpoint for endpoint in endpoints)), verbosity=1)
-                return endpoints
-
-            display.warning('HTTP %d error getting endpoints, trying again in %d seconds.' % (response.status_code, sleep))
-            time.sleep(sleep)
-
-        raise ApplicationError('Unable to get available endpoints.')
-
     @property
     def available(self):
         """Return True if Ansible Core CI is supported."""
