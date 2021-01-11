@@ -5,6 +5,41 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-01-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Changed the internal name of the custom plugin used to identify use of unwanted imports and functions.
+- ansible-test - The ``pylint`` sanity test is now skipped with a warning on Python 3.9 due to unresolved upstream regressions.
+- ansible-test - The ``pylint`` sanity test is now supported on Python 3.8.
+- ansible-test - add macOS 11.1 as a remote target (https://github.com/ansible/ansible/pull/72622)
+- ansible-test - remote macOS instances no longer install ``virtualenv`` during provisioning
+- ansible-test - virtualenv helper scripts now prefer ``venv`` on Python 3 over ``virtualenv`` if the ``ANSIBLE_TEST_PREFER_VENV`` environment variable is set
+
+Bugfixes
+--------
+
+- Apply ``_wrap_native_text`` only for builtin filters specified in STRING_TYPE_FILTERS.
+- Documentation change to the apt module to reference lock files (https://github.com/ansible/ansible/issues/73079).
+- Fix --list-tasks format `role_name : task_name` when task name contains the role name. (https://github.com/ansible/ansible/issues/72505)
+- Fix ansible-galaxy collection list to show collections in site-packages (https://github.com/ansible/ansible/issues/70147)
+- Fix bytestring vs string comparison in module_utils.basic.is_special_selinux_path() so that special-cased filesystems which don't support SELinux context attributes still allow files to be manipulated on them. (https://github.com/ansible/ansible/issues/70244)
+- Fix notifying handlers via `role_name : handler_name` when handler name contains the role name. (https://github.com/ansible/ansible/issues/70582)
+- async - Fix Python 3 interpreter parsing from module by comparing with bytes (https://github.com/ansible/ansible/issues/70690)
+- inventory - pass the vars dictionary to combine_vars instead of an individual key's value (https://github.com/ansible/ansible/issues/72975).
+- paramiko connection plugin - Ensure we only reset the connection when one has been previously established (https://github.com/ansible/ansible/issues/65812)
+- systemd - preserve the full unit name when using a templated service and ``systemd`` failed to parse dbus due to a known bug in ``systemd`` (https://github.com/ansible/ansible/pull/72985)
+- user - do the right thing when ``password_lock=True`` and ``password`` are used together (https://github.com/ansible/ansible/issues/72992)
+
 v2.10.4
 =======
 
