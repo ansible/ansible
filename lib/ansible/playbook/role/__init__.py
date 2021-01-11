@@ -274,7 +274,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=handler_data, orig_exc=e)
 
-    def _prepend_validation_task(self, task_data, argument_specs):
+    def _prepend_validation_task(self, task_data, metadata_spec):
         '''Insert a role validation task if we have a role argument spec.
 
         This method will prepend a validation task to the front of the role task
@@ -282,14 +282,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         exists for the entry point. Entry point defaults to `main`.
 
         :param task_data: List of tasks loaded from the role.
-        :param argument_specs: The complete role argument spec data as read from the metadata file.
-            We pass this in to make it testable in unit tests.
+        :param metadata_spec: The complete role argument spec data as read from the metadata file.
         '''
-        if argument_specs:
+        if metadata_spec:
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
             entrypoint = self._from_files.get('tasks', 'main')
-            entrypoint_arg_spec = argument_specs.get(entrypoint)
+            entrypoint_arg_spec = metadata_spec.get(entrypoint)
 
             if entrypoint_arg_spec:
                 validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint)
