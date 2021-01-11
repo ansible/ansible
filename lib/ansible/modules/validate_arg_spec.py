@@ -60,9 +60,7 @@ argument_spec_data:
                     - secret_choice1
                     - secret_choice2
                 type: "str"
-        required_together:
-            - ["peanut_butter", "jelly"]
-validate_args_context:
+ validate_args_context:
     description: A dict of info about where validate_args_spec was used
     type: dict
     returned: success, failure

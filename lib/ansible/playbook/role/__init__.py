@@ -256,7 +256,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
-        self._prepend_validation_task(task_data)
+        self._prepend_validation_task(task_data, self._metadata.argument_specs)
 
         if task_data:
             try:
@@ -274,7 +274,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=handler_data, orig_exc=e)
 
-    def _prepend_validation_task(self, task_data):
+    def _prepend_validation_task(self, task_data, argument_specs):
         '''Insert a role validation task if we have a role argument spec.
 
         This method will prepend a validation task to the front of the role task
@@ -282,12 +282,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         exists for the entry point. Entry point defaults to `main`.
 
         :param task_data: List of tasks loaded from the role.
+        :param argument_specs: The complete role argument spec data as read from the metadata file.
+            We pass this in to make it testable in unit tests.
         '''
-        if self._metadata.argument_specs:
+        if argument_specs:
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
             entrypoint = self._from_files.get('tasks', 'main')
-            entrypoint_arg_spec = self._metadata.argument_specs.get(entrypoint)
+            entrypoint_arg_spec = argument_specs.get(entrypoint)
 
             if entrypoint_arg_spec:
                 validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint)
@@ -303,6 +305,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''Create a new task data structure that uses the validate_arg_spec action plugin.
 
         :param argument_spec: The arg spec definition for a particular role entry point.
+            This will be the entire arg spec for the entry point as read from the input file.
         :param entrypoint_name: The name of the role entry point associated with the
             supplied `argument_spec`.
         '''
@@ -315,7 +318,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return {
             'action': {
                 'module': 'validate_arg_spec',
-                'argument_spec': argument_spec,
+                # Pass only the 'options' portion of the arg spec to the module.
+                'argument_spec': argument_spec.get('options', {}),
                 'provided_arguments': self._role_params,
                 'validate_args_context': {
                     'type': 'role',

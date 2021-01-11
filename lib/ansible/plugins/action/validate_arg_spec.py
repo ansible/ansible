@@ -115,18 +115,14 @@ class ActionModule(ActionBase):
         # and modify it in place later.
         orig_argument_spec_data = argument_spec_data.copy()
 
-        # then get the 'options' item from the dict in the argument_spec task var
-        # everything left in argument_spec_data is modifiers
-        argument_spec = argument_spec_data.pop('options', {})
-
         module_params = provided_arguments
 
         # apply any defaults from the arg spec and setup aliases
-        built_args = self.build_args(argument_spec, task_vars)
+        built_args = self.build_args(argument_spec_data, task_vars)
         module_params.update(built_args)
 
         module_args = {}
-        module_args['argument_spec'] = argument_spec
+        module_args['argument_spec'] = argument_spec_data
         module_args['params'] = module_params
 
         try:
