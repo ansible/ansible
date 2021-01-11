@@ -193,9 +193,10 @@ options:
         version_added: "1.9"
     password_lock:
         description:
-            - Lock the password (usermod -L, pw lock, usermod -C).
-            - BUT implementation differs on different platforms, this option does not always mean the user cannot login using other methods.
-            - This option does not disable the user, only lock the password. Do not change the password in the same task.
+            - Lock the password (C(usermod -L), C(usermod -U), C(pw lock)).
+            - Implementation differs by platform. This option does not always mean the user cannot login using other methods.
+            - This option does not disable the user, only lock the password.
+            - This must be set to C(False) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
             - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
         type: bool
         version_added: "2.6"
