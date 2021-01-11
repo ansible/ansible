@@ -29,21 +29,21 @@ options:
         description:
             - The path of where the repository should be checked out. This
               is equivalent to C(git clone [repo_url] [directory]). The repository
-              named in C(repo) is not appended to this path and the destination directory must be empty. This
-              parameter is required, unless C(clone) is set to C(no).
+              named in I(repo) is not appended to this path and the destination directory must be empty. This
+              parameter is required, unless I(clone) is set to C(no).
         type: path
         required: true
     version:
         description:
             - What version of the repository to check out. This can be
               the literal string C(HEAD), a branch name, a tag name.
-              It can also be a I(SHA-1) hash, in which case C(refspec) needs
+              It can also be a I(SHA-1) hash, in which case I(refspec) needs
               to be specified if the given revision is not already available.
         type: str
         default: "HEAD"
     accept_hostkey:
         description:
-            - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
+            - If C(yes), ensure that "-o StrictHostKeyChecking=no" is
               present as an ssh option.
         type: bool
         default: 'no'
@@ -53,8 +53,8 @@ options:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
-              (although this particular option is better set via
-              C(accept_hostkey)).
+              (although this particular option is better set by
+              I(accept_hostkey)).
         type: str
         version_added: "1.5"
     key_file:
@@ -64,7 +64,7 @@ options:
         version_added: "1.5"
     reference:
         description:
-            - Reference repository (see "git clone --reference ...")
+            - Reference repository (see "git clone --reference ...").
         version_added: "1.4"
     remote:
         description:
@@ -86,7 +86,7 @@ options:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
               'yes' and could not be disabled.  Prior to 1.9, the default was
-              `yes`
+              `yes`.
         type: bool
         default: 'no'
         version_added: "0.7"
@@ -99,13 +99,13 @@ options:
         version_added: "1.2"
     clone:
         description:
-            - If C(no), do not clone the repository even if it does not exist locally
+            - If C(no), do not clone the repository even if it does not exist locally.
         type: bool
         default: 'yes'
         version_added: "1.9"
     update:
         description:
-            - If C(no), do not retrieve new revisions from the origin repository
+            - If C(no), do not retrieve new revisions from the origin repository.
             - Operations like archive will work on the existing (old) repository and might
               not respond to changes to the options version or remote.
         type: bool
@@ -119,7 +119,7 @@ options:
         version_added: "1.4"
     bare:
         description:
-            - if C(yes), repository will be created as a bare repo, otherwise
+            - If C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
         type: bool
         default: 'no'
@@ -133,22 +133,22 @@ options:
 
     recursive:
         description:
-            - if C(no), repository will be cloned without the --recursive
-              option, skipping submodules.
+            - If C(no), repository will be cloned without the --recursive
+              option, skipping sub-modules.
         type: bool
         default: 'yes'
         version_added: "1.6"
 
     single_branch:
         description:
-            - Clone only the history leading to the tip of the specified C(branch)
+            - Clone only the history leading to the tip of the specified I(branch).
         type: bool
         default: 'no'
         version_added: '2.11'
 
     track_submodules:
         description:
-            - if C(yes), submodules will track the latest commit on their
+            - If C(yes), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
               C(no), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the --remote flag
@@ -159,8 +159,8 @@ options:
 
     verify_commit:
         description:
-            - if C(yes), when cloning or checking out a C(version) verify the
-              signature of a GPG signed commit. This requires C(git) version>=2.1.0
+            - If C(yes), when cloning or checking out a I(version) verify the
+              signature of a GPG signed commit. This requires git version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
               be present in the GPG keyring.
         type: bool
@@ -172,7 +172,7 @@ options:
             - Specify archive file path with extension. If specified, creates an
               archive file of the specified format containing the tree structure
               for the source tree.
-              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
+              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"].
             - This will clone and perform git archive from local directory as not
               all git servers support git archive.
         type: path
@@ -180,7 +180,7 @@ options:
 
     archive_prefix:
         description:
-            - Specify a prefix to add to each file path in archive. Requires C(archive) to be specified.
+            - Specify a prefix to add to each file path in archive. Requires I(archive) to be specified.
         version_added: "2.10"
         type: str
 
@@ -211,58 +211,59 @@ notes:
       one solution is to use the option accept_hostkey. Another solution is to
       add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
       the git module, with the following command: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts."
+    - Supports C(check_mode).
 '''
 
 EXAMPLES = '''
 - name: Git checkout
-  git:
+  ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
 - name: Read-write git checkout from github
-  git:
+  ansible.builtin.git:
     repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
 - name: Just ensuring the repo checkout exists
-  git:
+  ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
 - name: Just get information about the repository whether or not it has already been cloned locally
-  git:
+  ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
-  git:
+  ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
 
 - name: Create git archive from repo
-  git:
+  ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
 - name: Clone a repo with separate git directory
-  git:
+  ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
 
-# Example clone of a single branch
-- git:
+- name: Example clone of a single branch
+  ansible.builtin.git:
     single_branch: yes
     branch: master
 
-- name: avoid hanging when http(s) password is missing
-  git:
+- name: Avoid hanging when http(s) password is missing
+  ansible.builtin.git:
     repo: https://github.com/ansible/could-be-a-private-repo
     dest: /src/from-private-repo
   environment:
@@ -272,12 +273,12 @@ EXAMPLES = '''
 
 RETURN = '''
 after:
-    description: last commit revision of the repository retrieved during the update
+    description: Last commit revision of the repository retrieved during the update.
     returned: success
     type: str
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
 before:
-    description: commit revision before the repository was updated, "null" for new repository
+    description: Commit revision before the repository was updated, "null" for new repository.
     returned: success
     type: str
     sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
@@ -292,12 +293,12 @@ warnings:
     type: str
     sample: git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
-    description: Contains the new path of .git directory if it's changed
+    description: Contains the new path of .git directory if it is changed.
     returned: success
     type: str
     sample: /path/to/new/git/dir
 git_dir_before:
-    description: Contains the original path of .git directory if it's changed
+    description: Contains the original path of .git directory if it is changed.
     returned: success
     type: str
     sample: /path/to/old/git/dir

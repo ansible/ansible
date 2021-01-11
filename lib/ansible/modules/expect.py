@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 ---
 module: expect
 version_added: '2.0'
-short_description: Executes a command and responds to prompts.
+short_description: Executes a command and responds to prompts
 description:
      - The C(expect) module executes a command and responds to prompts.
      - The given command will be executed on all selected nodes. It will not be
@@ -59,7 +59,7 @@ requirements:
   - pexpect >= 3.3
 notes:
   - If you want to run a command through the shell (say you are using C(<),
-    C(>), C(|), etc), you must specify a shell in the command such as
+    C(>), C(|), and so on), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else").
   - The question, or key, under I(responses) is a python regex match. Case
     insensitive searches are indicated with a prefix of C(?i).
@@ -69,7 +69,7 @@ notes:
     the response. The list functionality is new in 2.1.
   - The M(ansible.builtin.expect) module is designed for simple scenarios.
     For more complex needs, consider the use of expect code with the M(ansible.builtin.shell)
-    or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation)
+    or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation).
 seealso:
 - module: ansible.builtin.script
 - module: ansible.builtin.shell
@@ -78,7 +78,7 @@ author: "Matt Martz (@sivel)"
 
 EXAMPLES = r'''
 - name: Case insensitive password string match
-  expect:
+  ansible.builtin.expect:
     command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
@@ -86,7 +86,7 @@ EXAMPLES = r'''
   no_log: true
 
 - name: Generic question with multiple different responses
-  expect:
+  ansible.builtin.expect:
     command: /path/to/custom/command
     responses:
       Question:

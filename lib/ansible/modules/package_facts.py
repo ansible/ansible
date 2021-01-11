@@ -10,9 +10,9 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 module: package_facts
-short_description: package information as facts
+short_description: Package information as facts
 description:
-  - Return information about installed packages as facts
+  - Return information about installed packages as facts.
 options:
   manager:
     description:
@@ -22,7 +22,6 @@ options:
       - The 'apk' option was added in version 2.11.
     default: ['auto']
     choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
-    required: False
     type: list
     elements: str
   strategy:
@@ -42,19 +41,21 @@ author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
   - Adam Miller (@maxamillion)
+notes:
+  - Supports C(check_mode).
 '''
 
 EXAMPLES = '''
 - name: Gather the package facts
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: Print the package facts
-  debug:
+  ansible.builtin.debug:
     var: ansible_facts.packages
 
 - name: Check whether a package called foobar is installed
-  debug:
+  ansible.builtin.debug:
     msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
   when: "'foobar' in ansible_facts.packages"
 
@@ -62,7 +63,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ansible_facts:
-  description: facts to add to ansible_facts
+  description: Facts to add to ansible_facts.
   returned: always
   type: complex
   contains:
