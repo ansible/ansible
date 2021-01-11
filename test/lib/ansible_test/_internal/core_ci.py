@@ -49,13 +49,11 @@ from .data import (
     data_context,
 )
 
-AWS_ENDPOINTS = {
-    'us-east-1': 'https://ansible-core-ci.testing.ansible.com',
-}
-
 
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
+    DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
+
     def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None):
         """
         :type args: EnvironmentConfig
@@ -76,7 +74,7 @@ class AnsibleCoreCI:
         self.connection = None
         self.instance_id = None
         self.endpoint = None
-        self.max_threshold = 1
+        self.default_endpoint = args.remote_endpoint or self.DEFAULT_ENDPOINT
         self.retries = 3
         self.ci_provider = get_ci_provider()
         self.auth_context = AuthContext()
@@ -166,11 +164,6 @@ class AnsibleCoreCI:
 
             self.path = "%s-%s" % (self.path, region)
 
-            if self.args.remote_endpoint:
-                self.endpoints = (self.args.remote_endpoint,)
-            else:
-                self.endpoints = (AWS_ENDPOINTS[region],)
-
             self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
@@ -184,11 +177,6 @@ class AnsibleCoreCI:
                 # 90 seconds
                 self.retries = 7
         elif self.provider == 'parallels':
-            if self.args.remote_endpoint:
-                self.endpoints = (self.args.remote_endpoint,)
-            else:
-                self.endpoints = (AWS_ENDPOINTS['us-east-1'],)
-
             self.ssh_key = SshKey(args)
             self.port = None
         else:
@@ -229,6 +217,9 @@ class AnsibleCoreCI:
             self.endpoint = None
 
             display.sensitive.add(self.instance_id)
+
+        if not self.endpoint:
+            self.endpoint = self.default_endpoint
 
     @property
     def available(self):
@@ -379,7 +370,7 @@ class AnsibleCoreCI:
             'Content-Type': 'application/json',
         }
 
-        response = self._start_try_endpoints(data, headers)
+        response = self._start_endpoint(data, headers)
 
         self.started = True
         self._save()
@@ -391,45 +382,16 @@ class AnsibleCoreCI:
 
         return response.json()
 
-    def _start_try_endpoints(self, data, headers):
+    def _start_endpoint(self, data, headers):
         """
         :type data: dict[str, any]
         :type headers: dict[str, str]
         :rtype: HttpResponse
         """
-        threshold = 1
-
-        while threshold <= self.max_threshold:
-            for self.endpoint in self.endpoints:
-                try:
-                    return self._start_at_threshold(data, headers, threshold)
-                except CoreHttpError as ex:
-                    if ex.status == 503:
-                        display.info('Service Unavailable: %s' % ex.remote_message, verbosity=1)
-                        continue
-                    display.error(ex.remote_message)
-                except HttpError as ex:
-                    display.error(u'%s' % ex)
-
-                time.sleep(3)
-
-            threshold += 1
-
-        raise ApplicationError('Maximum threshold reached and all endpoints exhausted.')
-
-    def _start_at_threshold(self, data, headers, threshold):
-        """
-        :type data: dict[str, any]
-        :type headers: dict[str, str]
-        :type threshold: int
-        :rtype: HttpResponse | None
-        """
         tries = self.retries
         sleep = 15
 
-        data['threshold'] = threshold
-
-        display.info('Trying endpoint: %s (threshold %d)' % (self.endpoint, threshold), verbosity=1)
+        display.info('Trying endpoint: %s' % self.endpoint, verbosity=1)
 
         while True:
             tries -= 1

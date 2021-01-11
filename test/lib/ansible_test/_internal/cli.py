@@ -75,10 +75,6 @@ from .target import (
     walk_sanity_targets,
 )
 
-from .core_ci import (
-    AWS_ENDPOINTS,
-)
-
 from .cloud import (
     initialize_cloud_plugins,
 )
@@ -965,7 +961,7 @@ def add_environments(parser, isolated_delegation=True):
     remote.add_argument('--remote-aws-region',
                         metavar='REGION',
                         help='remote aws region to use: %(choices)s (default: auto)',
-                        choices=sorted(AWS_ENDPOINTS),
+                        choices=['us-east-1'],
                         default=None)
 
     remote.add_argument('--remote-terminate',
