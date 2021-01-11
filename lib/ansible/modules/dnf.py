@@ -1155,21 +1155,11 @@ class DnfModule(YumDnf):
                                 response['results'].append(handled_remove_error)
                         continue
 
-                    installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
-                    if installed_pkg:
-                        candidate_pkg = self._packagename_dict(installed_pkg[0])
-                        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
-                    else:
-                        candidate_pkg = self._packagename_dict(pkg_spec)
-                        installed_pkg = installed.filter(nevra=pkg_spec).run()
-                    if installed_pkg:
-                        installed_pkg = installed_pkg[0]
-                        evr_cmp = self._compare_evr(
-                            installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
-                            candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
-                        )
-                        if evr_cmp == 0:
-                            self.base.remove(pkg_spec)
+                    installed_pkg = dnf.subject.Subject(pkg_spec).get_best_query(
+                        sack=self.base.sack).installed().run()
+
+                    for pkg in installed_pkg:
+                        self.base.remove(str(pkg))
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
