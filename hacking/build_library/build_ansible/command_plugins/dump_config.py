@@ -27,6 +27,12 @@ def fix_description(config_options):
     '''some descriptions are strings, some are lists. workaround it...'''
 
     for config_key in config_options:
+
+        # drop internal entries
+        if config_key.startswith('_'):
+            del config_options[config_key]
+            continue
+
         description = config_options[config_key].get('description', [])
         if isinstance(description, list):
             desc_list = description
