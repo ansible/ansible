@@ -169,7 +169,7 @@ def main():
         argument_spec=dict(
             iap_port=dict(type='str', required=True),
             iap_fqdn=dict(type='str', required=True),
-            token_key=dict(type='str', required=True),
+            token_key=dict(type='str', required=True, no_log=True),
             workflow_name=dict(type='str', required=True),
             description=dict(type='str', required=True),
             variables=dict(type='dict', required=False),

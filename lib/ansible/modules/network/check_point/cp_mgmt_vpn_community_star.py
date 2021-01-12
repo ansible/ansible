@@ -213,7 +213,7 @@ def main():
         satellite_gateways=dict(type='list'),
         shared_secrets=dict(type='list', options=dict(
             external_gateway=dict(type='str'),
-            shared_secret=dict(type='str')
+            shared_secret=dict(type='str', no_log=True)
         )),
         tags=dict(type='list'),
         use_shared_secret=dict(type='bool'),

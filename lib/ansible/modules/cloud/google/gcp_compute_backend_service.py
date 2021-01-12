@@ -732,7 +732,7 @@ def main():
             health_checks=dict(required=True, type='list', elements='str'),
             iap=dict(
                 type='dict',
-                options=dict(enabled=dict(type='bool'), oauth2_client_id=dict(required=True, type='str'), oauth2_client_secret=dict(required=True, type='str')),
+                options=dict(enabled=dict(type='bool'), oauth2_client_id=dict(required=True, type='str'), oauth2_client_secret=dict(required=True, type='str', no_log=True)),
             ),
             load_balancing_scheme=dict(default='EXTERNAL', type='str'),
             name=dict(required=True, type='str'),

@@ -57,7 +57,7 @@ def keycloak_argument_spec():
         auth_keycloak_url=dict(type='str', aliases=['url'], required=True),
         auth_client_id=dict(type='str', default='admin-cli'),
         auth_realm=dict(type='str', required=True),
-        auth_client_secret=dict(type='str', default=None),
+        auth_client_secret=dict(type='str', default=None, no_log=True),
         auth_username=dict(type='str', aliases=['username'], required=True),
         auth_password=dict(type='str', aliases=['password'], required=True, no_log=True),
         validate_certs=dict(type='bool', default=True)

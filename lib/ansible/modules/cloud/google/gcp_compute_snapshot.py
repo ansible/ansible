@@ -291,8 +291,8 @@ def main():
             labels=dict(type='dict'),
             source_disk=dict(required=True, type='dict'),
             zone=dict(type='str'),
-            snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
-            source_disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
+            snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), kms_key_name=dict(type='str'))),
+            source_disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), kms_key_name=dict(type='str'))),
         )
     )
 

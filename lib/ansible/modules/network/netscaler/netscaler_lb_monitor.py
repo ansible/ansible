@@ -986,7 +986,7 @@ def main():
         secondarypassword=dict(type='str'),
         logonpointname=dict(type='str'),
         lasversion=dict(type='str'),
-        radkey=dict(type='str'),
+        radkey=dict(type='str', no_log=True),
         radnasid=dict(type='str'),
         radnasip=dict(type='str'),
         radaccounttype=dict(type='float'),
