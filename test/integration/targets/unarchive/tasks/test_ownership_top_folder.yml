@@ -17,6 +17,7 @@
         path: "{{ user.home }}/tarball-top-folder"
         state: directory
         owner: root
+        group: root
 
     - name: Add a file owned by root
       copy:
@@ -45,6 +46,7 @@
         list_files: True
         owner: unarchivetest3
         group: "{{ user.group }}"
+      register: unarchive30
 
     - name: Stat the extracted top folder
       stat:
