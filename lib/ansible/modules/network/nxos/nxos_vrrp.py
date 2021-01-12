@@ -330,7 +330,7 @@ def main():
         admin_state=dict(required=False, type='str',
                          choices=['shutdown', 'no shutdown', 'default'],
                          default='shutdown'),
-        authentication=dict(required=False, type='str'),
+        authentication=dict(required=False, type='str', no_log=True),
         state=dict(choices=['absent', 'present'], required=False, default='present')
     )
     argument_spec.update(nxos_argument_spec)

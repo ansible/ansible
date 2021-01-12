@@ -863,7 +863,7 @@ def main():
                             auto_delete=dict(type='bool'),
                             boot=dict(type='bool'),
                             device_name=dict(type='str'),
-                            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), rsa_encrypted_key=dict(type='str'))),
+                            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), rsa_encrypted_key=dict(type='str', no_log=True))),
                             index=dict(type='int'),
                             initialize_params=dict(
                                 type='dict',
@@ -872,7 +872,7 @@ def main():
                                     disk_size_gb=dict(type='int'),
                                     disk_type=dict(type='str'),
                                     source_image=dict(type='str'),
-                                    source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
+                                    source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True))),
                                 ),
                             ),
                             interface=dict(type='str', choices=['SCSI', 'NVME']),

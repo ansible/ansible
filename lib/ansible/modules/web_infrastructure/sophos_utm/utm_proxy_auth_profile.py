@@ -319,7 +319,7 @@ def main():
             backend_user_suffix=dict(type='str', required=False, default=""),
             comment=dict(type='str', required=False, default=""),
             frontend_cookie=dict(type='str', required=False),
-            frontend_cookie_secret=dict(type='str', required=False),
+            frontend_cookie_secret=dict(type='str', required=False, no_log=True),
             frontend_form=dict(type='str', required=False),
             frontend_form_template=dict(type='str', required=False, default=""),
             frontend_login=dict(type='str', required=False),
