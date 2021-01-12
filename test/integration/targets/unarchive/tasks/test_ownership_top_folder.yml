@@ -45,7 +45,6 @@
         list_files: True
         owner: unarchivetest3
         group: "{{ user.group }}"
-      register: unarchive30
 
     - name: Stat the extracted top folder
       stat:
