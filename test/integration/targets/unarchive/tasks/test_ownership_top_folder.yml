@@ -17,7 +17,6 @@
         path: "{{ user.home }}/tarball-top-folder"
         state: directory
         owner: root
-        group: root
 
     - name: Add a file owned by root
       copy:
