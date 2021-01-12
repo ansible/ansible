@@ -22,7 +22,7 @@ You install Ansible on a control node, which then uses SSH (by default) to commu
 Control node requirements
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed.
+Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer.
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_.
 
@@ -32,6 +32,10 @@ When choosing a control node, bear in mind that any management system benefits f
 
     macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
+
+.. warning::
+
+    Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer.
 
 .. warning::
 
@@ -99,10 +103,17 @@ On Fedora:
 
     $ sudo dnf install ansible
 
-On RHEL and CentOS:
+On RHEL:
 
 .. code-block:: bash
 
+    $ sudo yum install ansible
+
+On CentOS:
+
+.. code-block:: bash
+
+    $ sudo yum install epel-release
     $ sudo yum install ansible
 
 RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
@@ -140,7 +151,7 @@ To configure the PPA on your machine and install Ansible run these commands:
 
     $ sudo apt update
     $ sudo apt install software-properties-common
-    $ sudo apt-add-repository --yes --update ppa:ansible/ansible
+    $ sudo add-apt-repository --yes --update ppa:ansible/ansible
     $ sudo apt install ansible
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
@@ -158,7 +169,7 @@ Installing Ansible on Debian
 
 Debian users may leverage the same source as the Ubuntu PPA.
 
-Add the following line to /etc/apt/sources.list:
+Add the following line to ``/etc/apt/sources.list``:
 
 .. code-block:: bash
 

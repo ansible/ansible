@@ -83,14 +83,7 @@ You can memorize your vault password, or manually copy vault passwords from any 
 Storing passwords in files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To store a vault password in a file, enter the password as a string on a single line in the file. Make sure the permissions on the file are appropriate. Do not add password files to source control. If you have multiple passwords, you can store them all in a single file, as long as they all have vault IDs. For each password, create a separate line and enter the vault ID, a space, then the password as a string. For example:
-
-.. code-block:: text
-
-   dev my_dev_pass
-   test my_test_pass
-   prod my_prod_pass
-
+To store a vault password in a file, enter the password as a string on a single line in the file. Make sure the permissions on the file are appropriate. Do not add password files to source control.
 
 .. _vault_password_client_scripts:
 
@@ -206,11 +199,11 @@ The command above creates this content::
               6664656334373166630a363736393262666465663432613932613036303963343263623137386239
               6330
 
-To encrypt the string 'letmein' read from stdin, add the vault ID 'test' using the 'test' vault password stored in `a_password_file`, and name the variable 'test_db_password':
+To encrypt the string 'letmein' read from stdin, add the vault ID 'dev' using the 'dev' vault password stored in `a_password_file`, and name the variable 'db_password':
 
 .. code-block:: bash
 
-    echo -n 'letmein' | ansible-vault encrypt_string --vault-id test@a_password_file --stdin-name 'test_db_password'
+    echo -n 'letmein' | ansible-vault encrypt_string --vault-id dev@a_password_file --stdin-name 'db_password'
 
 .. warning::
 

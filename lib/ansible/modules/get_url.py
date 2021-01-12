@@ -358,16 +358,12 @@ def url_filename(url):
     return fn
 
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest=''):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET'):
     """
     Download data from the url and store in a temporary file.
 
     Return (tempfile, info about the request)
     """
-    if module.check_mode:
-        method = 'HEAD'
-    else:
-        method = 'GET'
 
     start = datetime.datetime.utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method)
@@ -449,7 +445,7 @@ def main():
     argument_spec.update(
         url=dict(type='str', required=True),
         dest=dict(type='path', required=True),
-        backup=dict(type='bool'),
+        backup=dict(type='bool', default=False),
         sha256sum=dict(type='str', default=''),
         checksum=dict(type='str', default=''),
         timeout=dict(type='int', default=10),
@@ -573,7 +569,8 @@ def main():
 
     # download to tmpsrc
     start = datetime.datetime.utcnow()
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+    method = 'HEAD' if module.check_mode else 'GET'
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
 
@@ -630,7 +627,7 @@ def main():
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
-            module.atomic_move(tmpsrc, dest)
+            module.atomic_move(tmpsrc, dest, unsafe_writes=module.params['unsafe_writes'])
         except Exception as e:
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)

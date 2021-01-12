@@ -993,6 +993,9 @@ def add_extra_coverage_options(parser):
                         action='store_true',
                         help='generate empty report of all python/powershell source files')
 
+    parser.add_argument('--export',
+                        help='directory to export combined coverage files to')
+
 
 def add_httptester_options(parser, argparse):
     """
@@ -1059,6 +1062,9 @@ def add_extra_docker_options(parser, integration=True):
     docker.add_argument('--docker-privileged',
                         action='store_true',
                         help='run docker container in privileged mode')
+
+    docker.add_argument('--docker-network',
+                        help='run using the specified docker network')
 
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',

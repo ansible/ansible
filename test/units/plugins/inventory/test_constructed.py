@@ -33,6 +33,7 @@ def inventory_module():
     r = InventoryModule()
     r.inventory = InventoryData()
     r.templar = Templar(None)
+    r._options = {'leading_separator': True}
     return r
 
 

@@ -6,29 +6,38 @@ export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_s
 export ANSIBLE_GATHERING=explicit
 export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
+export ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0
 
 # FUTURE: just use INVENTORY_PATH as-is once ansible-test sets the right dir
 ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
 export INVENTORY_PATH="$ipath"
 
+# ensure we can call collection module
+ansible localhost -m testns.testcoll.testmodule
+
+# ensure we can call collection module with ansible_collections in path
+ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_sys/ansible_collections ansible localhost -m testns.testcoll.testmodule
+
+
 echo "--- validating callbacks"
 # validate FQ callbacks in ansible-playbook
-ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible-playbook noop.yml | grep "usercallback says ok"
+ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible-playbook noop.yml | grep "usercallback says ok"
 # use adhoc for the rest of these tests, must force it to load other callbacks
 export ANSIBLE_LOAD_CALLBACK_PLUGINS=1
 # validate redirected callback
-ANSIBLE_CALLBACK_WHITELIST=formerly_core_callback ansible localhost -m debug 2>&1 | grep -- "usercallback says ok"
-# validate missing redirected callback
-ANSIBLE_CALLBACK_WHITELIST=formerly_core_missing_callback ansible localhost -m debug 2>&1 | grep -- "Skipping 'formerly_core_missing_callback'"
-# validate redirected + removed callback (fatal)
-ANSIBLE_CALLBACK_WHITELIST=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "testns.testcoll.removedcallback has been removed"
-# validate warning on logical duplicate (FQ + unqualified that are the same)
-ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback,formerly_core_callback ansible localhost -m debug 2>&1 | grep -- "Skipping callback 'formerly_core_callback'"
+ANSIBLE_CALLBACKS_ENABLED=formerly_core_callback ansible localhost -m debug 2>&1 | grep -- "usercallback says ok"
+## validate missing redirected callback
+ANSIBLE_CALLBACKS_ENABLED=formerly_core_missing_callback ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'formerly_core_missing_callback'"
+## validate redirected + removed callback (fatal)
+ANSIBLE_CALLBACKS_ENABLED=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "testns.testcoll.removedcallback has been removed"
+# validate avoiding duplicate loading of callback, even if using diff names
+[ "$(ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback,formerly_core_callback ansible localhost -m debug 2>&1 | grep -c 'usercallback says ok')" = "1" ]
 # ensure non existing callback does not crash ansible
-ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping 'charlie.gomez.notme'"
+ANSIBLE_CALLBACKS_ENABLED=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'charlie.gomez.notme'"
+
 unset ANSIBLE_LOAD_CALLBACK_PLUGINS
 # adhoc normally shouldn't load non-default plugins- let's be sure
-output=$(ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug)
+output=$(ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible localhost -m debug)
 if [[ "${output}" =~ "usercallback says ok" ]]; then echo fail; exit 1; fi
 
 echo "--- validating docs"
@@ -68,7 +77,27 @@ if [[ ${INVENTORY_PATH} != *.winrm ]]; then
 	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
 fi
 
+echo "--- validating bypass_host_loop with collection search"
+ansible-playbook -i host1,host2, -v test_bypass_host_loop.yml "$@"
+
 echo "--- validating inventory"
+# test collection inventories
+ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
+
+if [[ ${INVENTORY_PATH} != *.winrm ]]; then
+	# base invocation tests
+	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
+
+	# run playbook from collection, test default again, but with FQCN
+	ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook.yml "$@"
+
+	# run playbook from collection, test default again, but with FQCN and no extension
+	ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook "$@"
+
+	# run playbook that imports from collection
+	ansible-playbook -i "${INVENTORY_PATH}" import_collection_pb.yml "$@"
+fi
+
 # test collection inventories
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
@@ -105,4 +134,3 @@ if [[ "$(grep -wc "dynamic_host_a" "$CACHEFILE")" -ne "0" ]]; then
 fi
 
 ./vars_plugin_tests.sh
-

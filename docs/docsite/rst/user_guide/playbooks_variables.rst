@@ -188,7 +188,7 @@ To reference an IP address from your facts using the dot notation::
 Transforming variables with Jinja2 filters
 ==========================================
 
-Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies many more filters. To find more examples of filters, see :ref:`playbooks_filters`.
+Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <https://jinja.palletsprojects.com/templates/#builtin-filters>`_ and Ansible supplies many more filters. To find more examples of filters, see :ref:`playbooks_filters`.
 
 .. _setting_variables:
 

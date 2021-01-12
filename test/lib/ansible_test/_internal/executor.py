@@ -68,6 +68,7 @@ from .util import (
     open_zipfile,
     SUPPORTED_PYTHON_VERSIONS,
     str_to_version,
+    version_to_str,
 )
 
 from .util_common import (
@@ -90,6 +91,9 @@ from .docker_util import (
     docker_rm,
     get_docker_container_id,
     get_docker_container_ip,
+    get_docker_hostname,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 from .ansible_util import (
@@ -182,6 +186,42 @@ def create_shell_command(command):
     return cmd
 
 
+def get_openssl_version(args, python, python_version):  # type: (EnvironmentConfig, str, str) -> t.Optional[t.Tuple[int, ...]]
+    """Return the openssl version."""
+    if not python_version.startswith('2.'):
+        # OpenSSL version checking only works on Python 3.x.
+        # This should be the most accurate, since it is the Python we will be using.
+        version = json.loads(run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'sslcheck.py')], capture=True, always=True)[0])['version']
+
+        if version:
+            display.info('Detected OpenSSL version %s under Python %s.' % (version_to_str(version), python_version), verbosity=1)
+
+            return tuple(version)
+
+    # Fall back to detecting the OpenSSL version from the CLI.
+    # This should provide an adequate solution on Python 2.x.
+    openssl_path = find_executable('openssl', required=False)
+
+    if openssl_path:
+        try:
+            result = raw_command([openssl_path, 'version'], capture=True)[0]
+        except SubprocessError:
+            result = ''
+
+        match = re.search(r'^OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+)', result)
+
+        if match:
+            version = str_to_version(match.group('version'))
+
+            display.info('Detected OpenSSL version %s using the openssl CLI.' % version_to_str(version), verbosity=1)
+
+            return version
+
+    display.info('Unable to detect OpenSSL version.', verbosity=1)
+
+    return None
+
+
 def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
     """Return the setuptools version for the given python."""
     try:
@@ -193,19 +233,45 @@ def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t
         raise
 
 
-def get_cryptography_requirement(args, python_version):  # type: (EnvironmentConfig, str) -> str
+def install_cryptography(args, python, python_version, pip):  # type: (EnvironmentConfig, str, str, t.List[str]) -> None
+    """
+    Install cryptography for the specified environment.
+    """
+    # make sure ansible-test's basic requirements are met before continuing
+    # this is primarily to ensure that pip is new enough to facilitate further requirements installation
+    install_ansible_test_requirements(args, pip)
+
+    # make sure setuptools is available before trying to install cryptography
+    # the installed version of setuptools affects the version of cryptography to install
+    run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
+
+    # install the latest cryptography version that the current requirements can support
+    # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
+    # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
+    # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
+    run_command(args, generate_pip_install(pip, '',
+                                           packages=[get_cryptography_requirement(args, python, python_version)],
+                                           constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+
+
+def get_cryptography_requirement(args, python, python_version):  # type: (EnvironmentConfig, str, str) -> str
     """
     Return the correct cryptography requirement for the given python version.
-    The version of cryptograpy installed depends on the python version and setuptools version.
+    The version of cryptography installed depends on the python version, setuptools version and openssl version.
     """
     python = find_python(python_version)
     setuptools_version = get_setuptools_version(args, python)
+    openssl_version = get_openssl_version(args, python, python_version)
 
     if setuptools_version >= (18, 5):
         if python_version == '2.6':
             # cryptography 2.2+ requires python 2.7+
             # see https://github.com/pyca/cryptography/blob/master/CHANGELOG.rst#22---2018-03-19
             cryptography = 'cryptography < 2.2'
+        elif openssl_version and openssl_version < (1, 1, 0):
+            # cryptography 3.2 requires openssl 1.1.x or later
+            # see https://cryptography.io/en/latest/changelog.html#v3-2
+            cryptography = 'cryptography < 3.2'
         else:
             cryptography = 'cryptography'
     else:
@@ -250,7 +316,8 @@ def install_command_requirements(args, python_version=None, context=None, enable
     if not python_version:
         python_version = args.python_version
 
-    pip = generate_pip_command(find_python(python_version))
+    python = find_python(python_version)
+    pip = generate_pip_command(python)
 
     # skip packages which have aleady been installed for python_version
 
@@ -268,19 +335,7 @@ def install_command_requirements(args, python_version=None, context=None, enable
     installed_packages.update(packages)
 
     if args.command != 'sanity':
-        install_ansible_test_requirements(args, pip)
-
-        # make sure setuptools is available before trying to install cryptography
-        # the installed version of setuptools affects the version of cryptography to install
-        run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
-
-        # install the latest cryptography version that the current requirements can support
-        # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
-        # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
-        # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
-        run_command(args, generate_pip_install(pip, '',
-                                               packages=[get_cryptography_requirement(args, python_version)],
-                                               constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+        install_cryptography(args, python, python_version, pip)
 
     commands = [generate_pip_install(pip, args.command, packages=packages, context=context)]
 
@@ -389,12 +444,12 @@ def generate_egg_info(args):
 
     # inclusion of the version number in the path is optional
     # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
-    egg_info_path = ANSIBLE_LIB_ROOT + '_base-%s.egg-info' % ansible_version
+    egg_info_path = ANSIBLE_LIB_ROOT + '_core-%s.egg-info' % ansible_version
 
     if os.path.exists(egg_info_path):
         return
 
-    egg_info_path = ANSIBLE_LIB_ROOT + '_base.egg-info'
+    egg_info_path = ANSIBLE_LIB_ROOT + '_core.egg-info'
 
     if os.path.exists(egg_info_path):
         return
@@ -1263,9 +1318,7 @@ def start_httptester(args):
 
     container_id = get_docker_container_id()
 
-    if container_id:
-        display.info('Running in docker container: %s' % container_id, verbosity=1)
-    else:
+    if not container_id:
         for item in ports:
             item['localhost'] = get_available_port()
 
@@ -1277,7 +1330,7 @@ def start_httptester(args):
         container_host = get_docker_container_ip(args, httptester_id)
         display.info('Found httptester container address: %s' % container_host, verbosity=1)
     else:
-        container_host = 'localhost'
+        container_host = get_docker_hostname()
 
     ssh_options = []
 
@@ -1301,6 +1354,13 @@ def run_httptester(args, ports=None):
     if ports:
         for localhost_port, container_port in ports.items():
             options += ['-p', '%d:%d' % (localhost_port, container_port)]
+
+    network = get_docker_preferred_network_name(args)
+
+    if is_docker_user_defined_network(network):
+        # network-scoped aliases are only supported for containers in user defined networks
+        for alias in HTTPTESTER_HOSTS:
+            options.extend(['--network-alias', alias])
 
     httptester_id = docker_run(args, args.httptester, options=options)[0]
 
@@ -1426,7 +1486,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
 
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
-        ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
+        ANSIBLE_CALLBACKS_ENABLED=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
@@ -2110,7 +2170,7 @@ class EnvironmentDescription:
         if not os.path.exists(path):
             return None
 
-        file_hash = hashlib.md5()
+        file_hash = hashlib.sha256()
 
         file_hash.update(read_binary_file(path))
 

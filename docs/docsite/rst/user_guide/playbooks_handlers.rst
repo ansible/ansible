@@ -140,6 +140,7 @@ a shared source like Galaxy).
    * Use unique handler names. If you trigger more than one handler with the same name, the first one(s) get overwritten. Only the last one defined will run.
    * You can notify a handler defined inside a static include.
    * You cannot notify a handler defined inside a dynamic include.
+   * A handler can not run import_role or include_role.
 
 When using handlers within roles, note that:
 

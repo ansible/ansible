@@ -129,8 +129,9 @@ If you want to apply a tag to many, but not all, of the tasks in your play, use 
 
    # myrole/tasks/main.yml
    tasks:
-   - block:
+   - name: ntp tasks
      tags: ntp
+     block:
      - name: Install ntp
        ansible.builtin.yum:
          name: ntp

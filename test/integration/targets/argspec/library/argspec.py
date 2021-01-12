@@ -11,6 +11,14 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         {
+            'required': {
+                'required': True,
+            },
+            'required_one_of_one': {},
+            'required_one_of_two': {},
+            'required_by_one': {},
+            'required_by_two': {},
+            'required_by_three': {},
             'state': {
                 'type': 'str',
                 'choices': ['absent', 'present'],
@@ -19,6 +27,24 @@ def main():
             'content': {},
             'mapping': {
                 'type': 'dict',
+            },
+            'required_one_of': {
+                'required_one_of': [['thing', 'other']],
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'thing': {},
+                    'other': {},
+                },
+            },
+            'required_by': {
+                'required_by': {'thing': 'other'},
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'thing': {},
+                    'other': {},
+                },
             },
             'required_together': {
                 'required_together': [['thing', 'other']],
@@ -65,6 +91,41 @@ def main():
                     'off',
                 ],
             },
+            'choices': {
+                'type': 'str',
+                'choices': [
+                    'foo',
+                    'bar',
+                ],
+            },
+            'list_choices': {
+                'type': 'list',
+                'choices': [
+                    'foo',
+                    'bar',
+                    'baz',
+                ],
+            },
+            'primary': {
+                'type': 'str',
+                'aliases': [
+                    'alias',
+                ],
+            },
+            'password': {
+                'type': 'str',
+                'no_log': True,
+            },
+            'not_a_password': {
+                'type': 'str',
+                'no_log': False,
+            },
+            'maybe_password': {
+                'type': 'str',
+            },
+            'int': {
+                'type': 'int',
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
@@ -72,6 +133,12 @@ def main():
         mutually_exclusive=(
             ('path', 'content'),
         ),
+        required_one_of=(
+            ('required_one_of_one', 'required_one_of_two'),
+        ),
+        required_by={
+            'required_by_one': ('required_by_two', 'required_by_three'),
+        },
         required_together=(
             ('required_together_one', 'required_together_two'),
         ),

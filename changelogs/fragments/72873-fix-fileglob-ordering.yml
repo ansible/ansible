@@ -1,0 +1,2 @@
+bugfixes:
+- Fix fileglob bug where it could return different results for different order of parameters (https://github.com/ansible/ansible/issues/72873).

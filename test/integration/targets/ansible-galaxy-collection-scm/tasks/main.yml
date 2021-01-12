@@ -12,6 +12,7 @@
   block:
 
   - include_tasks: ./setup.yml
+  - include_tasks: ./requirements.yml
   - include_tasks: ./individual_collection_repo.yml
   - include_tasks: ./setup_multi_collection_repo.yml
   - include_tasks: ./multi_collection_repo_all.yml

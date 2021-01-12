@@ -1,0 +1,4 @@
+minor_changes:
+  - >
+    unarchive - add ``include`` parameter to allow extracting specific files
+    from an archive (https://github.com/ansible/ansible/pull/40522)

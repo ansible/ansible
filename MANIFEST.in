@@ -2,8 +2,8 @@ include README.rst
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
-include shippable.yml
 recursive-include docs *
+include docs/docsite/rst/collections/all_plugins.rst
 exclude docs/docsite/rst_warnings
 recursive-exclude docs/docsite/_build *
 recursive-exclude docs/docsite/_extensions *.pyc *.pyo
@@ -11,6 +11,7 @@ include examples/hosts
 include examples/ansible.cfg
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
+include lib/ansible/keyword_desc.yml
 recursive-include lib/ansible/executor/powershell *.ps1
 recursive-include lib/ansible/module_utils/csharp *.cs
 recursive-include lib/ansible/module_utils/powershell *.psm1

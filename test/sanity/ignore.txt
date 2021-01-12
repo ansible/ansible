@@ -31,6 +31,7 @@ hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compil
 hacking/build_library/build_ansible/commands.py compile-2.6!skip # release and docs process only, 3.6+ required
 hacking/build_library/build_ansible/commands.py compile-2.7!skip # release and docs process only, 3.6+ required
 hacking/build_library/build_ansible/commands.py compile-3.5!skip # release and docs process only, 3.6+ required
+lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/cli/console.py pylint:blacklisted-name
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
@@ -72,10 +73,7 @@ lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
-lib/ansible/modules/apt_repository.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt_repository.py validate-modules:undocumented-parameter
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/async_status.py use-argspec-type-path
 lib/ansible/modules/async_status.py validate-modules!skip
@@ -84,12 +82,12 @@ lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, requi
 lib/ansible/modules/async_wrapper.py use-argspec-type-path
 lib/ansible/modules/blockinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/blockinfile.py validate-modules:doc-default-does-not-match-spec
+lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec  # _uses_shell is undocumented
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/copy.py pylint:blacklisted-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/copy.py validate-modules:doc-type-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
@@ -112,6 +110,7 @@ lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
+lib/ansible/modules/stat.py validate-modules:doc-default-does-not-match-spec  # get_md5 is undocumented
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/stat.py validate-modules:undocumented-parameter
@@ -140,6 +139,7 @@ lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
+test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/filter/check_pylint.py pylint:blacklisted-name
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -198,8 +198,6 @@ test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPat
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
 test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
-test/support/integration/plugins/module_utils/ansible_tower.py future-import-boilerplate
-test/support/integration/plugins/module_utils/ansible_tower.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
@@ -207,8 +205,6 @@ test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boil
 test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/integration/plugins/module_utils/database.py future-import-boilerplate
 test/support/integration/plugins/module_utils/database.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/k8s/common.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/k8s/raw.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate

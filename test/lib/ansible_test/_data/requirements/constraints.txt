@@ -2,6 +2,7 @@ coverage >= 4.5.1, < 5.0.0 ; python_version <  '3.7' # coverage 4.4 required for
 coverage >= 4.5.2, < 5.0.0 ; python_version == '3.7' # coverage 4.5.2 fixes bugs in support for python 3.7, coverage 5.0+ incompatible
 coverage >= 4.5.4, < 5.0.0 ; python_version >  '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
+# do not add a cryptography constraint here unless it is for python version incompatibility, see the get_cryptography_requirement function in executor.py for details
 deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
 jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.7 or later
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
@@ -52,12 +53,12 @@ antsibull-changelog == 0.7.0
 antsibull >= 0.21.0
 
 # freeze pylint and its requirements for consistent test results
-astroid == 2.2.5
+astroid == 2.3.3
 isort == 4.3.15
-lazy-object-proxy == 1.3.1
+lazy-object-proxy == 1.4.3
 mccabe == 0.6.1
 pylint == 2.3.1
-typed-ast == 1.4.0  # 1.4.0 is required to compile on Python 3.8
+typed-ast == 1.4.1
 wrapt == 1.11.1
 
 # freeze pycodestyle for consistent test results

@@ -1,0 +1,2 @@
+bugfixes:
+- get_url - skip checksum during ``--check`` (https://github.com/ansible/ansible/issues/61369).

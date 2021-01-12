@@ -33,6 +33,7 @@ options:
   name:
     description:
       - A package name or package specifier with version, like C(name-1.0).
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
       - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be C('*') which means run C(yum -y update).
@@ -276,6 +277,11 @@ EXAMPLES = '''
   yum:
     name: httpd
     state: latest
+
+- name: Install Apache >= 2.4
+  yum:
+    name: httpd>=2.4
+    state: present
 
 - name: Install a list of packages (suitable replacement for 2.11 loop deprecation warning)
   yum:

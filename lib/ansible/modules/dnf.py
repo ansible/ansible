@@ -25,6 +25,7 @@ options:
         When using state=latest, this can be '*' which means run: dnf -y update.
         You can also pass a url or a local path to a rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
     required: true
     aliases:
         - pkg
@@ -128,12 +129,14 @@ options:
   security:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked security related.
+      - Note that, similar to ``dnf upgrade-minimal``, this filter applies to dependencies as well.
     type: bool
     default: "no"
     version_added: "2.7"
   bugfix:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - Note that, similar to ``dnf upgrade-minimal``, this filter applies to dependencies as well.
     default: "no"
     type: bool
     version_added: "2.7"
@@ -247,6 +250,11 @@ EXAMPLES = '''
   dnf:
     name: httpd
     state: latest
+
+- name: Install Apache >= 2.4
+  dnf:
+    name: httpd>=2.4
+    state: present
 
 - name: Install the latest version of Apache and MariaDB
   dnf:
@@ -674,10 +682,10 @@ class DnfModule(YumDnf):
         filters = []
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
-            filters.append(base.sack.query().filter(**key))
+            filters.append(base.sack.query().upgrades().filter(**key))
         if self.security:
             key = {'advisory_type__eq': 'security'}
-            filters.append(base.sack.query().filter(**key))
+            filters.append(base.sack.query().upgrades().filter(**key))
         if filters:
             base._update_security_filters = filters
 
@@ -1147,21 +1155,11 @@ class DnfModule(YumDnf):
                                 response['results'].append(handled_remove_error)
                         continue
 
-                    installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
-                    if installed_pkg:
-                        candidate_pkg = self._packagename_dict(installed_pkg[0])
-                        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
-                    else:
-                        candidate_pkg = self._packagename_dict(pkg_spec)
-                        installed_pkg = installed.filter(nevra=pkg_spec).run()
-                    if installed_pkg:
-                        installed_pkg = installed_pkg[0]
-                        evr_cmp = self._compare_evr(
-                            installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
-                            candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
-                        )
-                        if evr_cmp == 0:
-                            self.base.remove(pkg_spec)
+                    installed_pkg = dnf.subject.Subject(pkg_spec).get_best_query(
+                        sack=self.base.sack).installed().run()
+
+                    for pkg in installed_pkg:
+                        self.base.remove(str(pkg))
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages

@@ -1,0 +1,2 @@
+minor_changes:
+- distribution - handle NetBSD OS Family (https://github.com/ansible/ansible/issues/43739).

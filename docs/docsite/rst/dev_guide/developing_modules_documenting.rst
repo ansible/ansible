@@ -253,8 +253,8 @@ content in a uniform way:
 .. note::
     - To refer to a group of modules in a collection, use ``R()``.  When a collection is not the right granularity, use ``C(..)``:
 
-        -``Refer to the R(community.kubernetes collection, plugins_in_community.kubernetes) for information on managing kubernetes clusters.``
-        -``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
+        - ``Refer to the R(community.kubernetes collection, plugins_in_community.kubernetes) for information on managing kubernetes clusters.``
+        - ``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
 
 
 .. note::

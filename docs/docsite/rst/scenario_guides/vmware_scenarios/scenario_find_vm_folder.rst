@@ -4,14 +4,15 @@
 Find folder path of an existing VMware virtual machine
 ******************************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
 
 This guide will show you how to utilize Ansible to find folder path of an existing VMware virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 * Software
@@ -41,7 +42,7 @@ Caveats
 - You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
 
 
-Example Description
+Example description
 ===================
 
 With the following Ansible playbook you can find the folder path of an existing virtual machine using name.

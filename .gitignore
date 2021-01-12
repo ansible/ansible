@@ -38,6 +38,7 @@ docs/docsite/rst/dev_guide/collections_galaxy_meta.rst
 docs/docsite/rst/dev_guide/testing/sanity/index.rst.new
 docs/docsite/rst/modules/*.rst
 docs/docsite/rst/collections/*.rst
+!docs/docsite/rst/collections/all_plugins.rst
 docs/docsite/rst/collections/*/*.rst
 docs/docsite/rst/playbooks_directives.rst
 docs/docsite/rst/plugins_by_category.rst
@@ -79,6 +80,8 @@ Vagrantfile
 /lib/ansible.egg-info/
 # First used in the `devel` branch during Ansible 2.10 development.
 /lib/ansible_base.egg-info/
+# First used in the `devel` branch during Ansible 2.11 development.
+/lib/ansible_core.egg-info/
 /shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template

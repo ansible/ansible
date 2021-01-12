@@ -511,7 +511,8 @@ class JinjaPluginIntercept(MutableMapping):
                 for func_name, func in iteritems(method_map()):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
-                    if self._jinja2_native and func_name in C.STRING_TYPE_FILTERS:
+                    if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
+                            func_name in C.STRING_TYPE_FILTERS:
                         self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
                     else:
                         self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
@@ -797,7 +798,7 @@ class Templar:
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
-        static_vars = [''] if static_vars is None else static_vars
+        static_vars = [] if static_vars is None else static_vars
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):
