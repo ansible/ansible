@@ -1,0 +1,75 @@
+- name: Create unarchivetest3 user
+  user:
+    name: unarchivetest3
+    group: "{{ group_table[ansible_facts['distribution']] | default(omit) }}"
+  register: user
+  vars:
+    group_table:
+      MacOSX: staff
+
+- name: Test unarchiving as root and apply different ownership to top folder
+  become: yes
+  become_user: root
+  block:
+
+    - name: Create top folder owned by root
+      file:
+        path: "{{ user.home }}/tarball-top-folder"
+        state: directory
+        owner: root
+        group: root
+
+    - name: Add a file owned by root
+      copy:
+        src: foo.txt
+        dest: "{{ user.home }}/tarball-top-folder/foo-unarchive.txt"
+        mode: preserve
+
+    - name: Create a tarball as root
+      shell: tar -czf test-tarball.tar.gz tarball-top-folder/
+      args:
+        chdir: "{{ user.home }}"
+        creates: "{{ user.home }}/test-tarball.tar.gz"
+
+    - name: Create unarchive destination folder in /home/unarchivetest3/unarchivetest3-unarchive
+      file:
+        path: "{{ user.home }}/unarchivetest3-unarchive"
+        state: directory
+        owner: unarchivetest3
+        group: "{{ user.group }}"
+
+    - name: unarchive the tarball as root. apply ownership for unarchivetest3
+      unarchive:
+        src: "{{ user.home }}/test-tarball.tar.gz"
+        dest: "{{ user.home }}/unarchivetest3-unarchive"
+        remote_src: yes
+        list_files: True
+        owner: unarchivetest3
+        group: "{{ user.group }}"
+      register: unarchive30
+
+    - name: Stat the extracted top folder
+      stat:
+        path: "{{ user.home }}/unarchivetest3-unarchive/tarball-top-folder"
+      register: top_folder_info
+
+    - name: verify that extracted top folder is owned by unarchivetest3
+      assert:
+        that:
+          - top_folder_info.stat.pw_name == "unarchivetest3"
+          - top_folder_info.stat.gid == {{ user.group }}
+
+  always:
+    - name: remove our unarchivetest3 user and files
+      user:
+        name: unarchivetest3
+        state: absent
+        remove: yes
+      become: no
+
+    - name: Remove user home directory on macOS
+      file:
+        path: /Users/unarchivetest3
+        state: absent
+      become: no
+      when: ansible_facts.distribution == 'MacOSX'
