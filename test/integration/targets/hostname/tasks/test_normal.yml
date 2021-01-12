@@ -1,0 +1,24 @@
+- name: Run hostname module for real now
+  hostname:
+    name: crocodile.ansible.test.doesthiswork.net.example.com
+  register: hn2
+
+- name: Get hostname
+  command: hostname
+  register: current_after_hn2
+
+- name: Run hostname again to ensure it does not change
+  hostname:
+    name: crocodile.ansible.test.doesthiswork.net.example.com
+  register: hn3
+
+- name: Get hostname
+  command: hostname
+  register: current_after_hn3
+
+- assert:
+    that:
+      - hn2 is changed
+      - hn3 is not changed
+      - current_after_hn2.stdout == 'crocodile.ansible.test.doesthiswork.net.example.com'
+      - current_after_hn2.stdout == current_after_hn2.stdout

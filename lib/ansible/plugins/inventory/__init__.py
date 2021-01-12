@@ -443,6 +443,8 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
+                            if prefix == '' and self.get_option('leading_separator') is False:
+                                sep = ''
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)

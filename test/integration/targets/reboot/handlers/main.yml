@@ -1,0 +1,4 @@
+- name: remove molly-guard
+  apt:
+    name: molly-guard
+    state: absent

@@ -39,4 +39,15 @@ options:
         key: use_extra_vars
     env:
       - name: ANSIBLE_INVENTORY_USE_EXTRA_VARS
+  leading_separator:
+    description:
+      - Use in conjunction with keyed_groups.
+      - By default, a keyed group that does not have a prefix or a separator provided will have a name that starts with an underscore.
+      - This is because the default prefix is "" and the default separator is "_".
+      - Set this option to False to omit the leading underscore (or other separator) if no prefix is given.
+      - If the group name is derived from a mapping the separator is still used to concatenate the items.
+      - To not use a separator in the group name at all, set the separator for the keyed group to an empty string instead.
+    type: boolean
+    default: True
+    version_added: '2.11'
 '''

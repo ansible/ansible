@@ -8,13 +8,26 @@ __metaclass__ = type
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.collections import is_iterable
-from ansible.module_utils.common.validation import check_type_dict
 
 from ansible.module_utils.six import (
     binary_type,
     integer_types,
     string_types,
     text_type,
+)
+
+from ansible.module_utils.common.validation import (
+    check_type_bits,
+    check_type_bool,
+    check_type_bytes,
+    check_type_dict,
+    check_type_float,
+    check_type_int,
+    check_type_jsonarg,
+    check_type_list,
+    check_type_path,
+    check_type_raw,
+    check_type_str,
 )
 
 # Python2 & 3 way to get NoneType
@@ -41,6 +54,21 @@ PASS_VARS = {
 }
 
 PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'no_log')
+
+DEFAULT_TYPE_VALIDATORS = {
+    'str': check_type_str,
+    'list': check_type_list,
+    'dict': check_type_dict,
+    'bool': check_type_bool,
+    'int': check_type_int,
+    'float': check_type_float,
+    'path': check_type_path,
+    'raw': check_type_raw,
+    'jsonarg': check_type_jsonarg,
+    'json': check_type_jsonarg,
+    'bytes': check_type_bytes,
+    'bits': check_type_bits,
+}
 
 
 def _return_datastructure_name(obj):
@@ -195,3 +223,55 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
                 params[k] = params[alias]
 
     return aliases_results, legal_inputs
+
+
+def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
+    """Check keys in module_parameters against those provided in legal_inputs
+    to ensure they contain legal values. If legal_inputs are not supplied,
+    they will be generated using the argument_spec.
+
+    :arg argument_spec: Dictionary of parameters, their type, and valid values.
+    :arg module_parameters: Dictionary of module parameters.
+    :arg legal_inputs: List of valid key names property names. Overrides values
+        in argument_spec.
+
+    :returns: Set of unsupported parameters. Empty set if no unsupported parameters
+        are found.
+    """
+
+    if legal_inputs is None:
+        aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
+
+    unsupported_parameters = set()
+    for k in module_parameters.keys():
+        if k not in legal_inputs:
+            unsupported_parameters.add(k)
+
+    return unsupported_parameters
+
+
+def get_type_validator(wanted):
+    """Returns the callable used to validate a wanted type and the type name.
+
+    :arg wanted: String or callable. If a string, get the corresponding
+        validation function from DEFAULT_TYPE_VALIDATORS. If callable,
+        get the name of the custom callable and return that for the type_checker.
+
+    :returns: Tuple of callable function or None, and a string that is the name
+        of the wanted type.
+    """
+
+    # Use one our our builtin validators.
+    if not callable(wanted):
+        if wanted is None:
+            # Default type for parameters
+            wanted = 'str'
+
+        type_checker = DEFAULT_TYPE_VALIDATORS.get(wanted)
+
+    # Use the custom callable for validation.
+    else:
+        type_checker = wanted
+        wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
+    return type_checker, wanted

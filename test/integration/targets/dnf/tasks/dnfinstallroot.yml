@@ -3,21 +3,9 @@
   command: mktemp -d "{{ remote_tmp_dir }}/ansible.test.XXXXXX"
   register: dnfroot
 
-- name: Make a necessary directory
-  file:
-    path: "/{{ dnfroot.stdout }}/etc/dnf/vars/"
-    state: directory
-    mode: 0755
-
-- name: Populate directory
-  copy:
-    # We need '8' for CentOS, but '8.x' for RHEL.
-    content: "{{ ansible_distribution_version|int if ansible_distribution != 'RedHat' else ansible_distribution_version }}\n"
-    dest: "/{{ dnfroot.stdout }}/etc/dnf/vars/releasever"
-
 # This will drag in > 200 MB.
 - name: attempt installroot
-  dnf: name=sos installroot="/{{ dnfroot.stdout }}/" disable_gpg_check=yes
+  dnf: name=sos installroot="/{{ dnfroot.stdout }}/" disable_gpg_check=yes releasever={{ansible_facts['distribution_major_version']}}
   register: dnf_result
 
 - name: check sos with rpm in installroot

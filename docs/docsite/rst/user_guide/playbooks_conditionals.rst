@@ -295,7 +295,7 @@ Ansible expands this at execution time to the equivalent of::
       # this task sets a value for x
 
     - name: Do the task if "x" is not defined
-      ansible.builin.debug:
+      ansible.builtin.debug:
         var: x
       when: x is not defined
       # Ansible skips this task, because x is now defined

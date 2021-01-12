@@ -234,7 +234,7 @@ If you are reading in some already formatted data::
 for example::
 
   tasks:
-    - name: Register JSON output as a variable 
+    - name: Register JSON output as a variable
       ansible.builtin.shell: cat /some/path/to/file.json
       register: result
 
@@ -749,8 +749,8 @@ To extract all server names::
 
 To extract ports from cluster1::
 
-    - ansible.builtin.name: Display all ports from cluster1
-      debug:
+    - name: Display all ports from cluster1
+      ansible.builtin.debug:
         var: item
       loop: "{{ domain_definition | community.general.json_query(server_name_cluster1_query) }}"
       vars:
@@ -783,6 +783,24 @@ To get a hash map with all ports and names of a cluster::
       loop: "{{ domain_definition | community.general.json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
+
+To extract ports from all clusters with name starting with 'server1'::
+
+    - name: Display all ports from cluster1
+      ansible.builtin.debug:
+        msg: "{{ domain_definition | to_json | from_json | community.general.json_query(server_name_query) }}"
+      vars:
+        server_name_query: "domain.server[?starts_with(name,'server1')].port"
+
+To extract ports from all clusters with name containing 'server1'::
+
+    - name: Display all ports from cluster1
+      ansible.builtin.debug:
+        msg: "{{ domain_definition | to_json | from_json | community.general.json_query(server_name_query) }}"
+      vars:
+        server_name_query: "domain.server[?contains(name,'server1')].port"
+
+.. note:: while using ``starts_with`` and ``contains``, you have to use `` to_json | from_json `` filter for correct parsing of data structure.
 
 
 Randomizing data
@@ -1248,6 +1266,7 @@ Another example Jinja template::
     switchport trunk allowed vlan {{ parsed_vlans[0] }}
     {% for i in range (1, parsed_vlans | count) %}
     switchport trunk allowed vlan add {{ parsed_vlans[i] }}
+    {% endfor %}
 
 This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface. You can store an exhaustive raw list of the exact VLANs required for an interface and then compare that to the parsed IOS output that would actually be generated for the configuration.
 
@@ -1287,7 +1306,7 @@ An idempotent method to generate unique hashes per system is to use a salt that 
 
     {{ 'secretpassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}
 
-Hash types available depend on the master system running Ansible, 'hash' depends on hashlib, password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+Hash types available depend on the control system running Ansible, 'hash' depends on hashlib, password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
 
 .. versionadded:: 2.7
 
@@ -1641,6 +1660,8 @@ To get a date object from a string use the `to_datetime` filter::
 
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
     {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
+    
+.. note:: For a full list of format codes for working with python date format strings, see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
 
 .. versionadded:: 2.4
 

@@ -61,6 +61,8 @@
   when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('31', '>=')) or
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
 
+# TODO: Construct our own instance where 'nobest' applies, so we can stop using
+#       a third-party repo to test this behavior.
 - include_tasks: nobest.yml
   when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('24', '>=')) or
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))

@@ -30,9 +30,12 @@ from ansible.plugins.loader import become_loader, connection_loader, shell_loade
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import set_default_transport
 from ansible.utils.display import Display
+
 
 display = Display()
 
@@ -87,7 +90,24 @@ class PlaybookExecutor:
             list(shell_loader.all(class_only=True))
             list(become_loader.all(class_only=True))
 
-            for playbook_path in self._playbooks:
+            for playbook in self._playbooks:
+
+                # deal with FQCN
+                resource = _get_collection_playbook_path(playbook)
+                if resource is not None:
+                    playbook_path = resource[1]
+                    playbook_collection = resource[2]
+                else:
+                    playbook_path = playbook
+                    # not fqcn, but might still be colleciotn playbook
+                    playbook_collection = _get_collection_name_from_path(playbook)
+
+                if playbook_collection:
+                    display.warning("running playbook inside collection {0}".format(playbook_collection))
+                    AnsibleCollectionConfig.default_collection = playbook_collection
+                else:
+                    AnsibleCollectionConfig.default_collection = None
+
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 

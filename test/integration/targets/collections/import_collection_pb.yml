@@ -1,0 +1,2 @@
+- import_playbook: testns.testcoll.default_collection_playbook.yml
+- import_playbook: testns.testcoll.default_collection_playbook

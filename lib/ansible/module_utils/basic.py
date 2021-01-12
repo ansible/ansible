@@ -156,9 +156,12 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
+    get_unsupported_parameters,
+    get_type_validator,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
+    DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
 )
@@ -692,6 +695,7 @@ class AnsibleModule(object):
         self._diff = False
         self._socket_path = None
         self._shell = None
+        self._syslog_facility = 'LOG_USER'
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -728,6 +732,7 @@ class AnsibleModule(object):
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
+        self._set_internal_properties()
         self._check_arguments()
 
         # check exclusive early
@@ -736,20 +741,9 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
-        self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
-            'str': self._check_type_str,
-            'list': self._check_type_list,
-            'dict': self._check_type_dict,
-            'bool': self._check_type_bool,
-            'int': self._check_type_int,
-            'float': self._check_type_float,
-            'path': self._check_type_path,
-            'raw': self._check_type_raw,
-            'jsonarg': self._check_type_jsonarg,
-            'json': self._check_type_jsonarg,
-            'bytes': self._check_type_bytes,
-            'bits': self._check_type_bits,
-        }
+        # This is for backwards compatibility only.
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
+
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()
@@ -1183,7 +1177,11 @@ class AnsibleModule(object):
                         if underlying_stat.st_mode != new_underlying_stat.st_mode:
                             os.chmod(b_path, stat.S_IMODE(underlying_stat.st_mode))
             except OSError as e:
-                if os.path.islink(b_path) and e.errno in (errno.EPERM, errno.EROFS):  # Can't set mode on symbolic links
+                if os.path.islink(b_path) and e.errno in (
+                    errno.EACCES,  # can't access symlink in sticky directory (stat)
+                    errno.EPERM,  # can't set mode on symbolic links (chmod)
+                    errno.EROFS,  # can't set mode on read-only filesystem
+                ):
                     pass
                 elif e.errno in (errno.ENOENT, errno.ELOOP):  # Can't set mode on broken symbolic links
                     pass
@@ -1527,29 +1525,20 @@ class AnsibleModule(object):
             deprecate(message['msg'], version=message.get('version'), date=message.get('date'),
                       collection_name=message.get('collection_name'))
 
-    def _check_arguments(self, spec=None, param=None, legal_inputs=None):
-        self._syslog_facility = 'LOG_USER'
-        unsupported_parameters = set()
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-        if legal_inputs is None:
-            legal_inputs = self._legal_inputs
-
-        for k in list(param.keys()):
-
-            if k not in legal_inputs:
-                unsupported_parameters.add(k)
+    def _set_internal_properties(self, argument_spec=None, module_parameters=None):
+        if argument_spec is None:
+            argument_spec = self.argument_spec
+        if module_parameters is None:
+            module_parameters = self.params
 
         for k in PASS_VARS:
             # handle setting internal properties from internal ansible vars
             param_key = '_ansible_%s' % k
-            if param_key in param:
+            if param_key in module_parameters:
                 if k in PASS_BOOLS:
-                    setattr(self, PASS_VARS[k][0], self.boolean(param[param_key]))
+                    setattr(self, PASS_VARS[k][0], self.boolean(module_parameters[param_key]))
                 else:
-                    setattr(self, PASS_VARS[k][0], param[param_key])
+                    setattr(self, PASS_VARS[k][0], module_parameters[param_key])
 
                 # clean up internal top level params:
                 if param_key in self.params:
@@ -1558,6 +1547,17 @@ class AnsibleModule(object):
                 # use defaults if not already set
                 if not hasattr(self, PASS_VARS[k][0]):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
+
+    def _check_arguments(self, spec=None, param=None, legal_inputs=None):
+        unsupported_parameters = set()
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        if legal_inputs is None:
+            legal_inputs = self._legal_inputs
+
+        unsupported_parameters = get_unsupported_parameters(spec, param, legal_inputs)
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
@@ -1571,6 +1571,7 @@ class AnsibleModule(object):
                     supported_parameters.append(key)
             msg += " Supported parameters include: %s" % (', '.join(supported_parameters))
             self.fail_json(msg=msg)
+
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
@@ -1817,6 +1818,7 @@ class AnsibleModule(object):
 
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
+                    self._set_internal_properties(spec, param)
                     self._check_arguments(spec, param, options_legal_inputs)
 
                     # check exclusive early
@@ -1842,20 +1844,13 @@ class AnsibleModule(object):
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
-        if not callable(wanted):
-            if wanted is None:
-                # Mostly we want to default to str.
-                # For values set to None explicitly, return None instead as
-                # that allows a user to unset a parameter
-                wanted = 'str'
-            try:
-                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-            except KeyError:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+        # Use the private method for 'str' type to handle the string conversion warning.
+        if wanted == 'str':
+            type_checker, wanted = self._check_type_str, 'str'
         else:
-            # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
-            type_checker = wanted
-            wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+            type_checker, wanted = get_type_validator(wanted)
+        if type_checker is None:
+            self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
         return type_checker, wanted
 
@@ -2374,8 +2369,7 @@ class AnsibleModule(object):
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)),
-                               exception=traceback.format_exc())
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
             else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
@@ -2385,14 +2379,13 @@ class AnsibleModule(object):
                 error_msg = None
                 tmp_dest_name = None
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp',
-                                                                  dir=b_dest_dir, suffix=b_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
                 except TypeError:
                     # We expect that this is happening because python3.4.x and
-                    # below can't handle byte strings in mkstemp().  Traceback
-                    # would end in something like:
+                    # below can't handle byte strings in mkstemp().
+                    # Traceback would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
                     error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
@@ -2436,11 +2429,12 @@ class AnsibleModule(object):
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
                                     self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)),
-                                                   exception=traceback.format_exc())
+                                                       (src, dest, b_tmp_dest_name, to_native(e)), exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
-                            self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)),
-                                           exception=traceback.format_exc())
+                            if unsafe_writes:
+                                self._unsafe_writes(b_src, b_dest)
+                            else:
+                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
                     finally:
                         self.cleanup(b_tmp_dest_name)
 
@@ -2521,7 +2515,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2572,6 +2566,9 @@ class AnsibleModule(object):
             after ``Popen`` object will be created
             but before communicating to the process.
             (``Popen`` object will be passed to callback as a first argument)
+        :kw ignore_invalid_cwd: This flag indicates whether an invalid ``cwd``
+            (non-existent or not a directory) should be ignored or should raise
+            an exception.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2646,8 +2643,12 @@ class AnsibleModule(object):
                 old_env_vals[key] = os.environ.get(key, None)
                 os.environ[key] = val
         if path_prefix:
-            old_env_vals['PATH'] = os.environ['PATH']
-            os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
+            path = os.environ.get('PATH', '')
+            old_env_vals['PATH'] = path
+            if path:
+                os.environ['PATH'] = "%s:%s" % (path_prefix, path)
+            else:
+                os.environ['PATH'] = path_prefix
 
         # If using test-module.py and explode, the remote lib path will resemble:
         #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
@@ -2685,14 +2686,17 @@ class AnsibleModule(object):
         prev_dir = os.getcwd()
 
         # make sure we're in the right working directory
-        if cwd and os.path.isdir(cwd):
-            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
-            kwargs['cwd'] = cwd
-            try:
-                os.chdir(cwd)
-            except (OSError, IOError) as e:
-                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)),
-                               exception=traceback.format_exc())
+        if cwd:
+            if os.path.isdir(cwd):
+                cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
+                kwargs['cwd'] = cwd
+                try:
+                    os.chdir(cwd)
+                except (OSError, IOError) as e:
+                    self.fail_json(rc=e.errno, msg="Could not chdir to %s, %s" % (cwd, to_native(e)),
+                                   exception=traceback.format_exc())
+            elif not ignore_invalid_cwd:
+                self.fail_json(msg="Provided cwd is not a valid directory: %s" % cwd)
 
         old_umask = None
         if umask:

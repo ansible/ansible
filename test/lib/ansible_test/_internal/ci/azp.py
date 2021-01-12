@@ -151,8 +151,14 @@ class AzurePipelinesAuthHelper(CryptographyAuthHelper):
     """
     def publish_public_key(self, public_key_pem):  # type: (str) -> None
         """Publish the given public key."""
+        try:
+            agent_temp_directory = os.environ['AGENT_TEMPDIRECTORY']
+        except KeyError as ex:
+            raise MissingEnvironmentVariable(name=ex.args[0])
+
         # the temporary file cannot be deleted because we do not know when the agent has processed it
-        with tempfile.NamedTemporaryFile(prefix='public-key-', suffix='.pem', delete=False) as public_key_file:
+        # placing the file in the agent's temp directory allows it to be picked up when the job is running in a container
+        with tempfile.NamedTemporaryFile(prefix='public-key-', suffix='.pem', delete=False, dir=agent_temp_directory) as public_key_file:
             public_key_file.write(to_bytes(public_key_pem))
             public_key_file.flush()
 
@@ -202,10 +208,10 @@ class AzurePipelinesChanges:
         if self.base_commit:
             self.base_commit = self.git.run_git(['rev-parse', self.base_commit]).strip()
 
-            # <rev1>...<rev2>
-            # Include commits that are reachable from <rev2> but exclude those that are reachable from <rev1>.
-            # see: https://git-scm.com/docs/gitrevisions
-            dot_range = '%s..%s' % (self.base_commit, self.commit)
+            # <commit>...<commit>
+            # This form is to view the changes on the branch containing and up to the second <commit>, starting at a common ancestor of both <commit>.
+            # see: https://git-scm.com/docs/git-diff
+            dot_range = '%s...%s' % (self.base_commit, self.commit)
 
             self.paths = sorted(self.git.get_diff_names([dot_range]))
             self.diff = self.git.get_diff([dot_range])

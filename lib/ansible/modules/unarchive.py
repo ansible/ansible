@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 ---
 module: unarchive
 version_added: '1.4'
-short_description: Unpacks an archive after (optionally) copying it from the local machine.
+short_description: Unpacks an archive after (optionally) copying it from the local machine
 description:
      - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
@@ -39,7 +39,7 @@ options:
     required: true
   copy:
     description:
-      - If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine.
+      - If true, the file is copied from local controller to the managed (remote) node, otherwise, the plugin will look for src archive on the managed machine.
       - This option has been deprecated in favor of C(remote_src).
       - This option is mutually exclusive with C(remote_src).
     type: bool
@@ -58,9 +58,20 @@ options:
   exclude:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
+      - Mutually exclusive with C(include).
     type: list
+    default: []
     elements: str
     version_added: "2.1"
+  include:
+    description:
+      - List of directory and file entries that you would like to extract from the archive. Only
+        files listed here will be extracted.
+      - Mutually exclusive with C(exclude).
+    type: list
+    default: []
+    elements: str
+    version_added: "2.11"
   keep_newer:
     description:
       - Do not replace existing files that are newer than files from the archive.
@@ -107,6 +118,7 @@ notes:
       are not touched. This is the same behavior as a normal archive extraction.
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
+    - Supports C(check_mode).
 seealso:
 - module: community.general.archive
 - module: community.general.iso_extract
@@ -116,29 +128,89 @@ author: Michael DeHaan
 
 EXAMPLES = r'''
 - name: Extract foo.tgz into /var/lib/foo
-  unarchive:
+  ansible.builtin.unarchive:
     src: foo.tgz
     dest: /var/lib/foo
 
 - name: Unarchive a file that is already on the remote machine
-  unarchive:
+  ansible.builtin.unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
     remote_src: yes
 
 - name: Unarchive a file that needs to be downloaded (added in 2.0)
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
 
 - name: Unarchive a file with extra options
-  unarchive:
+  ansible.builtin.unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
     extra_opts:
     - --transform
     - s/^xxx/yyy/
+'''
+
+RETURN = r'''
+dest:
+  description: Path to the destination directory.
+  returned: always
+  type: str
+  sample: /opt/software
+files:
+  description: List of all the files in the archive.
+  returned: When I(list_files) is True
+  type: list
+  sample: '["file1", "file2"]'
+gid:
+  description: Numerical ID of the group that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
+group:
+  description: Name of the group that owns the destination directory.
+  returned: always
+  type: str
+  sample: "librarians"
+handler:
+  description: Archive software handler used to extract and decompress the archive.
+  returned: always
+  type: str
+  sample: "TgzArchive"
+mode:
+  description: String that represents the octal permissions of the destination directory.
+  returned: always
+  type: str
+  sample: "0755"
+owner:
+  description: Name of the user that owns the destination directory.
+  returned: always
+  type: str
+  sample: "paul"
+size:
+  description: The size of destination directory in bytes. Does not include the size of files or subdirectories contained within.
+  returned: always
+  type: int
+  sample: 36
+src:
+  description:
+    - The source archive's path.
+    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+  returned: always
+  type: str
+  sample: "/home/paul/test.tar.gz"
+state:
+  description: State of the destination. Effectively always "directory".
+  returned: always
+  type: str
+  sample: "directory"
+uid:
+  description: Numerical ID of the user that owns the destination directory.
+  returned: always
+  type: int
+  sample: 1000
 '''
 
 import binascii
@@ -204,6 +276,7 @@ class ZipArchive(object):
         self.module = module
         self.excludes = module.params['exclude']
         self.includes = []
+        self.include_files = self.module.params['include']
         self.cmd_path = self.module.get_bin_path('unzip')
         self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
         self._files_in_archive = []
@@ -277,14 +350,19 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
-                    exclude_flag = False
-                    if self.excludes:
-                        for exclude in self.excludes:
-                            if fnmatch.fnmatch(member, exclude):
-                                exclude_flag = True
-                                break
-                    if not exclude_flag:
-                        self._files_in_archive.append(to_native(member))
+                    if self.include_files:
+                        for include in self.include_files:
+                            if fnmatch.fnmatch(member, include):
+                                self._files_in_archive.append(to_native(member))
+                    else:
+                        exclude_flag = False
+                        if self.excludes:
+                            for exclude in self.excludes:
+                                if not fnmatch.fnmatch(member, exclude):
+                                    exclude_flag = True
+                                    break
+                        if not exclude_flag:
+                            self._files_in_archive.append(to_native(member))
             except Exception:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
@@ -297,6 +375,8 @@ class ZipArchive(object):
         cmd = [self.zipinfocmd_path, '-T', '-s', self.src]
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
+        if self.include_files:
+            cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd)
 
         old_out = out
@@ -605,6 +685,8 @@ class ZipArchive(object):
         # cmd.extend(map(shell_escape, self.includes))
         if self.excludes:
             cmd.extend(['-x'] + self.excludes)
+        if self.include_files:
+            cmd.extend(self.include_files)
         cmd.extend(['-d', self.b_dest])
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
@@ -630,6 +712,7 @@ class TgzArchive(object):
         if self.module.check_mode:
             self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
+        self.include_files = self.module.params['include']
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
         self.cmd_path = self.module.get_bin_path('gtar', None)
         if not self.cmd_path:
@@ -666,8 +749,10 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        if self.include_files:
+            cmd.extend(self.include_files)
 
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -709,6 +794,8 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
+        if self.include_files:
+            cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
         # Check whether the differences are in something that we're
@@ -760,6 +847,8 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
+        if self.include_files:
+            cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
@@ -827,12 +916,14 @@ def main():
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
             exclude=dict(type='list', elements='str', default=[]),
+            include=dict(type='list', elements='str', default=[]),
             extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
         supports_check_mode=True,
+        mutually_exclusive=[('include', 'exclude')],
     )
 
     src = module.params['src']

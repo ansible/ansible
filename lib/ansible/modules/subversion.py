@@ -18,8 +18,8 @@ version_added: "0.7"
 author:
 - Dane Summers (@dsummersl) <njharman@gmail.com>
 notes:
-   - Requires I(svn) to be installed on the client.
    - This module does not handle externals.
+   - Supports C(check_mode).
 options:
   repo:
     description:
@@ -47,7 +47,7 @@ options:
   in_place:
     description:
       - If the directory exists, then the working copy will be checked-out over-the-top using
-        svn checkout --force; if force is specified then existing files with different content are reverted
+        svn checkout --force; if force is specified then existing files with different content are reverted.
     type: bool
     default: "no"
     version_added: "2.6"
@@ -105,23 +105,25 @@ requirements:
 
 EXAMPLES = '''
 - name: Checkout subversion repository to specified folder
-  subversion:
+  ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
 
 - name: Export subversion directory to folder
-  subversion:
+  ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
     export: yes
 
 - name: Get information about the repository whether or not it has already been cloned locally
-- subversion:
+  ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
     checkout: no
     update: no
 '''
+
+RETURN = r'''#'''
 
 import os
 import re

@@ -21,9 +21,9 @@ Enabling vars plugins
 
 You can activate a custom vars plugin by either dropping it into a ``vars_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
-Starting in Ansible 2.10, vars plugins can require whitelisting rather than running by default. To enable a plugin that requires whitelisting set ``vars_plugins_enabled`` in the ``defaults`` section of :ref:`ansible.cfg <ansible_configuration_settings>` or set the ``ANSIBLE_VARS_ENABLED`` environment variable to the list of vars plugins you want to execute. By default, the :ref:`host_group_vars <host_group_vars_vars>` plugin shipped with Ansible is whitelisted.
+Most vars plugins are disabled by default. To enable a vars plugin, set ``vars_plugins_enabled`` in the ``defaults`` section of :ref:`ansible.cfg <ansible_configuration_settings>` or set the ``ANSIBLE_VARS_ENABLED`` environment variable to the list of vars plugins you want to execute. By default, the :ref:`host_group_vars <host_group_vars_vars>` plugin shipped with Ansible is enabled.
 
-Starting in Ansible 2.10, you can use vars plugins in collections. All vars plugins in collections require whitelisting and need to use the fully qualified collection name in the format ``namespace.collection_name.vars_plugin_name``.
+Starting in Ansible 2.10, you can use vars plugins in collections. All vars plugins in collections must be explicitly enabled and must use the fully qualified collection name in the format ``namespace.collection_name.vars_plugin_name``.
 
 .. code-block:: yaml
 

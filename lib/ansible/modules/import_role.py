@@ -17,6 +17,7 @@ description:
     between other tasks of the play.
   - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
     you want the opposite behavior, use M(ansible.builtin.include_role) instead.
+  - Does not work in handlers.
 version_added: '2.4'
 options:
   name:
@@ -52,7 +53,7 @@ options:
     version_added: '2.8'
 notes:
   - Handlers are made available to the whole play.
-  - Since Ansible 2.7 variables defined in C(vars) and C(defaults) for the role are exposed at playbook parsing time.
+  - Since Ansible 2.7 variables defined in C(vars) and C(defaults) for the role are exposed to the play at playbook parsing time.
     Due to this, these variables will be accessible to roles and tasks executed before the location of the
     M(ansible.builtin.import_role) task.
   - Unlike M(ansible.builtin.include_role) variable exposure is not configurable, and will always be exposed.

@@ -24,3 +24,12 @@
 - assert:
     that:
       - "result.data == {'results': [{'i_a_m_user': 'UserName', 'tags': {'do_convert': 'DoNotConvert'}}], 'tags': {'DoNotConvert': 'DoNotConvert'}}"
+
+- name: Test converting dict keys in lists within lists
+  convert_snake_case:
+    data: {'Results': [{'Changes': [{'DoConvert': 'DoNotConvert', 'Details': ['DoNotConvert']}]}]}
+  register: result
+
+- assert:
+    that:
+      - "result.data == {'results': [{'changes': [{'do_convert': 'DoNotConvert', 'details': ['DoNotConvert']}]}]}"

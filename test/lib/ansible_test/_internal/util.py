@@ -364,6 +364,7 @@ def common_environment():
 
     optional = (
         'HTTPTESTER',
+        'KRB5_PASSWORD',
         'LD_LIBRARY_PATH',
         'SSH_AUTH_SOCK',
         # MacOS High Sierra Compatibility
@@ -770,12 +771,12 @@ def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
     return sorted(dir_names)
 
 
-def str_to_version(version):  # type: (str) -> t.Tuple[int]
+def str_to_version(version):  # type: (str) -> t.Tuple[int, ...]
     """Return a version tuple from a version string."""
     return tuple(int(n) for n in version.split('.'))
 
 
-def version_to_str(version):  # type: (t.Tuple[int]) -> str
+def version_to_str(version):  # type: (t.Tuple[int, ...]) -> str
     """Return a version string from a version tuple."""
     return '.'.join(str(n) for n in version)
 

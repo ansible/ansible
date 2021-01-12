@@ -25,13 +25,13 @@ ansible-config view -c ./no-extension 2> err2.txt || grep -q 'Unsupported config
 rm -f err*.txt
 
 # test setting playbook_dir via envvar
-ANSIBLE_PLAYBOOK_DIR=/tmp ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+ANSIBLE_PLAYBOOK_DIR=/doesnotexist/tmp ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/doesnotexist/tmp"'
 
 # test setting playbook_dir via cmdline
-ansible localhost -m debug -a var=playbook_dir --playbook-dir=/tmp | grep '"playbook_dir": "/tmp"'
+ansible localhost -m debug -a var=playbook_dir --playbook-dir=/doesnotexist/tmp | grep '"playbook_dir": "/doesnotexist/tmp"'
 
 # test setting playbook dir via ansible.cfg
-env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/doesnotexist/tmp"'
 
 # test adhoc callback triggers
 ANSIBLE_STDOUT_CALLBACK=callback_debug ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible --playbook-dir . testhost -i ../../inventory -m ping | grep -E '^v2_' | diff -u adhoc-callback.stdout -

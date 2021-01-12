@@ -58,11 +58,13 @@ options:
         version_added: "2.8"
     scope:
         description:
-            - run systemctl within a given service manager scope, either as the default system scope (system),
-              the current user's scope (user), or the scope of all users (global).
-            - "For systemd to work with 'user', the executing user must have its own instance of dbus started (systemd requirement).
-              The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
+            - Run systemctl within a given service manager scope, either as the default system scope C(system),
+              the current user's scope C(user), or the scope of all users C(global).
+            - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
+            - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
+            - The user must have access, normally given via setting the ``XDG_RUNTIME_DIR`` variable, see example below.
+
         type: str
         choices: [ system, user, global ]
         default: system
@@ -79,56 +81,65 @@ notes:
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
     - Before 2.4 you always required 'name'.
     - Globs are not supported in name, i.e ``postgres*.service``.
+    - Supports C(check_mode).
 requirements:
     - A system managed by systemd.
 '''
 
 EXAMPLES = '''
 - name: Make sure a service is running
-  systemd:
+  ansible.builtin.systemd:
     state: started
     name: httpd
 
 - name: Stop service cron on debian, if running
-  systemd:
+  ansible.builtin.systemd:
     name: cron
     state: stopped
 
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-  systemd:
+  ansible.builtin.systemd:
     state: restarted
     daemon_reload: yes
     name: crond
 
 - name: Reload service httpd, in all cases
-  systemd:
+  ansible.builtin.systemd:
     name: httpd
     state: reloaded
 
 - name: Enable service httpd and ensure it is not masked
-  systemd:
+  ansible.builtin.systemd:
     name: httpd
     enabled: yes
     masked: no
 
 - name: Enable a timer for dnf-automatic
-  systemd:
+  ansible.builtin.systemd:
     name: dnf-automatic.timer
     state: started
     enabled: yes
 
 - name: Just force systemd to reread configs (2.4 and above)
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: yes
 
 - name: Just force systemd to re-execute itself (2.8 and above)
-  systemd:
+  ansible.builtin.systemd:
     daemon_reexec: yes
+
+- name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
+  ansible.builtin.systemd:
+    name: myservice
+    state: started
+    scope: user
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
 '''
 
 RETURN = '''
 status:
-    description: A dictionary with the key=value pairs returned from `systemctl show`
+    description: A dictionary with the key=value pairs returned from `systemctl show`.
     returned: success
     type: complex
     sample: {
@@ -400,6 +411,19 @@ def main():
                 # Check for loading error
                 if is_systemd and not is_masked and 'LoadError' in result['status']:
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
+
+        # Workaround for https://github.com/ansible/ansible/issues/71528
+        elif err and rc == 1 and 'Failed to parse bus message' in err:
+            result['status'] = parse_systemctl_show(to_native(out).split('\n'))
+
+            unit_base, sep, suffix = unit.partition('@')
+            unit_search = '{unit_base}{sep}'.format(unit_base=unit_base, sep=sep)
+            (rc, out, err) = module.run_command("{systemctl} list-unit-files '{unit_search}*'".format(systemctl=systemctl, unit_search=unit_search))
+            is_systemd = unit_search in out
+
+            (rc, out, err) = module.run_command("{systemctl} is-active '{unit}'".format(systemctl=systemctl, unit=unit))
+            result['status']['ActiveState'] = out.rstrip('\n')
+
         else:
             # list taken from man systemctl(1) for systemd 244
             valid_enabled_states = [

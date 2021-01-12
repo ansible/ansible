@@ -36,9 +36,9 @@ options:
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
+      - Default is not to update the cache.
     aliases: [ update-cache ]
     type: bool
-    default: 'no'
   update_cache_retries:
     description:
       - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -53,7 +53,7 @@ options:
     version_added: '2.10'
   cache_valid_time:
     description:
-      - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
+      - Update the apt cache if it is older than the I(cache_valid_time). This option is set in seconds.
       - As of Ansible 2.4, if explicitly set, this sets I(update_cache=yes).
     type: int
     default: 0
@@ -133,7 +133,7 @@ options:
     description:
       - Force the exit code of /usr/sbin/policy-rc.d.
       - For example, if I(policy_rc_d=101) the installed package will not trigger a service start.
-      - If /usr/sbin/policy-rc.d already exist, it is backed up and restored after the package installation.
+      - If /usr/sbin/policy-rc.d already exists, it is backed up and restored after the package installation.
       - If C(null), the /usr/sbin/policy-rc.d isn't created/changed.
     type: int
     default: null
@@ -268,6 +268,17 @@ EXAMPLES = '''
   apt:
     autoremove: yes
 
+# Sometimes apt tasks fail because apt is locked by an autoupdate or by a race condition on a thread.
+# To check for a lock file before executing, and keep trying until the lock file is released:
+- name: Install packages only when the apt process is not locked
+  apt:
+    name: foo
+    state: present
+  register: apt_action
+  retries: 100
+  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
+
 '''
 
 RETURN = '''
@@ -369,7 +380,7 @@ class PolicyRcD(object):
         if self.m.params['policy_rc_d'] is None:
             return
 
-        # if the /usr/sbin/policy-rc.d already exist
+        # if the /usr/sbin/policy-rc.d already exists
         # we will back it up during package installation
         # then restore it
         if os.path.exists('/usr/sbin/policy-rc.d'):
@@ -379,21 +390,21 @@ class PolicyRcD(object):
 
     def __enter__(self):
         """
-        This method will be call when we enter the context, before we call `apt-get …`
+        This method will be called when we enter the context, before we call `apt-get …`
         """
 
         # if policy_rc_d is null then we don't need to modify policy-rc.d
         if self.m.params['policy_rc_d'] is None:
             return
 
-        # if the /usr/sbin/policy-rc.d already exist we back it up
+        # if the /usr/sbin/policy-rc.d already exists we back it up
         if self.backup_dir:
             try:
                 shutil.move('/usr/sbin/policy-rc.d', self.backup_dir)
             except Exception:
                 self.m.fail_json(msg="Fail to move /usr/sbin/policy-rc.d to %s" % self.backup_dir)
 
-        # we write /usr/sbin/policy-rc.d so it always exit with code policy_rc_d
+        # we write /usr/sbin/policy-rc.d so it always exits with code policy_rc_d
         try:
             with open('/usr/sbin/policy-rc.d', 'w') as policy_rc_d:
                 policy_rc_d.write('#!/bin/sh\nexit %d\n' % self.m.params['policy_rc_d'])
@@ -404,7 +415,7 @@ class PolicyRcD(object):
 
     def __exit__(self, type, value, traceback):
         """
-        This method will be call when we enter the context, before we call `apt-get …`
+        This method will be called when we enter the context, before we call `apt-get …`
         """
 
         # if policy_rc_d is null then we don't need to modify policy-rc.d
@@ -422,7 +433,7 @@ class PolicyRcD(object):
                 self.m.fail_json(msg="Fail to move back %s to /usr/sbin/policy-rc.d"
                                      % os.path.join(self.backup_dir, 'policy-rc.d'))
         else:
-            # if they wheren't any /usr/sbin/policy-rc.d file before the call to __enter__
+            # if there wasn't a /usr/sbin/policy-rc.d file before the call to __enter__
             # we just remove the file
             try:
                 os.remove('/usr/sbin/policy-rc.d')

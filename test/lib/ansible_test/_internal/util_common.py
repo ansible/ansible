@@ -153,7 +153,7 @@ def get_parameterized_completion(cache, name):
         if data_context().content.collection:
             context = 'collection'
         else:
-            context = 'ansible-base'
+            context = 'ansible-core'
 
         images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
 

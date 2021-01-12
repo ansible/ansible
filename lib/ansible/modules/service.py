@@ -79,8 +79,9 @@ options:
         version_added: 2.2
 notes:
     - For AIX, group subsystem names can be used.
+    - Supports C(check_mode).
 seealso:
-- module: ansible.windows.win_service
+    - module: ansible.windows.win_service
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -88,42 +89,44 @@ author:
 
 EXAMPLES = r'''
 - name: Start service httpd, if not started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: started
 
 - name: Stop service httpd, if started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: stopped
 
 - name: Restart service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: restarted
 
 - name: Reload service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: reloaded
 
 - name: Enable service httpd, and not touch the state
-  service:
+  ansible.builtin.service:
     name: httpd
     enabled: yes
 
 - name: Start service foo, based on running process /usr/bin/foo
-  service:
+  ansible.builtin.service:
     name: foo
     pattern: /usr/bin/foo
     state: started
 
 - name: Restart network service for interface eth0
-  service:
+  ansible.builtin.service:
     name: network
     state: restarted
     args: eth0
 '''
+
+RETURN = r'''#'''
 
 import glob
 import json
@@ -132,7 +135,6 @@ import platform
 import re
 import select
 import shlex
-import string
 import subprocess
 import tempfile
 import time
@@ -416,7 +418,7 @@ class Service(object):
 
             # Write out the contents of the list into our temporary file.
             for rcline in new_rc_conf:
-                os.write(TMP_RCCONF, rcline)
+                os.write(TMP_RCCONF, rcline.encode())
 
             # Close temporary file.
             os.close(TMP_RCCONF)
@@ -1113,7 +1115,7 @@ class DragonFlyBsdService(FreeBsdService):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+        self.rcconf_key = "%s" % self.name.replace("-", "_")
 
         return self.service_enable_rcconf()
 
@@ -1271,7 +1273,7 @@ class NetBsdService(Service):
     """
     This is the NetBSD Service manipulation class - it uses the /etc/rc.conf
     file for controlling services started at boot, check status and perform
-    direct service manipulation. Init scripts in /etc/rcd are used for
+    direct service manipulation. Init scripts in /etc/rc.d are used for
     controlling services (start/stop) as well as for controlling the current
     state.
     """
@@ -1301,7 +1303,7 @@ class NetBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+        self.rcconf_key = "%s" % self.name.replace("-", "_")
 
         return self.service_enable_rcconf()
 

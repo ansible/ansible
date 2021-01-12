@@ -1,0 +1,36 @@
+- name: ensure no templating unsafe
+  block:
+  - name: check unsafe string
+    assert:
+      that:
+        - regstr != resolved
+        - "'Fail' not in regstr"
+        - "'{' in regstr"
+        - "'}' in regstr"
+    vars:
+      regstr: !unsafe b{{nottemplate}}
+
+  - name: check unsafe string in list
+    assert:
+      that:
+        - ulist[0] != resolved
+        - "'Fail' not in ulist[0]"
+        - "'{' in ulist[0]"
+        - "'}' in ulist[0]"
+    vars:
+      ulist: !unsafe [ 'b{{nottemplate}}', 'c', 'd']
+
+  - name: check unsafe string in dict
+    assert:
+      that:
+        - udict['a'] != resolved
+        - "'Fail' not in udict['a']"
+        - "'{' in udict['a']"
+        - "'}' in udict['a']"
+    vars:
+      udict: !unsafe
+        a: b{{nottemplate}}
+        c: d
+  vars:
+    nottemplate: FAIL
+    resolved: 'b{{nottemplate}}'

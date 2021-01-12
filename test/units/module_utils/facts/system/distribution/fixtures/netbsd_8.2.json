@@ -1,0 +1,25 @@
+{
+    "name": "NetBSD 8.2 (GENERIC) #0",
+    "input": {},
+    "platform.system": "NetBSD",
+    "platform.release": "8.2",
+    "command_output": {
+        "/sbin/sysctl -n kern.version": "NetBSD 8.2 (GENERIC) #0: Tue Mar 31 05:08:40 UTC 2020\n        mkrepro@mkrepro.NetBSD.org:/usr/src/sys/arch/amd64/compile/GENERIC"
+    },
+    "distro": {
+        "codename": "",
+        "id": "netbsd",
+        "name": "NetBSD",
+        "version": "8.2",
+        "version_best": "8.2",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "NetBSD",
+        "distribution_major_version": "8",
+        "distribution_release": "8.2",
+        "os_family": "NetBSD",
+        "distribution_version": "8.2"
+    }
+}

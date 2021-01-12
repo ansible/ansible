@@ -101,3 +101,14 @@ Red Hat Ansible `Tower <https://www.ansible.com/products/tower>`_ is a UI, Serve
 The Red Hat Ansible Automation subscription contains support for Ansible, Ansible Tower, Ansible Automation for Networking, and more.
 
 If you have a question about Ansible Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC channel or the general project mailing list.
+
+The Bullhorn
+============
+
+**The Bullhorn** is our newsletter for the Ansible developer community. 
+If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues.
+
+Read past issues `here <https://github.com/ansible/community/wiki/News>`_.
+
+`Subscribe <http://eepurl.com/gZmiEP>`_ to receive it.
+

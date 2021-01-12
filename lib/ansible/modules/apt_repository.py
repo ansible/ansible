@@ -20,6 +20,7 @@ description:
 notes:
     - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
+    - Supports C(check_mode).
 options:
     repo:
         description:
@@ -73,9 +74,20 @@ options:
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
-              Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+              Should usually only be set when working with a PPA on
+              a non-Ubuntu target (for example, Debian or Mint).
         type: str
         version_added: '2.3'
+    install_python_apt:
+        description:
+            - Whether to automatically try to install the Python apt library or not, if it is not already installed.
+              Without this library, the module does not work.
+            - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
+            - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
+               the system Python, set I(install_python_apt=false) and ensure that the Python apt library
+               for your Python version is installed some other way.
+        type: bool
+        default: true
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
@@ -86,35 +98,37 @@ requirements:
 
 EXAMPLES = '''
 - name: Add specified repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Add specified repository into sources list using specified filename
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
 - name: Add source repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Remove specified repository from sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
 - name: Add nginx stable repository from PPA and install its signing key on Ubuntu target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: ppa:nginx/stable
 
 - name: Add nginx stable repository from PPA and install its signing key on Debian target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
 '''
+
+RETURN = '''#'''
 
 import glob
 import json

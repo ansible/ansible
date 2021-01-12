@@ -68,14 +68,18 @@ options:
     - The permissions of the destination file or directory.
     - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
-      (like C(0644) or C(01777))or quote it (like C('644') or C('1777')) so Ansible receives a string
+      (like C(0644) or C(01777)) or quote it (like C('644') or C('1777')) so Ansible receives a string
       and can do its own conversion from string into number. Giving Ansible a number without following
       one of these rules will end up with a decimal number which will have unexpected results.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
     - When doing a recursive copy, see also C(directory_mode).
-    type: path
+    - If C(mode) is not specified and the destination file B(does not) exist, the default C(umask) on the system will be used
+      when setting the mode for the newly created file.
+    - If C(mode) is not specified and the destination file B(does) exist, the mode of the existing file will be used.
+    - Specifying C(mode) is the best way to ensure files are created with the correct permissions.
+      See CVE-2020-1736 for further details.
   directory_mode:
     description:
     - When doing a recursive copy set the mode for the directories.
@@ -86,10 +90,11 @@ options:
   remote_src:
     description:
     - Influence whether C(src) needs to be transferred or already is present remotely.
-    - If C(no), it will search for C(src) at originating/master machine.
-    - If C(yes) it will go to the remote/target machine for the C(src).
+    - If C(no), it will search for C(src) on the controller node.
+    - If C(yes) it will search for C(src) on the managed (remote) node.
     - C(remote_src) supports recursive copying as of version 2.8.
     - C(remote_src) only works with C(mode=preserve) as of version 2.6.
+    - Autodecryption of files does not work when C(remote_src=yes).
     type: bool
     default: no
     version_added: '2.0'
@@ -118,6 +123,7 @@ extends_documentation_fragment:
 - validate
 notes:
 - The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+- Supports C(check_mode).
 seealso:
 - module: ansible.builtin.assemble
 - module: ansible.builtin.fetch
@@ -132,7 +138,7 @@ author:
 
 EXAMPLES = r'''
 - name: Copy file with owner and permissions
-  copy:
+  ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
@@ -140,7 +146,7 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Copy file with owner and permission, using symbolic representation
-  copy:
+  ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
@@ -148,7 +154,7 @@ EXAMPLES = r'''
     mode: u=rw,g=r,o=r
 
 - name: Another symbolic mode example, adding some permissions and removing others
-  copy:
+  ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
@@ -156,7 +162,7 @@ EXAMPLES = r'''
     mode: u+rw,g-wx,o-rwx
 
 - name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
-  copy:
+  ansible.builtin.copy:
     src: /mine/ntp.conf
     dest: /etc/ntp.conf
     owner: root
@@ -165,31 +171,31 @@ EXAMPLES = r'''
     backup: yes
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
-  copy:
+  ansible.builtin.copy:
     src: /mine/sudoers
     dest: /etc/sudoers
     validate: /usr/sbin/visudo -csf %s
 
 - name: Copy a "sudoers" file on the remote machine for editing
-  copy:
+  ansible.builtin.copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
     remote_src: yes
     validate: /usr/sbin/visudo -csf %s
 
 - name: Copy using inline content
-  copy:
+  ansible.builtin.copy:
     content: '# This file was moved to /etc/other.conf'
     dest: /etc/mine.conf
 
 - name: If follow=yes, /path/to/file will be overwritten by contents of foo.conf
-  copy:
+  ansible.builtin.copy:
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: yes
 
 - name: If follow=no, /path/to/link will become a file and be overwritten by contents of foo.conf
-  copy:
+  ansible.builtin.copy:
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no
@@ -197,62 +203,62 @@ EXAMPLES = r'''
 
 RETURN = r'''
 dest:
-    description: Destination file/path
+    description: Destination file/path.
     returned: success
     type: str
     sample: /path/to/file.txt
 src:
-    description: Source file used for the copy on the target machine
+    description: Source file used for the copy on the target machine.
     returned: changed
     type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 md5sum:
-    description: MD5 checksum of the file after running copy
+    description: MD5 checksum of the file after running copy.
     returned: when supported
     type: str
     sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
-    description: SHA1 checksum of the file after running copy
+    description: SHA1 checksum of the file after running copy.
     returned: success
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 backup_file:
-    description: Name of backup file created
+    description: Name of backup file created.
     returned: changed and if backup=yes
     type: str
     sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
-    description: Group id of the file, after execution
+    description: Group id of the file, after execution.
     returned: success
     type: int
     sample: 100
 group:
-    description: Group of the file, after execution
+    description: Group of the file, after execution.
     returned: success
     type: str
     sample: httpd
 owner:
-    description: Owner of the file, after execution
+    description: Owner of the file, after execution.
     returned: success
     type: str
     sample: httpd
 uid:
-    description: Owner id of the file, after execution
+    description: Owner id of the file, after execution.
     returned: success
     type: int
     sample: 100
 mode:
-    description: Permissions of the target, after execution
+    description: Permissions of the target, after execution.
     returned: success
     type: str
     sample: 0644
 size:
-    description: Size of the target, after execution
+    description: Size of the target, after execution.
     returned: success
     type: int
     sample: 1220
 state:
-    description: State of the target, after execution
+    description: State of the target, after execution.
     returned: success
     type: str
     sample: file

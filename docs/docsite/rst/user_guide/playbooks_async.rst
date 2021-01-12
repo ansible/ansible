@@ -46,8 +46,8 @@ To avoid timeouts on a task, specify its maximum runtime and how frequently you 
 
       tasks:
 
-      - name: simulate long running op (15 sec), wait for up to 45 sec, poll every 5 sec
-        command: /bin/sleep 15
+      - name: Simulate long running op (15 sec), wait for up to 45 sec, poll every 5 sec
+        ansible.builtin.command: /bin/sleep 15
         async: 45
         poll: 5
 
@@ -76,8 +76,8 @@ To run a playbook task asynchronously::
 
       tasks:
 
-      - name: simulate long running op, allow to run for 45 sec, fire and forget
-        command: /bin/sleep 15
+      - name: Simulate long running op, allow to run for 45 sec, fire and forget
+        ansible.builtin.command: /bin/sleep 15
         async: 45
         poll: 0
 
@@ -85,19 +85,19 @@ To run a playbook task asynchronously::
    Do not specify a poll value of 0 with operations that require exclusive locks (such as yum transactions) if you expect to run other commands later in the playbook against those same resources.
 
 .. note::
-   Using a higher value for ``--forks`` will result in kicking off asynchronous tasks even faster.  This also increases the efficiency of polling.
+   Using a higher value for ``--forks`` will result in kicking off asynchronous tasks even faster. This also increases the efficiency of polling.
 
 If you need a synchronization point with an async task, you can register it to obtain its job ID and use the :ref:`async_status <async_status_module>` module to observe it in a later task. For example::
 
-      - name: 'YUM - async task'
-        yum:
+      - name: Run an async task
+        ansible.builtin.yum:
           name: docker-io
           state: present
         async: 1000
         poll: 0
         register: yum_sleeper
 
-      - name: 'YUM - check on async task'
+      - name: Check on an async task
         async_status:
           jid: "{{ yum_sleeper.ansible_job_id }}"
         register: job_result
@@ -131,7 +131,7 @@ To run multiple asynchronous tasks while limiting the number of tasks running co
     # execute_batch.yml
     #####################
     - name: Async sleeping for batched_items
-      command: sleep {{ async_item }}
+      ansible.builtin.command: sleep {{ async_item }}
       async: 45
       poll: 0
       loop: "{{ durations }}"

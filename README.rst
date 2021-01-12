@@ -95,12 +95,12 @@ GNU General Public License v3.0 or later
 
 See `COPYING <COPYING>`_ to see the full text.
 
-.. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
-   :target: https://pypi.org/project/ansible
+.. |PyPI version| image:: https://img.shields.io/pypi/v/ansible-core.svg
+   :target: https://pypi.org/project/ansible-core
 .. |Docs badge| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg
    :target: https://docs.ansible.com/ansible/latest/
-.. |Build Status| image:: https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=devel
-   :target: https://app.shippable.com/projects/573f79d02a8192902e20e34b
+.. |Build Status| image:: https://dev.azure.com/ansible/ansible/_apis/build/status/CI?branchName=devel
+   :target: https://dev.azure.com/ansible/ansible/_build/latest?definitionId=20&branchName=devel
 .. |Chat badge| image:: https://img.shields.io/badge/chat-IRC-brightgreen.svg
    :target: https://docs.ansible.com/ansible/latest/community/communication.html
 .. |Code Of Conduct| image:: https://img.shields.io/badge/code%20of%20conduct-Ansible-silver.svg

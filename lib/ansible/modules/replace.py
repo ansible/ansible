@@ -95,24 +95,25 @@ notes:
     previous incorrect behavior, you may be need to adjust your tasks.
     See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
+  - Supports C(check_mode).
 '''
 
 EXAMPLES = r'''
 - name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
-  replace:
+  ansible.builtin.replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
     replace: '\1new.host.name\2'
 
 - name: Replace after the expression till the end of the file (requires Ansible >= 2.4)
-  replace:
+  ansible.builtin.replace:
     path: /etc/apache2/sites-available/default.conf
     after: 'NameVirtualHost [*]'
     regexp: '^(.+)$'
     replace: '# \1'
 
 - name: Replace before the expression till the begin of the file (requires Ansible >= 2.4)
-  replace:
+  ansible.builtin.replace:
     path: /etc/apache2/sites-available/default.conf
     before: '# live site config'
     regexp: '^(.+)$'
@@ -121,7 +122,7 @@ EXAMPLES = r'''
 # Prior to Ansible 2.7.10, using before and after in combination did the opposite of what was intended.
 # see https://github.com/ansible/ansible/issues/31354 for details.
 - name: Replace between the expressions (requires Ansible >= 2.4)
-  replace:
+  ansible.builtin.replace:
     path: /etc/hosts
     after: '<VirtualHost [*]>'
     before: '</VirtualHost>'
@@ -129,7 +130,7 @@ EXAMPLES = r'''
     replace: '# \1'
 
 - name: Supports common file attributes
-  replace:
+  ansible.builtin.replace:
     path: /home/jdoe/.ssh/known_hosts
     regexp: '^old\.host\.name[^\n]*\n'
     owner: jdoe
@@ -137,33 +138,35 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Supports a validate command
-  replace:
+  ansible.builtin.replace:
     path: /etc/apache/ports
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
 
 - name: Short form task (in ansible 2+) necessitates backslash-escaped sequences
-  replace: path=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
+  ansible.builtin.replace: path=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
 
 - name: Long form task does not
-  replace:
+  ansible.builtin.replace:
     path: /etc/hosts
     regexp: '\b(localhost)(\d*)\b'
     replace: '\1\2.localdomain\2 \1\2'
 
 - name: Explicitly specifying positional matched groups in replacement
-  replace:
+  ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^(ListenAddress[ ]+)[^\n]+$'
     replace: '\g<1>0.0.0.0'
 
 - name: Explicitly specifying named matched groups
-  replace:
+  ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^(?P<dctv>ListenAddress[ ]+)(?P<host>[^\n]+)$'
     replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
 '''
+
+RETURN = r'''#'''
 
 import os
 import re

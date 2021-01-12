@@ -675,7 +675,7 @@ class StrategyBase:
 
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                        if original_task.action == 'include_vars':
+                        if original_task.action in C._ACTION_INCLUDE_VARS:
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
@@ -689,9 +689,10 @@ class StrategyBase:
                                 # we set BOTH fact and nonpersistent_facts (aka hostvar)
                                 # when fact is retrieved from cache in subsequent operations it will have the lower precedence,
                                 # but for playbook setting it the 'higher' precedence is kept
-                                if original_task.action != 'set_fact' or cacheable:
+                                is_set_fact = original_task.action in C._ACTION_SET_FACT
+                                if not is_set_fact or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
-                                if original_task.action == 'set_fact':
+                                if is_set_fact:
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
@@ -742,7 +743,7 @@ class StrategyBase:
 
             # If this is a role task, mark the parent role as being run (if
             # the task was ok or failed, but not skipped or unreachable)
-            if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
+            if original_task._role is not None and role_ran:  # TODO:  and original_task.action not in C._ACTION_INCLUDE_ROLE:?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
                 for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role.get_name()]):
@@ -1009,14 +1010,11 @@ class StrategyBase:
         notified_hosts += failed_hosts
 
         if len(notified_hosts) > 0:
-            saved_name = handler.name
-            handler.name = handler_name
             self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
-            handler.name = saved_name
 
         bypass_host_loop = False
         try:
-            action = plugin_loader.action_loader.get(handler.action, class_only=True)
+            action = plugin_loader.action_loader.get(handler.action, class_only=True, collection_list=handler.collections)
             if getattr(action, 'BYPASS_HOST_LOOP', False):
                 bypass_host_loop = True
         except KeyError:
@@ -1194,6 +1192,13 @@ class StrategyBase:
                 skip_reason += ", continuing execution for %s" % target_host.name
                 # TODO: Nix msg here? Left for historical reasons, but skip_reason exists now.
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
+        elif meta_action == 'role_complete':
+            # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
+            # How would this work with allow_duplicates??
+            if task.implicit:
+                if target_host.name in task._role._had_task_run:
+                    task._role._completed[target_host.name] = True
+                    msg = 'role_complete for %s' % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)

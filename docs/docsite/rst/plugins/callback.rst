@@ -30,11 +30,11 @@ You can activate a custom callback by either dropping it into a ``callback_plugi
 
 Plugins are loaded in alphanumeric order. For example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
-Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function. For example:
+Most callbacks shipped with Ansible are disabled by default and need to be enabled in your :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function. For example:
 
 .. code-block:: ini
 
-  #callback_whitelist = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
+  #callback_enabled = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
 
 Setting a callback plugin for ``ansible-playbook``
 --------------------------------------------------

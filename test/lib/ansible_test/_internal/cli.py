@@ -993,6 +993,9 @@ def add_extra_coverage_options(parser):
                         action='store_true',
                         help='generate empty report of all python/powershell source files')
 
+    parser.add_argument('--export',
+                        help='directory to export combined coverage files to')
+
 
 def add_httptester_options(parser, argparse):
     """
@@ -1003,7 +1006,7 @@ def add_httptester_options(parser, argparse):
 
     group.add_argument('--httptester',
                        metavar='IMAGE',
-                       default='quay.io/ansible/http-test-container:1.1.0',
+                       default='quay.io/ansible/http-test-container:1.3.0',
                        help='docker image to use for the httptester container')
 
     group.add_argument('--disable-httptester',
@@ -1014,6 +1017,9 @@ def add_httptester_options(parser, argparse):
 
     parser.add_argument('--inject-httptester',
                         action='store_true',
+                        help=argparse.SUPPRESS)  # internal use only
+
+    parser.add_argument('--httptester-krb5-password',
                         help=argparse.SUPPRESS)  # internal use only
 
 
@@ -1056,6 +1062,9 @@ def add_extra_docker_options(parser, integration=True):
     docker.add_argument('--docker-privileged',
                         action='store_true',
                         help='run docker container in privileged mode')
+
+    docker.add_argument('--docker-network',
+                        help='run using the specified docker network')
 
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
