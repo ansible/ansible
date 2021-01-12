@@ -40,7 +40,8 @@ options:
         none provided, the base name of the URL on the remote server will be
         used. If a directory, C(force) has no effect.
       - If C(dest) is a directory, the file will always be downloaded
-        (regardless of the C(force) option), but replaced only if the contents changed..
+        (regardless of the C(force) and C(checksum) option), but
+        replaced only if the contents changed.
     type: path
     required: true
   tmp_dest:
