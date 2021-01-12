@@ -396,7 +396,7 @@ class ConfigManager(object):
             ret = self._plugins.get(plugin_type, {}).get(name, {})
 
         if ignore_private:
-            for cdef in ret:
+            for cdef in list(ret.keys()):
                 if cdef.startswith('_'):
                     del ret[cdef]
 
