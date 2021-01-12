@@ -1,0 +1,4 @@
+bugfixes:
+  - Restored unsafe_writes functionality which was being skipped.
+  - Added unsafe_writes test.
+  - Enabled unsafe_writes for get_url which was ignoring the paramter.
