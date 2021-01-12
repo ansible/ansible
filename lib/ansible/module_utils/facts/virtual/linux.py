@@ -352,6 +352,11 @@ class LinuxVirtual(Virtual):
                         virtual_facts['virtualization_role'] = 'guest'
                         found_virt = True
 
+                if 'BHYVE' in out:
+                    virtual_facts['virtualization_type'] = 'bhyve'
+                    virtual_facts['virtualization_role'] = 'guest'
+                    found_virt = True
+
         if os.path.exists('/dev/kvm'):
             host_tech.add('kvm')
             if not found_virt:
