@@ -5,3 +5,9 @@ argument_specs:
             a_str:
                 type: "str"
                 required: true
+    alternate:
+        short_description: Alternate entry point for role A.
+        options:
+            a_int:
+                type: "int"
+                required: true

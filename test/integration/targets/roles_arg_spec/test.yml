@@ -26,12 +26,13 @@
           b_int: 5
           b_bool: true
 
-- name: "New play to reset vars"
+
+- name: "New play to reset vars: Test include_role fails"
   hosts: localhost
   gather_facts: false
   tasks:
       - block:
-        - name: "Invalid role usage"
+        - name: "EXPECTED FAILURE: Invalid role usage"
           include_role:
             name: b
           vars:
@@ -50,3 +51,92 @@
                 - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
                 - ansible_failed_result.argument_errors | length == 2
                 - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"
+
+
+- name: "New play to reset vars: Test import_role fails"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+      - block:
+        - name: "EXPECTED FAILURE: Invalid role usage"
+          import_role:
+            name: b
+          vars:
+            b_bool: 7
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+
+          - name: "Validate failure"
+            assert:
+              that:
+                - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
+                - ansible_failed_result.argument_errors | length == 2
+                - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"
+
+
+- name: "New play to reset vars: Test nested role including/importing role succeeds"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    c_int: 1
+    a_str: "some string"
+    a_int: 42
+  tasks:
+      - name: "Test import_role of role C"
+        import_role:
+          name: c
+
+      - name: "Test include_role of role C"
+        include_role:
+          name: c
+
+
+- name: "New play to reset vars: Test nested role including/importing role fails"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+      - block:
+        - name: "EXPECTED FAILURE: Test import_role of role C (missing a_str)"
+          import_role:
+            name: c
+          vars:
+            c_int: 100
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+          - name: "Validate import_role failure"
+            assert:
+              that:
+                # NOTE: a bug here that prevents us from getting ansible_failed_task
+                - ansible_failed_result.argument_errors | length == 1
+                - "'missing required arguments: a_str' in ansible_failed_result.argument_errors"
+
+      - block:
+        - name: "EXPECTED FAILURE: Test include_role of role C (missing a_int)"
+          include_role:
+            name: c
+          vars:
+            c_int: 200
+            a_str: "some string"
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+          - name: "Validate include_role failure"
+            assert:
+              that:
+                # NOTE: a bug here that prevents us from getting ansible_failed_task
+                - ansible_failed_result.argument_errors | length == 1
+                - "'missing required arguments: a_int' in ansible_failed_result.argument_errors"
