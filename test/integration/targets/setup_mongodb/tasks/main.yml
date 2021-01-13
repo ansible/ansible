@@ -129,12 +129,12 @@
   when:
     - ansible_distribution == "Fedora"
 
-- name: Fix corrupted yum db in Redhat 8 Shippable
-  shell: rm -rf /var/lib/rpm/ && yum clean all
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_version.split('.')[0]|int == 8
-    - not ansible_distribution == "Fedora"
+#- name: Fix corrupted yum db in Redhat 8 Shippable
+#  shell: rm -rf /var/lib/rpm/ && yum clean all
+#  when:
+#    - ansible_os_family == "RedHat"
+#    - ansible_distribution_version.split('.')[0]|int == 8
+#    - not ansible_distribution == "Fedora"
 
 - name: Ensure epel package is installed
   package:
