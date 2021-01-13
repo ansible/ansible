@@ -372,7 +372,7 @@ Otherwise, for each value returned, provide the following fields. All fields are
     Only needed if this return was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
     This is a string, and not a float, for example, ``version_added: '2.3'``.
   :contains:
-    Optional. To describe nested return values, set ``type: complex``, ``type: dict``, or ``type: list``/``elements: dict`` and repeat the elements above for each sub-field.
+    Optional. To describe nested return values, set ``type: dict``, or ``type: list``/``elements: dict``, or if you really have to, ``type: complex``, and repeat the elements above for each sub-field.
 
 Here are two example ``RETURN`` sections, one with three simple fields and one with a complex nested field::
 
@@ -398,12 +398,13 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
     packages:
         description: Information about package requirements.
         returned: success
-        type: complex
+        type: dict
         contains:
             missing:
                 description: Packages that are missing from the system.
                 returned: success
                 type: list
+                elements: str
                 sample:
                     - libmysqlclient-dev
                     - libxml2-dev
@@ -411,6 +412,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
                 description: Packages that are installed but at bad versions.
                 returned: success
                 type: list
+                elements: dict
                 sample:
                     - package: libxml2-dev
                       version: 2.9.4+dfsg1-2
