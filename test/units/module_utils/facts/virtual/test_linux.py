@@ -22,7 +22,7 @@ def test_get_virtual_facts_bhyve(mocker):
         'virtualization_role': 'guest',
         'virtualization_tech_host': set(),
         'virtualization_type': 'bhyve',
-        'virtualization_tech_guest': {'bhyve'},
+        'virtualization_tech_guest': set(['bhyve']),
     }
 
     assert facts == expected
