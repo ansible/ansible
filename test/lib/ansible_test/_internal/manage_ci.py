@@ -204,21 +204,21 @@ class ManagePosixCI:
         for ssh_option in sorted(ssh_options):
             self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
+        self.become = None
+
         if self.core_ci.platform == 'freebsd':
-            if self.core_ci.provider == 'aws':
-                self.become = ['su', '-l', 'root', '-c']
-            elif self.core_ci.provider == 'azure':
-                self.become = ['sudo', '-in', 'sh', '-c']
-            else:
-                raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
+            self.become = ['su', '-l', 'root', '-c']
         elif self.core_ci.platform == 'macos':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH', 'sh', '-c']
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
-        elif self.core_ci.platform == 'rhel' or self.core_ci.platform == 'centos':
+        elif self.core_ci.platform == 'rhel':
             self.become = ['sudo', '-in', 'bash', '-c']
         elif self.core_ci.platform in ['aix', 'ibmi']:
             self.become = []
+
+        if self.become is None:
+            raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
 
     def setup(self, python_version):
         """Start instance and wait for it to become ready and respond to an ansible ping.

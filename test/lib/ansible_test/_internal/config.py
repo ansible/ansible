@@ -99,7 +99,6 @@ class EnvironmentConfig(CommonConfig):
         self.remote_stage = args.remote_stage  # type: str
         self.remote_provider = args.remote_provider  # type: str
         self.remote_endpoint = args.remote_endpoint  # type: t.Optional[str]
-        self.remote_aws_region = args.remote_aws_region  # type: str
         self.remote_terminate = args.remote_terminate  # type: str
 
         if self.remote_provider == 'default':
