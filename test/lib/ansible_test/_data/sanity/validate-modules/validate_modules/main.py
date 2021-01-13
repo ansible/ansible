@@ -69,6 +69,8 @@ REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
+NO_LOG_REGEX = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
+
 REJECTLIST_IMPORTS = {
     'requests': {
         'new_only': True,
@@ -1480,6 +1482,22 @@ class ModuleValidator(Validator):
                             msg=msg,
                         )
                         continue
+
+            # FIXME: This needs moving to somewhere that supports nested args, though should be good enough for now
+
+            # Could this a place where secrete are leaked?
+            # If it is type: path we know it's not a secret key as it's a file path
+            if (data.get('no_log') is None and
+                    NO_LOG_REGEX.match(arg) and
+                    data.get('type') != "path"):
+                msg = "Argument '%s' in argument_spec appears to be a secret, though doesn't have `no_log` set" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                self.reporter.error(
+                    path=self.object_path,
+                    code='no-log-needed',
+                    msg=msg,
+                )
 
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
