@@ -5,8 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import pytest
-
 from ansible.module_utils.facts.virtual import linux
 
 
@@ -24,7 +22,7 @@ def test_get_virtual_facts_bhyve(mocker):
         'virtualization_role': 'guest',
         'virtualization_tech_host': set(),
         'virtualization_type': 'bhyve',
-        'virtualization_tech_guest': set(),
+        'virtualization_tech_guest': {'bhyve'},
     }
 
     assert facts == expected
