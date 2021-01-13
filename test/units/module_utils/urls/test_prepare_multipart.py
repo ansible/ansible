@@ -58,6 +58,7 @@ def test_prepare_multipart():
         },
         'file5': {
             'filename': client_key,
+            'mime_type': 'application/octet-stream'
         },
         'file6': {
             'filename': client_txt,
