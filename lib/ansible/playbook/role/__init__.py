@@ -292,15 +292,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             if entrypoint_arg_spec:
                 validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint)
 
-                # Prepend our validate_arg_spec action to happen before any tasks provided by the role.
+                # Prepend our validate_argument_spec action to happen before any tasks provided by the role.
                 # 'any tasks' can and does include 0 or None tasks, in which cases we create a list of tasks and add our
-                # validate_arg_spec task
+                # validate_argument_spec task
                 if not task_data:
                     task_data = []
                 task_data.insert(0, validation_task)
 
     def _create_validation_task(self, argument_spec, entrypoint_name):
-        '''Create a new task data structure that uses the validate_arg_spec action plugin.
+        '''Create a new task data structure that uses the validate_argument_spec action plugin.
 
         :param argument_spec: The arg spec definition for a particular role entry point.
             This will be the entire arg spec for the entry point as read from the input file.
@@ -315,7 +315,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         return {
             'action': {
-                'module': 'validate_arg_spec',
+                'module': 'validate_argument_spec',
                 # Pass only the 'options' portion of the arg spec to the module.
                 'argument_spec': argument_spec.get('options', {}),
                 'provided_arguments': self._role_params,

@@ -15,10 +15,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: validate_arg_spec
-short_description: Validate Arg Specs
+module: validate_argument_spec
+short_description: Validate role argument specs.
 description:
-     - This module validate args specs
+     - This module validates role arguments with a defined argument specification.
 version_added: "2.11"
 options:
   argument_spec:
