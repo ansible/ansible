@@ -70,7 +70,6 @@ class AnsibleCoreCI:
             'freebsd',
             'ios',
             'rhel',
-            'tower',
             'vyos',
             'windows',
         ),
