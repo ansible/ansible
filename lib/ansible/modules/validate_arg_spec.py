@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: validate_arg_spec
 short_description: Validate Arg Specs
@@ -32,40 +32,36 @@ author:
     - Ansible Core Team
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 '''
 
-RETURN = '''
+RETURN = r'''
 argument_errors:
-    description: A list of arg validation errors
-    returned: failure
-    type: list
-    sample:
-        - "parameters are mutually exclusive: bust_some_stuff, tidy_expected"
-        - "value of things_i_need must be one of: this paddle game, the astray, this remote control, the chair, got: my dog"
-        - "value of secret_ballot must be one of: secret_choice1, secret_choice2, got: ********"
+  description: A list of arg validation errors.
+  returned: failure
+  type: list
+  elements: str
+  sample:
+    - "error message 1"
+    - "error message 2"
+
 argument_spec_data:
-    description: A dict of the data from the 'argument_spec' arg
-    returned: failure
-    type: dict
-    sample:
-        argument_spec:
-            some_arg:
-                required: true
-                default: 37
-                type: "int"
-            secret_ballot:
-                required: false
-                choices:
-                    - secret_choice1
-                    - secret_choice2
-                type: "str"
- validate_args_context:
-    description: A dict of info about where validate_args_spec was used
-    type: dict
-    returned: success, failure
-    sample:
-        name: my_role
-        type: role
-        path: /home/user/roles/my_role/
+  description: A dict of the data from the 'argument_spec' arg.
+  returned: failure
+  type: dict
+  sample:
+    some_arg:
+      type: "str"
+    some_other_arg:
+      type: "int"
+      required: true
+
+validate_args_context:
+  description: A dict of info about where validate_args_spec was used
+  type: dict
+  returned: success, failure
+  sample:
+    name: my_role
+    type: role
+    path: /home/user/roles/my_role/
 '''
