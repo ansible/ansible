@@ -25,6 +25,7 @@ from ansible.module_utils._text import to_text
 filelist = [
     '/etc/oracle-release',
     '/etc/slackware-version',
+    '/etc/centos-release',
     '/etc/redhat-release',
     '/etc/vmware-release',
     '/etc/openwrt_release',
