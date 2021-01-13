@@ -18,13 +18,27 @@
         vars:
             a_str: "import_role"
 
-      - name: "Valid complex role usage"
+      - name: "Valid role usage (more args)"
         include_role:
           name: b
         vars:
           b_str: "xyz"
           b_int: 5
           b_bool: true
+
+      - name: "Valid simple role usage with include_role of different entry point"
+        include_role:
+          name: a
+          tasks_from: "alternate"
+        vars:
+          a_int: 256
+
+      - name: "Valid simple role usage with import_role of different entry point"
+        import_role:
+          name: a
+          tasks_from: "alternate"
+        vars:
+          a_int: 512
 
 
 - name: "New play to reset vars: Test include_role fails"
