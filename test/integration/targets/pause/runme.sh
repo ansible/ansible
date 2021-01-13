@@ -17,6 +17,15 @@ ansible-playbook test-pause-no-tty.yml 2>&1 | \
     }
 EOF
 
+# Do not issue a warning when run in the background if a timeout is given
+# https://github.com/ansible/ansible/issues/73042
+if sleep 0 | ansible localhost -m pause -a 'seconds=1' 2>&1 | grep '\[WARNING\]: Not waiting for response'; then
+    echo "Incorrectly issued warning when run in the background"
+    exit 1
+else
+    echo "Succesfully ran in the background with no warning"
+fi
+
 # Test redirecting stdout
 # Issue #41717
 ansible-playbook pause-3.yml > /dev/null \
