@@ -100,7 +100,7 @@ YTVjY0o0emZPdwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
 
 --===============3996062709511591449==
 Content-Transfer-Encoding: base64
-Content-Type: application/pgp-keys
+Content-Type: application/octet-stream
 Content-Disposition: form-data; name="file5"; filename="client.key"
 
 LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZB
