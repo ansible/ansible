@@ -129,12 +129,6 @@
   when:
     - ansible_distribution == "Fedora"
 
-- name: Ensure epel package is installed
-  package:
-    name: epel-release
-    state: present
-  when: ansible_os_family == "RedHat"
-
 - name: Ensure mongod package is installed
   yum:
     name: "{{ mongodb_packages.mongod }}"
