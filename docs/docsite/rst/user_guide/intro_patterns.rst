@@ -155,6 +155,8 @@ Finally, you can use ``--limit`` to read the list of hosts from a file by prefix
 
 If :ref:`RETRY_FILES_ENABLED` is set to ``True``, a ``.retry`` file will be created after the ``ansible-playbook`` run containing a list of failed hosts from all plays. This file is overwritten each time ``ansible-playbook`` finishes running.
 
+.. code-block::
+
     ansible-playbook site.yml --limit @site.retry
 
 To apply your knowledge of patterns with Ansible commands and playbooks, read :ref:`intro_adhoc` and :ref:`playbooks_intro`.
