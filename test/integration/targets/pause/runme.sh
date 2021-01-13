@@ -4,8 +4,8 @@ set -eux
 
 ANSIBLE_ROLES_PATH=../ ansible-playbook setup.yml
 
-# Test pause module when no tty and non-interactive. This is to prevent playbooks
-# from hanging in cron and Tower jobs.
+# Test pause module when no tty and non-interactive with no seconds parameter.
+# This is to prevent playbooks from hanging in cron and Tower jobs.
 /usr/bin/env bash << EOF
 ansible-playbook test-pause-no-tty.yml 2>&1 | \
     grep '\[WARNING\]: Not waiting for response to prompt as stdin is not interactive' && {
@@ -27,10 +27,14 @@ else
 fi
 
 # Test redirecting stdout
-# Issue #41717
-ansible-playbook pause-3.yml > /dev/null \
-    && echo "Successfully redirected stdout" \
-    || echo "Failure when attempting to redirect stdout"
+# https://github.com/ansible/ansible/issues/41717
+if ansible-playbook pause-3.yml > /dev/null ; then
+    echo "Successfully redirected stdout"
+else
+    echo "Failure when attempting to redirect stdout"
+    exit 1
+fi
+
 
 # Test pause with seconds and minutes specified
 ansible-playbook test-pause.yml "$@"
