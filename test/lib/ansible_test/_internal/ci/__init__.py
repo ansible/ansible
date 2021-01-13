@@ -43,7 +43,7 @@ class ChangeDetectionNotSupported(ApplicationError):
 class AuthContext:
     """Context information required for Ansible Core CI authentication."""
     def __init__(self):  # type: () -> None
-        self.region = None  # type: t.Optional[str]
+        pass
 
 
 class CIProvider(ABC):

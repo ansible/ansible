@@ -49,14 +49,49 @@ from .data import (
     data_context,
 )
 
-AWS_ENDPOINTS = {
-    'us-east-1': 'https://ansible-core-ci.testing.ansible.com',
-}
-
 
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
-    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None):
+    DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
+
+    # Assign a default provider for each VM platform supported.
+    # This is used to determine the provider from the platform when no provider is specified.
+    # The keys here also serve as the list of providers which users can select from the command line.
+    #
+    # Entries can take one of two formats:
+    #   {platform}
+    #   {platform} arch={arch}
+    #
+    # Entries with an arch are only used as a default if the value for --remote-arch matches the {arch} specified.
+    # This allows arch specific defaults to be distinct from the default used when no arch is specified.
+
+    PROVIDERS = dict(
+        aws=(
+            'freebsd',
+            'ios',
+            'rhel',
+            'tower',
+            'vyos',
+            'windows',
+        ),
+        azure=(
+        ),
+        ibmps=(
+            'aix',
+            'ibmi',
+        ),
+        parallels=(
+            'macos',
+            'osx',
+        ),
+    )
+
+    # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
+    # The list below identifies which platforms accept an arch, and which one. These platforms can only be used with the specified arch.
+    PROVIDER_ARCHES = dict(
+    )
+
+    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None, internal=False):
         """
         :type args: EnvironmentConfig
         :type platform: str
@@ -66,6 +101,7 @@ class AnsibleCoreCI:
         :type load: bool
         :type provider: str | None
         :type arch: str | None
+        :type internal: bool
         """
         self.args = args
         self.arch = arch
@@ -76,7 +112,7 @@ class AnsibleCoreCI:
         self.connection = None
         self.instance_id = None
         self.endpoint = None
-        self.max_threshold = 1
+        self.default_endpoint = args.remote_endpoint or self.DEFAULT_ENDPOINT
         self.retries = 3
         self.ci_provider = get_ci_provider()
         self.auth_context = AuthContext()
@@ -86,62 +122,26 @@ class AnsibleCoreCI:
         else:
             self.name = '%s-%s' % (self.platform, self.version)
 
-        # Assign each supported platform to one provider.
-        # This is used to determine the provider from the platform when no provider is specified.
-        providers = dict(
-            aws=(
-                'aws',
-                'windows',
-                'freebsd',
-                'vyos',
-                'junos',
-                'ios',
-                'tower',
-                'rhel',
-                'hetzner',
-            ),
-            azure=(
-                'azure',
-            ),
-            ibmps=(
-                'aix',
-                'ibmi',
-            ),
-            ibmvpc=(
-                'centos arch=power',  # avoid ibmvpc as default for no-arch centos to avoid making centos default to power
-            ),
-            parallels=(
-                'macos',
-                'osx',
-            ),
-        )
-
-        # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
-        # The list below identifies which platforms accept an arch, and which one. These platforms can only be used with the specified arch.
-        provider_arches = dict(
-            ibmvpc='power',
-        )
-
         if provider:
             # override default provider selection (not all combinations are valid)
             self.provider = provider
         else:
             self.provider = None
 
-            for candidate in providers:
+            for candidate in self.PROVIDERS:
                 choices = [
                     platform,
                     '%s arch=%s' % (platform, arch),
                 ]
 
-                if any(choice in providers[candidate] for choice in choices):
+                if any(choice in self.PROVIDERS[candidate] for choice in choices):
                     # assign default provider based on platform
                     self.provider = candidate
                     break
 
         # If a provider has been selected, make sure the correct arch (or none) has been selected.
         if self.provider:
-            required_arch = provider_arches.get(self.provider)
+            required_arch = self.PROVIDER_ARCHES.get(self.provider)
 
             if self.arch != required_arch:
                 if required_arch:
@@ -154,48 +154,13 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure', 'ibmps', 'ibmvpc'):
-            if args.remote_aws_region:
-                display.warning('The --remote-aws-region option is obsolete and will be removed in a future version of ansible-test.')
-                # permit command-line override of region selection
-                region = args.remote_aws_region
-                # use a dedicated CI key when overriding the region selection
-                self.auth_context.region = args.remote_aws_region
-            else:
-                region = 'us-east-1'
-
-            self.path = "%s-%s" % (self.path, region)
-
-            if self.args.remote_endpoint:
-                self.endpoints = (self.args.remote_endpoint,)
-            else:
-                self.endpoints = (AWS_ENDPOINTS[region],)
-
-            self.ssh_key = SshKey(args)
-
-            if self.platform == 'windows':
-                self.port = 5986
-            else:
-                self.port = 22
-
-            if self.provider == 'ibmps':
-                # Additional retries are neededed to accommodate images transitioning
-                # to the active state in the IBM cloud. This operation can take up to
-                # 90 seconds
-                self.retries = 7
-        elif self.provider == 'parallels':
-            if self.args.remote_endpoint:
-                self.endpoints = (self.args.remote_endpoint,)
-            else:
-                self.endpoints = (AWS_ENDPOINTS['us-east-1'],)
-
-            self.ssh_key = SshKey(args)
-            self.port = None
-        else:
+        if self.provider not in self.PROVIDERS and not internal:
             if self.arch:
                 raise ApplicationError('Provider not detected for platform "%s" on arch "%s".' % (self.platform, self.arch))
 
             raise ApplicationError('Provider not detected for platform "%s" with no arch specified.' % self.platform)
+
+        self.ssh_key = SshKey(args)
 
         if persist and load and self._load():
             try:
@@ -230,26 +195,8 @@ class AnsibleCoreCI:
 
             display.sensitive.add(self.instance_id)
 
-    def _get_parallels_endpoints(self):
-        """
-        :rtype: tuple[str]
-        """
-        client = HttpClient(self.args, always=True)
-        display.info('Getting available endpoints...', verbosity=1)
-        sleep = 3
-
-        for _iteration in range(1, 10):
-            response = client.get('https://ansible-ci-files.s3.amazonaws.com/ansible-test/parallels-endpoints.txt')
-
-            if response.status_code == 200:
-                endpoints = tuple(response.response.splitlines())
-                display.info('Available endpoints (%d):\n%s' % (len(endpoints), '\n'.join(' - %s' % endpoint for endpoint in endpoints)), verbosity=1)
-                return endpoints
-
-            display.warning('HTTP %d error getting endpoints, trying again in %d seconds.' % (response.status_code, sleep))
-            time.sleep(sleep)
-
-        raise ApplicationError('Unable to get available endpoints.')
+        if not self.endpoint:
+            self.endpoint = self.default_endpoint
 
     @property
     def available(self):
@@ -326,7 +273,7 @@ class AnsibleCoreCI:
             self.connection = InstanceConnection(
                 running=True,
                 hostname='cloud.example.com',
-                port=self.port or 12345,
+                port=12345,
                 username='username',
                 password='password' if self.platform == 'windows' else None,
             )
@@ -339,7 +286,7 @@ class AnsibleCoreCI:
                 self.connection = InstanceConnection(
                     running=status == 'running',
                     hostname=con['hostname'],
-                    port=int(con.get('port', self.port)),
+                    port=int(con['port']),
                     username=con['username'],
                     password=con.get('password'),
                     response_json=response_json,
@@ -388,7 +335,7 @@ class AnsibleCoreCI:
             config=dict(
                 platform=self.platform,
                 version=self.version,
-                public_key=self.ssh_key.pub_contents if self.ssh_key else None,
+                public_key=self.ssh_key.pub_contents,
                 query=False,
                 winrm_config=winrm_config,
             )
@@ -400,7 +347,7 @@ class AnsibleCoreCI:
             'Content-Type': 'application/json',
         }
 
-        response = self._start_try_endpoints(data, headers)
+        response = self._start_endpoint(data, headers)
 
         self.started = True
         self._save()
@@ -412,45 +359,16 @@ class AnsibleCoreCI:
 
         return response.json()
 
-    def _start_try_endpoints(self, data, headers):
+    def _start_endpoint(self, data, headers):
         """
         :type data: dict[str, any]
         :type headers: dict[str, str]
         :rtype: HttpResponse
         """
-        threshold = 1
-
-        while threshold <= self.max_threshold:
-            for self.endpoint in self.endpoints:
-                try:
-                    return self._start_at_threshold(data, headers, threshold)
-                except CoreHttpError as ex:
-                    if ex.status == 503:
-                        display.info('Service Unavailable: %s' % ex.remote_message, verbosity=1)
-                        continue
-                    display.error(ex.remote_message)
-                except HttpError as ex:
-                    display.error(u'%s' % ex)
-
-                time.sleep(3)
-
-            threshold += 1
-
-        raise ApplicationError('Maximum threshold reached and all endpoints exhausted.')
-
-    def _start_at_threshold(self, data, headers, threshold):
-        """
-        :type data: dict[str, any]
-        :type headers: dict[str, str]
-        :type threshold: int
-        :rtype: HttpResponse | None
-        """
         tries = self.retries
         sleep = 15
 
-        data['threshold'] = threshold
-
-        display.info('Trying endpoint: %s (threshold %d)' % (self.endpoint, threshold), verbosity=1)
+        display.info('Trying endpoint: %s' % self.endpoint, verbosity=1)
 
         while True:
             tries -= 1

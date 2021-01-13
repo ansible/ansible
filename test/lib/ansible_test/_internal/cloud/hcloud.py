@@ -83,7 +83,7 @@ class HcloudCloudProvider(CloudProvider):
         """
         :rtype: AnsibleCoreCI
         """
-        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', persist=False, stage=self.args.remote_stage, provider=self.args.remote_provider)
+        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', persist=False, stage=self.args.remote_stage, provider='hetzner', internal=True)
 
 
 class HcloudCloudEnvironment(CloudEnvironment):

@@ -75,12 +75,12 @@ from .target import (
     walk_sanity_targets,
 )
 
-from .core_ci import (
-    AWS_ENDPOINTS,
-)
-
 from .cloud import (
     initialize_cloud_plugins,
+)
+
+from .core_ci import (
+    AnsibleCoreCI,
 )
 
 from .data import (
@@ -924,7 +924,6 @@ def add_environments(parser, isolated_delegation=True):
             remote=None,
             remote_stage=None,
             remote_provider=None,
-            remote_aws_region=None,
             remote_terminate=None,
             remote_endpoint=None,
             python_interpreter=None,
@@ -954,18 +953,12 @@ def add_environments(parser, isolated_delegation=True):
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
-                        choices=['default', 'aws', 'azure', 'parallels', 'ibmvpc', 'ibmps'],
+                        choices=['default'] + sorted(AnsibleCoreCI.PROVIDERS.keys()),
                         default='default')
 
     remote.add_argument('--remote-endpoint',
                         metavar='ENDPOINT',
                         help='remote provisioning endpoint to use (default: auto)',
-                        default=None)
-
-    remote.add_argument('--remote-aws-region',
-                        metavar='REGION',
-                        help='remote aws region to use: %(choices)s (default: auto)',
-                        choices=sorted(AWS_ENDPOINTS),
                         default=None)
 
     remote.add_argument('--remote-terminate',
