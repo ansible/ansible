@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - correct ``collections-path`` command line argument (https://github.com/ansible/ansible/issues/73127)
