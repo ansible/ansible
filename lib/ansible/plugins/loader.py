@@ -134,14 +134,15 @@ class PluginLoadContext(object):
         if not deprecation:
             return self
 
-        warning_text = deprecation.get('warning_text', None)
+        # The `or ''` instead of using `.get(..., '')` makes sure that even if the user explicitly
+        # sets `warning_text` to `~` (None) or `false`, we still get an empty string.
+        warning_text = deprecation.get('warning_text', None) or ''
         removal_date = deprecation.get('removal_date', None)
         removal_version = deprecation.get('removal_version', None)
         # If both removal_date and removal_version are specified, use removal_date
         if removal_date is not None:
             removal_version = None
-        if not warning_text:
-            warning_text = '{0} has been deprecated'.format(name)
+        warning_text = '{0} has been deprecated.{1}{2}'.format(name, ' ' if warning_text else '', warning_text)
 
         display.deprecated(warning_text, date=removal_date, version=removal_version, collection_name=collection_name)
 
@@ -459,7 +460,8 @@ class PluginLoader:
             if tombstone:
                 removal_date = tombstone.get('removal_date')
                 removal_version = tombstone.get('removal_version')
-                warning_text = tombstone.get('warning_text') or '{0} has been removed.'.format(fq_name)
+                warning_text = tombstone.get('warning_text') or ''
+                warning_text = '{0} has been removed.{1}{2}'.format(fq_name, ' ' if warning_text else '', warning_text)
                 removed_msg = display.get_deprecation_message(msg=warning_text, version=removal_version,
                                                               date=removal_date, removed=True,
                                                               collection_name=acr.collection)
