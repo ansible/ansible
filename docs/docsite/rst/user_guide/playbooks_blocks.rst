@@ -58,7 +58,7 @@ Rescue blocks specify tasks to run when an earlier task in a block fails. This a
 
 .. _block_rescue:
 .. code-block:: YAML
- :emphasize-lines: 3,10
+ :emphasize-lines: 3,14
  :caption: Block error handling example
 
   tasks:
@@ -83,7 +83,7 @@ You can also add an ``always`` section to a block. Tasks in the ``always`` secti
 
 .. _block_always:
 .. code-block:: YAML
- :emphasize-lines: 2,9
+ :emphasize-lines: 2,13
  :caption: Block with always section
 
   - name: Always do X
@@ -106,7 +106,7 @@ You can also add an ``always`` section to a block. Tasks in the ``always`` secti
 Together, these elements offer complex error handling.
 
 .. code-block:: YAML
- :emphasize-lines: 2,9,16
+ :emphasize-lines: 2,13,24
  :caption: Block with all sections
 
  - name: Attempt and graceful roll back demo
@@ -144,7 +144,7 @@ If an error occurs in the block and the rescue task succeeds, Ansible reverts th
 You can use blocks with ``flush_handlers`` in a rescue task to ensure that all handlers run even if an error occurs:
 
 .. code-block:: YAML
- :emphasize-lines: 6,10
+ :emphasize-lines: 3,12
  :caption: Block run handlers in error handling
 
   tasks:
