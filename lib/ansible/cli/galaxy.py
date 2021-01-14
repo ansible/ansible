@@ -165,7 +165,7 @@ class GalaxyCLI(CLI):
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
         collections_path = opt_help.argparse.ArgumentParser(add_help=False)
-        collections_path.add_argument('-p', '--collection-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
+        collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
                                       default=AnsibleCollectionConfig.collection_paths,
                                       action=opt_help.PrependListAction,
                                       help="One or more directories to search for collections in addition "
