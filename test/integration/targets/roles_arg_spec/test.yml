@@ -40,6 +40,10 @@
         vars:
           a_int: 512
 
+      - name: "Call role entry point that is defined, but has no spec data"
+        import_role:
+          name: a
+          tasks_from: "no_spec_entrypoint"
 
 - name: "New play to reset vars: Test include_role fails"
   hosts: localhost
