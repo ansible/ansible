@@ -111,22 +111,31 @@
                                         map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
                                         list }}"
 
-            - name: figure out the difference between expected and actual validate_arg_spec failures
+            - name: figure out the difference between expected and actual validate_argument_spec failures
               set_fact:
                   actual_not_in_expected: "{{ actual_generic| difference(expected_generic) | sort() }}"
                   expected_not_in_actual: "{{ expected_generic | difference(actual_generic) | sort() }}"
 
-            - name: assert that all actual validate_arg_spec failures were in expected
+            - name: assert that all actual validate_argument_spec failures were in expected
               assert:
                   that:
                       - actual_not_in_expected | length == 0
-                  msg: "Actual validate_arg_spec failures that were not expected: {{ actual_not_in_expected }}"
+                  msg: "Actual validate_argument_spec failures that were not expected: {{ actual_not_in_expected }}"
 
-            - name: assert that all expected validate_arg_spec failures were in expected
+            - name: assert that all expected validate_argument_spec failures were in expected
               assert:
                   that:
                       - expected_not_in_actual | length == 0
-                  msg: "Expected validate_arg_spec failures that were not in actual results: {{ expected_not_in_actual }}"
+                  msg: "Expected validate_argument_spec failures that were not in actual results: {{ expected_not_in_actual }}"
+
+            - name: assert that `validate_args_context` return value has what we expect
+              assert:
+                that:
+                  - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                  - ansible_failed_result.validate_args_context.name == "test1"
+                  - ansible_failed_result.validate_args_context.type == "role"
+                  - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/test1')"
+
         # skip this task if jinja isnt >= 2.7, aka centos6
         when:
             - jinja2_version.stdout is version('2.7', '>=')

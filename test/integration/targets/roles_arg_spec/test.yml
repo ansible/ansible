@@ -69,6 +69,10 @@
                 - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
                 - ansible_failed_result.argument_errors | length == 2
                 - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "b"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/b')"
 
 
 - name: "New play to reset vars: Test import_role fails"
@@ -95,6 +99,10 @@
                 - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
                 - ansible_failed_result.argument_errors | length == 2
                 - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "b"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/b')"
 
 
 - name: "New play to reset vars: Test nested role including/importing role succeeds"
@@ -137,9 +145,13 @@
                 # NOTE: a bug here that prevents us from getting ansible_failed_task
                 - ansible_failed_result.argument_errors | length == 1
                 - "'missing required arguments: a_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "a"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
 
       - block:
-        - name: "EXPECTED FAILURE: Test include_role of role C (missing a_int)"
+        - name: "EXPECTED FAILURE: Test include_role of role C (missing a_int from `alternate` entry point)"
           include_role:
             name: c
           vars:
@@ -158,3 +170,7 @@
                 # NOTE: a bug here that prevents us from getting ansible_failed_task
                 - ansible_failed_result.argument_errors | length == 1
                 - "'missing required arguments: a_int' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "alternate"
+                - ansible_failed_result.validate_args_context.name == "a"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
