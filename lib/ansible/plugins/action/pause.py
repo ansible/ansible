@@ -231,7 +231,8 @@ class ActionModule(ActionBase):
 
             while True:
                 if not interactive:
-                    display.warning("Not waiting for response to prompt as stdin is not interactive")
+                    if seconds is None:
+                        display.warning("Not waiting for response to prompt as stdin is not interactive")
                     if seconds is not None:
                         # Give the signal handler enough time to timeout
                         time.sleep(seconds + 1)
