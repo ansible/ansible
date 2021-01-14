@@ -159,7 +159,7 @@ class ConfigCLI(CLI):
         '''
         list all current configs reading lib/constants.py and shows env and config file setting names
         '''
-        self.pager(to_text(yaml.dump(self.config.get_configuration_definitions(), Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+        self.pager(to_text(yaml.dump(self.config.get_configuration_definitions(ignore_private=True), Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
     def execute_dump(self):
         '''
@@ -167,7 +167,7 @@ class ConfigCLI(CLI):
         '''
         # FIXME: deal with plugins, not just base config
         text = []
-        defaults = self.config.get_configuration_definitions().copy()
+        defaults = self.config.get_configuration_definitions(ignore_private=True).copy()
         for setting in self.config.data.get_settings():
             if setting.name in defaults:
                 defaults[setting.name] = setting

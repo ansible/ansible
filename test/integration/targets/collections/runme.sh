@@ -6,7 +6,7 @@ export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_s
 export ANSIBLE_GATHERING=explicit
 export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
-export ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0
+unset ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH
 
 # FUTURE: just use INVENTORY_PATH as-is once ansible-test sets the right dir
 ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")

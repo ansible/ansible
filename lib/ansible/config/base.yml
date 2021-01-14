@@ -275,15 +275,19 @@ COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   ini: [{key: collections_on_ansible_version_mismatch, section: defaults}]
   choices: [error, warning, ignore]
   default: warning
+_COLOR_DEFAULTS: &color
+  name: placeholder for color settings' defaults
+  choices: ['black', 'bright gray', 'blue', 'white', 'green', 'bright blue', 'cyan', 'bright green', 'red', 'bright cyan', 'purple', 'bright red', 'yellow', 'bright purple', 'dark gray', 'bright yellow', 'magenta', 'bright magenta', 'normal']
 COLOR_CHANGED:
+  <<: *color
   name: Color for 'changed' task status
   default: yellow
   description: Defines the color to use on 'Changed' task status
   env: [{name: ANSIBLE_COLOR_CHANGED}]
   ini:
   - {key: changed, section: colors}
-  yaml: {key: display.colors.changed}
 COLOR_CONSOLE_PROMPT:
+  <<: *color
   name: "Color for ansible-console's prompt task status"
   default: white
   description: Defines the default color to use for ansible-console
@@ -292,22 +296,23 @@ COLOR_CONSOLE_PROMPT:
   - {key: console_prompt, section: colors}
   version_added: "2.7"
 COLOR_DEBUG:
+  <<: *color
   name: Color for debug statements
   default: dark gray
   description: Defines the color to use when emitting debug messages
   env: [{name: ANSIBLE_COLOR_DEBUG}]
   ini:
   - {key: debug, section: colors}
-  yaml: {key: display.colors.debug}
 COLOR_DEPRECATE:
+  <<: *color
   name: Color for deprecation messages
   default: purple
   description: Defines the color to use when emitting deprecation messages
   env: [{name: ANSIBLE_COLOR_DEPRECATE}]
   ini:
   - {key: deprecate, section: colors}
-  yaml: {key: display.colors.deprecate}
 COLOR_DIFF_ADD:
+  <<: *color
   name: Color for diff added display
   default: green
   description: Defines the color to use when showing added lines in diffs
@@ -316,6 +321,7 @@ COLOR_DIFF_ADD:
   - {key: diff_add, section: colors}
   yaml: {key: display.colors.diff.add}
 COLOR_DIFF_LINES:
+  <<: *color
   name: Color for diff lines display
   default: cyan
   description: Defines the color to use when showing diffs
@@ -323,6 +329,7 @@ COLOR_DIFF_LINES:
   ini:
   - {key: diff_lines, section: colors}
 COLOR_DIFF_REMOVE:
+  <<: *color
   name: Color for diff removed display
   default: red
   description: Defines the color to use when showing removed lines in diffs
@@ -330,6 +337,7 @@ COLOR_DIFF_REMOVE:
   ini:
   - {key: diff_remove, section: colors}
 COLOR_ERROR:
+  <<: *color
   name: Color for error messages
   default: red
   description: Defines the color to use when emitting error messages
@@ -338,6 +346,7 @@ COLOR_ERROR:
   - {key: error, section: colors}
   yaml: {key: colors.error}
 COLOR_HIGHLIGHT:
+  <<: *color
   name: Color for highlighting
   default: white
   description: Defines the color to use for highlighting
@@ -345,6 +354,7 @@ COLOR_HIGHLIGHT:
   ini:
   - {key: highlight, section: colors}
 COLOR_OK:
+  <<: *color
   name: Color for 'ok' task status
   default: green
   description: Defines the color to use when showing 'OK' task status
@@ -352,6 +362,7 @@ COLOR_OK:
   ini:
   - {key: ok, section: colors}
 COLOR_SKIP:
+  <<: *color
   name: Color for 'skip' task status
   default: cyan
   description: Defines the color to use when showing 'Skipped' task status
@@ -359,6 +370,7 @@ COLOR_SKIP:
   ini:
   - {key: skip, section: colors}
 COLOR_UNREACHABLE:
+  <<: *color
   name: Color for 'unreachable' host state
   default: bright red
   description: Defines the color to use on 'Unreachable' status
@@ -366,6 +378,7 @@ COLOR_UNREACHABLE:
   ini:
   - {key: unreachable, section: colors}
 COLOR_VERBOSE:
+  <<: *color
   name: Color for verbose messages
   default: blue
   description: Defines the color to use when emitting verbose messages. i.e those that show with '-v's.
@@ -373,6 +386,7 @@ COLOR_VERBOSE:
   ini:
   - {key: verbose, section: colors}
 COLOR_WARN:
+  <<: *color
   name: Color for warning messages
   default: bright purple
   description: Defines the color to use when emitting warning messages

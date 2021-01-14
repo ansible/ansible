@@ -26,7 +26,13 @@ DEFAULT_TEMPLATE_DIR = pathlib.Path(__file__).parents[4] / 'docs/templates'
 def fix_description(config_options):
     '''some descriptions are strings, some are lists. workaround it...'''
 
-    for config_key in config_options:
+    for config_key in list(config_options.keys()):
+
+        # drop internal entries
+        if config_key.startswith('_'):
+            del config_options[config_key]
+            continue
+
         description = config_options[config_key].get('description', [])
         if isinstance(description, list):
             desc_list = description
