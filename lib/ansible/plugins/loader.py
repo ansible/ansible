@@ -134,6 +134,8 @@ class PluginLoadContext(object):
         if not deprecation:
             return self
 
+        # The `or ''` instead of using `.get(..., '')` makes sure that even if the user explicitly
+        # sets `warning_text` to `~` (None) or `false`, we still get an empty string.
         warning_text = deprecation.get('warning_text', None) or ''
         removal_date = deprecation.get('removal_date', None)
         removal_version = deprecation.get('removal_version', None)
