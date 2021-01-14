@@ -64,4 +64,5 @@ validate_args_context:
     name: my_role
     type: role
     path: /home/user/roles/my_role/
+    argument_spec_name: main
 '''

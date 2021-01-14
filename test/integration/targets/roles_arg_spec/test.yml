@@ -48,6 +48,18 @@
 - name: "New play to reset vars: Test include_role fails"
   hosts: localhost
   gather_facts: false
+  vars:
+    expected_returned_spec:
+      b_bool:
+        required: true
+        type: "bool"
+      b_int:
+        required: true
+        type: "int"
+      b_str:
+        required: true
+        type: "str"
+
   tasks:
       - block:
         - name: "EXPECTED FAILURE: Invalid role usage"
@@ -73,11 +85,24 @@
                 - ansible_failed_result.validate_args_context.name == "b"
                 - ansible_failed_result.validate_args_context.type == "role"
                 - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/b')"
+                - ansible_failed_result.argument_spec_data == expected_returned_spec
 
 
 - name: "New play to reset vars: Test import_role fails"
   hosts: localhost
   gather_facts: false
+  vars:
+    expected_returned_spec:
+      b_bool:
+        required: true
+        type: "bool"
+      b_int:
+        required: true
+        type: "int"
+      b_str:
+        required: true
+        type: "str"
+
   tasks:
       - block:
         - name: "EXPECTED FAILURE: Invalid role usage"
@@ -103,6 +128,7 @@
                 - ansible_failed_result.validate_args_context.name == "b"
                 - ansible_failed_result.validate_args_context.type == "role"
                 - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/b')"
+                - ansible_failed_result.argument_spec_data == expected_returned_spec
 
 
 - name: "New play to reset vars: Test nested role including/importing role succeeds"
@@ -125,6 +151,16 @@
 - name: "New play to reset vars: Test nested role including/importing role fails"
   hosts: localhost
   gather_facts: false
+  vars:
+    main_expected_returned_spec:
+      a_str:
+        required: true
+        type: "str"
+    alternate_expected_returned_spec:
+      a_int:
+        required: true
+        type: "int"
+
   tasks:
       - block:
         - name: "EXPECTED FAILURE: Test import_role of role C (missing a_str)"
@@ -149,6 +185,7 @@
                 - ansible_failed_result.validate_args_context.name == "a"
                 - ansible_failed_result.validate_args_context.type == "role"
                 - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
+                - ansible_failed_result.argument_spec_data == main_expected_returned_spec
 
       - block:
         - name: "EXPECTED FAILURE: Test include_role of role C (missing a_int from `alternate` entry point)"
@@ -174,3 +211,4 @@
                 - ansible_failed_result.validate_args_context.name == "a"
                 - ansible_failed_result.validate_args_context.type == "role"
                 - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
+                - ansible_failed_result.argument_spec_data == alternate_expected_returned_spec
