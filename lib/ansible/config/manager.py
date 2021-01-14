@@ -384,7 +384,7 @@ class ConfigManager(object):
 
         return ret
 
-    def get_configuration_definitions(self, plugin_type=None, name=None):
+    def get_configuration_definitions(self, plugin_type=None, name=None, ignore_private=False):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
         ret = {}
@@ -394,6 +394,11 @@ class ConfigManager(object):
             ret = self._plugins.get(plugin_type, {})
         else:
             ret = self._plugins.get(plugin_type, {}).get(name, {})
+
+        if ignore_private:
+            for cdef in list(ret.keys()):
+                if cdef.startswith('_'):
+                    del ret[cdef]
 
         return ret
 
@@ -535,6 +540,12 @@ class ConfigManager(object):
                 else:
                     raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
                                               (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
+
+            # deal with restricted values
+            if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
+                if value not in defs[config]['choices']:
+                    raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
+                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), defs[config]['choices']))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
