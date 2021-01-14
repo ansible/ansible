@@ -51,21 +51,6 @@ if C.ANSIBLE_FORCE_COLOR:
 # domain - there is no license except that you must leave this header.
 #
 # Copyright (C) 2008 Brian Nez <thedude at bri1 dot com>
-#
-# http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
-
-codeCodes = {
-    'black': u'0;30', 'bright gray': u'0;37',
-    'blue': u'0;34', 'white': u'1;37',
-    'green': u'0;32', 'bright blue': u'1;34',
-    'cyan': u'0;36', 'bright green': u'1;32',
-    'red': u'0;31', 'bright cyan': u'1;36',
-    'purple': u'0;35', 'bright red': u'1;31',
-    'yellow': u'0;33', 'bright purple': u'1;35',
-    'dark gray': u'1;30', 'bright yellow': u'1;33',
-    'magenta': u'0;35', 'bright magenta': u'1;35',
-    'normal': u'0',
-}
 
 
 def parsecolor(color):
@@ -74,7 +59,7 @@ def parsecolor(color):
                        r"|(?P<rgb>rgb(?P<red>[0-5])(?P<green>[0-5])(?P<blue>[0-5]))"
                        r"|gray(?P<gray>[0-9]+)", color)
     if not matches:
-        return codeCodes[color]
+        return C.COLOR_CODES[color]
     if matches.group('color'):
         return u'38;5;%d' % int(matches.group('color'))
     if matches.group('rgb'):
