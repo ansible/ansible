@@ -63,3 +63,6 @@ wrapt == 1.11.1
 
 # freeze pycodestyle for consistent test results
 pycodestyle == 2.6.0
+
+# test with latest pyyaml
+pyyaml == 5.4b1 ; python_version >= '2.7'
