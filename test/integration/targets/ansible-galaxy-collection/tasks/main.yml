@@ -186,10 +186,6 @@
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   vars:
-    test_name: '{{ item.name }}'
-    test_server: '{{ item.server }}'
-    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
-  loop:
-  - name: galaxy_ng
-    server: '{{ galaxy_ng_server }}'
-    v3: true
+    test_name: 'galaxy_ng'
+    test_server: '{{ galaxy_ng_server }}'
+    vX: "v3/"

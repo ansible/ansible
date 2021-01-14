@@ -61,7 +61,7 @@
 
 - name: update the collection version
   lineinfile:
-    regexp: "version: *"
+    regexp: "version: .*"
     line: "version: '2.0.0'"
     path: '{{ galaxy_dir }}/scratch/ansible_test/verify/galaxy.yml'
 
