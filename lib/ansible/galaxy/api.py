@@ -263,6 +263,16 @@ class GalaxyAPI:
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
+    def __str__(self):
+        # type: (GalaxyAPI) -> str
+        """Render GalaxyAPI as a native string representation."""
+        return to_native(self.name)
+
+    def __unicode__(self):
+        # type: (GalaxyAPI) -> unicode
+        """Render GalaxyAPI as a unicode/text string representation."""
+        return to_text(self.name)
+
     @property
     @g_connect(['v1', 'v2', 'v3'])
     def available_api_versions(self):
