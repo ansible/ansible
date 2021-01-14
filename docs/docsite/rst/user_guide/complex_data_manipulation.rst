@@ -198,7 +198,7 @@ These example produces ``{"a": "b", "c": "d"}``
 
   vars:
       single_list: [ 'a', 'b', 'c', 'd' ]
-      mydict: "{{ dict(single_list) | slice(2) | list }}"
+      mydict: "{{ dict(single_list | slice(2) | list) }}"
 
 
 .. code-block:: YAML+Jinja
