@@ -1,0 +1,2 @@
+bugfixes:
+- "Always mention the name of the deprecated or tombstoned plugin in routing deprecation/tombstone messages (https://github.com/ansible/ansible/pull/73059)."
