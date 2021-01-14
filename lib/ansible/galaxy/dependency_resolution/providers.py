@@ -160,8 +160,6 @@ class CollectionDependencyProvider(AbstractProvider):
         :returns: An iterable that orders candidates by preference, \
                   e.g. the most preferred candidate comes first.
         """
-        assert requirements, 'Broken contract of having non-empty requirements'
-
         # FIXME: The first requirement may be a Git repo followed by
         # FIXME: its cloned tmp dir. Using only the first one creates
         # FIXME: loops that prevent any further dependency exploration.
@@ -183,10 +181,6 @@ class CollectionDependencyProvider(AbstractProvider):
             candidate for candidate in self._preferred_candidates
             if candidate.fqcn == fqcn
         }
-
-        assert len(preinstalled_candidates) < 2, (
-            'Max of 1 candidate is expected to be preinstalled'
-        )
 
         return list(preinstalled_candidates) + sorted(
             {

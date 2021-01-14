@@ -328,7 +328,6 @@ class _ComputedReqKindsMixin:
         if req_type not in {'galaxy', 'subdirs'} and req_version == '*':
             req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
 
-        assert req_name is not None or req_type in {'git', 'subdirs'}
         return cls(
             req_name, req_version,
             req_source, req_type,
@@ -396,7 +395,6 @@ class _ComputedReqKindsMixin:
 
     @property
     def namespace_collection_paths(self):
-        assert self.is_subdirs, 'This property only makes sense for namespaces'
         return [
             to_native(path)
             for path in _find_collections_in_subdirs(self.src)

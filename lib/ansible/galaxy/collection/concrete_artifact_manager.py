@@ -79,8 +79,6 @@ class ConcreteArtifactsManager:
 
         If it's not yet on disk, this method downloads the artifact first.
         """
-        assert not collection.is_concrete_artifact
-
         try:
             return self._galaxy_artifact_cache[collection]
         except KeyError:
@@ -141,12 +139,6 @@ class ConcreteArtifactsManager:
 
         If it's not yet on disk, this method downloads the artifact first.
         """
-        assert collection.is_concrete_artifact and collection.src is not None, (
-            'The contract is to have a collection candidate that is '
-            'unambiguously resolvable into a specific tarball '
-            'artifact pointer (a file or a dir on disk, an archive on '
-            'web or a buildable Git repository reference)'
-        )
         try:
             return self._artifact_cache[collection.src]
         except KeyError:
@@ -207,12 +199,10 @@ class ConcreteArtifactsManager:
 
     def _get_direct_collection_namespace(self, collection):
         # type: (Candidate) -> Optional[str]
-        assert collection.is_concrete_artifact
         return self.get_direct_collection_meta(collection)['namespace']  # type: ignore[return-value]
 
     def _get_direct_collection_name(self, collection):
         # type: (Candidate) -> Optional[str]
-        assert collection.is_concrete_artifact
         return self.get_direct_collection_meta(collection)['name']  # type: ignore[return-value]
 
     def get_direct_collection_fqcn(self, collection):
@@ -222,8 +212,6 @@ class ConcreteArtifactsManager:
         If the collection is virtual, ``None`` is returned instead
         of a string.
         """
-        assert collection.is_concrete_artifact
-
         if collection.is_virtual:
             # NOTE: should it be something like "<virtual>"?
             return None
@@ -236,20 +224,16 @@ class ConcreteArtifactsManager:
     def get_direct_collection_version(self, collection):
         # type: (Union[Candidate, Requirement]) -> str
         """Extract version from the given on-disk collection artifact."""
-        assert collection.is_concrete_artifact
         return self.get_direct_collection_meta(collection)['version']  # type: ignore[return-value]
 
     def get_direct_collection_dependencies(self, collection):
         # type: (Union[Candidate, Requirement]) -> Dict[str, str]
         """Extract deps from the given on-disk collection artifact."""
-        assert collection.is_concrete_artifact
         return self.get_direct_collection_meta(collection)['dependencies']  # type: ignore[return-value]
 
     def get_direct_collection_meta(self, collection):
         # type: (Union[Candidate, Requirement]) -> Dict[str, Optional[Union[str, Dict[str, str], List[str]]]]
         """Extract meta from the given on-disk collection artifact."""
-        assert collection.is_concrete_artifact
-
         try:  # FIXME: use unique collection identifier as a cache key?
             return self._artifact_meta_cache[collection.src]
         except KeyError:
