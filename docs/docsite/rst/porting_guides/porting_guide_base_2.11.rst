@@ -31,6 +31,12 @@ Command Line
   ``~/.ansible/galaxy_token``) or (insecurely) via the ``--token`` argument to ``ansible-galaxy``.
 
 
+Other:
+======
+
+* The configuration system now validates the ``choices`` field, so any settings that currently violate it and are currently ignored will now cause an error.
+  For example, `ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0` will now cause an error (valid chioces are 'ignore', 'warn' or 'error'.
+
 Deprecated
 ==========
 
