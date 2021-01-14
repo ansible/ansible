@@ -4348,6 +4348,9 @@ files:
     labels: networking
     maintainers:
     - samccann
+  docs/docsite/rst/porting_guides/:
+    notify:
+    - felixfontein
   docs/docsite/rst/scenario_guides/guide_aci.rst: *id017
   docs/docsite/rst/scenario_guides/guide_aws.rst:
     labels:
