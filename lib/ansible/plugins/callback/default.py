@@ -82,6 +82,9 @@ class CallbackModule(CallbackBase):
 
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
+            path = result._task.get_path()
+            if path:
+                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
 
         self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
         self._handle_warnings(result._result)
@@ -91,10 +94,14 @@ class CallbackModule(CallbackBase):
 
         else:
             if delegated_vars:
+                if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
+                    self._print_task_path(result._task)
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
                                                                             self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
             else:
+                if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
+                    self._print_task_path(result._task)
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
 
@@ -199,6 +206,11 @@ class CallbackModule(CallbackBase):
             if self.display_skipped_hosts and self.display_ok_hosts:
                 self._print_task_banner(task)
 
+    def _print_task_path(self, task):
+        path = task.get_path()
+        if path:
+            self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
+
     def _print_task_banner(self, task):
         # args can be specified as no_log in several places: in the task or in
         # the argument spec.  We can check whether the task is no_log but the
@@ -225,10 +237,9 @@ class CallbackModule(CallbackBase):
         else:
             checkmsg = ""
         self._display.banner(u"%s [%s%s]%s" % (prefix, task_name, args, checkmsg))
+
         if self._display.verbosity >= 2:
-            path = task.get_path()
-            if path:
-                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
+            self._print_task_path(task)
 
         self._last_task_banner = task._uuid
 
