@@ -1,0 +1,16 @@
+{
+    "description": "Linux running in podman atop a KVM VM",
+    "files": {
+        "/proc/1/cgroup": "12:perf_event:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n11:devices:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n10:net_cls,net_prio:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n9:hugetlb:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n8:pids:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n7:cpuset:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n6:cpu,cpuacct:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n5:rdma:/\n4:memory:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n3:blkio:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n2:freezer:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n1:name=systemd:/machine.slice/libpod-fdfa24d9dfe0edd3abf71ce6ef419e2e14f6e08e88a6c56236fd53c755db9136.scope\n",
+        "/proc/1/environ": "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\u0000TERM=xterm\u0000HOSTNAME=fdfa24d9dfe0\u0000container=podman\u0000FGC=f32\u0000FBR=f32\u0000DISTTAG=f32\u0000containerHOME=/root",
+        "/sys/devices/virtual/dmi/id/product_name": "Standard PC (Q35 + ICH9, 2009)\n",
+        "/sys/devices/virtual/dmi/id/bios_vendor": "SeaBIOS\n",
+        "/sys/devices/virtual/dmi/id/sys_vendor": "QEMU\n"
+    },
+    "result": {
+        "virtualization_role": "guest",
+        "virtualization_tech_host": [],
+        "virtualization_type": "podman",
+        "virtualization_tech_guest": ["container", "kvm", "podman"]
+    }
+}

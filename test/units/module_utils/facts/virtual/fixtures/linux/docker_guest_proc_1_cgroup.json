@@ -1,0 +1,12 @@
+{
+    "description": "Linux running as a Docker guest (per /proc/1/cgroup)",
+    "files": {
+        "/proc/1/cgroup": "11:pids:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n10:perf_event:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n9:net_cls:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n8:freezer:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n7:devices:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n6:memory:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n5:blkio:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n4:cpuacct:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n3:cpu:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n2:cpuset:/docker/59c9f9ee226d866d26e1d0c976f3bf1a9fee51a26a961da81d39b4430e3cb883\n1:name=openrc:/docker\n0::/docker\n"
+    },
+    "result": {
+        "virtualization_role": "guest",
+        "virtualization_tech_host": [],
+        "virtualization_type": "docker",
+        "virtualization_tech_guest": ["docker", "container"]
+    }
+}

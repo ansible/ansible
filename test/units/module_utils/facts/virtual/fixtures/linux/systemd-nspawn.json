@@ -1,0 +1,16 @@
+{
+    "description": "Linux running in systemd-nspawn",
+    "files": {
+        "/proc/1/cgroup": "12:cpuset:/\n11:freezer:/\n10:devices:/\n9:rdma:/\n8:perf_event:/\n7:memory:/\n6:blkio:/\n5:cpu,cpuacct:/\n4:hugetlb:/\n3:net_cls,net_prio:/\n2:pids:/\n1:name=systemd:/\n0::/\n",
+        "/proc/1/environ": "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\u0000container=systemd-nspawn\u0000TERM=xterm-256color\u0000HOME=/root\u0000USER=root\u0000LOGNAME=root\u0000container_uuid=20260d16-2837-405f-8940-2044534e7022\u0000NOTIFY_SOCKET=/run/systemd/nspawn/notify",
+        "/sys/devices/virtual/dmi/id/product_name": "4286CTO\n",
+        "/sys/devices/virtual/dmi/id/bios_vendor": "LENOVO\n",
+        "/sys/devices/virtual/dmi/id/sys_vendor": "LENOVO\n"
+    },
+    "result": {
+        "virtualization_role": "guest",
+        "virtualization_tech_host": [],
+        "virtualization_type": "container",
+        "virtualization_tech_guest": ["container"]
+    }
+}

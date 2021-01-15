@@ -1,0 +1,12 @@
+{
+    "description": "Linux running as an Xen domU (by bios_vendor)",
+    "files": {
+        "/sys/devices/virtual/dmi/id/bios_vendor": "Xen\n"
+    },
+    "result": {
+        "virtualization_role": "guest",
+        "virtualization_tech_host": [],
+        "virtualization_type": "xen",
+        "virtualization_tech_guest": ["xen"]
+    }
+}

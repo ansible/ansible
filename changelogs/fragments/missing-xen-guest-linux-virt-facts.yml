@@ -1,0 +1,2 @@
+bugfixes:
+  - linux virtual facts - add missing "xen" to listed guest technologies in one case.

@@ -1,0 +1,13 @@
+{
+    "description": "Linux running as an openvz host",
+    "files": {
+        "/proc/vz": "anything",
+        "/proc/bc": "anything"
+    },
+    "result": {
+        "virtualization_role": "host",
+        "virtualization_tech_host": ["openvz"],
+        "virtualization_type": "openvz",
+        "virtualization_tech_guest": []
+    }
+}

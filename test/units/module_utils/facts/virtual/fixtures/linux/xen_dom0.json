@@ -1,0 +1,15 @@
+{
+    "description": "Linux running as an Xen dom0",
+    "paths": [
+        "/proc/xen"
+    ],
+    "files": {
+        "/proc/xen/capabilities": "control_d"
+    },
+    "result": {
+        "virtualization_role": "host",
+        "virtualization_tech_host": ["xen"],
+        "virtualization_type": "xen",
+        "virtualization_tech_guest": []
+    }
+}

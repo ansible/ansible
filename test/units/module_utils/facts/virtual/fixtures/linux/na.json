@@ -1,0 +1,9 @@
+{
+    "description": "Defaults if everything fails",
+    "result": {
+        "virtualization_role": "NA",
+        "virtualization_tech_host": [],
+        "virtualization_type": "NA",
+        "virtualization_tech_guest": []
+    }
+}

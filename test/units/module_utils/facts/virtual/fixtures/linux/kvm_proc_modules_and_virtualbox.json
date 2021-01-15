@@ -1,0 +1,12 @@
+{
+    "description": "Linux host running KVM (/proc/modules) and VirtualBox (/proc/modules) guests",
+    "files": {
+        "/proc/modules": "br_netfilter 28672 0 - Live 0x0000000000000000\nxt_MASQUERADE 16384 34 - Live 0x0000000000000000\nefivarfs 16384 1 - Live 0x0000000000000000\nvboxdrv 1234 1 - Live 0x0000000000000000\nkvm 1234 1 - Live 0x0000000000000000\n"
+    },
+    "result": {
+        "virtualization_role": "host",
+        "virtualization_tech_host": ["kvm", "virtualbox"],
+        "virtualization_type": "kvm",
+        "virtualization_tech_guest": []
+    }
+}

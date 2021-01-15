@@ -1,0 +1,12 @@
+{
+    "description": "Linux host running KVM guests (by existence of /dev/kvm)",
+    "files": {
+        "/dev/kvm": "anything"
+    },
+    "result": {
+        "virtualization_role": "host",
+        "virtualization_tech_host": ["kvm"],
+        "virtualization_type": "kvm",
+        "virtualization_tech_guest": []
+    }
+}

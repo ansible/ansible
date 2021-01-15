@@ -1,0 +1,19 @@
+{
+    "description": "Linux VM running on bhyve host",
+    "binaries": [
+        "dmidecode"
+    ],
+    "commands": {
+        "dmidecode -s system-product-name": {
+            "rc": 0,
+            "stdout": "BHYVE\n",
+            "stderr": ""
+        }
+    },
+    "result": {
+        "virtualization_role": "guest",
+        "virtualization_tech_host": [],
+        "virtualization_type": "bhyve",
+        "virtualization_tech_guest": ["bhyve"]
+    }
+}

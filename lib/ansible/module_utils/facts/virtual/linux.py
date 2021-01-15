@@ -129,6 +129,7 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'xen'
                     virtual_facts['virtualization_role'] = 'host'
             else:
+                guest_tech.add('xen')
                 if not found_virt:
                     virtual_facts['virtualization_type'] = 'xen'
                     virtual_facts['virtualization_role'] = 'guest'
