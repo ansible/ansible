@@ -1,0 +1,2 @@
+minor_changes:
+  - Add support in the unarchive module for .tar.zst (zstd compression)
