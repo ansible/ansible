@@ -309,7 +309,6 @@ class VaultCLI(CLI):
                 msg = "String to encrypt:"
 
             prompt_response = display.prompt(msg, private=hide_input)
-            prompt_response = display.prompt(msg)
 
             if prompt_response == '':
                 raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
