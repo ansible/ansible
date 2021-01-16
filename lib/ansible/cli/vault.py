@@ -303,7 +303,7 @@ class VaultCLI(CLI):
             # TODO: could prompt for which vault_id to use for each plaintext string
             #       currently, it will just be the default
             hide_input = not context.CLIARGS['show_string_input']
-            if hide_input: 
+            if hide_input:
                 msg = "String to encrypt (hidden): "
             else:
                 msg = "String to encrypt:"
