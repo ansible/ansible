@@ -1493,6 +1493,20 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
 
+    # Do not merge -- test purposes
+    # Test with a reasonable list of locations where ara would be installed.
+    python_versions = ["3.6","3.7","3.8","3.9"]
+    callback_paths = [ "/usr/lib/python%s/site-packages/ara/plugins/callback" % version for version in python_versions ]
+
+    display.info("Enabling ARA with ANSIBLE_CALLBACK_PLUGINS=%s" % ":".join(callback_paths))
+    env.update(dict(
+        ANSIBLE_CALLBACK_PLUGINS=":".join(callback_paths),
+        ARA_API_CLIENT="http",
+        ARA_API_SERVER="https://demo.recordsansible.org",
+        ARA_CALLBACK_THREADS="4",
+        ARA_DEFAULT_LABELS="ansible-test_20200117"
+    ))
+
     if args.debug_strategy:
         env.update(dict(ANSIBLE_STRATEGY='debug'))
 

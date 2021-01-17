@@ -5,3 +5,4 @@ ordereddict ; python_version < '2.7' # ansible-test junit callback plugin requir
 packaging
 paramiko
 pyyaml
+ara
