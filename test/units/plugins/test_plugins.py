@@ -105,8 +105,8 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(one, two)
 
     @patch('ansible.plugins.loader.glob')
-    @patch.object(PluginLoader, '_get_paths')
-    def test_all_no_duplicate_names(self, gp_mock, glob_mock):
+    @patch.object(PluginLoader, '_get_paths_with_context')
+    def test_all_no_duplicate_names(self, gpwc_mock, glob_mock):
         '''
         This test goes along with ``test__load_module_source_no_duplicate_names``
         and ensures that we ignore duplicate imports on multiple paths
@@ -114,9 +114,9 @@ class TestErrors(unittest.TestCase):
 
         fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
 
-        gp_mock.return_value = [
-            fixture_path,
-            '/path/to'
+        gpwc_mock.return_value = [
+            PluginPathContext(fixture_path, True),
+            PluginPathContext('/path/to', True),
         ]
 
         glob_mock.glob.side_effect = [
