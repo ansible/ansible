@@ -927,11 +927,13 @@ class PluginLoader:
         all_matches = []
         found_in_cache = True
 
-        for i in self._get_paths():
-            all_matches.extend(glob.glob(to_native(os.path.join(i, "*.py"))))
+        for path_with_context in self._get_paths_with_context(subdirs=True):
+            all_matches.extend([
+                (path, path_with_context.internal)
+                for path in glob.glob(to_native(os.path.join(path_with_context.path, "*.py")))])
 
         loaded_modules = set()
-        for path in sorted(all_matches, key=os.path.basename):
+        for path, internal in sorted(all_matches, key=lambda pi: os.path.basename(pi[0])):
             name = os.path.splitext(path)[0]
             basename = os.path.basename(name)
 
@@ -961,7 +963,7 @@ class PluginLoader:
                     else:
                         full_name = basename
                     module = self._load_module_source(full_name, path)
-                    self._load_config_defs(basename, module, path)
+                    self._load_config_defs(basename, module, path, collection_name='ansible.builtin' if internal else None)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                     continue
