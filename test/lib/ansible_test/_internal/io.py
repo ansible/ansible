@@ -91,4 +91,4 @@ class SortedSetEncoder(json.JSONEncoder):
         if isinstance(obj, set):
             return sorted(obj)
 
-        return super(SortedSetEncoder).default(self, obj)
+        return json.JSONEncoder.default(self, obj)
