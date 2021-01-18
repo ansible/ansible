@@ -51,18 +51,18 @@ all: docs
 docs: htmldocs
 
 generate_rst: collections_meta config cli keywords plugins testing
-base_generate_rst: collections_meta config cli keywords base_plugins testing
+core_generate_rst: collections_meta config cli keywords core_plugins testing
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-base_htmldocs: base_generate_rst
+core_htmldocs: core_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 singlehtmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
-base_singlehtmldocs: base_generate_rst
+core_singlehtmldocs: core_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 linkcheckdocs: generate_rst
@@ -119,7 +119,7 @@ keywords: ../templates/playbooks_keywords.rst.j2
 config: ../templates/config.rst.j2
 	$(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ ../../lib/ansible/config/base.yml
 
-# For now, if we're building on devel, just build base docs.  In the future we'll want to build docs that
+# For now, if we're building on devel, just build core docs.  In the future we'll want to build docs that
 # are the latest versions on galaxy (using a different antsibull-docs subcommand)
 plugins:
 	if expr "$(VERSION)" : '.*[.]dev[0-9]\{1,\}$$' &> /dev/null; then \
@@ -128,8 +128,8 @@ plugins:
 		$(PLUGIN_FORMATTER) full -o rst $(PLUGIN_ARGS);\
 	fi
 
-# This only builds the plugin docs included with ansible-base
-base_plugins:
+# This only builds the plugin docs included with ansible-core
+core_plugins:
 	$(PLUGIN_FORMATTER) base -o rst $(PLUGIN_ARGS);\
 
 testing:
