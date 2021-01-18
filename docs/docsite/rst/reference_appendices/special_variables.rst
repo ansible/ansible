@@ -51,7 +51,7 @@ ansible_play_batch
     List of active hosts in the current play run limited by the serial, aka 'batch'. Failed/Unreachable hosts are not considered 'active'.
 
 ansible_play_hosts
-    List of hosts in the current play run, not limited by the serial. Failed/Unreachable hosts are included in this list.
+    List of hosts in the current play run, not limited by the serial. Failed/Unreachable hosts are excluded from this list.
 
 ansible_play_hosts_all
     List of all the hosts that were targeted by the play
