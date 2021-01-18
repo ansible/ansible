@@ -56,6 +56,7 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
+            - Works only when I(file_type) is C(file).
         type: str
     read_whole_file:
         description:
