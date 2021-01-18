@@ -1693,6 +1693,11 @@ releases:
     - set_mode_if_different-symlink-sticky-dir.yml
     - v2.9.16rc1_summary.yaml
     release_date: '2020-12-07'
+  2.9.17:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.17_summary.yaml
+    release_date: '2021-01-18'
   2.9.17rc1:
     codename: Immigrant Song
     fragments:
