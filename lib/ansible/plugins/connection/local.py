@@ -39,7 +39,7 @@ class Connection(ConnectionBase):
     ''' Local based connections '''
 
     transport = 'local'
-    has_pipelining = True
+    has_pipelining = False
 
     def __init__(self, *args, **kwargs):
 
