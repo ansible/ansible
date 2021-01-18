@@ -39,7 +39,7 @@ class Connection(ConnectionBase):
     ''' Local based connections '''
 
     transport = 'local'
-    has_pipelining = False
+    has_pipelining = True
 
     def __init__(self, *args, **kwargs):
 
@@ -80,15 +80,17 @@ class Connection(ConnectionBase):
         else:
             cmd = map(to_bytes, cmd)
 
-        # Create a pty. Fallback to using a standard pipe if this fails (which may
-        # cause the command to fail in certain situations where we are escalating
-        # privileges or the command otherwise needs a pty)
-        try:
-            master, stdin = pty.openpty()
-        except (IOError, OSError) as e:
-            display.debug("Unable to open pty: %s" % to_native(e))
-            master = None
-            stdin = subprocess.PIPE
+        master = None
+        stdin = subprocess.PIPE
+        if sudoable and self.become and self.become.expect_prompt():
+            # Create a pty if sudoable for privlege escalation that needs it.
+            # Falls back to using a standard pipe if this fails, which may
+            # cause the command to fail in certain situations where we are escalating
+            # privileges or the command otherwise needs a pty.
+            try:
+                master, stdin = pty.openpty()
+            except (IOError, OSError) as e:
+                display.debug("Unable to open pty: %s" % to_native(e))
 
         p = subprocess.Popen(
             cmd,
@@ -101,7 +103,7 @@ class Connection(ConnectionBase):
         )
 
         # if we created a master, we can close the other half of the pty now
-        if master:
+        if master is not None:
             os.close(stdin)
 
         display.debug("done running command with Popen()")
