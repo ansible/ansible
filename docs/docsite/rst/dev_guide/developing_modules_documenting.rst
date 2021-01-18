@@ -114,7 +114,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :version_added:
 
   * The version of Ansible when the module was added.
-  * This is a string, and not a float, for example, ``version_added: '2.1'``
+  * This is a string, and not a float, for example, ``version_added: '2.1'``.
+  * In collections, this must be the collection version the module was added to, not the Ansible version. For example, ``version_added: 1.0.0``.
 
 :author:
 
@@ -182,6 +183,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
     * Only needed if this option was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
     * This is a string, and not a float, for example, ``version_added: '2.3'``.
+    * In collections, this must be the collection version the option was added to, not the Ansible version. For example, ``version_added: 1.0.0``.
 
   :suboptions:
 

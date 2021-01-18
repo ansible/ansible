@@ -167,7 +167,7 @@ For example, the resource model builder includes the ``myos_interfaces.yml`` sam
             description:
             - The some_int.
             type: int
-            version_added: '1.1'
+            version_added: '1.1.0'
           some_dict:
             type: dict
             description:
