@@ -1,0 +1,4 @@
+bugfixes:
+- mysql_user - add ``SHOW_ROUTINE`` privilege support (https://github.com/ansible-collections/community.mysql/issues/86).
+- mysql_user - add missed privileges to support (https://github.com/ansible-collections/community.general/issues/617).
+- mysql_user - add ``INVOKE LAMBDA`` privilege support (https://github.com/ansible-collections/community.general/issues/283).
