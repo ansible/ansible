@@ -205,7 +205,7 @@ does not have this constraint, or use :ref:`ansible_tower` to manage indirect ac
 Become variables not available for templating
 ---------------------------------------------
 
-As a security precaution, Ansible ``*become*`` magic variables such as
+As a security precaution, Ansible ``*become*``  variables such as
 ``ansible_become_pass`` are *not* available for templating. For instance, even
 if using ``--ask-become-pass``/``-K`` or ``--become-user`` from the command
 line, ``{{ ansible_become_pass }}`` and ``{{ ansible_become_method }}`` will
