@@ -8,7 +8,6 @@ export PIP_DISABLE_PIP_VERSION_CHECK=1
 
 source virtualenv.sh
 
-pip install toml
 
 >&2 echo \
     === Test that the module \
