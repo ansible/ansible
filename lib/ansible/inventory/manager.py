@@ -306,19 +306,24 @@ class InventoryManager(object):
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
-            else:
-                if not parsed and failures:
+
+        if not parsed:
+            # only warn/error if NOT using the default or using it and the file is present
+            # TODO: handle 'non file' inventorya and detect vs hardcode default
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+
+                if failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
                         display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
                         if 'tb' in fail:
                             display.vvv(to_text(fail['tb']))
-                    if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
-        if not parsed:
-            if source != '/etc/ansible/hosts' or os.path.exists(source):
-                # only warn if NOT using the default and if using it, only if the file is present
-                display.warning("Unable to parse %s as an inventory source" % source)
+
+                # final erorr/warning on inventory source failure
+                if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
+                    raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+                else:
+                    display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
