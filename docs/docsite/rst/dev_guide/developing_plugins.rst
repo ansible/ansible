@@ -221,7 +221,7 @@ but with an extra option so you can see how configuration works in Ansible versi
     requirements:
         - enable in configuration
     short_description: Adds time to play stats
-    version_added: "2.0"
+    version_added: "2.0"  # for collections, use the collection version, not the Ansible version
     description:
         - This callback just adds total play duration to the play stats.
     options:
@@ -339,7 +339,7 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
     DOCUMENTATION = """
       lookup: file
       author: Daniel Hokka Zakrisson <daniel@hozac.com>
-      version_added: "0.9"
+      version_added: "0.9"  # for collections, use the collection version, not the Ansible version
       short_description: read file contents
       description:
           - This lookup returns the contents from a file on the Ansible controller's file system.
@@ -468,7 +468,7 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
 
     DOCUMENTATION = '''
         vars: custom_hostvars
-        version_added: "2.10"
+        version_added: "2.10"  # for collections, use the collection version, not the Ansible version
         short_description: Load custom host vars
         description: Load custom host vars
         options:
