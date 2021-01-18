@@ -2282,6 +2282,17 @@ releases:
     - skip_invalid_coll_name_when_listing.yml
     - v2.10.4rc1_summary.yaml
     release_date: '2020-12-07'
+  2.10.5:
+    changes:
+      release_summary: '| Release Date: 2021-01-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.5_summary.yaml
+    release_date: '2021-01-18'
   2.10.5rc1:
     changes:
       bugfixes:
