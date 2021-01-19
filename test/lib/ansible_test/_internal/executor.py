@@ -259,7 +259,6 @@ def get_cryptography_requirement(args, python, python_version):  # type: (Enviro
     Return the correct cryptography requirement for the given python version.
     The version of cryptography installed depends on the python version, setuptools version and openssl version.
     """
-    python = find_python(python_version)
     setuptools_version = get_setuptools_version(args, python)
     openssl_version = get_openssl_version(args, python, python_version)
 
