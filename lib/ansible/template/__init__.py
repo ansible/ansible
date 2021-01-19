@@ -1031,7 +1031,8 @@ class Templar:
             return [] if wantlist else None
 
         if ran and not allow_unsafe:
-            self.cur_context.unsafe = bool(self.cur_context)
+            if self.cur_context:
+                self.cur_context.unsafe = True
 
             if wantlist:
                 return wrap_var(ran)
