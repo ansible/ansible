@@ -2183,61 +2183,61 @@ plugin_routing:
         removal_date: 2019-11-06
         warning_text: bigip_gtm_facts has been removed please use bigip_device_info module.
     faz_device:
-      redirect: community.network.faz_device
+      redirect: community.fortios.faz_device
     fmgr_device:
-      redirect: community.network.fmgr_device
+      redirect: community.fortios.fmgr_device
     fmgr_device_config:
-      redirect: community.network.fmgr_device_config
+      redirect: community.fortios.fmgr_device_config
     fmgr_device_group:
-      redirect: community.network.fmgr_device_group
+      redirect: community.fortios.fmgr_device_group
     fmgr_device_provision_template:
-      redirect: community.network.fmgr_device_provision_template
+      redirect: community.fortios.fmgr_device_provision_template
     fmgr_fwobj_address:
-      redirect: community.network.fmgr_fwobj_address
+      redirect: community.fortios.fmgr_fwobj_address
     fmgr_fwobj_ippool:
-      redirect: community.network.fmgr_fwobj_ippool
+      redirect: community.fortios.fmgr_fwobj_ippool
     fmgr_fwobj_ippool6:
-      redirect: community.network.fmgr_fwobj_ippool6
+      redirect: community.fortios.fmgr_fwobj_ippool6
     fmgr_fwobj_service:
-      redirect: community.network.fmgr_fwobj_service
+      redirect: community.fortios.fmgr_fwobj_service
     fmgr_fwobj_vip:
-      redirect: community.network.fmgr_fwobj_vip
+      redirect: community.fortios.fmgr_fwobj_vip
     fmgr_fwpol_ipv4:
-      redirect: community.network.fmgr_fwpol_ipv4
+      redirect: community.fortios.fmgr_fwpol_ipv4
     fmgr_fwpol_package:
-      redirect: community.network.fmgr_fwpol_package
+      redirect: community.fortios.fmgr_fwpol_package
     fmgr_ha:
-      redirect: community.network.fmgr_ha
+      redirect: community.fortios.fmgr_ha
     fmgr_provisioning:
-      redirect: community.network.fmgr_provisioning
+      redirect: community.fortios.fmgr_provisioning
     fmgr_query:
-      redirect: community.network.fmgr_query
+      redirect: community.fortios.fmgr_query
     fmgr_script:
-      redirect: community.network.fmgr_script
+      redirect: community.fortios.fmgr_script
     fmgr_secprof_appctrl:
-      redirect: community.network.fmgr_secprof_appctrl
+      redirect: community.fortios.fmgr_secprof_appctrl
     fmgr_secprof_av:
-      redirect: community.network.fmgr_secprof_av
+      redirect: community.fortios.fmgr_secprof_av
     fmgr_secprof_dns:
-      redirect: community.network.fmgr_secprof_dns
+      redirect: community.fortios.fmgr_secprof_dns
     fmgr_secprof_ips:
-      redirect: community.network.fmgr_secprof_ips
+      redirect: community.fortios.fmgr_secprof_ips
     fmgr_secprof_profile_group:
-      redirect: community.network.fmgr_secprof_profile_group
+      redirect: community.fortios.fmgr_secprof_profile_group
     fmgr_secprof_proxy:
-      redirect: community.network.fmgr_secprof_proxy
+      redirect: community.fortios.fmgr_secprof_proxy
     fmgr_secprof_spam:
-      redirect: community.network.fmgr_secprof_spam
+      redirect: community.fortios.fmgr_secprof_spam
     fmgr_secprof_ssl_ssh:
-      redirect: community.network.fmgr_secprof_ssl_ssh
+      redirect: community.fortios.fmgr_secprof_ssl_ssh
     fmgr_secprof_voip:
-      redirect: community.network.fmgr_secprof_voip
+      redirect: community.fortios.fmgr_secprof_voip
     fmgr_secprof_waf:
-      redirect: community.network.fmgr_secprof_waf
+      redirect: community.fortios.fmgr_secprof_waf
     fmgr_secprof_wanopt:
-      redirect: community.network.fmgr_secprof_wanopt
+      redirect: community.fortios.fmgr_secprof_wanopt
     fmgr_secprof_web:
-      redirect: community.network.fmgr_secprof_web
+      redirect: community.fortios.fmgr_secprof_web
     ftd_configuration:
       redirect: community.network.ftd_configuration
     ftd_file_download:
@@ -7964,9 +7964,9 @@ plugin_routing:
     network.f5.urls:
       redirect: f5networks.f5_modules.urls
     network.fortianalyzer.common:
-      redirect: community.network.network.fortianalyzer.common
+      redirect: community.fortios.fortianalyzer.common
     network.fortianalyzer.fortianalyzer:
-      redirect: community.network.network.fortianalyzer.fortianalyzer
+      redirect: community.fortios.fortianalyzer.fortianalyzer
     network.fortimanager.common:
       redirect: fortinet.fortimanager.common
     network.fortimanager.fortimanager:
@@ -9483,7 +9483,7 @@ plugin_routing:
     exos:
       redirect: community.network.exos
     fortianalyzer:
-      redirect: community.network.fortianalyzer
+      redirect: community.fortios.fortianalyzer
     fortimanager:
       redirect: fortinet.fortimanager.fortimanager
     ftd:
