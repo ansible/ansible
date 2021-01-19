@@ -1605,6 +1605,8 @@ INTERPRETER_PYTHON_FALLBACK:
   - python2.6
   - /usr/libexec/platform-python
   - /usr/bin/python3
+  - /QOpenSys/pkgs/bin/python3
+  - /QOpenSys/pkgs/bin/python2
   - python
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   version_added: "2.8"
