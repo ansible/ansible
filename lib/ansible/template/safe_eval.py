@@ -140,7 +140,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     try:
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
-        compiled = compile(parsed_tree, to_native(expr), 'eval')
+        compiled = compile(parsed_tree, '<expr %s>' % to_native(expr), 'eval')
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of builtins done in CleansingNodeVisitor
