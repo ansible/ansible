@@ -1028,33 +1028,33 @@ class Templar:
                     display.display(msg, log_only=True)
                 else:
                     raise AnsibleError(to_native(msg))
-            ran = [] if wantlist else None
+            return [] if wantlist else None
 
         if ran and not allow_unsafe:
+            self.cur_context.unsafe = bool(self.cur_context)
+
             if wantlist:
-                ran = wrap_var(ran)
-            else:
-                try:
-                    if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
-                        ran = wrap_var(NativeJinjaText(",".join(ran)))
-                    else:
-                        ran = wrap_var(",".join(ran))
-                except TypeError:
-                    # Lookup Plugins should always return lists.  Throw an error if that's not
-                    # the case:
-                    if not isinstance(ran, Sequence):
-                        raise AnsibleError("The lookup plugin '%s' did not return a list."
-                                           % name)
+                return wrap_var(ran)
 
-                    # The TypeError we can recover from is when the value *inside* of the list
-                    # is not a string
-                    if len(ran) == 1:
-                        ran = wrap_var(ran[0])
-                    else:
-                        ran = wrap_var(ran)
+            try:
+                if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
+                    ran = wrap_var(NativeJinjaText(",".join(ran)))
+                else:
+                    ran = wrap_var(",".join(ran))
+            except TypeError:
+                # Lookup Plugins should always return lists.  Throw an error if that's not
+                # the case:
+                if not isinstance(ran, Sequence):
+                    raise AnsibleError("The lookup plugin '%s' did not return a list."
+                                       % name)
 
-            if self.cur_context:
-                self.cur_context.unsafe = True
+                # The TypeError we can recover from is when the value *inside* of the list
+                # is not a string
+                if len(ran) == 1:
+                    ran = wrap_var(ran[0])
+                else:
+                    ran = wrap_var(ran)
+
         return ran
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
