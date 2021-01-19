@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_set - return a message instead of traceback when a passed parameter has not been found (https://github.com/ansible-collections/community.postgresql/issues/41).

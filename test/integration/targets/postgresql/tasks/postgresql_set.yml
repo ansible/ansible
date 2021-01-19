@@ -302,3 +302,19 @@
   - assert:
       that:
       - result.query_result.0.reset_val == "test ! -f /mnt/postgres/mb/%f && cp %p /mnt/postgres/mb/%f"
+
+  #################################################################################
+  # Bugfix of https://github.com/ansible-collections/community.postgresql/issues/41
+  - name: Pass non-existent parameter
+    <<: *task_parameters
+    postgresql_set:
+      <<: *pg_parameters
+      name: Timezone
+      value: utc
+    register: result
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - result.msg is search('No such parameter')
