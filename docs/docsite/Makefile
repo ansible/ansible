@@ -59,13 +59,13 @@ htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 core_htmldocs: core_generate_rst
-	CPUS=$(CPUS) $(MAKE) -f Makefile_core.sphinx html
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SOURCEDIR=core_rst
 
 singlehtmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 core_singlehtmldocs: core_generate_rst
-	CPUS=$(CPUS) $(MAKE) -f Makefile_core.sphinx singlehtml
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SOURCEDIR=core_rst
 
 linkcheckdocs: generate_rst
 		CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck
