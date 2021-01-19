@@ -63,6 +63,9 @@ notes:
     C(/bin/bash -c "/path/to/something | grep else").
   - The question, or key, under I(responses) is a python regex match. Case
     insensitive searches are indicated with a prefix of C(?i).
+  - The C(pexpect) library used by this module operates with a search window
+    of 2000 bytes, and does not use a multiline regex match. To perform a
+    start of line bound match, use a pattern like C((?m)^pattern)
   - By default, if a question is encountered multiple times, its string
     response will be repeated. If you need different responses for successive
     question matches, instead of a string response, use a list of strings as
