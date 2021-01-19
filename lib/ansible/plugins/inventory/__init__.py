@@ -380,6 +380,7 @@ class Constructable(object):
                         raise AnsibleError("Could not set %s for host %s: %s" % (varname, host, to_native(e)))
                     continue
                 self.inventory.set_variable(host, varname, composite)
+                variables[varname] = composite
 
     def _add_host_to_composed_groups(self, groups, variables, host, strict=False):
         ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
