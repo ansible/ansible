@@ -615,7 +615,7 @@ class Display:
         """
         :type message: str
         :type color: str | None
-        :type fd: file
+        :type fd: t.IO[str]
         :type truncate: bool
         """
         if self.redact and self.sensitive:
