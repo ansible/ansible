@@ -100,7 +100,21 @@ class AnsibleError(Exception):
         with open(file_name, 'r') as f:
             lines = f.readlines()
 
+            # In case of a YAML loading error, PyYAML will report the very last line
+            # as the location of the error. Avoid an index error here in order to
+            # return a helpful message.
+            file_length = len(lines)
+            if line_number >= file_length:
+                line_number = file_length - 1
+
+            # If target_line contains only whitespace, move backwards until
+            # actual code is found. If there are several empty lines after target_line,
+            # the error lines would just be blank, which is not very helpful.
             target_line = lines[line_number]
+            while not target_line.strip():
+                line_number -= 1
+                target_line = lines[line_number]
+
             if line_number > 0:
                 prev_line = lines[line_number - 1]
 
