@@ -270,6 +270,10 @@ epub:
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
 
+.PHONY: coredocs
+coredocs:
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) coredocs)
+
 .PHONY: linkcheckdocs
 linkcheckdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) linkcheckdocs)

@@ -50,6 +50,8 @@ all: docs
 
 docs: htmldocs
 
+coredocs: core_htmldocs
+
 generate_rst: collections_meta config cli keywords plugins testing
 core_generate_rst: collections_meta config cli keywords core_plugins testing
 
