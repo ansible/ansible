@@ -22,7 +22,7 @@ You install ``ansible-core`` on a control node, which then uses SSH (by default)
 Control node requirements
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
- ``ansible-core`` 2.11 makes Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. ``ansible-core`` 2.12 will require Python 3.8 or newer to function on the control node. Starting with ``ansible-core`` 2.11, the project will only be packaged for Python 3.8 and newer.
+``ansible-core`` 2.11 makes Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. ``ansible-core`` 2.12 will require Python 3.8 or newer to function on the control node. Starting with ``ansible-core`` 2.11, the project will only be packaged for Python 3.8 and newer.
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_.
 
