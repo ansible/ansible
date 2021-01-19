@@ -1,0 +1,4 @@
+bugfixes:
+  - Pass expression in angle-bracket notation as filename argument to a
+    ``compile()`` built-in function, so that Python debuggers do not try to
+    parse it as filename.
