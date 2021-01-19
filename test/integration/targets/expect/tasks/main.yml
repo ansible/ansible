@@ -43,7 +43,7 @@
   assert:
     that:
     - "expect_result.changed == true"
-    - "expect_result.stdout == 'foobar'"
+    - "expect_result.stdout_lines|last == 'foobar'"
 
 - name: test creates option
   expect:
@@ -71,7 +71,7 @@
   assert:
     that:
     - "creates_result.changed == true"
-    - "creates_result.stdout == 'foobar'"
+    - "creates_result.stdout_lines|last == 'foobar'"
 
 - name: test removes option
   expect:
@@ -85,7 +85,7 @@
   assert:
     that:
     - "removes_result.changed == true"
-    - "removes_result.stdout == 'foobar'"
+    - "removes_result.stdout_lines|last == 'foobar'"
 
 - name: test removes option (missing)
   expect:
@@ -139,9 +139,9 @@
 - name: assert echo works
   assert:
     that:
-    - "echo_result.stdout_lines|length == 2"
-    - "echo_result.stdout_lines[0] == 'foobar'"
-    - "echo_result.stdout_lines[1] == 'bar'"
+    - "echo_result.stdout_lines|length == 7"
+    - "echo_result.stdout_lines[-2] == 'foobar'"
+    - "echo_result.stdout_lines[-1] == 'bar'"
 
 - name: test response list
   expect:
@@ -155,9 +155,9 @@
 - name: assert list response works
   assert:
     that:
-    - "list_result.stdout_lines|length == 2"
-    - "list_result.stdout_lines[0] == 'foobar'"
-    - "list_result.stdout_lines[1] == 'foobaz'"
+    - "list_result.stdout_lines|length == 7"
+    - "list_result.stdout_lines[-2] == 'foobar'"
+    - "list_result.stdout_lines[-1] == 'foobaz'"
 
 - name: test no remaining responses
   expect:
