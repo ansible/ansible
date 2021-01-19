@@ -53,18 +53,33 @@ docs: htmldocs
 coredocs: core_htmldocs
 
 generate_rst: collections_meta config cli keywords plugins testing
+# Build the docs with only plugins shipped in ansible-core
 core_generate_rst: collections_meta config cli keywords core_plugins testing
+
+# Symlink the relevant directory structure into place for building core docs
+core_structure: core_generate_rst
+	@echo "Creating symlinks in core_rst"
+	-ln -sf ../rst/cli core_rst/
+	-ln -sf ../rst/collections core_rst/
+	-ln -sf ../rst/community core_rst/
+	-ln -sf ../rst/dev_guide core_rst/
+	-ln -sf ../rst/plugins core_rst/
+	-ln -sf ../rst/reference_appendices core_rst/
+	-ln -sf ../rst/shared_snippets core_rst/
+	-ln -sf ../rst/user_guide core_rst/
+	-ln -sf ../../rst/installation_guide/index.rst core_rst/installation_guide/index.rst
+	-ln -sf ../../rst/installation_guide/intro_configuration.rst core_rst/installation_guide/intro_configuration.rst
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-core_htmldocs: core_generate_rst
+core_htmldocs: core_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SOURCEDIR=core_rst
 
 singlehtmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
-core_singlehtmldocs: core_generate_rst
+core_singlehtmldocs: core_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SOURCEDIR=core_rst
 
 linkcheckdocs: generate_rst
@@ -101,6 +116,8 @@ clean:
 			rm -rf "rst/collections/$$filename"; \
 		fi \
 	done
+	@echo "Cleanning up generated core_rst structure"
+	find -type l -delete
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
 	rm -f rst/plugins/*/*.rst

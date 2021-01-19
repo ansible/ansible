@@ -1,1 +1,0 @@
-../../rst/installation_guide/index.rst
