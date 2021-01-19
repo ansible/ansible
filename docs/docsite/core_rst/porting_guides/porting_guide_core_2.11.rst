@@ -1,8 +1,8 @@
 
-.. _porting_2.11_guide_base:
+.. _porting_2.11_guide_core:
 
 *******************************
-Ansible-base 2.11 Porting Guide
+ansible-core 2.11 Porting Guide
 *******************************
 
 This section discusses the behavioral changes between Ansible-base 2.10 and Ansible-base 2.11.
