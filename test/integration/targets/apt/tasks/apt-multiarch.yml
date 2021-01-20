@@ -2,23 +2,27 @@
 - name: add architecture {{ apt_foreign_arch }}
   command: dpkg --add-architecture {{ apt_foreign_arch }}
 
-- name: install hello:{{ apt_foreign_arch }} with apt
-  apt: pkg=hello:{{ apt_foreign_arch }} state=present update_cache=yes
+- name: install libunistring2:{{ apt_foreign_arch }} with apt
+  apt: pkg=libunistring2:{{ apt_foreign_arch }} state=present update_cache=yes
   register: apt_result
   until: apt_result is success
 
-- name: uninstall hello:{{ apt_foreign_arch }} with apt
-  apt: pkg=hello:{{ apt_foreign_arch }} state=absent purge=yes
+- name: check libunistring2 version
+  shell: dpkg -s libunistring2 | grep Version | awk '{print $2}'
+  register: libunistring2_version
+
+- name: uninstall libunistring2:{{ apt_foreign_arch }} with apt
+  apt: pkg=libunistring2:{{ apt_foreign_arch }} state=absent purge=yes
 
 - name: install deb file
-  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ apt_foreign_arch }}.deb"
+  apt: deb="/var/cache/apt/archives/libunistring2_{{ libunistring2_version.stdout }}_{{ apt_foreign_arch }}.deb"
   register: apt_multi_initial
 
 - name: install deb file again
-  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ apt_foreign_arch }}.deb"
+  apt: deb="/var/cache/apt/archives/libunistring2_{{ libunistring2_version.stdout }}_{{ apt_foreign_arch }}.deb"
   register: apt_multi_secondary
 
-- name: verify installation of hello:{{ apt_foreign_arch }}
+- name: verify installation of libunistring2:{{ apt_foreign_arch }}
   assert:
     that:
         - "apt_multi_initial.changed"
