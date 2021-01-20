@@ -312,6 +312,37 @@ In a playbook, you can control the collections Ansible searches for modules and 
 
 The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (for example, lookups, filters, tests).
 
+
+Using a playbook from a collection
+==================================
+
+.. versionadded:: 2.11
+
+You can also distribute playbooks in your collection and invoke them using the same semantics you use for plugins:
+
+.. code-block:: shell
+
+    ansible-playbook my_namespace.my_collection.playbook1 -i ./myinventory
+
+From inside a playbook:
+
+.. code-block:: yaml
+
+    - import_playbook: my_namespace.my_collection.playbookX
+
+
+A few recommendations when creating such playbooks, ``hosts:`` should be generic or at least have a variable input.
+
+.. code-block:: yaml
+
+ - hosts: all  # Use --limit or customized inventory to restrict hosts targeted
+
+ - hosts: localhost  # For things you want to restrict to the controller
+
+ - hosts: '{{target|default("webservers")}}'  # Assumes inventory provides a 'webservers' group, but can also use ``-e 'target=host1,host2'``
+
+
+This will have an implied entry in the ``collections:`` keyword of ``my_namespace.my_collection`` just as with roles.
 .. seealso::
 
   :ref:`developing_collections`
