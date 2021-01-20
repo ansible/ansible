@@ -108,7 +108,7 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault',
                              'encrypt_string',
                              '--show-input',
-                             '--prompt',
+                             '--prompt'])
         cli.parse()
         cli.run()
         args, kwargs = mock_display.call_args
@@ -140,7 +140,7 @@ class TestVaultCli(unittest.TestCase):
                              '-'])
         cli.parse()
         cli.run()
-    
+
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
     def test_encrypt_string_stdin_prompt_error(self, mock_vault_editor, mock_setup_vault_secrets):
@@ -152,8 +152,8 @@ class TestVaultCli(unittest.TestCase):
                              '-',
                              '--prompt'])
         self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                            "The --prompt option is not supported if also reading input from stdin",
-                            cli.parse)
+                                "The --prompt option is not supported if also reading input from stdin",
+                                cli.parse)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')

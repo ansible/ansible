@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix improper parsing for ansible-vault encrypt_string --prompt (https://github.com/ansible/ansible/issues/70200)
