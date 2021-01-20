@@ -18,6 +18,7 @@ string_to_vars = {
     'DOCUMENTATION': 'doc',
     'EXAMPLES': 'plainexamples',
     'RETURN': 'returndocs',
+    'SEEALSO': 'seealso',
     'ANSIBLE_METADATA': 'metadata',  # NOTE: now unused, but kept for backwards compat
 }
 
@@ -126,7 +127,6 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
     """
 
     data = _init_doc_dict()
-
     try:
         with open(filename, 'rb') as b_module_data:
             M = ast.parse(b_module_data.read())
