@@ -23,6 +23,7 @@
   - import_tasks: 'apt-multiarch.yml'
     when:
       - ansible_userspace_architecture != apt_foreign_arch
+      - not (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '20.04')
 
   - import_tasks: 'apt-builddep.yml'
 
