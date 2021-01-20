@@ -715,7 +715,7 @@ Generate an IPv6 address in Stateless Configuration (SLAAC)
 
 the filter ``slaac()`` generates an IPv6 address for a given network and a MAC Address in Stateless Configuration::
 
-    # {{ fdcf:1894:23b5:d38c:0000:0000:0000:0000 | slaac('c2:31:b3:83:bf:2b') }}
+    # {{ 'fdcf:1894:23b5:d38c:0000:0000:0000:0000' | slaac('c2:31:b3:83:bf:2b') }}
     fdcf:1894:23b5:d38c:c031:b3ff:fe83:bf2b
 
 .. seealso::
