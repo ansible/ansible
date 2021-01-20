@@ -1030,7 +1030,7 @@ class Templar:
                     raise AnsibleError(to_native(msg))
             return [] if wantlist else None
 
-        if allow_unsafe is False:
+        if ran and allow_unsafe is False:
             if self.cur_context:
                 self.cur_context.unsafe = True
 
