@@ -97,12 +97,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
 
-    def __init__(self, play=None, from_files=None, from_include=False):
+    def __init__(self, play=None, from_files=None, from_include=False, parent=None):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
         self._role_params = dict()
         self._loader = None
+        self._parent = parent
 
         self._metadata = None
         self._play = play
@@ -134,7 +135,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, parent=None):
 
         if from_files is None:
             from_files = {}
@@ -168,7 +169,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include)
+            r = Role(play=play, from_files=from_files, from_include=from_include, parent=parent)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.get_name() not in play.ROLE_CACHE:
@@ -305,7 +306,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         deps = []
         if self._metadata:
             for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, play=self._play, parent_role=self)
+                r = Role.load(role_include, play=self._play, parent_role=self, parent=self._play)
                 deps.append(r)
 
         return deps

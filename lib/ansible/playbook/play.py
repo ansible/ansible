@@ -199,7 +199,7 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
 
         roles = []
         for ri in role_includes:
-            roles.append(Role.load(ri, play=self))
+            roles.append(Role.load(ri, play=self, parent=self))
 
         self.roles[:0] = roles
 
