@@ -403,10 +403,9 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch):
 
     broken_server = copy.copy(galaxy_server)
     broken_server.api_server = 'https://broken.com/'
-    mock_404 = MagicMock()
-    mock_404.side_effect = api.GalaxyError(urllib_error.HTTPError('https://galaxy.server.com', 404, 'msg', {},
-                                                                  StringIO()), "custom msg")
-    monkeypatch.setattr(broken_server, 'get_collection_versions', mock_404)
+    mock_version_list = MagicMock()
+    mock_version_list.return_value = []
+    monkeypatch.setattr(broken_server, 'get_collection_versions', mock_version_list)
 
     actual = collection.CollectionRequirement.from_name('namespace.collection', [broken_server, galaxy_server],
                                                         '>1.0.1', False, True)
@@ -420,8 +419,8 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch):
     assert actual.latest_version == u'1.0.3'
     assert actual.dependencies == {}
 
-    assert mock_404.call_count == 1
-    assert mock_404.mock_calls[0][1] == ('namespace', 'collection')
+    assert mock_version_list.call_count == 1
+    assert mock_version_list.mock_calls[0][1] == ('namespace', 'collection')
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -429,8 +428,7 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch):
 
 def test_build_requirement_from_name_missing(galaxy_server, monkeypatch):
     mock_open = MagicMock()
-    mock_open.side_effect = api.GalaxyError(urllib_error.HTTPError('https://galaxy.server.com', 404, 'msg', {},
-                                                                   StringIO()), "")
+    mock_open.return_value = []
 
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_open)
 

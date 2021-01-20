@@ -751,9 +751,15 @@ class GalaxyAPI:
             server_cache = self._cache.setdefault(get_cache_id(versions_url), {})
             modified_cache = server_cache.setdefault('modified', {})
 
-            modified_date = self.get_collection_metadata(namespace, name).modified_str
-            cached_modified_date = modified_cache.get('%s.%s' % (namespace, name), None)
+            try:
+                modified_date = self.get_collection_metadata(namespace, name).modified_str
+            except GalaxyError as err:
+                if err.http_code != 404:
+                    raise
+                # No collection found, return an empty list to keep things consistent with the various APIs
+                return []
 
+            cached_modified_date = modified_cache.get('%s.%s' % (namespace, name), None)
             if cached_modified_date != modified_date:
                 modified_cache['%s.%s' % (namespace, name)] = modified_date
                 if versions_url_info.path in server_cache:
@@ -763,7 +769,14 @@ class GalaxyAPI:
 
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)
-        data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True)
+
+        try:
+            data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True)
+        except GalaxyError as err:
+            if err.http_code != 404:
+                raise
+            # v3 doesn't raise a 404 so we need to mimick the empty response from APIs that do.
+            return []
 
         if 'data' in data:
             # v3 automation-hub is the only known API that uses `data`
