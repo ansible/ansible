@@ -45,13 +45,22 @@ class Playbook:
         self._loader = loader
         self._file_name = None
 
+    def __repr__(self):
+        return self.get_name()
+
+    def get_name(self):
+        return self._file_name
+
     @staticmethod
     def load(file_name, variable_manager=None, loader=None):
         pb = Playbook(loader=loader)
         pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
         return pb
 
-    def _load_playbook_data(self, file_name, variable_manager, vars=None):
+    def _load_playbook_data(self, file_name, variable_manager, parent=None):
+
+        if parent is None:
+            parent = self
 
         if os.path.isabs(file_name):
             self._basedir = os.path.dirname(file_name)
@@ -95,7 +104,7 @@ class Playbook:
                 if any(action in entry for action in C._ACTION_INCLUDE):
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')
-                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
+                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader, parent=parent)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
@@ -106,7 +115,7 @@ class Playbook:
                             break
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, parent=parent)
                 self._entries.append(entry_obj)
 
         # we're done, so restore the old basedir in the loader

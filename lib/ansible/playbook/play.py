@@ -83,12 +83,13 @@ class Play(Base, Taggable, CollectionSearch):
 
     # =================================================================================
 
-    def __init__(self):
+    def __init__(self, parent=None):
         super(Play, self).__init__()
 
         self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
+        self._parent = parent
         self.ROLE_CACHE = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
@@ -102,7 +103,7 @@ class Play(Base, Taggable, CollectionSearch):
         return self.name
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None, vars=None):
+    def load(data, variable_manager=None, loader=None, parent=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if data['hosts'] is None or all(host is None for host in data['hosts']):
                 raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
@@ -110,9 +111,7 @@ class Play(Base, Taggable, CollectionSearch):
                 data['name'] = ','.join(data['hosts'])
             else:
                 data['name'] = data['hosts']
-        p = Play()
-        if vars:
-            p.vars = vars.copy()
+        p = Play(parent)
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -288,7 +287,14 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def get_vars(self):
-        return self.vars.copy()
+        all_vars = {}
+        if self._parent:
+            all_vars.update(self._parent.get_vars())
+
+        all_vars.update(self.vars)
+
+        return all_vars
+
 
     def get_vars_files(self):
         if self.vars_files is None:
@@ -320,6 +326,7 @@ class Play(Base, Taggable, CollectionSearch):
             roles.append(role.serialize())
         data['roles'] = roles
         data['included_path'] = self._included_path
+        data['parent'] = self._parent
 
         return data
 
@@ -327,6 +334,7 @@ class Play(Base, Taggable, CollectionSearch):
         super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
+        self._parent = data.get('parent')
         if 'roles' in data:
             role_data = data.get('roles', [])
             roles = []
@@ -343,4 +351,5 @@ class Play(Base, Taggable, CollectionSearch):
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
+        new_me._parent = self._parent
         return new_me

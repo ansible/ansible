@@ -44,9 +44,23 @@ class PlaybookInclude(Base, Conditional, Taggable):
     _import_playbook = FieldAttribute(isa='string')
     _vars = FieldAttribute(isa='dict', default=dict)
 
+    def __init__(self, parent=None):
+        super(PlaybookInclude, self).__init__()
+
+        self._parent = parent
+
+    def __repr__(self):
+        return self.get_name()
+
+    def get_name(self):
+        return self.import_playbook
+
+    def get_vars(self):
+        return self.vars.copy()
+
     @staticmethod
-    def load(data, basedir, variable_manager=None, loader=None):
-        return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
+    def load(data, basedir, variable_manager=None, loader=None, parent=None):
+        return PlaybookInclude(parent).load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
     def load_data(self, ds, basedir, variable_manager=None, loader=None):
         '''
@@ -95,7 +109,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # it is NOT a collection playbook, setup adjecent paths
             AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
 
-        pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy())
+        pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, parent=self)
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
@@ -106,7 +120,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 entry._included_conditional = new_obj.when[:]
 
             temp_vars = entry.vars.copy()
-            temp_vars.update(new_obj.vars)
             param_tags = temp_vars.pop('tags', None)
             if param_tags is not None:
                 entry.tags.extend(param_tags.split(','))
