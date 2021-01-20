@@ -288,7 +288,8 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
         return block_list
 
     def get_vars(self):
-        all_vars = self._parent.get_vars()
+        # With adhoc, self._parent may be None
+        all_vars = {} if not self._parent else self._parent.get_vars()
         all_vars.update(self.vars)
         return all_vars
 
