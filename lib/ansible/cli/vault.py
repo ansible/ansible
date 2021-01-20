@@ -99,6 +99,8 @@ class VaultCLI(CLI):
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
                                     action='store_true',
                                     help="Prompt for the string to encrypt")
+        enc_str_parser.add_argument('--show-input', dest='show_string_input', default=False, action='store_true',
+                                    help='Do not hide input when prompted for the string to encrypt')
         enc_str_parser.add_argument('-n', '--name', dest='encrypt_string_names',
                                     action='append',
                                     help="Specify the variable name")
@@ -300,8 +302,13 @@ class VaultCLI(CLI):
 
             # TODO: could prompt for which vault_id to use for each plaintext string
             #       currently, it will just be the default
-            # could use private=True for shadowed input if useful
-            prompt_response = display.prompt(msg)
+            hide_input = not context.CLIARGS['show_string_input']
+            if hide_input:
+                msg = "String to encrypt (hidden): "
+            else:
+                msg = "String to encrypt:"
+
+            prompt_response = display.prompt(msg, private=hide_input)
 
             if prompt_response == '':
                 raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
