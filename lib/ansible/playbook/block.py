@@ -59,6 +59,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         elif parent_block:
             self._parent = parent_block
 
+        if self._parent is None:
+            self._parent = play
+
         super(Block, self).__init__()
 
     def __repr__(self):
@@ -169,7 +172,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     def get_dep_chain(self):
         if self._dep_chain is None:
             if self._parent:
-                return self._parent.get_dep_chain()
+                try:
+                    return self._parent.get_dep_chain()
+                except AttributeError:
+                    return None
             else:
                 return None
         else:
@@ -206,7 +212,11 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         new_me._parent = None
         if self._parent and not exclude_parent:
-            new_me._parent = self._parent.copy(exclude_tasks=True)
+            try:
+                new_me._parent = self._parent.copy(exclude_tasks=True)
+            except:
+                print((type(self._parent), self._parent))
+                raise
 
         if not exclude_tasks:
             new_me.block = _dupe_task_list(self.block or [], new_me)
@@ -389,10 +399,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
 
     def get_include_params(self):
-        if self._parent:
+        try:
             return self._parent.get_include_params()
-        else:
-            return dict()
+        except AttributeError:
+            return {}
 
     def all_parents_static(self):
         '''

@@ -28,11 +28,13 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 display = Display()
 
@@ -40,7 +42,7 @@ display = Display()
 __all__ = ['Play']
 
 
-class Play(Base, Taggable, CollectionSearch):
+class Play(Base, Taggable, CollectionSearch, Conditional):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -86,7 +88,6 @@ class Play(Base, Taggable, CollectionSearch):
     def __init__(self, parent=None):
         super(Play, self).__init__()
 
-        self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
         self._parent = parent
@@ -287,14 +288,9 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def get_vars(self):
-        all_vars = {}
-        if self._parent:
-            all_vars.update(self._parent.get_vars())
-
+        all_vars = self._parent.get_vars()
         all_vars.update(self.vars)
-
         return all_vars
-
 
     def get_vars_files(self):
         if self.vars_files is None:
@@ -346,10 +342,49 @@ class Play(Base, Taggable, CollectionSearch):
             setattr(self, 'roles', roles)
             del data['roles']
 
-    def copy(self):
+    def copy(self, **kwargs):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
-        new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         new_me._parent = self._parent
         return new_me
+
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._parent:
+            self._parent.set_loader(loader)
+
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
+        '''
+        Generic logic to get the attribute or parent attribute for a task value.
+        '''
+
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
+        try:
+            value = self._attributes[attr]
+
+            if hasattr(self._parent, 'get_plays'):
+                _parent = self._parent._parent
+            else:
+                _parent = self._parent
+
+            if _parent and (value is Sentinel or extend):
+                # vars are always inheritable, other attributes might not be for the parent but still should be fo
+                parent_value = _parent._attributes.get(attr, Sentinel)
+
+                if extend:
+                    value = self._extend_value(value, parent_value, prepend)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
+
+        return value

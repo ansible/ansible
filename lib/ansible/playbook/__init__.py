@@ -37,13 +37,14 @@ __all__ = ['Playbook']
 
 class Playbook:
 
-    def __init__(self, loader):
+    def __init__(self, loader, parent=None):
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader = loader
         self._file_name = None
+        self._parent = parent
 
     def __repr__(self):
         return self.get_name()
@@ -104,7 +105,7 @@ class Playbook:
                 if any(action in entry for action in C._ACTION_INCLUDE):
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')
-                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader, parent=parent)
+                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader, parent=self)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
@@ -124,5 +125,22 @@ class Playbook:
     def get_loader(self):
         return self._loader
 
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._parent:
+            self._parent.set_loader(loader)
+
     def get_plays(self):
         return self._entries[:]
+
+    def get_vars(self):
+        # This does nothing and has no purpose other than making
+        # Play.get_vars more simple and potentially faster
+        return {} if not self._parent else self._parent.get_vars()

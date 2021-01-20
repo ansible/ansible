@@ -56,7 +56,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         return self.import_playbook
 
     def get_vars(self):
-        return self.vars.copy()
+        all_vars = self._parent.get_vars()
+        all_vars.update(self.vars)
+        return all_vars
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None, parent=None):
@@ -84,7 +86,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         templar = Templar(loader=loader, variables=all_vars)
 
         # then we use the object to load a Playbook
-        pb = Playbook(loader=loader)
+        pb = Playbook(loader=loader, parent=self)
 
         file_name = templar.template(new_obj.import_playbook)
 
@@ -109,15 +111,11 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # it is NOT a collection playbook, setup adjecent paths
             AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
 
-        pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, parent=self)
+        pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, parent=pb)
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
-
-            # conditional includes on a playbook need a marker to skip gathering
-            if new_obj.when and isinstance(entry, Play):
-                entry._included_conditional = new_obj.when[:]
 
             temp_vars = entry.vars.copy()
             param_tags = temp_vars.pop('tags', None)
@@ -127,13 +125,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
             entry.tags = list(set(entry.tags).union(new_obj.tags))
             if entry._included_path is None:
                 entry._included_path = os.path.dirname(playbook)
-
-            # Check to see if we need to forward the conditionals on to the included
-            # plays. If so, we can take a shortcut here and simply prepend them to
-            # those attached to each block (if any)
-            if new_obj.when:
-                for task_block in (entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks):
-                    task_block._attributes['when'] = new_obj.when[:] + task_block.when[:]
 
         return pb
 
@@ -195,3 +186,15 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 if 'vars' in new_ds:
                     raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
                 new_ds['vars'] = params
+
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._parent:
+            self._parent.set_loader(loader)
