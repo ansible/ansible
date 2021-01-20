@@ -112,7 +112,8 @@ class TestVaultCli(unittest.TestCase):
                              'some string to encrypt'])
         cli.parse()
         cli.run()
-        assert mock_display.call_args.kwargs["private"] is False
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"] is False
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -125,7 +126,8 @@ class TestVaultCli(unittest.TestCase):
                              'some string to encrypt'])
         cli.parse()
         cli.run()
-        assert mock_display.call_args.kwargs["private"]
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"]
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
