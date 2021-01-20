@@ -60,7 +60,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             self._parent = parent_block
 
         if self._parent is None:
-            self._parent = play
+            self._parent = role if role else play
 
         super(Block, self).__init__()
 
