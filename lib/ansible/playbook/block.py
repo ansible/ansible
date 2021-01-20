@@ -212,11 +212,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         new_me._parent = None
         if self._parent and not exclude_parent:
-            try:
-                new_me._parent = self._parent.copy(exclude_tasks=True)
-            except:
-                print((type(self._parent), self._parent))
-                raise
+            new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
             new_me.block = _dupe_task_list(self.block or [], new_me)
