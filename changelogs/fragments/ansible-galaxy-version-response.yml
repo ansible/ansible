@@ -1,0 +1,4 @@
+minor_changes:
+- >-
+  ansible-galaxy - Ensure ``get_collection_versions`` returns an empty list when a collection does
+  not exist for consistency across API versions.
