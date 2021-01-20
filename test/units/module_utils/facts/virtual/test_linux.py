@@ -19,15 +19,16 @@ for datafile in glob.glob(os.path.join(os.path.dirname(__file__), 'fixtures/linu
     with open(os.path.join(os.path.dirname(__file__), '%s' % datafile)) as f:
         TESTSETS.append(json.loads(f.read()))
 
+
 @pytest.mark.parametrize(
     "testcase",
     TESTSETS,
     ids=lambda x: x.get('description'))
 def test_linux_virtualization_facts(mocker, testcase):
     def mock_path_exists(fname):
-        return (fname in testcase.get('files', {}) and \
+        return (fname in testcase.get('files', {}) and
                 testcase['files'][fname] is not None) or \
-                fname in testcase.get('paths', [])
+            fname in testcase.get('paths', [])
 
     def mock_access(fname, mode):
         return mock_path_exists(fname)
