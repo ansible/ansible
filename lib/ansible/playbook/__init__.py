@@ -28,6 +28,7 @@ from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
+from ansible.utils.vars import get_unique_id
 
 display = Display()
 
@@ -45,6 +46,7 @@ class Playbook:
         self._loader = loader
         self._file_name = None
         self._parent = parent
+        self._uuid = get_unique_id()
 
     def __repr__(self):
         return self.get_name()

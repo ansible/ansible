@@ -69,11 +69,11 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     def __eq__(self, other):
         '''object comparison based on _uuid'''
-        return self._uuid == other._uuid
+        return isinstance(other, Block) and self._uuid == other._uuid
 
     def __ne__(self, other):
         '''object comparison based on _uuid'''
-        return self._uuid != other._uuid
+        return isinstance(other, Block) and self._uuid != other._uuid
 
     def get_vars(self):
         '''

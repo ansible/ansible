@@ -35,6 +35,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.vars import get_unique_id
 
 display = Display()
 
@@ -48,6 +49,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         super(PlaybookInclude, self).__init__()
 
         self._parent = parent
+        self._uuid = get_unique_id()
 
     def __repr__(self):
         return self.get_name()
