@@ -93,8 +93,8 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.3
               test: rhel/8.3
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
+            - name: FreeBSD 11.4
+              test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
           groups:
@@ -170,8 +170,8 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.3
               test: rhel/8.3
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
+            - name: FreeBSD 11.4
+              test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
   - stage: Incidental_Docker
