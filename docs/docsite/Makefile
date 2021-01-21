@@ -56,6 +56,21 @@ generate_rst: collections_meta config cli keywords plugins testing
 # Build the docs with only plugins shipped in ansible-core
 core_generate_rst: collections_meta config cli keywords core_plugins testing
 
+	# Symlink the relevant directory structure into place for building Ansible the package docs
+ansible_docs_structure: generate_rst
+	@echo "Creating symlinks in core_rst"
+	-ln -sf ../rst/cli ansible_pkg_rst/
+	-ln -sf ../rst/collections ansible_pkg_rst/
+	-ln -sf ../rst/community ansible_pkg_rst/
+	-ln -sf ../rst/dev_guide ansible_pkg_rst/
+	-ln -sf ../rst/plugins ansible_pkg_rst/
+	-ln -sf ../rst/reference_appendices ansible_pkg_rst/
+	-ln -sf ../rst/shared_snippets ansible_pkg_rst/
+	-ln -sf ../rst/user_guide ansible_pkg_rst/
+	-ln -sf ../../rst/installation_guide/index.rst ansible_pkg_rst/installation_guide/index.rst
+	-ln -sf ../../rst/installation_guide/intro_configuration.rst ansible_pkg_rst/installation_guide/intro_configuration.rst
+
+
 # Symlink the relevant directory structure into place for building core docs
 core_structure: core_generate_rst
 	@echo "Creating symlinks in core_rst"
@@ -70,20 +85,20 @@ core_structure: core_generate_rst
 	-ln -sf ../../rst/installation_guide/index.rst core_rst/installation_guide/index.rst
 	-ln -sf ../../rst/installation_guide/intro_configuration.rst core_rst/installation_guide/intro_configuration.rst
 
-htmldocs: generate_rst
+htmldocs: ansible_docs_structure
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SOURCEDIR=ansible_pkg_rst
+
+core_htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-core_htmldocs: core_structure
-	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SOURCEDIR=core_rst
+singlehtmldocs: ansible_docs_structure
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SOURCEDIR=ansible_pkg_rst
 
-singlehtmldocs: generate_rst
+core_singlehtmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
-core_singlehtmldocs: core_structure
-	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SOURCEDIR=core_rst
-
-linkcheckdocs: generate_rst
-		CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck
+linkcheckdocs: ansible_docs_structure
+		CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck SOURCEDIR=ansible_pkg_rst
 
 webdocs: docs
 
