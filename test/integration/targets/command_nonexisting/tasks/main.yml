@@ -1,0 +1,4 @@
+- command: commandthatdoesnotexist --would-be-awkward
+  register: res
+  changed_when: "'changed' in res.stdout"
+  failed_when: "res.stdout != '' or res.stderr != ''"
