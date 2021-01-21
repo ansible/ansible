@@ -516,7 +516,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("The password script %s returned and error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
+                raise AnsibleError("The password script %s returned an error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
             secret = stdout
 
         else:
