@@ -751,7 +751,7 @@ tend to have very short expiration periods so it requires frequent reauthorizati
 a long set of tasks.
 
 In such environments we recommend securing around Ansible's execution but still allow it to use an 'automation user' that does not require such measures.
-This is something Tower/AWX excels at by setting up RBAC access to inventory and job execution.
+This is something Tower/AWX excels at by setting up RBAC access to inventory, manage credentials and job execution.
 
 
 .. _docs_contributions:
