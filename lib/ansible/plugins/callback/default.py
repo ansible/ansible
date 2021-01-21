@@ -206,11 +206,6 @@ class CallbackModule(CallbackBase):
             if self.display_skipped_hosts and self.display_ok_hosts:
                 self._print_task_banner(task)
 
-    def _print_task_path(self, task):
-        path = task.get_path()
-        if path:
-            self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
-
     def _print_task_banner(self, task):
         # args can be specified as no_log in several places: in the task or in
         # the argument spec.  We can check whether the task is no_log but the
