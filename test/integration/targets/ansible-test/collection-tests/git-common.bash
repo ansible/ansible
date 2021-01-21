@@ -3,7 +3,29 @@
 set -eux -o pipefail
 
 # make sure git is installed
-git --version || ansible-playbook collection-tests/install-git.yml -i ../../inventory "$@"
+set +e
+git --version
+gitres=$?
+set -e
+
+if [[ $gitres -ne 0 ]]; then
+  ansible-playbook collection-tests/install-git.yml -i ../../inventory "$@"
+fi
+
+dir="$(pwd)"
+
+uninstall_git() {
+  cd "$dir"
+  ansible-playbook collection-tests/uninstall-git.yml -i ../../inventory "$@"
+}
+
+# This is kind of a hack. The uninstall playbook has no way to know the result
+# of the install playbook to determine if it changed. So instead, we assume
+# that if git wasn't found to begin with, it was installed by the playbook and
+# and needs to be removed when we exit.
+if [[ $gitres -ne 0 ]]; then
+  trap uninstall_git EXIT
+fi
 
 # init sub project
 mkdir "${WORK_DIR}/sub"

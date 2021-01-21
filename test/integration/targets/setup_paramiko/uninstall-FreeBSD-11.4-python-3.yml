@@ -1,0 +1,4 @@
+- name: Uninstall Paramiko for Python 3 on FreeBSD 11.4
+  pkgng:
+    name: py37-paramiko
+    state: absent

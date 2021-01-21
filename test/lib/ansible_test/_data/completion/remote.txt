@@ -1,4 +1,5 @@
 freebsd/11.1 python=2.7,3.6 python_dir=/usr/local/bin
+freebsd/11.4 python=2.7,3.7 python_dir=/usr/local/bin
 freebsd/12.1 python=3.6,2.7 python_dir=/usr/local/bin
 freebsd/12.2 python=3.7,2.7 python_dir=/usr/local/bin
 osx/10.11 python=2.7 python_dir=/usr/local/bin
