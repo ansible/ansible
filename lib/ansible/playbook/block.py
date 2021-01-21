@@ -191,7 +191,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     else:
                         # task may not be a direct child of new_block, search for the correct place to insert new_block
                         cur_obj = new_task._parent
-                        while cur_obj._parent and cur_obj._parent != new_block:
+                        # Prevent the new block from becoming a parent higher than the Play
+                        while cur_obj._parent.__class__.__name__ != 'Play' and cur_obj._parent != new_block:
                             cur_obj = cur_obj._parent
 
                         cur_obj._parent = new_block
