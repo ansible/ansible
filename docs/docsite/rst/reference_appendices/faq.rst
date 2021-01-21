@@ -744,7 +744,7 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 Does Ansible support multiple factor authentication 2FA/MFA/biometrics/finterprint/usbkey/OTP/...
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-No, Ansible is designed to execute multilpe tasks against multiple targets minimizing user interaction.
+No, Ansible is designed to execute multiple tasks against multiple targets, minimizing user interaction.
 As most automation tools, it is not compatible with interactive security systems designed to handle human interaction.
 Most of these systems require a secondary prompt per target, which prevents scaling to thousands of targets.  They also
 tend to have very short expiration periods so it requires frequent reauthorization, also an issue with many hosts and/or
