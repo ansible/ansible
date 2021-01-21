@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Avoid using ``/tmp`` to resolve occasional failures starting tests with the ``--docker`` option.
