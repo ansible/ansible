@@ -1,0 +1,6 @@
+---
+minor_changes:
+- >-
+  Added support for ``mypy`` static type checker
+  (https://mypy.rtfd.io).
+...
