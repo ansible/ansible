@@ -558,11 +558,14 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
         b_command += b_args
 
-    def _build_command(self, binary, command='ssh', *other_args):
+    def _build_command(self, binary, subsystem, *other_args):
         '''
-        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns
-        a command line as an array that can be passed to subprocess.Popen.
-        :args: command: subsystem to use, ssh/sftp/scp
+        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns from remote device.
+
+        :binary: actual executable to use to execute command.
+        :subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
+        :other_args: dict of , value pairs passed as arguments to the ssh binary
+
         '''
 
         b_command = []
@@ -596,7 +599,7 @@ class Connection(ConnectionBase):
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
-        if command == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
+        if subsystem == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             if conn_password:
                 b_args = [b'-o', b'BatchMode=no']
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
@@ -659,7 +662,7 @@ class Connection(ConnectionBase):
         # Add in any common or binary-specific arguments from the PlayContext
         # (i.e. inventory or task settings or overrides on the command line).
 
-        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(command)):
+        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(subsystem)):
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
                 b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
