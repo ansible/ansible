@@ -1,0 +1,18 @@
+- hosts: localhost
+  tasks:
+    - name: Make sure git is uninstalled
+      package:
+        name: git
+        state: absent
+      register: git_remove
+
+    # This gets dragged in as a dependency of git on FreeBSD.
+    # We need to remove it too when done.
+    - name: remove python37 if necessary
+      package:
+        name: python37
+        state: absent
+      when:
+        - git_remove is changed
+        - ansible_distribution == 'FreeBSD'
+        - ansible_python.version.major == 2

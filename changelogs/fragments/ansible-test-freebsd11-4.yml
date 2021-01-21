@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Now supports freebsd/11.4 remote (https://github.com/ansible/ansible/issues/48782).
