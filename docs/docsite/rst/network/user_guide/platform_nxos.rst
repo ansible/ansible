@@ -144,6 +144,7 @@ The following platforms and software versions have been certified by Cisco to wo
      Cisco Nexus N5k      7.3(0)N1(1) and later
      Cisco Nexus N6k      7.3(0)N1(1) and later
      Cisco Nexus N7k      7.3(0)D1(1) and later
+     Cisco Nexus MDS      8.4(1) and later
      ===================  =====================
 
 .. table:: Platform Models
@@ -157,6 +158,7 @@ The following platforms and software versions have been certified by Cisco to wo
      N6k       Support includes all N6xxx models
      N7k       Support includes all N7xxx models
      N9k       Support includes all N9xxx models
+     MDS       Support includes all MDS 9xxx models
      ========  ==============================================
 
 .. seealso::
