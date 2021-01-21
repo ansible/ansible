@@ -293,8 +293,9 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
         all_vars.update(self.vars)
         all_vars.update(self.get_vars_files_vars())
 
-        for role in self.get_roles():
-            all_vars.update(role.get_vars())
+        if C.DEFAULT_PRIVATE_ROLE_VARS is False:
+            for role in self.get_roles():
+                all_vars.update(role.get_vars())
         return all_vars
 
     def get_vars_files(self):
