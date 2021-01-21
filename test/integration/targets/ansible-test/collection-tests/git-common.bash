@@ -5,6 +5,15 @@ set -eux -o pipefail
 # make sure git is installed
 git --version || ansible-playbook collection-tests/install-git.yml -i ../../inventory "$@"
 
+dir="$(pwd)"
+
+uninstall_git() {
+  cd "$dir"
+  ansible-playbook collection-tests/uninstall-git.yml -i ../../inventory "$@"
+}
+
+trap uninstall_git EXIT
+
 # init sub project
 mkdir "${WORK_DIR}/sub"
 cd "${WORK_DIR}/sub"
