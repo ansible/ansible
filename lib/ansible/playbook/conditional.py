@@ -182,12 +182,8 @@ class Conditional:
                             inside_yield=inside_yield
                         )
             try:
-                e = templar.environment.overlay()
-                e.filters.update(templar.environment.filters)
-                e.tests.update(templar.environment.tests)
-
-                res = e._parse(conditional, None, None)
-                res = generate(res, e, None, None)
+                res = templar.environment.parse(conditional, None, None)
+                res = generate(res, templar.environment, None, None)
                 parsed = ast.parse(res, mode='exec')
 
                 cnv = CleansingNodeVisitor()
