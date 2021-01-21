@@ -1202,12 +1202,12 @@
       - initial_file.state == 'file'
 
 # Regarding the documentation:
-# If literal are passed to both literal and
-# insertafter, insertafter is only honored if no match for literal is found.
+# If the search string is passed to both search_string and
+# insertafter, insertafter is only honored if no match for search_string is found.
 # Therefore,
-# when literal expressions are passed to both literal and insertafter, then:
-# 1. literal was found -> ignore insertafter, replace the founded line
-# 2. literal was not found -> insert the line after 'insertafter' line
+# when search_string expressions are passed to both search_string and insertafter, then:
+# 1. search_string was found -> ignore insertafter, replace the founded line
+# 2. search_string was not found -> insert the line after 'insertafter' line
 
 # literal is not present in the file, so the line must be inserted after ^#!/bin/sh
 - name: Add the line using firstmatch, regexp, and insertafter

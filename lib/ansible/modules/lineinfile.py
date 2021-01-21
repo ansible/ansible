@@ -194,7 +194,7 @@ EXAMPLES = r'''
   lineinfile:
     path: /etc/httpd/conf/httpd.conf
     search_string: '<FilesMatch ".php[45]?$">'
-    insertafter: '^<IfModule !php4_module>$\n\t<Location \/>\n'
+    insertafter: '^\t<Location \/>\n'
     line: '        <FilesMatch ".php[34]?$">'
 
 - name: Ensure we have our own comment added to /etc/services
