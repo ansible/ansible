@@ -543,6 +543,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     def copy(self, **kwargs):
         new_me = super(Role, self).copy(**kwargs)
         new_me._parent = self._parent
+        return new_me
 
     def set_loader(self, loader):
         self._loader = loader
