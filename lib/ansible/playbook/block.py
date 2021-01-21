@@ -178,7 +178,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         else:
             return self._dep_chain[:]
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
+    def copy(self, exclude_parent=False, exclude_tasks=False, direct_parent=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
@@ -208,7 +208,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             new_me._dep_chain = self._dep_chain[:]
 
         new_me._parent = None
-        if self._parent and not exclude_parent:
+        if direct_parent:
+            new_me._parent = self._parent
+        elif not exclude_parent:
             new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
@@ -379,8 +381,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             return tmp_list
 
         def evaluate_block(block):
-            new_block = block.copy(exclude_parent=True, exclude_tasks=True)
-            new_block._parent = block._parent
+            new_block = block.copy(direct_parent=True, exclude_tasks=True)
             new_block.block = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)

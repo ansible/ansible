@@ -454,7 +454,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             block_list.extend(dep_blocks)
 
         for task_block in self._task_blocks:
-            new_task_block = task_block.copy()
+            new_task_block = task_block.copy(direct_parent=True)
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
             block_list.append(new_task_block)
@@ -488,6 +488,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         res['_default_vars'] = self._default_vars
         res['_had_task_run'] = self._had_task_run.copy()
         res['_completed'] = self._completed.copy()
+        res['_parent'] = self._parent
 
         if self._metadata:
             res['_metadata'] = self._metadata.serialize()
@@ -513,6 +514,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._default_vars = data.get('_default_vars', dict())
         self._had_task_run = data.get('_had_task_run', dict())
         self._completed = data.get('_completed', dict())
+        self._parent = data.get('parent')
 
         if include_deps:
             deps = []
@@ -537,6 +539,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             self._metadata = m
 
         super(Role, self).deserialize(data)
+
+    def copy(self, **kwargs):
+        new_me = super(Role, self).copy(**kwargs)
+        new_me._parent = self._parent
 
     def set_loader(self, loader):
         self._loader = loader

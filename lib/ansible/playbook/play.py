@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleFileNotFound
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
@@ -291,6 +291,10 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
         # With adhoc, self._parent may be None
         all_vars = {} if not self._parent else self._parent.get_vars()
         all_vars.update(self.vars)
+        all_vars.update(self.get_vars_files_vars())
+
+        for role in self.get_roles():
+            all_vars.update(role.get_vars())
         return all_vars
 
     def get_vars_files(self):
@@ -299,6 +303,27 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
         elif not isinstance(self.vars_files, list):
             return [self.vars_files]
         return self.vars_files
+
+    def get_vars_files_vars(self):
+        all_vars = {}
+        vars_files = self.get_vars_files()
+        try:
+            for vars_file in vars_files:
+                try:
+                    data = self._loader.load_from_file(vars_file, unsafe=True)
+                    if data is not None:
+                        all_vars.update(data)
+                    break
+                except AnsibleFileNotFound:
+                    raise AnsibleFileNotFound("vars file %s was not found" % vars_file)
+                except AnsibleParserError:
+                    raise
+                display.vvv("Read vars_file '%s'" % vars_file)
+        except TypeError:
+            raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
+                                     "Got '%s' of type %s" % (vars_files, type(vars_files)))
+
+        return all_vars
 
     def get_handlers(self):
         return self.handlers[:]

@@ -341,8 +341,7 @@ class TaskExecutor:
                 ran_once = True
 
             try:
-                tmp_task = self._task.copy(exclude_parent=True, exclude_tasks=True)
-                tmp_task._parent = self._task._parent
+                tmp_task = self._task.copy(direct_parent=True, exclude_tasks=True)
                 tmp_play_context = self._play_context.copy()
             except AnsibleParserError as e:
                 results.append(dict(failed=True, msg=to_text(e)))

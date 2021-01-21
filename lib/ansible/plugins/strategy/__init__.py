@@ -516,8 +516,7 @@ class StrategyBase:
             original_host = get_original_host(task_result._host)
             queue_cache_entry = (original_host.name, task_result._task)
             found_task = self._queued_task_cache.get(queue_cache_entry)['task']
-            original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-            original_task._parent = found_task._parent
+            original_task = found_task.copy(direct_parent=True, exclude_tasks=True)
             original_task.from_attrs(task_result._task_fields)
 
             task_result._host = original_host
