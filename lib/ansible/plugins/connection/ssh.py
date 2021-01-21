@@ -558,10 +558,11 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
         b_command += b_args
 
-    def _build_command(self, binary, *other_args):
+    def _build_command(self, binary, command='ssh', *other_args):
         '''
-        Takes a binary (ssh, scp, sftp) and optional extra arguments and returns
+        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns
         a command line as an array that can be passed to subprocess.Popen.
+        :args: command: subsystem to use, ssh/sftp/scp
         '''
 
         b_command = []
@@ -585,10 +586,7 @@ class Connection(ConnectionBase):
             if password_prompt:
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
 
-        if binary == 'ssh':
-            b_command += [to_bytes(self._play_context.ssh_executable, errors='surrogate_or_strict')]
-        else:
-            b_command += [to_bytes(binary, errors='surrogate_or_strict')]
+        b_command += [to_bytes(binary, errors='surrogate_or_strict')]
 
         #
         # Next, additional arguments based on the configuration.
@@ -598,7 +596,7 @@ class Connection(ConnectionBase):
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
-        if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
+        if command == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             if conn_password:
                 b_args = [b'-o', b'BatchMode=no']
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
@@ -661,7 +659,7 @@ class Connection(ConnectionBase):
         # Add in any common or binary-specific arguments from the PlayContext
         # (i.e. inventory or task settings or overrides on the command line).
 
-        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(binary)):
+        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(command)):
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
                 b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
@@ -1126,7 +1124,7 @@ class Connection(ConnectionBase):
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
-                cmd = self._build_command(self.get_option('sftp_executable'), to_bytes(host))
+                cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
@@ -1134,9 +1132,9 @@ class Connection(ConnectionBase):
                 scp = self.get_option('scp_executable')
 
                 if sftp_action == 'get':
-                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
+                    cmd = self._build_command(scp, 'scp', u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
+                    cmd = self._build_command(scp, 'scp', in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
@@ -1208,18 +1206,18 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        ssh_executable = self._play_context.ssh_executable
+        ssh_executable = self.get_option('ssh_executable') or self._play_context.ssh_executable
 
         # -tt can cause various issues in some environments so allow the user
         # to disable it as a troubleshooting method.
         use_tty = self.get_option('use_tty')
 
         if not in_data and sudoable and use_tty:
-            args = (ssh_executable, '-tt', self.host, cmd)
+            args = ('-tt', self.host, cmd)
         else:
-            args = (ssh_executable, self.host, cmd)
+            args = (self.host, cmd)
 
-        cmd = self._build_command(*args)
+        cmd = self._build_command(ssh_executable, 'ssh', *args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         # When running on Windows, stderr may contain CLIXML encoded output
@@ -1257,7 +1255,7 @@ class Connection(ConnectionBase):
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
+        cmd = self._build_command(self.get_option('ssh_executable') or self._play_context.ssh_executable, 'ssh', '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
         cp_arg = [a for a in cmd if a.startswith(b"ControlPath=")]
 
