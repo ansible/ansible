@@ -739,6 +739,21 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 
 .. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
 
+.. _mfa_support:
+
+Does ansilbe support multiple factor authentification 2FA/MFA/biometrics/finterprint/usbkey/OTP/...
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+No, Ansible is designed to execute multilpe tasks against multiple targets minimizing user interaction.
+As most automation tools, it is not very compatible with interactive security systems designed to handle actual humans.
+Most of these systems require a secondary prompt per target, which prevents scaling to thousands of targets.  They also
+tend to have very short expiration periods so it requires frequent reauthorization, also an issue with many hosts and/or
+a long set of tasks.
+
+We recommend in such environments to setup a secure execution environment for Ansible itself but still allow it to use an 'automation user'
+that does not require such measures. This is something Tower/AWX excels at by setting up RBAC access to inventory and job execution.
+
+
 .. _docs_contributions:
 
 How do I submit a change to the documentation?
