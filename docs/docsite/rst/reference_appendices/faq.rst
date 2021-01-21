@@ -750,8 +750,8 @@ Most of these systems require a secondary prompt per target, which prevents scal
 tend to have very short expiration periods so it requires frequent reauthorization, also an issue with many hosts and/or
 a long set of tasks.
 
-We recommend in such environments to setup a secure environment for Ansible itself but still allow it to use an 'automation user'
-that does not require such measures. This is something Tower/AWX excels at by setting up RBAC access to inventory and job execution.
+In such environments we recommend securing around Ansible's execution but still allow it to use an 'automation user' that does not require such measures.
+This is something Tower/AWX excels at by setting up RBAC access to inventory and job execution.
 
 
 .. _docs_contributions:
