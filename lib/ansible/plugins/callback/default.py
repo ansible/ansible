@@ -82,9 +82,6 @@ class CallbackModule(CallbackBase):
 
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
-            path = result._task.get_path()
-            if path:
-                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
 
         self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
         self._handle_warnings(result._result)
