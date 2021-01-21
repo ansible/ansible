@@ -81,11 +81,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         of a role or task include which does, so return those if present.
         '''
 
-        all_vars = self.vars.copy()
-
-        if self._parent:
-            all_vars.update(self._parent.get_vars())
-
+        all_vars = self._parent.get_vars()
+        all_vars.update(self.vars.copy())
         return all_vars
 
     @staticmethod
