@@ -741,7 +741,7 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 
 .. _mfa_support:
 
-Does ansilbe support multiple factor authentification 2FA/MFA/biometrics/finterprint/usbkey/OTP/...
+Does Ansible support multiple factor authentication 2FA/MFA/biometrics/finterprint/usbkey/OTP/...
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 No, Ansible is designed to execute multilpe tasks against multiple targets minimizing user interaction.
