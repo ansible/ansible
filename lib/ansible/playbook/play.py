@@ -389,3 +389,6 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
             pass
 
         return value
+
+    def all_parents_static(self):
+        return True
