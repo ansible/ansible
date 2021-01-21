@@ -85,8 +85,8 @@ class ModuleDocFragment(object):
       show_task_path_on_failure:
         name: Show file path on failed tasks
         description:
-         When a task fails, display the path to the file containing the failed task and the line number.
-         This information is displayed automatically for every task when running with C(-vv) or greater verbosity.
+          When a task fails, display the path to the file containing the failed task and the line number.
+          This information is displayed automatically for every task when running with C(-vv) or greater verbosity.
         type: bool
         default: no
         env:
