@@ -214,7 +214,7 @@ class TaskExecutor:
         if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
             self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+        templar = Templar(loader=self._loader, variables=self._job_vars)
         items = None
         loop_cache = self._job_vars.get('_ansible_loop_cache')
         if loop_cache is not None:
@@ -277,7 +277,7 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         extended = False
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+        templar = Templar(loader=self._loader, variables=self._job_vars)
 
         # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
         if self._task.loop_control:
@@ -419,7 +419,7 @@ class TaskExecutor:
         if variables is None:
             variables = self._job_vars
 
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+        templar = Templar(loader=self._loader, variables=variables)
 
         context_validation_error = None
         try:

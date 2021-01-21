@@ -257,7 +257,6 @@ def _unroll_iterator(func):
             return list(ret)
         return ret
 
-    wrapper.__UNROLLED__ = True
     return _update_wrapper(wrapper, func)
 
 
@@ -414,9 +413,30 @@ class JinjaPluginIntercept(MutableMapping):
 
         self._collection_jinja_func_cache = {}
 
+        self._ansible_plugins_loaded = False
+
+    def _load_ansible_plugins(self):
+        if self._ansible_plugins_loaded:
+            return
+
+        for plugin in self._pluginloader.all():
+            method_map = getattr(plugin, self._method_map_name)
+            self._delegatee.update(method_map())
+
+        if self._pluginloader.class_name == 'FilterModule':
+            for plugin_name, plugin in self._delegatee.items():
+                if self._jinja2_native and plugin_name in C.STRING_TYPE_FILTERS:
+                    self._delegatee[plugin_name] = _wrap_native_text(plugin)
+                else:
+                    self._delegatee[plugin_name] = _unroll_iterator(plugin)
+
+        self._ansible_plugins_loaded = True
+
     # FUTURE: we can cache FQ filter/test calls for the entire duration of a run, since a given collection's impl's
     # aren't supposed to change during a run
     def __getitem__(self, key):
+        self._load_ansible_plugins()
+
         try:
             if not isinstance(key, string_types):
                 raise ValueError('key must be a string')
@@ -511,11 +531,14 @@ class JinjaPluginIntercept(MutableMapping):
                 for func_name, func in iteritems(method_map()):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
-                    if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
-                            func_name in C.STRING_TYPE_FILTERS:
-                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
+                    if self._pluginloader.class_name == 'FilterModule':
+                        if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
+                                func_name in C.STRING_TYPE_FILTERS:
+                            self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
+                        else:
+                            self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
                     else:
-                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
+                        self._collection_jinja_func_cache[fq_name] = func
 
             function_impl = self._collection_jinja_func_cache[key]
             return function_impl
@@ -586,27 +609,14 @@ class Templar:
     '''
 
     def __init__(self, loader, shared_loader_obj=None, variables=None):
-        variables = {} if variables is None else variables
-
+        # NOTE shared_loader_obj is deprecated, ansible.plugins.loader is used
+        # directly. Keeping the arg for now in case 3rd party code "uses" it.
         self._loader = loader
         self._filters = None
         self._tests = None
-        self._available_variables = variables
+        self._available_variables = {} if variables is None else variables
         self._cached_result = {}
-
-        if loader:
-            self._basedir = loader.get_basedir()
-        else:
-            self._basedir = './'
-
-        if shared_loader_obj:
-            self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
-            self._test_loader = getattr(shared_loader_obj, 'test_loader')
-            self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
-        else:
-            self._filter_loader = filter_loader
-            self._test_loader = test_loader
-            self._lookup_loader = lookup_loader
+        self._basedir = loader.get_basedir() if loader else './'
 
         # flags to determine whether certain failures during templating
         # should result in fatal errors being raised
@@ -679,46 +689,6 @@ class Templar:
                 pass
 
         return new_templar
-
-    def _get_filters(self):
-        '''
-        Returns filter plugins, after loading and caching them if need be
-        '''
-
-        if self._filters is not None:
-            return self._filters.copy()
-
-        self._filters = dict()
-
-        for fp in self._filter_loader.all():
-            self._filters.update(fp.filters())
-
-        if self.jinja2_native:
-            for string_filter in C.STRING_TYPE_FILTERS:
-                try:
-                    orig_filter = self._filters[string_filter]
-                except KeyError:
-                    try:
-                        orig_filter = self.environment.filters[string_filter]
-                    except KeyError:
-                        continue
-                self._filters[string_filter] = _wrap_native_text(orig_filter)
-
-        return self._filters.copy()
-
-    def _get_tests(self):
-        '''
-        Returns tests plugins, after loading and caching them if need be
-        '''
-
-        if self._tests is not None:
-            return self._tests.copy()
-
-        self._tests = dict()
-        for fp in self._test_loader.all():
-            self._tests.update(fp.tests())
-
-        return self._tests.copy()
 
     def _get_extensions(self):
         '''
@@ -1002,7 +972,7 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name, loader=self._loader, templar=self)
+        instance = lookup_loader.get(name, loader=self._loader, templar=self)
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
@@ -1071,7 +1041,7 @@ class Templar:
         try:
             # allows template header overrides to change jinja2 options.
             if overrides is None:
-                myenv = self.environment.overlay()
+                myenv = self.environment
             else:
                 myenv = self.environment.overlay(overrides)
 
@@ -1084,13 +1054,6 @@ class Templar:
                     (key, val) = pair.split(':')
                     key = key.strip()
                     setattr(myenv, key, ast.literal_eval(val.strip()))
-
-            # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters())
-            for k in myenv.filters:
-                if not getattr(myenv.filters[k], '__UNROLLED__', False):
-                    myenv.filters[k] = _unroll_iterator(myenv.filters[k])
-            myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
