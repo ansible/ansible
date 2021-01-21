@@ -406,7 +406,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         the chain check the statically_loaded value of the parent.
         '''
         from ansible.playbook.task_include import TaskInclude
-        if self._parent:
+        if self._parent and hasattr(self._parent, 'all_parents_static'):
             if isinstance(self._parent, TaskInclude) and not self._parent.statically_loaded:
                 return False
             return self._parent.all_parents_static()
