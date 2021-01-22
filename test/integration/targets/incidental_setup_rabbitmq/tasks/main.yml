@@ -1,3 +1,5 @@
 ---
 - include: ubuntu.yml
-  when: ansible_distribution == 'Ubuntu'
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - ansible_distribution_release != 'focal'
