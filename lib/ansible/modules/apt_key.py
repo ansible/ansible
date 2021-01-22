@@ -342,7 +342,6 @@ def main():
 
     find_needed_binaries(module)
 
-
     if not key_id:
 
         if keyserver:
@@ -385,7 +384,8 @@ def main():
                 # verify it got added
                 keys = all_keys(module, keyring, short_format)
                 if fingerprint not in keys:
-                    module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)", id=key_id)
+                    module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)",
+                                     id=key_id)
 
     elif state == 'absent':
         if not key_id:
@@ -398,7 +398,7 @@ def main():
                 if short_key_id is not None and remove_key(module, short_key_id, keyring):
                     keys = all_keys(module, keyring, short_format)
                     if fingerprint in keys:
-                        module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)",
+                        module.fail_json(msg="apt-key did not return an error, but the key was not removed (check that the id is correct and *not* a subkey)",
                                          id=key_id)
                 else:
                     # FIXME: module.fail_json or exit-json immediately at point of failure
