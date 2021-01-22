@@ -149,7 +149,6 @@ class TaskInclude(Task):
                 role=self._role,
                 variable_manager=self._variable_manager,
                 loader=self._loader,
-                parent=self._parent
             )
         else:
             p_block = self
