@@ -393,7 +393,7 @@ def main():
                 keys2 = all_keys(module, keyring, short_format)
                 if fingerprint not in keys2:
                     module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)",
-                                     id=key_id, changed=changed)
+                                     id=key_id, changed=changed, keys=keys2)
 
     elif state == 'absent':
         if not key_id:
