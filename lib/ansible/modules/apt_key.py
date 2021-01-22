@@ -218,7 +218,7 @@ def download_key(module, url):
         module.fail_json(msg="needed a URL but was not specified")
 
     try:
-        rsp, info = fetch_url(module, url)
+        rsp, info = fetch_url(module, url, use_proxy=True)
         if info['status'] != 200:
             module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
 
