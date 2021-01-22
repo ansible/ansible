@@ -1,0 +1,2 @@
+minor_changes:
+  - hash_behaviour - Remove deprecation for ``hash_behaviour`` for future re-evaluation.
