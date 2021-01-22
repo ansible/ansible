@@ -786,23 +786,29 @@ DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
   type: string
-  choices: ["replace", "merge"]
+  choices:
+    replace: Any variable that is defined more than once is overwritten using the order from variable precedence rules (highest wins).
+    merge: Any dictionary variable will be recursively merged with new definitions across the different variable definition sources.
   description:
-    - This setting controls how variables merge in Ansible.
-      By default Ansible will override variables in specific precedence orders, as described in Variables.
-      When a variable of higher precedence wins, it will replace the other value.
-    - "Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.
-      This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars
-      (integers, strings) or arrays.  We generally recommend not using this setting unless you think you have an absolute need for it,
-      and playbooks in the official examples repos do not use this setting"
-    - In version 2.0 a ``combine`` filter was added to allow doing this for a particular variable (described in Filters).
+    - This setting controls how duplicate definitions of dictionary variables (aka hash, map, associative array) are handled in Ansible.
+    - This does not affect variables whose values are scalars (integers, strings) or arrays.
+    - "**WARNING**, changing this setting is not recommended as this is fragile and makes your content (plays, roles, collections) non portable,
+      leading to continual confusion and misuse. Don't change this setting unless you think you have an absolute need for it."
+    - We recommend avoiding reusing variable names and relying on the ``combine`` filter and ``vars`` and ``varnames`` lookups
+      to create merged versions of the individual variables. In our experience this is rarely really needed and a sign that too much
+      complexity has been introduced into the data structures and plays.
+    - For some uses you can also look into custom vars_plugins to merge on input, even substituting the default ``host_group_vars``
+      that is in charge of parsing the ``host_vars/`` and ``group_vars/`` directories. Most users of this setting are only interested in inventory scope,
+      but the setting itself affects all sources and makes debugging even harder.
+    - All playbooks and roles in the official examples repos assume the default for this setting.
+    - Changing the setting to ``merge`` applies across variable sources, but many sources will internally still overwrite the variables.
+      For example ``include_vars`` will dedupe variables internally before updating Ansible, with 'last defined' overwriting previous definitions in same file.
+    - The Ansible project recommends you **avoid ``merge`` for new projects.**
+    - It is the intention of the Ansible developers to eventually deprecate and remove this setting, but it is being kept as some users do heavily rely on it.
+      New projects should **avoid 'merge'**.
   env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
   ini:
   - {key: hash_behaviour, section: defaults}
-  deprecated:
-    why: this feature is fragile and not portable, leading to continual confusion and misuse
-    version: "2.13"
-    alternatives: the ``combine`` filter explicitly
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
