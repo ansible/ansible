@@ -29,6 +29,9 @@ notes:
     - Supports C(check_mode).
 requirements:
     - gpg
+notes:
+    - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
+      This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.
 options:
     id:
         description:
