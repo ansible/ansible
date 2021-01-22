@@ -184,7 +184,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             for task in task_list:
                 new_task = task.copy(exclude_parent=True)
                 if task._parent:
-                    new_task._parent = task._parent.copy(exclude_tasks=True)
+                    new_task._parent = task._parent.copy(exclude_tasks=True, direct_parent=True)
                     if task._parent == new_block:
                         # If task._parent is the same as new_block, just replace it
                         new_task._parent = new_block
