@@ -167,3 +167,6 @@
 
 - name: Test expires for local users
   import_tasks: test_local_expires.yml
+
+- name: Test missing home directory parent directory for local users
+  import_tasks: test_local_missing_parent_dir.yml
