@@ -791,18 +791,22 @@ DEFAULT_HASH_BEHAVIOUR:
     - This setting controls how variables merge in Ansible.
       By default Ansible will override variables in specific precedence orders, as described in Variables.
       When a variable of higher precedence wins, it will replace the other value.
-    - "Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.
-      This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars
-      (integers, strings) or arrays.  We generally recommend not using this setting unless you think you have an absolute need for it,
-      and playbooks in the official examples repos do not use this setting"
+    - Setting this option to 'merge' combines common top-level keys in hashes (aka 'dictionaries' in Python terms) instead
+      of replacing them. It does not affect variables whose values are scalars (integers, strings) or arrays.
+      This setting is strongly discouraged and indicates variables should be restructured. You can use the ``combine`` filter
+      to merge hashes transparently.
+      This setting may be used for a specific objective (for example, merging variables from inventory sources), but because
+      it isn't limited to that scope, additional content may be unintentionally impacted by it. This can lead to surprising
+      behavior, difficulty debugging, and break the portability of things that should be self-contained, such as roles.
+      Besides simplifying the structure of variables and using the ``combine`` filter, custom inventory and vars plugins
+      can be used to implement intentionally-scoped merge hash behavior.
+      This setting is internally vulnerable to breakage due to the scope of things that must use an obscure function instead
+      of more natural ways to combine hashes.
+      Playbooks in the official examples repos do not use this setting.
     - In version 2.0 a ``combine`` filter was added to allow doing this for a particular variable (described in Filters).
   env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
   ini:
   - {key: hash_behaviour, section: defaults}
-  deprecated:
-    why: this feature is fragile and not portable, leading to continual confusion and misuse
-    version: "2.13"
-    alternatives: the ``combine`` filter explicitly
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
