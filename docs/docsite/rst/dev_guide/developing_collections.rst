@@ -10,6 +10,8 @@ You can publish and use collections through `Ansible Galaxy <https://galaxy.ansi
 
 * For details on how to *use* collections see :ref:`collections`.
 * For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
+* If you want your collection added to the Ansible package, see the `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
+
 
 .. contents::
    :local:
