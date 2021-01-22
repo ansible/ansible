@@ -19,10 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleFileNotFound
+from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleFileNotFound, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -288,11 +291,11 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
 
         return block_list
 
-    def get_vars(self):
+    def get_vars(self, templar=None):
         # With adhoc, self._parent may be None
         all_vars = {} if not self._parent else self._parent.get_vars()
         all_vars = combine_vars(all_vars, self.vars)
-        all_vars = combine_vars(all_vars, self.get_vars_files_vars())
+        all_vars = combine_vars(all_vars, self.get_vars_files_vars(templar))
 
         if C.DEFAULT_PRIVATE_ROLE_VARS is False:
             for role in self.get_roles():
@@ -306,20 +309,41 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
             return [self.vars_files]
         return self.vars_files
 
-    def get_vars_files_vars(self):
+    def get_vars_files_vars(self, templar=None):
+        # Templar is required to template vars_files paths
+        # on a per host basis, and is only passed from
+        # VariableManager.get_vars
         all_vars = {}
         vars_files = self.get_vars_files()
         try:
-            for vars_file in vars_files:
+            for vars_file_list in vars_files:
+                if not is_sequence(vars_file_list):
+                    vars_file_list = [vars_file_list]
                 try:
-                    data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
-                    if data is not None:
-                        for item in data:
-                            all_vars.update(item)
-                except AnsibleFileNotFound:
-                    raise AnsibleFileNotFound("vars file %s was not found" % vars_file)
-                except AnsibleParserError:
-                    raise
+                    for vars_file in vars_file_list:
+                        # vars_files is a list of lists
+                        # The inner list operates like fist_found
+                        if templar:
+                            vars_file = templar.template(vars_file)
+
+                        try:
+                            data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
+                            if data is not None:
+                                for item in data:
+                                    all_vars.update(item)
+                            break
+                        except AnsibleFileNotFound:
+                            # we continue on loader failures
+                            continue
+                        except AnsibleParserError:
+                            raise
+                    else:
+                        # If we made it here, and we have a templar,
+                        # and we didn't find a file, the error
+                        if templar:
+                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file)
+                except (UndefinedError, AnsibleUndefinedVariable):
+                    pass
                 display.vvv("Read vars_file '%s'" % vars_file)
         except TypeError:
             raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "

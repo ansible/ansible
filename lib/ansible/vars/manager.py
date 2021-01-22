@@ -321,7 +321,10 @@ class VariableManager:
                 pass
 
         if play:
-            all_vars = _combine_and_track(all_vars, play.get_vars(), "play vars")
+            temp_vars = combine_vars(all_vars, self._extra_vars)
+            temp_vars = combine_vars(temp_vars, magic_variables)
+            templar = Templar(loader=self._loader, variables=temp_vars)
+            all_vars = _combine_and_track(all_vars, play.get_vars(templar), "play vars")
 
             # try:
             #     for vars_file_item in vars_files:
