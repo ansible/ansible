@@ -24,8 +24,12 @@ class Validator():
         self.module_params = module_params
         self.validated_params = {}
 
-    def _check_argument_types(self):
+    def _validate_argument_types(self):
+        """Validate module parameters and store them in self.validated_params
+        """
+
         # FIXME: Need to handle subelements
+
         for k, v in self.arg_spec.items():
             type = v.get('type')
             if k not in self.module_params:
@@ -58,6 +62,6 @@ class Validator():
             raise TypeError({'unsupported_params': list(unsupported_parameters)})
 
         check_required_arguments(self.arg_spec, self.module_params)
-        self._check_argument_types()
+        self._validate_argument_types()
 
         return self.validated_params
