@@ -12,3 +12,4 @@ opensuse15py2 name=quay.io/ansible/opensuse15py2-test-container:1.21.0 python=2.
 opensuse15 name=quay.io/ansible/opensuse15-test-container:1.21.0 python=3.6
 ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.21.0 python=2.7 seccomp=unconfined
 ubuntu1804 name=quay.io/ansible/ubuntu1804-test-container:1.21.0 python=3.6 seccomp=unconfined
+ubuntu2004 name=quay.io/ansible/ubuntu2004-test-container:1.21.0 python=3.8 seccomp=unconfined
