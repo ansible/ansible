@@ -312,10 +312,10 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
         try:
             for vars_file in vars_files:
                 try:
-                    data = self._loader.load_from_file(vars_file, unsafe=True)
+                    data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                     if data is not None:
-                        all_vars.update(data)
-                    break
+                        for item in data:
+                            all_vars.update(item)
                 except AnsibleFileNotFound:
                     raise AnsibleFileNotFound("vars file %s was not found" % vars_file)
                 except AnsibleParserError:
