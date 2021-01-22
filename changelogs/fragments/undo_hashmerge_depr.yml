@@ -1,0 +1,2 @@
+bugfixes:
+  - undeprecate hash_merge setting and add more docs clarifying its use and why not to use it.
