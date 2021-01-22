@@ -309,6 +309,9 @@
 - name: autoclean during install
   apt: pkg=hello state=present autoclean=yes
 
+- name: undo previous install
+  apt: pkg=hello state=absent
+
 # https://github.com/ansible/ansible/issues/23155
 - name: create a repo file
   copy:

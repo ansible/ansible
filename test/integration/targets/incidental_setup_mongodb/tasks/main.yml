@@ -20,8 +20,10 @@
 # https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 # Support for Ubuntu 14.04 has been removed from MongoDB 4.0.10+, 3.6.13+, and 3.4.21+.
 # CentOS6 has python version issues
+# Ubuntu 20.04 does not yet have the required packages
 - meta: end_play
   when: (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04')
+    or (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '20.04')
     or (ansible_os_family == "RedHat" and ansible_distribution_major_version == '6')
     or ansible_os_family == "Suse"
     or ansible_distribution == 'Fedora'

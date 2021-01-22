@@ -130,6 +130,8 @@ stages:
               test: ubuntu1604
             - name: Ubuntu 18.04
               test: ubuntu1804
+            - name: Ubuntu 20.04
+              test: ubuntu2004
           groups:
             - 1
             - 2
@@ -200,6 +202,8 @@ stages:
               test: ubuntu1604
             - name: Ubuntu 18.04
               test: ubuntu1804
+            - name: Ubuntu 20.04
+              test: ubuntu2004
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
