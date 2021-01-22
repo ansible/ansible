@@ -383,10 +383,12 @@ def main():
                     import_key(module, keyring, keyserver, key_id)
                 elif data:
                     add_key(module, "-", keyring, data)
+                else:
+                    module.fail_json(msg="No key to add ... how did i get here?!?!")
 
                 # verify it got added
-                keys = all_keys(module, keyring, short_format)
-                if fingerprint not in keys:
+                keys2 = all_keys(module, keyring, short_format)
+                if fingerprint not in keys2:
                     module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)",
                                      id=key_id)
 
@@ -399,8 +401,8 @@ def main():
                 # we use the "short" id: key_id[-8:], short_format=True
                 # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
                 if short_key_id is not None and remove_key(module, short_key_id, keyring):
-                    keys = all_keys(module, keyring, short_format)
-                    if fingerprint in keys:
+                    keys2 = all_keys(module, keyring, short_format)
+                    if fingerprint in keys2:
                         module.fail_json(msg="apt-key did not return an error, but the key was not removed (check that the id is correct and *not* a subkey)",
                                          id=key_id)
                 else:
