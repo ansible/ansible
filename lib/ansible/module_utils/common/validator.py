@@ -5,14 +5,30 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils.common._collections_compat import (
+    KeysView,
+    Sequence,
+)
 
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
     get_type_validator,
 )
 
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+from ansible.module_utils.common.text.converters import to_native
+
+from ansible.module_utils.common.text.formatters import (
+    lenient_lowercase,
+)
+
 from ansible.module_utils.common.validation import (
     check_required_arguments
+)
+
+from ansible.module_utils.six import (
+    binary_type,
+    text_type,
 )
 
 
@@ -20,6 +36,8 @@ class Validator():
     """Argument spec validator class"""
 
     def __init__(self, arg_spec, module_params):
+        self._options_context = None
+
         self.arg_spec = arg_spec
         self.module_params = module_params
         self.validated_params = {}
@@ -43,6 +61,55 @@ class Validator():
 
             self.validated_params[k] = type_checker(value)
 
+    def _validate_argument_values(self):
+        """Docs"""
+
+        for k, v in self.arg_spec.items():
+            choices = v.get('choices')
+            if choices is None:
+                continue
+
+            if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
+                if k in self.module_params:
+                    # Allow one or more when type='list' param with choices
+                    if isinstance(self.module_params[k], list):
+                        diff_list = ", ".join([item for item in self.module_params[k] if item not in choices])
+                        if diff_list:
+                            choices_str = ", ".join([to_native(c) for c in choices])
+                            msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                            if self._options_context:
+                                msg += " found in %s" % " -> ".join(self._options_context)
+                            raise ValueError(msg)
+
+                        # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
+                        # the value. If we can't figure this out, module author is responsible.
+                        lowered_choices = None
+                        if self.module_params[k] == 'False':
+                            lowered_choices = lenient_lowercase(choices)
+                            overlap = BOOLEANS_FALSE.intersection(choices)
+                            if len(overlap) == 1:
+                                # Extract from a set
+                                (self.module_params[k],) = overlap
+
+                        if self.module_params[k] == 'True':
+                            if lowered_choices is None:
+                                lowered_choices = lenient_lowercase(choices)
+                            overlap = BOOLEANS_TRUE.intersection(choices)
+                            if len(overlap) == 1:
+                                (self.module_params[k],) = overlap
+
+                        if self.module_params[k] not in choices:
+                            choices_str = ", ".join([to_native(c) for c in choices])
+                            msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, self.module_params[k])
+                            if self._options_context:
+                                msg += " found in %s" % " -> ".join(self._options_context)
+                            raise ValueError(msg)
+            else:
+                msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                raise ValueError(msg)
+
     def validate(self):
         """Validate module parameters against argument spec
 
@@ -63,5 +130,6 @@ class Validator():
 
         check_required_arguments(self.arg_spec, self.module_params)
         self._validate_argument_types()
+        self._validate_argument_values()
 
         return self.validated_params
