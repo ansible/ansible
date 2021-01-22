@@ -125,18 +125,15 @@ from ansible.module_utils.urls import fetch_url
 
 
 apt_key_bin = None
+gpg_bin = None
 
 
 def find_needed_binaries(module):
     global apt_key_bin
+    global gpg_bin
 
     apt_key_bin = module.get_bin_path('apt-key', required=True)
-
-    # FIXME: Is there a reason that gpg and grep are checked?  Is it just
-    # cruft or does the apt .deb package not require them (and if they're not
-    # installed, /usr/bin/apt-key fails?)
-    module.get_bin_path('gpg', required=True)
-    module.get_bin_path('grep', required=True)
+    gpg_bin = module.get_bin_path('gpg', required=True)
 
 
 def parse_key_id(key_id):
@@ -176,23 +173,31 @@ def parse_key_id(key_id):
     return short_key_id, fingerprint, key_id
 
 
-def all_keys(module, keyring, short_format):
-    if keyring:
-        cmd = "%s --keyring %s adv --list-public-keys --keyid-format=long" % (apt_key_bin, keyring)
-    else:
-        cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
-    (rc, out, err) = module.run_command(cmd)
-    results = []
-    lines = to_native(out).split('\n')
+def parse_output_for_keys(output):
+
+    found = []
+    lines = to_native(output).split('\n')
     for line in lines:
         if (line.startswith("pub") or line.startswith("sub")) and "expired" not in line:
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
-            results.append(real_code)
-    if short_format:
-        results = shorten_key_ids(results)
-    return results
+            if real_code:
+                found.append(real_code)
+    if found:
+        found = shorten_key_ids(found)
+
+    return found
+
+
+def all_keys(module, keyring, short_format):
+    if keyring is not None:
+        cmd = "%s --keyring %s adv --list-public-keys --keyid-format=long" % (apt_key_bin, keyring)
+    else:
+        cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
+    (rc, out, err) = module.run_command(cmd)
+
+    return parse_output_for_keys(out)
 
 
 def shorten_key_ids(key_id_list):
@@ -220,6 +225,40 @@ def download_key(module, url):
         return rsp.read()
     except Exception:
         module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
+
+
+def get_key_id_from_file(module, filename, data=None):
+
+    key = None
+
+    cmd = [gpg_bin, filename]
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
+    if rc != 0:
+        module.fail_json(msg="Unable to extract key from file(%s)", stdout=out, stderr=err)
+
+    keys = parse_output_for_keys(out)
+    if keys:
+        key = keys[0]
+
+    return key
+
+
+def get_key_id_from_data(module, data):
+
+    key = None
+
+    cmd = [gpg_bin, '-']
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data)
+    if rc != 0:
+        module.fail_json(msg="Unable to extract key from data.", stdout=out, stderr=err)
+
+    keys = parse_output_for_keys(out)
+    if keys:
+        key = keys[0]
+
+    return key
 
 
 def import_key(module, keyring, keyserver, key_id):
@@ -286,6 +325,7 @@ def main():
         mutually_exclusive=(('data', 'file', 'keyserver', 'url'),),
     )
 
+    # parameters
     key_id = module.params['id']
     url = module.params['url']
     data = module.params['data']
@@ -295,70 +335,76 @@ def main():
     keyserver = module.params['keyserver']
     changed = False
 
-    fingerprint = short_key_id = key_id
+    # internal vars
     short_format = False
-    if key_id:
-        try:
-            short_key_id, fingerprint, key_id = parse_key_id(key_id)
-        except ValueError:
-            module.fail_json(msg='Invalid key_id', id=key_id)
-
-        if len(fingerprint) == 8:
-            short_format = True
+    short_key_id = None
+    fingerprint = None
 
     find_needed_binaries(module)
 
+
+    if not key_id:
+
+        if keyserver:
+            module.fail_json(msg="Missing key_id, required with keyserver.")
+
+        if url:
+            data = download_key(module, url)
+
+        if filename:
+            key_id = get_key_id_from_file(module, filename)
+        elif data:
+            key_id = get_key_id_from_data(module, data)
+
+    try:
+        short_key_id, fingerprint, key_id = parse_key_id(key_id)
+    except ValueError:
+        module.fail_json(msg='Invalid key_id', id=key_id)
+
+    if not fingerprint:
+        # invalid key should fail well before this point, but JIC ...
+        module.fail_json(msg="Unable to continue as we could not extract a valid fingerprint to compare against existing keys.")
+
+    if len(fingerprint) == 8:
+        short_format = True
+
+    # get existing keys to verify if we need to change
     keys = all_keys(module, keyring, short_format)
-    return_values = {}
 
     if state == 'present':
-        if fingerprint and fingerprint in keys:
-            module.exit_json(changed=False)
-        elif fingerprint and fingerprint not in keys and module.check_mode:
-            # TODO: Someday we could go further -- write keys out to
-            # a temporary file and then extract the key id from there via gpg
-            # to decide if the key is installed or not.
-            module.exit_json(changed=True)
-        else:
-            if not filename and not data and not keyserver:
-                data = download_key(module, url)
+        if fingerprint not in keys:
+            changed = True
+            if not module.check_mode:
+                if filename:
+                    add_key(module, filename, keyring)
+                elif keyserver:
+                    import_key(module, keyring, keyserver, key_id)
+                elif data:
+                    add_key(module, "-", keyring, data)
 
-            if filename:
-                add_key(module, filename, keyring)
-            elif keyserver:
-                import_key(module, keyring, keyserver, key_id)
-            else:
-                add_key(module, "-", keyring, data)
-
-            changed = False
-            keys2 = all_keys(module, keyring, short_format)
-            if len(keys) != len(keys2):
-                changed = True
-
-            if fingerprint and fingerprint not in keys2:
-                module.fail_json(msg="key does not seem to have been added", id=key_id)
-            module.exit_json(changed=changed)
+                # verify it got added
+                keys = all_keys(module, keyring, short_format)
+                if fingerprint not in keys:
+                    module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)", id=key_id)
 
     elif state == 'absent':
         if not key_id:
             module.fail_json(msg="key is required")
         if fingerprint in keys:
-            if module.check_mode:
-                module.exit_json(changed=True)
+            changed = True
+            if not module.check_mode:
+                # we use the "short" id: key_id[-8:], short_format=True
+                # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
+                if short_key_id is not None and remove_key(module, short_key_id, keyring):
+                    keys = all_keys(module, keyring, short_format)
+                    if fingerprint in keys:
+                        module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)",
+                                         id=key_id)
+                else:
+                    # FIXME: module.fail_json or exit-json immediately at point of failure
+                    module.fail_json(msg="error removing key_id")
 
-            # we use the "short" id: key_id[-8:], short_format=True
-            # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
-            if remove_key(module, short_key_id, keyring):
-                keys = all_keys(module, keyring, short_format)
-                if fingerprint in keys:
-                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)",
-                                     id=key_id)
-                changed = True
-            else:
-                # FIXME: module.fail_json or exit-json immediately at point of failure
-                module.fail_json(msg="error removing key_id", **return_values)
-
-    module.exit_json(changed=changed, **return_values)
+    module.exit_json(changed=changed)
 
 
 if __name__ == '__main__':
