@@ -20,7 +20,8 @@ short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it.
 notes:
-    - Doesn't download the key unless it really needs it.
+    - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
+      This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.
     - As a sanity check, downloaded key id must match the one specified.
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
@@ -29,9 +30,6 @@ notes:
     - Supports C(check_mode).
 requirements:
     - gpg
-notes:
-    - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
-      This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.
 options:
     id:
         description:
@@ -382,6 +380,11 @@ def main():
                 elif keyserver:
                     import_key(module, keyring, keyserver, key_id)
                 elif data:
+                    # this also takes care of url if key_id was not provided
+                    add_key(module, "-", keyring, data)
+                elif url:
+                    # we hit this branch only if key_id is supplied with url
+                    data = download_key(module, url)
                     add_key(module, "-", keyring, data)
                 else:
                     module.fail_json(msg="No key to add ... how did i get here?!?!")
