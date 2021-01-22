@@ -27,7 +27,7 @@ class Validator():
     def _check_argument_types(self):
         # FIXME: Need to handle subelements
         for k, v in self.arg_spec.items():
-            type = v.get('type', None)
+            type = v.get('type')
             if k not in self.module_params:
                 continue
 
