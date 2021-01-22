@@ -158,7 +158,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_host = MagicMock()
 
-        def _copy(exclude_parent=False, exclude_tasks=False):
+        def _copy(exclude_parent=False, exclude_tasks=False, direct_parent=False):
             new_item = MagicMock()
             return new_item
 

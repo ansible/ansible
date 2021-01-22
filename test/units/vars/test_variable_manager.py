@@ -95,14 +95,14 @@ class TestVariableManager(unittest.TestCase):
             """
         })
 
-        mock_play = MagicMock()
-        mock_play.get_vars.return_value = dict()
-        mock_play.get_roles.return_value = []
-        mock_play.get_vars_files.return_value = [__file__]
-
         mock_inventory = MagicMock()
         v = VariableManager(inventory=mock_inventory, loader=fake_loader)
-        self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
+        play = Play.load(dict(
+            hosts=['all'],
+            vars_files=[__file__],
+        ), loader=fake_loader, variable_manager=v)
+
+        self.assertEqual(v.get_vars(play=play, use_cache=False).get("foo"), "bar")
 
     def test_variable_manager_task_vars(self):
         # FIXME: BCS make this work

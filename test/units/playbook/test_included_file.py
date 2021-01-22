@@ -237,6 +237,10 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator,
     hostname = "testhost1"
     hostname2 = "testhost2"
 
+    mock_play = MagicMock()
+    mock_play.copy.return_value = mock_play
+    mock_play._get_parent_attribute.return_value = []
+
     role1_ds = {
         'name': 'task1 include',
         'include_role': {
@@ -257,7 +261,7 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator,
             role2_ds
         ]
     }
-    parent_block = Block.load(parent_task_ds, loader=fake_loader)
+    parent_block = Block.load(parent_task_ds, loader=fake_loader, play=mock_play)
 
     parent_block._play = None
 
