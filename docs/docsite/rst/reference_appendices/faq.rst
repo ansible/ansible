@@ -745,7 +745,7 @@ Does Ansible support multiple factor authentication 2FA/MFA/biometrics/finterpri
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 No, Ansible is designed to execute multiple tasks against multiple targets, minimizing user interaction.
-As most automation tools, it is not compatible with interactive security systems designed to handle human interaction.
+As with most automation tools, it is not compatible with interactive security systems designed to handle human interaction.
 Most of these systems require a secondary prompt per target, which prevents scaling to thousands of targets.  They also
 tend to have very short expiration periods so it requires frequent reauthorization, also an issue with many hosts and/or
 a long set of tasks.
