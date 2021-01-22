@@ -35,6 +35,7 @@ from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -290,12 +291,12 @@ class Play(Base, Taggable, CollectionSearch, Conditional):
     def get_vars(self):
         # With adhoc, self._parent may be None
         all_vars = {} if not self._parent else self._parent.get_vars()
-        all_vars.update(self.vars)
-        all_vars.update(self.get_vars_files_vars())
+        all_vars = combine_vars(all_vars, self.vars)
+        all_vars = combine_vars(all_vars, self.get_vars_files_vars())
 
         if C.DEFAULT_PRIVATE_ROLE_VARS is False:
             for role in self.get_roles():
-                all_vars.update(role.get_vars())
+                all_vars = combine_vars(all_vars, role.get_vars())
         return all_vars
 
     def get_vars_files(self):
