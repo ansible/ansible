@@ -390,11 +390,11 @@ def main():
                 keys2 = all_keys(module, keyring, short_format)
                 if fingerprint not in keys2:
                     module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)",
-                                     id=key_id)
+                                     id=key_id, changed=changed)
 
     elif state == 'absent':
         if not key_id:
-            module.fail_json(msg="key is required")
+            module.fail_json(msg="key is required to remove a key")
         if fingerprint in keys:
             changed = True
             if not module.check_mode:
@@ -404,7 +404,7 @@ def main():
                     keys2 = all_keys(module, keyring, short_format)
                     if fingerprint in keys2:
                         module.fail_json(msg="apt-key did not return an error, but the key was not removed (check that the id is correct and *not* a subkey)",
-                                         id=key_id)
+                                         id=key_id, changed=changed)
                 else:
                     # FIXME: module.fail_json or exit-json immediately at point of failure
                     module.fail_json(msg="error removing key_id")
