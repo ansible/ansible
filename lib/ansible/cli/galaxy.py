@@ -398,6 +398,8 @@ class GalaxyCLI(CLI):
                                         help='A file containing a list of collections to be installed.')
             install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
                                         help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
+            install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
+                                        help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -1178,7 +1180,9 @@ class GalaxyCLI(CLI):
         ignore_errors = context.CLIARGS['ignore_errors']
         no_deps = context.CLIARGS['no_deps']
         force_with_deps = context.CLIARGS['force_with_deps']
+        # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
         allow_pre_release = context.CLIARGS['allow_pre_release'] if 'allow_pre_release' in context.CLIARGS else False
+        upgrade = context.CLIARGS['upgrade'] if 'upgrade' in context.CLIARGS else False
 
         collections_path = C.COLLECTIONS_PATHS
         if len([p for p in collections_path if p.startswith(path)]) == 0:
@@ -1196,6 +1200,7 @@ class GalaxyCLI(CLI):
             no_deps, force, force_with_deps,
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
+            upgrade=upgrade,
         )
 
         return 0
