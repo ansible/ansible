@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - The ``--remote`` option has been updated for Python 2.7 to work around breaking changes in the newly released ``get-pip.py`` bootstrapper.

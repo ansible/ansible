@@ -10,7 +10,15 @@ cd ~/
 
 install_pip () {
     if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
-        curl --silent --show-error https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+        case "${python_version}" in
+            "2.7")
+                pip_bootstrap_url="https://bootstrap.pypa.io/${python_version}/get-pip.py"
+                ;;
+            *)
+                pip_bootstrap_url="https://bootstrap.pypa.io/get-pip.py"
+                ;;
+        esac
+        curl --silent --show-error "${pip_bootstrap_url}" -o /tmp/get-pip.py
         "${python_interpreter}" /tmp/get-pip.py --disable-pip-version-check --quiet
         rm /tmp/get-pip.py
     fi
