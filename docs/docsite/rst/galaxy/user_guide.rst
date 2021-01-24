@@ -381,7 +381,7 @@ There are two ways to define the dependencies of a role:
 Using ``meta/requirements.yml``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`.. versionadded:: 2.10`
+.. versionadded:: 2.10
 
 You can create the file ``meta/requirements.yml`` and define dependencies in the same format used for :file:`requirements.yml` described in the `Installing multiple roles from a file`_ section.
 
