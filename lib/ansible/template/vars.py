@@ -59,59 +59,57 @@ class AnsibleJ2Vars(Mapping):
                     elif key not in ('context', 'environment', 'template'):
                         self._locals[key] = val
 
+    def _get_repos(self):
+        ''' predictably return the internal repositories for vars '''
+        for r in (self._templar.available_variables, self._locals, self._globals, *self._extras):
+            yield r
+
     def __contains__(self, k):
-        if k in self._templar.available_variables:
-            return True
-        if k in self._locals:
-            return True
-        for i in self._extras:
-            if k in i:
+
+        for repo in self._get_repos():
+            if k in repo:
                 return True
-        if k in self._globals:
-            return True
         return False
 
     def __iter__(self):
         keys = set()
-        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._get_repos())
         return iter(keys)
 
     def __len__(self):
         keys = set()
-        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._get_repos())
         return len(keys)
 
     def __getitem__(self, varname):
-        if varname not in self._templar.available_variables:
-            if varname in self._locals:
-                return self._locals[varname]
-            for i in self._extras:
-                if varname in i:
-                    return i[varname]
-            if varname in self._globals:
-                return self._globals[varname]
-            else:
-                raise KeyError("undefined variable: %s" % varname)
 
-        variable = self._templar.available_variables[varname]
+        value = None
 
-        # HostVars is special, return it as-is, as is the special variable
-        # 'vars', which contains the vars structure
-        from ansible.vars.hostvars import HostVars
-        if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
-            return variable
+        for repo in (self._get_repos()):
+            if varname in repo:
+                value = repo[varname]
+                break
         else:
-            value = None
-            try:
-                value = self._templar.template(variable)
-            except AnsibleUndefinedVariable as e:
-                raise AnsibleUndefinedVariable("%s: %s" % (to_native(variable), e.message))
-            except Exception as e:
-                msg = getattr(e, 'message', None) or to_native(e)
-                raise AnsibleError("An unhandled exception occurred while templating '%s'. "
-                                   "Error was a %s, original message: %s" % (to_native(variable), type(e), msg))
+            # we got through whole loop w/o finding varname
+            raise KeyError("undefined variable: %s" % varname)
 
-            return value
+        # only templar repo requires templating
+        if repo == self._templar.available_variables:
+
+            from ansible.vars.hostvars import HostVars, HostVarsVars
+            # Vars is currently unused but kept for backwards compat, keep untemplated as it would be recursively templating this object.
+            # HostVars and HostVarsVars are special, since they should be templated in context of the original host
+            # Don't template UNSAFE stuff
+            if not any(isinstance(value, dict) and varname == "vars", isinstance(value, (HostVars, HostVarsVars)), hasattr(value, '__UNSAFE__')):
+                try:
+                    value = self._templar.template(value)
+                except AnsibleUndefinedVariable as e:
+                    raise AnsibleUndefinedVariable("%s: %s" % (to_native(varname), e.message))
+                except Exception as e:
+                    msg = getattr(e, 'message', None) or to_native(e)
+                    raise AnsibleError("Unexpectedly failed to template the variable named '%s'. "
+                                       "Error was a '%s', original message: %s" % (to_native(varname), type(e), msg))
+        return value
 
     def add_locals(self, locals):
         '''
