@@ -54,13 +54,13 @@ generate_rst: collections_meta config cli keywords plugins testing
 base_generate_rst: collections_meta config cli keywords base_plugins testing
 
 htmldocs: generate_rst
-	CPUS=$(CPUS) $(MAKE) -f Makefile.ansible_sphinx html
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SPHINXCONFDIR=ansible_pkg_rst
 
 base_htmldocs: base_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 singlehtmldocs: generate_rst
-	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SPHINXCONFDIR=ansible_pkg_rst
 
 base_singlehtmldocs: base_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
