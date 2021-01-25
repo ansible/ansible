@@ -99,7 +99,7 @@ class AnsibleJ2Vars(Mapping):
             # Vars is currently unused but kept for backwards compat, keep untemplated as it would be recursively templating this object.
             # HostVars and HostVarsVars are special, since they should be templated in context of the original host
             # Don't template UNSAFE stuff
-            if not any(isinstance(value, dict) and varname == "vars", isinstance(value, (HostVars, HostVarsVars)), hasattr(value, '__UNSAFE__')):
+            if not any((isinstance(value, dict) and varname == "vars", isinstance(value, (HostVars, HostVarsVars)), hasattr(value, '__UNSAFE__'))):
                 try:
                     value = self._templar.template(value)
                 except AnsibleUndefinedVariable as e:
