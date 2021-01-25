@@ -742,17 +742,8 @@ class AnsibleModule(object):
         self._set_defaults(pre=True)
 
         # This is for backwards compatibility only.
-            'str': self._check_type_str,
-            'str_strict': self._check_type_str_strict,
-            'list': self._check_type_list,
-            'dict': self._check_type_dict,
-            'bool': self._check_type_bool,
-            'int': self._check_type_int,
-            'float': self._check_type_float,
-            'path': self._check_type_path,
-            'raw': self._check_type_raw,
-            'jsonarg': self._check_type_jsonarg,
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER['str_strict'] = self._check_type_str_strict
 
         if not bypass_checks:
             self._check_required_arguments()
