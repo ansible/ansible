@@ -117,6 +117,8 @@ EXAMPLES = '''
 
 RETURN = '''#'''
 
+import os
+
 # FIXME: standardize into module_common
 from traceback import format_exc
 
