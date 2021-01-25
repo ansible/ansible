@@ -40,7 +40,7 @@ class AnsibleJ2Vars(Mapping):
     To facilitate using builtin jinja2 things like range, globals are also handled here.
     '''
 
-    def __init__(self, templar, globals, locals=None, *extras):
+    def __init__(self, templar, globals, locals=None):
         '''
         Initializes this object with a valid Templar() object, as
         well as several dictionaries of variables representing
@@ -49,7 +49,6 @@ class AnsibleJ2Vars(Mapping):
 
         self._templar = templar
         self._globals = globals
-        self._extras = extras
         self._locals = dict()
         if isinstance(locals, dict):
             for key, val in iteritems(locals):
@@ -61,7 +60,7 @@ class AnsibleJ2Vars(Mapping):
 
     def _get_repos(self):
         ''' predictably return the internal repositories for vars '''
-        for r in (self._templar.available_variables, self._locals, self._globals, *self._extras):
+        for r in (self._locals, self._templar.available_variables, self._globals):
             yield r
 
     def __contains__(self, k):
@@ -125,4 +124,4 @@ class AnsibleJ2Vars(Mapping):
         new_locals = self._locals.copy()
         new_locals.update(locals)
 
-        return AnsibleJ2Vars(self._templar, self._globals, locals=new_locals, *self._extras)
+        return AnsibleJ2Vars(self._templar, self._globals, locals=new_locals)
