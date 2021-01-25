@@ -11,11 +11,8 @@ cd ~/
 install_pip () {
     if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
         case "${python_version}" in
-            "2.7")
-                pip_bootstrap_url="https://bootstrap.pypa.io/${python_version}/get-pip.py"
-                ;;
             *)
-                pip_bootstrap_url="https://bootstrap.pypa.io/get-pip.py"
+                pip_bootstrap_url="https://ansible-ci-files.s3.amazonaws.com/ansible-test/get-pip-20.3.4.py"
                 ;;
         esac
         curl --silent --show-error "${pip_bootstrap_url}" -o /tmp/get-pip.py
