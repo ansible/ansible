@@ -205,7 +205,7 @@ def parse_output_for_keys(output, short_format=False):
                 # gpg format
                 try:
                     tokens = line.split(':')
-                    real_code = token[4]
+                    real_code = tokens[4]
                 except ValueError:
                     # invalid line, skip
                     continue
@@ -366,7 +366,7 @@ def main():
             module.fail_json(msg="Missing key_id, required with keyserver.")
 
         if url:
-            data = download_key(module, url, validate_certs)
+            data = download_key(module, url)
 
         if filename:
             key_id = get_key_id_from_file(module, filename)
