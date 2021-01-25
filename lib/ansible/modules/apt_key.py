@@ -138,6 +138,19 @@ def find_needed_binaries(module):
     gpg_bin = module.get_bin_path('gpg', required=True)
 
 
+def add_http_proxy(cmd):
+
+    for envvar in ('HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy'):
+        proxy = os.environ.get(envvar)
+        if proxy:
+            break
+
+    if proxy:
+        cmd += ' --keyserver-options http-proxy=%s' % proxy
+
+    return cmd
+
+
 def parse_key_id(key_id):
     """validate the key_id and break it into segments
 
@@ -274,6 +287,10 @@ def import_key(module, keyring, keyserver, key_id):
         cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
     else:
         cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+
+    # check for proxy
+    cmd = add_http_proxy(cmd)
+
     for retry in range(5):
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
         if rc == 0:
