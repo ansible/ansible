@@ -90,8 +90,7 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-# OBSOLETE - removing this - dharmabumstead 2018-02-06
-# exclude_patterns = ['modules']
+exclude_patterns = ['galaxy']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
