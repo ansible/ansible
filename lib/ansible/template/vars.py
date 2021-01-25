@@ -72,19 +72,19 @@ class AnsibleJ2Vars(Mapping):
 
     def __iter__(self):
         keys = set()
-        keys.update(self._get_repos())
+        keys.update(list(self._get_repos()))
         return iter(keys)
 
     def __len__(self):
         keys = set()
-        keys.update(self._get_repos())
+        keys.update(list(self._get_repos()))
         return len(keys)
 
     def __getitem__(self, varname):
 
         value = None
 
-        for repo in (self._get_repos()):
+        for repo in self._get_repos():
             if varname in repo:
                 value = repo[varname]
                 break
