@@ -174,7 +174,7 @@ def parse_key_id(key_id):
     return short_key_id, fingerprint, key_id
 
 
-def parse_output_for_keys(output):
+def parse_output_for_keys(output, short_format=False):
 
     found = []
     lines = to_native(output).split('\n')
@@ -185,7 +185,7 @@ def parse_output_for_keys(output):
             (len_type, real_code) = code.split("/")
             if real_code:
                 found.append(real_code)
-    if found:
+    if found and short_format:
         found = shorten_key_ids(found)
 
     return found
@@ -198,7 +198,7 @@ def all_keys(module, keyring, short_format):
         cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
     (rc, out, err) = module.run_command(cmd)
 
-    return parse_output_for_keys(out)
+    return parse_output_for_keys(out, short_format)
 
 
 def shorten_key_ids(key_id_list):
@@ -365,14 +365,14 @@ def main():
         # invalid key should fail well before this point, but JIC ...
         module.fail_json(msg="Unable to continue as we could not extract a valid fingerprint to compare against existing keys.")
 
-    if len(fingerprint) == 8:
+    if len(key_id) == 8:
         short_format = True
 
     # get existing keys to verify if we need to change
     keys = all_keys(module, keyring, short_format)
 
     if state == 'present':
-        if fingerprint not in keys:
+        if (short_format and short_key_id not in keys) or (not short_format and fingerprint not in keys):
             changed = True
             if not module.check_mode:
                 if filename:
@@ -391,9 +391,9 @@ def main():
 
                 # verify it got added
                 keys2 = all_keys(module, keyring, short_format)
-                if fingerprint not in keys2:
+                if (short_format and short_key_id not in keys2) or (not short_format and fingerprint not in keys2):
                     module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)",
-                                     id=key_id, changed=changed, keys=keys2)
+                                     id=key_id, changed=changed)
 
     elif state == 'absent':
         if not key_id:
