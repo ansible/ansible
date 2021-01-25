@@ -1,10 +1,11 @@
-.. _ansible_documentation:
+.. _ansible_core_documentation:
 
-Ansible Documentation
+**************************
+Ansible Core Documentation
+**************************
+
+About `ansible-core`
 =====================
-
-About Ansible
-`````````````
 
 Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates.
 
@@ -29,46 +30,21 @@ Ansible releases a new major release of Ansible approximately three to four time
 
 .. toctree::
    :maxdepth: 2
-   :caption: Using Ansible
+   :caption: Using `ansible-core`
 
    user_guide/index
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contributing to Ansible
+   :caption: Contributing to `ansible-core`
 
    community/index
 
 .. toctree::
    :maxdepth: 2
-   :caption: Extending Ansible
+   :caption: Extending `ansible-core`
 
    dev_guide/index
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: Common Ansible Scenarios
-
-   scenario_guides/cloud_guides
-   scenario_guides/network_guides
-   scenario_guides/virt_guides
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Network Automation
-
-   network/getting_started/index
-   network/user_guide/index
-   network/dev_guide/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Ansible Galaxy
-
-   galaxy/user_guide.rst
-   galaxy/dev_guide.rst
-
 
 .. toctree::
    :maxdepth: 1
