@@ -61,7 +61,7 @@ templates_path = ['.templates']
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'ansible_index'
 
 # General substitutions.
 project = 'Ansible'
