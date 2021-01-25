@@ -197,13 +197,19 @@ def parse_output_for_keys(output, short_format=False):
     for line in lines:
         if (line.startswith("pub") or line.startswith("sub")) and "expired" not in line:
             try:
+                # apt key format
                 tokens = line.split()
                 code = tokens[1]
                 (len_type, real_code) = code.split("/")
-                found.append(real_code)
             except ValueError:
-                # invalid line, skip
-                continue
+                # gpg format
+                try:
+                    tokens = line.split(':')
+                    real_code = token[4]
+                except ValueError:
+                    # invalid line, skip
+                    continue
+            found.append(real_code)
 
     if found and short_format:
         found = shorten_key_ids(found)
@@ -233,12 +239,9 @@ def shorten_key_ids(key_id_list):
 
 
 def download_key(module, url):
-    # FIXME: move get_url code to common, allow for in-memory D/L, support proxies
-    # and reuse here
-    if url is None:
-        module.fail_json(msg="needed a URL but was not specified")
 
     try:
+        # note: validate_certs and other args are pulled from module directly
         rsp, info = fetch_url(module, url, use_proxy=True)
         if info['status'] != 200:
             module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
@@ -253,12 +256,14 @@ def get_key_id_from_file(module, filename, data=None):
     global lang_env
     key = None
 
-    cmd = [gpg_bin, filename]
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
+    cmd = [gpg_bin, '--import', '--with-colons', '--import-options', 'show-only', filename]
+
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data)
     if rc != 0:
-        module.fail_json(msg="Unable to extract key from file(%s)", stdout=out, stderr=err)
+        module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is None else filename), stdout=out, stderr=err)
 
     keys = parse_output_for_keys(out)
+    # assume we only want first key?
     if keys:
         key = keys[0]
 
@@ -266,20 +271,7 @@ def get_key_id_from_file(module, filename, data=None):
 
 
 def get_key_id_from_data(module, data):
-
-    global lang_env
-    key = None
-
-    cmd = [gpg_bin, '-']
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data)
-    if rc != 0:
-        module.fail_json(msg="Unable to extract key from data.", stdout=out, stderr=err)
-
-    keys = parse_output_for_keys(out)
-    if keys:
-        key = keys[0]
-
-    return key
+    return get_key_id_from_file(module, '-', data)
 
 
 def import_key(module, keyring, keyserver, key_id):
@@ -374,7 +366,7 @@ def main():
             module.fail_json(msg="Missing key_id, required with keyserver.")
 
         if url:
-            data = download_key(module, url)
+            data = download_key(module, url, validate_certs)
 
         if filename:
             key_id = get_key_id_from_file(module, filename)
