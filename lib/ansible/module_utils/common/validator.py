@@ -23,7 +23,11 @@ from ansible.module_utils.common.text.formatters import (
 )
 
 from ansible.module_utils.common.validation import (
-    check_required_arguments
+    check_required_arguments,
+    check_required_by,
+    check_required_if,
+    check_required_one_of,
+    check_required_together,
 )
 
 from ansible.module_utils.six import (
@@ -40,6 +44,7 @@ class Validator():
 
         self.arg_spec = arg_spec
         self.module_params = module_params
+        self.error_messages = []
         self.validated_params = {}
 
     def _validate_argument_types(self):
@@ -135,10 +140,38 @@ class Validator():
 
         unsupported_parameters = get_unsupported_parameters(self.arg_spec, self.module_params)
         if unsupported_parameters:
-            raise TypeError({'unsupported_params': list(unsupported_parameters)})
+            self.error_messages.append('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
-        check_required_arguments(self.arg_spec, self.module_params)
-        self._validate_argument_types()
-        self._validate_argument_values()
+        try:
+            self._validate_argument_types()
+        except TypeError as te:
+            self.error_messages.append(to_native(te))
 
-        return self.validated_params
+        try:
+            self._validate_argument_values()
+        except TypeError as te:
+            self.error_messages.append(to_native(te))
+
+        # TODO: Since these need explicit input outside the argument_spec,
+        #       how are we handling them?
+        #
+        # check_required_arguments()
+        # check_required_together()
+        # check_required_one_of()
+        # check_required_if()
+        # check_required_by()
+
+        try:
+            check_required_arguments(self.arg_spec, self.module_params)
+        except TypeError as te:
+            self.error_messages.append(to_native(te))
+
+        # try:
+        #     check_required_together(required_together, self.module_params)
+        # except TypeError as te:
+        #     self.error_messages.append(to_native(te))
+
+        return {
+            'error_messages': self.error_messages,
+            'validated': self.validated_params,
+        }
