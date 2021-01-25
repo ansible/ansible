@@ -2,4 +2,4 @@
 - include: ubuntu.yml
   when: 
     - ansible_distribution == 'Ubuntu'
-    - ansible_distribution_release != 'trusty'
+    - ansible_distribution_release not in ('trusty', 'focal')
