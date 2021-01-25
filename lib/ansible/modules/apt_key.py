@@ -127,6 +127,7 @@ from ansible.module_utils.urls import fetch_url
 
 apt_key_bin = None
 gpg_bin = None
+lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
 
 
 def find_needed_binaries(module):
@@ -234,10 +235,10 @@ def download_key(module, url):
 
 def get_key_id_from_file(module, filename, data=None):
 
+    global lang_env
     key = None
 
     cmd = [gpg_bin, filename]
-    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
     (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
     if rc != 0:
         module.fail_json(msg="Unable to extract key from file(%s)", stdout=out, stderr=err)
@@ -251,10 +252,10 @@ def get_key_id_from_file(module, filename, data=None):
 
 def get_key_id_from_data(module, data):
 
+    global lang_env
     key = None
 
     cmd = [gpg_bin, '-']
-    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
     (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data)
     if rc != 0:
         module.fail_json(msg="Unable to extract key from data.", stdout=out, stderr=err)
@@ -267,12 +268,13 @@ def get_key_id_from_data(module, data):
 
 
 def import_key(module, keyring, keyserver, key_id):
+
+    global lang_env
     if keyring:
         cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
     else:
         cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
     for retry in range(5):
-        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
         if rc == 0:
             break
