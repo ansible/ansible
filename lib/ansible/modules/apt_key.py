@@ -395,6 +395,7 @@ def main():
 
     # get existing keys to verify if we need to change
     keys = all_keys(module, keyring, short_format)
+    keys2 = []
 
     if state == 'present':
         if (short_format and short_key_id not in keys) or (not short_format and fingerprint not in keys):
@@ -437,7 +438,7 @@ def main():
                     # FIXME: module.fail_json or exit-json immediately at point of failure
                     module.fail_json(msg="error removing key_id")
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, orig=keys, final=keys2)
 
 
 if __name__ == '__main__':
