@@ -171,7 +171,7 @@ def parse_key_id(key_id):
 
     """
     # Make sure the key_id is valid hexadecimal
-    int(key_id, 16)
+    int(to_native(key_id), 16)
 
     key_id = key_id.upper()
     if key_id.startswith('0X'):
