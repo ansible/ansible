@@ -37,6 +37,7 @@ Release Manager
 Planned work
 ============
 
+- Rename ``ansible-base`` to ``ansible-core``.
 - Improve UX of ``ansible-galaxy collection`` CLI, specifically as it relates to install and upgrade.
 - Add new Role Argument Spec feature that will allow a role to define an argument spec to be used in
   validating variables used by the role.
