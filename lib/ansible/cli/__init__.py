@@ -19,7 +19,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import with_metaclass, string_types
+from ansible.module_utils.six import with_metaclass, string_types, PY3
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
@@ -253,7 +253,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
             elif op['become_password_file']:
-                becomepass = CLI.get_password_from_file('become_password_file')
+                becomepass = CLI.get_password_from_file(op['become_password_file'])
 
         except EOFError:
             pass
@@ -500,13 +500,21 @@ class CLI(with_metaclass(ABCMeta, object)):
     @staticmethod
     def get_password_from_file(pwd_file):
 
+        b_pwd_file = to_bytes(pwd_file)
         secret = None
-        if not os.path.exists(pwd_file):
+        if b_pwd_file == b'-':
+            if PY3:
+                # ensure its read as bytes
+                secret = sys.stdin.buffer.read()
+            else:
+                secret = sys.stdin.read()
+
+        elif not os.path.exists(b_pwd_file):
             raise AnsibleError("The password file %s was not found" % pwd_file)
 
-        if os.path.is_executable(pwd_file):
+        elif os.path.is_executable(b_pwd_file):
             display.vvvv(u'The password file %s is a script.' % to_text(pwd_file))
-            cmd = [pwd_file]
+            cmd = [b_pwd_file]
 
             try:
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -521,7 +529,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         else:
             try:
-                f = open(pwd_file, "rb")
+                f = open(b_pwd_file, "rb")
                 secret = f.read().strip()
                 f.close()
             except (OSError, IOError) as e:
