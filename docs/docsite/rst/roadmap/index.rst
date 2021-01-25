@@ -1,10 +1,11 @@
-.. _core_roadmaps:
+.. _roadmaps:
 
-ansible-core Roadmaps
-======================
+Roadmaps
+===============
 
 .. toctree::
    :maxdepth: 1
    :glob:
 
-   ansible_core_roadmap_index
+   ansible_roadmap_index
+   old_roadmap_index

@@ -25,4 +25,3 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
 
    COLLECTIONS_2_10
    COLLECTIONS_3_0
-   ROADMAP_2_10
