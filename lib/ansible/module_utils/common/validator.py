@@ -43,9 +43,9 @@ class Validator():
         self.validated_params = {}
 
     def _validate_argument_types(self):
-        """Validate module parameters and store them in self.validated_params
-        """
+        """Validate module parameters and store them in self.validated_params"""
 
+        # TODO: Move to standalone function
         # FIXME: Need to handle subelements
 
         for k, v in self.arg_spec.items():
@@ -63,6 +63,8 @@ class Validator():
 
     def _validate_argument_values(self):
         """Docs"""
+
+        # TODO: Move to standalone function
 
         for k, v in self.arg_spec.items():
             choices = v.get('choices')
@@ -124,11 +126,11 @@ class Validator():
         :param module_params: Parameters provided to the module
         :type module_params: dict
 
-        :return: Validated spec (is there some transformation done? aliases, etc.?)
+        :returns: Validated spec (is there some transformation done? aliases, etc.?)
         :rtype: list
 
         :raises TypeError: When validation fails.
-        :raises ValueError: When parameter choices do not match spec choices.
+        :raises ValueError: When parameter choices do not match spec choices
         """
 
         unsupported_parameters = get_unsupported_parameters(self.arg_spec, self.module_params)
