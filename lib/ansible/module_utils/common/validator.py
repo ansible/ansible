@@ -111,18 +111,25 @@ class Validator():
                 raise ValueError(msg)
 
     def validate(self):
-        """Validate module parameters against argument spec
+        """Validate module parameters against argument spec.
 
-        arg_spec - dictionary of parameters, type, and valid values
-        module_params - dictionary of parameters provided to the module
+        :Example:
 
-        Returns validated spec (is there some transformation done? aliases, etc.?)
+        validator = Validator(argument_spec, module parameters)
+        validated_params = validator.validate()
 
-        Raises TypeError if validation fails.
+        :param arg_spec: Specification of parameters, type, and valid values
+        :type arg_spec: dict
+
+        :param module_params: Parameters provided to the module
+        :type module_params: dict
+
+        :return: Validated spec (is there some transformation done? aliases, etc.?)
+        :rtype: list
+
+        :raises TypeError: When validation fails.
+        :raises ValueError: When parameter choices do not match spec choices.
         """
-
-        # TODO:
-        #  - custom exception type for returning _all_ failed validations?
 
         unsupported_parameters = get_unsupported_parameters(self.arg_spec, self.module_params)
         if unsupported_parameters:
