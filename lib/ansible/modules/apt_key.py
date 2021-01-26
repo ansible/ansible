@@ -115,7 +115,14 @@ EXAMPLES = '''
     state: present
 '''
 
-RETURN = '''#'''
+RETURN = '''
+#final
+#fp
+#id
+#key_id
+#original
+#short_id
+'''
 
 import os
 
@@ -351,14 +358,16 @@ def main():
     keyring = module.params['keyring']
     state = module.params['state']
     keyserver = module.params['keyserver']
-    changed = False
 
     # internal vars
     short_format = False
     short_key_id = None
     fingerprint = None
 
+
     find_needed_binaries(module)
+
+    r = {'changed': False}
 
     if not key_id:
 
@@ -373,25 +382,29 @@ def main():
         elif data:
             key_id = get_key_id_from_data(module, data)
 
+    r['id'] = key_id
     try:
         short_key_id, fingerprint, key_id = parse_key_id(key_id)
+        r['short_id'] = shorkt_key_id
+        r['fp'] = fingerprint
+        r['key_id'] = key_id
     except ValueError:
-        module.fail_json(msg='Invalid key_id', id=key_id)
+        module.fail_json(msg='Invalid key_id', **r)
 
     if not fingerprint:
         # invalid key should fail well before this point, but JIC ...
-        module.fail_json(msg="Unable to continue as we could not extract a valid fingerprint to compare against existing keys.")
+        module.fail_json(msg="Unable to continue as we could not extract a valid fingerprint to compare against existing keys.", **r)
 
     if len(key_id) == 8:
         short_format = True
 
     # get existing keys to verify if we need to change
-    keys = all_keys(module, keyring, short_format)
+    r['original'] = keys = all_keys(module, keyring, short_format)
     keys2 = []
 
     if state == 'present':
         if (short_format and short_key_id not in keys) or (not short_format and fingerprint not in keys):
-            changed = True
+            r['changed'] = True
             if not module.check_mode:
                 if filename:
                     add_key(module, filename, keyring)
@@ -405,32 +418,31 @@ def main():
                     data = download_key(module, url)
                     add_key(module, "-", keyring, data)
                 else:
-                    module.fail_json(msg="No key to add ... how did i get here?!?!")
+                    module.fail_json(msg="No key to add ... how did i get here?!?!", **r)
 
                 # verify it got added
-                keys2 = all_keys(module, keyring, short_format)
+                r['final'] = keys2 = all_keys(module, keyring, short_format)
                 if (short_format and short_key_id not in keys2) or (not short_format and fingerprint not in keys2):
-                    module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)",
-                                     id=key_id, changed=changed)
+                    module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)", **r)
 
     elif state == 'absent':
         if not key_id:
-            module.fail_json(msg="key is required to remove a key")
+            module.fail_json(msg="key is required to remove a key", **r)
         if fingerprint in keys:
-            changed = True
+            r['changed'] = True
             if not module.check_mode:
                 # we use the "short" id: key_id[-8:], short_format=True
                 # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
                 if short_key_id is not None and remove_key(module, short_key_id, keyring):
-                    keys2 = all_keys(module, keyring, short_format)
+                    r['final'] = keys2 = all_keys(module, keyring, short_format)
                     if fingerprint in keys2:
                         module.fail_json(msg="apt-key did not return an error, but the key was not removed (check that the id is correct and *not* a subkey)",
-                                         id=key_id, changed=changed)
+                                         **r)
                 else:
                     # FIXME: module.fail_json or exit-json immediately at point of failure
-                    module.fail_json(msg="error removing key_id")
+                    module.fail_json(msg="error removing key_id", **r)
 
-    module.exit_json(changed=changed, orig=keys, final=keys2)
+    module.exit_json(**r)
 
 
 if __name__ == '__main__':
