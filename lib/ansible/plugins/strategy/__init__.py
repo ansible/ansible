@@ -185,6 +185,11 @@ class StrategyBase:
     # the throttling internally (as `free` does)
     ALLOW_BASE_THROTTLING = True
 
+    # Features
+    LOCKSTEP = False
+    BYPASS_HOST_LOOP = True
+    ANY_ERRORS_FATAL = True
+
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
@@ -236,6 +241,15 @@ class StrategyBase:
         self._hosts_cache_all = []
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
+
+    @classmethod
+    @property
+    def features(cls):
+        return {
+            'lockstep': cls.LOCKSTEP,
+            'bypass_host_loop': cls.BYPASS_HOST_LOOP,
+            'any_errors_fatal': cls.ANY_ERRORS_FATAL,
+        }
 
     def _set_hosts_cache(self, play, refresh=True):
         """Responsible for setting _hosts_cache and _hosts_cache_all
