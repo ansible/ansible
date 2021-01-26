@@ -495,7 +495,7 @@ class ModuleValidator(Validator):
                         column=(os_call_match.span()[0] + 1)
                     )
 
-    def _find_blacklist_imports(self):
+    def _find_rejectlist_imports(self):
         for child in self.ast.body:
             names = []
             if isinstance(child, ast.Import):
@@ -509,8 +509,8 @@ class ModuleValidator(Validator):
                         names.extend(grandchild.names)
             for name in names:
                 # TODO: Add line/col
-                for blacklist_import, options in REJECTLIST_IMPORTS.items():
-                    if re.search(blacklist_import, name.name):
+                for rejectlist_import, options in REJECTLIST_IMPORTS.items():
+                    if re.search(rejectlist_import, name.name):
                         new_only = options['new_only']
                         if self._is_new_module() and new_only:
                             self.reporter.error(
@@ -2093,7 +2093,7 @@ class ModuleValidator(Validator):
         return existing_doc
 
     @staticmethod
-    def is_blacklisted(path):
+    def is_on_rejectlist(path):
         base_name = os.path.basename(path)
         file_name = os.path.splitext(base_name)[0]
 
@@ -2186,7 +2186,7 @@ class ModuleValidator(Validator):
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
             self._check_for_sys_exit()
-            self._find_blacklist_imports()
+            self._find_rejectlist_imports()
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
@@ -2329,7 +2329,7 @@ def run():
             path = module
             if args.exclude and args.exclude.search(path):
                 continue
-            if ModuleValidator.is_blacklisted(path):
+            if ModuleValidator.is_on_rejectlist(path):
                 continue
             with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
                                  analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
@@ -2353,7 +2353,7 @@ def run():
                 path = os.path.join(root, filename)
                 if args.exclude and args.exclude.search(path):
                     continue
-                if ModuleValidator.is_blacklisted(path):
+                if ModuleValidator.is_on_rejectlist(path):
                     continue
                 with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
                                      analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
