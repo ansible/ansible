@@ -563,9 +563,9 @@ class Connection(ConnectionBase):
         Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
         wrapped in local ssh shell commands and ready for execution.
 
-        :binary: actual executable to use to execute command.
-        :subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
-        :other_args: dict of, value pairs passed as arguments to the ssh binary
+        :arg binary: actual executable to use to execute command.
+        :arg subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
+        :arg other_args: dict of, value pairs passed as arguments to the ssh binary
 
         '''
 
