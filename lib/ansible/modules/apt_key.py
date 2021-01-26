@@ -288,7 +288,7 @@ def get_key_id_from_file(module, filename, data=None):
 
     cmd = [gpg_bin, '--with-colons', filename]
 
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=to_text(data))
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=to_native(data))
     if rc != 0:
         module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is None else filename), stdout=out, stderr=err)
 
