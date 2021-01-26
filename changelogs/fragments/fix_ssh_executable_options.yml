@@ -1,0 +1,2 @@
+bugfixes:
+  - ensure the correct options are used when ssh executables are used taht don't match ssh executable names.
