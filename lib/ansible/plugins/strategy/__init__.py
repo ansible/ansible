@@ -174,25 +174,6 @@ def debug_closure(func):
     return inner
 
 
-class Features(ImmutableDict):
-    def __init__(self, data, names):
-        self.name = names[0]
-        self.names = names
-        super(Features, self).__init__(data)
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return repr(str(self))
-
-    def __eq__(self, other):
-        if isinstance(other, text_type):
-            return other in self.names
-
-        return False
-
-
 class StrategyBase:
 
     '''
@@ -264,13 +245,12 @@ class StrategyBase:
 
     @property
     def features(self):
-        return Features(
+        return ImmutableDict(
             {
                 'lockstep': self.LOCKSTEP,
                 'bypass_host_loop': self.BYPASS_HOST_LOOP,
                 'any_errors_fatal': self.ANY_ERRORS_FATAL,
-            },
-            self._redirected_names + [self._redirected_names[0].split('.')[-1]]
+            }
         )
 
     def _set_hosts_cache(self, play, refresh=True):

@@ -94,6 +94,8 @@ class Play(Base, Taggable, CollectionSearch):
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
+        self.strategy_features = {}
+
     def __repr__(self):
         return self.get_name()
 
