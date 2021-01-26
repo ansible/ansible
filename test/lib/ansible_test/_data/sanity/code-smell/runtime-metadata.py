@@ -112,6 +112,7 @@ def get_collection_version():
     sys.modules['collection_detail'] = collection_detail
     collection_detail_spec.loader.exec_module(collection_detail)
 
+    # noinspection PyBroadException
     try:
         result = collection_detail.read_manifest_json('.') or collection_detail.read_galaxy_yml('.')
         return SemanticVersion(result['version'])
