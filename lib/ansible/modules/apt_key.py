@@ -116,11 +116,16 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-final:
+after:
     description: List of apt key ids or fingerprints after any modification
     returned: on change
     type: list
     sample: ["D8576A8BA88D21E9", "3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
+before:
+    description: List of apt key ids or fingprints before any modifications
+    returned: always
+    type: list
+    sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 fp:
     description: Fingerprint of the key to import
     returned: always
@@ -136,11 +141,6 @@ key_id:
     returned: always
     type: str
     sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
-original:
-    description: List of apt key ids or fingprints before any modifications
-    returned: always
-    type: list
-    sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 short_id:
     description: caclulated short key id
     returned: always
@@ -424,7 +424,7 @@ def main():
         short_format = True
 
     # get existing keys to verify if we need to change
-    r['original'] = keys = all_keys(module, keyring, short_format)
+    r['before'] = keys = all_keys(module, keyring, short_format)
     keys2 = []
 
     if state == 'present':
@@ -446,7 +446,7 @@ def main():
                     module.fail_json(msg="No key to add ... how did i get here?!?!", **r)
 
                 # verify it got added
-                r['final'] = keys2 = all_keys(module, keyring, short_format)
+                r['after'] = keys2 = all_keys(module, keyring, short_format)
                 if (short_format and short_key_id not in keys2) or (not short_format and fingerprint not in keys2):
                     module.fail_json(msg=error_no_error % 'failed to add the key', **r)
 
@@ -459,7 +459,7 @@ def main():
                 # we use the "short" id: key_id[-8:], short_format=True
                 # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
                 if short_key_id is not None and remove_key(module, short_key_id, keyring):
-                    r['final'] = keys2 = all_keys(module, keyring, short_format)
+                    r['after'] = keys2 = all_keys(module, keyring, short_format)
                     if fingerprint in keys2:
                         module.fail_json(msg=error_no_error % 'the key was not removed', **r)
                 else:
