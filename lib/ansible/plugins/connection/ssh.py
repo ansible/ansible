@@ -564,7 +564,7 @@ class Connection(ConnectionBase):
 
         :binary: actual executable to use to execute command.
         :subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
-        :other_args: dict of , value pairs passed as arguments to the ssh binary
+        :other_args: dict of, value pairs passed as arguments to the ssh binary
 
         '''
 
