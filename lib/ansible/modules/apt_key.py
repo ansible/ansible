@@ -117,7 +117,7 @@ EXAMPLES = '''
 
 RETURN = '''
 final:
-    description: List of apt key id's after any modification
+    description: List of apt key ids or fingerprints after any modification
     returned: on change
     type: list
     sample: ["D8576A8BA88D21E9", "3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
@@ -137,7 +137,7 @@ key_id:
     type: str
     sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 original:
-    description: List of apt key id's before any modifications
+    description: List of apt key ids or fingprints before any modifications
     returned: always
     type: list
     sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
