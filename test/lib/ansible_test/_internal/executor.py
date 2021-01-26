@@ -30,6 +30,7 @@ from .core_ci import (
 from .manage_ci import (
     ManageWindowsCI,
     ManageNetworkCI,
+    get_network_settings,
 )
 
 from .cloud import (
@@ -73,7 +74,6 @@ from .util import (
 
 from .util_common import (
     get_docker_completion,
-    get_network_settings,
     get_remote_completion,
     get_python_path,
     intercept_command,
@@ -259,7 +259,6 @@ def get_cryptography_requirement(args, python, python_version):  # type: (Enviro
     Return the correct cryptography requirement for the given python version.
     The version of cryptography installed depends on the python version, setuptools version and openssl version.
     """
-    python = find_python(python_version)
     setuptools_version = get_setuptools_version(args, python)
     openssl_version = get_openssl_version(args, python, python_version)
 
@@ -624,7 +623,7 @@ def command_network_integration(args):
             time.sleep(1)
 
         remotes = [instance.wait_for_result() for instance in instances]
-        inventory = network_inventory(remotes)
+        inventory = network_inventory(args, remotes)
 
         display.info('>>> Inventory: %s\n%s' % (inventory_path, inventory.strip()), verbosity=3)
 
@@ -702,14 +701,15 @@ def network_run(args, platform, version, config):
     core_ci.load(config)
     core_ci.wait()
 
-    manage = ManageNetworkCI(core_ci)
+    manage = ManageNetworkCI(args, core_ci)
     manage.wait()
 
     return core_ci
 
 
-def network_inventory(remotes):
+def network_inventory(args, remotes):
     """
+    :type args: NetworkIntegrationConfig
     :type remotes: list[AnsibleCoreCI]
     :rtype: str
     """
@@ -723,7 +723,7 @@ def network_inventory(remotes):
             ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
         )
 
-        settings = get_network_settings(remote.args, remote.platform, remote.version)
+        settings = get_network_settings(args, remote.platform, remote.version)
 
         options.update(settings.inventory_vars)
 

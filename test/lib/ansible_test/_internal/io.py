@@ -28,8 +28,8 @@ def read_text_file(path):  # type: (t.AnyStr) -> t.Text
 
 def read_binary_file(path):  # type: (t.AnyStr) -> bytes
     """Return the contents of the specified path as bytes."""
-    with open_binary_file(path) as file:
-        return file.read()
+    with open_binary_file(path) as file_obj:
+        return file_obj.read()
 
 
 def make_dirs(path):  # type: (str) -> None
@@ -63,8 +63,8 @@ def write_text_file(path, content, create_directories=False):  # type: (str, str
     if create_directories:
         make_dirs(os.path.dirname(path))
 
-    with open_binary_file(path, 'wb') as file:
-        file.write(to_bytes(content))
+    with open_binary_file(path, 'wb') as file_obj:
+        file_obj.write(to_bytes(content))
 
 
 def open_text_file(path, mode='r'):  # type: (str, str) -> t.TextIO
@@ -91,4 +91,4 @@ class SortedSetEncoder(json.JSONEncoder):
         if isinstance(obj, set):
             return sorted(obj)
 
-        return super(SortedSetEncoder).default(self, obj)
+        return json.JSONEncoder.default(self, obj)

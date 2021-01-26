@@ -115,13 +115,6 @@ class CommonConfig:
         return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
 
 
-class NetworkPlatformSettings:
-    """Settings required for provisioning a network platform."""
-    def __init__(self, collection, inventory_vars):  # type: (str, t.Type[str, str]) -> None
-        self.collection = collection
-        self.inventory_vars = inventory_vars
-
-
 def get_docker_completion():
     """
     :rtype: dict[str, dict[str, str]]
@@ -183,23 +176,6 @@ def docker_qualify_image(name):
     config = get_docker_completion().get(name, {})
 
     return config.get('name', name)
-
-
-def get_network_settings(args, platform, version):  # type: (NetworkIntegrationConfig, str, str) -> NetworkPlatformSettings
-    """Returns settings for the given network platform and version."""
-    platform_version = '%s/%s' % (platform, version)
-    completion = get_network_completion().get(platform_version, {})
-    collection = args.platform_collection.get(platform, completion.get('collection'))
-
-    settings = NetworkPlatformSettings(
-        collection,
-        dict(
-            ansible_connection=args.platform_connection.get(platform, completion.get('connection')),
-            ansible_network_os='%s.%s' % (collection, platform) if collection else platform,
-        )
-    )
-
-    return settings
 
 
 def handle_layout_messages(messages):  # type: (t.Optional[LayoutMessages]) -> None

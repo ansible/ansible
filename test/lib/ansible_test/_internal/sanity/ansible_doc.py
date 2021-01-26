@@ -127,7 +127,7 @@ class AnsibleDocTest(SanitySingleVersion):
 
                 if stderr:
                     # ignore removed module/plugin warnings
-                    stderr = re.sub(r'\[WARNING\]: [^ ]+ [^ ]+ has been removed\n', '', stderr).strip()
+                    stderr = re.sub(r'\[WARNING]: [^ ]+ [^ ]+ has been removed\n', '', stderr).strip()
 
                 if stderr:
                     summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)

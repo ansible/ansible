@@ -33,11 +33,13 @@ from .data import (
 MODULE_EXTENSIONS = '.py', '.ps1'
 
 try:
+    # noinspection PyTypeChecker
     TCompletionTarget = t.TypeVar('TCompletionTarget', bound='CompletionTarget')
 except AttributeError:
     TCompletionTarget = None  # pylint: disable=invalid-name
 
 try:
+    # noinspection PyTypeChecker
     TIntegrationTarget = t.TypeVar('TIntegrationTarget', bound='IntegrationTarget')
 except AttributeError:
     TIntegrationTarget = None  # pylint: disable=invalid-name

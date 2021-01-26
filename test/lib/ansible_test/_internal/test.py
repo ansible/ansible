@@ -157,6 +157,7 @@ class TestResult:
         try:
             to_xml_string = self.junit.to_xml_report_string
         except AttributeError:
+            # noinspection PyDeprecation
             to_xml_string = self.junit.TestSuite.to_xml_string
 
         report = to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')

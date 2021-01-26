@@ -6,6 +6,8 @@ import json
 import os
 import time
 
+from . import types as t
+
 from .io import (
     open_binary_file,
     read_text_file,

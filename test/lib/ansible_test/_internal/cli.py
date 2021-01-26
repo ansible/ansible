@@ -678,7 +678,7 @@ def key_value(argparse, value):  # type: (argparse_module, str) -> t.Tuple[str, 
     return parts[0], parts[1]
 
 
-# noinspection PyProtectedMember
+# noinspection PyProtectedMember,PyUnresolvedReferences
 def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argparse_module._SubParsersAction, argparse_module.ArgumentParser) -> None
     """Add the `coverage analyze` subcommand."""
     analyze = coverage_subparsers.add_parser(
