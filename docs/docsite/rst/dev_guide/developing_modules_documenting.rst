@@ -243,7 +243,7 @@ content in a uniform way:
 
 * ``I()`` for option names. For example: ``Required if I(state=present).``  This is italicized in
   the documentation.
-* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``  This displays with a mono-space font in the documentation.
+* ``C()`` for files, option values, and inline code. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.`` or ``Use C(var | foo.bar.my_filter) to transform C(var) into the required format.``  This displays with a mono-space font in the documentation.
 * ``B()`` currently has no standardized usage.  It is displayed in boldface in the documentation.
 * ``HORIZONTALLINE`` is used sparingly as a separator in long descriptions.  It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation.
 
