@@ -120,7 +120,7 @@ final:
     description: List of apt key id's after any modification
     returned: on change
     type: list
-    sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
+    sample: ["D8576A8BA88D21E9", "3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 fp:
     description: Fingerprint of the key to import
     returned: always
