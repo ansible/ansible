@@ -39,7 +39,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six.moves import queue as Queue
-from ansible.module_utils.six import iteritems, itervalues, string_types, text_type
+from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import ImmutableDict
 from ansible.module_utils.connection import Connection, ConnectionError
