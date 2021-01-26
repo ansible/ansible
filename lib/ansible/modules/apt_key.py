@@ -116,12 +116,32 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-#final
-#fp
-#id
-#key_id
-#original
-#short_id
+final:
+    description: List of apt key id's after any modification
+    returned: on change
+    type: string
+    sample: <
+fp:
+    description: Fingerprint of the key to import
+    returned: always
+    type: string
+id:
+    description: key id from source
+    returned: always
+    type: string
+key_id:
+    description: calculated key id
+    returned: always
+    type: string
+original:
+    description: List of apt key id's before any modifications
+    returned: always
+    type: string
+    sample: <
+short_id:
+    description: caclulated short key id
+    returned: always
+    type: string
 '''
 
 import os
@@ -130,7 +150,7 @@ import os
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native 
 from ansible.module_utils.urls import fetch_url
 
 
@@ -138,16 +158,7 @@ apt_key_bin = None
 gpg_bin = None
 lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
 
-
-def find_needed_binaries(module):
-    global apt_key_bin
-    global gpg_bin
-
-    apt_key_bin = module.get_bin_path('apt-key', required=True)
-    gpg_bin = module.get_bin_path('gpg', required=True)
-
-
-def add_http_proxy(cmd):
+def find_needed_binaries(module): global apt_key_bin global gpg_bin apt_key_bin = module.get_bin_path('apt-key', required=True) gpg_bin = module.get_bin_path('gpg', required=True) def add_http_proxy(cmd):
 
     for envvar in ('HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy'):
         proxy = os.environ.get(envvar)
@@ -263,7 +274,7 @@ def get_key_id_from_file(module, filename, data=None):
     global lang_env
     key = None
 
-    cmd = [gpg_bin, '--import', '--with-colons', '--import-options show-only', filename]
+    cmd = [gpg_bin, '--with-colons', filename]
 
     (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data)
     if rc != 0:
