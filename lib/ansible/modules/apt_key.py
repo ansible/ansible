@@ -124,17 +124,17 @@ final:
 fp:
     description: Fingerprint of the key to import
     returned: always
-    type: string
+    type: str
     sample: "D8576A8BA88D21E9"
 id:
     description: key id from source
     returned: always
-    type: string
+    type: str
     sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 key_id:
     description: calculated key id, it should be same as 'id', but can be different
     returned: always
-    type: string
+    type: str
     sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 original:
     description: List of apt key id's before any modifications
@@ -144,7 +144,7 @@ original:
 short_id:
     description: caclulated short key id
     returned: always
-    type: string
+    type: str
     sample: "A88D21E9"
 '''
 
