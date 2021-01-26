@@ -263,7 +263,7 @@ def get_key_id_from_file(module, filename, data=None):
     global lang_env
     key = None
 
-    cmd = [gpg_bin, '--import', '--with-colons', '--import-options', 'show-only', filename]
+    cmd = [gpg_bin, '--import', '--with-colons', '--import-options show-only', filename]
 
     (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data)
     if rc != 0:
