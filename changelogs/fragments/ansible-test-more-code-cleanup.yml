@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Cleaned up code to resolve warnings and errors reported by PyCharm.
