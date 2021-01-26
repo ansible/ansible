@@ -125,6 +125,11 @@ Each approach to re-using distributed Ansible artifacts has advantages and limit
 
    ========================= ======================================== ========================================
 
+
+.. note::
+    * There are also big differences in resource consumption and performance, imports are quite lean and fast, while includes require a lot of management
+      and accounting.
+
 Re-using tasks as handlers
 ==========================
 
