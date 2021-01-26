@@ -15,6 +15,7 @@ from ..util import (
 
 
 try:
+    # noinspection PyTypeChecker
     TPathProvider = t.TypeVar('TPathProvider', bound='PathProvider')
 except AttributeError:
     TPathProvider = None  # pylint: disable=invalid-name
