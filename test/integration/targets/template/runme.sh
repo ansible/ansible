@@ -25,3 +25,12 @@ ansible-playbook unused_vars_include.yml -v "$@"
 
 # https://github.com/ansible/ansible/issues/55152
 ansible-playbook undefined_var_info.yml -v "$@"
+
+# https://github.com/ansible/ansible/issues/72615
+ansible-playbook 72615.yml -v "$@"
+
+# https://github.com/ansible/ansible/issues/6653
+ansible-playbook 6653.yml -v "$@"
+
+# https://github.com/ansible/ansible/issues/72262
+ansible-playbook 72262.yml -v "$@"
