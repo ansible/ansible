@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Rename internal functions to match associated constant names that were previously updated.
