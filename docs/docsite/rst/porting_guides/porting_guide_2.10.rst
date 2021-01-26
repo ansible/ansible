@@ -98,6 +98,50 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v2.10.6
+=========================
+
+Major Changes
+-------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- For community.general 2.0.0, the kubevirt modules will be moved to the `community.kubevirt <https://galaxy.ansible.com/community/kubevirt>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use kubevirt modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.kubevirt.`` instead of ``community.general.``,
+  for example replace ``community.general.kubevirt_vm`` in a task by ``community.kubevirt.kubevirt_vm``.
+
+  If you use ansible-base and installed ``community.general`` manually and rely on the kubevirt modules, you have to make sure to install the ``community.kubevirt`` collection as well.
+  If you are using FQCNs, for example ``community.general.kubevirt_vm`` instead of ``kubevirt_vm``, it will continue working, but we still recommend to adjust the FQCNs as well.
+
+community.network
+~~~~~~~~~~~~~~~~~
+
+- For community.network 2.0.0, the Cisco NSO modules will be moved to the `cisco.nso <https://galaxy.ansible.com/cisco/nso>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use Cisco NSO modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``cisco.nso.`` instead of ``community.network.``,
+  for example replace ``community.network.nso_config`` in a task by ``cisco.nso.nso_config``.
+
+  If you use ansible-base and installed ``community.network`` manually and rely on the Cisco NSO modules, you have to make sure to install the ``cisco.nso`` collection as well.
+  If you are using FQCNs, for example ``community.network.nso_config`` instead of ``nso_config``, it will continue working, but we still recommend to adjust the FQCNs as well.
+- For community.network 2.0.0, the FortiOS modules will be moved to the `community.fortios <https://galaxy.ansible.com/ansible-collections/community.fortios>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use FortiOS modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.fortios.`` instead of ``community.network.``,
+  for example replace ``community.network.fmgr_device`` in a task by ``community.fortios.fmgr_device``.
+
+  If you use ansible-base and installed ``community.network`` manually and rely on the FortiOS modules, you have to make sure to install the ``community.fortios`` collection as well.
+  If you are using FQCNs, for example ``community.network.fmgr_device`` instead of ``fmgr_device``, it will continue working, but we still recommend to adjust the FQCNs as well.
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Added async_timeout parameter to bigip_ucs_fetch module to allow customization of module wait for async interface
+- Changed bigip_ucs_fetch module to use asynchronous interface when generating UCS files
+
 Porting Guide for v2.10.5
 =========================
 
@@ -296,6 +340,11 @@ Ansible-base
 
 Major Changes
 -------------
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Add phone home Teem integration into all modules, functionality can be disabled by setting up F5_TEEM environment variable or no_f5_teem provider parameter
 
 ovirt.ovirt
 ~~~~~~~~~~~
