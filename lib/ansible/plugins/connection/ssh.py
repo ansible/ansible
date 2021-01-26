@@ -560,7 +560,8 @@ class Connection(ConnectionBase):
 
     def _build_command(self, binary, subsystem, *other_args):
         '''
-        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns from remote device.
+        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
+        wrapped in local ssh shell commands and ready for execution.
 
         :binary: actual executable to use to execute command.
         :subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
