@@ -385,7 +385,7 @@ def main():
     r['id'] = key_id
     try:
         short_key_id, fingerprint, key_id = parse_key_id(key_id)
-        r['short_id'] = shorkt_key_id
+        r['short_id'] = short_key_id
         r['fp'] = fingerprint
         r['key_id'] = key_id
     except ValueError:
