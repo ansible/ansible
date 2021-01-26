@@ -156,11 +156,15 @@ apt_key_bin = None
 gpg_bin = None
 lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
 
+
 def find_needed_binaries(module):
     global apt_key_bin
     global gpg_bin
     apt_key_bin = module.get_bin_path('apt-key', required=True)
-    gpg_bin = module.get_bin_path('gpg', required=True) def add_http_proxy(cmd):
+    gpg_bin = module.get_bin_path('gpg', required=True)
+
+
+def add_http_proxy(cmd):
 
     for envvar in ('HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy'):
         proxy = os.environ.get(envvar)
