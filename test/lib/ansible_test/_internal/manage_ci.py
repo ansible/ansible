@@ -6,6 +6,8 @@ import os
 import tempfile
 import time
 
+from . import types as t
+
 from .util import (
     SubprocessError,
     ApplicationError,
@@ -16,7 +18,7 @@ from .util import (
 
 from .util_common import (
     intercept_command,
-    get_network_settings,
+    get_network_completion,
     run_command,
 )
 
@@ -29,6 +31,7 @@ from .ansible_util import (
 )
 
 from .config import (
+    NetworkIntegrationConfig,
     ShellConfig,
 )
 
@@ -142,15 +145,17 @@ class ManageWindowsCI:
 
 class ManageNetworkCI:
     """Manage access to a network instance provided by Ansible Core CI."""
-    def __init__(self, core_ci):
+    def __init__(self, args, core_ci):
         """
+        :type args: NetworkIntegrationConfig
         :type core_ci: AnsibleCoreCI
         """
+        self.args = args
         self.core_ci = core_ci
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
-        settings = get_network_settings(self.core_ci.args, self.core_ci.platform, self.core_ci.version)
+        settings = get_network_settings(self.args, self.core_ci.platform, self.core_ci.version)
 
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
@@ -333,3 +338,27 @@ class ManagePosixCI:
                 time.sleep(10)
 
         raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
+
+
+def get_network_settings(args, platform, version):  # type: (NetworkIntegrationConfig, str, str) -> NetworkPlatformSettings
+    """Returns settings for the given network platform and version."""
+    platform_version = '%s/%s' % (platform, version)
+    completion = get_network_completion().get(platform_version, {})
+    collection = args.platform_collection.get(platform, completion.get('collection'))
+
+    settings = NetworkPlatformSettings(
+        collection,
+        dict(
+            ansible_connection=args.platform_connection.get(platform, completion.get('connection')),
+            ansible_network_os='%s.%s' % (collection, platform) if collection else platform,
+        )
+    )
+
+    return settings
+
+
+class NetworkPlatformSettings:
+    """Settings required for provisioning a network platform."""
+    def __init__(self, collection, inventory_vars):  # type: (str, t.Type[str, str]) -> None
+        self.collection = collection
+        self.inventory_vars = inventory_vars
