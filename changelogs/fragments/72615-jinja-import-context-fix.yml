@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix incorrect variable scoping when using ``import with context`` in Jinja2 templates. (https://github.com/ansible/ansible/issues/72615)

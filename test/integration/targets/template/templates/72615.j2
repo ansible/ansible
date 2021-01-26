@@ -1,0 +1,4 @@
+{% set foo = "template-level-foo" %}
+{% set bar = "template-level-bar" %}
+{% from '72615-macro.j2' import print_context_vars with context %}
+{{ print_context_vars(bar) }}

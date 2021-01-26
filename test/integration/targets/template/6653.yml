@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    mylist:
+      - alpha
+      - bravo
+  tasks:
+    - name: Should not fail on undefined variable
+      set_fact:
+        template_result: "{{ lookup('template', '6653.j2') }}"
