@@ -119,27 +119,33 @@ RETURN = '''
 final:
     description: List of apt key id's after any modification
     returned: on change
-    type: string
+    type: list
+    sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 fp:
     description: Fingerprint of the key to import
     returned: always
     type: string
+    sample: "D8576A8BA88D21E9"
 id:
     description: key id from source
     returned: always
     type: string
+    sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 key_id:
-    description: calculated key id
+    description: calculated key id, it should be same as 'id', but can be different
     returned: always
     type: string
+    sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 original:
     description: List of apt key id's before any modifications
     returned: always
-    type: string
+    type: list
+    sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 short_id:
     description: caclulated short key id
     returned: always
     type: string
+    sample: "A88D21E9"
 '''
 
 import os
@@ -380,10 +386,12 @@ def main():
     short_format = False
     short_key_id = None
     fingerprint = None
+    error_no_error = "apt-key did not return an error, but %s (check that the id is correct and *not* a subkey)"
 
-
+    # ensure we have requirements met
     find_needed_binaries(module)
 
+    # initialize result dict
     r = {'changed': False}
 
     if not key_id:
@@ -440,7 +448,7 @@ def main():
                 # verify it got added
                 r['final'] = keys2 = all_keys(module, keyring, short_format)
                 if (short_format and short_key_id not in keys2) or (not short_format and fingerprint not in keys2):
-                    module.fail_json(msg="apt-key did not return an error, but failed to add the key (check that the id is correct and *not* a subkey)", **r)
+                    module.fail_json(msg=error_no_error % 'failed to add the key', **r)
 
     elif state == 'absent':
         if not key_id:
@@ -453,10 +461,8 @@ def main():
                 if short_key_id is not None and remove_key(module, short_key_id, keyring):
                     r['final'] = keys2 = all_keys(module, keyring, short_format)
                     if fingerprint in keys2:
-                        module.fail_json(msg="apt-key did not return an error, but the key was not removed (check that the id is correct and *not* a subkey)",
-                                         **r)
+                        module.fail_json(msg=error_no_error % 'the key was not removed', **r)
                 else:
-                    # FIXME: module.fail_json or exit-json immediately at point of failure
                     module.fail_json(msg="error removing key_id", **r)
 
     module.exit_json(**r)
