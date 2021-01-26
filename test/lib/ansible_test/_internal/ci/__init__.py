@@ -181,12 +181,14 @@ class CryptographyAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-metho
         private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
         public_key = private_key.public_key()
 
+        # noinspection PyUnresolvedReferences
         private_key_pem = to_text(private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         ))
 
+        # noinspection PyTypeChecker
         public_key_pem = to_text(public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo,

@@ -97,6 +97,7 @@ class AwsCloudEnvironment(CloudEnvironment):
             resource_prefix=self.resource_prefix,
         )
 
+        # noinspection PyTypeChecker
         ansible_vars.update(dict(parser.items('default')))
 
         display.sensitive.add(ansible_vars.get('aws_secret_key'))

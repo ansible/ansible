@@ -615,7 +615,7 @@ class Display:
         """
         :type message: str
         :type color: str | None
-        :type fd: file
+        :type fd: t.IO[str]
         :type truncate: bool
         """
         if self.redact and self.sensitive:
@@ -815,13 +815,11 @@ def load_module(path, name):  # type: (str, str) -> None
         return
 
     if sys.version_info >= (3, 4):
-        # noinspection PyUnresolvedReferences
         import importlib.util
 
-        # noinspection PyUnresolvedReferences
         spec = importlib.util.spec_from_file_location(name, path)
-        # noinspection PyUnresolvedReferences
         module = importlib.util.module_from_spec(spec)
+        # noinspection PyUnresolvedReferences
         spec.loader.exec_module(module)
 
         sys.modules[name] = module

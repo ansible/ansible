@@ -81,7 +81,7 @@ class YamlChecker:
 
     def check(self, paths):
         """
-        :type paths: str
+        :type paths: t.List[str]
         """
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
 

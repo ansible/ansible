@@ -200,7 +200,7 @@ class LayoutProvider(PathProvider):
         """Create a layout using the given root and paths."""
 
 
-def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple(t.Dict[str, t.Any], t.List[str])
+def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]
     """Return a filesystem tree from the given list of paths."""
     tree = {}, []
 
@@ -219,7 +219,7 @@ def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple(t.Dict[str, t.Any], 
     return tree
 
 
-def get_tree_item(tree, parts):  # type: (t.Tuple(t.Dict[str, t.Any], t.List[str]), t.List[str]) -> t.Optional[t.Tuple(t.Dict[str, t.Any], t.List[str])]
+def get_tree_item(tree, parts):  # type: (t.Tuple[t.Dict[str, t.Any], t.List[str]], t.List[str]) -> t.Optional[t.Tuple[t.Dict[str, t.Any], t.List[str]]]
     """Return the portion of the tree found under the path given by parts, or None if it does not exist."""
     root = tree
 

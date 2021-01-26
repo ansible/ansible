@@ -30,6 +30,7 @@ from .data import (
 )
 
 try:
+    # noinspection PyTypeChecker
     TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound='IntegrationConfig')
 except AttributeError:
     TIntegrationConfig = None  # pylint: disable=invalid-name

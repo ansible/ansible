@@ -163,8 +163,8 @@ def enumerate_python_arcs(
     try:
         original.read_file(path)
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        with open_binary_file(path) as file:
-            header = file.read(6)
+        with open_binary_file(path) as file_obj:
+            header = file_obj.read(6)
 
         if header == b'SQLite':
             display.error('File created by "coverage" 5.0+: %s' % os.path.relpath(path))
