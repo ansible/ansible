@@ -208,12 +208,12 @@ def parse_output_for_keys(output, short_format=False):
                 tokens = line.split()
                 code = tokens[1]
                 (len_type, real_code) = code.split("/")
-            except ValueError:
+            except (IndexError, ValueError):
                 # gpg format
                 try:
                     tokens = line.split(':')
                     real_code = tokens[4]
-                except ValueError:
+                except (IndexError, ValueError):
                     # invalid line, skip
                     continue
             found.append(real_code)
