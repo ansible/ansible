@@ -5,6 +5,15 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils.common._collections_compat import (
+    KeysView,
+    Sequence,
+)
+from ansible.module_utils.common.text.formatters import (
+    lenient_lowercase,
+)
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.collections import is_iterable
@@ -275,3 +284,94 @@ def get_type_validator(wanted):
         wanted = getattr(wanted, '__name__', to_native(type(wanted)))
 
     return type_checker, wanted
+
+def validate_argument_types(argument_spec, module_parameters):
+    """Validate that module parameter types match the type in the argument spec.
+
+    :param argument_spec: Argument spec
+    :type argument_spec: dict
+
+    :param module_parameters: Parameters passed to module
+    :type module_parameters: dict
+
+    :returns: Validated and coerced module parameters and a list of any errors
+              that were encountered.
+    :rtype: dict
+
+    """
+
+    result = {
+        'validated_params': {},
+        'errors': [],
+    }
+    for k, v in argument_spec.items():
+        if k not in module_parameters:
+            continue
+
+        value = module_parameters[k]
+        if value is None:
+            continue
+
+        wanted_type = argument_spec[k]['type']
+        type_checker, wanted_name = get_type_validator(wanted_type)
+
+        try:
+            result['validated_params'][k] = type_checker(value)
+        except (TypeError, ValueError) as e:
+            result['errors'].append(e)
+
+    return result
+
+
+def validate_argument_values(argument_spec, module_parameters, options_context=None):
+    """Ensure all arguments have the requested values, and there are no stray arguments"""
+
+    errors = []
+
+    for k, v in argument_spec.items():
+        choices = v.get('choices')
+        if choices is None:
+            continue
+
+        if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
+            if k in module_parameters:
+                # Allow one or more when type='list' param with choices
+                if isinstance(module_parameters[k], list):
+                    diff_list = ", ".join([item for item in module_parameters[k] if item not in choices])
+                    if diff_list:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                        if options_context:
+                            msg += " found in %s" % " -> ".join(options_context)
+                        errors.append(ValueError(msg))
+
+                    # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
+                    # the value. If we can't figure this out, module author is responsible.
+                    lowered_choices = None
+                    if module_parameters[k] == 'False':
+                        lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_FALSE.intersection(choices)
+                        if len(overlap) == 1:
+                            # Extract from a set
+                            (module_parameters[k],) = overlap
+
+                    if module_parameters[k] == 'True':
+                        if lowered_choices is None:
+                            lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_TRUE.intersection(choices)
+                        if len(overlap) == 1:
+                            (module_parameters[k],) = overlap
+
+                    if module_parameters[k] not in choices:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, module_parameters[k])
+                        if options_context:
+                            msg += " found in %s" % " -> ".join(options_context)
+                        errors.append(ValueError(msg))
+        else:
+            msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
+            if options_context:
+                msg += " found in %s" % " -> ".join(options_context)
+            errors.append(ValueError(msg))
+
+    return errors
