@@ -395,8 +395,8 @@ def validate_argument_values(argument_spec, module_parameters, options_context=N
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
                         if options_context:
                             msg += " found in %s" % " -> ".join(options_context)
-                        errors.append(ValueError(msg))
-
+                        errors.append(msg)
+                elif module_parameters[k] not in choices:
                     # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
                     # the value. If we can't figure this out, module author is responsible.
                     lowered_choices = None
