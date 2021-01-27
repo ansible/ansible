@@ -66,13 +66,9 @@ class Validator():
         except TypeError as e:
             self.error_messages.append(to_native(e))
 
-        result = validate_argument_types(self.arg_spec, self.module_params)
-        self.validated_params = result['validated_params']
+        self.validated_params, self.error_messages = validate_argument_types(self.arg_spec, self.module_params)
 
         self.error_messages.append([to_native(e) for e in result['errors']])
         self.error_messages.append(validate_argument_values(self.arg_spec, self.module_params))
 
-        return {
-            'error_messages': self.error_messages,
-            'validated': self.validated_params,
-        }
+        return self.validated_params
