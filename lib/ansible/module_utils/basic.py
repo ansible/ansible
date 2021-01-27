@@ -240,6 +240,15 @@ _literal_eval = literal_eval
 # is an internal implementation detail
 _ANSIBLE_ARGS = None
 
+
+def env_fallback(*args, **kwargs):
+    ''' Load value from environment '''
+    for arg in args:
+        if arg in os.environ:
+            return os.environ[arg]
+    raise AnsibleFallbackNotFound
+
+
 FILE_COMMON_ARGUMENTS = dict(
     # These are things we want. About setting metadata (mode, ownership, permissions in general) on
     # created files (these are used by set_fs_attributes_if_different and included in
@@ -252,7 +261,7 @@ FILE_COMMON_ARGUMENTS = dict(
     selevel=dict(type='str'),
     setype=dict(type='str'),
     attributes=dict(type='str', aliases=['attr']),
-    unsafe_writes=dict(type='bool', default=False),  # should be available to any module using atomic_move
+    unsafe_writes=dict(type='bool', default=False, fallback=(env_fallback, ['ANSIBLE_UNSAFE_WRITES'])),  # should be available to any module using atomic_move
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -636,14 +645,6 @@ def _load_params():
         print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", '
               '"failed": true}')
         sys.exit(1)
-
-
-def env_fallback(*args, **kwargs):
-    ''' Load value from environment '''
-    for arg in args:
-        if arg in os.environ:
-            return os.environ[arg]
-    raise AnsibleFallbackNotFound
 
 
 def missing_required_lib(library, reason=None, url=None):

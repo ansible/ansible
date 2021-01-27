@@ -38,7 +38,7 @@
                 - copy_without is failed
 
           - name: test overwriting file with unsafe
-            copy: content=NEW dest={{testufile}} unsafe_writes=True
+            copy: content=NEWNOREALLY dest={{testufile}} unsafe_writes=True
             register: copy_with
 
           - name: ensure we properly changed
@@ -46,6 +46,21 @@
               that:
                 - copy_with is changed
 
+          - name: test fallback env var
+            when: lookup('env', 'ANSIBLE_UNSAFE_WRITES') not in ('', None)
+            vars:
+              env_enabled: "{{lookup('env', 'ANSIBLE_UNSAFE_WRITES')|bool}}"
+            block:
+            - name: test overwriting file with unsafe depending on fallback environment setting
+              copy: content=NEWBUTNOTDIFFERENT dest={{testufile}}
+              register: copy_with_env
+              ignore_errors: True
+
+            - name: ensure we properly follow env var
+              assert:
+                msg: "Failed with envvar: {{env_enabled}}, due AUW: to {{q('env', 'ANSIBLE_UNSAFE_WRITES')}}"
+                that:
+                  - env_enabled and copy_with_env is changed or not env_enabled and copy_with_env is failed
       always:
       - name: remove immutable flag from dir to prevent issues with cleanup
         file: path={{testudir}} state=directory attributes="-i"
