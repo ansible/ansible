@@ -8,18 +8,16 @@ __metaclass__ = type
 import pytest
 
 from ansible.cli.galaxy import _get_collection_widths
+from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 
 @pytest.fixture
-def collection_objects(mocker):
-    collection_ham = mocker.MagicMock(latest_version='1.5.0')
-    collection_ham.__str__.return_value = 'sandwiches.ham'
+def collection_objects():
+    collection_ham = Requirement('sandwiches.ham', '1.5.0', None, 'galaxy')
 
-    collection_pbj = mocker.MagicMock(latest_version='2.5')
-    collection_pbj.__str__.return_value = 'sandwiches.pbj'
+    collection_pbj = Requirement('sandwiches.pbj', '2.5', None, 'galaxy')
 
-    collection_reuben = mocker.MagicMock(latest_version='4')
-    collection_reuben.__str__.return_value = 'sandwiches.reuben'
+    collection_reuben = Requirement('sandwiches.reuben', '4', None, 'galaxy')
 
     return [collection_ham, collection_pbj, collection_reuben]
 
@@ -29,8 +27,7 @@ def test_get_collection_widths(collection_objects):
 
 
 def test_get_collection_widths_single_collection(mocker):
-    mocked_collection = mocker.MagicMock(latest_version='3.0.0')
-    mocked_collection.__str__.return_value = 'sandwiches.club'
+    mocked_collection = Requirement('sandwiches.club', '3.0.0', None, 'galaxy')
     # Make this look like it is not iterable
     mocker.patch('ansible.cli.galaxy.is_iterable', return_value=False)
 

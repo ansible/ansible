@@ -21,7 +21,8 @@
 - assert:
     that:
       - verify.failed
-      - "'The format namespace.name is expected' in verify.stderr"
+      - >-
+        "ERROR! 'file' type is not supported. The format namespace.name is expected." in verify.stderr
 
 - name: install the collection from the server
   command: ansible-galaxy collection install ansible_test.verify:1.0.0
@@ -38,6 +39,11 @@
     that:
       - verify is success
       - "'Collection ansible_test.verify contains modified content' not in verify.stdout"
+
+- name: verify the installed collection against the server, with unspecified version in CLI
+  command: ansible-galaxy collection verify ansible_test.verify
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
 
 - name: verify a collection that doesn't appear to be installed
   command: ansible-galaxy collection verify ansible_test.verify:1.0.0

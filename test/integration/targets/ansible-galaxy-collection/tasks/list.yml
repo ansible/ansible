@@ -1,0 +1,55 @@
+- name: initialize collection structure
+  command: ansible-galaxy collection init {{ item }} --init-path "{{ galaxy_dir }}/dev/ansible_collections" {{ galaxy_verbosity }}
+  loop:
+    - 'dev.collection1'
+    - 'dev.collection2'
+    - 'dev.collection3'
+
+- name: replace the default version of the collections
+  lineinfile:
+    path: "{{ galaxy_dir }}/dev/ansible_collections/dev/{{ item.name }}/galaxy.yml"
+    line: "{{ item.version }}"
+    regexp: "version: .*"
+  loop:
+    - name: "collection1"
+      version: "version: null"
+    - name: "collection2"
+      version: "version: placeholder"
+    - name: "collection3"
+      version: "version: ''"
+
+- name: list collections in development without semver versions
+  command: ansible-galaxy collection list {{ galaxy_verbosity }}
+  register: list_result
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+
+- assert:
+    that:
+      - "'dev.collection1 *' in list_result.stdout"
+      # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
+      - "'dev.collection2 placeholder' in list_result.stdout"
+      - "'dev.collection3 *' in list_result.stdout"
+
+- name: install an artifact to the second collections path
+  command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng {{ galaxy_verbosity }} -p "{{ galaxy_dir }}/prod"
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: replace the artifact version
+  lineinfile:
+    path: "{{ galaxy_dir }}/prod/ansible_collections/namespace1/name1/MANIFEST.json"
+    line: '  "version": null,'
+    regexp: '  "version": .*'
+
+- name: test listing collections in all paths
+  command: ansible-galaxy collection list {{ galaxy_verbosity }}
+  register: list_result
+  ignore_errors: True
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+
+- assert:
+    that:
+      - list_result is failed
+      - "'is expected to have a valid SemVer version value but got None' in list_result.stderr"

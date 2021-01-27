@@ -1,5 +1,5 @@
 # Copyright: (c) 2013, James Cammarata <jcammarata@ansible.com>
-# Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2018-2021, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -24,7 +24,6 @@ from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
     build_collection,
-    CollectionRequirement,
     download_collections,
     find_existing_collections,
     install_collections,
@@ -33,6 +32,10 @@ from ansible.galaxy.collection import (
     validate_collection_path,
     verify_collections
 )
+from ansible.galaxy.collection.concrete_artifact_manager import (
+    ConcreteArtifactsManager,
+)
+from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
@@ -50,6 +53,26 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse
+
+
+def with_collection_artifacts_manager(wrapped_method):
+    """Inject an artifacts manager if not passed explicitly.
+
+    This decorator constructs a ConcreteArtifactsManager and maintains
+    the related temporary directory auto-cleanup around the target
+    method invocation.
+    """
+    def method_wrapper(*args, **kwargs):
+        if 'artifacts_manager' in kwargs:
+            return wrapped_method(*args, **kwargs)
+
+        with ConcreteArtifactsManager.under_tmpdir(
+                C.DEFAULT_LOCAL_TMP,
+                validate_certs=not context.CLIARGS['ignore_certs'],
+        ) as concrete_artifact_cm:
+            kwargs['artifacts_manager'] = concrete_artifact_cm
+            return wrapped_method(*args, **kwargs)
+    return method_wrapper
 
 
 def _display_header(path, h1, h2, w1=10, w2=7):
@@ -76,20 +99,19 @@ def _display_role(gr):
 
 def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
     display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
-        fqcn=to_text(collection),
-        version=collection.latest_version,
+        fqcn=to_text(collection.fqcn),
+        version=collection.ver,
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
         vwidth=max(vwidth, min_vwidth)
     ))
 
 
 def _get_collection_widths(collections):
-    if is_iterable(collections):
-        fqcn_set = set(to_text(c) for c in collections)
-        version_set = set(to_text(c.latest_version) for c in collections)
-    else:
-        fqcn_set = set([to_text(collections)])
-        version_set = set([collections.latest_version])
+    if not is_iterable(collections):
+        collections = (collections, )
+
+    fqcn_set = {to_text(c.fqcn) for c in collections}
+    version_set = {to_text(c.ver) for c in collections}
 
     fqcn_length = len(max(fqcn_set, key=len))
     version_length = len(max(version_set, key=len))
@@ -447,7 +469,7 @@ class GalaxyCLI(CLI):
 
         # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
         server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
-        for server_key in server_list:
+        for server_priority, server_key in enumerate(server_list, start=1):
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
             config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
@@ -486,7 +508,11 @@ class GalaxyCLI(CLI):
                         server_options['token'] = GalaxyToken(token=token_val)
 
             server_options.update(galaxy_options)
-            config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
+            config_servers.append(GalaxyAPI(
+                self.galaxy, server_key,
+                priority=server_priority,
+                **server_options
+            ))
 
         cmd_server = context.CLIARGS['api_server']
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
@@ -497,15 +523,21 @@ class GalaxyCLI(CLI):
             if config_server:
                 self.api_servers.append(config_server)
             else:
-                self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token,
-                                                  **galaxy_options))
+                self.api_servers.append(GalaxyAPI(
+                    self.galaxy, 'cmd_arg', cmd_server, token=cmd_token,
+                    priority=len(config_servers) + 1,
+                    **galaxy_options
+                ))
         else:
             self.api_servers = config_servers
 
         # Default to C.GALAXY_SERVER if no servers were defined
         if len(self.api_servers) == 0:
-            self.api_servers.append(GalaxyAPI(self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token,
-                                              **galaxy_options))
+            self.api_servers.append(GalaxyAPI(
+                self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token,
+                priority=0,
+                **galaxy_options
+            ))
 
         context.CLIARGS['func']()
 
@@ -530,7 +562,7 @@ class GalaxyCLI(CLI):
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
 
-    def _parse_requirements_file(self, requirements_file, allow_old_format=True):
+    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None):
         """
         Parses an Ansible requirement.yml file and returns all the roles and/or collections defined in it. There are 2
         requirements file format:
@@ -556,6 +588,7 @@ class GalaxyCLI(CLI):
 
         :param requirements_file: The path to the requirements file.
         :param allow_old_format: Will fail if a v1 requirements file is found and this is set to False.
+        :param artifacts_manager: Artifacts manager.
         :return: a dict containing roles and collections to found in the requirements file.
         """
         requirements = {
@@ -619,32 +652,47 @@ class GalaxyCLI(CLI):
             for role_req in file_requirements.get('roles') or []:
                 requirements['roles'] += parse_role_req(role_req)
 
-            for collection_req in file_requirements.get('collections') or []:
-                if isinstance(collection_req, dict):
-                    req_name = collection_req.get('name', None)
-                    if req_name is None:
-                        raise AnsibleError("Collections requirement entry should contain the key name.")
-
-                    req_type = collection_req.get('type')
-                    if req_type not in ('file', 'galaxy', 'git', 'url', None):
-                        raise AnsibleError("The collection requirement entry key 'type' must be one of file, galaxy, git, or url.")
-
-                    req_version = collection_req.get('version', '*')
-                    req_source = collection_req.get('source', None)
-                    if req_source:
-                        # Try and match up the requirement source with our list of Galaxy API servers defined in the
-                        # config, otherwise create a server with that URL without any auth.
-                        req_source = next(iter([a for a in self.api_servers if req_source in [a.name, a.api_server]]),
-                                          GalaxyAPI(self.galaxy,
-                                                    "explicit_requirement_%s" % req_name,
-                                                    req_source,
-                                                    validate_certs=not context.CLIARGS['ignore_certs']))
-
-                    requirements['collections'].append((req_name, req_version, req_source, req_type))
-                else:
-                    requirements['collections'].append((collection_req, '*', None, None))
+            requirements['collections'] = [
+                Requirement.from_requirement_dict(
+                    self._init_coll_req_dict(collection_req),
+                    artifacts_manager,
+                )
+                for collection_req in file_requirements.get('collections') or []
+            ]
 
         return requirements
+
+    def _init_coll_req_dict(self, coll_req):
+        if not isinstance(coll_req, dict):
+            # Assume it's a string:
+            return {'name': coll_req}
+
+        if (
+                'name' not in coll_req or
+                not coll_req.get('source') or
+                coll_req.get('type', 'galaxy') != 'galaxy'
+        ):
+            return coll_req
+
+        # Try and match up the requirement source with our list of Galaxy API
+        # servers defined in the config, otherwise create a server with that
+        # URL without any auth.
+        coll_req['source'] = next(
+            iter(
+                srvr for srvr in self.api_servers
+                if coll_req['source'] in {srvr.name, srvr.api_server}
+            ),
+            GalaxyAPI(
+                self.galaxy,
+                'explicit_requirement_{name!s}'.format(
+                    name=coll_req['name'],
+                ),
+                coll_req['source'],
+                validate_certs=not context.CLIARGS['ignore_certs'],
+            ),
+        )
+
+        return coll_req
 
     @staticmethod
     def exit_without_ignore(rc=1):
@@ -733,26 +781,29 @@ class GalaxyCLI(CLI):
 
         return meta_value
 
-    def _require_one_of_collections_requirements(self, collections, requirements_file):
+    def _require_one_of_collections_requirements(
+            self, collections, requirements_file,
+            artifacts_manager=None,
+    ):
         if collections and requirements_file:
             raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
         elif not collections and not requirements_file:
             raise AnsibleError("You must specify a collection name or a requirements file.")
         elif requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
-            requirements = self._parse_requirements_file(requirements_file, allow_old_format=False)
+            requirements = self._parse_requirements_file(
+                requirements_file,
+                allow_old_format=False,
+                artifacts_manager=artifacts_manager,
+            )
         else:
-            requirements = {'collections': [], 'roles': []}
-            for collection_input in collections:
-                requirement = None
-                if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
-                        urlparse(collection_input).scheme.lower() in ['http', 'https'] or \
-                        collection_input.startswith(('git+', 'git@')):
-                    # Arg is a file path or URL to a collection
-                    name = collection_input
-                else:
-                    name, dummy, requirement = collection_input.partition(':')
-                requirements['collections'].append((name, requirement or '*', None, None))
+            requirements = {
+                'collections': [
+                    Requirement.from_string(coll_input, artifacts_manager)
+                    for coll_input in collections
+                ],
+                'roles': [],
+            }
         return requirements
 
     ############################
@@ -792,27 +843,37 @@ class GalaxyCLI(CLI):
 
         for collection_path in context.CLIARGS['args']:
             collection_path = GalaxyCLI._resolve_path(collection_path)
-            build_collection(collection_path, output_path, force)
+            build_collection(
+                to_text(collection_path, errors='surrogate_or_strict'),
+                to_text(output_path, errors='surrogate_or_strict'),
+                force,
+            )
 
-    def execute_download(self):
+    @with_collection_artifacts_manager
+    def execute_download(self, artifacts_manager=None):
         collections = context.CLIARGS['args']
         no_deps = context.CLIARGS['no_deps']
         download_path = context.CLIARGS['download_path']
-        ignore_certs = context.CLIARGS['ignore_certs']
 
         requirements_file = context.CLIARGS['requirements']
         if requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
-        requirements = self._require_one_of_collections_requirements(collections, requirements_file)['collections']
+        requirements = self._require_one_of_collections_requirements(
+            collections, requirements_file,
+            artifacts_manager=artifacts_manager,
+        )['collections']
 
         download_path = GalaxyCLI._resolve_path(download_path)
         b_download_path = to_bytes(download_path, errors='surrogate_or_strict')
         if not os.path.exists(b_download_path):
             os.makedirs(b_download_path)
 
-        download_collections(requirements, download_path, self.api_servers, (not ignore_certs), no_deps,
-                             context.CLIARGS['allow_pre_release'])
+        download_collections(
+            requirements, download_path, self.api_servers, no_deps,
+            context.CLIARGS['allow_pre_release'],
+            artifacts_manager=artifacts_manager,
+        )
 
         return 0
 
@@ -1002,29 +1063,38 @@ class GalaxyCLI(CLI):
 
         self.pager(data)
 
-    def execute_verify(self):
+    @with_collection_artifacts_manager
+    def execute_verify(self, artifacts_manager=None):
 
         collections = context.CLIARGS['args']
         search_paths = context.CLIARGS['collections_path']
-        ignore_certs = context.CLIARGS['ignore_certs']
         ignore_errors = context.CLIARGS['ignore_errors']
         requirements_file = context.CLIARGS['requirements']
 
-        requirements = self._require_one_of_collections_requirements(collections, requirements_file)['collections']
+        requirements = self._require_one_of_collections_requirements(
+            collections, requirements_file,
+            artifacts_manager=artifacts_manager,
+        )['collections']
 
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
-        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors,
-                           allow_pre_release=True)
+        verify_collections(
+            requirements, resolved_paths,
+            self.api_servers, ignore_errors,
+            artifacts_manager=artifacts_manager,
+        )
 
         return 0
 
-    def execute_install(self):
+    @with_collection_artifacts_manager
+    def execute_install(self, artifacts_manager=None):
         """
         Install one or more roles(``ansible-galaxy role install``), or one or more collections(``ansible-galaxy collection install``).
         You can pass in a list (roles or collections) or use the file
         option listed below (these are mutually exclusive). If you pass in a list, it
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
+
+        :param artifacts_manager: Artifacts manager.
         """
         install_items = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
@@ -1042,7 +1112,10 @@ class GalaxyCLI(CLI):
         role_requirements = []
         if context.CLIARGS['type'] == 'collection':
             collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
-            requirements = self._require_one_of_collections_requirements(install_items, requirements_file)
+            requirements = self._require_one_of_collections_requirements(
+                install_items, requirements_file,
+                artifacts_manager=artifacts_manager,
+            )
 
             collection_requirements = requirements['collections']
             if requirements['roles']:
@@ -1055,7 +1128,10 @@ class GalaxyCLI(CLI):
                 if not (requirements_file.endswith('.yaml') or requirements_file.endswith('.yml')):
                     raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
 
-                requirements = self._parse_requirements_file(requirements_file)
+                requirements = self._parse_requirements_file(
+                    requirements_file,
+                    artifacts_manager=artifacts_manager,
+                )
                 role_requirements = requirements['roles']
 
                 # We can only install collections and roles at the same time if the type wasn't specified and the -p
@@ -1090,11 +1166,15 @@ class GalaxyCLI(CLI):
             display.display("Starting galaxy collection install process")
             # Collections can technically be installed even when ansible-galaxy is in role mode so we need to pass in
             # the install path as context.CLIARGS['collections_path'] won't be set (default is calculated above).
-            self._execute_install_collection(collection_requirements, collection_path)
+            self._execute_install_collection(
+                collection_requirements, collection_path,
+                artifacts_manager=artifacts_manager,
+            )
 
-    def _execute_install_collection(self, requirements, path):
+    def _execute_install_collection(
+            self, requirements, path, artifacts_manager,
+    ):
         force = context.CLIARGS['force']
-        ignore_certs = context.CLIARGS['ignore_certs']
         ignore_errors = context.CLIARGS['ignore_errors']
         no_deps = context.CLIARGS['no_deps']
         force_with_deps = context.CLIARGS['force_with_deps']
@@ -1111,8 +1191,12 @@ class GalaxyCLI(CLI):
         if not os.path.exists(b_output_path):
             os.makedirs(b_output_path)
 
-        install_collections(requirements, output_path, self.api_servers, (not ignore_certs), ignore_errors,
-                            no_deps, force, force_with_deps, allow_pre_release=allow_pre_release)
+        install_collections(
+            requirements, output_path, self.api_servers, ignore_errors,
+            no_deps, force, force_with_deps,
+            allow_pre_release=allow_pre_release,
+            artifacts_manager=artifacts_manager,
+        )
 
         return 0
 
@@ -1283,9 +1367,12 @@ class GalaxyCLI(CLI):
 
         return 0
 
-    def execute_list_collection(self):
+    @with_collection_artifacts_manager
+    def execute_list_collection(self, artifacts_manager=None):
         """
         List all collections installed on the local system
+
+        :param artifacts_manager: Artifacts manager.
         """
 
         collections_search_paths = set(context.CLIARGS['collections_path'])
@@ -1328,8 +1415,16 @@ class GalaxyCLI(CLI):
                     continue
 
                 collection_found = True
-                collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True)
-                fqcn_width, version_width = _get_collection_widths(collection)
+
+                try:
+                    collection = Requirement.from_dir_path_as_unknown(
+                        b_collection_path,
+                        artifacts_manager,
+                    )
+                except ValueError as val_err:
+                    six.raise_from(AnsibleError(val_err), val_err)
+
+                fqcn_width, version_width = _get_collection_widths([collection])
 
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
                 _display_collection(collection, fqcn_width, version_width)
@@ -1339,7 +1434,9 @@ class GalaxyCLI(CLI):
                 collection_path = validate_collection_path(path)
                 if os.path.isdir(collection_path):
                     display.vvv("Searching {0} for collections".format(collection_path))
-                    collections = find_existing_collections(collection_path, fallback_metadata=True)
+                    collections = list(find_existing_collections(
+                        collection_path, artifacts_manager,
+                    ))
                 else:
                     # There was no 'ansible_collections/' directory in the path, so there
                     # or no collections here.
@@ -1355,8 +1452,7 @@ class GalaxyCLI(CLI):
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
 
                 # Sort collections by the namespace and name
-                collections.sort(key=to_text)
-                for collection in collections:
+                for collection in sorted(collections, key=to_text):
                     _display_collection(collection, fqcn_width, version_width)
 
         # Do not warn if the specific collection was found in any of the search paths

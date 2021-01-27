@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import collections
 import datetime
+import functools
 import hashlib
 import json
 import os
@@ -233,11 +234,17 @@ class CollectionVersionMetadata:
         self.dependencies = dependencies
 
 
+@functools.total_ordering
 class GalaxyAPI:
     """ This class is meant to be used as a API client for an Ansible Galaxy server """
 
-    def __init__(self, galaxy, name, url, username=None, password=None, token=None, validate_certs=True,
-                 available_api_versions=None, clear_response_cache=False, no_cache=True):
+    def __init__(
+            self, galaxy, name, url,
+            username=None, password=None, token=None, validate_certs=True,
+            available_api_versions=None,
+            clear_response_cache=False, no_cache=True,
+            priority=float('inf'),
+    ):
         self.galaxy = galaxy
         self.name = name
         self.username = username
@@ -246,6 +253,7 @@ class GalaxyAPI:
         self.api_server = url
         self.validate_certs = validate_certs
         self._available_api_versions = available_api_versions or {}
+        self._priority = priority
 
         b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
         makedirs_safe(b_cache_dir, mode=0o700)
@@ -262,6 +270,38 @@ class GalaxyAPI:
             self._cache = _load_cache(self._b_cache_path)
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
+
+    def __str__(self):
+        # type: (GalaxyAPI) -> str
+        """Render GalaxyAPI as a native string representation."""
+        return to_native(self.name)
+
+    def __unicode__(self):
+        # type: (GalaxyAPI) -> unicode
+        """Render GalaxyAPI as a unicode/text string representation."""
+        return to_text(self.name)
+
+    def __repr__(self):
+        # type: (GalaxyAPI) -> str
+        """Render GalaxyAPI as an inspectable string representation."""
+        return (
+            '<{instance!s} "{name!s}" @ {url!s} with priority {priority!s}>'.
+            format(
+                instance=self, name=self.name,
+                priority=self._priority, url=self.api_server,
+            )
+        )
+
+    def __lt__(self, other_galaxy_api):
+        # type: (GalaxyAPI, GalaxyAPI) -> Union[bool, 'NotImplemented']
+        """Return whether the instance priority is higher than other."""
+        if not isinstance(other_galaxy_api, self.__class__):
+            return NotImplemented
+
+        return (
+            self._priority > other_galaxy_api._priority or
+            self.name < self.name
+        )
 
     @property
     @g_connect(['v1', 'v2', 'v3'])
