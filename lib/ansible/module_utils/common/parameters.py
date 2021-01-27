@@ -419,11 +419,11 @@ def validate_argument_values(argument_spec, module_parameters, options_context=N
                         msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, module_parameters[k])
                         if options_context:
                             msg += " found in %s" % " -> ".join(options_context)
-                        errors.append(ValueError(msg))
+                        errors.append(msg)
         else:
             msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
             if options_context:
                 msg += " found in %s" % " -> ".join(options_context)
-            errors.append(ValueError(msg))
+            errors.append(msg)
 
     return errors
