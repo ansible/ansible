@@ -821,7 +821,11 @@ def command_windows_integration(args):
                 # we are running in a Docker container that is linked to the httptester container, we just need to
                 # forward these requests to the linked hostname
                 first_host = HTTPTESTER_HOSTS[0]
-                ssh_options = ["-R", "8080:%s:80" % first_host, "-R", "8443:%s:443" % first_host, "8444:%s:444" % first_host]
+                ssh_options = [
+                    "-R", "8080:%s:80" % first_host,
+                    "-R", "8443:%s:443" % first_host,
+                    "-R", "8444:%s:444" % first_host
+                ]
             else:
                 # we are running directly and need to start the httptester container ourselves and forward the port
                 # from there manually set so HTTPTESTER env var is set during the run
