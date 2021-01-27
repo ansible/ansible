@@ -54,6 +54,7 @@ import time
 import traceback
 
 from collections import deque
+from itertools import chain, repeat
 
 try:
     import syslog
