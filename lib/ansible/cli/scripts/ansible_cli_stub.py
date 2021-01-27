@@ -27,7 +27,6 @@ __requires__ = ['ansible_core']
 
 import errno
 import os
-import shutil
 import sys
 import traceback
 

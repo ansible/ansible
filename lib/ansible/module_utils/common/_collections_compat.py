@@ -7,6 +7,8 @@ It will go away once the bundled copy of six includes equivalent functionality.
 Third parties should not use this.
 """
 
+# pylint: disable=unused-import
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 

@@ -15,7 +15,7 @@ from jinja2.runtime import StrictUndefined
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import is_sequence, Mapping
 from ansible.module_utils.common.text.converters import container_to_text
-from ansible.module_utils.six import PY2, text_type
+from ansible.module_utils.six import PY2
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.native_jinja import NativeJinjaText
 

@@ -34,7 +34,7 @@ from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsiblePluginRemovedError
+from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.json import AnsibleJSONEncoder

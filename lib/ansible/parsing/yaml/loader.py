@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    from _yaml import CParser, CEmitter
+    from _yaml import CParser
     HAVE_PYYAML_C = True
 except ImportError:
     HAVE_PYYAML_C = False

@@ -21,9 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-import sys
-
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError

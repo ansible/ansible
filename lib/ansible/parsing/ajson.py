@@ -8,7 +8,7 @@ __metaclass__ = type
 import json
 
 # Imported for backwards compat
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.json import AnsibleJSONEncoder  # pylint: disable=unused-import
 
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode

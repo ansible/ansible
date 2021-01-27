@@ -321,7 +321,7 @@ import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_file
 
 # APT related constants

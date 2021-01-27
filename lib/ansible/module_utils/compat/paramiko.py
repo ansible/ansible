@@ -9,7 +9,7 @@ PARAMIKO_IMPORT_ERR = None
 
 paramiko = None
 try:
-    import paramiko
+    import paramiko  # pylint: disable=unused-import
 # paramiko and gssapi are incompatible and raise AttributeError not ImportError
 # When running in FIPS mode, cryptography raises InternalError
 # https://bugzilla.redhat.com/show_bug.cgi?id=1778939

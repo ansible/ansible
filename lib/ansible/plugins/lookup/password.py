@@ -104,7 +104,6 @@ _raw:
 import os
 import string
 import time
-import shutil
 import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError

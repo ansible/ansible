@@ -4,24 +4,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import errno
 import os
 import stat
 import re
-import pwd
-import grp
 import time
-import shutil
-import traceback
 import fcntl
 import sys
 
 from contextlib import contextmanager
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import b, binary_type
 
 try:
-    import selinux
+    import selinux  # pylint: disable=unused-import
     HAVE_SELINUX = True
 except ImportError:
     HAVE_SELINUX = False

@@ -14,7 +14,7 @@ import time
 import yaml
 
 try:
-    import _yaml
+    import _yaml  # pylint: disable=unused-import
     HAS_LIBYAML = True
 except ImportError:
     HAS_LIBYAML = False

@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
-from ansible import errors
 
 
 class TestModule(object):

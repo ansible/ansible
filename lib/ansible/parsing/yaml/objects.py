@@ -23,7 +23,6 @@ import string
 import sys as _sys
 
 import sys
-import yaml
 
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import text_type

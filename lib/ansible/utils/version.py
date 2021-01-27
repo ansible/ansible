@@ -9,8 +9,6 @@ import re
 
 from distutils.version import LooseVersion, Version
 
-from ansible.module_utils.six import text_type
-
 
 # Regular expression taken from
 # https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string

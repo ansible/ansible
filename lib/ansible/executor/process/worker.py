@@ -37,7 +37,6 @@ except Exception:
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
-from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context

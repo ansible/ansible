@@ -32,7 +32,6 @@ FILE_ATTRIBUTES = {
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
-import __main__
 import atexit
 import errno
 import datetime
@@ -53,10 +52,8 @@ import sys
 import tempfile
 import time
 import traceback
-import types
 
 from collections import deque
-from itertools import chain, repeat
 
 try:
     import syslog
@@ -89,14 +86,14 @@ from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
     container_to_text as json_dict_bytes_to_unicode,
-)
+)  # pylint: disable=unused-import
 
 from ansible.module_utils.common.text.formatters import (
     lenient_lowercase,
     bytes_to_human,
     human_to_bytes,
     SIZE_RANGES,
-)
+)  # pylint: disable=unused-import
 
 try:
     from ansible.module_utils.common._json_compat import json
@@ -148,13 +145,13 @@ from ansible.module_utils.common.file import (
     is_executable,
     format_attributes,
     get_flags_from_attributes,
-)
+)  # pylint: disable=unused-import
 from ansible.module_utils.common.sys_info import (
     get_distribution,
     get_distribution_version,
     get_platform_subclass,
-)
-from ansible.module_utils.pycompat24 import get_exception, literal_eval
+)  # pylint: disable=unused-import
+from ansible.module_utils.pycompat24 import get_exception, literal_eval  # pylint: disable=unused-import
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
     get_type_validator,
@@ -172,7 +169,6 @@ from ansible.module_utils.six import (
     b,
     binary_type,
     integer_types,
-    iteritems,
     string_types,
     text_type,
 )
@@ -200,7 +196,7 @@ from ansible.module_utils.common.validation import (
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
-from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean  # pylint: disable=unused-import
 from ansible.module_utils.common.warnings import (
     deprecate,
     get_deprecation_messages,

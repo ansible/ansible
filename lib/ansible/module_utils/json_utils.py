@@ -27,8 +27,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
 # changes are propagated there.

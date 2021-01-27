@@ -106,7 +106,7 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase

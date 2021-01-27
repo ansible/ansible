@@ -182,7 +182,7 @@ except ImportError:
 
 # Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
 try:
-    import urllib_gssapi
+    import urllib_gssapi  # pylint: disable=unused-import
     HAS_GSSAPI = True
 except ImportError:
     HAS_GSSAPI = False
