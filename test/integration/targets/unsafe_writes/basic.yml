@@ -58,6 +58,7 @@
 
             - name: ensure we properly follow env var
               assert:
+                msg: "Failed with envvar: {{env_enabled}}, due AUW: to {{q('env', 'ANSIBLE_UNSAFE_WRITES')}}"
                 that:
                   - env_enabled and copy_with_env is changed
                   - not env_enabled and copy_with_env is failed
