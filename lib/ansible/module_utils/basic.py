@@ -54,7 +54,7 @@ import time
 import traceback
 
 from collections import deque
-from itertools import chain, repeat
+from itertools import chain
 
 try:
     import syslog
@@ -83,18 +83,18 @@ NoneType = type(None)
 from ansible.module_utils.compat import selectors
 
 from ._text import to_native, to_bytes, to_text
-from ansible.module_utils.common.text.converters import (
+from ansible.module_utils.common.text.converters import (  # pylint: disable=unused-import
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
     container_to_text as json_dict_bytes_to_unicode,
-)  # pylint: disable=unused-import
+)
 
-from ansible.module_utils.common.text.formatters import (
+from ansible.module_utils.common.text.formatters import (  # pylint: disable=unused-import
     lenient_lowercase,
     bytes_to_human,
     human_to_bytes,
     SIZE_RANGES,
-)  # pylint: disable=unused-import
+)
 
 try:
     from ansible.module_utils.common._json_compat import json
@@ -139,19 +139,19 @@ from ansible.module_utils.common._collections_compat import (
     Set, MutableSet,
 )
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.file import (
+from ansible.module_utils.common.file import (  # pylint: disable=unused-import
     _PERM_BITS as PERM_BITS,
     _EXEC_PERM_BITS as EXEC_PERM_BITS,
     _DEFAULT_PERM as DEFAULT_PERM,
     is_executable,
     format_attributes,
     get_flags_from_attributes,
-)  # pylint: disable=unused-import
-from ansible.module_utils.common.sys_info import (
+)
+from ansible.module_utils.common.sys_info import (  # pylint: disable=unused-import
     get_distribution,
     get_distribution_version,
     get_platform_subclass,
-)  # pylint: disable=unused-import
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval  # pylint: disable=unused-import
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
