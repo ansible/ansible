@@ -285,7 +285,33 @@ def get_type_validator(wanted):
 
     return type_checker, wanted
 
-def validate_argument_types(argument_spec, module_parameters):
+
+def handle_elements(wanted_type, parameters, values, options_context=None):
+    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    validated_params = []
+    errors = []
+    # Get param name for strings so we can later display this value in a useful error message if needed
+    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+    kwargs = {}
+    if wanted_element_type == 'str' and isinstance(wanted_element_type, string_types):
+        if isinstance(parameters, string_types):
+            kwargs['param'] = parameters
+        elif isinstance(parameters, dict):
+            kwargs['param'] = list(parameters.keys())[0]
+    for value in values:
+        try:
+            validated_params.append(type_checker(value, **kwargs))
+        except (TypeError, ValueError) as e:
+            msg = "Elements value for option %s" % parameters
+            if options_context:
+                msg += " found in '%s'" % " -> ".join(options_context)
+            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
+            errors.append(msg)
+
+    return validated_params, errors
+
+
+def validate_argument_types(argument_spec, module_parameters, prefix='', options_context=None):
     """Validate that module parameter types match the type in the argument spec.
 
     :param argument_spec: Argument spec
