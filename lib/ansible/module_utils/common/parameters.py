@@ -320,16 +320,20 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
     :param module_parameters: Parameters passed to module
     :type module_parameters: dict
 
-    :returns: Validated and coerced module parameters and a list of any errors
-              that were encountered.
-    :rtype: dict
+    :param prefix: Name of the parent key that contains the spec. Used in the error message
+    :type prefix: str
+
+    :param options_context: List of contexts?
+    :type options_context: list
+
+    :returns: Two item tuple containing validated and coerced module parameters
+              and a list of any errors that were encountered.
+    :rtype: tuple
 
     """
 
-    result = {
-        'validated_params': {},
-        'errors': [],
-    }
+    validated_params = {}
+    errors = []
     for k, v in argument_spec.items():
         if k not in module_parameters:
             continue
@@ -338,15 +342,37 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
         if value is None:
             continue
 
-        wanted_type = argument_spec[k]['type']
+        wanted_type = v.get('type')
         type_checker, wanted_name = get_type_validator(wanted_type)
+        # Get param name for strings so we can later display this value in a useful error message if needed
+        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+        kwargs = {}
+        if wanted_name == 'str' and isinstance(type_checker, string_types):
+            kwargs['param'] = list(module_parameters.keys())[0]
+
+            # Get the name of the parent key if this is a nested option
+            if prefix:
+                kwargs['prefix'] = prefix
 
         try:
-            result['validated_params'][k] = type_checker(value)
+            validated_params[k] = type_checker(value, **kwargs)
+            wanted_elements = v.get('elements', None)
+            if wanted_elements:
+                if wanted_type != 'list' or not isinstance(module_parameters[k], list):
+                    msg = "Invalid type %s for option '%s'" % (wanted_name, module_parameters)
+                    if options_context:
+                        msg += " found in '%s'." % " -> ".join(options_context)
+                    msg += ", elements value check is supported only with 'list' type"
+                    errors.append(msg)
+                validated_params[k] = handle_elements(wanted_elements, k, module_parameters[k], options_context)
         except (TypeError, ValueError) as e:
-            result['errors'].append(e)
+            msg = "argument %s is of type %s" % (k, type(value))
+            if options_context:
+                msg += " found in '%s'." % " -> ".join(options_context)
+            msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
+            errors.append(msg)
 
-    return result
+    return validated_params, errors
 
 
 def validate_argument_values(argument_spec, module_parameters, options_context=None):
