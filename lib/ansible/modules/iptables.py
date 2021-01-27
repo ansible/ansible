@@ -356,7 +356,9 @@ options:
       - Set the policy for the chain to the given target.
       - Only built-in chains can have policies.
       - This parameter requires the C(chain) parameter.
-      - Ignores all other parameters.
+      - If you specify this parameter, all other parameters will be ignored.
+      - This parameter is used to set default policy for the given C(chain).
+        Do not confuse this with C(jump) parameter.
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
@@ -446,6 +448,7 @@ EXAMPLES = r'''
     action: insert
     rule_num: 5
 
+# Think twice before running following task as this may lock target system
 - name: Set the policy for the INPUT chain to DROP
   ansible.builtin.iptables:
     chain: INPUT
@@ -691,7 +694,7 @@ def set_chain_policy(iptables_path, module, params):
 
 
 def get_chain_policy(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-L', params)
+    cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
     rc, out, _ = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
     result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
