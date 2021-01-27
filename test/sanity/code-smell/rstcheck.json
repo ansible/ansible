@@ -1,0 +1,6 @@
+{
+    "output": "path-line-column-message",
+    "extensions": [
+        ".rst"
+    ]
+}
