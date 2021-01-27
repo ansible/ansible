@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - The ``default`` container for both collections and core have been updated to versions 2.11.0 and 1.9.0 respectively.
