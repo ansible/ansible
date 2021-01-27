@@ -538,7 +538,7 @@ class PlayIterator(metaclass=MetaPlayIterator):
             return self.get_active_state(state.always_child_state)
         return state
 
-    def is_any_block_rescuing(self, state):
+    def is_in_rescue(self, state):
         '''
         Given the current HostState state, determines if the current block, or any child blocks,
         has a rescue section.
@@ -548,11 +548,28 @@ class PlayIterator(metaclass=MetaPlayIterator):
         if state._blocks[state.cur_block].rescue:
             return True
         if state.tasks_child_state is not None:
-            return self.is_any_block_rescuing(state.tasks_child_state)
+            return self.is_in_rescue(state.tasks_child_state)
         elif state.rescue_child_state is not None:
-            return self.is_any_block_rescuing(state.rescue_child_state)
+            return self.is_in_rescue(state.rescue_child_state)
         elif state.always_child_state is not None:
-            return self.is_any_block_rescuing(state.always_child_state)
+            return self.is_in_rescue(state.always_child_state)
+        return False
+
+    def is_in_always(self, state):
+        '''
+        Given the current HostState state, determines if the current block, or any child blocks,
+        has a always section.
+        '''
+        if state is None:
+            return False
+        if state._blocks[state.cur_block].always:
+            return True
+        if state.tasks_child_state is not None:
+            return self.is_in_always(state.tasks_child_state)
+        elif state.rescue_child_state is not None:
+            return self.is_in_always(state.rescue_child_state)
+        elif state.always_child_state is not None:
+            return self.is_in_always(state.always_child_state)
         return False
 
     def get_original_task(self, host, task):

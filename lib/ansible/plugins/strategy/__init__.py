@@ -570,7 +570,7 @@ class StrategyBase:
                     # we save the failed task in a special var for use
                     # within the rescue/always
                     state = iterator._host_states[original_host.name]
-                    if iterator.is_any_block_rescuing(state):
+                    if iterator.is_in_rescue(state):
                         self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
