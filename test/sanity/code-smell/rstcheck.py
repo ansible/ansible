@@ -1,100 +1,63 @@
-"""Sanity test using rstcheck."""
+#!/usr/bin/env python
+"""Sanity test using rstcheck and sphinx."""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-from .. import types as t
-
-from ..sanity import (
-    SanitySingleVersion,
-    SanityMessage,
-    SanityFailure,
-    SanitySuccess,
-    SANITY_ROOT,
-)
-
-from ..target import (
-    TestTarget,
-)
-
-from ..util import (
-    SubprocessError,
-    parse_to_list_of_dict,
-    read_lines_without_comments,
-    find_python,
-)
-
-from ..util_common import (
-    run_command,
-)
-
-from ..config import (
-    SanityConfig,
-)
+import re
+import subprocess
+import sys
 
 
-class RstcheckTest(SanitySingleVersion):
-    """Sanity test using rstcheck."""
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
-        """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] in ('.rst',)]
+def main():
+    paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
-        ignore_substitutions = (
-            '_',
-            'br',
-            'release',
-            'today',
-            'version',
-        )
+    encoding = 'utf-8'
 
-        settings = self.load_processor(args)
+    ignore_substitutions = (
+        'br',
+    )
 
-        paths = [target.path for target in targets.include]
+    cmd = [
+        sys.executable,
+        '-m', 'rstcheck',
+        '--report', 'warning',
+        '--ignore-substitutions', ','.join(ignore_substitutions),
+    ] + paths
 
-        cmd = [
-            find_python(python_version),
-            '-m', 'rstcheck',
-            '--report', 'warning',
-            '--ignore-substitutions', ','.join(ignore_substitutions),
-        ] + paths
+    process = subprocess.run(cmd,
+                             stdin=subprocess.DEVNULL,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             )
 
-        try:
-            stdout, stderr = run_command(args, cmd, capture=True)
-            status = 0
-        except SubprocessError as ex:
-            stdout = ex.stdout
-            stderr = ex.stderr
-            status = ex.status
+    if process.stdout:
+        raise Exception(process.stdout)
 
-        if stdout:
-            raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+    pattern = re.compile(r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$')
 
-        if args.explain:
-            return SanitySuccess(self.name)
+    results = parse_to_list_of_dict(pattern, process.stderr.decode(encoding))
 
-        pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
+    for result in results:
+        print('%s:%s:%s: %s' % (result['path'], result['line'], 0, result['message']))
 
-        results = parse_to_list_of_dict(pattern, stderr)
 
-        results = [SanityMessage(
-            message=r['message'],
-            path=r['path'],
-            line=int(r['line']),
-            column=0,
-            level=r['level'],
-        ) for r in results]
+def parse_to_list_of_dict(pattern, value):
+    matched = []
+    unmatched = []
 
-        settings.process_errors(results, paths)
+    for line in value.splitlines():
+        match = re.search(pattern, line)
 
-        if results:
-            return SanityFailure(self.name, messages=results)
+        if match:
+            matched.append(match.groupdict())
+        else:
+            unmatched.append(line)
 
-        return SanitySuccess(self.name)
+    if unmatched:
+        raise Exception('Pattern "%s" did not match values:\n%s' % (pattern, '\n'.join(unmatched)))
+
+    return matched
+
+
+if __name__ == '__main__':
+    main()
