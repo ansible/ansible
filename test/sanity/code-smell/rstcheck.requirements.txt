@@ -1,1 +1,2 @@
 rstcheck
+sphinx  # required for full functionality
