@@ -144,33 +144,23 @@
 - name: assert result of install collection with dep on another server
   assert:
     that:
-    - '"''secondary.name'' obtained from server secondary" in install_cross_dep.stdout'
+    - >-
+      "'secondary.name:1.0.0' obtained from server secondary"
+      in install_cross_dep.stdout
     # pulp_v2 is highest in the list so it will find it there first
-    - '"''parent_dep.parent_collection'' obtained from server pulp_v2" in install_cross_dep.stdout'
-    - '"''child_dep.child_collection'' obtained from server pulp_v2" in install_cross_dep.stdout'
-    - '"''child_dep.child_dep2'' obtained from server pulp_v2" in install_cross_dep.stdout'
+    - >-
+      "'parent_dep.parent_collection:1.0.0' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - >-
+      "'child_dep.child_collection:0.9.9' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - >-
+      "'child_dep.child_dep2:1.2.2' obtained from server pulp_v2"
+      in install_cross_dep.stdout
     - (install_cross_dep_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_cross_dep_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_cross_dep_actual.results[2].content | b64decode | from_json).collection_info.version == '0.9.9'
     - (install_cross_dep_actual.results[3].content | b64decode | from_json).collection_info.version == '1.2.2'
-
-# fake.fake does not exist but we check the output to ensure it checked all 3
-# servers defined in the config. We hardcode to -vvv as that's what level the
-# message is shown
-- name: test install fallback on server list
-  command: ansible-galaxy collection install fake.fake -vvv
-  ignore_errors: yes
-  environment:
-    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
-  register: missing_fallback
-
-- name: assert test install fallback on server list
-  assert:
-    that:
-    - missing_fallback.rc == 1
-    - '"Collection ''fake.fake'' is not available from server pulp_v2" in missing_fallback.stdout'
-    - '"Collection ''fake.fake'' is not available from server pulp_v3" in missing_fallback.stdout'
-    - '"Collection ''fake.fake'' is not available from server galaxy_ng" in missing_fallback.stdout'
 
 - name: run ansible-galaxy collection download tests
   include_tasks: download.yml
@@ -189,3 +179,6 @@
     test_name: 'galaxy_ng'
     test_server: '{{ galaxy_ng_server }}'
     vX: "v3/"
+
+- name: run ansible-galaxy collection list tests
+  include_tasks: list.yml

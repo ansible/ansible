@@ -2,6 +2,7 @@ docutils
 jinja2
 packaging
 pyyaml  # ansible-core requirement
+resolvelib  # ansible-core requirement
 rstcheck
 setuptools > 39.2
 straight.plugin

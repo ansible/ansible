@@ -16,12 +16,18 @@
     file_type: file
   register: download_collection_actual
 
-- name: assert download collection with multiple dependencies
+- name: assert download collection with multiple dependencies --no-deps
   assert:
     that:
-    - '"Downloading collection ''parent_dep.parent_collection'' to" in download_collection.stdout'
-    - 'not "Downloading collection ''child_dep.child_collection'' to" in download_collection.stdout'
-    - 'not "Downloading collection ''child_dep.child_dep2'' to" in download_collection.stdout'
+    - >-
+      "Downloading collection 'parent_dep.parent_collection:1.0.0' to '/tmp/"
+      in download_collection.stdout
+    - >-
+      "Downloading collection 'child_dep.child_collection"
+      not in download_collection.stdout
+    - >-
+      "Downloading collection 'child_dep.child_dep2"
+      not in download_collection.stdout
     - download_collection_actual.examined == 2
     - download_collection_actual.matched == 2
     - (download_collection_actual.files[0].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
@@ -42,9 +48,9 @@
 - name: assert download collection with multiple dependencies
   assert:
     that:
-    - '"Downloading collection ''parent_dep.parent_collection'' to" in download_collection.stdout'
-    - '"Downloading collection ''child_dep.child_collection'' to" in download_collection.stdout'
-    - '"Downloading collection ''child_dep.child_dep2'' to" in download_collection.stdout'
+    - '"Downloading collection ''parent_dep.parent_collection:1.0.0'' to" in download_collection.stdout'
+    - '"Downloading collection ''child_dep.child_collection:0.9.9'' to" in download_collection.stdout'
+    - '"Downloading collection ''child_dep.child_dep2:1.2.2'' to" in download_collection.stdout'
     - download_collection_actual.examined == 4
     - download_collection_actual.matched == 4
     - (download_collection_actual.files[0].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
@@ -104,7 +110,7 @@
 - name: assert download collection with multiple dependencies
   assert:
     that:
-    - '"Downloading collection ''namespace1.name1'' to" in download_req_custom_path.stdout'
+    - '"Downloading collection ''namespace1.name1:1.1.0-beta.1'' to" in download_req_custom_path.stdout'
     - download_req_custom_path_actual.examined == 2
     - download_req_custom_path_actual.matched == 2
     - (download_req_custom_path_actual.files[0].path | basename) in ['requirements.yml', 'namespace1-name1-1.1.0-beta.1.tar.gz']
@@ -161,5 +167,5 @@
 
     - assert:
         that:
-        - '"Downloading collection ''ansible_test.my_collection'' to" in download_collection.stdout'
+        - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection.stdout'
         - download_collection_actual.stat.exists

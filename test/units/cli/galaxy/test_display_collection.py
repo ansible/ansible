@@ -8,14 +8,13 @@ __metaclass__ = type
 import pytest
 
 from ansible.cli.galaxy import _display_collection
+from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 
 @pytest.fixture
-def collection_object(mocker):
+def collection_object():
     def _cobj(fqcn='sandwiches.ham'):
-        cobj = mocker.MagicMock(latest_version='1.5.0')
-        cobj.__str__.return_value = fqcn
-        return cobj
+        return Requirement(fqcn, '1.5.0', None, 'galaxy')
     return _cobj
 
 

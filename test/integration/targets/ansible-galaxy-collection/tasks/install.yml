@@ -40,7 +40,7 @@
 - name: assert install existing without --force - {{ test_name }}
   assert:
     that:
-    - '"Skipping ''namespace1.name1'' as it is already installed" in install_existing_no_force.stdout'
+    - '"Nothing to do. All requested collections are already installed" in install_existing_no_force.stdout'
 
 - name: install existing with --force - {{ test_name }}
   command: ansible-galaxy collection install namespace1.name1 -s '{{ test_name }}' --force {{ galaxy_verbosity }}
@@ -129,7 +129,9 @@
 - name: expect failure with dep resolution failure
   command:  ansible-galaxy collection install fail_namespace.fail_collection -s {{ test_name }} {{ galaxy_verbosity }}
   register: fail_dep_mismatch
-  failed_when: '"Cannot meet dependency requirement ''fail_dep2.name:<0.0.5'' for collection fail_namespace.fail_collection" not in fail_dep_mismatch.stderr'
+  failed_when:
+  - '"Could not satisfy the following requirements" not in fail_dep_mismatch.stderr'
+  - '" fail_dep2.name:<0.0.5 (dependency of fail_namespace.fail_collection:2.1.2)" not in fail_dep_mismatch.stderr'
 
 - name: Find artifact url for namespace3.name
   uri:

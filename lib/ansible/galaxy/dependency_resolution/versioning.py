@@ -15,7 +15,10 @@ from ansible.utils.version import SemanticVersion
 def is_pre_release(version):
     # type: (str) -> bool
     """Figure out if a given version is a pre-release."""
-    return SemanticVersion(version).is_prerelease
+    try:
+        return SemanticVersion(version).is_prerelease
+    except ValueError:
+        return False
 
 
 def meets_requirements(version, requirements):

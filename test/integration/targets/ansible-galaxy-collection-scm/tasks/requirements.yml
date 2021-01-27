@@ -25,7 +25,13 @@
 - assert:
     that:
       - result.failed
-      - '"ERROR! Collections requirement entry should contain the key name." in result.stderr'
+      - >-
+        "ERROR! Neither the collection requirement entry key 'name',
+        nor 'source' point to a concrete resolvable collection artifact.
+        Also 'name' is not an FQCN. A valid collection name must be in
+        the format <namespace>.<collection>. Please make sure that the
+        namespace and the collection name  contain characters from
+        [a-zA-Z0-9_] only." in result.stderr
 
 - name: test source is not a git repo even if name is provided
   command: 'ansible-galaxy collection install -r source_and_name.yml'
@@ -37,7 +43,10 @@
 - assert:
     that:
       - result.failed
-      - '"ERROR! Unknown error when attempting to call Galaxy" in result.stderr'
+      - >-
+        result.stderr is search("ERROR! Collections requirement 'source'
+        entry should contain a valid Galaxy API URL but it does not:
+        git\+file:///.*/amazon.aws/.git is not an HTTP URL.")
 
 - name: test source is not a git repo even if name and type is provided
   command: 'ansible-galaxy collection install -r source_and_name_and_type.yml'
@@ -49,7 +58,12 @@
 - assert:
     that:
       - result.failed
-      - 'result.stderr is search("ERROR! - command /.*/git clone ansible.nope ansible.nope failed")'
+      - >-
+        result.stderr is search("ERROR! Failed to clone a Git repository
+        from `file:///.*/.git`.")
+      - >-
+        result.stderr is search("fatal: '/.*/amazon.aws/.git' does not
+        appear to be a git repository")
 
 - name: test using name as a git repo without git+ prefix
   command: 'ansible-galaxy collection install -r name_without_type.yml'

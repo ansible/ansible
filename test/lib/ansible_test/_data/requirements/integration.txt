@@ -4,3 +4,4 @@ junit-xml
 ordereddict ; python_version < '2.7'
 packaging
 pyyaml
+resolvelib
