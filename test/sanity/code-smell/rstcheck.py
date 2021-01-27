@@ -47,8 +47,13 @@ class RstcheckTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        ignore_file = os.path.join(SANITY_ROOT, 'rstcheck', 'ignore-substitutions.txt')
-        ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
+        ignore_substitutions = (
+            '_',
+            'br',
+            'release',
+            'today',
+            'version',
+        )
 
         settings = self.load_processor(args)
 
