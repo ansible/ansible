@@ -3,6 +3,11 @@
     url: https://getfedora.org/static/fedora.gpg
     dest: /tmp/fedora.gpg
 
+- name: Ensure clean slate
+  apt_key:
+    id: 49FD77499570FF31
+    state: absent
+
 - name: Run apt_key with both file and keyserver
   apt_key:
     file: /tmp/fedora.gpg
@@ -31,7 +36,7 @@
 
 - name: remove fedora.gpg
   apt_key:
-    id: 97A1AE57C3A2372CCA3A4ABA6C13026D12C944D0
+    id: 49FD77499570FF31
     state: absent
   register: remove_fedora
 
