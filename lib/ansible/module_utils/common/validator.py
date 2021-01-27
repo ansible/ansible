@@ -69,7 +69,7 @@ class Validator():
         self.validated_parameters, errors = validate_argument_types(self.argument_spec, self.module_parameters)
         self.error_messages.extend(errors)
 
-        self.error_messages.append([to_native(e) for e in result['errors']])
-        self.error_messages.append(validate_argument_values(self.arg_spec, self.module_params))
+        errors = validate_argument_values(self.argument_spec, self.module_parameters)
+        self.error_messages.extend(errors)
 
         return self.validated_parameters
