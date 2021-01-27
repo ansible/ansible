@@ -23,21 +23,23 @@ from ansible.module_utils.common.validation import (
 class Validator():
     """Argument spec validator class"""
 
-    def __init__(self, arg_spec, module_params):
+    def __init__(self):
         self._options_context = None
 
-        self.arg_spec = arg_spec
-        self.module_params = module_params
+        self.arg_spec = {}
+        self.module_params = {}
         self.error_messages = []
         self.validated_params = {}
 
-    def validate(self):
+    def validate(self, arg_spec, module_params):
         """Validate module parameters against argument spec.
 
         :Example:
 
-        validator = Validator(argument_spec, module parameters)
-        validated_params = validator.validate()
+        validator = Validator()
+        validator.validate()
+        validated_params = validator.validated_params
+        errors = validator.error_messages
 
         :param arg_spec: Specification of parameters, type, and valid values
         :type arg_spec: dict
@@ -51,6 +53,9 @@ class Validator():
         :raises TypeError: When validation fails.
         :raises ValueError: When parameter choices do not match spec choices
         """
+
+        self.arg_spec = arg_spec
+        self.module_params = module_params
 
         unsupported_parameters = get_unsupported_parameters(self.arg_spec, self.module_params)
         if unsupported_parameters:
