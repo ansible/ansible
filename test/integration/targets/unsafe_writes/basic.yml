@@ -38,7 +38,7 @@
                 - copy_without is failed
 
           - name: test overwriting file with unsafe
-            copy: content=NEW dest={{testufile}} unsafe_writes=True
+            copy: content=NEWNOREALLY dest={{testufile}} unsafe_writes=True
             register: copy_with
 
           - name: ensure we properly changed
@@ -52,7 +52,7 @@
               env_enabled: "{{lookup('env', 'ANSIBLE_UNSAFE_WRITES')|bool}}"
             block:
             - name: test overwriting file with unsafe depending on fallback environment setting
-              copy: content=NEW dest={{testufile}}
+              copy: content=NEWBUTNOTDIFFERENT dest={{testufile}}
               register: copy_with_env
               ignore_errors: True
 
