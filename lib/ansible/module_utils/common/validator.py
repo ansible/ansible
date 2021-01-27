@@ -26,26 +26,26 @@ class Validator():
     def __init__(self):
         self._options_context = None
 
-        self.arg_spec = {}
-        self.module_params = {}
+        self.argument_spec = {}
+        self.module_parameters = {}
         self.error_messages = []
-        self.validated_params = {}
+        self.validated_parameters = {}
 
-    def validate(self, arg_spec, module_params):
+    def validate(self, arg_spec, module_parameters):
         """Validate module parameters against argument spec.
 
         :Example:
 
         validator = Validator()
         validator.validate()
-        validated_params = validator.validated_params
+        validated_parameters = validator.validated_parameters
         errors = validator.error_messages
 
         :param arg_spec: Specification of parameters, type, and valid values
         :type arg_spec: dict
 
-        :param module_params: Parameters provided to the module
-        :type module_params: dict
+        :param module_parameters: Parameters provided to the module
+        :type module_parameters: dict
 
         :returns: Validated spec (is there some transformation done? aliases, etc.?)
         :rtype: list
@@ -54,15 +54,15 @@ class Validator():
         :raises ValueError: When parameter choices do not match spec choices
         """
 
-        self.arg_spec = arg_spec
-        self.module_params = module_params
+        self.argument_spec = arg_spec
+        self.module_parameters = module_parameters
 
-        unsupported_parameters = get_unsupported_parameters(self.arg_spec, self.module_params)
+        unsupported_parameters = get_unsupported_parameters(self.argument_spec, self.module_parameters)
         if unsupported_parameters:
             self.error_messages.append('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         try:
-            check_required_arguments(self.arg_spec, self.module_params)
+            check_required_arguments(self.argument_spec, self.module_parameters)
         except TypeError as e:
             self.error_messages.append(to_native(e))
 
@@ -71,4 +71,4 @@ class Validator():
         self.error_messages.append([to_native(e) for e in result['errors']])
         self.error_messages.append(validate_argument_values(self.arg_spec, self.module_params))
 
-        return self.validated_params
+        return self.validated_parameters
