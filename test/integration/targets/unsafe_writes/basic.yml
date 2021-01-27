@@ -60,8 +60,7 @@
               assert:
                 msg: "Failed with envvar: {{env_enabled}}, due AUW: to {{q('env', 'ANSIBLE_UNSAFE_WRITES')}}"
                 that:
-                  - env_enabled and copy_with_env is changed
-                  - not env_enabled and copy_with_env is failed
+                  - env_enabled and copy_with_env is changed or not env_enabled and copy_with_env is failed
       always:
       - name: remove immutable flag from dir to prevent issues with cleanup
         file: path={{testudir}} state=directory attributes="-i"
