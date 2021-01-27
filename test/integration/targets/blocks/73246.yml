@@ -1,0 +1,11 @@
+- hosts: host1
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - block:
+        - block:
+          - fail:
+      always:
+        - block:
+          - debug:
+              msg: "Always starts with a new block"
