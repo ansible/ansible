@@ -58,7 +58,23 @@ EXAMPLES = r'''
 # 2179
 '''
 
-RETURN = r'''#'''
+RETURN = r'''
+content:
+    description: Content of the file encoded in base64
+    returned: success
+    type: str
+    sample: ZXhhbXBsZSBjb250ZW50Cg==
+encoding:
+    description: Encoding used for the file content (by default base64)
+    returned: success
+    type: str
+    sample: base64
+source:
+    description: Path of the file retrieved as defined in the task
+    returned: success
+    type: str
+    sample: /srv/foo/bar
+'''
 
 import base64
 import os
