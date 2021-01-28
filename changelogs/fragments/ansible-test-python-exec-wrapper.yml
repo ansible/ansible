@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Symbolic links are no longer used to inject ``python`` into the environment, since they do not work reliably in all cases.
+                   Instead, the existing Python based exec wrapper is always used.
