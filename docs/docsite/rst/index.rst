@@ -1,11 +1,22 @@
-.. _ansible_core_documentation:
+.. _ansible_documentation:
 
-**************************
-Ansible Core Documentation
-**************************
+.. only:: ansible_pkg
 
-About `ansible-core`
-=====================
+   **********************
+   Ansible Documentation
+   **********************
+
+   About Ansible
+   ==============
+
+.. only:: coredocs
+
+   **************************
+   Ansible Core Documentation
+   **************************
+
+   About ansible-core
+   ===================
 
 Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates.
 
@@ -19,7 +30,14 @@ Ansible manages machines in an agent-less manner. There is never a question of h
 
 This documentation covers the version of Ansible noted in the upper left corner of this page. We maintain multiple versions of Ansible and of the documentation, so please be sure you are using the version of the documentation that covers the version of Ansible you're using. For recent features, we note the version of Ansible where the feature was added.
 
-Ansible releases a new major release of Ansible approximately three to four times per year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly.
+.. only:: ansible_pkg
+
+  Ansible releases a new major release of Ansible approximately three to four times per year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly.
+
+.. only:: coredocs
+
+    ``ansible-core`` releases a new major release approximately twice a year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly.
+
 
 .. toctree::
    :maxdepth: 2
@@ -30,21 +48,46 @@ Ansible releases a new major release of Ansible approximately three to four time
 
 .. toctree::
    :maxdepth: 2
-   :caption: Using `ansible-core`
+   :caption: Using Ansible
 
    user_guide/index
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contributing to `ansible-core`
+   :caption: Contributing to Ansible
 
    community/index
 
 .. toctree::
    :maxdepth: 2
-   :caption: Extending `ansible-core`
+   :caption: Extending Ansible
 
    dev_guide/index
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: Common Ansible Scenarios
+
+   scenario_guides/cloud_guides
+   scenario_guides/network_guides
+   scenario_guides/virt_guides
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Network Automation
+
+   network/getting_started/index
+   network/user_guide/index
+   network/dev_guide/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Ansible Galaxy
+
+   galaxy/user_guide.rst
+   galaxy/dev_guide.rst
+
 
 .. toctree::
    :maxdepth: 1
