@@ -40,11 +40,11 @@ options:
     accept_hostkey:
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
         version_added: "1.5"
         description:
             - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
               present as an ssh options.
+        type: bool
     ssh_opts:
         required: false
         default: None
@@ -84,7 +84,7 @@ options:
     force:
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
         version_added: "0.7"
         description:
             - If C(yes), any modified files in the working
@@ -101,15 +101,15 @@ options:
               ignored. Needs I(git>=1.9.1) to work correctly.
     clone:
         required: false
+        type: bool
         default: "yes"
-        choices: [ "yes", "no" ]
         version_added: "1.9"
         description:
             - If C(no), do not clone the repository if it does not exist locally
     update:
         required: false
         default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
         version_added: "1.2"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
@@ -123,7 +123,7 @@ options:
     bare:
         required: false
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
         version_added: "1.4"
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
@@ -139,7 +139,7 @@ options:
     recursive:
         required: false
         default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
         version_added: "1.6"
         description:
             - if C(no), repository will be cloned without the --recursive
@@ -148,7 +148,7 @@ options:
     track_submodules:
         required: false
         default: "no"
-        choices: ["yes", "no"]
+        type: bool
         version_added: "1.8"
         description:
             - if C(yes), submodules will track the latest commit on their
@@ -160,7 +160,7 @@ options:
     verify_commit:
         required: false
         default: "no"
-        choices: ["yes", "no"]
+        type: bool
         version_added: "2.0"
         description:
             - if C(yes), when cloning or checking out a C(version) verify the
