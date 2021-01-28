@@ -3,7 +3,8 @@
 
 # You can set these variables from the command line.
 SPHINXCONFDIR = rst
-SPHINXOPTS    = -j $(CPUS) -n -w rst_warnings -c "$(SPHINXCONFDIR)"
+DOCSET = coredocs
+SPHINXOPTS    = -j $(CPUS) -n -w rst_warnings -c "$(SPHINXCONFDIR)" -t "$(DOCSET)"
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = sdfsdf
 SOURCEDIR     = rst
