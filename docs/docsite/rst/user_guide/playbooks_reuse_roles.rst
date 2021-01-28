@@ -279,6 +279,7 @@ role ``meta/main.yml`` file. All fields are lower-case.
     :short_description:
 
         * A short, one-line description of the entry point.
+        * The ``short_description`` is displayed by ``ansible-doc -t role -l``.
 
     :description:
 
