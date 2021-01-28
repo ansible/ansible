@@ -108,7 +108,7 @@ from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
 )
 from ansible.galaxy.dependency_resolution.dataclasses import (
-    Candidate, Requirement, _is_installed_collection_dir
+    Candidate, Requirement, _is_installed_collection_dir,
 )
 from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyResolutionImpossible,
