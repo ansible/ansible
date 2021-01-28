@@ -656,6 +656,7 @@ class GalaxyCLI(CLI):
                 Requirement.from_requirement_dict(
                     self._init_coll_req_dict(collection_req),
                     artifacts_manager,
+                    user_defined=True,
                 )
                 for collection_req in file_requirements.get('collections') or []
             ]
@@ -799,7 +800,7 @@ class GalaxyCLI(CLI):
         else:
             requirements = {
                 'collections': [
-                    Requirement.from_string(coll_input, artifacts_manager)
+                    Requirement.from_string(coll_input, artifacts_manager, user_defined=True)
                     for coll_input in collections
                 ],
                 'roles': [],

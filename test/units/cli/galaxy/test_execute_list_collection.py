@@ -56,12 +56,14 @@ def mock_collection_objects(mocker):
             '1.5.0',
             None,
             'dir',
+            False,
         ),
         (
             'sandwiches.reuben',
             '2.5.0',
             None,
             'dir',
+            False,
         ),
     )
 
@@ -71,12 +73,14 @@ def mock_collection_objects(mocker):
             '1.0.0',
             None,
             'dir',
+            False,
         ),
         (
             'sandwiches.ham',
             '1.0.0',
             None,
             'dir',
+            False,
         ),
     )
 
@@ -96,12 +100,14 @@ def mock_from_path(mocker):
                     '1.5.0',
                     None,
                     'dir',
+                    False,
                 ),
                 (
                     'sandwiches.pbj',
                     '1.0.0',
                     None,
                     'dir',
+                    False,
                 ),
             ),
             'sandwiches.ham': (
@@ -110,6 +116,7 @@ def mock_from_path(mocker):
                     '1.0.0',
                     None,
                     'dir',
+                    False,
                 ),
             ),
         }

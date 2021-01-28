@@ -14,7 +14,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 @pytest.fixture
 def collection_object():
     def _cobj(fqcn='sandwiches.ham'):
-        return Requirement(fqcn, '1.5.0', None, 'galaxy')
+        return Requirement(fqcn, '1.5.0', None, 'galaxy', False)
     return _cobj
 
 

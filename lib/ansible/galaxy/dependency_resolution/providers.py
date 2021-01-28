@@ -173,7 +173,7 @@ class CollectionDependencyProvider(AbstractProvider):
             # FIXME: does using fqcn==None cause us problems here?
 
             return [
-                Candidate(fqcn, version, _none_src_server, first_req.type)
+                Candidate(fqcn, version, _none_src_server, first_req.type, first_req.user_defined)
                 for version, _none_src_server in coll_versions
             ]
 
@@ -185,7 +185,8 @@ class CollectionDependencyProvider(AbstractProvider):
         return list(preinstalled_candidates) + sorted(
             {
                 candidate for candidate in (
-                    Candidate(fqcn, version, src_server, 'galaxy')
+                    Candidate(fqcn, version, src_server, 'galaxy',
+                              first_req.user_defined if version == first_req.ver else False)
                     for version, src_server in coll_versions
                 )
                 if all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
@@ -214,9 +215,14 @@ class CollectionDependencyProvider(AbstractProvider):
         :returns: Indication whether the `candidate` is a viable \
                   solution to the `requirement`.
         """
-        # NOTE: Only allow pre-release candidates if we want pre-releases or
-        # the req ver was an exact match with the pre-release version.
-        allow_pre_release = self._with_pre_releases or not (
+        # NOTE: Only allow pre-release candidates if
+        #   we want pre-releases,
+        #   was explicit set by the user (cli/requirements),
+        #   is a concrete artifact (not from Galaxy), or
+        #   the req ver was an exact match with the pre-release version.
+        allow_pre_release = self._with_pre_releases or \
+            candidate.user_defined or \
+            candidate.is_concrete_artifact or not (
             requirement.ver == '*' or
             requirement.ver.startswith('<') or
             requirement.ver.startswith('>') or

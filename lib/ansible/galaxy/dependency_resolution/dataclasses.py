@@ -183,11 +183,11 @@ class _ComputedReqKindsMixin:
                 ' collection directory.',
             )
 
-        tmp_inst_req = cls(None, None, dir_path, 'dir')
+        tmp_inst_req = cls(None, None, dir_path, 'dir', False)
         req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
         req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
 
-        return cls(req_name, req_version, dir_path, 'dir')
+        return cls(req_name, req_version, dir_path, 'dir', False)
 
     @classmethod
     def from_dir_path_implicit(  # type: ignore[misc]
@@ -204,10 +204,10 @@ class _ComputedReqKindsMixin:
         u_dir_path = to_text(dir_path, errors='surrogate_or_strict')
         path_list = u_dir_path.split(os.path.sep)
         req_name = '.'.join(path_list[-2:])
-        return cls(req_name, '*', dir_path, 'dir')  # type: ignore[call-arg]
+        return cls(req_name, '*', dir_path, 'dir', False)  # type: ignore[call-arg]
 
     @classmethod
-    def from_string(cls, collection_input, artifacts_manager):
+    def from_string(cls, collection_input, artifacts_manager, user_defined=False):
         req = {}
         if _is_concrete_artifact_pointer(collection_input):
             # Arg is a file path or URL to a collection
@@ -217,10 +217,10 @@ class _ComputedReqKindsMixin:
             if not req['version']:
                 del req['version']
 
-        return cls.from_requirement_dict(req, artifacts_manager)
+        return cls.from_requirement_dict(req, artifacts_manager, user_defined=user_defined)
 
     @classmethod
-    def from_requirement_dict(cls, collection_req, art_mgr):
+    def from_requirement_dict(cls, collection_req, art_mgr, user_defined=False):
         req_name = collection_req.get('name', None)
         req_version = collection_req.get('version', '*')
         req_type = collection_req.get('type')
@@ -320,7 +320,7 @@ class _ComputedReqKindsMixin:
                 format(not_url=req_source.api_server),
             )
 
-        tmp_inst_req = cls(req_name, req_version, req_source, req_type)
+        tmp_inst_req = cls(req_name, req_version, req_source, req_type, user_defined)
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
@@ -331,6 +331,7 @@ class _ComputedReqKindsMixin:
         return cls(
             req_name, req_version,
             req_source, req_type,
+            user_defined,
         )
 
     def __repr__(self):
@@ -423,13 +424,13 @@ class _ComputedReqKindsMixin:
 
 class Requirement(
         _ComputedReqKindsMixin,
-        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type')),
+        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'user_defined')),
 ):
     """An abstract requirement request."""
 
 
 class Candidate(
         _ComputedReqKindsMixin,
-        namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type'))
+        namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'user_defined'))
 ):
     """A concrete collection candidate with its version resolved."""

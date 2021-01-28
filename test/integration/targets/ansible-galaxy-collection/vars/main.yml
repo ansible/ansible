@@ -123,3 +123,9 @@ collection_list:
   - namespace: cache
     name: cache
     version: 1.0.0
+
+  # Dep with beta version
+  - namespace: dep_with_beta
+    name: parent
+    dependencies:
+      namespace1.name1: '*'

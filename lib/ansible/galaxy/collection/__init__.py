@@ -422,7 +422,7 @@ def install_collections(
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
     existing_collections = {
-        Requirement(coll.fqcn, coll.ver, coll.src, coll.type)
+        Requirement(coll.fqcn, coll.ver, coll.src, coll.type, coll.user_defined)
         for coll in find_existing_collections(output_path, artifacts_manager)
     }
 
@@ -472,7 +472,7 @@ def install_collections(
         else existing_collections
     )
     preferred_collections = {
-        Candidate(coll.fqcn, coll.ver, coll.src, coll.type)
+        Candidate(coll.fqcn, coll.ver, coll.src, coll.type, coll.user_defined)
         for coll in preferred_requirements
     }
     with _display_progress("Process install dependency map"):
@@ -628,7 +628,7 @@ def verify_collections(
                     collection.fqcn,
                     collection.ver if collection.ver != '*'
                     else local_collection.ver,
-                    None, 'galaxy',
+                    None, 'galaxy', False,
                 )
 
                 # Download collection on a galaxy server for comparison

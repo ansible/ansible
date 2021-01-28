@@ -698,7 +698,7 @@ def test_dep_candidate_with_conflict(monkeypatch, tmp_path_factory, galaxy_serve
 
 def test_install_installed_collection(monkeypatch, tmp_path_factory, galaxy_server):
 
-    mock_installed_collections = MagicMock(return_value=[Candidate('namespace.collection', '1.2.3', None, 'dir')])
+    mock_installed_collections = MagicMock(return_value=[Candidate('namespace.collection', '1.2.3', None, 'dir', True)])
 
     monkeypatch.setattr(collection, 'find_existing_collections', mock_installed_collections)
 
@@ -736,7 +736,7 @@ def test_install_collection(collection_artifact, monkeypatch):
     collection_path = os.path.join(output_path, b'ansible_namespace', b'collection')
     os.makedirs(os.path.join(collection_path, b'delete_me'))  # Create a folder to verify the install cleans out the dir
 
-    candidate = Candidate('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file')
+    candidate = Candidate('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', True)
     collection.install(candidate, to_text(output_path), concrete_artifact_cm)
 
     # Ensure the temp directory is empty, nothing is left behind
@@ -775,7 +775,7 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
     mock_download.return_value = collection_tar
     monkeypatch.setattr(concrete_artifact_cm, 'get_galaxy_artifact_path', mock_download)
 
-    req = Requirement('ansible_namespace.collection', '0.1.0', 'https://downloadme.com', 'galaxy')
+    req = Requirement('ansible_namespace.collection', '0.1.0', 'https://downloadme.com', 'galaxy', True)
     collection.install(req, to_text(collections_dir), concrete_artifact_cm)
 
     actual_files = os.listdir(collection_path)
@@ -803,7 +803,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
 
-    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file')]
+    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', True)]
     collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, concrete_artifact_cm)
 
     assert os.path.isdir(collection_path)
@@ -839,7 +839,7 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     assert os.path.isdir(collection_path)
 
-    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file')]
+    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', True)]
     collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, concrete_artifact_cm)
 
     assert os.path.isdir(collection_path)
@@ -871,7 +871,7 @@ def test_install_missing_metadata_warning(collection_artifact, monkeypatch):
             os.unlink(b_path)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
-    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file')]
+    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', True)]
     collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, concrete_artifact_cm)
 
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
@@ -892,7 +892,7 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     monkeypatch.setattr(Display, 'display', mock_display)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
-    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file')]
+    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', True)]
     collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, concrete_artifact_cm)
 
     assert os.path.isdir(collection_path)
