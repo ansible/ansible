@@ -223,11 +223,11 @@ class CollectionDependencyProvider(AbstractProvider):
         allow_pre_release = self._with_pre_releases or \
             candidate.user_defined or \
             candidate.is_concrete_artifact or not (
-            requirement.ver == '*' or
-            requirement.ver.startswith('<') or
-            requirement.ver.startswith('>') or
-            requirement.ver.startswith('!=')
-        )
+                requirement.ver == '*' or
+                requirement.ver.startswith('<') or
+                requirement.ver.startswith('>') or
+                requirement.ver.startswith('!=')
+            )
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 
