@@ -42,7 +42,14 @@ def main():
         return
 
     cmd = [sys.executable, '-m', 'antsibull_changelog', 'lint'] + paths_to_check
-    subprocess.call(cmd)  # ignore the return code, rely on the output instead
+
+    # The sphinx module is a soft dependency for rstcheck, which is used by the changelog linter.
+    # If sphinx is found it will be loaded by rstcheck, which can affect the results of the test.
+    # To maintain consistency across environments, loading of sphinx is blocked, since any version (or no version) of sphinx may be present.
+    env = os.environ.copy()
+    env.update(PYTHONPATH='%s:%s' % (os.path.join(os.path.dirname(__file__), 'changelog'), env['PYTHONPATH']))
+
+    subprocess.call(cmd, env=env)  # ignore the return code, rely on the output instead
 
 
 if __name__ == '__main__':
