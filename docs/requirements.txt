@@ -1,0 +1,4 @@
+# Additional requirements for building documentation
+docutils
+packaging
+straight.plugin
