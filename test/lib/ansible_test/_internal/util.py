@@ -386,6 +386,14 @@ def common_environment():
         'CFLAGS',
     )
 
+    # FreeBSD Compatibility
+    # This is required to include libyaml support in PyYAML.
+    # The header /usr/local/include/yaml.h isn't in the default include path for the compiler.
+    # It is included here so that tests can take advantage of it, rather than only ansible-test during managed pip installs.
+    # If CFLAGS has been set in the environment that value will take precedence due to being an optional var when calling pass_vars.
+    if os.path.exists('/etc/freebsd-update.conf'):
+        env.update(CFLAGS='-I/usr/local/include/')
+
     env.update(pass_vars(required=required, optional=optional))
 
     return env

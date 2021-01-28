@@ -269,7 +269,7 @@ class ManagePosixCI:
         :type python_version: str
         """
         self.upload(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'remote.sh'), '/tmp')
-        self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
+        self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s %s' % (self.core_ci.platform, self.core_ci.version, python_version))
 
     def upload_source(self):
         """Upload and extract source."""
