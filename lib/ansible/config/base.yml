@@ -1612,6 +1612,8 @@ INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
   - /usr/bin/python
+  - python3.9
+  - python3.8
   - python3.7
   - python3.6
   - python3.5
