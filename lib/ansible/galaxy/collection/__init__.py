@@ -606,6 +606,7 @@ def verify_collections(
                 # NOTE: Verify local collection exists before
                 # NOTE: downloading its source artifact from
                 # NOTE: a galaxy server.
+                artifact = True
                 for search_path in search_paths:
                     b_search_path = to_bytes(
                         os.path.join(
@@ -616,12 +617,20 @@ def verify_collections(
                     )
                     if not os.path.isdir(b_search_path):
                         continue
+                    if not os.path.isfile(os.path.join(b_search_path, b'MANIFEST.json')):
+                        artifact = False
+                        continue
 
                     local_collection = Candidate.from_dir_path(
                         b_search_path, artifacts_manager,
                     )
                     break
                 else:
+                    if not artifact:
+                        raise AnsibleError(
+                            message="Collection %s does not have a MANIFEST.json. " % collection.fqcn +
+                            "A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy."
+                        )
                     raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection.fqcn)
 
                 remote_collection = Candidate(
