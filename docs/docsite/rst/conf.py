@@ -90,7 +90,10 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-exclude_patterns = ['galaxy', 'network', 'scenario_guides', 'ansible_index.rst']
+exclude_patterns = [
+    'scenario_guides/network_guides.rst',
+    'scenario_guides/virt_guides.rst'
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

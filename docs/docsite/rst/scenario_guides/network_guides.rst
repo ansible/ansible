@@ -1,16 +1,18 @@
 .. _network_guides:
 
-*************************
-Network Technology Guides
-*************************
+.. only:: ansible_pkg
 
-The guides in this section cover using Ansible with specific network technologies. They explore particular use cases in greater depth and provide a more "top-down" explanation of some basic features.
+   *************************
+   Network Technology Guides
+   *************************
 
-.. toctree::
-   :maxdepth: 1
+   The guides in this section cover using Ansible with specific network technologies. They explore particular use cases in greater depth and provide a more "top-down" explanation of some basic features.
 
-   guide_aci
-   guide_meraki
-   guide_infoblox
+   .. toctree::
+      :maxdepth: 1
 
-To learn more about Network Automation with Ansible, see :ref:`network_getting_started` and :ref:`network_advanced`.
+      guide_aci
+      guide_meraki
+      guide_infoblox
+
+   To learn more about Network Automation with Ansible, see :ref:`network_getting_started` and :ref:`network_advanced`.

@@ -61,7 +61,7 @@ templates_path = ['.templates']
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'ansible_index'
+master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible'
@@ -90,7 +90,7 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-exclude_patterns = ['index.rst']
+exclude_patterns = ['']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
