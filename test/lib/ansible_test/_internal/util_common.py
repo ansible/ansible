@@ -252,18 +252,17 @@ def get_python_path(args, interpreter):
     python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
     injected_interpreter = os.path.join(python_path, 'python')
 
-    # A symlink is faster than the execv wrapper, but isn't compatible with virtual environments.
-    # Attempt to detect when it is safe to use a symlink by checking the real path of the interpreter.
-    use_symlink = os.path.dirname(os.path.realpath(interpreter)) == os.path.dirname(interpreter)
+    # A symlink is faster than the execv wrapper, but isn't guaranteed to provide the correct result.
+    # There are several scenarios known not to work with symlinks:
+    #
+    # - A virtual environment where the target is a symlink to another directory.
+    # - A pyenv environment where the target is a shell script that changes behavior based on the program name.
+    #
+    # To avoid issues for these and other scenarios, only an exec wrapper is used.
 
-    if use_symlink:
-        display.info('Injecting "%s" as a symlink to the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
+    display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
 
-        os.symlink(interpreter, injected_interpreter)
-    else:
-        display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
-
-        create_interpreter_wrapper(interpreter, injected_interpreter)
+    create_interpreter_wrapper(interpreter, injected_interpreter)
 
     os.chmod(python_path, MODE_DIRECTORY)
 
