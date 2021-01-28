@@ -1,0 +1,3 @@
+bugfixes:
+  - git module no longer uses wrapper script for ssh options.
+  - git module is more consistent and clearer about which ssh options are added to git calls.
