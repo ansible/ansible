@@ -628,8 +628,9 @@ def verify_collections(
                 else:
                     if not artifact:
                         raise AnsibleError(
-                            message="Collection %s does not have a MANIFEST.json. " % collection.fqcn +
-                            "A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy."
+                            message="Collection %s does not have a MANIFEST.json. "
+                            "A MANIFEST.json is expected if the collection has been built "
+                            "and installed via ansible-galaxy" % collection.fqcn
                         )
                     raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection.fqcn)
 
