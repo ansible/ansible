@@ -26,8 +26,6 @@ class Validator():
     def __init__(self):
         self._options_context = None
 
-        self.argument_spec = {}
-        self.module_parameters = {}
         self.error_messages = []
         self.validated_parameters = {}
 
@@ -51,22 +49,19 @@ class Validator():
         :raises ValueError: When parameter choices do not match spec choices
         """
 
-        self.argument_spec = arg_spec
-        self.module_parameters = module_parameters
-
-        unsupported_parameters = get_unsupported_parameters(self.argument_spec, self.module_parameters)
+        unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
         if unsupported_parameters:
             self.error_messages.append('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         try:
-            check_required_arguments(self.argument_spec, self.module_parameters)
+            check_required_arguments(argument_spec, parameters)
         except TypeError as e:
             self.error_messages.append(to_native(e))
 
-        self.validated_parameters, errors = validate_argument_types(self.argument_spec, self.module_parameters)
+        self.validated_parameters, errors = validate_argument_types(argument_spec, parameters)
         self.error_messages.extend(errors)
 
-        errors = validate_argument_values(self.argument_spec, self.module_parameters)
+        errors = validate_argument_values(argument_spec, parameters)
         self.error_messages.extend(errors)
 
         return self.validated_parameters
