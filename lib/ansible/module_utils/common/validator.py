@@ -62,11 +62,8 @@ class Validator():
         :param parameters: Parameters provided to the role
         :type parameters: dict
 
-        :returns: Validated spec (is there some transformation done? aliases, etc.?)
-        :rtype: list
-
-        :raises TypeError: When validation fails.
-        :raises ValueError: When parameter choices do not match spec choices
+        :returns: True if no errors were encountered, False if any errors were encountered.
+        :rtype: bool
         """
 
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
