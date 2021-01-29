@@ -535,5 +535,5 @@ class Display(with_metaclass(Singleton, object)):
             tty_size = unpack('HHHH', fcntl.ioctl(1, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
             # Avoid wrapping in absence of a tty
-            tty_size = sys.maxsize
+            tty_size = float('inf')
         self.columns = max(79, tty_size - 1)
