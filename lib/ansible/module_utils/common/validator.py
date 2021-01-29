@@ -36,10 +36,7 @@ class Validator():
 
         :Example:
 
-        validator = Validator()
-        validator.validate()
-        validated_parameters = validator.validated_parameters
-        errors = validator.error_messages
+        [good example goes here]
 
         :param arg_spec: Specification of parameters, type, and valid values
         :type arg_spec: dict
