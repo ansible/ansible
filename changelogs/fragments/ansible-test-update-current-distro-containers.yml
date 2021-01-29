@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Containers used with the ``--remote`` option have been updated to version 1.29.0 to include the latest Ansible requirements.
