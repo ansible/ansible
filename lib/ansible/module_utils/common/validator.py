@@ -29,18 +29,18 @@ class Validator():
         self.error_messages = []
         self.validated_parameters = {}
 
-    def validate(self, arg_spec, module_parameters):
+    def validate_role(self, argument_spec, parameters):
         """Validate module parameters against argument spec.
 
         :Example:
 
         [good example goes here]
 
-        :param arg_spec: Specification of parameters, type, and valid values
-        :type arg_spec: dict
+        :param argument_spec: Specification of parameters, type, and valid values
+        :type argument_spec: dict
 
-        :param module_parameters: Parameters provided to the module
-        :type module_parameters: dict
+        :param parameters: Parameters provided to the role
+        :type parameters: dict
 
         :returns: Validated spec (is there some transformation done? aliases, etc.?)
         :rtype: list
@@ -65,3 +65,8 @@ class Validator():
         self.error_messages.extend(errors)
 
         return self.validated_parameters
+
+
+    def validate_module(self, arg_spec, parameters):
+        """Future method that can be used to module arg spec validation"""
+        pass
