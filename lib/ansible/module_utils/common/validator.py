@@ -6,6 +6,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+from ansible.module_utils.common._collections_compat import (
+    Sequence,
+)
+
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
     validate_argument_types,  # Rename this because it actually does coercion?
@@ -13,11 +17,11 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
-
-
 from ansible.module_utils.common.validation import (
     check_required_arguments,
 )
+
+from ansible.module_utils.six import string_types
 
 
 class Validator():
@@ -26,8 +30,24 @@ class Validator():
     def __init__(self):
         self._options_context = None
 
-        self.error_messages = []
-        self.validated_parameters = {}
+        self._error_messages = []
+        self._validated_parameters = {}
+
+    @property
+    def error_messages(self):
+        return self._error_messages
+
+    @property
+    def validated_parameters(self):
+        return self._validated_parameters
+
+    def add_error(self, error):
+        if isinstance(error, string_types):
+            self._error_messages.append(error)
+        elif isinstance(error, Sequence):
+            self._error_messages.extend(error)
+        else:
+            raise ValueError('Error messages must be a string or sequence not a %s' % type(error))
 
     def validate_role(self, argument_spec, parameters):
         """Validate module parameters against argument spec.
@@ -51,20 +71,18 @@ class Validator():
 
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
         if unsupported_parameters:
-            self.error_messages.append('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
+            self.add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         try:
             check_required_arguments(argument_spec, parameters)
         except TypeError as e:
-            self.error_messages.append(to_native(e))
+            self.add_error(to_native(e))
 
-        self.validated_parameters, errors = validate_argument_types(argument_spec, parameters)
-        self.error_messages.extend(errors)
+        self._validated_parameters, errors = validate_argument_types(argument_spec, parameters)
+        self.add_error(errors)
 
         errors = validate_argument_values(argument_spec, parameters)
-        self.error_messages.extend(errors)
-
-        return self.validated_parameters
+        self.add_error(errors)
 
 
     def validate_module(self, arg_spec, parameters):
