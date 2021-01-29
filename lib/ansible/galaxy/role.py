@@ -334,7 +334,11 @@ class GalaxyRole(object):
                                 n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
                                 n_final_parts = []
                                 for n_part in n_parts:
-                                    if n_part != '..' and '~' not in n_part and '$' not in n_part:
+                                    # TODO if the condition triggers it produces a broken installation.
+                                    # It will create the parent directory as an empty file and will
+                                    # explode if the directory contains valid files.
+                                    # Leaving this as is since the whole module needs a rewrite.
+                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
                                         n_final_parts.append(n_part)
                                 member.name = os.path.join(*n_final_parts)
                                 role_tar_file.extract(member, to_native(self.path))
