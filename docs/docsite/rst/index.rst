@@ -23,7 +23,7 @@ This documentation covers the version of Ansible noted in the upper left corner 
 ``ansible-core`` releases a new major release approximately twice a year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly.
 
 
-.
+
 .. toctree::
    :maxdepth: 2
    :caption: Installation, Upgrade & Configuration
