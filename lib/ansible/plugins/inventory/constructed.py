@@ -120,7 +120,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         gvars = get_group_vars(host.get_groups())
 
         if self.get_option('use_vars_plugins'):
-            gvars = combine_vars(gvars, get_vars_from_inventory_sources(loader, inventory._sources, host.get_groups(), 'inventory')
+            gvars = combine_vars(gvars, get_vars_from_inventory_sources(loader, inventory._sources, host.get_groups(), 'inventory'))
 
         return gvars
 
@@ -129,7 +129,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         hvars = host.get_vars()
 
         if self.get_option('use_vars_plugins'):
-            hvars = combine_vars(hvars, get_vars_from_inventory_sources(loader, inventory._sources, [host], 'inventory')
+            hvars = combine_vars(hvars, get_vars_from_inventory_sources(loader, inventory._sources, [host], 'inventory'))
 
         return hvars
 
