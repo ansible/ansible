@@ -22,7 +22,9 @@
                   "argument some_bytes is of type <class 'bytes'> and we were unable to convert to bytes: <class 'bytes'> cannot be converted to a Byte value",
                   "argument some_bits is of type <class 'str'> and we were unable to convert to bits: <class 'str'> cannot be converted to a Bit value",
                   "value of test1_choices must be one of: this paddle game, the astray, this remote control, the chair, got: My dog",
-                  "value of secret_choices must be one of: secret_ballot_choice1, secret_ballot_choice2, got: ********"
+                  "value of secret_choices must be one of: secret_ballot_choice1, secret_ballot_choice2, got: ********",
+
+                  "argument some_second_level is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.  ",
                   ]
 
   tasks:
@@ -72,6 +74,8 @@
                 # some_str_nicknames: []
                 # some_str_akas: {}
                 some_str_removed_in: "foo"
+                some_dict_options:
+                  some_second_level: "not-a-bool"
 
             - fail:
                 msg: "Should not get here"
@@ -99,6 +103,7 @@
                                       map('replace', bytes_class_match, 'STR')|
                                       map('replace', float_class_match, 'FLOAT')|
                                       map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
+                                      map('regex_replace', 'Valid booleans include.*$', '')|
                                       list }}"
                   expected_generic: "{{ expected.test1_1.argument_errors|
                                         map('replace', unicode_type_match, 'STR')|
@@ -109,6 +114,7 @@
                                         map('replace', bytes_class_match, 'STR')|
                                         map('replace', float_class_match, 'FLOAT')|
                                         map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
+                                        map('regex_replace', 'Valid booleans include.*$', '')|
                                         list }}"
 
             - name: figure out the difference between expected and actual validate_argument_spec failures
