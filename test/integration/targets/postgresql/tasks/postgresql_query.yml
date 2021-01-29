@@ -468,3 +468,34 @@
     name: test_array_table
     state: absent
   when: postgres_version_resp.stdout is version('9.4', '>=')
+
+#############################################################################
+# Issue https://github.com/ansible-collections/community.postgresql/issues/45
+- name: Create table containing a decimal value
+  become_user: '{{ pg_user }}'
+  become: true
+  postgresql_query:
+    login_user: '{{ pg_user }}'
+    db: postgres
+    query: CREATE TABLE blabla (id int, num decimal)
+
+- name: Insert data
+  become_user: '{{ pg_user }}'
+  become: true
+  postgresql_query:
+    login_user: '{{ pg_user }}'
+    db: postgres
+    query: INSERT INTO blabla (id, num) VALUES (1, 1::decimal)
+
+- name: Get data
+  become_user: '{{ pg_user }}'
+  become: true
+  postgresql_query:
+    login_user: '{{ pg_user }}'
+    db: postgres
+    query: SELECT * FROM blabla
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
