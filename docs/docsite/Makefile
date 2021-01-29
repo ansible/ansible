@@ -50,19 +50,21 @@ all: docs
 
 docs: htmldocs
 
+coredocs: core_htmldocs
+
 generate_rst: collections_meta config cli keywords plugins testing
-base_generate_rst: collections_meta config cli keywords base_plugins testing
+core_generate_rst: collections_meta config cli keywords base_plugins testing
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SPHINXCONFDIR=ansible_pkg_rst DOCSET=ansible_pkg
 
-base_htmldocs: base_generate_rst
+core_htmldocs: core_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 singlehtmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SPHINXCONFDIR=ansible_pkg_rst
 
-base_singlehtmldocs: base_generate_rst
+core_singlehtmldocs: core_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 linkcheckdocs: generate_rst
