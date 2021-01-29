@@ -41,60 +41,33 @@ This documentation covers the version of Ansible noted in the upper left corner 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Installation, Upgrade & Configuration
 
    installation_guide/index
    porting_guides/porting_guides
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Using Ansible
-
    user_guide/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contributing to Ansible
 
    community/index
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Extending Ansible
-
    dev_guide/index
 
+   scenario_guides/index
+
+   network/index
+
+   galaxy/index
+
 .. toctree::
-   :glob:
    :maxdepth: 1
-   :caption: Common Ansible Scenarios
+   :caption: Collections
 
-   scenario_guides/cloud_guides
-   scenario_guides/network_guides
-   scenario_guides/virt_guides
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Network Automation
-
-   network/getting_started/index
-   network/user_guide/index
-   network/dev_guide/index
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Ansible Galaxy
-
-   galaxy/user_guide.rst
-   galaxy/dev_guide.rst
-
-
+   collections/index
+   collections/all_plugins
+   
 .. toctree::
    :maxdepth: 1
    :caption: Reference & Appendices
 
-   collections/index
-   collections/all_plugins
    reference_appendices/playbooks_keywords
    reference_appendices/common_return_values
    reference_appendices/config
@@ -112,11 +85,6 @@ This documentation covers the version of Ansible noted in the upper left corner 
    reference_appendices/tower
    reference_appendices/automationhub
    reference_appendices/logging
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Release Notes
 
 .. toctree::
    :maxdepth: 2
