@@ -84,6 +84,10 @@ class Validator():
         errors = validate_argument_values(argument_spec, parameters)
         self.add_error(errors)
 
+        if self.error_messages:
+            return False
+        else:
+            return True
 
     def validate_module(self, arg_spec, parameters):
         """Future method that can be used to module arg spec validation"""
