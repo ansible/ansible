@@ -92,7 +92,7 @@ stages:
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.3 py36
-              test: rhel/8.3
+              test: rhel/8.3@3.6
             - name: RHEL 8.3 py38
               test: rhel/8.3@3.8
             - name: FreeBSD 11.4
@@ -173,7 +173,7 @@ stages:
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.3 py36
-              test: rhel/8.3
+              test: rhel/8.3@3.6
             - name: RHEL 8.3 py38
               test: rhel/8.3@3.8
             - name: FreeBSD 11.4
