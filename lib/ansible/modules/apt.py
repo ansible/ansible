@@ -351,6 +351,8 @@ CLEAN_OP_CHANGED_STR = dict(
     autoclean='Del ',
 )
 
+# init module names to keep pylint happy
+apt = apt_pkg = None
 
 def do_apt_imports():
     global apt, apt_pkg

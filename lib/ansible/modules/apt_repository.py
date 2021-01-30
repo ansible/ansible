@@ -145,6 +145,9 @@ from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
 
+# init module names to keep pylint happy
+apt = apt_pkg = aptsources_distro = distro = None
+
 
 def do_apt_imports():
     global apt, apt_pkg, aptsources_distro, distro

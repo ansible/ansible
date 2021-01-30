@@ -334,6 +334,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
+# init the module name to keep pylint happy
+dnf = None
+
 
 def _do_dnf_imports():
     global dnf
