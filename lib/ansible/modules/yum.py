@@ -393,10 +393,6 @@ try:
 except ImportError:
     HAS_YUM_PYTHON = False
 
-if (not HAS_RPM_PYTHON or not HAS_YUM_PYTHON) and sys.executable != '/usr/bin/python' and not has_respawned():
-    respawn_module('/usr/bin/python')
-    # end of the line for this process; we'll exit here once the respawned module has completed
-
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
     from rpmUtils.miscutils import splitFilename, compareEVR
@@ -1604,6 +1600,10 @@ class YumModule(YumDnf):
         actually execute the module code backend
         """
 
+        if (not HAS_RPM_PYTHON or not HAS_YUM_PYTHON) and sys.executable != '/usr/bin/python' and not has_respawned():
+            respawn_module('/usr/bin/python')
+            # end of the line for this process; we'll exit here once the respawned module has completed
+
         error_msgs = []
         if not HAS_RPM_PYTHON:
             error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
@@ -1722,7 +1722,6 @@ def main():
 
     module_implementation = YumModule(module)
     module_implementation.run()
-
 
 if __name__ == '__main__':
     main()
