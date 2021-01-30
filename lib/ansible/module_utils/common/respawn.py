@@ -40,7 +40,7 @@ def respawn_module(interpreter_path):
     os.write(stdin_write, to_bytes(payload))
     os.close(stdin_write)
     rc = subprocess.call([interpreter_path, '--'], stdin=stdin_read)
-    sys.exit(rc)
+    sys.exit(rc)  # pylint: disable=ansible-bad-function
 
 
 def _create_payload():
