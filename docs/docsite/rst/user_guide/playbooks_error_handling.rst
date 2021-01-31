@@ -1,7 +1,7 @@
 .. _playbooks_error_handling:
 
 ***************************
-Error handling or Exception handling in playbooks
+Error handling/Exception handling in playbooks
 ***************************
 
 When Ansible receives a non-zero return code from a command or a failure from a module, by default it stops executing on that host and continues on other hosts. However, in some circumstances you may want different behavior. Sometimes a non-zero return code indicates success. Sometimes you want a failure on one host to stop execution on all hosts. Ansible provides tools and settings to handle these situations and help you get the behavior, output, and reporting you want.
