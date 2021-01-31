@@ -20,7 +20,7 @@ By default Ansible stops executing tasks on a host when a task fails on that hos
       ansible.builtin.command: /bin/false
       ignore_errors: yes
 
-The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, execution issues (for example, missing packages), or syntax errors. But it's not a good practice to always handle the exceptions using "ignore_errors", because the task might fail due to poor internet connection and your other task may depend on this task.
+The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, execution issues (for example, missing packages), or syntax errors. But it is not a good practice to always handle errors using ``ignore_errors``, because the task might fail due to poor internet connection and your other tasks might depend on this task.
 
 Ignoring unreachable host errors
 ================================
