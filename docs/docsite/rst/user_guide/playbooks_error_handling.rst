@@ -1,7 +1,7 @@
 .. _playbooks_error_handling:
 
 ***************************
-Error handling in playbooks
+Error handling or Exception handling in playbooks
 ***************************
 
 When Ansible receives a non-zero return code from a command or a failure from a module, by default it stops executing on that host and continues on other hosts. However, in some circumstances you may want different behavior. Sometimes a non-zero return code indicates success. Sometimes you want a failure on one host to stop execution on all hosts. Ansible provides tools and settings to handle these situations and help you get the behavior, output, and reporting you want.
@@ -20,7 +20,7 @@ By default Ansible stops executing tasks on a host when a task fails on that hos
       ansible.builtin.command: /bin/false
       ignore_errors: yes
 
-The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, connection failures, execution issues (for example, missing packages), or syntax errors.
+The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, execution issues (for example, missing packages), or syntax errors. But it's not a good practice to always handle the exceptions using "ignore_errors", because the task might fail due to poor internet connection and your other task may depend on this task.
 
 Ignoring unreachable host errors
 ================================
