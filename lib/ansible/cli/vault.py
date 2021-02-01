@@ -96,17 +96,20 @@ class VaultCLI(CLI):
         enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id])
         enc_str_parser.set_defaults(func=self.execute_encrypt_string)
         enc_str_parser.add_argument('args', help='String to encrypt', metavar='string_to_encrypt', nargs='*')
-        enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
-                                    action='store_true',
-                                    help="Prompt for the string to encrypt")
+
         enc_str_parser.add_argument('--show-input', dest='show_string_input', default=False, action='store_true',
                                     help='Do not hide input when prompted for the string to encrypt')
         enc_str_parser.add_argument('-n', '--name', dest='encrypt_string_names',
                                     action='append',
                                     help="Specify the variable name")
-        enc_str_parser.add_argument('--stdin-name', dest='encrypt_string_stdin_name',
-                                    default=None,
-                                    help="Specify the variable name for stdin")
+
+        enc_str_parser_exclusive = enc_str_parser.add_mutually_exclusive_group()
+        enc_str_parser_exclusive.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
+                                              action='store_true',
+                                              help="Prompt for the string to encrypt")
+        enc_str_parser_exclusive.add_argument('--stdin-name', dest='encrypt_string_stdin_name',
+                                              default=None,
+                                              help="Specify the variable name for stdin")
 
         rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[common, vault_id])
         rekey_parser.set_defaults(func=self.execute_rekey)
@@ -131,10 +134,9 @@ class VaultCLI(CLI):
             raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
         if options.action == 'encrypt_string':
-            if '-' in options.args or (not options.args and not options.encrypt_string_prompt) or options.encrypt_string_stdin_name:
+            if '-' in options.args or options.encrypt_string_stdin_name:
                 self.encrypt_string_read_stdin = True
 
-            # TODO: prompting from stdin and reading from stdin seem mutually exclusive, but verify that.
             if options.encrypt_string_prompt and self.encrypt_string_read_stdin:
                 raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
 
