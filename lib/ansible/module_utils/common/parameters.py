@@ -341,15 +341,15 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
 
     validated_params = {}
     errors = []
-    for k, v in argument_spec.items():
-        if k not in module_parameters:
+    for param, spec in argument_spec.items():
+        if param not in module_parameters:
             continue
 
-        value = module_parameters[k]
+        value = module_parameters[param]
         if value is None:
             continue
 
-        wanted_type = v.get('type')
+        wanted_type = spec.get('type')
         type_checker, wanted_name = get_type_validator(wanted_type)
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
@@ -362,20 +362,20 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
                 kwargs['prefix'] = prefix
 
         try:
-            validated_params[k] = type_checker(value, **kwargs)
-            wanted_elements = v.get('elements', None)
+            validated_params[param] = type_checker(value, **kwargs)
+            wanted_elements = spec.get('elements', None)
             if wanted_elements:
-                parameter = module_parameters[k]
+                parameter = module_parameters[param]
                 if wanted_type != 'list' or not isinstance(parameter, list):
                     msg = "Invalid type %s for option '%s'" % (wanted_name, parameter)
                     if options_context:
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
                     errors.append(msg)
-                validated_params[k], _errors = handle_elements(wanted_elements, k, parameter, options_context)
+                validated_params[param], _errors = handle_elements(wanted_elements, param, parameter, options_context)
                 errors.extend(_errors)
         except (TypeError, ValueError) as e:
-            msg = "argument %s is of type %s" % (k, type(value))
+            msg = "argument %s is of type %s" % (param, type(value))
             if options_context:
                 msg += " found in '%s'." % " -> ".join(options_context)
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
@@ -389,48 +389,48 @@ def validate_argument_values(argument_spec, module_parameters, options_context=N
 
     errors = []
 
-    for k, v in argument_spec.items():
-        choices = v.get('choices')
+    for param, spec in argument_spec.items():
+        choices = spec.get('choices')
         if choices is None:
             continue
 
         if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
-            if k in module_parameters:
+            if param in module_parameters:
                 # Allow one or more when type='list' param with choices
-                if isinstance(module_parameters[k], list):
-                    diff_list = ", ".join([item for item in module_parameters[k] if item not in choices])
+                if isinstance(module_parameters[param], list):
+                    diff_list = ", ".join([item for item in module_parameters[param] if item not in choices])
                     if diff_list:
                         choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
                         if options_context:
                             msg += " found in %s" % " -> ".join(options_context)
                         errors.append(msg)
-                elif module_parameters[k] not in choices:
+                elif module_parameters[param] not in choices:
                     # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
                     # the value. If we can't figure this out, module author is responsible.
                     lowered_choices = None
-                    if module_parameters[k] == 'False':
+                    if module_parameters[param] == 'False':
                         lowered_choices = lenient_lowercase(choices)
                         overlap = BOOLEANS_FALSE.intersection(choices)
                         if len(overlap) == 1:
                             # Extract from a set
-                            (module_parameters[k],) = overlap
+                            (module_parameters[param],) = overlap
 
-                    if module_parameters[k] == 'True':
+                    if module_parameters[param] == 'True':
                         if lowered_choices is None:
                             lowered_choices = lenient_lowercase(choices)
                         overlap = BOOLEANS_TRUE.intersection(choices)
                         if len(overlap) == 1:
-                            (module_parameters[k],) = overlap
+                            (module_parameters[param],) = overlap
 
-                    if module_parameters[k] not in choices:
+                    if module_parameters[param] not in choices:
                         choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, module_parameters[k])
+                        msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, module_parameters[param])
                         if options_context:
                             msg += " found in %s" % " -> ".join(options_context)
                         errors.append(msg)
         else:
-            msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
+            msg = "internal error: choices for argument %s are not iterable: %s" % (param, choices)
             if options_context:
                 msg += " found in %s" % " -> ".join(options_context)
             errors.append(msg)
