@@ -65,7 +65,7 @@ content:
   type: str
   sample: "SnVzdCBtb3JlIGNvZmZlZQo="
 source:
-  description: Path to the slurpped file.
+  description: Path to the slurped file.
   returned: always
   type: str
   sample: /home/paul/shopping-list.txt
