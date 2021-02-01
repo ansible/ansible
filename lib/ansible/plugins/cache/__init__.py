@@ -319,9 +319,13 @@ class CachePluginAdjudicator(MutableMapping):
 
     def _do_load_key(self, key):
         load = False
-        if key not in self._cache and key not in self._retrieved and self._plugin_name != 'memory':
-            if self._plugin.contains(key):
-                load = True
+        if all([
+            key not in self._cache,
+            key not in self._retrieved,
+            self._plugin_name != 'memory',
+            self._plugin.contains(key),
+        ]):
+            load = True
         return load
 
     def __getitem__(self, key):
