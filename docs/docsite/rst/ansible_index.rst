@@ -25,7 +25,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    :caption: Installation, Upgrade & Configuration
 
    installation_guide/index
-   porting_guides/porting_guides
+   porting_guides/ansible_porting_guides
 
 .. toctree::
    :maxdepth: 2
