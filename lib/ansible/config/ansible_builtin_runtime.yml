@@ -2783,11 +2783,11 @@ plugin_routing:
     cobbler_system:
       redirect: community.general.cobbler_system
     idrac_firmware:
-      redirect: community.general.idrac_firmware
+      redirect: dellemc.openmanage.idrac_firmware
     idrac_server_config_profile:
-      redirect: community.general.idrac_server_config_profile
+      redirect: dellemc.openmanage.idrac_server_config_profile
     ome_device_info:
-      redirect: community.general.ome_device_info
+      redirect: dellemc.openmanage.ome_device_info
     foreman:
       redirect: community.general.foreman
     katello:
@@ -8794,11 +8794,11 @@ plugin_routing:
     redhat:
       redirect: community.general.redhat
     remote_management.dellemc:
-      redirect: community.general.remote_management.dellemc
+      redirect: dellemc.openmanage
     remote_management.dellemc.dellemc_idrac:
-      redirect: community.general.remote_management.dellemc.dellemc_idrac
+      redirect: dellemc.openmanage.dellemc_idrac
     remote_management.dellemc.ome:
-      redirect: community.general.remote_management.dellemc.ome
+      redirect: dellemc.openmanage.ome
     remote_management.intersight:
       redirect: cisco.intersight.intersight
     remote_management.lxca:

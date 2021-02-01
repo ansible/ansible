@@ -9,3 +9,4 @@ minor_changes:
 - "Collection routing: Hashi Vault content from community.general migrated to community.hashi_vault (https://github.com/ansible/ansible/pull/73046)."
 - "Collection routing: KubeVirt content from community.general migrated to community.kubevirt (https://github.com/ansible/ansible/pull/73046)."
 - "Collection routing: FortiOS content from community.network migrated to community.fortios (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: DellEMC content from community.general migrated to dellemc.openmanage (https://github.com/ansible/ansible/pull/73046)."
