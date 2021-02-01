@@ -95,6 +95,9 @@ exclude_patterns = [
     'porting_guides/porting_guides.rst',
     'porting_guides/porting_guide_base_2.10.rst',
     'porting_guides/porting_guide_core_2.11.rst',
+    'roadmap/ansible_base_roadmap_index.rst',
+    'roadmap/ROADMAP_2_10.rst',
+    'roadmap/ROADMAP_2_11.rst'
 ]
 
 # The reST default role (used for this markup: `text`) to use for all

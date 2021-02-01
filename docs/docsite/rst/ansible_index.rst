@@ -97,10 +97,6 @@ Ansible releases a new major release of Ansible approximately three to four time
 
 .. toctree::
    :maxdepth: 2
-   :caption: Release Notes
-
-.. toctree::
-   :maxdepth: 2
    :caption: Roadmaps
 
-   roadmap/index.rst
+   roadmap/ansible_roadmap_index.rst
