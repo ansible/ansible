@@ -41,7 +41,7 @@ class Validator():
     def validated_parameters(self):
         return self._validated_parameters
 
-    def add_error(self, error):
+    def _add_error(self, error):
         if isinstance(error, string_types):
             self._error_messages.append(error)
         elif isinstance(error, Sequence):
@@ -68,18 +68,18 @@ class Validator():
 
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
         if unsupported_parameters:
-            self.add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
+            self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         try:
             check_required_arguments(argument_spec, parameters)
         except TypeError as e:
-            self.add_error(to_native(e))
+            self._add_error(to_native(e))
 
         self._validated_parameters, errors = validate_argument_types(argument_spec, parameters)
-        self.add_error(errors)
+        self._add_error(errors)
 
         errors = validate_argument_values(argument_spec, parameters)
-        self.add_error(errors)
+        self._add_error(errors)
 
         if self.error_messages:
             return False
