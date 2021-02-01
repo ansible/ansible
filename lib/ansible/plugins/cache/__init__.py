@@ -319,12 +319,13 @@ class CachePluginAdjudicator(MutableMapping):
 
     def _do_load_key(self, key):
         load = False
-        if key not in self._cache and key not in self._retrieved and self._plugin_name != 'memory':
-            if isinstance(self._plugin, BaseFileCacheModule):
-                load = True
-            elif not isinstance(self._plugin, BaseFileCacheModule) and self._plugin.contains(key):
-                # Database-backed caches don't raise KeyError for expired keys, so only load if the key is valid by checking contains()
-                load = True
+        if all([
+            key not in self._cache,
+            key not in self._retrieved,
+            self._plugin_name != 'memory',
+            self._plugin.contains(key),
+        ]):
+            load = True
         return load
 
     def __getitem__(self, key):
