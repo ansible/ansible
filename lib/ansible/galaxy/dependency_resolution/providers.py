@@ -40,6 +40,7 @@ class CollectionDependencyProvider(AbstractProvider):
             self,  # type: CollectionDependencyProvider
             apis,  # type: MultiGalaxyAPIProxy
             concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
+            user_requirements=None,  # type: Iterable[Requirement]
             preferred_candidates=None,  # type: Iterable[Candidate]
             with_deps=True,  # type: bool
             with_pre_releases=False,  # type: bool
@@ -64,9 +65,50 @@ class CollectionDependencyProvider(AbstractProvider):
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
+        self._pinned_candidate_requests = set(
+            Candidate(req.fqcn, req.ver, req.src, req.type)
+            for req in (user_requirements or ())
+            if req.is_concrete_artifact or (
+                req.ver != '*' and
+                not req.ver.startswith(('<', '>', '!='))
+            )
+        )
         self._preferred_candidates = set(preferred_candidates or ())
         self._with_deps = with_deps
         self._with_pre_releases = with_pre_releases
+
+    def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
+        """Check if the candidate is requested by the user."""
+        if candidate in self._pinned_candidate_requests:
+            return True
+
+        if candidate.is_online_index_pointer and candidate.src is not None:
+            # NOTE: Candidate is a namedtuple, it has a source server set
+            # NOTE: to a specific GalaxyAPI instance or `None`. When the
+            # NOTE: user runs
+            # NOTE:
+            # NOTE:     $ ansible-galaxy collection install ns.coll
+            # NOTE:
+            # NOTE: then it's saved in `self._pinned_candidate_requests`
+            # NOTE: as `('ns.coll', '*', None, 'galaxy')` but then
+            # NOTE: `self.find_matches()` calls `self.is_satisfied_by()`
+            # NOTE: with Candidate instances bound to each specific
+            # NOTE: server available, those look like
+            # NOTE: `('ns.coll', '*', GalaxyAPI(...), 'galaxy')` and
+            # NOTE: wouldn't match the user requests saved in
+            # NOTE: `self._pinned_candidate_requests`. This is why we
+            # NOTE: normalize the collection to have `src=None` and try
+            # NOTE: again.
+            # NOTE:
+            # NOTE: When the user request comes from `requirements.yml`
+            # NOTE: with the `source:` set, it'll match the first check
+            # NOTE: but it still can have entries with `src=None` so this
+            # NOTE: normalized check is still necessary.
+            return Candidate(
+                candidate.fqcn, candidate.ver, None, candidate.type,
+            ) in self._pinned_candidate_requests
+
+        return False
 
     def identify(self, requirement_or_candidate):
         # type: (Union[Candidate, Requirement]) -> str
@@ -214,14 +256,18 @@ class CollectionDependencyProvider(AbstractProvider):
         :returns: Indication whether the `candidate` is a viable \
                   solution to the `requirement`.
         """
-        # NOTE: Only allow pre-release candidates if we want pre-releases or
-        # the req ver was an exact match with the pre-release version.
+        # NOTE: Only allow pre-release candidates if we want pre-releases
+        # NOTE: or the req ver was an exact match with the pre-release
+        # NOTE: version. Another case where we'd want to allow
+        # NOTE: pre-releases is when there are several user requirements
+        # NOTE: and one of them is a pre-release that also matches a
+        # NOTE: transitive dependency of another requirement.
         allow_pre_release = self._with_pre_releases or not (
             requirement.ver == '*' or
             requirement.ver.startswith('<') or
             requirement.ver.startswith('>') or
             requirement.ver.startswith('!=')
-        )
+        ) or self._is_user_requested(candidate)
         if is_pre_release(candidate.ver) and not allow_pre_release:
             return False
 
