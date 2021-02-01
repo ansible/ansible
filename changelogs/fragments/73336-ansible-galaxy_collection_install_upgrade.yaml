@@ -5,4 +5,4 @@ major_changes:
 - >-
   A collection can be reinstalled with new version requirements without using
   the ``--force`` flag. The collection's dependencies will also be updated
-  with the new requirements.
+  if necessary with the new requirements.
