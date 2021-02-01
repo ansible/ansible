@@ -290,6 +290,7 @@ def handle_elements(wanted_type, parameters, values, options_context=None):
     type_checker, wanted_element_type = get_type_validator(wanted_type)
     validated_params = []
     errors = []
+
     # Get param name for strings so we can later display this value in a useful error message if needed
     # Only pass 'kwargs' to our checkers and ignore custom callable checkers
     kwargs = {}
@@ -298,6 +299,7 @@ def handle_elements(wanted_type, parameters, values, options_context=None):
             kwargs['param'] = parameters
         elif isinstance(parameters, dict):
             kwargs['param'] = list(parameters.keys())[0]
+
     for value in values:
         try:
             validated_params.append(type_checker(value, **kwargs))
@@ -358,13 +360,15 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
             validated_params[k] = type_checker(value, **kwargs)
             wanted_elements = v.get('elements', None)
             if wanted_elements:
-                if wanted_type != 'list' or not isinstance(module_parameters[k], list):
-                    msg = "Invalid type %s for option '%s'" % (wanted_name, module_parameters)
+                parameter = module_parameters[k]
+                if wanted_type != 'list' or not isinstance(parameter, list):
+                    msg = "Invalid type %s for option '%s'" % (wanted_name, parameter)
                     if options_context:
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
                     errors.append(msg)
-                validated_params[k] = handle_elements(wanted_elements, k, module_parameters[k], options_context)
+                validated_params[k], _errors = handle_elements(wanted_elements, k, parameter, options_context)
+                errors.extend(_errors)
         except (TypeError, ValueError) as e:
             msg = "argument %s is of type %s" % (k, type(value))
             if options_context:
