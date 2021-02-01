@@ -234,7 +234,11 @@ Older versions of FreeBSD worked with something like this (substitute for your c
 Installing Ansible on macOS
 ---------------------------
 
-The preferred way to install Ansible on a Mac is with ``pip``.
+A direct way to install Ansible on a Mac is with ``brew``. Also, you need to have XCode installed.
+
+``brew install ansible``
+
+Otherwise you can also try it with the Python Package Index (pip):
 
 The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that.
 
