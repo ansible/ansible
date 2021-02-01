@@ -92,7 +92,7 @@ today_fmt = '%B %d, %Y'
 # for source files.
 exclude_patterns = [
     'index.rst',
-    'porting_guides/porting_guides.rst',
+    'porting_guides/core_porting_guides.rst',
     'porting_guides/porting_guide_base_2.10.rst',
     'porting_guides/porting_guide_core_2.11.rst',
     'roadmap/ansible_base_roadmap_index.rst',
