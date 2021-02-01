@@ -90,7 +90,12 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-exclude_patterns = ['index.rst']
+exclude_patterns = [
+    'index.rst',
+    'porting_guides/porting_guides.rst',
+    'porting_guides/porting_guide_base_2.10.rst',
+    'porting_guides/porting_guide_core_2.11.rst',
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
