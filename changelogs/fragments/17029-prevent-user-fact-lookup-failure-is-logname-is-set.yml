@@ -1,0 +1,2 @@
+bugfixes:
+  - Lookup user by UID in password database if login name is not found (https://github.com/ansible/ansible/issues/17029)
