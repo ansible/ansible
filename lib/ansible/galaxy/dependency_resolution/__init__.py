@@ -17,7 +17,10 @@ if TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
-    from ansible.galaxy.dependency_resolution.dataclasses import Candidate
+    from ansible.galaxy.dependency_resolution.dataclasses import (
+        Candidate,
+        Requirement,
+    )
 
 from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 from ansible.galaxy.dependency_resolution.providers import CollectionDependencyProvider
@@ -28,6 +31,7 @@ from ansible.galaxy.dependency_resolution.resolvers import CollectionDependencyR
 def build_collection_dependency_resolver(
         galaxy_apis,  # type: Iterable[GalaxyAPI]
         concrete_artifacts_manager,  # type: ConcreteArtifactsManager
+        user_requirements,  # type: Iterable[Requirement]
         preferred_candidates=None,  # type: Iterable[Candidate]
         with_deps=True,  # type: bool
         with_pre_releases=False,  # type: bool
@@ -41,6 +45,7 @@ def build_collection_dependency_resolver(
         CollectionDependencyProvider(
             apis=MultiGalaxyAPIProxy(galaxy_apis, concrete_artifacts_manager),
             concrete_artifacts_manager=concrete_artifacts_manager,
+            user_requirements=user_requirements,
             preferred_candidates=preferred_candidates,
             with_deps=with_deps,
             with_pre_releases=with_pre_releases,
