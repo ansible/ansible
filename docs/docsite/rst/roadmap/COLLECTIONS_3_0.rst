@@ -43,3 +43,8 @@ Ansible 3.x.x minor releases will occur approximately every three weeks if chang
 
 
 For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
+
+ansible-base release
+====================
+
+Ansible 3.x.x works with ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for details.

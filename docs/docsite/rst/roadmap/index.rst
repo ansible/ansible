@@ -3,12 +3,17 @@
 Roadmaps
 ===============
 
-.. toctree::
-   :maxdepth: 1
-   :glob:
+.. only:: ansible_pkg
 
-   ansible_roadmap_index
-   ansible_base_roadmap_index
-   old_roadmap_index
+   .. toctree::
+      :maxdepth: 1
 
-   
+      ansible_roadmap_index
+      old_roadmap_index
+
+.. only:: coredocs
+
+   .. toctree::
+      :maxdepth: 1
+
+      ansible_base_roadmap_index
