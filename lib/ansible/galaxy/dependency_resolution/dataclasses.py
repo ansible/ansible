@@ -88,7 +88,7 @@ def _find_collections_in_subdirs(dir_path):
         b'*',  # collection name
     )
 
-    for subdir in iglob(os.path.join(subdir_glob_pattern)):
+    for subdir in iglob(subdir_glob_pattern):
         if os.path.isfile(os.path.join(subdir, _MANIFEST_JSON)):
             yield subdir
         elif os.path.isfile(os.path.join(subdir, _GALAXY_YAML)):
@@ -288,7 +288,7 @@ class _ComputedReqKindsMixin:
                     # instead of the ``galaxy.yml``.
                     raise AnsibleError(
                         u"Collection requirement at '{path!s}' has both a {manifest_json!s} "
-                        u"file and a {galaxy_yml!s}.\nThe requirement must either be an artifact "
+                        u"file and a {galaxy_yml!s}.\nThe requirement must either be an installed "
                         u"collection directory or a source collection directory, not both.".
                         format(
                             path=to_text(src_path, errors='surrogate_or_strict'),
