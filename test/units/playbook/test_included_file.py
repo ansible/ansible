@@ -126,9 +126,9 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
 
     res = IncludedFile.process_include_results(results, mock_iterator, fake_loader, mock_variable_manager)
     assert isinstance(res, list)
-    assert len(res) == 1
+    assert len(res) == 2
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
-    assert res[0]._hosts == ['testhost1', 'testhost2']
+    assert res[0]._hosts == ['testhost1']
     assert res[0]._args == {}
     assert res[0]._vars == {}
 

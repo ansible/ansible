@@ -1,0 +1,3 @@
+- assert:
+    that:
+    - var1 == inventory_hostname_short

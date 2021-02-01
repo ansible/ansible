@@ -1,0 +1,19 @@
+- hosts: "test07:test08"
+  tasks:
+  - include_role:
+      name: "{{ inventory_hostname_short }}"
+      vars_from: "{{ inventory_hostname_short }}"
+- hosts: "test07:test08"
+  tasks:
+  - include_role:
+      name: solaris
+      vars_from: "{{ inventory_hostname_short }}"
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: counter
+      loop: [1, 1, 1]
+    - assert:
+        that:
+          - "counter == '111'"

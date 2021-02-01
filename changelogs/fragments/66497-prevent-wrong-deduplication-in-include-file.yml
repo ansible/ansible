@@ -1,0 +1,2 @@
+bugfixes:
+- Prevent wrong deduplication in IncludeFile if vars_from is used (https://github.com/ansible/ansible/issues/66497)
