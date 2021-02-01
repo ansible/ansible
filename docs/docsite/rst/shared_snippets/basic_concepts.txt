@@ -6,12 +6,12 @@ Any machine with Ansible installed. You can run Ansible commands and playbooks b
 Managed nodes
 =============
 
-The network devices (and/or servers) you manage with Ansible. Managed nodes are also sometimes called "hosts". Ansible is not installed on managed nodes.
+The network devices (and/or servers) you manage with Ansible. Managed nodes are also sometimes called "hosts". Ansible is not required on managed nodes, but a valid installation of Python to run most Ansible modules is.
 
 Inventory
 =========
 
-A list of managed nodes. An inventory file is also sometimes called a "hostfile". Your inventory can specify information like IP address for each managed node. An inventory can also organize managed nodes, creating and nesting groups for easier scaling. To learn more about inventory, see :ref:`the Working with Inventory<intro_inventory>` section.
+A list of managed nodes. An inventory file is also sometimes called a "hostfile". Your inventory can specify information like hostname, IP address, and other connection information for each managed node. An inventory can also organize managed nodes, creating and nesting groups for easier scaling. To learn more about inventory, see :ref:`the Working with Inventory<intro_inventory>` section.
 
 Collections
 ===========
