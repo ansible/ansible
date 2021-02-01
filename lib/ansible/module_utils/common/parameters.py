@@ -436,3 +436,64 @@ def validate_argument_values(argument_spec, module_parameters, options_context=N
             errors.append(msg)
 
     return errors
+
+
+def validate_sub_spec(argument_spec, module_parameters, prefix='', options_context=None):
+    """description"""
+
+    if options_context is None:
+        options_context = []
+
+    errors = []
+    validated_params = {}
+    for param, value in argument_spec.items():
+        wanted = value.get('type')
+        if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == dict):
+            sub_spec = value.get('options')
+            if value.get('apply_defaults', False):
+                if sub_spec is not None:
+                    if module_parameters.get(value) is None:
+                        # FIXME: This is modifying the passed in arguments
+                        module_parameters[param] = {}
+                    else:
+                        continue
+            elif sub_spec is None or param not in module_parameters or module_parameters[param] is None:
+                continue
+
+            # Keep track of context for warning messages
+            options_context.append(param)
+
+            # Make sure we can iterate over the elements
+            if isinstance(module_parameters[param], dict):
+                elements = [module_parameters[param]]
+            else:
+                elements = module_parameters[param]
+
+            for idx, sub_parameters in enumerate(elements):
+                if not isinstance(sub_parameters, dict):
+                    errors.append('value of %s must be of type dict or list of dicts' % param)
+
+                # Set prefix for warning messages
+                new_prefix = prefix + param
+                if wanted == 'list':
+                    new_prefix += '[%d]' % idx
+                new_prefix += '.'
+
+                options_aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
+                unsupported_parameters = get_unsupported_parameters(sub_spec, sub_parameters)
+                if unsupported_parameters:
+                    errors.append('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
+
+                _validated_params, _errors = validate_argument_types(sub_spec, sub_parameters, options_context)
+                validated_params.update(_validated_params)
+                errors.extend(_errors)
+
+                _errors = validate_argument_values(sub_spec, sub_parameters, options_context)
+                errors.extend(_errors)
+
+                _validated_params, _errors = validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context)
+                validated_params.update(_validated_params)
+                errors.extend(_errors)
+            options_context.pop()
+
+    return validated_params, errors

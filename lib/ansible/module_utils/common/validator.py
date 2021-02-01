@@ -14,6 +14,7 @@ from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
     validate_argument_types,  # Rename this because it actually does coercion?
     validate_argument_values,
+    validate_sub_spec,
 )
 
 from ansible.module_utils.common.text.converters import to_native
@@ -79,6 +80,11 @@ class Validator():
         self._add_error(errors)
 
         errors = validate_argument_values(argument_spec, parameters)
+        self._add_error(errors)
+
+        # FIXME: This should just be done by validate_argument_types() and validate_argument_values()
+        _validated_parameters, errors = validate_sub_spec(argument_spec, self._validated_parameters)
+        self._validated_parameters.update(_validated_parameters)
         self._add_error(errors)
 
         if self.error_messages:
