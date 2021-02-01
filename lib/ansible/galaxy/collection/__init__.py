@@ -108,7 +108,7 @@ from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
 )
 from ansible.galaxy.dependency_resolution.dataclasses import (
-    Candidate, Requirement,
+    Candidate, Requirement, _is_installed_collection_dir,
 )
 from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyResolutionImpossible,
@@ -606,6 +606,7 @@ def verify_collections(
                 # NOTE: Verify local collection exists before
                 # NOTE: downloading its source artifact from
                 # NOTE: a galaxy server.
+                default_err = 'Collection %s is not installed in any of the collection paths.' % collection.fqcn
                 for search_path in search_paths:
                     b_search_path = to_bytes(
                         os.path.join(
@@ -616,13 +617,20 @@ def verify_collections(
                     )
                     if not os.path.isdir(b_search_path):
                         continue
+                    if not _is_installed_collection_dir(b_search_path):
+                        default_err = (
+                            "Collection %s does not have a MANIFEST.json. "
+                            "A MANIFEST.json is expected if the collection has been built "
+                            "and installed via ansible-galaxy" % collection.fqcn
+                        )
+                        continue
 
                     local_collection = Candidate.from_dir_path(
                         b_search_path, artifacts_manager,
                     )
                     break
                 else:
-                    raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection.fqcn)
+                    raise AnsibleError(message=default_err)
 
                 remote_collection = Candidate(
                     collection.fqcn,

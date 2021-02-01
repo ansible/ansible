@@ -191,3 +191,33 @@
 - assert:
     that:
       - "'Collection ansible_test.verify contains modified content in the following files:\nansible_test.verify\n    MANIFEST.json' in verify.stdout"
+
+- name: remove the artifact metadata to test verifying a collection without it
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ manifest_path }}"
+    - "{{ file_manifest_path }}"
+
+- name: add some development metadata
+  copy:
+    content: |
+      namespace: 'ansible_test'
+      name: 'verify'
+      version: '2.0.0'
+      readme: 'README.md'
+      authors: ['Ansible']
+    dest: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/galaxy.yml'
+
+- name: test we only verify collections containing a MANIFEST.json with the version on the server
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  register: verify
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+  ignore_errors: yes
+
+- assert:
+    that:
+      - verify.failed
+      - "'Collection ansible_test.verify does not have a MANIFEST.json' in verify.stderr"
