@@ -60,8 +60,6 @@ An open-source, free GUI text editor created and maintained by Microsoft. Useful
 
 
 * `YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - provides YAML support through yaml-language-server with built-in Kubernetes and Kedge syntax support.
-* `Ansible Syntax Highlighting Extension <https://marketplace.visualstudio.com/items?itemName=haaaad.ansible>`_ - YAML & Jinja2 support.
-* `Visual Studio Code extension for Ansible <https://marketplace.visualstudio.com/items?itemName=vscoss.vscode-ansible>`_ - provides autocompletion, syntax highlighting.
 
 vim
 ===
