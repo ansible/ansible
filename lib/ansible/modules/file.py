@@ -670,12 +670,13 @@ def ensure_directory(path, follow, recurse, timestamps, impose_suffix):
             # If the directory already exist and if we want to create a folder with a suffix appended if impose_suffix is set to True
             # For example: if the Directory /Sample/Test dir already exist and if the path is /Sample/Test,
             # then a directory /Sample/Test1 will be created. On subsequent run the number keeps increasing.
+            
             folder_exist = True
             iteration = 0
             original_path = path
-            while folder_exist:
+            while folder_exist:                
                 if os.path.exists(path):
-                    iteration = iteration+1
+                    iteration = iteration + 1
                     path = original_path + str(iteration)
                     folder_exist = True
                 else:
