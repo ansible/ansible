@@ -657,6 +657,52 @@ def ensure_directory(path, follow, recurse, timestamps):
                                               'path': path})
         return {'path': path, 'changed': changed, 'diff': diff}
 
+    elif prev_state == 'directory' and impose_suffix == True:
+        curpath = ''
+        try:
+            # If the directory already exist and if we want to create a folder with a suffix appended if impose_suffix is set to True
+            # For example: if the Directory /Sample/Test dir already exist and if the path is /Sample/Test,
+            # then a directory /Sample/Test1 will be created. On subsequent run the number keeps increasing.
+            folder_exist = True
+            iteration = 0
+            original_path = path
+            while folder_exist:
+                if os.path.exists(path):
+                    iteration = iteration+1
+                    path = original_path + str(iteration)
+                    folder_exist = True
+                else:
+                    folder_exist = False
+            # Split the path so we can apply filesystem attributes recursively
+            # from the root (/) directory for absolute paths or the base path
+            # of a relative path.  We can then walk the appropriate directory
+            # path to apply attributes.
+            # Something like mkdir -p with mode applied to all of the newly created directories
+            for dirname in path.strip('/').split('/'):
+                curpath = '/'.join([curpath, dirname])
+                # Remove leading slash if we're creating a relative path
+                if not os.path.isabs(path):
+                    curpath = curpath.lstrip('/')
+                b_curpath = to_bytes(curpath, errors='surrogate_or_strict')
+                if not os.path.exists(b_curpath):
+                    try:
+                        os.mkdir(b_curpath)
+                        changed = True
+                    except OSError as ex:
+                        # Possibly something else created the dir since the os.path.exists
+                        # check above. As long as it's a dir, we don't need to error out.
+                        if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
+                            raise
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path'] = curpath
+                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
+                    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+        except Exception as e:
+            raise AnsibleModuleError(results={'msg': 'There was an issue creating %s as requested:'
+                                                     ' %s' % (path, to_native(e)),
+                                              'path': path})
+        return {'path': path, 'changed': changed, 'diff': diff}
+      
     elif prev_state != 'directory':
         # We already know prev_state is not 'absent', therefore it exists in some form.
         raise AnsibleModuleError(results={'msg': '%s already exists as a %s' % (path, prev_state),
