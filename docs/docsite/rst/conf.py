@@ -94,7 +94,17 @@ exclude_patterns = [
     'ansible_index.rst',
     'galaxy',
     'network',
-    'scenario_guides'
+    'scenario_guides',
+        'porting_guides/ansible_porting_guides.rst',
+        'porting_guides/porting_guide_2.10.rst',
+        'porting_guides/porting_guide_2.9.rst',
+        'porting_guides/porting_guide_2.8.rst',
+        'porting_guides/porting_guide_2.7.rst',
+        'porting_guides/porting_guide_2.6.rst',
+        'porting_guides/porting_guide_2.5.rst',
+        'porting_guides/porting_guide_2.4.rst',
+        'porting_guides/porting_guide_2.3.rst',
+        'porting_guides/porting_guide_2.0.rst'
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
