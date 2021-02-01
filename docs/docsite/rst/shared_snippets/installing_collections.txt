@@ -18,7 +18,7 @@ You can also directly use the tarball from your build:
 
    ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
 
-You can install a collection from a directory, much like ``pip``. The collection will be built with the ``MANIFEST.json`` or ``galaxy.yml``
+You can build and install a collection from a local source directory. The ``ansible-galaxy`` utility builds the collection using the ``MANIFEST.json`` or ``galaxy.yml``
 metadata in the directory.
 
 .. code-block:: bash

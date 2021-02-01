@@ -35,7 +35,7 @@ Default repository search locations
 
 There are two paths searched in a repository for collections by default.
 
-The first is the ``MANIFEST.json`` or ``galaxy.yml`` file in the top level of the repository path. If the file exists it's used as the collection metadata and the individual collection will be installed.
+The first is the ``galaxy.yml`` or ``MANIFEST.json`` file in the top level of the repository path. If the file exists it's used as the collection metadata and the individual collection will be installed.
 
 .. code-block:: text
 
@@ -46,7 +46,7 @@ The first is the ``MANIFEST.json`` or ``galaxy.yml`` file in the top level of th
    │   └── module_utils/
    └─── README.md
 
-The second is a ``MANIFEST.json`` or ``galaxy.yml`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection.
+The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection.
 
 .. code-block:: text
 

@@ -97,7 +97,7 @@ requirements file in the format documented with :ref:`collection_requirements_fi
 
    ansible-galaxy collection download -r requirements.yml
 
-A source collection directory can also be downloaded. The collection will be built with the mandatory ``galaxy.yml`` file.
+You can also download a source collection directory. The collection is built with the mandatory ``galaxy.yml`` file.
 
 .. code-block:: bash
 
@@ -105,7 +105,7 @@ A source collection directory can also be downloaded. The collection will be bui
 
    ansible-galaxy collection download git+file:///path/to/collection/.git
 
-Multiple source collections can be downloaded by providing the path to the namespace.
+You can download multiple source collections from a single namespace by providing the path to the namespace.
 
 .. code-block:: text
 
