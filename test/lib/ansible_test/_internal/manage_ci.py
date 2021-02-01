@@ -8,6 +8,10 @@ import time
 
 from . import types as t
 
+from .io import (
+    read_text_file,
+)
+
 from .util import (
     SubprocessError,
     ApplicationError,
@@ -20,6 +24,7 @@ from .util_common import (
     intercept_command,
     get_network_completion,
     run_command,
+    ShellScriptTemplate,
 )
 
 from .core_ci import (
@@ -268,8 +273,16 @@ class ManagePosixCI:
         """Configure remote host for testing.
         :type python_version: str
         """
-        self.upload(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'remote.sh'), '/tmp')
-        self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s %s' % (self.core_ci.platform, self.core_ci.version, python_version))
+        template = ShellScriptTemplate(read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'remote.sh')))
+        setup_sh = template.substitute(
+            platform=self.core_ci.platform,
+            platform_version=self.core_ci.version,
+            python_version=python_version,
+        )
+
+        shell = setup_sh.splitlines()[0][2:]
+
+        self.ssh(shell, data=setup_sh)
 
     def upload_source(self):
         """Upload and extract source."""
@@ -302,11 +315,12 @@ class ManagePosixCI:
         """
         self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
 
-    def ssh(self, command, options=None, capture=False):
+    def ssh(self, command, options=None, capture=False, data=None):
         """
         :type command: str | list[str]
         :type options: list[str] | None
         :type capture: bool
+        :type data: str | None
         :rtype: str | None, str | None
         """
         if not options:
@@ -316,12 +330,18 @@ class ManagePosixCI:
             command = ' '.join(cmd_quote(c) for c in command)
 
         command = cmd_quote(command) if self.become else command
+
+        options.append('-q')
+
+        if not data:
+            options.append('-tt')
+
         return run_command(self.core_ci.args,
-                           ['ssh', '-tt', '-q'] + self.ssh_args +
+                           ['ssh'] + self.ssh_args +
                            options +
                            ['-p', str(self.core_ci.connection.port),
                             '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                           self.become + [command], capture=capture)
+                           self.become + [command], capture=capture, data=data)
 
     def scp(self, src, dst):
         """

@@ -2,9 +2,10 @@
 
 set -eu
 
-platform="$1"
-platform_version="$2"
-python_version="$3"
+platform=#{platform}
+platform_version=#{platform_version}
+python_version=#{python_version}
+
 python_interpreter="python${python_version}"
 
 cd ~/

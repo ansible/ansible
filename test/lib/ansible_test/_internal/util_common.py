@@ -5,6 +5,7 @@ __metaclass__ = type
 import atexit
 import contextlib
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -29,6 +30,7 @@ from .util import (
     read_lines_without_comments,
     ANSIBLE_TEST_DATA_ROOT,
     ApplicationError,
+    cmd_quote,
 )
 
 from .io import (
@@ -47,6 +49,19 @@ from .provider.layout import (
 DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 NETWORK_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+
+
+class ShellScriptTemplate:
+    """A simple substition template for shell scripts."""
+    def __init__(self, template):  # type: (str) -> None
+        self.template = template
+
+    def substitute(self, **kwargs):
+        """Return a string templated with the given arguments."""
+        kvp = dict((k, cmd_quote(v)) for k, v in kwargs.items())
+        pattern = re.compile(r'#{(?P<name>[^}]+)}')
+        value = pattern.sub(lambda match: kvp[match.group('name')], self.template)
+        return value
 
 
 class ResultType:
