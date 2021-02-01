@@ -1,17 +1,17 @@
 
-.. _porting_2.11_guide_base:
+.. _porting_2.11_guide_core:
 
 *******************************
-Ansible-base 2.11 Porting Guide
+Ansible-core 2.11 Porting Guide
 *******************************
 
-This section discusses the behavioral changes between Ansible-base 2.10 and Ansible-base 2.11.
+This section discusses the behavioral changes between ``ansible-base`` 2.10 and ``ansible-core`` 2.11.
 
-It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible-base.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of ``ansible-core``.
 
-We suggest you read this page along with the `Ansible-base Changelog for 2.11 <https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with the `ansible-core Changelog for 2.11 <https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst>`_ to understand what updates you may need to make.
 
-Ansible-base is mainly of interest for developers and users who only want to use a small, controlled subset of the available collections. Regular users should install ansible.
+``ansible-core`` is mainly of interest for developers and users who only want to use a small, controlled subset of the available collections. Regular users should install Ansible.
 
 The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
