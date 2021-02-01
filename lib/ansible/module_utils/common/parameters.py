@@ -316,6 +316,11 @@ def handle_elements(wanted_type, parameters, values, options_context=None):
 def validate_argument_types(argument_spec, module_parameters, prefix='', options_context=None):
     """Validate that module parameter types match the type in the argument spec.
 
+    Determine the appropriate type checker function and run each
+    parameter value through that function. All error messages from type checker
+    functions are returned. If any parameter fails to validate, it will not
+    be in the returned parameters.
+
     :param argument_spec: Argument spec
     :type argument_spec: dict
 
