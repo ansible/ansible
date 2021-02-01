@@ -108,10 +108,10 @@ options:
   impose_suffix:
     description:
     - When used, a directory with suffix gets created if already exists.
-    - Default is False    
+    - Default is False
     type: bool
-    default: "No"
-    version_added: '2.7'    
+    default: no
+    version_added: '2.11'
 seealso:
 - module: ansible.builtin.assemble
 - module: ansible.builtin.copy
@@ -669,12 +669,11 @@ def ensure_directory(path, follow, recurse, timestamps, impose_suffix):
         try:
             # If the directory already exist and if we want to create a folder with a suffix appended if impose_suffix is set to True
             # For example: if the Directory /Sample/Test dir already exist and if the path is /Sample/Test,
-            # then a directory /Sample/Test1 will be created. On subsequent run the number keeps increasing.
-            
+            # then a directory /Sample/Test1 will be created. On subsequent run the number keeps increasing.                        
             folder_exist = True
             iteration = 0
             original_path = path
-            while folder_exist:                
+            while folder_exist:            
                 if os.path.exists(path):
                     iteration = iteration + 1
                     path = original_path + str(iteration)
@@ -710,7 +709,7 @@ def ensure_directory(path, follow, recurse, timestamps, impose_suffix):
                                                      ' %s' % (path, to_native(e)),
                                               'path': path})
         return {'path': path, 'changed': changed, 'diff': diff}
-            
+
     elif prev_state != 'directory':
         # We already know prev_state is not 'absent', therefore it exists in some form.
         raise AnsibleModuleError(results={'msg': '%s already exists as a %s' % (path, prev_state),
