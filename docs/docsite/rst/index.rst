@@ -29,7 +29,7 @@ This documentation covers the version of Ansible noted in the upper left corner 
    :caption: Installation, Upgrade & Configuration
 
    installation_guide/index
-   porting_guides/porting_guides
+   porting_guides/core_porting_guides
 
 .. toctree::
    :maxdepth: 2
