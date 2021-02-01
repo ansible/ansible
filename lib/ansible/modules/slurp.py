@@ -60,7 +60,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 content:
-  description: Slurpped file's content in base64.
+  description: Slurped file's content in base64.
   returned: always
   type: str
   sample: "SnVzdCBtb3JlIGNvZmZlZQo="
