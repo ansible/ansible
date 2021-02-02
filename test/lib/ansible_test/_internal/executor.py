@@ -55,14 +55,11 @@ from .util import (
     remove_tree,
     find_executable,
     raw_command,
-    get_available_port,
     generate_pip_command,
     find_python,
     cmd_quote,
-    ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_CONFIG_ROOT,
-    get_ansible_version,
     tempdir,
     open_zipfile,
     SUPPORTED_PYTHON_VERSIONS,
@@ -83,21 +80,15 @@ from .util_common import (
     handle_layout_messages,
 )
 
-from .docker_util import (
-    docker_pull,
-    docker_run,
-    docker_available,
-    docker_rm,
-    get_docker_container_id,
-    get_docker_container_ip,
-    get_docker_hostname,
-    get_docker_preferred_network_name,
-    is_docker_user_defined_network,
+from .containers import (
+    SshConnectionDetail,
+    create_container_hooks,
 )
 
 from .ansible_util import (
     ansible_environment,
     check_pyyaml,
+    run_playbook,
 )
 
 from .target import (
@@ -506,9 +497,6 @@ def command_shell(args):
 
     install_command_requirements(args)
 
-    if args.inject_httptester:
-        inject_httptester(args)
-
     cmd = create_shell_command(['bash', '-i'])
     run_command(args, cmd)
 
@@ -524,7 +512,12 @@ def command_posix_integration(args):
 
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
-    command_integration_filtered(args, internal_targets, all_targets, inventory_path)
+
+    managed_connections = None  # type: t.Optional[t.List[SshConnectionDetail]]
+
+    pre_target, post_target = create_container_hooks(args, managed_connections)
+
+    command_integration_filtered(args, internal_targets, all_targets, inventory_path, pre_target=pre_target, post_target=post_target)
 
 
 def command_network_integration(args):
@@ -741,9 +734,7 @@ def command_windows_integration(args):
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
     instances = []  # type: t.List[WrappedThread]
-    pre_target = None
-    post_target = None
-    httptester_id = None
+    managed_connections = []  # type: t.List[SshConnectionDetail]
 
     if args.windows:
         get_python_path(args, args.python_executable)  # initialize before starting threads
@@ -769,76 +760,29 @@ def command_windows_integration(args):
         if not args.explain:
             write_text_file(inventory_path, inventory)
 
-        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
-        # if running under Docker delegation, the httptester may have already been started
-        docker_httptester = bool(os.environ.get("HTTPTESTER", False))
+        for core_ci in remotes:
+            ssh_con = core_ci.connection
+            ssh = SshConnectionDetail(core_ci.name, ssh_con.hostname, 22, ssh_con.username, core_ci.ssh_key.key, shell_type='powershell')
+            managed_connections.append(ssh)
+    else:
+        inventory = parse_inventory(args, inventory_path)
+        hosts = get_hosts(inventory, 'windows')
+        identity_file = SshKey(args).key
 
-        if use_httptester and not docker_available() and not docker_httptester:
-            display.warning('Assuming --disable-httptester since `docker` is not available.')
-        elif use_httptester:
-            if docker_httptester:
-                # we are running in a Docker container that is linked to the httptester container, we just need to
-                # forward these requests to the linked hostname
-                first_host = HTTPTESTER_HOSTS[0]
-                ssh_options = [
-                    "-R", "8080:%s:80" % first_host,
-                    "-R", "8443:%s:443" % first_host,
-                    "-R", "8444:%s:444" % first_host
-                ]
-            else:
-                # we are running directly and need to start the httptester container ourselves and forward the port
-                # from there manually set so HTTPTESTER env var is set during the run
-                args.inject_httptester = True
-                httptester_id, ssh_options = start_httptester(args)
+        managed_connections = [SshConnectionDetail(
+            name=name,
+            host=config['ansible_host'],
+            port=22,
+            user=config['ansible_user'],
+            identity_file=identity_file,
+            shell_type='powershell',
+        ) for name, config in hosts.items()]
 
-            # to get this SSH command to run in the background we need to set to run in background (-f) and disable
-            # the pty allocation (-T)
-            ssh_options.insert(0, "-fT")
+        if managed_connections:
+            display.info('Generated SSH connection details from inventory:\n%s' % (
+                '\n'.join('%s %s@%s:%d' % (ssh.name, ssh.user, ssh.host, ssh.port) for ssh in managed_connections)), verbosity=1)
 
-            # create a script that will continue to run in the background until the script is deleted, this will
-            # cleanup and close the connection
-            def forward_ssh_ports(target):
-                """
-                :type target: IntegrationTarget
-                """
-                if 'needs/httptester/' not in target.aliases:
-                    return
-
-                for remote in [r for r in remotes if r.version != '2008']:
-                    manage = ManageWindowsCI(remote)
-                    manage.upload(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'windows-httptester.ps1'), watcher_path)
-
-                    # We cannot pass an array of string with -File so we just use a delimiter for multiple values
-                    script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\%s -Hosts \"%s\"" \
-                             % (watcher_path, "|".join(HTTPTESTER_HOSTS))
-                    if args.verbosity > 3:
-                        script += " -Verbose"
-                    manage.ssh(script, options=ssh_options, force_pty=False)
-
-            def cleanup_ssh_ports(target):
-                """
-                :type target: IntegrationTarget
-                """
-                if 'needs/httptester/' not in target.aliases:
-                    return
-
-                for remote in [r for r in remotes if r.version != '2008']:
-                    # delete the tmp file that keeps the http-tester alive
-                    manage = ManageWindowsCI(remote)
-                    manage.ssh("cmd.exe /c \"del %s /F /Q\"" % watcher_path, force_pty=False)
-
-            watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
-            pre_target = forward_ssh_ports
-            post_target = cleanup_ssh_ports
-
-    def run_playbook(playbook, run_playbook_vars):  # type: (str, t.Dict[str, t.Any]) -> None
-        playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
-        command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(run_playbook_vars)]
-        if args.verbosity:
-            command.append('-%s' % ('v' * args.verbosity))
-
-        env = ansible_environment(args)
-        intercept_command(args, command, '', env, disable_coverage=True)
+    pre_target, post_target = create_container_hooks(args, managed_connections)
 
     remote_temp_path = None
 
@@ -846,7 +790,7 @@ def command_windows_integration(args):
         # Create the remote directory that is writable by everyone. Use Ansible to talk to the remote host.
         remote_temp_path = 'C:\\ansible_test_coverage_%s' % time.time()
         playbook_vars = {'remote_temp_path': remote_temp_path}
-        run_playbook('windows_coverage_setup.yml', playbook_vars)
+        run_playbook(args, inventory_path, 'windows_coverage_setup.yml', playbook_vars)
 
     success = False
 
@@ -855,14 +799,11 @@ def command_windows_integration(args):
                                      post_target=post_target, remote_temp_path=remote_temp_path)
         success = True
     finally:
-        if httptester_id:
-            docker_rm(args, httptester_id)
-
         if remote_temp_path:
             # Zip up the coverage files that were generated and fetch it back to localhost.
             with tempdir() as local_temp_path:
                 playbook_vars = {'remote_temp_path': remote_temp_path, 'local_temp_path': local_temp_path}
-                run_playbook('windows_coverage_teardown.yml', playbook_vars)
+                run_playbook(args, inventory_path, 'windows_coverage_teardown.yml', playbook_vars)
 
                 for filename in os.listdir(local_temp_path):
                     with open_zipfile(os.path.join(local_temp_path, filename)) as coverage_zip:
@@ -879,6 +820,9 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     :type args: WindowsIntegrationConfig
     :type internal_targets: tuple[IntegrationTarget]
     """
+    # generate an ssh key (if needed) up front once, instead of for each instance
+    SshKey(args)
+
     if not args.windows:
         return
 
@@ -947,14 +891,7 @@ def windows_inventory(remotes):
         if remote.ssh_key:
             options["ansible_ssh_private_key_file"] = os.path.abspath(remote.ssh_key.key)
 
-        if remote.name == 'windows-2008':
-            options.update(
-                # force 2008 to use PSRP for the connection plugin
-                ansible_connection='psrp',
-                ansible_psrp_auth='basic',
-                ansible_psrp_cert_validation='ignore',
-            )
-        elif remote.name == 'windows-2016':
+        if remote.name == 'windows-2016':
             options.update(
                 # force 2016 to use NTLM + HTTP message encryption
                 ansible_connection='winrm',
@@ -1045,24 +982,23 @@ def command_integration_filter(args,  # type: TIntegrationConfig
         data_context().register_payload_callback(integration_config_callback)
 
     if args.delegate:
-        raise Delegate(require=require, exclude=exclude, integration_targets=internal_targets)
+        raise Delegate(require=require, exclude=exclude)
 
     install_command_requirements(args)
 
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None,
-                                 remote_temp_path=None):
-    """
-    :type args: IntegrationConfig
-    :type targets: tuple[IntegrationTarget]
-    :type all_targets: tuple[IntegrationTarget]
-    :type inventory_path: str
-    :type pre_target: (IntegrationTarget) -> None | None
-    :type post_target: (IntegrationTarget) -> None | None
-    :type remote_temp_path: str | None
-    """
+def command_integration_filtered(
+        args,  # type: IntegrationConfig
+        targets,  # type: t.Tuple[IntegrationTarget]
+        all_targets,  # type: t.Tuple[IntegrationTarget]
+        inventory_path,  # type: str
+        pre_target=None,  # type: t.Optional[t.Callable[IntegrationTarget]]
+        post_target=None,  # type: t.Optional[t.Callable[IntegrationTarget]]
+        remote_temp_path=None,  # type: t.Optional[str]
+):
+    """Run integration tests for the specified targets."""
     found = False
     passed = []
     failed = []
@@ -1099,10 +1035,6 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
                 seconds = 3
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
-
-    # Windows is different as Ansible execution is done locally but the host is remote
-    if args.inject_httptester and not isinstance(args, WindowsIntegrationConfig):
-        inject_httptester(args)
 
     start_at_task = args.start_at_task
 
@@ -1150,15 +1082,15 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
                         start_time = time.time()
 
+                        if pre_target:
+                            pre_target(target)
+
                         run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, common_temp_path, True)
 
                         if not args.explain:
                             # create a fresh test directory for each test target
                             remove_tree(test_dir)
                             make_dirs(test_dir)
-
-                        if pre_target:
-                            pre_target(target)
 
                         try:
                             if target.script_path:
@@ -1253,155 +1185,21 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
             len(failed), len(passed) + len(failed), '\n'.join(target.name for target in failed)))
 
 
-def start_httptester(args):
-    """
-    :type args: EnvironmentConfig
-    :rtype: str, list[str]
-    """
-
-    # map ports from remote -> localhost -> container
-    # passing through localhost is only used when ansible-test is not already running inside a docker container
-    ports = [
-        dict(
-            remote=8080,
-            container=80,
-        ),
-        dict(
-            remote=8088,
-            container=88,
-        ),
-        dict(
-            remote=8443,
-            container=443,
-        ),
-        dict(
-            remote=8444,
-            container=444,
-        ),
-        dict(
-            remote=8749,
-            container=749,
-        ),
-    ]
-
-    container_id = get_docker_container_id()
-
-    if not container_id:
-        for item in ports:
-            item['localhost'] = get_available_port()
-
-    docker_pull(args, args.httptester)
-
-    httptester_id = run_httptester(args, dict((port['localhost'], port['container']) for port in ports if 'localhost' in port))
-
-    if container_id:
-        container_host = get_docker_container_ip(args, httptester_id)
-        display.info('Found httptester container address: %s' % container_host, verbosity=1)
-    else:
-        container_host = get_docker_hostname()
-
-    ssh_options = []
-
-    for port in ports:
-        ssh_options += ['-R', '%d:%s:%d' % (port['remote'], container_host, port.get('localhost', port['container']))]
-
-    return httptester_id, ssh_options
+def parse_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> t.Dict[str, t.Any]
+    """Return a dict parsed from the given inventory file."""
+    cmd = ['ansible-inventory', '-i', inventory_path, '--list']
+    env = ansible_environment(args)
+    inventory = json.loads(intercept_command(args, cmd, '', env, capture=True, disable_coverage=True)[0])
+    return inventory
 
 
-def run_httptester(args, ports=None):
-    """
-    :type args: EnvironmentConfig
-    :type ports: dict[int, int] | None
-    :rtype: str
-    """
-    options = [
-        '--detach',
-        '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password,
-    ]
-
-    if ports:
-        for localhost_port, container_port in ports.items():
-            options += ['-p', '%d:%d' % (localhost_port, container_port)]
-
-    network = get_docker_preferred_network_name(args)
-
-    if is_docker_user_defined_network(network):
-        # network-scoped aliases are only supported for containers in user defined networks
-        for alias in HTTPTESTER_HOSTS:
-            options.extend(['--network-alias', alias])
-
-    httptester_id = docker_run(args, args.httptester, options=options)[0]
-
-    if args.explain:
-        httptester_id = 'httptester_id'
-    else:
-        httptester_id = httptester_id.strip()
-
-    return httptester_id
-
-
-def inject_httptester(args):
-    """
-    :type args: CommonConfig
-    """
-    comment = ' # ansible-test httptester\n'
-    append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
-    hosts_path = '/etc/hosts'
-
-    original_lines = read_text_file(hosts_path).splitlines(True)
-
-    if not any(line.endswith(comment) for line in original_lines):
-        write_text_file(hosts_path, ''.join(original_lines + append_lines))
-
-    # determine which forwarding mechanism to use
-    pfctl = find_executable('pfctl', required=False)
-    iptables = find_executable('iptables', required=False)
-
-    if pfctl:
-        kldload = find_executable('kldload', required=False)
-
-        if kldload:
-            try:
-                run_command(args, ['kldload', 'pf'], capture=True)
-            except SubprocessError:
-                pass  # already loaded
-
-        rules = '''
-rdr pass inet proto tcp from any to any port 80 -> 127.0.0.1 port 8080
-rdr pass inet proto tcp from any to any port 88 -> 127.0.0.1 port 8088
-rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
-rdr pass inet proto tcp from any to any port 444 -> 127.0.0.1 port 8444
-rdr pass inet proto tcp from any to any port 749 -> 127.0.0.1 port 8749
-'''
-        cmd = ['pfctl', '-ef', '-']
-
-        try:
-            run_command(args, cmd, capture=True, data=rules)
-        except SubprocessError:
-            pass  # non-zero exit status on success
-
-    elif iptables:
-        ports = [
-            (80, 8080),
-            (88, 8088),
-            (443, 8443),
-            (444, 8444),
-            (749, 8749),
-        ]
-
-        for src, dst in ports:
-            rule = ['-o', 'lo', '-p', 'tcp', '--dport', str(src), '-j', 'REDIRECT', '--to-port', str(dst)]
-
-            try:
-                # check for existing rule
-                cmd = ['iptables', '-t', 'nat', '-C', 'OUTPUT'] + rule
-                run_command(args, cmd, capture=True)
-            except SubprocessError:
-                # append rule when it does not exist
-                cmd = ['iptables', '-t', 'nat', '-A', 'OUTPUT'] + rule
-                run_command(args, cmd, capture=True)
-    else:
-        raise ApplicationError('No supported port forwarding mechanism detected.')
+def get_hosts(inventory, group_name):  # type: (t.Dict[str, t.Any], str) -> t.Dict[str, t.Dict[str, t.Any]]
+    """Return a dict of hosts from the specified group in the given inventory."""
+    hostvars = inventory.get('_meta', {}).get('hostvars', {})
+    group = inventory.get(group_name, {})
+    host_names = group.get('hosts', [])
+    hosts = dict((name, hostvars[name]) for name in host_names)
+    return hosts
 
 
 def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, inventory_path, temp_path, always):
@@ -1445,12 +1243,6 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     :rtype: dict[str, str]
     """
     env = ansible_environment(args, ansible_config=ansible_config)
-
-    if args.inject_httptester:
-        env.update(dict(
-            HTTPTESTER='1',
-            KRB5_PASSWORD=args.httptester_krb5_password,
-        ))
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
 
@@ -1496,6 +1288,14 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
         if cloud_environment:
             env_config = cloud_environment.get_environment_config()
 
+    if env_config:
+        display.info('>>> Environment Config\n%s' % json.dumps(dict(
+            env_vars=env_config.env_vars,
+            ansible_vars=env_config.ansible_vars,
+            callback_plugins=env_config.callback_plugins,
+            module_defaults=env_config.module_defaults,
+        ), indent=4, sort_keys=True), verbosity=3)
+
     with integration_test_environment(args, target, inventory_path) as test_env:
         cmd = ['./%s' % os.path.basename(target.script_path)]
 
@@ -1518,6 +1318,7 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
                 cmd += ['-e', '@%s' % config_path]
 
             module_coverage = 'non_local/' not in target.aliases
+
             intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,
                               remote_temp_path=remote_temp_path, module_coverage=module_coverage)
 
@@ -1558,6 +1359,14 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
         if cloud_environment:
             env_config = cloud_environment.get_environment_config()
+
+    if env_config:
+        display.info('>>> Environment Config\n%s' % json.dumps(dict(
+            env_vars=env_config.env_vars,
+            ansible_vars=env_config.ansible_vars,
+            callback_plugins=env_config.callback_plugins,
+            module_defaults=env_config.module_defaults,
+        ), indent=4, sort_keys=True), verbosity=3)
 
     with integration_test_environment(args, target, inventory_path) as test_env:
         if os.path.exists(test_env.vars_file):
@@ -2138,17 +1947,15 @@ class NoTestsForChanges(ApplicationWarning):
 
 class Delegate(Exception):
     """Trigger command delegation."""
-    def __init__(self, exclude=None, require=None, integration_targets=None):
+    def __init__(self, exclude=None, require=None):
         """
         :type exclude: list[str] | None
         :type require: list[str] | None
-        :type integration_targets: tuple[IntegrationTarget] | None
         """
         super(Delegate, self).__init__()
 
         self.exclude = exclude or []
         self.require = require or []
-        self.integration_targets = integration_targets or tuple()
 
 
 class AllTargetsSkipped(ApplicationWarning):

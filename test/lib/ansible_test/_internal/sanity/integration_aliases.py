@@ -271,10 +271,17 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         )
 
         for cloud in clouds:
+            if cloud == 'httptester':
+                find = self.format_test_group_alias('linux').replace('linux', 'posix')
+                find_incidental = ['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX]
+            else:
+                find = self.format_test_group_alias(cloud, 'generic')
+                find_incidental = ['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX]
+
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
-                find=self.format_test_group_alias(cloud, 'cloud'),
-                find_incidental=['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX],
+                find=find,
+                find_incidental=find_incidental,
             )
 
         return messages

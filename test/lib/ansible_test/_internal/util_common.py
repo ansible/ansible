@@ -219,7 +219,7 @@ def named_temporary_file(args, prefix, suffix, directory, content):
     :rtype: str
     """
     if args.explain:
-        yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
+        yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
     else:
         with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
             tempfile_fd.write(to_bytes(content))

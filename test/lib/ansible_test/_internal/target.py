@@ -614,6 +614,9 @@ class IntegrationTarget(CompletionTarget):
         if 'destructive' not in groups:
             groups.append('non_destructive')
 
+        if 'needs/httptester' in groups:
+            groups.append('cloud/httptester')  # backwards compatibility for when it was not a cloud plugin
+
         if '_' in self.name:
             prefix = self.name[:self.name.find('_')]
         else:

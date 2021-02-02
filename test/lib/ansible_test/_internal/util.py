@@ -12,7 +12,6 @@ import pkgutil
 import random
 import re
 import shutil
-import socket
 import stat
 import string
 import subprocess
@@ -71,6 +70,13 @@ try:
     MAXFD = subprocess.MAXFD
 except AttributeError:
     MAXFD = -1
+
+try:
+    TKey = t.TypeVar('TKey')
+    TValue = t.TypeVar('TValue')
+except AttributeError:
+    TKey = None  # pylint: disable=invalid-name
+    TValue = None  # pylint: disable=invalid-name
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -146,6 +152,11 @@ def read_lines_without_comments(path, remove_blank_lines=False, optional=False):
         lines = [line for line in lines if line]
 
     return lines
+
+
+def exclude_none_values(data):  # type: (t.Dict[TKey, t.Optional[TValue]]) -> t.Dict[TKey, TValue]
+    """Return the provided dictionary with any None values excluded."""
+    return dict((key, value) for key, value in data.items() if value is not None)
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -725,18 +736,6 @@ def parse_to_list_of_dict(pattern, value):
     return matched
 
 
-def get_available_port():
-    """
-    :rtype: int
-    """
-    # this relies on the kernel not reusing previously assigned ports immediately
-    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    with contextlib.closing(socket_fd):
-        socket_fd.bind(('', 0))
-        return socket_fd.getsockname()[1]
-
-
 def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
     """Returns the set of types that are concrete subclasses of the given type."""
     subclasses = set()  # type: t.Set[t.Type[C]]
@@ -857,6 +856,21 @@ def open_zipfile(path, mode='r'):
     zib_obj = zipfile.ZipFile(path, mode=mode)
     yield zib_obj
     zib_obj.close()
+
+
+def sanitize_host_name(name):
+    """Return a sanitized version of the given name, suitable for use as a hostname."""
+    return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
+
+
+def devnull():
+    """Return a file descriptor for /dev/null, using a previously cached version if available."""
+    try:
+        return devnull.fd
+    except AttributeError:
+        devnull.fd = os.open('/dev/null', os.O_RDONLY)
+
+    return devnull.fd
 
 
 def get_hash(path):
