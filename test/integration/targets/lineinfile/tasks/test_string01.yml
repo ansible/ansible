@@ -1,0 +1,142 @@
+---
+###################################################################
+# 1st search_string tests
+
+- name: deploy the test file for lineinfile string
+  copy:
+    src: teststring.txt
+    dest: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - "result.checksum == '481c2b73fe062390afdd294063a4f8285d69ac85'"
+      - "result.state == 'file'"
+
+- name: insert a line at the beginning of the file, and back it up
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+    backup: yes
+  register: result1
+
+- name: insert a line at the beginning of the file again
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+  register: result2
+
+- name: Replace a line using string
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: present
+    line: "Thi$ i^ [ine 3"
+    search_string: (\\w)(\\s+)([\\.,])
+  register: backrefs_result1
+
+- name: Replace a line again using string
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: present
+    line: "Thi$ i^ [ine 3"
+    search_string: (\\w)(\\s+)([\\.,])
+  register: backrefs_result2
+
+- command: cat {{ output_dir }}/teststring.txt
+
+- name: assert that the line with backrefs was changed
+  assert:
+    that:
+      - backrefs_result1 is changed
+      - backrefs_result2 is not changed
+      - "backrefs_result1.msg == 'line replaced'"
+
+- name: stat the test after the backref line was replaced
+  stat:
+    path: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+      - "result.stat.checksum == '8084519b53e268920a46592a112297715951f167'"
+
+- name: remove the middle line using string
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: absent
+    search_string: "Thi$ i^ [ine 3"
+  register: result
+
+- name: assert that the line was removed
+  assert:
+    that:
+      - result is changed
+      - "result.msg == '1 line(s) removed'"
+
+- name: stat the test after the middle line was removed
+  stat:
+    path: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: assert test checksum matches after the middle line was removed
+  assert:
+    that:
+      - "result.stat.checksum == '89919ef2ef91e48ad02e0ca2bcb76dfc2a86d516'"
+
+- name: run a validation script that succeeds using string
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: absent
+    search_string: <FilesMatch ".py[45]?$">
+    validate: "true %s"
+  register: result
+
+- name: assert that the file validated after removing a line
+  assert:
+    that:
+      - result is changed
+      - "result.msg == '1 line(s) removed'"
+
+- name: stat the test after the validation succeeded
+  stat:
+    path: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: assert test checksum matches after the validation succeeded
+  assert:
+    that:
+      - "result.stat.checksum == 'ba9600b34febbc88bfb3ca99cd6b57f1010c19a4'"
+
+- name: run a validation script that fails using string
+  lineinfile:
+    dest: "{{ output_dir }}/teststring.txt"
+    state: absent
+    search_string: "This is line 1"
+    validate: "/bin/false %s"
+  register: result
+  ignore_errors: yes
+
+- name: assert that the validate failed
+  assert:
+    that:
+      - "result.failed == true"
+
+- name: stat the test after the validation failed
+  stat:
+    path: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: assert test checksum matches the previous after the validation failed
+  assert:
+    that:
+      - "result.stat.checksum == 'ba9600b34febbc88bfb3ca99cd6b57f1010c19a4'"
+
+# End of string tests
+###################################################################

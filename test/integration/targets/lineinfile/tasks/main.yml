@@ -253,6 +253,8 @@
     that:
       - "result.stat.checksum == 'ab56c210ea82839a54487464800fed4878cb2608'"
 
+- import_tasks: test_string01.yml
+
 - name: use create=yes
   lineinfile:
     dest: "{{ output_dir }}/new_test.txt"
@@ -806,7 +808,8 @@
       - oneline_insbefore_test2 is not changed
       - oneline_insbefore_file.stat.checksum == '4dca56d05a21f0d018cd311f43e134e4501cf6d9'
 
-###################################################################
+- import_tasks: test_string02.yml
+
 # Issue 29443
 # When using an empty regexp, replace the last line (since it matches every line)
 # but also provide a warning.
@@ -847,6 +850,49 @@
       The regular expression is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
       If this is desired, use '^' to match every line in the file and avoid this warning.
+
+###################################################################
+# When using an empty search string, replace the last line (since it matches every line)
+# but also provide a warning.
+
+- name: Deploy the test file for lineinfile
+  copy:
+    src: teststring.txt
+    dest: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '481c2b73fe062390afdd294063a4f8285d69ac85'
+      - result.state == 'file'
+
+- name: Insert a line in the file using an empty string as a search string
+  lineinfile:
+    path: "{{ output_dir }}/teststring.txt"
+    search_string: ''
+    line: This is line 6
+  register: insert_empty_literal
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/teststring.txt"
+  register: result
+
+- name: Assert that the file contents match what is expected and a warning was displayed
+  assert:
+    that:
+      - insert_empty_literal is changed
+      - warning_message in insert_empty_literal.warnings
+      - result.stat.checksum == 'eaa79f878557d4bd8d96787a850526a0facab342'
+  vars:
+    warning_message: >-
+      The search string is an empty string, which will match every line in the file.
+      This may have unintended consequences, such as replacing the last line in the file rather than appending.
+
+- name: meta
+  meta: end_play
 
 ###################################################################
 ## Issue #58923
@@ -1126,6 +1172,120 @@
       - insertbefore_test5 is not changed
       - insertbefore_test5_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
 
+########################################################################################
+# Same tests for literal
+
+# Test insertafter with literal
+- name: Deploy the test file
+  copy:
+    src: teststring_58923.txt
+    dest: "{{ output_dir }}/teststring_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+# Regarding the documentation:
+# If the search string is passed to both search_string and
+# insertafter, insertafter is only honored if no match for search_string is found.
+# Therefore,
+# when search_string expressions are passed to both search_string and insertafter, then:
+# 1. search_string was found -> ignore insertafter, replace the founded line
+# 2. search_string was not found -> insert the line after 'insertafter' line
+
+# literal is not present in the file, so the line must be inserted after ^#!/bin/sh
+- name: Add the line using firstmatch, regexp, and insertafter
+  lineinfile:
+    path: "{{ output_dir }}/teststring_58923.txt"
+    insertafter: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test1
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/teststring_58923.txt"
+  register: insertafter_test1_file
+
+- name: Add the line using firstmatch, literal, and insertafter again
+  lineinfile:
+    path: "{{ output_dir }}/teststring_58923.txt"
+    insertafter: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test2
+
+# Check of the prev step.
+# We tried to add the same line with the same playbook,
+# so nothing has been added:
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/teststring_58923.txt"
+  register: insertafter_test2_file
+
+- name: Assert insertafter tests gave the expected results
+  assert:
+    that:
+      - insertafter_test1 is changed
+      - insertafter_test1_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+      - insertafter_test2 is not changed
+      - insertafter_test2_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+
+# Test insertbefore with literal
+- name: Deploy the test file
+  copy:
+    src: teststring_58923.txt
+    dest: "{{ output_dir }}/teststring_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+- name: Add the line using literal, firstmatch, and insertbefore
+  lineinfile:
+    path: "{{ output_dir }}/teststring_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test1
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/teststring_58923.txt"
+  register: insertbefore_test1_file
+
+- name: Add the line using literal, firstmatch, and insertbefore again
+  lineinfile:
+    path: "{{ output_dir }}/teststring_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test2
+
+- name: Stat the file again
+  stat:
+    path: "{{ output_dir }}/teststring_58923.txt"
+  register: insertbefore_test2_file
+
+- name: Assert insertbefore with literal tests gave the expected results
+  assert:
+    that:
+      - insertbefore_test1 is changed
+      - insertbefore_test1_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+      - insertbefore_test2 is not changed
+      - insertbefore_test2_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
 
 # Test inserting a line at the end of the file using regexp with insertafter
 # https://github.com/ansible/ansible/issues/63684
@@ -1147,6 +1307,35 @@
 - name: Stat the file
   stat:
     path: "{{ output_dir }}/testend.txt"
+  register: testend_file
+
+- name: Assert inserting at the end gave the expected results.
+  assert:
+    that:
+      - testend1 is changed
+      - testend2 is changed
+      - testend_file.stat.checksum == 'ef36116966836ce04f6b249fd1837706acae4e19'
+
+# Test inserting a line at the end of the file using search_string with insertafter
+
+- name: Create a file by inserting a line
+  lineinfile:
+    path: "{{ output_dir }}/testendliteral.txt"
+    create: yes
+    line: testline
+  register: testend1
+
+- name: Insert a line at the end of the file
+  lineinfile:
+    path: "{{ output_dir }}/testendliteral.txt"
+    insertafter: testline
+    search_string: line at the end
+    line: line at the end
+  register: testend2
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/testendliteral.txt"
   register: testend_file
 
 - name: Assert inserting at the end gave the expected results.
