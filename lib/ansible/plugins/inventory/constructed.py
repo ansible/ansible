@@ -140,8 +140,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._read_config_data(path)
 
-        current_source = inventory._sources.index(path)
-        sources = inventory._sources[0:current_source]
+        #current_source = inventory._sources.index(path)  # this would work on Imanager, but not idata
+        #sources = inventory._sources[0:current_source]
+        sources = []
 
         strict = self.get_option('strict')
         fact_cache = FactCache()
