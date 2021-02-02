@@ -21,7 +21,8 @@ description:
     - Set system's hostname. Supports most OSs/Distributions including those using C(systemd).
     - Windows, HP-UX, and AIX are not currently supported.
 notes:
-    - This module does B(NOT) modify C(/etc/hosts). You need to modify it yourself using other modules like M(template) or M(replace).
+    - This module does B(NOT) modify C(/etc/hosts). You need to modify it yourself using other modules such as M(ansible.builtin.template)
+      or M(ansible.builtin.replace).
     - On macOS, this module uses C(scutil) to set C(HostName), C(ComputerName), and C(LocalHostName). Since C(LocalHostName)
       cannot contain spaces or most special characters, this module will replace characters when setting C(LocalHostName).
     - Supports C(check_mode).
