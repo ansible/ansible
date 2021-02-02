@@ -1,0 +1,3 @@
+---
+bugfixes:
+- validate-modules - do not raise an ``AttributeError`` if a value is assigned to a module attribute in a try/except block.
