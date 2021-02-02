@@ -666,7 +666,7 @@ class ModuleValidator(Validator):
                         found_try_except_import = True
                     if isinstance(grandchild, ast.Assign):
                         for target in grandchild.targets:
-                            if not hasattr(target, 'id'):
+                            if not isinstance(target, ast.Name):
                                 continue
                             if target.id.lower().startswith('has_'):
                                 found_has = True
