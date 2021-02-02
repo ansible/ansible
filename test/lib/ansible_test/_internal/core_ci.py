@@ -490,8 +490,9 @@ class CoreHttpError(HttpError):
 
 class SshKey:
     """Container for SSH key used to connect to remote instances."""
-    KEY_NAME = 'id_rsa'
-    PUB_NAME = 'id_rsa.pub'
+    KEY_TYPE = 'rsa'  # RSA is used to maintain compatibility with paramiko and EC2
+    KEY_NAME = 'id_%s' % KEY_TYPE
+    PUB_NAME = '%s.pub' % KEY_NAME
 
     def __init__(self, args):
         """
@@ -519,8 +520,10 @@ class SshKey:
 
         if args.explain:
             self.pub_contents = None
+            self.key_contents = None
         else:
             self.pub_contents = read_text_file(self.pub).strip()
+            self.key_contents = read_text_file(self.key).strip()
 
     def get_in_tree_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
         """Return the ansible-test SSH key pair paths from the content tree."""
@@ -562,7 +565,7 @@ class SshKey:
             make_dirs(os.path.dirname(key))
 
         if not os.path.isfile(key) or not os.path.isfile(pub):
-            run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
+            run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', self.KEY_TYPE, '-N', '', '-f', key])
 
             # newer ssh-keygen PEM output (such as on RHEL 8.1) is not recognized by paramiko
             key_contents = read_text_file(key)

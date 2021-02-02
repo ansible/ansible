@@ -377,7 +377,7 @@ def docker_network_inspect(args, network):
             raise ex
 
 
-def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):
+def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None, data=None):
     """
     :type args: EnvironmentConfig
     :type container_id: str
@@ -386,12 +386,16 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     :type capture: bool
     :type stdin: BinaryIO | None
     :type stdout: BinaryIO | None
+    :type data: str | None
     :rtype: str | None, str | None
     """
     if not options:
         options = []
 
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout)
+    if data:
+        options.append('-i')
+
+    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, data=data)
 
 
 def docker_info(args):
