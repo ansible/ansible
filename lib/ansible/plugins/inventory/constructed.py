@@ -111,25 +111,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         return valid
 
-    def get_all_host_vars(self, host, loader, inventory):
+    def get_all_host_vars(self, host, loader, sources):
         ''' requires host object '''
-        return combine_vars(self.host_groupvars(host, loader, inventory), self.get_host_vars(host, loader, inventory))
+        return combine_vars(self.host_groupvars(host, loader, sources), self.get_host_vars(host, loader, sources))
 
-    def host_groupvars(self, host, loader, inventory):
+    def host_groupvars(self, host, loader, sources):
         ''' requires host object '''
         gvars = get_group_vars(host.get_groups())
 
         if self.get_option('use_vars_plugins'):
-            gvars = combine_vars(gvars, get_vars_from_inventory_sources(loader, inventory._sources, host.get_groups(), 'inventory'))
+            gvars = combine_vars(gvars, get_vars_from_inventory_sources(loader, sources, host.get_groups(), 'inventory'))
 
         return gvars
 
-    def host_vars(self, host, loader, inventory):
+    def host_vars(self, host, loader, sources):
         ''' requires host object '''
         hvars = host.get_vars()
 
         if self.get_option('use_vars_plugins'):
-            hvars = combine_vars(hvars, get_vars_from_inventory_sources(loader, inventory._sources, [host], 'inventory'))
+            hvars = combine_vars(hvars, get_vars_from_inventory_sources(loader, sources, [host], 'inventory'))
 
         return hvars
 
@@ -140,6 +140,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._read_config_data(path)
 
+        current_source = inventory._sources.index(path)
+        sources = inventory._sources[0:current_source]
+
         strict = self.get_option('strict')
         fact_cache = FactCache()
         try:
@@ -147,7 +150,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, inventory)
+                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
                 if host in fact_cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, fact_cache[host])
 
@@ -155,7 +158,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
-                hostvars = self.get_all_hostvars(inventory.hosts[host], loader, inventory)
+                hostvars = self.get_all_hostvars(inventory.hosts[host], loader, sources)
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 
