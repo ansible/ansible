@@ -37,11 +37,13 @@ from .config import (
 
 from .core_ci import (
     AnsibleCoreCI,
+    SshKey,
 )
 
 from .manage_ci import (
     ManagePosixCI,
     ManageWindowsCI,
+    get_ssh_key_setup,
 )
 
 from .util import (
@@ -337,6 +339,9 @@ def delegate_docker(args, exclude, require, integration_targets):
 
             setup_sh = read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'docker.sh'))
 
+            ssh_keys_sh = get_ssh_key_setup(SshKey(args))
+
+            setup_sh += ssh_keys_sh
             shell = setup_sh.splitlines()[0][2:]
 
             docker_exec(args, test_id, [shell], data=setup_sh)

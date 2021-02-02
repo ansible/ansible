@@ -29,6 +29,7 @@ from .util_common import (
 
 from .core_ci import (
     AnsibleCoreCI,
+    SshKey,
 )
 
 from .ansible_util import (
@@ -280,6 +281,9 @@ class ManagePosixCI:
             python_version=python_version,
         )
 
+        ssh_keys_sh = get_ssh_key_setup(self.core_ci.ssh_key)
+
+        setup_sh += ssh_keys_sh
         shell = setup_sh.splitlines()[0][2:]
 
         self.ssh(shell, data=setup_sh)
@@ -358,6 +362,19 @@ class ManagePosixCI:
                 time.sleep(10)
 
         raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
+
+
+def get_ssh_key_setup(ssh_key):  # type: (SshKey) -> str
+    """Generate and return a script to configure SSH keys on a host."""
+    template = ShellScriptTemplate(read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'ssh-keys.sh')))
+
+    ssh_keys_sh = template.substitute(
+        ssh_public_key=ssh_key.pub_contents,
+        ssh_private_key=ssh_key.key_contents,
+        ssh_key_type=ssh_key.KEY_TYPE,
+    )
+
+    return ssh_keys_sh
 
 
 def get_network_settings(args, platform, version):  # type: (NetworkIntegrationConfig, str, str) -> NetworkPlatformSettings

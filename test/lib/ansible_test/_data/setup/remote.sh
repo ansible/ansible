@@ -165,24 +165,6 @@ elif [ "${platform}" = "aix" ]; then
     done
 fi
 
-# Generate our ssh key and add it to our authorized_keys file.
-# We also need to add localhost's server keys to known_hosts.
-
-if [ ! -f "${HOME}/.ssh/id_rsa.pub" ]; then
-    ssh-keygen -m PEM -q -t rsa -N '' -f "${HOME}/.ssh/id_rsa"
-    # newer ssh-keygen PEM output (such as on RHEL 8.1) is not recognized by paramiko
-    touch "${HOME}/.ssh/id_rsa.new"
-    chmod 0600 "${HOME}/.ssh/id_rsa.new"
-    sed 's/\(BEGIN\|END\) PRIVATE KEY/\1 RSA PRIVATE KEY/' "${HOME}/.ssh/id_rsa" > "${HOME}/.ssh/id_rsa.new"
-    mv "${HOME}/.ssh/id_rsa.new" "${HOME}/.ssh/id_rsa"
-    cat "${HOME}/.ssh/id_rsa.pub" >> "${HOME}/.ssh/authorized_keys"
-    chmod 0600 "${HOME}/.ssh/authorized_keys"
-    for key in /etc/ssh/ssh_host_*_key.pub; do
-        pk=$(cat "${key}")
-        echo "localhost ${pk}" >> "${HOME}/.ssh/known_hosts"
-    done
-fi
-
 # Improve prompts on remote host for interactive use.
 # shellcheck disable=SC1117
 cat << EOF > ~/.bashrc
