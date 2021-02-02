@@ -482,6 +482,26 @@ class TestPkgMgrFacts(TestCollectedFacts):
     }
 
 
+class TestPkgMgrOSTreeFacts(TestPkgMgrFacts):
+    @patch(
+        'ansible.module_utils.facts.system.pkg_mgr.os.path.exists',
+        side_effect=lambda x: x == '/run/ostree-booted')
+    def _recollect_facts(self, distribution, version, mock_exists):
+        self.collected_facts['ansible_distribution'] = distribution
+        self.collected_facts['ansible_distribution_major_version'] = \
+            str(version)
+        # Recollect facts
+        self.setUp()
+        self.assertIn('pkg_mgr', self.facts)
+        self.assertEqual(self.facts['pkg_mgr'], 'atomic_container')
+
+    def test_is_rhel_edge_ostree(self):
+        self._recollect_facts('RedHat', 8)
+
+    def test_is_fedora_ostree(self):
+        self._recollect_facts('Fedora', 33)
+
+
 class TestOpenBSDPkgMgrFacts(TestPkgMgrFacts):
     def test_is_openbsd_pkg(self):
         self.assertIn('pkg_mgr', self.facts)
