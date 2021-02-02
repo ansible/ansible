@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - centos6 image now has multiple fallback yum repositories for CentOS Vault.
