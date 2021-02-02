@@ -80,7 +80,7 @@ EXAMPLES = r'''
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleOptionsError
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
@@ -140,9 +140,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._read_config_data(path)
 
-        #current_source = inventory._sources.index(path)  # this would work on Imanager, but not idata
-        #sources = inventory._sources[0:current_source]
         sources = []
+        try:
+            sources = inventory.processed_sources
+        except AttributeError:
+            if self.get_option('use_vars_plugins'):
+                raise AnsibleOptionsError("The option use_vars_plugins requires ansible >= 2.11.")
 
         strict = self.get_option('strict')
         fact_cache = FactCache()
