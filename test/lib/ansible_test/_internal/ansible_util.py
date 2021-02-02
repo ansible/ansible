@@ -31,6 +31,7 @@ from .util_common import (
     create_temp_dir,
     run_command,
     ResultType,
+    intercept_command,
 )
 
 from .config import (
@@ -295,3 +296,15 @@ def get_collection_detail(args, python):  # type: (EnvironmentConfig, str) -> Co
     detail.version = str(version) if version is not None else None
 
     return detail
+
+
+def run_playbook(args, inventory_path, playbook, run_playbook_vars):  # type: (CommonConfig, str, str, t.Dict[str, t.Any]) -> None
+    """Run the specified playbook using the given inventory file and playbook variables."""
+    playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
+    command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(run_playbook_vars)]
+
+    if args.verbosity:
+        command.append('-%s' % ('v' * args.verbosity))
+
+    env = ansible_environment(args)
+    intercept_command(args, command, '', env, disable_coverage=True)

@@ -2,6 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os
 import re
 import sys
@@ -16,11 +17,8 @@ from .io import (
 
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
-    HTTPTESTER_HOSTS,
     create_shell_command,
-    run_httptester,
     run_pypi_proxy,
-    start_httptester,
     get_python_interpreter,
     get_python_version,
 )
@@ -69,24 +67,19 @@ from .util_common import (
 from .docker_util import (
     docker_exec,
     docker_get,
+    docker_inspect,
     docker_pull,
     docker_put,
     docker_rm,
     docker_run,
-    docker_available,
     docker_network_disconnect,
-    get_docker_networks,
-    get_docker_preferred_network_name,
+    get_docker_command,
     get_docker_hostname,
-    is_docker_user_defined_network,
 )
 
-from .cloud import (
-    get_cloud_providers,
-)
-
-from .target import (
-    IntegrationTarget,
+from .containers import (
+    SshConnectionDetail,
+    support_container_context,
 )
 
 from .data import (
@@ -119,12 +112,11 @@ def check_delegation_args(args):
         get_python_version(args, get_remote_completion(), args.remote)
 
 
-def delegate(args, exclude, require, integration_targets):
+def delegate(args, exclude, require):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
-    :type integration_targets: tuple[IntegrationTarget]
     :rtype: bool
     """
     if isinstance(args, TestConfig):
@@ -137,31 +129,30 @@ def delegate(args, exclude, require, integration_targets):
             args.metadata.to_file(args.metadata_path)
 
             try:
-                return delegate_command(args, exclude, require, integration_targets)
+                return delegate_command(args, exclude, require)
             finally:
                 args.metadata_path = None
     else:
-        return delegate_command(args, exclude, require, integration_targets)
+        return delegate_command(args, exclude, require)
 
 
-def delegate_command(args, exclude, require, integration_targets):
+def delegate_command(args, exclude, require):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
-    :type integration_targets: tuple[IntegrationTarget]
     :rtype: bool
     """
     if args.venv:
-        delegate_venv(args, exclude, require, integration_targets)
+        delegate_venv(args, exclude, require)
         return True
 
     if args.docker:
-        delegate_docker(args, exclude, require, integration_targets)
+        delegate_docker(args, exclude, require)
         return True
 
     if args.remote:
-        delegate_remote(args, exclude, require, integration_targets)
+        delegate_remote(args, exclude, require)
         return True
 
     return False
@@ -170,19 +161,12 @@ def delegate_command(args, exclude, require, integration_targets):
 def delegate_venv(args,  # type: EnvironmentConfig
                   exclude,  # type: t.List[str]
                   require,  # type: t.List[str]
-                  integration_targets,  # type: t.Tuple[IntegrationTarget, ...]
                   ):  # type: (...) -> None
     """Delegate ansible-test execution to a virtual environment using venv or virtualenv."""
     if args.python:
         versions = (args.python_version,)
     else:
         versions = SUPPORTED_PYTHON_VERSIONS
-
-    if args.httptester:
-        needs_httptester = sorted(target.name for target in integration_targets if 'needs/httptester/' in target.aliases)
-
-        if needs_httptester:
-            display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
 
     if args.venv_system_site_packages:
         suffix = '-ssp'
@@ -224,30 +208,26 @@ def delegate_venv(args,  # type: EnvironmentConfig
                 PYTHONPATH=library_path,
             )
 
-            run_command(args, cmd, env=env)
+            with support_container_context(args, None) as containers:
+                if containers:
+                    cmd.extend(['--containers', json.dumps(containers.to_dict())])
+
+                run_command(args, cmd, env=env)
 
 
-def delegate_docker(args, exclude, require, integration_targets):
+def delegate_docker(args, exclude, require):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
-    :type integration_targets: tuple[IntegrationTarget]
     """
+    get_docker_command(required=True)  # fail early if docker is not available
+
     test_image = args.docker
     privileged = args.docker_privileged
 
-    if isinstance(args, ShellConfig):
-        use_httptester = args.httptester
-    else:
-        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
-
-    if use_httptester:
-        docker_pull(args, args.httptester)
-
     docker_pull(args, test_image)
 
-    httptester_id = None
     test_id = None
     success = False
 
@@ -295,11 +275,6 @@ def delegate_docker(args, exclude, require, integration_targets):
         try:
             create_payload(args, local_source_fd.name)
 
-            if use_httptester:
-                httptester_id = run_httptester(args)
-            else:
-                httptester_id = None
-
             test_options = [
                 '--detach',
                 '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
@@ -320,28 +295,7 @@ def delegate_docker(args, exclude, require, integration_targets):
             if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
-            if httptester_id:
-                test_options += ['--env', 'HTTPTESTER=1', '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password]
-
-                network = get_docker_preferred_network_name(args)
-
-                if not is_docker_user_defined_network(network):
-                    # legacy links are required when using the default bridge network instead of user-defined networks
-                    for host in HTTPTESTER_HOSTS:
-                        test_options += ['--link', '%s:%s' % (httptester_id, host)]
-
-            if isinstance(args, IntegrationConfig):
-                cloud_platforms = get_cloud_providers(args)
-
-                for cloud_platform in cloud_platforms:
-                    test_options += cloud_platform.get_docker_run_options()
-
-            test_id = docker_run(args, test_image, options=test_options)[0]
-
-            if args.explain:
-                test_id = 'test_id'
-            else:
-                test_id = test_id.strip()
+            test_id = docker_run(args, test_image, options=test_options)
 
             setup_sh = read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'docker.sh'))
 
@@ -377,7 +331,8 @@ def delegate_docker(args, exclude, require, integration_targets):
 
                 docker_exec(args, test_id, cmd + ['--requirements-mode', 'only'], options=cmd_options)
 
-                networks = get_docker_networks(args, test_id)
+                container = docker_inspect(args, test_id)
+                networks = container.get_network_names()
 
                 if networks is not None:
                     for network in networks:
@@ -391,7 +346,11 @@ def delegate_docker(args, exclude, require, integration_targets):
                 cmd_options += ['--user', 'pytest']
 
             try:
-                docker_exec(args, test_id, cmd, options=cmd_options)
+                with support_container_context(args, None) as containers:
+                    if containers:
+                        cmd.extend(['--containers', json.dumps(containers.to_dict())])
+
+                    docker_exec(args, test_id, cmd, options=cmd_options)
                 # docker_exec will throw SubprocessError if not successful
                 # If we make it here, all the prep work earlier and the docker_exec line above were all successful.
                 success = True
@@ -402,16 +361,21 @@ def delegate_docker(args, exclude, require, integration_targets):
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
 
-                make_dirs(local_test_root)  # make sure directory exists for collections which have no tests
+                try:
+                    make_dirs(local_test_root)  # make sure directory exists for collections which have no tests
 
-                with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root, remote_results_name])
-                    docker_get(args, test_id, remote_temp_file, local_result_fd.name)
-                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', local_test_root])
+                    with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
+                        docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root,
+                                                    remote_results_name])
+                        docker_get(args, test_id, remote_temp_file, local_result_fd.name)
+                        run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', local_test_root])
+                except Exception as ex:  # pylint: disable=broad-except
+                    if success:
+                        raise  # download errors are fatal, but only if tests succeeded
+
+                    # handle download error here to avoid masking test failures
+                    display.warning('Failed to download results while handling an exception: %s' % ex)
         finally:
-            if httptester_id:
-                docker_rm(args, httptester_id)
-
             if pypi_proxy_id:
                 docker_rm(args, pypi_proxy_id)
 
@@ -420,42 +384,26 @@ def delegate_docker(args, exclude, require, integration_targets):
                     docker_rm(args, test_id)
 
 
-def delegate_remote(args, exclude, require, integration_targets):
+def delegate_remote(args, exclude, require):
     """
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
-    :type integration_targets: tuple[IntegrationTarget]
     """
     remote = args.parsed_remote
 
     core_ci = AnsibleCoreCI(args, remote.platform, remote.version, stage=args.remote_stage, provider=args.remote_provider, arch=remote.arch)
     success = False
-    raw = False
 
-    if isinstance(args, ShellConfig):
-        use_httptester = args.httptester
-        raw = args.raw
-    else:
-        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
-
-    if use_httptester and not docker_available():
-        display.warning('Assuming --disable-httptester since `docker` is not available.')
-        use_httptester = False
-
-    httptester_id = None
     ssh_options = []
     content_root = None
 
     try:
         core_ci.start()
-
-        if use_httptester:
-            httptester_id, ssh_options = start_httptester(args)
-
         core_ci.wait()
 
         python_version = get_python_version(args, get_remote_completion(), args.remote)
+        python_interpreter = None
 
         if remote.platform == 'windows':
             # Windows doesn't need the ansible-test fluff, just run the SSH command
@@ -463,7 +411,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage.setup(python_version)
 
             cmd = ['powershell.exe']
-        elif raw:
+        elif isinstance(args, ShellConfig) and args.raw:
             manage = ManagePosixCI(core_ci)
             manage.setup(python_version)
 
@@ -487,9 +435,6 @@ def delegate_remote(args, exclude, require, integration_targets):
 
             cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
-            if httptester_id:
-                cmd += ['--inject-httptester', '--httptester-krb5-password', args.httptester_krb5_password]
-
             if isinstance(args, TestConfig):
                 if args.coverage and not args.coverage_label:
                     cmd += ['--coverage-label', 'remote-%s-%s' % (remote.platform, remote.version)]
@@ -502,14 +447,16 @@ def delegate_remote(args, exclude, require, integration_targets):
             if isinstance(args, UnitsConfig) and not args.python:
                 cmd += ['--python', 'default']
 
-        if isinstance(args, IntegrationConfig):
-            cloud_platforms = get_cloud_providers(args)
-
-            for cloud_platform in cloud_platforms:
-                ssh_options += cloud_platform.get_remote_ssh_options()
-
         try:
-            manage.ssh(cmd, ssh_options)
+            ssh_con = core_ci.connection
+            ssh = SshConnectionDetail(core_ci.name, ssh_con.hostname, ssh_con.port, ssh_con.username, core_ci.ssh_key.key, python_interpreter)
+
+            with support_container_context(args, ssh) as containers:
+                if containers:
+                    cmd.extend(['--containers', json.dumps(containers.to_dict())])
+
+                manage.ssh(cmd, ssh_options)
+
             success = True
         finally:
             download = False
@@ -532,14 +479,20 @@ def delegate_remote(args, exclude, require, integration_targets):
                 # pattern and achieve the same goal
                 cp_opts = '-hr' if remote.platform in ['aix', 'ibmi'] else '-a'
 
-                manage.ssh('rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root))
-                manage.download(remote_temp_path, local_test_root)
+                try:
+                    command = 'rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root)
+
+                    manage.ssh(command, capture=True)  # pylint: disable=unexpected-keyword-arg
+                    manage.download(remote_temp_path, local_test_root)
+                except Exception as ex:  # pylint: disable=broad-except
+                    if success:
+                        raise  # download errors are fatal, but only if tests succeeded
+
+                    # handle download error here to avoid masking test failures
+                    display.warning('Failed to download results while handling an exception: %s' % ex)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             core_ci.stop()
-
-        if httptester_id:
-            docker_rm(args, httptester_id)
 
 
 def generate_command(args, python_interpreter, ansible_bin_path, content_root, options, exclude, require):

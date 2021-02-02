@@ -72,6 +72,13 @@ try:
 except AttributeError:
     MAXFD = -1
 
+try:
+    TKey = t.TypeVar('TKey')
+    TValue = t.TypeVar('TValue')
+except AttributeError:
+    TKey = None  # pylint: disable=invalid-name
+    TValue = None  # pylint: disable=invalid-name
+
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -146,6 +153,11 @@ def read_lines_without_comments(path, remove_blank_lines=False, optional=False):
         lines = [line for line in lines if line]
 
     return lines
+
+
+def exclude_none_values(data):  # type: (t.Dict[TKey, t.Optional[TValue]]) -> t.Dict[TKey, TValue]
+    """Return the provided dictionary with any None values excluded."""
+    return dict((key, value) for key, value in data.items() if value is not None)
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -365,8 +377,6 @@ def common_environment():
     )
 
     optional = (
-        'HTTPTESTER',
-        'KRB5_PASSWORD',
         'LD_LIBRARY_PATH',
         'SSH_AUTH_SOCK',
         # MacOS High Sierra Compatibility
@@ -725,18 +735,6 @@ def parse_to_list_of_dict(pattern, value):
     return matched
 
 
-def get_available_port():
-    """
-    :rtype: int
-    """
-    # this relies on the kernel not reusing previously assigned ports immediately
-    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    with contextlib.closing(socket_fd):
-        socket_fd.bind(('', 0))
-        return socket_fd.getsockname()[1]
-
-
 def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
     """Returns the set of types that are concrete subclasses of the given type."""
     subclasses = set()  # type: t.Set[t.Type[C]]
@@ -859,6 +857,21 @@ def open_zipfile(path, mode='r'):
     zib_obj.close()
 
 
+def sanitize_host_name(name):
+    """Return a sanitized version of the given name, suitable for use as a hostname."""
+    return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
+
+
+def devnull():
+    """Return a file descriptor for /dev/null, using a previously cached version if available."""
+    try:
+        return devnull.fd
+    except AttributeError:
+        devnull.fd = os.open('/dev/null', os.O_RDONLY)
+
+    return devnull.fd
+
+
 def get_hash(path):
     """
     :type path: str
@@ -872,6 +885,22 @@ def get_hash(path):
     file_hash.update(read_binary_file(path))
 
     return file_hash.hexdigest()
+
+
+def get_host_ip():
+    """Return the host's IP address."""
+    try:
+        return get_host_ip.ip
+    except AttributeError:
+        pass
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.connect(('10.255.255.255', 22))
+        host_ip = get_host_ip.ip = sock.getsockname()[0]
+
+    display.info('Detected host IP: %s' % host_ip, verbosity=1)
+
+    return host_ip
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

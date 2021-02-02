@@ -9,7 +9,6 @@ from . import types as t
 
 from .util import (
     find_python,
-    generate_password,
     generate_pip_command,
     ApplicationError,
 )
@@ -126,13 +125,7 @@ class EnvironmentConfig(CommonConfig):
         if self.delegate:
             self.requirements = True
 
-        self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
-        self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
-        krb5_password = args.httptester_krb5_password if 'httptester_krb5_password' in args else ''
-        self.httptester_krb5_password = krb5_password or generate_password()  # type: str
-
-        if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
-            self.httptester = False
+        self.containers = args.containers  # type: t.Optional[t.Dict[str, t.Dict[str, t.Dict[str, t.Any]]]]
 
         if self.get_delegated_completion().get('pip-check', 'enabled') == 'disabled':
             self.pip_check = False
@@ -232,9 +225,6 @@ class ShellConfig(EnvironmentConfig):
         super(ShellConfig, self).__init__(args, 'shell')
 
         self.raw = args.raw  # type: bool
-
-        if self.raw:
-            self.httptester = False
 
 
 class SanityConfig(TestConfig):
