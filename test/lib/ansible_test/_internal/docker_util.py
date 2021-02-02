@@ -4,6 +4,8 @@ __metaclass__ = type
 
 import json
 import os
+import random
+import socket
 import time
 
 from . import types as t
@@ -27,6 +29,7 @@ from .http import (
 
 from .util_common import (
     run_command,
+    raw_command,
 )
 
 from .config import (
@@ -35,12 +38,68 @@ from .config import (
 
 BUFFER_SIZE = 256 * 256
 
+DOCKER_COMMANDS = [
+    'docker',
+    'podman',
+]
 
-def docker_available():
-    """
-    :rtype: bool
-    """
-    return find_executable('docker', required=False)
+
+class DockerCommand:
+    """Details about the available docker command."""
+    def __init__(self, command, executable, version):  # type: (str, str, str) -> None
+        self.command = command
+        self.executable = executable
+        self.version = version
+
+    @staticmethod
+    def detect():  # type: () -> t.Optional[DockerCommand]
+        """Detect and return the available docker command, or None."""
+        if os.environ.get('ANSIBLE_TEST_PREFER_PODMAN'):
+            commands = list(reversed(DOCKER_COMMANDS))
+        else:
+            commands = DOCKER_COMMANDS
+
+        for command in commands:
+            executable = find_executable(command, required=False)
+
+            if executable:
+                version = raw_command([command, '-v'], capture=True)[0].strip()
+
+                if command == 'docker' and 'podman' in version:
+                    continue  # avoid detecting podman as docker
+
+                display.info('Detected "%s" container runtime version: %s' % (command, version), verbosity=1)
+
+                return DockerCommand(command, executable, version)
+
+        return None
+
+
+def get_docker_command(required=False):  # type: (bool) -> t.Optional[DockerCommand]
+    """Return the docker command to invoke. Raises an exception if docker is not available."""
+    try:
+        return get_docker_command.cmd
+    except AttributeError:
+        get_docker_command.cmd = DockerCommand.detect()
+
+    if required and not get_docker_command.cmd:
+        raise ApplicationError("No container runtime detected. Supported commands: %s" % ', '.join(DOCKER_COMMANDS))
+
+    return get_docker_command.cmd
+
+
+def get_docker_host_ip():  # type: () -> str
+    """Return the IP of the Docker host."""
+    try:
+        return get_docker_host_ip.ip
+    except AttributeError:
+        pass
+
+    docker_host_ip = get_docker_host_ip.ip = socket.gethostbyname(get_docker_hostname())
+
+    display.info('Detected docker host IP: %s' % docker_host_ip, verbosity=1)
+
+    return docker_host_ip
 
 
 def get_docker_hostname():  # type: () -> str
@@ -101,45 +160,6 @@ def get_docker_container_id():
     return container_id
 
 
-def get_docker_container_ip(args, container_id):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :rtype: str
-    """
-    results = docker_inspect(args, container_id)
-    network_settings = results[0]['NetworkSettings']
-    networks = network_settings.get('Networks')
-
-    if networks:
-        network_name = get_docker_preferred_network_name(args) or 'bridge'
-        ipaddress = networks[network_name]['IPAddress']
-    else:
-        # podman doesn't provide Networks, fall back to using IPAddress
-        ipaddress = network_settings['IPAddress']
-
-    if not ipaddress:
-        raise ApplicationError('Cannot retrieve IP address for container: %s' % container_id)
-
-    return ipaddress
-
-
-def get_docker_network_name(args, container_id):  # type: (EnvironmentConfig, str) -> str
-    """
-    Return the network name of the specified container.
-    Raises an exception if zero or more than one network is found.
-    """
-    networks = get_docker_networks(args, container_id)
-
-    if not networks:
-        raise ApplicationError('No network found for Docker container: %s.' % container_id)
-
-    if len(networks) > 1:
-        raise ApplicationError('Found multiple networks for Docker container %s instead of only one: %s' % (container_id, ', '.join(networks)))
-
-    return networks[0]
-
-
 def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     """
     Return the preferred network name for use with Docker. The selection logic is:
@@ -147,6 +167,11 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     - the network of the currently running docker container (if any)
     - the default docker network (returns None)
     """
+    try:
+        return get_docker_preferred_network_name.network
+    except AttributeError:
+        pass
+
     network = None
 
     if args.docker_network:
@@ -157,7 +182,10 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
         if current_container_id:
             # Make sure any additional containers we launch use the same network as the current container we're running in.
             # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
-            network = get_docker_network_name(args, current_container_id)
+            container = docker_inspect(args, current_container_id, always=True)
+            network = container.get_network_name()
+
+    get_docker_preferred_network_name.network = network
 
     return network
 
@@ -167,26 +195,12 @@ def is_docker_user_defined_network(network):  # type: (str) -> bool
     return network and network != 'bridge'
 
 
-def get_docker_networks(args, container_id):
-    """
-    :param args: EnvironmentConfig
-    :param container_id: str
-    :rtype: list[str]
-    """
-    results = docker_inspect(args, container_id)
-    # podman doesn't return Networks- just silently return None if it's missing...
-    networks = results[0]['NetworkSettings'].get('Networks')
-    if networks is None:
-        return None
-    return sorted(networks)
-
-
 def docker_pull(args, image):
     """
     :type args: EnvironmentConfig
     :type image: str
     """
-    if ('@' in image or ':' in image) and docker_images(args, image):
+    if ('@' in image or ':' in image) and docker_image_exists(args, image):
         display.info('Skipping docker pull of existing image with tag or digest: %s' % image, verbosity=2)
         return
 
@@ -203,6 +217,11 @@ def docker_pull(args, image):
             time.sleep(3)
 
     raise ApplicationError('Failed to pull docker image "%s".' % image)
+
+
+def docker_cp_to(args, container_id, src, dst):  # type: (EnvironmentConfig, str, str, str) -> None
+    """Copy a file to the specified container."""
+    docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)])
 
 
 def docker_put(args, container_id, src, dst):
@@ -238,7 +257,7 @@ def docker_run(args, image, options, cmd=None, create_only=False):
     :type options: list[str] | None
     :type cmd: list[str] | None
     :type create_only[bool] | False
-    :rtype: str | None, str | None
+    :rtype: str
     """
     if not options:
         options = []
@@ -255,12 +274,16 @@ def docker_run(args, image, options, cmd=None, create_only=False):
 
     if is_docker_user_defined_network(network):
         # Only when the network is not the default bridge network.
-        # Using this with the default bridge network results in an error when using --link: links are only supported for user-defined networks
         options.extend(['--network', network])
 
     for _iteration in range(1, 3):
         try:
-            return docker_command(args, [command] + options + [image] + cmd, capture=True)
+            stdout = docker_command(args, [command] + options + [image] + cmd, capture=True)[0]
+
+            if args.explain:
+                return ''.join(random.choice('0123456789abcdef') for _iteration in range(64))
+
+            return stdout.strip()
         except SubprocessError as ex:
             display.error(ex)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
@@ -269,7 +292,7 @@ def docker_run(args, image, options, cmd=None, create_only=False):
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args, container_id, options):  # type: (EnvironmentConfig, str, t.List[str]) -> (t.Optional[str], t.Optional[str])
+def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> (t.Optional[str], t.Optional[str])
     """
     Start a docker container by name or ID
     """
@@ -287,33 +310,6 @@ def docker_start(args, container_id, options):  # type: (EnvironmentConfig, str,
     raise ApplicationError('Failed to run docker container "%s".' % container_id)
 
 
-def docker_images(args, image):
-    """
-    :param args: CommonConfig
-    :param image: str
-    :rtype: list[dict[str, any]]
-    """
-    try:
-        stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
-    except SubprocessError as ex:
-        if 'no such image' in ex.stderr:
-            return []  # podman does not handle this gracefully, exits 125
-
-        if 'function "json" not defined' in ex.stderr:
-            # podman > 2 && < 2.2.0 breaks with --format {{json .}}, and requires --format json
-            # So we try this as a fallback. If it fails again, we just raise the exception and bail.
-            stdout, _dummy = docker_command(args, ['images', image, '--format', 'json'], capture=True, always=True)
-        else:
-            raise ex
-
-    if stdout.startswith('['):
-        # modern podman outputs a pretty-printed json list. Just load the whole thing.
-        return json.loads(stdout)
-
-    # docker outputs one json object per line (jsonl)
-    return [json.loads(line) for line in stdout.splitlines()]
-
-
 def docker_rm(args, container_id):
     """
     :type args: EnvironmentConfig
@@ -328,25 +324,135 @@ def docker_rm(args, container_id):
             raise ex
 
 
-def docker_inspect(args, container_id):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :rtype: list[dict]
-    """
-    if args.explain:
-        return []
+class DockerError(Exception):
+    """General Docker error."""
 
+
+class ContainerNotFoundError(DockerError):
+    """The container identified by `identifier` was not found."""
+    def __init__(self, identifier):
+        super(ContainerNotFoundError, self).__init__('The container "%s" was not found.' % identifier)
+
+        self.identifier = identifier
+
+
+class DockerInspect:
+    """The results of `docker inspect` for a single container."""
+    def __init__(self, args, inspection):  # type: (EnvironmentConfig, t.Dict[str, t.Any]) -> None
+        self.args = args
+        self.inspection = inspection
+
+    # primary properties
+
+    @property
+    def id(self):  # type: () -> str
+        """Return the ID of the container."""
+        return self.inspection['Id']
+
+    @property
+    def network_settings(self):  # type: () -> t.Dict[str, t.Any]
+        """Return a dictionary of the container network settings."""
+        return self.inspection['NetworkSettings']
+
+    @property
+    def state(self):  # type: () -> t.Dict[str, t.Any]
+        """Return a dictionary of the container state."""
+        return self.inspection['State']
+
+    @property
+    def config(self):  # type: () -> t.Dict[str, t.Any]
+        """Return a dictionary of the container configuration."""
+        return self.inspection['Config']
+
+    # nested properties
+
+    @property
+    def ports(self):  # type: () -> t.Dict[str, t.List[t.Dict[str, str]]]
+        """Return a dictionary of ports the container has published."""
+        return self.network_settings['Ports']
+
+    @property
+    def networks(self):  # type: () -> t.Optional[t.Dict[str, t.Dict[str, t.Any]]]
+        """Return a dictionary of the networks the container is attached to, or None if running under podman, which does not support networks."""
+        return self.network_settings.get('Networks')
+
+    @property
+    def running(self):  # type: () -> bool
+        """Return True if the container is running, otherwise False."""
+        return self.state['Running']
+
+    @property
+    def env(self):  # type: () -> t.List[str]
+        """Return a list of the environment variables used to create the container."""
+        return self.config['Env']
+
+    @property
+    def image(self):  # type: () -> str
+        """Return the image used to create the container."""
+        return self.config['Image']
+
+    # functions
+
+    def env_dict(self):  # type: () -> t.Dict[str, str]
+        """Return a dictionary of the environment variables used to create the container."""
+        return dict((item[0], item[1]) for item in [e.split('=', 1) for e in self.env])
+
+    def get_tcp_port(self, port):  # type: (int) -> t.Optional[t.List[t.Dict[str, str]]]
+        """Return a list of the endpoints published by the container for the specified TCP port, or None if it is not published."""
+        return self.ports.get('%d/tcp' % port)
+
+    def get_network_names(self):  # type: () -> t.Optional[t.List[str]]
+        """Return a list of the network names the container is attached to."""
+        if self.networks is None:
+            return None
+
+        return sorted(self.networks)
+
+    def get_network_name(self):  # type: () -> str
+        """Return the network name the container is attached to. Raises an exception if no network, or more than one, is attached."""
+        networks = self.get_network_names()
+
+        if not networks:
+            raise ApplicationError('No network found for Docker container: %s.' % self.id)
+
+        if len(networks) > 1:
+            raise ApplicationError('Found multiple networks for Docker container %s instead of only one: %s' % (self.id, ', '.join(networks)))
+
+        return networks[0]
+
+    def get_ip_address(self):  # type: () -> t.Optional[str]
+        """Return the IP address of the container for the preferred docker network."""
+        if self.networks:
+            network_name = get_docker_preferred_network_name(self.args) or 'bridge'
+            ipaddress = self.networks[network_name]['IPAddress']
+        else:
+            ipaddress = self.network_settings['IPAddress']
+
+        if not ipaddress:
+            return None
+
+        return ipaddress
+
+
+def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig, str, bool) -> DockerInspect
+    """
+    Return the results of `docker inspect` for the specified container.
+    Raises a ContainerNotFoundError if the container was not found.
+    """
     try:
-        stdout = docker_command(args, ['inspect', container_id], capture=True)[0]
-        return json.loads(stdout)
+        stdout = docker_command(args, ['inspect', identifier], capture=True, always=always)[0]
     except SubprocessError as ex:
-        if 'no such image' in ex.stderr:
-            return []  # podman does not handle this gracefully, exits 125
-        try:
-            return json.loads(ex.stdout)
-        except Exception:
-            raise ex
+        stdout = ex.stdout
+
+    if args.explain and not always:
+        items = []
+    else:
+        items = json.loads(stdout)
+
+    if len(items) == 1:
+        return DockerInspect(args, items[0])
+
+    raise ContainerNotFoundError(identifier)
 
 
 def docker_network_disconnect(args, container_id, network):
@@ -356,6 +462,16 @@ def docker_network_disconnect(args, container_id, network):
     :param network: str
     """
     docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
+
+
+def docker_image_exists(args, image):  # type: (EnvironmentConfig, str) -> bool
+    """Return True if the image exists, otherwise False."""
+    try:
+        docker_command(args, ['image', 'inspect', image], capture=True)
+    except SubprocessError:
+        return False
+
+    return True
 
 
 def docker_network_inspect(args, network):
@@ -428,7 +544,8 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
+    command = get_docker_command(required=True).command
+    return run_command(args, [command] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 
 def docker_environment():
