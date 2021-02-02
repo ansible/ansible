@@ -11,27 +11,27 @@
     - directory
 
 - name: install a collection
-  command: ansible-galaxy collection install namespace1.name1:0.0.1 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:0.0.1 {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'
 
 - name: install a new version of the collection without --force
-  command: ansible-galaxy collection install namespace1.name1:>0.0.4,<=0.0.5 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:>0.0.4,<=0.0.5 {{ galaxy_verbosity }}
   register: result
 
 - assert:
     that: '"namespace1.name1:0.0.5 was installed successfully" in result.stdout_lines'
 
 - name: don't reinstall the collection in the requirement is compatible
-  command: ansible-galaxy collection install namespace1.name1:>=0.0.5 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:>=0.0.5 {{ galaxy_verbosity }}
   register: result
 
 - assert:
     that: "\"Nothing to do. All requested collections are already installed.\" in result.stdout"
 
 - name: install a pre-release of the collection without --force
-  command: ansible-galaxy collection install namespace1.name1:1.1.0-beta.1 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:1.1.0-beta.1 {{ galaxy_verbosity }}
   register: result
 
 - assert:
@@ -48,25 +48,25 @@
     - directory
 
 - name: install a dep that will need to be upgraded to be compatible with the parent
-  command: ansible-galaxy collection install child_dep.child_collection:0.4.0 --no-deps -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install child_dep.child_collection:0.4.0 --no-deps {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"child_dep.child_collection:0.4.0 was installed successfully" not in result.stdout_lines'
 
 - name: install a dep of the dep that will need to be upgraded to be compatible
-  command: ansible-galaxy collection install child_dep.child_dep2:>1.2.2 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install child_dep.child_dep2:>1.2.2 {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"child_dep.child_dep2:1.2.3 was installed successfully" not in result.stdout_lines'
 
 - name: install the parent without deps to test dep reconciliation during upgrade
-  command: ansible-galaxy collection install parent_dep.parent_collection:0.0.1 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install parent_dep.parent_collection:0.0.1 {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"parent_dep.parent_collection:0.0.1 was installed successfully" not in result.stdout_lines'
 
 - name: test upgrading the parent collection and dependencies
-  command: ansible-galaxy collection install parent_dep.parent_collection:>=1.0.0,<1.1.0 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install parent_dep.parent_collection:>=1.0.0,<1.1.0 {{ galaxy_verbosity }}
   register: result
 
 - assert:
@@ -76,7 +76,7 @@
       - '"child_dep.child_dep2:1.2.2 was installed successfully" in result.stdout_lines'
 
 - name: test upgrading a collection only upgrades dependencies if necessary
-  command: ansible-galaxy collection install parent_dep.parent_collection:1.1.0 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.1.0 {{ galaxy_verbosity }}
   register: result
 
 - assert:
@@ -98,41 +98,41 @@
     - directory
 
 - name: install a collection
-  command: ansible-galaxy collection install namespace1.name1:0.0.1 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:0.0.1 {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'
 
 - name: install a new version of the collection with --upgrade
-  command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade {{ galaxy_verbosity }}
   register: result
 
 - assert:
     that: '"namespace1.name1:0.0.5 was installed successfully" in result.stdout_lines'
 
 - name: upgrade the collection
-  command: ansible-galaxy collection install namespace1.name1:<0.0.7 -U -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1:<0.0.7 -U {{ galaxy_verbosity }}
   register: result
 
 - assert:
     that: '"namespace1.name1:0.0.6 was installed successfully" in result.stdout_lines'
 
 - name: upgrade the collection to the last version excluding prereleases
-  command: ansible-galaxy collection install namespace1.name1 -U -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 -U {{ galaxy_verbosity }}
   register: result
 
 - assert:
     that: '"namespace1.name1:1.0.9 was installed successfully" in result.stdout_lines'
 
 - name: upgrade the collection to the latest available version including prereleases
-  command: ansible-galaxy collection install namespace1.name1 --pre -U -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }}
   register: result
 
 - assert:
     that: '"namespace1.name1:1.1.0-beta.1 was installed successfully" in result.stdout_lines'
 
 - name: run the same command again
-  command: ansible-galaxy collection install namespace1.name1 --pre -U -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }}
   register: result
 
 - assert:
@@ -149,14 +149,14 @@
     - directory
 
 - name: install a parent collection and a particular version of its dependency
-  command: ansible-galaxy collection install parent_dep.parent_collection:1.0.0 child_dep.child_collection:0.5.0 -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.0.0 child_dep.child_collection:0.5.0 {{ galaxy_verbosity }}
   register: result
   failed_when:
     - '"parent_dep.parent_collection:1.0.0 was installed successfully" not in result.stdout_lines'
     - '"child_dep.child_collection:0.5.0 was installed successfully" not in result.stdout_lines'
 
 - name: upgrade the parent and child - the child's new version has a dependency that should be installed
-  command: ansible-galaxy collection install parent_dep.parent_collection -U -s pulp_v3 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install parent_dep.parent_collection -U {{ galaxy_verbosity }}
   register: result
 
 - assert:
