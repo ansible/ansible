@@ -253,13 +253,7 @@
     that:
       - "result.stat.checksum == 'ab56c210ea82839a54487464800fed4878cb2608'"
 
-###################################################################
-# 1st literal tests
-
 - import_tasks: test_string01.yml
-
-# end of literal tests
-###################################################################
 
 - name: use create=yes
   lineinfile:
@@ -814,13 +808,8 @@
       - oneline_insbefore_test2 is not changed
       - oneline_insbefore_file.stat.checksum == '4dca56d05a21f0d018cd311f43e134e4501cf6d9'
 
-###################################################################
-# Test insertbefore and insertafter with literal
-
 - import_tasks: test_string02.yml
 
-# End of literal tests
-###################################################################
 # Issue 29443
 # When using an empty regexp, replace the last line (since it matches every line)
 # but also provide a warning.
@@ -863,7 +852,7 @@
       If this is desired, use '^' to match every line in the file and avoid this warning.
 
 ###################################################################
-# When using an empty literal, replace the last line (since it matches every line)
+# When using an empty search string, replace the last line (since it matches every line)
 # but also provide a warning.
 
 - name: Deploy the test file for lineinfile
@@ -879,7 +868,7 @@
       - result.checksum == '481c2b73fe062390afdd294063a4f8285d69ac85'
       - result.state == 'file'
 
-- name: Insert a line in the file using an empty string as a regular expression
+- name: Insert a line in the file using an empty string as a search string
   lineinfile:
     path: "{{ output_dir }}/teststring.txt"
     search_string: ''
@@ -899,9 +888,8 @@
       - result.stat.checksum == 'eaa79f878557d4bd8d96787a850526a0facab342'
   vars:
     warning_message: >-
-      The regular expression is an empty string, which will match every line in the file.
+      The search string is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
-      If this is desired, use '^' to match every line in the file and avoid this warning.
 
 - name: meta
   meta: end_play
@@ -1328,7 +1316,7 @@
       - testend2 is changed
       - testend_file.stat.checksum == 'ef36116966836ce04f6b249fd1837706acae4e19'
 
-# Test inserting a line at the end of the file using literal with insertafter
+# Test inserting a line at the end of the file using search_string with insertafter
 
 - name: Create a file by inserting a line
   lineinfile:

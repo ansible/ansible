@@ -1,6 +1,6 @@
 ---
 ###################################################################
-# 1st string tests
+# 1st search_string tests
 
 - name: deploy the test file for lineinfile string
   copy:

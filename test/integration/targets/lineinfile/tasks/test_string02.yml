@@ -1,6 +1,6 @@
 ---
 ###################################################################
-# 2nd string tests
+# 2nd search_string tests
 
 - name: Deploy the teststring.conf file
   copy:

@@ -588,11 +588,14 @@ def main():
     search_string = params['search_string']
     line = params['line']
 
-    if regexp == '' or search_string == '':
-        module.warn(
-            "The regular expression is an empty string, which will match every line in the file. "
-            "This may have unintended consequences, such as replacing the last line in the file rather than appending. "
-            "If this is desired, use '^' to match every line in the file and avoid this warning.")
+    if '' in [regexp, search_string]:
+        msg = ("The %s is an empty string, which will match every line in the file. "
+               "This may have unintended consequences, such as replacing the last line in the file rather than appending.")
+        param_name = 'search string'
+        if regexp == '':
+            param_name = 'regular expression'
+            msg += " If this is desired, use '^' to match every line in the file and avoid this warning."
+        module.warn(msg % param_name)
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -615,7 +618,7 @@ def main():
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if (regexp, search_string, line) == (None, None, None):
-            module.fail_json(msg='one of line, search_string or regexp is required with state=absent')
+            module.fail_json(msg='one of line, search_string, or regexp is required with state=absent')
 
         absent(module, path, regexp, search_string, line, backup)
 
