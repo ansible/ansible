@@ -1181,8 +1181,8 @@ class GalaxyCLI(CLI):
         no_deps = context.CLIARGS['no_deps']
         force_with_deps = context.CLIARGS['force_with_deps']
         # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
-        allow_pre_release = context.CLIARGS['allow_pre_release'] if 'allow_pre_release' in context.CLIARGS else False
-        upgrade = context.CLIARGS['upgrade'] if 'upgrade' in context.CLIARGS else False
+        allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
+        upgrade = context.CLIARGS.get('upgrade', False)
 
         collections_path = C.COLLECTIONS_PATHS
         if len([p for p in collections_path if p.startswith(path)]) == 0:
