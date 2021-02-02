@@ -113,7 +113,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def get_all_host_vars(self, host, loader, sources):
         ''' requires host object '''
-        return combine_vars(self.host_groupvars(host, loader, sources), self.get_host_vars(host, loader, sources))
+        return combine_vars(self.host_groupvars(host, loader, sources), self.host_vars(host, loader, sources))
 
     def host_groupvars(self, host, loader, sources):
         ''' requires host object '''
@@ -162,7 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
-                hostvars = self.get_all_hostvars(inventory.hosts[host], loader, sources)
+                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 
