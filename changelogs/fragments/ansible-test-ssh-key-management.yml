@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Unified SSH key management for all instances created with the ``--remote`` or ``--docker`` options.
