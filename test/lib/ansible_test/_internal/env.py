@@ -22,7 +22,6 @@ from .io import (
 
 from .util import (
     display,
-    find_executable,
     SubprocessError,
     ApplicationError,
     get_ansible_version,
@@ -36,6 +35,7 @@ from .util_common import (
 )
 
 from .docker_util import (
+    get_docker_command,
     docker_info,
     docker_version
 )
@@ -269,11 +269,15 @@ def get_docker_details(args):
     :type args: CommonConfig
     :rtype: dict[str, any]
     """
-    docker = find_executable('docker', required=False)
+    docker = get_docker_command()
+
+    executable = None
     info = None
     version = None
 
     if docker:
+        executable = docker.executable
+
         try:
             info = docker_info(args)
         except SubprocessError as ex:
@@ -285,7 +289,7 @@ def get_docker_details(args):
             display.warning('Failed to collect docker version:\n%s' % ex)
 
     docker_details = dict(
-        executable=docker,
+        executable=executable,
         info=info,
         version=version,
     )

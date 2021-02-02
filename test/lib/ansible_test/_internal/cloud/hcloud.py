@@ -2,8 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ..util import (
     display,
     ConfigParser,
@@ -31,14 +29,13 @@ class HcloudCloudProvider(CloudProvider):
         """
         super(HcloudCloudProvider, self).__init__(args)
 
+        self.uses_config = True
+
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        if os.path.isfile(self.config_static_path):
-            return
-
         aci = self._create_ansible_core_ci()
 
         if aci.available:

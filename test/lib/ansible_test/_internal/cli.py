@@ -176,7 +176,7 @@ def main():
             delegate_args = None
         except Delegate as ex:
             # save delegation args for use once we exit the exception handler
-            delegate_args = (ex.exclude, ex.require, ex.integration_targets)
+            delegate_args = (ex.exclude, ex.require)
 
         if delegate_args:
             # noinspection PyTypeChecker
@@ -324,7 +324,7 @@ def parse_args():
                       help='base branch used for change detection')
 
     add_changes(test, argparse)
-    add_environments(test)
+    add_environments(test, argparse)
 
     integration = argparse.ArgumentParser(add_help=False, parents=[test])
 
@@ -423,7 +423,6 @@ def parse_args():
                                    config=PosixIntegrationConfig)
 
     add_extra_docker_options(posix_integration)
-    add_httptester_options(posix_integration, argparse)
 
     network_integration = subparsers.add_parser('network-integration',
                                                 parents=[integration],
@@ -469,7 +468,6 @@ def parse_args():
                                      config=WindowsIntegrationConfig)
 
     add_extra_docker_options(windows_integration, integration=False)
-    add_httptester_options(windows_integration, argparse)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -564,13 +562,12 @@ def parse_args():
                        action='store_true',
                        help='direct to shell with no setup')
 
-    add_environments(shell)
+    add_environments(shell, argparse)
     add_extra_docker_options(shell)
-    add_httptester_options(shell, argparse)
 
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[common])
 
-    add_environments(coverage_common, isolated_delegation=False)
+    add_environments(coverage_common, argparse, isolated_delegation=False)
 
     coverage = subparsers.add_parser('coverage',
                                      help='code coverage management and reporting')
@@ -896,9 +893,10 @@ def add_changes(parser, argparse):
     changes.add_argument('--changed-path', metavar='PATH', action='append', help=argparse.SUPPRESS)
 
 
-def add_environments(parser, isolated_delegation=True):
+def add_environments(parser, argparse, isolated_delegation=True):
     """
     :type parser: argparse.ArgumentParser
+    :type argparse: argparse
     :type isolated_delegation: bool
     """
     parser.add_argument('--requirements',
@@ -934,6 +932,7 @@ def add_environments(parser, isolated_delegation=True):
 
     if not isolated_delegation:
         environments.set_defaults(
+            containers=None,
             docker=None,
             remote=None,
             remote_stage=None,
@@ -944,6 +943,9 @@ def add_environments(parser, isolated_delegation=True):
         )
 
         return
+
+    parser.add_argument('--containers',
+                        help=argparse.SUPPRESS)  # internal use only
 
     environments.add_argument('--docker',
                               metavar='IMAGE',
@@ -999,32 +1001,6 @@ def add_extra_coverage_options(parser):
     parser.add_argument('--stub',
                         action='store_true',
                         help='generate empty report of all python/powershell source files')
-
-
-def add_httptester_options(parser, argparse):
-    """
-    :type parser: argparse.ArgumentParser
-    :type argparse: argparse
-    """
-    group = parser.add_mutually_exclusive_group()
-
-    group.add_argument('--httptester',
-                       metavar='IMAGE',
-                       default='quay.io/ansible/http-test-container:1.3.0',
-                       help='docker image to use for the httptester container')
-
-    group.add_argument('--disable-httptester',
-                       dest='httptester',
-                       action='store_const',
-                       const='',
-                       help='do not use the httptester container')
-
-    parser.add_argument('--inject-httptester',
-                        action='store_true',
-                        help=argparse.SUPPRESS)  # internal use only
-
-    parser.add_argument('--httptester-krb5-password',
-                        help=argparse.SUPPRESS)  # internal use only
 
 
 def add_extra_docker_options(parser, integration=True):
@@ -1119,9 +1095,8 @@ def complete_remote_shell(prefix, parsed_args, **_):
 
     images = sorted(get_remote_completion().keys())
 
-    # 2008 doesn't support SSH so we do not add to the list of valid images
     windows_completion_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'windows.txt')
-    images.extend(["windows/%s" % i for i in read_lines_without_comments(windows_completion_path, remove_blank_lines=True) if i != '2008'])
+    images.extend(["windows/%s" % i for i in read_lines_without_comments(windows_completion_path, remove_blank_lines=True)])
 
     return [i for i in images if i.startswith(prefix)]
 

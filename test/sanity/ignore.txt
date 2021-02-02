@@ -218,7 +218,6 @@ test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt test-constr
 test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
 test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
-test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
 test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate

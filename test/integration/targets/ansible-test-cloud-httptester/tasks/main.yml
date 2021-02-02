@@ -1,0 +1,15 @@
+- name: Verify HTTPTESTER environment variable
+  assert:
+    that:
+      - "lookup('env', 'HTTPTESTER') == '1'"
+
+- name: Verify endpoints respond
+  uri:
+    url: "{{ item }}"
+    validate_certs: no
+  with_items:
+    - http://ansible.http.tests/
+    - https://ansible.http.tests/
+    - https://sni1.ansible.http.tests/
+    - https://fail.ansible.http.tests/
+    - https://self-signed.ansible.http.tests/

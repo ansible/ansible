@@ -1,0 +1,8 @@
+- name: Verify endpoints respond
+  uri:
+    url: "{{ item }}"
+    validate_certs: no
+  register: this
+  failed_when: "this.status != 401"  # authentication is required, but not provided (requests must be signed)
+  with_items:
+    - "{{ ansible_env.CLOUDSTACK_ENDPOINT }}"

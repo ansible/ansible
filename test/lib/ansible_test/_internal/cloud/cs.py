@@ -4,8 +4,6 @@ __metaclass__ = type
 
 import json
 import os
-import re
-import time
 
 from . import (
     CloudProvider,
@@ -14,30 +12,22 @@ from . import (
 )
 
 from ..util import (
-    find_executable,
     ApplicationError,
     display,
-    SubprocessError,
     ConfigParser,
 )
 
 from ..http import (
-    HttpClient,
-    HttpError,
     urlparse,
 )
 
 from ..docker_util import (
-    docker_run,
-    docker_rm,
-    docker_inspect,
-    docker_pull,
-    docker_network_inspect,
     docker_exec,
-    get_docker_container_id,
-    get_docker_preferred_network_name,
-    get_docker_hostname,
-    is_docker_user_defined_network,
+)
+
+from ..containers import (
+    run_support_container,
+    wait_for_file,
 )
 
 
@@ -52,31 +42,11 @@ class CsCloudProvider(CloudProvider):
         super(CsCloudProvider, self).__init__(args)
 
         self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
-        self.container_name = ''
-        self.endpoint = ''
         self.host = ''
         self.port = 0
 
-    def filter(self, targets, exclude):
-        """Filter out the cloud tests when the necessary config and resources are not available.
-        :type targets: tuple[TestTarget]
-        :type exclude: list[str]
-        """
-        if os.path.isfile(self.config_static_path):
-            return
-
-        docker = find_executable('docker', required=False)
-
-        if docker:
-            return
-
-        skip = 'cloud/%s/' % self.platform
-        skipped = [target.name for target in targets if skip in target.aliases]
-
-        if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require the "docker" command or config (see "%s"): %s'
-                            % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+        self.uses_docker = True
+        self.uses_config = True
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -87,49 +57,19 @@ class CsCloudProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def get_remote_ssh_options(self):
-        """Get any additional options needed when delegating tests to a remote instance via SSH.
-        :rtype: list[str]
-        """
-        if self.managed:
-            return ['-R', '8888:%s:8888' % get_docker_hostname()]
-
-        return []
-
-    def get_docker_run_options(self):
-        """Get any additional options needed when delegating tests to a docker container.
-        :rtype: list[str]
-        """
-        network = get_docker_preferred_network_name(self.args)
-
-        if self.managed and not is_docker_user_defined_network(network):
-            return ['--link', self.DOCKER_SIMULATOR_NAME]
-
-        return []
-
-    def cleanup(self):
-        """Clean up the cloud resource and any temporary configuration files after tests complete."""
-        if self.container_name:
-            if self.ci_provider.code:
-                docker_rm(self.args, self.container_name)
-            elif not self.args.explain:
-                display.notice('Remember to run `docker rm -f %s` when finished testing.' % self.container_name)
-
-        super(CsCloudProvider, self).cleanup()
-
     def _setup_static(self):
         """Configure CloudStack tests for use with static configuration."""
         parser = ConfigParser()
         parser.read(self.config_static_path)
 
-        self.endpoint = parser.get('cloudstack', 'endpoint')
+        endpoint = parser.get('cloudstack', 'endpoint')
 
-        parts = urlparse(self.endpoint)
+        parts = urlparse(endpoint)
 
         self.host = parts.hostname
 
         if not self.host:
-            raise ApplicationError('Could not determine host from endpoint: %s' % self.endpoint)
+            raise ApplicationError('Could not determine host from endpoint: %s' % endpoint)
 
         if parts.port:
             self.port = parts.port
@@ -138,50 +78,35 @@ class CsCloudProvider(CloudProvider):
         elif parts.scheme == 'https':
             self.port = 443
         else:
-            raise ApplicationError('Could not determine port from endpoint: %s' % self.endpoint)
+            raise ApplicationError('Could not determine port from endpoint: %s' % endpoint)
 
         display.info('Read cs host "%s" and port %d from config: %s' % (self.host, self.port, self.config_static_path), verbosity=1)
-
-        self._wait_for_service()
 
     def _setup_dynamic(self):
         """Create a CloudStack simulator using docker."""
         config = self._read_config_template()
 
-        self.container_name = self.DOCKER_SIMULATOR_NAME
-
-        results = docker_inspect(self.args, self.container_name)
-
-        if results and not results[0]['State']['Running']:
-            docker_rm(self.args, self.container_name)
-            results = []
-
-        if results:
-            display.info('Using the existing CloudStack simulator docker container.', verbosity=1)
-        else:
-            display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
-            docker_pull(self.args, self.image)
-            docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
-
-            # apply work-around for OverlayFS issue
-            # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
-            docker_exec(self.args, self.container_name, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
-
-            if not self.args.explain:
-                display.notice('The CloudStack simulator will probably be ready in 2 - 4 minutes.')
-
-        container_id = get_docker_container_id()
-
-        if container_id:
-            self.host = self._get_simulator_address()
-            display.info('Found CloudStack simulator container address: %s' % self.host, verbosity=1)
-        else:
-            self.host = get_docker_hostname()
-
         self.port = 8888
-        self.endpoint = 'http://%s:%d' % (self.host, self.port)
 
-        self._wait_for_service()
+        ports = [
+            self.port,
+        ]
+
+        descriptor = run_support_container(
+            self.args,
+            self.platform,
+            self.image,
+            self.DOCKER_SIMULATOR_NAME,
+            ports,
+            allow_existing=True,
+            cleanup=True,
+        )
+
+        descriptor.register(self.args)
+
+        # apply work-around for OverlayFS issue
+        # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+        docker_exec(self.args, self.DOCKER_SIMULATOR_NAME, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
 
         if self.args.explain:
             values = dict(
@@ -189,17 +114,10 @@ class CsCloudProvider(CloudProvider):
                 PORT=str(self.port),
             )
         else:
-            credentials = self._get_credentials()
-
-            if self.args.docker:
-                host = self.DOCKER_SIMULATOR_NAME
-            elif self.args.remote:
-                host = 'localhost'
-            else:
-                host = self.host
+            credentials = self._get_credentials(self.DOCKER_SIMULATOR_NAME)
 
             values = dict(
-                HOST=host,
+                HOST=self.DOCKER_SIMULATOR_NAME,
                 PORT=str(self.port),
                 KEY=credentials['apikey'],
                 SECRET=credentials['secretkey'],
@@ -211,62 +129,23 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_simulator_address(self):
-        current_network = get_docker_preferred_network_name(self.args)
-        networks = docker_network_inspect(self.args, current_network)
-
-        try:
-            network = [network for network in networks if network['Name'] == current_network][0]
-            containers = network['Containers']
-            container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
-            return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
-        except Exception:
-            display.error('Failed to process the following docker network inspect output:\n%s' %
-                          json.dumps(networks, indent=4, sort_keys=True))
-            raise
-
-    def _wait_for_service(self):
-        """Wait for the CloudStack service endpoint to accept connections."""
-        if self.args.explain:
-            return
-
-        client = HttpClient(self.args, always=True)
-        endpoint = self.endpoint
-
-        for _iteration in range(1, 30):
-            display.info('Waiting for CloudStack service: %s' % endpoint, verbosity=1)
-
-            try:
-                client.get(endpoint)
-                return
-            except SubprocessError:
-                pass
-
-            time.sleep(10)
-
-        raise ApplicationError('Timeout waiting for CloudStack service.')
-
-    def _get_credentials(self):
+    def _get_credentials(self, container_name):
         """Wait for the CloudStack simulator to return credentials.
+        :type container_name: str
         :rtype: dict[str, str]
         """
-        client = HttpClient(self.args, always=True)
-        endpoint = '%s/admin.json' % self.endpoint
+        def check(value):
+            # noinspection PyBroadException
+            try:
+                json.loads(value)
+            except Exception:   # pylint: disable=broad-except
+                return False  # sometimes the file exists but is not yet valid JSON
 
-        for _iteration in range(1, 30):
-            display.info('Waiting for CloudStack credentials: %s' % endpoint, verbosity=1)
+            return True
 
-            response = client.get(endpoint)
+        stdout = wait_for_file(self.args, container_name, '/var/www/html/admin.json', sleep=10, tries=30, check=check)
 
-            if response.status_code == 200:
-                try:
-                    return response.json()
-                except HttpError as ex:
-                    display.error(ex)
-
-            time.sleep(10)
-
-        raise ApplicationError('Timeout waiting for CloudStack credentials.')
+        return json.loads(stdout)
 
 
 class CsCloudEnvironment(CloudEnvironment):

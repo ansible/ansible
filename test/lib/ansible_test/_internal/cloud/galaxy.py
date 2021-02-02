@@ -11,23 +11,12 @@ from . import (
     CloudEnvironmentConfig,
 )
 
-from ..util import (
-    find_executable,
-    display,
+from ..docker_util import (
+    docker_cp_to,
 )
 
-from ..docker_util import (
-    docker_command,
-    docker_run,
-    docker_start,
-    docker_rm,
-    docker_inspect,
-    docker_pull,
-    get_docker_container_id,
-    get_docker_hostname,
-    get_docker_container_ip,
-    get_docker_preferred_network_name,
-    is_docker_user_defined_network,
+from ..containers import (
+    run_support_container,
 )
 
 
@@ -103,68 +92,35 @@ class GalaxyProvider(CloudProvider):
             'docker.io/pulp/pulp-galaxy-ng@sha256:b79a7be64eff86d8f58db9ca83ed4967bd8b4e45c99addb17a91d11926480cf1'
         )
 
-        self.containers = []
-
-    def filter(self, targets, exclude):
-        """Filter out the tests with the necessary config and res unavailable.
-
-        :type targets: tuple[TestTarget]
-        :type exclude: list[str]
-        """
-        docker_cmd = 'docker'
-        docker = find_executable(docker_cmd, required=False)
-
-        if docker:
-            return
-
-        skip = 'cloud/%s/' % self.platform
-        skipped = [target.name for target in targets if skip in target.aliases]
-
-        if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require the "%s" command: %s'
-                            % (skip.rstrip('/'), docker_cmd, ', '.join(skipped)))
+        self.uses_docker = True
 
     def setup(self):
         """Setup cloud resource before delegation and reg cleanup callback."""
         super(GalaxyProvider, self).setup()
 
-        container_id = get_docker_container_id()
-
-        p_results = docker_inspect(self.args, 'ansible-ci-pulp')
-
-        if p_results and not p_results[0].get('State', {}).get('Running'):
-            docker_rm(self.args, 'ansible-ci-pulp')
-            p_results = []
-
-        display.info('%s ansible-ci-pulp docker container.'
-                     % ('Using the existing' if p_results else 'Starting a new'),
-                     verbosity=1)
-
         galaxy_port = 80
+        pulp_host = 'ansible-ci-pulp'
         pulp_port = 24817
 
-        if not p_results:
-            if self.args.docker or container_id:
-                publish_ports = []
-            else:
-                # publish the simulator ports when not running inside docker
-                publish_ports = [
-                    '-p', ':'.join((str(galaxy_port),) * 2),
-                    '-p', ':'.join((str(pulp_port),) * 2),
-                ]
+        ports = [
+            galaxy_port,
+            pulp_port,
+        ]
 
-            docker_pull(self.args, self.pulp)
+        # Create the container, don't run it, we need to inject configs before it starts
+        descriptor = run_support_container(
+            self.args,
+            self.platform,
+            self.pulp,
+            pulp_host,
+            ports,
+            start=False,
+            allow_existing=True,
+            cleanup=None,
+        )
 
-            # Create the container, don't run it, we need to inject configs before it starts
-            stdout, _dummy = docker_run(
-                self.args,
-                self.pulp,
-                ['--name', 'ansible-ci-pulp'] + publish_ports,
-                create_only=True
-            )
-
-            pulp_id = stdout.strip()
+        if not descriptor.running:
+            pulp_id = descriptor.container_id
 
             injected_files = {
                 '/etc/pulp/settings.py': SETTINGS,
@@ -175,48 +131,17 @@ class GalaxyProvider(CloudProvider):
                 with tempfile.NamedTemporaryFile() as temp_fd:
                     temp_fd.write(content)
                     temp_fd.flush()
-                    docker_command(self.args, ['cp', temp_fd.name, '%s:%s' % (pulp_id, path)])
+                    docker_cp_to(self.args, pulp_id, temp_fd.name, path)
 
-            # Start the container
-            docker_start(self.args, 'ansible-ci-pulp', [])
+            descriptor.start(self.args)
 
-            self.containers.append('ansible-ci-pulp')
-
-        if self.args.docker:
-            pulp_host = 'ansible-ci-pulp'
-        elif container_id:
-            pulp_host = self._get_simulator_address('ansible-ci-pulp')
-            display.info('Found Galaxy simulator container address: %s' % pulp_host, verbosity=1)
-        else:
-            pulp_host = get_docker_hostname()
+        descriptor.register(self.args)
 
         self._set_cloud_config('PULP_HOST', pulp_host)
         self._set_cloud_config('PULP_PORT', str(pulp_port))
         self._set_cloud_config('GALAXY_PORT', str(galaxy_port))
         self._set_cloud_config('PULP_USER', 'admin')
         self._set_cloud_config('PULP_PASSWORD', 'password')
-
-    def get_docker_run_options(self):
-        """Get additional options needed when delegating tests to a container.
-
-        :rtype: list[str]
-        """
-        network = get_docker_preferred_network_name(self.args)
-
-        if not is_docker_user_defined_network(network):
-            return ['--link', 'ansible-ci-pulp']
-
-        return []
-
-    def cleanup(self):
-        """Clean up the resource and temporary configs files after tests."""
-        for container_name in self.containers:
-            docker_rm(self.args, container_name)
-
-        super(GalaxyProvider, self).cleanup()
-
-    def _get_simulator_address(self, container_name):
-        return get_docker_container_ip(self.args, container_name)
 
 
 class GalaxyEnvironment(CloudEnvironment):

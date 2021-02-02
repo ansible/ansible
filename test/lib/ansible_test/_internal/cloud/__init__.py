@@ -50,6 +50,10 @@ from ..data import (
     data_context,
 )
 
+from ..docker_util import (
+    get_docker_command,
+)
+
 PROVIDERS = {}
 ENVIRONMENTS = {}
 
@@ -197,6 +201,9 @@ class CloudBase(ABC):
 
         def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the config file to the payload file list."""
+            if self.platform not in self.args.metadata.cloud_config:
+                return  # platform was initialized, but not used -- such as being skipped due to all tests being disabled
+
             if self._get_cloud_config(self._CONFIG_PATH, ''):
                 pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
 
@@ -297,18 +304,38 @@ class CloudProvider(CloudBase):
         self.config_template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, '%s.template' % self.config_static_name)
         self.config_extension = config_extension
 
+        self.uses_config = False
+        self.uses_docker = False
+
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
+        if not self.uses_docker and not self.uses_config:
+            return
+
+        if self.uses_docker and get_docker_command():
+            return
+
+        if self.uses_config and os.path.exists(self.config_static_path):
+            return
+
         skip = 'cloud/%s/' % self.platform
         skipped = [target.name for target in targets if skip in target.aliases]
 
         if skipped:
             exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require config (see "%s"): %s'
-                            % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+
+            if not self.uses_docker and self.uses_config:
+                display.warning('Excluding tests marked "%s" which require config (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+            elif self.uses_docker and not self.uses_config:
+                display.warning('Excluding tests marked "%s" which requires container support: %s'
+                                % (skip.rstrip('/'), ', '.join(skipped)))
+            elif self.uses_docker and self.uses_config:
+                display.warning('Excluding tests marked "%s" which requires container support or config (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -316,18 +343,6 @@ class CloudProvider(CloudBase):
         self.resource_prefix = re.sub(r'[^a-zA-Z0-9]+', '-', self.resource_prefix)[:63].lower().rstrip('-')
 
         atexit.register(self.cleanup)
-
-    def get_remote_ssh_options(self):
-        """Get any additional options needed when delegating tests to a remote instance via SSH.
-        :rtype: list[str]
-        """
-        return []
-
-    def get_docker_run_options(self):
-        """Get any additional options needed when delegating tests to a docker container.
-        :rtype: list[str]
-        """
-        return []
 
     def cleanup(self):
         """Clean up the cloud resource and any temporary configuration files after tests complete."""

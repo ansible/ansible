@@ -16,16 +16,14 @@ from ..util import (
 
 class OpenNebulaCloudProvider(CloudProvider):
     """Checks if a configuration file has been passed or fixtures are going to be used for testing"""
-
-    def filter(self, targets, exclude):
-        """ no need to filter modules, they can either run from config file or from fixtures"""
-
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(OpenNebulaCloudProvider, self).setup()
 
         if not self._use_static_config():
             self._setup_dynamic()
+
+        self.uses_config = True
 
     def _setup_dynamic(self):
         display.info('No config file provided, will run test from fixtures')

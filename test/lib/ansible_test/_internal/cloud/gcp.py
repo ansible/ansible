@@ -4,8 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ..util import (
     display,
     ConfigParser,
@@ -20,17 +18,13 @@ from . import (
 
 class GcpCloudProvider(CloudProvider):
     """GCP cloud provider plugin. Sets up cloud resources before delegation."""
-
-    def filter(self, targets, exclude):
-        """Filter out the cloud tests when the necessary config and resources are not available.
-        :type targets: tuple[TestTarget]
-        :type exclude: list[str]
+    def __init__(self, args):
+        """Set up container references for provider.
+        :type args: TestConfig
         """
+        super(GcpCloudProvider, self).__init__(args)
 
-        if os.path.isfile(self.config_static_path):
-            return
-
-        super(GcpCloudProvider, self).filter(targets, exclude)
+        self.uses_config = True
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""

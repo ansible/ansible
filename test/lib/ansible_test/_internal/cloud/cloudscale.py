@@ -22,22 +22,13 @@ class CloudscaleCloudProvider(CloudProvider):
     """Cloudscale cloud provider plugin. Sets up cloud resources before
        delegation.
     """
-
     def __init__(self, args):
         """
         :type args: TestConfig
         """
         super(CloudscaleCloudProvider, self).__init__(args)
 
-    def filter(self, targets, exclude):
-        """Filter out the cloud tests when the necessary config and resources are not available.
-        :type targets: tuple[TestTarget]
-        :type exclude: list[str]
-        """
-        if os.path.isfile(self.config_static_path):
-            return
-
-        super(CloudscaleCloudProvider, self).filter(targets, exclude)
+        self.uses_config = True
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
