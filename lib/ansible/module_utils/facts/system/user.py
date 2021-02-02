@@ -35,7 +35,10 @@ class UserFactCollector(BaseFactCollector):
 
         user_facts['user_id'] = getpass.getuser()
 
-        pwent = pwd.getpwnam(getpass.getuser())
+        try:
+            pwent = pwd.getpwnam(getpass.getuser())
+        except KeyError:
+            pwent = pwd.getpwuid(os.getuid())
 
         user_facts['user_uid'] = pwent.pw_uid
         user_facts['user_gid'] = pwent.pw_gid
