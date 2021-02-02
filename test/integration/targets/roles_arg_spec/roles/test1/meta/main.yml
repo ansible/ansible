@@ -28,13 +28,12 @@ argument_specs:
      bust_some_stuff:
        # required: false
        type: "int"
-     secret_choices:
+     some_choices:
        choices:
-         - "secret_ballot_choice1"
-         - "secret_ballot_choice2"
+         - "choice1"
+         - "choice2"
        required: false
        type: "str"
-       no_log: true
      some_str:
        type: "str"
      some_list:
@@ -79,6 +78,15 @@ argument_specs:
        removed_in: 2.10
      some_tmp_path:
        type: "path"
+     multi_level_option:
+       type: "dict"
+       options:
+         second_level:
+           type: "dict"
+           options:
+             third_level:
+               type: "int"
+               required: true
 
   other:
     short_description: "test1_simple_preset_arg_spec_other"
