@@ -407,9 +407,9 @@ def install_collections(
         no_deps,  # type: bool
         force,  # type: bool
         force_deps,  # type: bool
+        upgrade,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
-        upgrade=False,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -1255,7 +1255,7 @@ def _resolve_depenency_map(
         preferred_candidates,  # type: Optional[Iterable[Candidate]]
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
-        upgrade=False,  # type: bool
+        upgrade,  # type: bool
 ):  # type: (...) -> Dict[str, Candidate]
     """Return the resolved dependency map."""
     collection_dep_resolver = build_collection_dependency_resolver(

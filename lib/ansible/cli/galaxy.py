@@ -1197,10 +1197,9 @@ class GalaxyCLI(CLI):
 
         install_collections(
             requirements, output_path, self.api_servers, ignore_errors,
-            no_deps, force, force_with_deps,
+            no_deps, force, force_with_deps, upgrade,
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
-            upgrade=upgrade,
         )
 
         return 0
