@@ -3,4 +3,4 @@ freebsd/12.2 python=3.7,2.7,3.8 python_dir=/usr/local/bin
 macos/11.1 python=3.9 python_dir=/usr/local/bin
 rhel/7.9 python=2.7
 rhel/8.3 python=3.6,3.8
-aix/7.2 python=2.7 httptester=disabled temp-unicode=disabled pip-check=disabled
+aix/7.2 python=2.7 temp-unicode=disabled pip-check=disabled

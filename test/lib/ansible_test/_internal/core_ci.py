@@ -567,6 +567,9 @@ class SshKey:
         if not os.path.isfile(key) or not os.path.isfile(pub):
             run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', self.KEY_TYPE, '-N', '', '-f', key])
 
+            if args.explain:
+                return key, pub
+
             # newer ssh-keygen PEM output (such as on RHEL 8.1) is not recognized by paramiko
             key_contents = read_text_file(key)
             key_contents = re.sub(r'(BEGIN|END) PRIVATE KEY', r'\1 RSA PRIVATE KEY', key_contents)
