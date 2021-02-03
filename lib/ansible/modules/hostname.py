@@ -36,7 +36,7 @@ options:
 
 EXAMPLES = '''
 - name: Set a hostname
-  hostname:
+  ansible.builtin.hostname:
     name: web01
 '''
 
