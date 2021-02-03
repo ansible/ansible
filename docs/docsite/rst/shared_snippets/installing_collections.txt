@@ -29,13 +29,13 @@ You can also install multiple collections in a namespace directory.
 
 .. code-block:: text
 
-   ns
-   ├── collection1
+   ns/
+   ├── collection1/
    │   ├── MANIFEST.json
-   │   └── plugins
-   └── collection2
+   │   └── plugins/
+   └── collection2/
        ├── galaxy.yml
-       └── plugins
+       └── plugins/
 
 .. code-block:: bash
 

@@ -109,13 +109,13 @@ You can download multiple source collections from a single namespace by providin
 
 .. code-block:: text
 
-   ns
-   ├── collection1
+   ns/
+   ├── collection1/
    │   ├── galaxy.yml
-   │   └── plugins
-   └── collection2
+   │   └── plugins/
+   └── collection2/
        ├── galaxy.yml
-       └── plugins
+       └── plugins/
 
 .. code-block:: bash
 
