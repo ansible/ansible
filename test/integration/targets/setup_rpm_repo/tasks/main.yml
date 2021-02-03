@@ -36,6 +36,16 @@
       src: create-repo.py
       dest: /tmp/create-repo.py
       mode: 0755
+    environment:
+      TMPDIR: "{{ remote_tmp_dir }}/repos"
+
+  - set_fact:
+      repos:
+        - "fake-{{ ansible_architecture }}"
+        - "fake-i686"
+        - "fake-ppc64"
+      changed_when: yes
+      notify: remove repos
 
   - name: Create RPMs and put them into a repo
     shell: "{{ansible_python_interpreter}} /tmp/create-repo.py {{ ansible_architecture }}"
@@ -50,6 +60,7 @@
       description: "fake-{{ ansible_architecture }}"
       baseurl: "file://{{ repodir }}"
       gpgcheck: no
+    when: install_repos | bool
 
   - name: Copy comps.xml file
     copy:
@@ -73,6 +84,7 @@
       description: "fake-i686"
       baseurl: "file://{{ repodir_i686 }}"
       gpgcheck: no
+    when: install_repos | bool
 
   - name: Create RPMs and put them into a repo (ppc64)
     shell: "{{ansible_python_interpreter}} /tmp/create-repo.py ppc64"
@@ -87,11 +99,6 @@
       description: "fake-ppc64"
       baseurl: "file://{{ repodir_ppc64 }}"
       gpgcheck: no
-
-  - set_fact:
-      repos:
-        - "fake-{{ ansible_architecture }}"
-        - "fake-i686"
-        - "fake-ppc64"
+    when: install_repos | bool
 
   when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
