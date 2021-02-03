@@ -109,6 +109,7 @@ def generate_ansible_template_vars(path, dest_path=None):
     temp_vars = {
         'template_host': to_text(os.uname()[1]),
         'template_path': path,
+        'template_path_relative': re.sub(os.getcwd(), '', path),
         'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
         'template_uid': to_text(template_uid),
         'template_fullpath': os.path.abspath(path),
@@ -121,6 +122,7 @@ def generate_ansible_template_vars(path, dest_path=None):
         host=temp_vars['template_host'],
         uid=temp_vars['template_uid'],
         file=temp_vars['template_path'],
+        file_relative=temp_vars['template_path_relative'],
     )
     temp_vars['ansible_managed'] = to_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
 
