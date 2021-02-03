@@ -47,7 +47,7 @@
         "distribution_version": "8.3",
         "distribution_release": "Purple Manul",
         "distribution_major_version": "8",
-        "os_family": "AlmaLinux"
+        "os_family": "RedHat"
     },
     "platform.release": "4.18.0-240.el8.x86_64"
 }
