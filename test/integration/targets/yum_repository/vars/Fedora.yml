@@ -1,8 +1,5 @@
-# See Supported Distributions for the version of .NET available.
-# Fedora versions released after Decemeber 2022 will most likely need a newer version of .NET.
-# https://docs.microsoft.com/en-us/dotnet/core/install/linux-fedora#supported-distributions
-yum_repository_test_package: dotnet-runtime-3.1
+yum_repository_test_package: dinginessentail
 yum_repository_test_repo:
-  name: packages-microsoft-com-prod
-  description: Microsoft Production Packages
-  baseurl: https://packages.microsoft.com/fedora/{{ ansible_distribution_major_version }}/prod
+  name: fakerepo
+  description: Fake Repo
+  baseurl: "file://{{ repodir }}"
