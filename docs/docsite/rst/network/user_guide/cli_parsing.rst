@@ -59,7 +59,7 @@ The ``cli_parse`` module includes the following cli_parsing plugins:
 ``json``
   Converts JSON output at the CLI to an Ansible native data structure
 
-Although Ansible contains a number of plugins that can convert XML to Ansible native data structures, the``cli_parse`` module runs the command on devices that return XML and returns the converted data in a single task.
+Although Ansible contains a number of plugins that can convert XML to Ansible native data structures, the ``cli_parse`` module runs the command on devices that return XML and returns the converted data in a single task.
 
 Because ``cli_parse`` uses a plugin based architecture, it can use additional parsing engines from any Ansible collection.
 
@@ -538,7 +538,7 @@ Parsing with TTP
 
 TTP is a Python library for semi-structured text parsing using templates. TTP uses a jinja-like syntax to limit the need for regular expressions. Users familiar with jinja templating may find the TTP template syntax familiar.
 
-The following is an example TTP template stored as ``templates/nxos_show_interfaces.ttp``:
+The following is an example TTP template stored as ``templates/nxos_show_interface.ttp``:
 
 .. code-block:: jinja
 
@@ -586,7 +586,7 @@ The task sets the follow fact as the ``interfaces`` fact for the host:
 Converting XML
 -----------------
 
-Although Ansible contains a number of plugins that can convert XML to Ansible native data structures, the``cli_parse`` module runs the command on devices that return XML and returns the converted data in a single task.
+Although Ansible contains a number of plugins that can convert XML to Ansible native data structures, the ``cli_parse`` module runs the command on devices that return XML and returns the converted data in a single task.
 
 This example task runs the ``show interface`` command and parses the output as XML:
 
