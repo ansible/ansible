@@ -116,7 +116,7 @@
       name: name
       # parent_dep.parent_collection does not exist on the secondary server
       dependencies:
-        parent_dep.parent_collection: '*'
+        parent_dep.parent_collection: '1.0.0'
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
 
@@ -182,3 +182,10 @@
 
 - name: run ansible-galaxy collection list tests
   include_tasks: list.yml
+
+- include_tasks: upgrade.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'

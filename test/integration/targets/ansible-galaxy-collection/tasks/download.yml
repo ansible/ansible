@@ -5,7 +5,7 @@
     state: directory
 
 - name: download collection with multiple dependencies with --no-deps
-  command: ansible-galaxy collection download parent_dep.parent_collection --no-deps -s pulp_v2 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 --no-deps -s pulp_v2 {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'
@@ -34,7 +34,7 @@
     - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
 
 - name: download collection with multiple dependencies
-  command: ansible-galaxy collection download parent_dep.parent_collection -s pulp_v2 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 -s pulp_v2 {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'

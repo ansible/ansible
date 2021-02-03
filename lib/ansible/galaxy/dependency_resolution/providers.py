@@ -44,6 +44,7 @@ class CollectionDependencyProvider(AbstractProvider):
             preferred_candidates=None,  # type: Iterable[Candidate]
             with_deps=True,  # type: bool
             with_pre_releases=False,  # type: bool
+            upgrade=False,  # type: bool
     ):  # type: (...) -> None
         r"""Initialize helper attributes.
 
@@ -76,6 +77,7 @@ class CollectionDependencyProvider(AbstractProvider):
         self._preferred_candidates = set(preferred_candidates or ())
         self._with_deps = with_deps
         self._with_pre_releases = with_pre_releases
+        self._upgrade = upgrade
 
     def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
         """Check if the candidate is requested by the user."""
@@ -219,12 +221,7 @@ class CollectionDependencyProvider(AbstractProvider):
                 for version, _none_src_server in coll_versions
             ]
 
-        preinstalled_candidates = {
-            candidate for candidate in self._preferred_candidates
-            if candidate.fqcn == fqcn
-        }
-
-        return list(preinstalled_candidates) + sorted(
+        latest_matches = sorted(
             {
                 candidate for candidate in (
                     Candidate(fqcn, version, src_server, 'galaxy')
@@ -242,6 +239,22 @@ class CollectionDependencyProvider(AbstractProvider):
             ),
             reverse=True,  # prefer newer versions over older ones
         )
+
+        preinstalled_candidates = {
+            candidate for candidate in self._preferred_candidates
+            if candidate.fqcn == fqcn and
+            (
+                # check if an upgrade is necessary
+                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+                (
+                    not self._upgrade or
+                    # check if an upgrade is preferred
+                    all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                )
+            )
+        }
+
+        return list(preinstalled_candidates) + latest_matches
 
     def is_satisfied_by(self, requirement, candidate):
         # type: (Requirement, Candidate) -> bool
