@@ -92,6 +92,7 @@ today_fmt = '%B %d, %Y'
 # for source files.
 exclude_patterns = [
     'ansible_index.rst',
+    'core_index.rst',
     'galaxy',
     'network',
     'scenario_guides',

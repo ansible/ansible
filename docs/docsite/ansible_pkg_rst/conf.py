@@ -61,7 +61,7 @@ templates_path = ['.templates']
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'ansible_index'
+master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible'
@@ -91,7 +91,8 @@ today_fmt = '%B %d, %Y'
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
 exclude_patterns = [
-    'index.rst',
+    'core_index.rst',
+    'ansible_index.rst',
     'porting_guides/core_porting_guides.rst',
     'porting_guides/porting_guide_base_2.10.rst',
     'porting_guides/porting_guide_core_2.11.rst',

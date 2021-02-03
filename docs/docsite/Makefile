@@ -55,16 +55,28 @@ coredocs: core_htmldocs
 generate_rst: collections_meta config cli keywords plugins testing
 core_generate_rst: collections_meta config cli keywords base_plugins testing
 
-htmldocs: generate_rst
+# The following two symlinks are necessary to produce two different docsets
+# from the same set of rst files (Ansible the package docs, and core docs).
+# Symlink the relevant index into place for building Ansible docs
+ansible_structure: generate_rst
+		@echo "Creating symlinks in generate_rst"
+	  -ln -sf ../rst/ansible_index.rst rst/index.rst
+
+# Symlink the relevant index into place for building core docs
+core_structure: core_generate_rst
+		@echo "Creating symlinks in core_generate_rst"
+		-ln -sf ../rst/core_index.rst rst/index.rst
+
+htmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html SPHINXCONFDIR=ansible_pkg_rst
 
-core_htmldocs: core_generate_rst
+core_htmldocs: core_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-singlehtmldocs: generate_rst
+singlehtmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml SPHINXCONFDIR=ansible_pkg_rst
 
-core_singlehtmldocs: core_generate_rst
+core_singlehtmldocs: core_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 linkcheckdocs: generate_rst
@@ -101,6 +113,8 @@ clean:
 			rm -rf "rst/collections/$$filename"; \
 		fi \
 	done
+	@echo "Cleanning up generated ansible_structure"
+	find -type l -delete
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
 	rm -f rst/plugins/*/*.rst

@@ -1,5 +1,8 @@
 .. _ansible_core_documentation:
 
+..
+   This is the index file for ansible-core. It gets symlinked to index.rst by the Makefile
+
 **************************
 Ansible Core Documentation
 **************************
