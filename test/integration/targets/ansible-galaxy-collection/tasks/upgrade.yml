@@ -230,3 +230,53 @@
       - (metadata.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
       - '"child_dep.child_dep2:1.2.2 was installed successfully" in result.stdout_lines'
       - (metadata.results[2].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+# Test using a requirements.yml file for upgrade
+
+- name: reset installation directory
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
+
+- name: install upgradeable collections
+  command: ansible-galaxy collection install namespace1.name1:1.0.0 parent_dep.parent_collection:0.0.1 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:1.0.0 was installed successfully" not in result.stdout_lines'
+    - '"parent_dep.parent_collection:0.0.1 was installed successfully" not in result.stdout_lines'
+    - '"child_dep.child_collection:0.4.0 was installed successfully" not in result.stdout_lines'
+
+- name: create test requirements file with both roles and collections - {{ test_name }}
+  copy:
+    content: |
+      collections:
+        - namespace1.name1
+        - name: parent_dep.parent_collection
+          version: <=2.0.0
+      roles:
+      - skip.me
+    dest: '{{ galaxy_dir }}/ansible_collections/requirements.yml'
+
+- name: upgrade collections with the requirements.yml
+  command: ansible-galaxy collection install -r {{ requirements_path }} --upgrade {{ galaxy_verbosity }}
+  vars:
+    requirements_path: '{{ galaxy_dir }}/ansible_collections/requirements.yml'
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:1.0.9 was installed successfully" in result.stdout_lines'
+      - '"parent_dep.parent_collection:2.0.0 was installed successfully" in result.stdout_lines'
+      - '"child_dep.child_collection:1.0.0 was installed successfully" in result.stdout_lines'
+      - '"child_dep.child_dep2:1.2.2 was installed successfully" in result.stdout_lines'
+
+- name: cleanup
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
