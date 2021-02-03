@@ -35,6 +35,7 @@ def build_collection_dependency_resolver(
         preferred_candidates=None,  # type: Iterable[Candidate]
         with_deps=True,  # type: bool
         with_pre_releases=False,  # type: bool
+        upgrade=False,  # type: bool
 ):  # type: (...) -> CollectionDependencyResolver
     """Return a collection dependency resolver.
 
@@ -49,6 +50,7 @@ def build_collection_dependency_resolver(
             preferred_candidates=preferred_candidates,
             with_deps=with_deps,
             with_pre_releases=with_pre_releases,
+            upgrade=upgrade,
         ),
         CollectionDependencyReporter(),
     )

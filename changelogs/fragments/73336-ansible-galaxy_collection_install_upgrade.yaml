@@ -1,0 +1,9 @@
+major_changes:
+- >-
+  It became possible to upgrade Ansible collections from Galaxy servers
+  using the ``--upgrade`` option with ``ansible-galaxy collection install``.
+- >-
+  A collection can be reinstalled with new version requirements without using
+  the ``--force`` flag. The collection's dependencies will also be updated
+  if necessary with the new requirements. Use ``--upgrade`` to force
+  transitive dependency updates.

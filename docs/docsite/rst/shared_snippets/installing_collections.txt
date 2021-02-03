@@ -12,6 +12,12 @@ To install a collection hosted in Galaxy:
 
    ansible-galaxy collection install my_namespace.my_collection
 
+To upgrade a collection to the latest available version from the Galaxy server you can use the ``--upgrade`` option:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection --upgrade
+
 You can also directly use the tarball from your build:
 
 .. code-block:: bash

@@ -94,7 +94,7 @@
     - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
 
 - name: install multiple collections with dependencies - {{ test_name }}
-  command: ansible-galaxy collection install parent_dep.parent_collection namespace2.name -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.0.0 namespace2.name -s {{ test_name }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}/ansible_collections'
   environment:
