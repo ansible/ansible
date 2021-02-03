@@ -1,29 +1,33 @@
 ===================
-Ansible project 3.0
+Ansible project 4.0
 ===================
 
-This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_11` for the most recent updates on ``ansible-base``.
+This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-core <https://pypi.org/project/ansible-core/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_11` for the most recent updates on ``ansible-core``.
 
 .. contents::
    :local:
 
+
 Release schedule
 =================
 
-.. note::
 
-    Ansible is switching from its traditional versioning scheme to `semantic versioning <https://semver.org/>`_ starting with this release.  So this version is 3.0.0 instead of 2.11.0.
-
-
-
-:2020-12-16: Finalize rules for net-new collections submitted for the ansible release.
-:2021-01-27: Final day for new collections to be **reviewed and approved**. They MUST be
-    submitted prior to this to give reviewers a chance to look them over and for collection owners
-    to fix any problems.
-:2021-02-02: Ansible-3.0.0-beta1 -- feature freeze [1]_
-:2021-02-09: Ansible-3.0.0-rc1 -- final freeze [2]_ [3]_
-:2021-02-16: Release of Ansible-3.0.0
-:2021-03-09: Release of Ansible-3.1.0 (bugfix + compatible features: every three weeks)
+:2021-01-26: New Collections will be reviewed for inclusion in ansible-4.
+:2021-03-03: ansible-4.0.0 alpha1 (biweekly alpha releases.  This is timed to coincide with the start of the ansible-core-2.11 pre-releases)
+:2021-03-17: ansible-4.0.0 alpha2
+:2021-03-30: ansible-4.0.0 alpha3
+:2021-04-13: last day for new collections to be submitted for inclusion in ansible-4. Note that collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
+:2021-04-13: ansible-4.0.0 alpha4
+:2021-04-14: Community IRC Meeting topic: list any new collection reviews which block release.  list any backwards incompatible collection releases that beta1 should try to accommodate.
+:2021-04-21: Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
+:2021-04-26: last day for new collections to be **reviewed and approved** for inclusion in ansible-4
+:2021-04-26: last day for collections to make backwards incompatible releases that will be accepted into Ansible-4.
+:2021-04-27: ansible-4.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users
+             should test for bugs)
+:2021-05-04: ansible-4.0.0 beta2
+:2021-05-11: ansible-4.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed.  Test and alert us to any blocker bugs)
+:2021-05-18: ansible-4.0.0 release
+:2021-06-08: Release of Ansible-4.1.0 (bugfix + compatible features: every three weeks)
 
 .. [1] No new modules or major features accepted after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-2.1.0; ansible-3.0.0 could ship with community-crypto-2.1.1.  It would not ship with community-crypto-2.2.0.
 
@@ -33,13 +37,13 @@ Release schedule
 
 .. note::
 
-  Breaking changes may be introduced in Ansible 3.0.0, although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before the breaking change happens.
+  Breaking changes will be introduced in Ansible 4.0.0, although we encourage the use of deprecation periods that will show up in at least one Ansible release before the breaking change happens, this is not guaranteed.
 
 
 Ansible minor releases
 =======================
 
-Ansible 3.x.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-base-2.10.x.  Ansible 3.x.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-3.0.0 ships with community-crypto-2.1.0; Ansible-3.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0).
+Ansible 4.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-core-2.11.x.  Ansible 4.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-4.0.0 ships with community-crypto-2.1.0; Ansible-4.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0).
 
 
 For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
