@@ -1,4 +1,6 @@
 .. _ansible_documentation:
+..
+   This is the index file for Ansible the package. It gets symlinked to index.rst by the Makefile
 
 Ansible Documentation
 =====================
