@@ -1,5 +1,5 @@
-yum_repository_test_package: libbdplus
+yum_repository_test_package: dotnet-runtime-2.1
 yum_repository_test_repo:
-  name: rpmfusion-free
-  description: RPM Fusion for Fedora {{ ansible_distribution_major_version }} - Free
-  baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+  name: packages-microsoft-com-prod
+  description: Microsoft Production Packages
+  baseurl: https://packages.microsoft.com/fedora/{{ ansible_distribution_major_version }}/prod
