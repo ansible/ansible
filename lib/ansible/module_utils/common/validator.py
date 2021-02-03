@@ -83,9 +83,12 @@ class Validator():
         self._add_error(errors)
 
         # FIXME: This should just be done by validate_argument_types() and validate_argument_values()
-        _validated_parameters, errors = validate_sub_spec(argument_spec, self._validated_parameters)
-        self._validated_parameters.update(_validated_parameters)
-        self._add_error(errors)
+        # _validated_parameters, errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
+        # self._validated_parameters.update(_validated_parameters)
+        # self._add_error(errors)
+        # unsupported_parameters.extend(_unsupported)
+        # if unsupported_parameters:
+        #     self._add_error('Unsupported parameters %s' % ', '.join((p for p in unsupported_parameters)))
 
         if self.error_messages:
             return False
