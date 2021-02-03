@@ -1,0 +1,2 @@
+bugfixes:
+  - add AlmaLinux to fact gathering (https://github.com/ansible/ansible/pull/73458)
