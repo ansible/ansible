@@ -73,8 +73,24 @@ collection_list:
   # Complex dependency resolution
   - namespace: parent_dep
     name: parent_collection
+    version: 0.0.1
+    dependencies:
+      child_dep.child_collection: '<0.5.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.0.0
     dependencies:
       child_dep.child_collection: '>=0.5.0,<1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.1.0
+    dependencies:
+      child_dep.child_collection: '>=0.9.9,<=1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 2.0.0
+    dependencies:
+      child_dep.child_collection: '>=1.0.0'
   - namespace: parent_dep2
     name: parent_collection
     dependencies:
@@ -92,6 +108,9 @@ collection_list:
       child_dep.child_dep2: '!=1.2.3'
   - namespace: child_dep
     name: child_collection
+    version: 1.0.0
+    dependencies:
+      child_dep.child_dep2: '!=1.2.3'
   - namespace: child_dep
     name: child_dep2
     version: 1.2.2

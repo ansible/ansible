@@ -1,0 +1,282 @@
+##### Updating collections with a new version constraint
+
+# No deps
+
+- name: reset installation directory
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
+
+- name: install a collection
+  command: ansible-galaxy collection install namespace1.name1:0.0.1 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'
+
+- name: install a new version of the collection without --force
+  command: ansible-galaxy collection install namespace1.name1:>0.0.4,<=0.0.5 {{ galaxy_verbosity }}
+  register: result
+
+- name: check the MANIFEST.json to verify the version
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: metadata
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.5 was installed successfully" in result.stdout_lines'
+      - (metadata.content | b64decode | from_json).collection_info.version == '0.0.5'
+
+- name: don't reinstall the collection in the requirement is compatible
+  command: ansible-galaxy collection install namespace1.name1:>=0.0.5 {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that: "\"Nothing to do. All requested collections are already installed.\" in result.stdout"
+
+- name: install a pre-release of the collection without --force
+  command: ansible-galaxy collection install namespace1.name1:1.1.0-beta.1 {{ galaxy_verbosity }}
+  register: result
+
+- name: check the MANIFEST.json to verify the version
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: metadata
+
+- assert:
+    that:
+      - '"namespace1.name1:1.1.0-beta.1 was installed successfully" in result.stdout_lines'
+      - (metadata.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
+
+# With deps
+
+- name: reset installation directory
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
+
+- name: install a dep that will need to be upgraded to be compatible with the parent
+  command: ansible-galaxy collection install child_dep.child_collection:0.4.0 --no-deps {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"child_dep.child_collection:0.4.0 was installed successfully" not in result.stdout_lines'
+
+- name: install a dep of the dep that will need to be upgraded to be compatible
+  command: ansible-galaxy collection install child_dep.child_dep2:>1.2.2 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"child_dep.child_dep2:1.2.3 was installed successfully" not in result.stdout_lines'
+
+- name: install the parent without deps to test dep reconciliation during upgrade
+  command: ansible-galaxy collection install parent_dep.parent_collection:0.0.1 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"parent_dep.parent_collection:0.0.1 was installed successfully" not in result.stdout_lines'
+
+- name: test upgrading the parent collection and dependencies
+  command: ansible-galaxy collection install parent_dep.parent_collection:>=1.0.0,<1.1.0 {{ galaxy_verbosity }}
+  register: result
+
+- name: check the MANIFEST.json to verify the versions
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ item.namespace }}/{{ item.name }}/MANIFEST.json'
+  register: metadata
+  loop:
+    - namespace: parent_dep
+      name: parent_collection
+    - namespace: child_dep
+      name: child_collection
+    - namespace: child_dep
+      name: child_dep2
+
+- assert:
+    that:
+      - '"parent_dep.parent_collection:1.0.0 was installed successfully" in result.stdout_lines'
+      - (metadata.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
+      - '"child_dep.child_collection:0.9.9 was installed successfully" in result.stdout_lines'
+      - (metadata.results[1].content | b64decode | from_json).collection_info.version == '0.9.9'
+      - '"child_dep.child_dep2:1.2.2 was installed successfully" in result.stdout_lines'
+      - (metadata.results[2].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+- name: test upgrading a collection only upgrades dependencies if necessary
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.1.0 {{ galaxy_verbosity }}
+  register: result
+
+- name: check the MANIFEST.json to verify the versions
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ item.namespace }}/{{ item.name }}/MANIFEST.json'
+  register: metadata
+  loop:
+    - namespace: parent_dep
+      name: parent_collection
+    - namespace: child_dep
+      name: child_collection
+    - namespace: child_dep
+      name: child_dep2
+
+- assert:
+    that:
+      - '"parent_dep.parent_collection:1.1.0 was installed successfully" in result.stdout_lines'
+      - (metadata.results[0].content | b64decode | from_json).collection_info.version == '1.1.0'
+      - "\"Skipping 'child_dep.child_collection:0.9.9' as it is already installed\" in result.stdout_lines"
+      - (metadata.results[1].content | b64decode | from_json).collection_info.version == '0.9.9'
+      - "\"Skipping 'child_dep.child_dep2:1.2.2' as it is already installed\" in result.stdout_lines"
+      - (metadata.results[2].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+##### Updating collections with --upgrade
+
+# No deps
+
+- name: reset installation directory
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
+
+- name: install a collection
+  command: ansible-galaxy collection install namespace1.name1:0.0.1 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:0.0.1 was installed successfully" not in result.stdout_lines'
+
+- name: install a new version of the collection with --upgrade
+  command: ansible-galaxy collection install namespace1.name1:<=0.0.5 --upgrade {{ galaxy_verbosity }}
+  register: result
+
+- name: check the MANIFEST.json to verify the version
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: metadata
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.5 was installed successfully" in result.stdout_lines'
+      - (metadata.content | b64decode | from_json).collection_info.version == '0.0.5'
+
+- name: upgrade the collection
+  command: ansible-galaxy collection install namespace1.name1:<0.0.7 -U {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that: '"namespace1.name1:0.0.6 was installed successfully" in result.stdout_lines'
+
+- name: upgrade the collection to the last version excluding prereleases
+  command: ansible-galaxy collection install namespace1.name1 -U {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that: '"namespace1.name1:1.0.9 was installed successfully" in result.stdout_lines'
+
+- name: upgrade the collection to the latest available version including prereleases
+  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that: '"namespace1.name1:1.1.0-beta.1 was installed successfully" in result.stdout_lines'
+
+- name: run the same command again
+  command: ansible-galaxy collection install namespace1.name1 --pre -U {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that: "\"Skipping 'namespace1.name1:1.1.0-beta.1' as it is already installed\" in result.stdout"
+
+# With deps
+
+- name: reset installation directory
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
+
+- name: install a parent collection and a particular version of its dependency
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.0.0 child_dep.child_collection:0.5.0 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"parent_dep.parent_collection:1.0.0 was installed successfully" not in result.stdout_lines'
+    - '"child_dep.child_collection:0.5.0 was installed successfully" not in result.stdout_lines'
+
+- name: upgrade the parent and child - the child's new version has a dependency that should be installed
+  command: ansible-galaxy collection install parent_dep.parent_collection -U {{ galaxy_verbosity }}
+  register: result
+
+- name: check the MANIFEST.json to verify the versions
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ item.namespace }}/{{ item.name }}/MANIFEST.json'
+  register: metadata
+  loop:
+    - namespace: parent_dep
+      name: parent_collection
+    - namespace: child_dep
+      name: child_collection
+    - namespace: child_dep
+      name: child_dep2
+
+- assert:
+    that:
+      - '"parent_dep.parent_collection:2.0.0 was installed successfully" in result.stdout_lines'
+      - (metadata.results[0].content | b64decode | from_json).collection_info.version == '2.0.0'
+      - '"child_dep.child_collection:1.0.0 was installed successfully" in result.stdout_lines'
+      - (metadata.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+      - '"child_dep.child_dep2:1.2.2 was installed successfully" in result.stdout_lines'
+      - (metadata.results[2].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+# Test using a requirements.yml file for upgrade
+
+- name: reset installation directory
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
+
+- name: install upgradeable collections
+  command: ansible-galaxy collection install namespace1.name1:1.0.0 parent_dep.parent_collection:0.0.1 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:1.0.0 was installed successfully" not in result.stdout_lines'
+    - '"parent_dep.parent_collection:0.0.1 was installed successfully" not in result.stdout_lines'
+    - '"child_dep.child_collection:0.4.0 was installed successfully" not in result.stdout_lines'
+
+- name: create test requirements file with both roles and collections - {{ test_name }}
+  copy:
+    content: |
+      collections:
+        - namespace1.name1
+        - name: parent_dep.parent_collection
+          version: <=2.0.0
+      roles:
+      - skip.me
+    dest: '{{ galaxy_dir }}/ansible_collections/requirements.yml'
+
+- name: upgrade collections with the requirements.yml
+  command: ansible-galaxy collection install -r {{ requirements_path }} --upgrade {{ galaxy_verbosity }}
+  vars:
+    requirements_path: '{{ galaxy_dir }}/ansible_collections/requirements.yml'
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:1.0.9 was installed successfully" in result.stdout_lines'
+      - '"parent_dep.parent_collection:2.0.0 was installed successfully" in result.stdout_lines'
+      - '"child_dep.child_collection:1.0.0 was installed successfully" in result.stdout_lines'
+      - '"child_dep.child_dep2:1.2.2 was installed successfully" in result.stdout_lines'
+
+- name: cleanup
+  file:
+    state: "{{ item }}"
+    path: "{{ galaxy_dir }}/ansible_collections"
+  loop:
+    - absent
+    - directory
