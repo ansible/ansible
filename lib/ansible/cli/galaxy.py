@@ -1392,6 +1392,9 @@ class GalaxyCLI(CLI):
         warnings = []
         path_found = False
         collection_found = False
+        if output_format is not None:
+            collections_in_paths = {}
+
         for path in collections_search_paths:
             collection_path = GalaxyCLI._resolve_path(path)
             if not os.path.exists(path):
@@ -1458,17 +1461,9 @@ class GalaxyCLI(CLI):
                     continue
 
                 if output_format is not None:
-                    data = {
-                        collection_path: [{'name': c.fqcn, 'version': c.ver}
-                                          for c in collections]
-                    }
-
-                    if output_format == 'json':
-                        display.display(json.dumps(data))
-                    elif output_format == 'yaml':
-                        display.display(yaml.safe_dump(data))
-                    else:
-                        raise AnsibleError("Only yaml or json are supported output types")
+                    collections_in_paths[collection_path] = [
+                        {'name': c.fqcn, 'version': c.ver} for c in collections
+                    ]
                 else:
                     # Display header
                     fqcn_width, version_width = _get_collection_widths(collections)
@@ -1484,6 +1479,13 @@ class GalaxyCLI(CLI):
 
         for w in warnings:
             display.warning(w)
+
+        if output_format == 'json':
+            display.display(json.dumps(collections_in_paths))
+        elif output_format == 'yaml':
+            display.display(yaml.safe_dump(collections_in_paths))
+        else:
+            raise AnsibleError("Only yaml or json are supported output types")
 
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
