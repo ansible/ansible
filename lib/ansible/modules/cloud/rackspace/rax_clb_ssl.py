@@ -236,7 +236,7 @@ def main():
         loadbalancer=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
         enabled=dict(type='bool', default=True),
-        private_key=dict(),
+        private_key=dict(no_log=True),
         certificate=dict(),
         intermediate_certificate=dict(),
         secure_port=dict(type='int', default=443),

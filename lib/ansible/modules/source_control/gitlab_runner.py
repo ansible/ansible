@@ -304,7 +304,7 @@ def main():
         locked=dict(type='bool', default=False),
         access_level=dict(type='str', default='ref_protected', choices=["not_protected", "ref_protected"]),
         maximum_timeout=dict(type='int', default=3600),
-        registration_token=dict(type='str', required=True),
+        registration_token=dict(type='str', required=True, no_log=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),
     ))
 
