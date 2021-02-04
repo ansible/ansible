@@ -714,6 +714,9 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
+        # Save parameter values that should never be logged
+        self.no_log_values = set()
+
         self._load_params()
         self._set_fallbacks()
 
@@ -725,8 +728,6 @@ class AnsibleModule(object):
             print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
             sys.exit(1)
 
-        # Save parameter values that should never be logged
-        self.no_log_values = set()
         self._handle_no_log_values()
 
         # check the locale as set by the current environment, and reset to
@@ -1931,14 +1932,15 @@ class AnsibleModule(object):
             param = self.params
         for (k, v) in spec.items():
             default = v.get('default', None)
-            if pre is True:
-                # this prevents setting defaults on required items
-                if default is not None and k not in param:
-                    param[k] = default
-            else:
-                # make sure things without a default still get set None
-                if k not in param:
-                    param[k] = default
+
+            # This prevents setting defaults on required items on the 1st run,
+            # otherwise will set things without a default to None on the 2nd.
+            if k not in param and (default is not None or not pre):
+                # Make sure any default value for no_log fields are masked.
+                if v.get('no_log', False) and default:
+                    self.no_log_values.add(default)
+
+                param[k] = default
 
     def _set_fallbacks(self, spec=None, param=None):
         if spec is None:
@@ -1958,9 +1960,13 @@ class AnsibleModule(object):
                     else:
                         fallback_args = item
                 try:
-                    param[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
+                    fallback_value = fallback_strategy(*fallback_args, **fallback_kwargs)
                 except AnsibleFallbackNotFound:
                     continue
+                else:
+                    if v.get('no_log', False) and fallback_value:
+                        self.no_log_values.add(fallback_value)
+                    param[k] = fallback_value
 
     def _load_params(self):
         ''' read the input and set the params attribute.

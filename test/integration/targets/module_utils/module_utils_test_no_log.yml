@@ -1,0 +1,9 @@
+# This is called by module_utils_vvvvv.yml with a custom callback
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Check no_log invocation results
+      test_no_log:
+        explicit_pass: abc
+        suboption:
+          explicit_sub_pass: def
