@@ -1,0 +1,2 @@
+security_fixes:
+  - '**security issue** - Mask default and fallback values for ``no_log`` module options (CVE-2021-20228)'
