@@ -164,6 +164,7 @@ from ansible.module_utils.common.parameters import (
     list_no_log_values,
     set_defaults,
     set_fallbacks,
+    AnsibleFallbackNotFound,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
