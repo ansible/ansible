@@ -1318,7 +1318,7 @@ class GalaxyCLI(CLI):
         if context.CLIARGS['type'] == 'role':
             self.execute_list_role()
         elif context.CLIARGS['type'] == 'collection':
-            output_format = context.CLIARGS['output_format']
+            output_format = context.CLIARGS.get('output_format', False)
             self.execute_list_collection(output_format=output_format)
 
     def execute_list_role(self):
@@ -1480,12 +1480,13 @@ class GalaxyCLI(CLI):
         for w in warnings:
             display.warning(w)
 
-        if output_format == 'json':
-            display.display(json.dumps(collections_in_paths))
-        elif output_format == 'yaml':
-            display.display(yaml.safe_dump(collections_in_paths))
-        else:
-            raise AnsibleError("Only yaml or json are supported output types")
+        if output_format is not None:
+            if output_format == 'json':
+                display.display(json.dumps(collections_in_paths))
+            elif output_format == 'yaml':
+                display.display(yaml.safe_dump(collections_in_paths))
+            else:
+                raise AnsibleError("Only yaml or json are supported output types")
 
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
