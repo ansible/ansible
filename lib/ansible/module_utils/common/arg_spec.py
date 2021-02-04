@@ -13,6 +13,8 @@ from ansible.module_utils.common._collections_compat import (
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
     handle_aliases,
+    list_no_log_values,
+    remove_values,
     set_fallbacks,
     validate_argument_types,  # Rename this because it actually does coercion?
     validate_argument_values,
@@ -36,6 +38,7 @@ class Validator():
 
         self._error_messages = []
         self._validated_parameters = {}
+        self._no_log_values = set()
 
     @property
     def error_messages(self):
@@ -52,6 +55,9 @@ class Validator():
             self._error_messages.extend(error)
         else:
             raise ValueError('Error messages must be a string or sequence not a %s' % type(error))
+
+    def _sanitize_error_messages(self):
+        self._error_messages = remove_values(self._error_messages, self._no_log_values)
 
     def validate(self, argument_spec, parameters):
         """Validate module parameters against argument spec.
@@ -75,9 +81,10 @@ class Validator():
         alias_results, legal_inputs = handle_aliases(argument_spec, parameters)
         for option, alias in alias_results:
             warn('Both option %s and its alias %s are set.' % (option, alias))
+
+        self._no_log_values.update(list_no_log_values(argument_spec, parameters))
+
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
-        if unsupported_parameters:
-            self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         try:
             check_required_arguments(argument_spec, parameters)
@@ -90,13 +97,19 @@ class Validator():
         errors = validate_argument_values(argument_spec, parameters)
         self._add_error(errors)
 
-        # FIXME: This should just be done by validate_argument_types() and validate_argument_values()
+        self._sanitize_error_messages()
+
+
+        # Sub Spec
         # _validated_parameters, errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
         # self._validated_parameters.update(_validated_parameters)
         # self._add_error(errors)
         # unsupported_parameters.extend(_unsupported)
         # if unsupported_parameters:
         #     self._add_error('Unsupported parameters %s' % ', '.join((p for p in unsupported_parameters)))
+
+        if unsupported_parameters:
+            self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         if self.error_messages:
             return False

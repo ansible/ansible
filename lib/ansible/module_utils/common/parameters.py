@@ -5,26 +5,34 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import datetime
 import os
+
+from collections import deque
+from itertools import chain
+
+from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.formatters import lenient_lowercase
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 from ansible.module_utils.common._collections_compat import (
     KeysView,
+    Set,
     Sequence,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    MutableSequence,
 )
-from ansible.module_utils.common.text.formatters import (
-    lenient_lowercase,
-)
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils.common.collections import is_iterable
 
 from ansible.module_utils.six import (
     binary_type,
     integer_types,
     string_types,
     text_type,
+    PY2,
+    PY3,
 )
 
 from ansible.module_utils.common.validation import (
@@ -109,6 +117,97 @@ def _return_datastructure_name(obj):
         yield to_native(obj, nonstring='simplerepr')
     else:
         raise TypeError('Unknown parameter type: %s' % (type(obj)))
+
+
+def _remove_values_conditions(value, no_log_strings, deferred_removals):
+    """
+    Helper function for :meth:`remove_values`.
+
+    :arg value: The value to check for strings that need to be stripped
+    :arg no_log_strings: set of strings which must be stripped out of any values
+    :arg deferred_removals: List which holds information about nested
+        containers that have to be iterated for removals.  It is passed into
+        this function so that more entries can be added to it if value is
+        a container type.  The format of each entry is a 2-tuple where the first
+        element is the ``value`` parameter and the second value is a new
+        container to copy the elements of ``value`` into once iterated.
+    :returns: if ``value`` is a scalar, returns ``value`` with two exceptions:
+        1. :class:`~datetime.datetime` objects which are changed into a string representation.
+        2. objects which are in no_log_strings are replaced with a placeholder
+            so that no sensitive data is leaked.
+        If ``value`` is a container type, returns a new empty container.
+
+    ``deferred_removals`` is added to as a side-effect of this function.
+
+    .. warning:: It is up to the caller to make sure the order in which value
+        is passed in is correct.  For instance, higher level containers need
+        to be passed in before lower level containers. For example, given
+        ``{'level1': {'level2': 'level3': [True]} }`` first pass in the
+        dictionary for ``level1``, then the dict for ``level2``, and finally
+        the list for ``level3``.
+    """
+    if isinstance(value, (text_type, binary_type)):
+        # Need native str type
+        native_str_value = value
+        if isinstance(value, text_type):
+            value_is_text = True
+            if PY2:
+                native_str_value = to_bytes(value, errors='surrogate_or_strict')
+        elif isinstance(value, binary_type):
+            value_is_text = False
+            if PY3:
+                native_str_value = to_text(value, errors='surrogate_or_strict')
+
+        if native_str_value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            native_str_value = native_str_value.replace(omit_me, '*' * 8)
+
+        if value_is_text and isinstance(native_str_value, binary_type):
+            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
+        elif not value_is_text and isinstance(native_str_value, text_type):
+            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
+        else:
+            value = native_str_value
+
+    elif isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
+        if stringy_value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            if omit_me in stringy_value:
+                return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+
+    elif isinstance(value, (datetime.datetime, datetime.date)):
+        value = value.isoformat()
+    else:
+        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
+    return value
 
 
 def list_no_log_values(argument_spec, params):
@@ -258,6 +357,121 @@ def list_deprecations(argument_spec, params, prefix=''):
                             deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
 
     return deprecations
+
+
+def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
+    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
+    if isinstance(value, (text_type, binary_type)):
+        return value
+
+    if isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        return value
+
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        return value
+
+    raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
+
+def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
+    """ Sanitize the keys in a container object by removing no_log values from key names.
+
+    This is a companion function to the `remove_values()` function. Similar to that function,
+    we make use of deferred_removals to avoid hitting maximum recursion depth in cases of
+    large data structures.
+
+    :param obj: The container object to sanitize. Non-container objects are returned unmodified.
+    :param no_log_strings: A set of string values we do not want logged.
+    :param ignore_keys: A set of string values of keys to not sanitize.
+
+    :returns: An object with sanitized keys.
+    """
+
+    deferred_removals = deque()
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _sanitize_keys_conditions(obj, no_log_strings, ignore_keys, deferred_removals)
+
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                if old_key in ignore_keys or old_key.startswith('_ansible'):
+                    new_data[old_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+                else:
+                    # Sanitize the old key. We take advantage of the sanitizing code in
+                    # _remove_values_conditions() rather than recreating it here.
+                    new_key = _remove_values_conditions(old_key, no_log_strings, None)
+                    new_data[new_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+        else:
+            for elem in old_data:
+                new_elem = _sanitize_keys_conditions(elem, no_log_strings, ignore_keys, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from keys')
+
+    return new_value
+
+
+def remove_values(value, no_log_strings):
+    """ Remove strings in no_log_strings from value.  If value is a container
+    type, then remove a lot more.
+
+    Use of deferred_removals exists, rather than a pure recursive solution,
+    because of the potential to hit the maximum recursion depth when dealing with
+    large amounts of data (see issue #24560).
+    """
+
+    deferred_removals = deque()
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _remove_values_conditions(value, no_log_strings, deferred_removals)
+
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                new_elem = _remove_values_conditions(old_elem, no_log_strings, deferred_removals)
+                new_data[old_key] = new_elem
+        else:
+            for elem in old_data:
+                new_elem = _remove_values_conditions(elem, no_log_strings, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from output')
+
+    return new_value
 
 
 def handle_aliases(argument_spec, params, alias_warnings=None):
@@ -441,9 +655,9 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
             errors.append(msg)
 
-        sub_spec = spec.get('options')
-        if sub_spec:
-            validate_sub_spec(sub_spec, value, wanted_name, prefix, [param])
+        # sub_spec = spec.get('options')
+        # if sub_spec:
+        #     validate_sub_spec(sub_spec, value, wanted_name, prefix, [param])
 
     return validated_params, errors
 
