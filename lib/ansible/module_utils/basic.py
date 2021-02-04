@@ -1934,9 +1934,7 @@ class AnsibleModule(object):
 
             # This prevents setting defaults on required items on the 1st run,
             # otherwise will set things without a default to None on the 2nd.
-            extra_check = lambda: default is not None if pre is True else lambda: True
-
-            if extra_check() and k not in param:
+            if k not in param and (default is not None or not pre):
                 # Make sure any default value for no_log fields are masked.
                 if v.get('no_log', False) and default:
                     self.no_log_values.add(default)
