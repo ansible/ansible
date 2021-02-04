@@ -150,6 +150,7 @@ HTTPTESTER_HOSTS = (
     'ansible.http.tests',
     'sni1.ansible.http.tests',
     'fail.ansible.http.tests',
+    'self-signed.ansible.http.tests',
 )
 
 
@@ -820,7 +821,11 @@ def command_windows_integration(args):
                 # we are running in a Docker container that is linked to the httptester container, we just need to
                 # forward these requests to the linked hostname
                 first_host = HTTPTESTER_HOSTS[0]
-                ssh_options = ["-R", "8080:%s:80" % first_host, "-R", "8443:%s:443" % first_host]
+                ssh_options = [
+                    "-R", "8080:%s:80" % first_host,
+                    "-R", "8443:%s:443" % first_host,
+                    "-R", "8444:%s:444" % first_host
+                ]
             else:
                 # we are running directly and need to start the httptester container ourselves and forward the port
                 # from there manually set so HTTPTESTER env var is set during the run
@@ -1311,6 +1316,10 @@ def start_httptester(args):
             container=443,
         ),
         dict(
+            remote=8444,
+            container=444,
+        ),
+        dict(
             remote=8749,
             container=749,
         ),
@@ -1402,6 +1411,7 @@ def inject_httptester(args):
 rdr pass inet proto tcp from any to any port 80 -> 127.0.0.1 port 8080
 rdr pass inet proto tcp from any to any port 88 -> 127.0.0.1 port 8088
 rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
+rdr pass inet proto tcp from any to any port 444 -> 127.0.0.1 port 8444
 rdr pass inet proto tcp from any to any port 749 -> 127.0.0.1 port 8749
 '''
         cmd = ['pfctl', '-ef', '-']
@@ -1416,6 +1426,7 @@ rdr pass inet proto tcp from any to any port 749 -> 127.0.0.1 port 8749
             (80, 8080),
             (88, 8088),
             (443, 8443),
+            (444, 8444),
             (749, 8749),
         ]
 
