@@ -81,16 +81,18 @@ def _is_collection_dir(dir_path):
 
 def _find_collections_in_subdirs(dir_path):
     b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
-    galaxy_yml_glob_pattern = os.path.join(
+
+    subdir_glob_pattern = os.path.join(
         b_dir_path,
         # b'*',  # namespace is supposed to be top-level per spec
         b'*',  # collection name
-        _GALAXY_YAML,
     )
-    return (
-        os.path.dirname(galaxy_yml)
-        for galaxy_yml in iglob(galaxy_yml_glob_pattern)
-    )
+
+    for subdir in iglob(subdir_glob_pattern):
+        if os.path.isfile(os.path.join(subdir, _MANIFEST_JSON)):
+            yield subdir
+        elif os.path.isfile(os.path.join(subdir, _GALAXY_YAML)):
+            yield subdir
 
 
 def _is_collection_namespace_dir(tested_str):
@@ -280,6 +282,20 @@ class _ComputedReqKindsMixin:
                 req_type = 'file'
                 req_source = src_path
             elif _is_collection_dir(src_path):
+                if _is_installed_collection_dir(src_path) and _is_collection_src_dir(src_path):
+                    # Note that ``download`` requires a dir with a ``galaxy.yml`` and fails if it
+                    # doesn't exist, but if a ``MANIFEST.json`` also exists, it would be used
+                    # instead of the ``galaxy.yml``.
+                    raise AnsibleError(
+                        u"Collection requirement at '{path!s}' has both a {manifest_json!s} "
+                        u"file and a {galaxy_yml!s}.\nThe requirement must either be an installed "
+                        u"collection directory or a source collection directory, not both.".
+                        format(
+                            path=to_text(src_path, errors='surrogate_or_strict'),
+                            manifest_json=to_text(_MANIFEST_JSON),
+                            galaxy_yml=to_text(_GALAXY_YAML),
+                        )
+                    )
                 req_type = 'dir'
                 req_source = src_path
             elif _is_collection_namespace_dir(src_path):
