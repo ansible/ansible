@@ -40,6 +40,12 @@
 - assert:
     that:
       - "{{ item.value | length == 3 }}"
+      - "{{ item.value[0].name == 'dev.collection1' }}"
+      - "{{ item.value[0].version == '*' }}"
+      - "{{ item.value[1].name == 'dev.collection2' }}"
+      - "{{ item.value[1].version == 'placeholder' }}"
+      - "{{ item.value[2].name == 'dev.collection3' }}"
+      - "{{ item.value[2].version == '*' }}"
   with_dict: "{{ list_result_yaml.stdout | from_yaml }}"
 
 - name: list collections in json format
@@ -51,6 +57,12 @@
 - assert:
     that:
       - "{{ item.value | length == 3 }}"
+      - "{{ item.value[0].name == 'dev.collection1' }}"
+      - "{{ item.value[0].version == '*' }}"
+      - "{{ item.value[1].name == 'dev.collection2' }}"
+      - "{{ item.value[1].version == 'placeholder' }}"
+      - "{{ item.value[2].name == 'dev.collection3' }}"
+      - "{{ item.value[2].version == '*' }}"
   with_dict: "{{ list_result_json.stdout | from_json }}"
 
 - name: install an artifact to the second collections path
