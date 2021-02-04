@@ -50,7 +50,7 @@ class Validator():
         else:
             raise ValueError('Error messages must be a string or sequence not a %s' % type(error))
 
-    def validate_role(self, argument_spec, parameters):
+    def validate(self, argument_spec, parameters):
         """Validate module parameters against argument spec.
 
         :Example:
@@ -94,7 +94,3 @@ class Validator():
             return False
         else:
             return True
-
-    def validate_module(self, arg_spec, parameters):
-        """Future method that can be used to module arg spec validation"""
-        pass
