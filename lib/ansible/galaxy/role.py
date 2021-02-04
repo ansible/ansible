@@ -400,4 +400,14 @@ class GalaxyRole(object):
 
                     break
 
+            if type(self._requirements) is dict:
+                display.warning("Wrong format for requirements for role %s" % self.name)
+                if 'collections' in self._requirements:
+                    display.warning("Roles can not depend on collections. Collections will not be installed")
+                role_reqs = []
+                if 'roles' in self._requirements:
+                    role_reqs = self._requirements['roles']
+
+                self._requirements = role_reqs
+
         return self._requirements
