@@ -162,6 +162,7 @@ from ansible.module_utils.common.parameters import (
     handle_aliases,
     list_deprecations,
     list_no_log_values,
+    set_defaults,
     set_fallbacks,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
@@ -1924,15 +1925,10 @@ class AnsibleModule(object):
             spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k, v) in spec.items():
-            default = v.get('default', None)
 
             # This prevents setting defaults on required items on the 1st run,
             # otherwise will set things without a default to None on the 2nd.
-            if k not in param and (default is not None or not pre):
-                # Make sure any default value for no_log fields are masked.
-                if v.get('no_log', False) and default:
-                    self.no_log_values.add(default)
+        set_defaults(spec, param, pre)
 
                 param[k] = default
 
