@@ -36,8 +36,8 @@
         - "fake-{{ ansible_architecture }}"
         - "fake-i686"
         - "fake-ppc64"
-      changed_when: yes
-      notify: remove repos
+    changed_when: yes
+    notify: remove repos
 
   - name: Create RPMs and put them into a repo
     create_repo:
