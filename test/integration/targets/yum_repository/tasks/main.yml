@@ -79,6 +79,7 @@
       args:
         name: "{{ yum_repository_test_package }}"
         state: present
+        disable_gpg_check: yes
       register: test_package_result
 
     - name: check that {{ yum_repository_test_package }} was successfully installed
