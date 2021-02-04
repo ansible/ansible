@@ -380,7 +380,7 @@ def main():
             instance_gateway=dict(type='str', aliases=['gateway']),
             instance_domain=dict(type='str', aliases=['domain']),
             instance_dns=dict(type='str', aliases=['dns']),
-            instance_rootpw=dict(type='str', aliases=['rootpw']),
+            instance_rootpw=dict(type='str', aliases=['rootpw'], no_log=True),
             instance_key=dict(type='str', aliases=['key']),
             sdomain=dict(type='str'),
             region=dict(type='str'),

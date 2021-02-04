@@ -537,7 +537,7 @@ def main():
         generate_sqlite=dict(default=False, type='bool'),
         ca_cert=dict(aliases=['importer_ssl_ca_cert']),
         client_cert=dict(aliases=['importer_ssl_client_cert']),
-        client_key=dict(aliases=['importer_ssl_client_key']),
+        client_key=dict(aliases=['importer_ssl_client_key'], no_log=True),
         name=dict(required=True, aliases=['repo']),
         proxy_host=dict(),
         proxy_port=dict(),

@@ -146,7 +146,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             user=dict(required=True),
-            api_key=dict(required=True),
+            api_key=dict(required=True, no_log=True),
             name=dict(required=False),
             title=dict(required=True),
             source=dict(required=False),
