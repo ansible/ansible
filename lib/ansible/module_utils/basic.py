@@ -657,10 +657,6 @@ def missing_required_lib(library, reason=None, url=None):
     return msg
 
 
-class AnsibleFallbackNotFound(Exception):
-    pass
-
-
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  mutually_exclusive=None, required_together=None,
