@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os.path
 import re
 import shutil
@@ -12,7 +13,6 @@ import sys
 import textwrap
 import time
 import yaml
-import json
 
 from yaml.error import YAMLError
 
@@ -303,8 +303,8 @@ class GalaxyCLI(CLI):
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
         if galaxy_type == 'collection':
-            list_parser.add_argument('-o', '--output', dest='output_format',
-                                     help="Format to display the list of collections in. Choose between 'yaml' or 'json'.")
+            list_parser.add_argument('-o', '--output', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
+                                     help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1318,8 +1318,7 @@ class GalaxyCLI(CLI):
         if context.CLIARGS['type'] == 'role':
             self.execute_list_role()
         elif context.CLIARGS['type'] == 'collection':
-            output_format = context.CLIARGS.get('output_format', False)
-            self.execute_list_collection(output_format=output_format)
+            self.execute_list_collection()
 
     def execute_list_role(self):
         """
@@ -1378,23 +1377,22 @@ class GalaxyCLI(CLI):
         return 0
 
     @with_collection_artifacts_manager
-    def execute_list_collection(self, artifacts_manager=None, output_format=None):
+    def execute_list_collection(self, artifacts_manager=None):
         """
         List all collections installed on the local system
 
         :param artifacts_manager: Artifacts manager.
         """
 
+        output_format = context.CLIARGS.get('output_format', False)
         collections_search_paths = set(context.CLIARGS['collections_path'])
         collection_name = context.CLIARGS['collection']
         default_collections_path = AnsibleCollectionConfig.collection_paths
+        collections_in_paths = {}
 
         warnings = []
         path_found = False
         collection_found = False
-        if output_format is not None:
-            collections_in_paths = {}
-
         for path in collections_search_paths:
             collection_path = GalaxyCLI._resolve_path(path)
             if not os.path.exists(path):
@@ -1460,7 +1458,7 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
-                if output_format is not None:
+                if output_format in ('yaml', 'json'):
                     collections_in_paths[collection_path] = [
                         {'name': c.fqcn, 'version': c.ver} for c in collections
                     ]
@@ -1480,13 +1478,10 @@ class GalaxyCLI(CLI):
         for w in warnings:
             display.warning(w)
 
-        if output_format is not None:
-            if output_format == 'json':
-                display.display(json.dumps(collections_in_paths))
-            elif output_format == 'yaml':
-                display.display(yaml.safe_dump(collections_in_paths))
-            else:
-                raise AnsibleError("Only yaml or json are supported output types")
+        if output_format == 'json':
+            display.display(json.dumps(collections_in_paths))
+        elif output_format == 'yaml':
+            display.display(yaml.safe_dump(collections_in_paths))
 
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
