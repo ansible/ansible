@@ -12,6 +12,7 @@ from ansible.module_utils.common._collections_compat import (
 
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
+    handle_aliases,
     set_fallbacks,
     validate_argument_types,  # Rename this because it actually does coercion?
     validate_argument_values,
@@ -19,6 +20,7 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.common.validation import (
     check_required_arguments,
 )
@@ -70,6 +72,9 @@ class Validator():
 
         self._no_log_values.update(set_fallbacks(argument_spec, parameters))
 
+        alias_results, legal_inputs = handle_aliases(argument_spec, parameters)
+        for option, alias in alias_results:
+            warn('Both option %s and its alias %s are set.' % (option, alias))
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
         if unsupported_parameters:
             self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
