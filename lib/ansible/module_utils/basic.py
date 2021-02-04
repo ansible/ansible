@@ -1927,11 +1927,7 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-            # This prevents setting defaults on required items on the 1st run,
-            # otherwise will set things without a default to None on the 2nd.
-        set_defaults(spec, param, pre)
-
-                param[k] = default
+        self.no_log_values.update(set_defaults(spec, param, pre))
 
     def _set_fallbacks(self, spec=None, param=None):
         if spec is None:

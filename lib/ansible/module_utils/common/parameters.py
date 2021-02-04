@@ -196,18 +196,23 @@ def set_fallbacks(argument_spec, module_parameters):
 
 
 def set_defaults(argument_spec, module_parameters, set_default=False):
-    for (param, value) in argument_spec.items():
+    no_log_values = set()
+    for param, value in argument_spec.items():
+
         # TODO: Change the default value from None to Sentinel to differentiate between
         #       user supplied None and a default value set by this function.
         default = value.get('default', None)
-        if set_default is True:
-            # this prevents setting defaults on required items
-            if default is not None and param not in module_parameters:
-                module_parameters[param] = default
-        else:
-            # make sure things without a default still get set None
-            if param not in module_parameters:
-                module_parameters[param] = default
+
+        # This prevents setting defaults on required items on the 1st run,
+        # otherwise will set things without a default to None on the 2nd.
+        if param not in module_parameters and (default is not None or not set_default):
+            # Make sure any default value for no_log fields are masked.
+            if value.get('no_log', False) and default:
+                no_log_values.add(default)
+
+            module_parameters[param] = default
+
+    return no_log_values
 
 
 def list_deprecations(argument_spec, params, prefix=''):
