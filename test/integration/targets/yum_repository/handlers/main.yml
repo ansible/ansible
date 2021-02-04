@@ -1,0 +1,4 @@
+- name: remove listtest repo
+  yum_repository:
+    name: listtest
+    state: absent
