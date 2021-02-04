@@ -12,6 +12,7 @@ import sys
 import textwrap
 import time
 import yaml
+import json
 
 from yaml.error import YAMLError
 
@@ -300,6 +301,10 @@ class GalaxyCLI(CLI):
         list_parser.set_defaults(func=self.execute_list)
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
+
+        if galaxy_type == 'collection':
+            list_parser.add_argument('-o', '--output', dest='output_format',
+                                     help="Format to display the list of collections in. Choose between 'yaml' or 'json'.")
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1313,7 +1318,8 @@ class GalaxyCLI(CLI):
         if context.CLIARGS['type'] == 'role':
             self.execute_list_role()
         elif context.CLIARGS['type'] == 'collection':
-            self.execute_list_collection()
+            output_format = context.CLIARGS['output_format']
+            self.execute_list_collection(output_format=output_format)
 
     def execute_list_role(self):
         """
@@ -1372,7 +1378,7 @@ class GalaxyCLI(CLI):
         return 0
 
     @with_collection_artifacts_manager
-    def execute_list_collection(self, artifacts_manager=None):
+    def execute_list_collection(self, artifacts_manager=None, output_format=None):
         """
         List all collections installed on the local system
 
@@ -1451,13 +1457,26 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
-                # Display header
-                fqcn_width, version_width = _get_collection_widths(collections)
-                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+                if output_format is not None:
+                    data = {
+                        collection_path: [{'name': c.fqcn, 'version': c.ver}
+                                          for c in collections]
+                    }
 
-                # Sort collections by the namespace and name
-                for collection in sorted(collections, key=to_text):
-                    _display_collection(collection, fqcn_width, version_width)
+                    if output_format == 'json':
+                        display.display(json.dumps(data))
+                    elif output_format == 'yaml':
+                        display.display(yaml.safe_dump(data))
+                    else:
+                        raise AnsibleError("Only yaml or json are supported output types")
+                else:
+                    # Display header
+                    fqcn_width, version_width = _get_collection_widths(collections)
+                    _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+
+                    # Sort collections by the namespace and name
+                    for collection in sorted(collections, key=to_text):
+                        _display_collection(collection, fqcn_width, version_width)
 
         # Do not warn if the specific collection was found in any of the search paths
         if collection_found and collection_name:
