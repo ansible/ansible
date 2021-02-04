@@ -22,7 +22,7 @@ plugin_routing:
     jail:
       redirect: community.general.jail
     kubectl:
-      redirect: community.kubernetes.kubectl
+      redirect: kubernetes.core.kubectl
     libvirt_lxc:
       redirect: community.libvirt.libvirt_lxc
     lxc:
@@ -3249,23 +3249,23 @@ plugin_routing:
     grafana_plugin:
       redirect: community.grafana.grafana_plugin
     k8s_facts:
-      redirect: community.kubernetes.k8s_facts
+      redirect: kubernetes.core.k8s_facts
     k8s_raw:
-      redirect: community.kubernetes.k8s_raw
+      redirect: kubernetes.core.k8s_raw
     k8s:
-      redirect: community.kubernetes.k8s
+      redirect: kubernetes.core.k8s
     k8s_auth:
-      redirect: community.kubernetes.k8s_auth
+      redirect: kubernetes.core.k8s_auth
     k8s_info:
-      redirect: community.kubernetes.k8s_info
+      redirect: kubernetes.core.k8s_info
     k8s_scale:
-      redirect: community.kubernetes.k8s_scale
+      redirect: kubernetes.core.k8s_scale
     k8s_service:
-      redirect: community.kubernetes.k8s_service
+      redirect: kubernetes.core.k8s_service
     openshift_raw:
-      redirect: community.kubernetes.openshift_raw
+      redirect: kubernetes.core.openshift_raw
     openshift_scale:
-      redirect: community.kubernetes.openshift_scale
+      redirect: kubernetes.core.openshift_scale
     openssh_cert:
       redirect: community.crypto.openssh_cert
     openssl_pkcs12:
@@ -7679,11 +7679,11 @@ plugin_routing:
     ismount:
       redirect: ansible.posix.mount
     k8s.common:
-      redirect: community.kubernetes.common
+      redirect: kubernetes.core.common
     k8s.raw:
-      redirect: community.kubernetes.raw
+      redirect: kubernetes.core.raw
     k8s.scale:
-      redirect: community.kubernetes.scale
+      redirect: kubernetes.core.scale
     known_hosts:
       redirect: community.general.known_hosts
     kubevirt:
@@ -9318,15 +9318,15 @@ plugin_routing:
     zabbix:
       redirect: community.zabbix.zabbix
     k8s_auth_options:
-      redirect: community.kubernetes.k8s_auth_options
+      redirect: kubernetes.core.k8s_auth_options
     k8s_name_options:
-      redirect: community.kubernetes.k8s_name_options
+      redirect: kubernetes.core.k8s_name_options
     k8s_resource_options:
-      redirect: community.kubernetes.k8s_resource_options
+      redirect: kubernetes.core.k8s_resource_options
     k8s_scale_options:
-      redirect: community.kubernetes.k8s_scale_options
+      redirect: kubernetes.core.k8s_scale_options
     k8s_state_options:
-      redirect: community.kubernetes.k8s_state_options
+      redirect: kubernetes.core.k8s_state_options
     acme:
       redirect: community.crypto.acme
     ecs_credential:
@@ -9432,7 +9432,7 @@ plugin_routing:
     random_mac:
       redirect: community.general.random_mac
     k8s_config_resource_name:
-      redirect: community.kubernetes.k8s_config_resource_name
+      redirect: kubernetes.core.k8s_config_resource_name
     cidr_merge:
       redirect: ansible.netcommon.cidr_merge
     ipaddr:
@@ -9531,9 +9531,9 @@ plugin_routing:
     vultr:
       redirect: ngine_io.vultr.vultr
     k8s:
-      redirect: community.kubernetes.k8s
+      redirect: kubernetes.core.k8s
     openshift:
-      redirect: community.kubernetes.openshift
+      redirect: kubernetes.core.openshift
     vmware_vm_inventory:
       redirect: community.vmware.vmware_vm_inventory
     aws_ec2:
@@ -9617,9 +9617,9 @@ plugin_routing:
     grafana_dashboard:
       redirect: community.grafana.grafana_dashboard
     openshift:
-      redirect: community.kubernetes.openshift
+      redirect: kubernetes.core.openshift
     k8s:
-      redirect: community.kubernetes.k8s
+      redirect: kubernetes.core.k8s
     mongodb:
       redirect: community.mongodb.mongodb
     laps_password:
