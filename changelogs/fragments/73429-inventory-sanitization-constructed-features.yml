@@ -1,0 +1,4 @@
+bugfixes:
+  - inventory plugins - Let plugins define the sanitization method for the constructed ``groups`` feature.
+minor_changes:
+  - constructed inventory plugin - Sanitize group names created from the ``groups`` option silently.
