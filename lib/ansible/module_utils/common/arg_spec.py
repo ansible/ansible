@@ -12,6 +12,7 @@ from ansible.module_utils.common._collections_compat import (
 
 from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
+    set_fallbacks,
     validate_argument_types,  # Rename this because it actually does coercion?
     validate_argument_values,
     validate_sub_spec,
@@ -66,6 +67,8 @@ class Validator():
         :returns: True if no errors were encountered, False if any errors were encountered.
         :rtype: bool
         """
+
+        self._no_log_values.update(set_fallbacks(argument_spec, parameters))
 
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
         if unsupported_parameters:
