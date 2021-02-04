@@ -863,7 +863,13 @@ def main():
                             auto_delete=dict(type='bool'),
                             boot=dict(type='bool'),
                             device_name=dict(type='str'),
-                            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), rsa_encrypted_key=dict(type='str', no_log=True))),
+                            disk_encryption_key=dict(
+                                type='dict',
+                                options=dict(
+                                    raw_key=dict(type='str', no_log=True),
+                                    rsa_encrypted_key=dict(type='str', no_log=True),
+                                ),
+                            ),
                             index=dict(type='int'),
                             initialize_params=dict(
                                 type='dict',
