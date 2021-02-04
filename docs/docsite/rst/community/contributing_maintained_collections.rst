@@ -66,7 +66,7 @@ The following table shows:
     <tr>
       <td><a href="https://galaxy.ansible.com/amazon/aws">amazon.aws</a></td>
       <td><a href="https://galaxy.ansible.com/community/aws">community.aws</a></td>
-      <td><a href="https://github.com/ansible/community/tree/master/group-aws">Cloud</a></td>
+      <td><a href="https://github.com/ansible/community/tree/master/group-aws">AWS</a></td>
       <td>✓**</td>
       <td>**</td>
       <td>✓</td>
@@ -231,13 +231,13 @@ The following table shows:
     <tr>
       <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
       <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
-      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/VMware">VMware</a></td>
       <td>✓</td>
       <td>✓</td>
       <td>✓</td>
       <td>Zuul</td>
       <td>✓</td>
-      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/vmware_rest_guidelines.html">VMWare REST guide</a></td>
+      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/vmware_rest_guidelines.html">VMware REST guide</a></td>
     </tr>
 
   </table>
