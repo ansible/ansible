@@ -1,17 +1,6 @@
 - name: Run tests
   when: ansible_facts.distribution in ['CentOS', 'Fedora']
   block:
-    - name: Include distribution specific variables
-      include_vars: "{{ lookup('first_found', params) }}"
-      vars:
-        params:
-          files:
-            - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
-            - "{{ ansible_facts.distribution }}.yml"
-            - default.yml
-          paths:
-            - vars
-
     - name: ensure {{ yum_repository_test_package }} is uninstalled to begin with
       action: "{{ ansible_facts.pkg_mgr }}"
       args:
@@ -184,6 +173,7 @@
         includepkgs:
           - ccc
           - ddd
+      notify: remove listtest repo
 
     - name: Assert that lists were properly inserted
       assert:
@@ -198,24 +188,3 @@
         repofile: "{{ lookup('file', '/etc/yum.repos.d/listtest.repo') }}"
         url_hostname: "{{ yum_repository_test_repo.baseurl | urlsplit('hostname') }}"
         url_hostname2: "{{ url_hostname | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
-
-    - name: CLEANUP | Remove list test repo
-      yum_repository:
-        name: listtest
-        state: absent
-
-    - name: CLEANUP | Remove {{ yum_repository_test_repo.name }}
-      yum_repository:
-        name: "{{ yum_repository_test_repo.name }}"
-        state: absent
-
-    - name: CLEANUP | Enable EPEL
-      yum_repository:
-        name: epel
-        state: present
-        description: "{{ yum_repository_epel.description | default(omit) }}"
-        metalink: "{{ yum_repository_epel.metalink | default(omit) }}"
-        mirrorlist: "{{ yum_repository_epel.mirrorlist | default(omit) }}"
-        gpgkey: "{{ yum_repository_epel.gpgkey }}"
-        gpgcheck: yes
-      when: ansible_facts.distribution == 'CentOS'
