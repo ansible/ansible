@@ -1,2 +1,2 @@
 security_fixes:
-- 'bitbucket_pipeline_variable - **CVE-2021-20180** - hide user sensitive information which are marked as ``secured`` from logging into the console (https://github.com/ansible-collections/community.general/pull/1635).'
+- 'bitbucket_pipeline_variable - hide user sensitive information which are marked as ``secured`` from logging into the console (https://github.com/ansible-collections/community.general/pull/1635) (CVE-2021-20180).'
