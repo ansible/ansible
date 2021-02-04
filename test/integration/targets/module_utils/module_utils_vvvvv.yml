@@ -1,0 +1,27 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  # Invocation usually is output with 3vs or more, our callback plugin displays it anyway
+  - name: Check no_log invocation results
+    command: ansible-playbook -i {{ inventory_file }} module_utils_test_no_log.yml
+    environment:
+      ANSIBLE_CALLBACK_PLUGINS: callback
+      ANSIBLE_STDOUT_CALLBACK: pure_json
+      SECRET_ENV: ghi
+      SECRET_SUB_ENV: jkl
+    register: no_log_invocation
+
+  - set_fact:
+      no_log_invocation: '{{ no_log_invocation.stdout | trim | from_json }}'
+
+  - name: check no log values from fallback or default are masked
+    assert:
+      that:
+      - no_log_invocation.invocation.module_args.default_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.explicit_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.fallback_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.normal == 'plaintext'
+      - no_log_invocation.invocation.module_args.suboption.default_sub_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.suboption.explicit_sub_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.suboption.fallback_sub_pass == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - no_log_invocation.invocation.module_args.suboption.normal == 'plaintext'
