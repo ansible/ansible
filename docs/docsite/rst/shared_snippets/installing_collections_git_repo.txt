@@ -1,4 +1,4 @@
-You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag).
+You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag).
 
 .. warning::
 
@@ -35,7 +35,7 @@ Default repository search locations
 
 There are two paths searched in a repository for collections by default.
 
-The first is the ``galaxy.yml`` file in the top level of the repository path. If the ``galaxy.yml`` file exists it's used as the collection metadata and the individual collection will be installed.
+The first is the ``galaxy.yml`` or ``MANIFEST.json`` file in the top level of the repository path. If the file exists it's used as the collection metadata and the individual collection will be installed.
 
 .. code-block:: text
 
@@ -46,13 +46,13 @@ The first is the ``galaxy.yml`` file in the top level of the repository path. If
    │   └── module_utils/
    └─── README.md
 
-The second is a ``galaxy.yml`` file in each directory in the repository path (one level deep). In this scenario, each directory with a ``galaxy.yml`` is installed as a collection.
+The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection.
 
 .. code-block:: text
 
    directory/
    ├── docs/
-   ├── galaxy.yml
+   ├── MANIFEST.json
    ├── plugins/
    │   ├── inventory/
    │   └── modules/
@@ -61,7 +61,7 @@ The second is a ``galaxy.yml`` file in each directory in the repository path (on
 Specifying the location to search for collections
 -------------------------------------------------
 
-If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for ``galaxy.yml`` file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file).
+If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for metadata file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file or ``MANIFEST.json`` file).
 
 .. code-block:: text
 

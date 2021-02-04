@@ -24,6 +24,29 @@ You can also directly use the tarball from your build:
 
    ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
 
+You can build and install a collection from a local source directory. The ``ansible-galaxy`` utility builds the collection using the ``MANIFEST.json`` or ``galaxy.yml``
+metadata in the directory.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install /path/to/collection -p ./collections
+
+You can also install multiple collections in a namespace directory.
+
+.. code-block:: text
+
+   ns/
+   ├── collection1/
+   │   ├── MANIFEST.json
+   │   └── plugins/
+   └── collection2/
+       ├── galaxy.yml
+       └── plugins/
+
+.. code-block:: bash
+
+   ansible-galaxy collection install /path/to/ns -p ./collections
+
 .. note::
     The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the
     parent directory is already in a folder called ``ansible_collections``.
