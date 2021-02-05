@@ -192,3 +192,7 @@ ansible-playbook -i host1,host2 no_implicit_meta_banners.yml > meta_test.out
 cat meta_test.out
 [ "$(grep -c 'TASK \[meta\]' meta_test.out)" -eq 0 ]
 rm -f meta_test.out
+
+# Ensure free/host_pinned non-lockstep strategies display correctly
+diff -u <(ANSIBLE_STRATEGY=free ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null) callback_default.out.free.stdout
+diff -u <(ANSIBLE_STRATEGY=host_pinned ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null) callback_default.out.host_pinned.stdout

@@ -3,3 +3,8 @@ testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playboo
 
 [nonexistent]
 testhost5 ansible_host=169.254.199.200  # no connection is ever established with this host
+
+[nonlockstep]
+testhost10 i=1.0 ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+testhost11 i=2.0 ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+testhost12 i=3.0 ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
