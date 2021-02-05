@@ -680,7 +680,7 @@ def main():
         enabled=dict(type='bool'),
         client_authenticator_type=dict(type='str', choices=['client-secret', 'client-jwt'], aliases=['clientAuthenticatorType']),
         secret=dict(type='str', no_log=True),
-        registration_access_token=dict(type='str', aliases=['registrationAccessToken']),
+        registration_access_token=dict(type='str', aliases=['registrationAccessToken'], no_log=True),
         default_roles=dict(type='list', aliases=['defaultRoles']),
         redirect_uris=dict(type='list', aliases=['redirectUris']),
         web_origins=dict(type='list', aliases=['webOrigins']),
