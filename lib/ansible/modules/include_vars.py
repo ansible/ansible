@@ -71,7 +71,7 @@ options:
     default: no
     version_added: "2.7"
   overwrite:
-    version_added: "2.6"
+    version_added: "2.11"
     description:
       - Defines whether existing variables should be overwritten.
     default: yes (default) / no
