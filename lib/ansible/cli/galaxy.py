@@ -1437,6 +1437,13 @@ class GalaxyCLI(CLI):
 
                 fqcn_width, version_width = _get_collection_widths([collection])
 
+                if output_format in ('yaml', 'json'):
+                    collections_in_paths[collection_path] = {
+                        collection.fqcn: { 'version': collection.ver }
+                    }
+
+                    continue
+
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
                 _display_collection(collection, fqcn_width, version_width)
 
@@ -1459,17 +1466,19 @@ class GalaxyCLI(CLI):
                     continue
 
                 if output_format in ('yaml', 'json'):
-                    collections_in_paths[collection_path] = [
-                        {'name': c.fqcn, 'version': c.ver} for c in collections
-                    ]
-                else:
-                    # Display header
-                    fqcn_width, version_width = _get_collection_widths(collections)
-                    _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+                    collections_in_paths[collection_path] = {
+                        collection.fqcn: { 'version': collection.ver } for collection in collections
+                    }
 
-                    # Sort collections by the namespace and name
-                    for collection in sorted(collections, key=to_text):
-                        _display_collection(collection, fqcn_width, version_width)
+                    continue
+
+                # Display header
+                fqcn_width, version_width = _get_collection_widths(collections)
+                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+
+                # Sort collections by the namespace and name
+                for collection in sorted(collections, key=to_text):
+                    _display_collection(collection, fqcn_width, version_width)
 
         # Do not warn if the specific collection was found in any of the search paths
         if collection_found and collection_name:
