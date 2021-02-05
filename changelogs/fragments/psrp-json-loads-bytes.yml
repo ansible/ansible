@@ -1,0 +1,2 @@
+bugfixes:
+  - psrp connection plugin - ``to_text(stdout)`` before json.loads in psrp.Connection.put_file in case stdout is bytes.
