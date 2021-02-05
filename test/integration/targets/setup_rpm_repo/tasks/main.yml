@@ -12,6 +12,7 @@
     with_items:
       - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
       - createrepo
+      - rpm-build
     when:
       - ansible_distribution in ['Fedora']
 
@@ -19,6 +20,7 @@
     package:
       name: "{{ item }}"
     with_items:
+      - rpm-build
       - python-rpmfluff
       - createrepo_c
       - createrepo  # used by el6 version of rpmfluff
@@ -30,6 +32,7 @@
     package:
       name: "{{ item }}"
     with_items:
+      - rpm-build
       - python3-rpmfluff
       - createrepo_c
       - createrepo  # used by el6 version of rpmfluff
