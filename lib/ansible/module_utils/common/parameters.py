@@ -210,54 +210,42 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
     return value
 
 
-def list_no_log_values(argument_spec, params):
-    """Return set of no log values
+def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
+    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
+    if isinstance(value, (text_type, binary_type)):
+        return value
 
-    :arg argument_spec: An argument spec dictionary from a module
-    :arg params: Dictionary of all module parameters
+    if isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
 
-    :returns: Set of strings that should be hidden from output::
+    if isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
 
-        {'secret_dict_value', 'secret_list_item_one', 'secret_list_item_two', 'secret_string'}
-    """
+    if isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
 
-    no_log_values = set()
-    for arg_name, arg_opts in argument_spec.items():
-        if arg_opts.get('no_log', False):
-            # Find the value for the no_log'd param
-            no_log_object = params.get(arg_name, None)
+    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        return value
 
-            if no_log_object:
-                try:
-                    no_log_values.update(_return_datastructure_name(no_log_object))
-                except TypeError as e:
-                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        return value
 
-        # Get no_log values from suboptions
-        sub_argument_spec = arg_opts.get('options')
-        if sub_argument_spec is not None:
-            wanted_type = arg_opts.get('type')
-            sub_parameters = params.get(arg_name)
-
-            if sub_parameters is not None:
-                if wanted_type == 'dict' or (wanted_type == 'list' and arg_opts.get('elements', '') == 'dict'):
-                    # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
-                    if not isinstance(sub_parameters, list):
-                        sub_parameters = [sub_parameters]
-
-                    for sub_param in sub_parameters:
-                        # Validate dict fields in case they came in as strings
-
-                        if isinstance(sub_param, string_types):
-                            sub_param = check_type_dict(sub_param)
-
-                        if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
-                                            "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
-
-                        no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
-
-    return no_log_values
+    raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
 def env_fallback(*args, **kwargs):
@@ -314,6 +302,56 @@ def set_defaults(argument_spec, module_parameters, set_default=False):
     return no_log_values
 
 
+def list_no_log_values(argument_spec, params):
+    """Return set of no log values
+
+    :arg argument_spec: An argument spec dictionary from a module
+    :arg params: Dictionary of all module parameters
+
+    :returns: Set of strings that should be hidden from output::
+
+        {'secret_dict_value', 'secret_list_item_one', 'secret_list_item_two', 'secret_string'}
+    """
+
+    no_log_values = set()
+    for arg_name, arg_opts in argument_spec.items():
+        if arg_opts.get('no_log', False):
+            # Find the value for the no_log'd param
+            no_log_object = params.get(arg_name, None)
+
+            if no_log_object:
+                try:
+                    no_log_values.update(_return_datastructure_name(no_log_object))
+                except TypeError as e:
+                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
+
+        # Get no_log values from suboptions
+        sub_argument_spec = arg_opts.get('options')
+        if sub_argument_spec is not None:
+            wanted_type = arg_opts.get('type')
+            sub_parameters = params.get(arg_name)
+
+            if sub_parameters is not None:
+                if wanted_type == 'dict' or (wanted_type == 'list' and arg_opts.get('elements', '') == 'dict'):
+                    # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
+                    if not isinstance(sub_parameters, list):
+                        sub_parameters = [sub_parameters]
+
+                    for sub_param in sub_parameters:
+                        # Validate dict fields in case they came in as strings
+
+                        if isinstance(sub_param, string_types):
+                            sub_param = check_type_dict(sub_param)
+
+                        if not isinstance(sub_param, Mapping):
+                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                                            "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
+
+                        no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
+
+    return no_log_values
+
+
 def list_deprecations(argument_spec, params, prefix=''):
     """Return a list of deprecations
 
@@ -357,44 +395,6 @@ def list_deprecations(argument_spec, params, prefix=''):
                             deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
 
     return deprecations
-
-
-def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
-    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
-    if isinstance(value, (text_type, binary_type)):
-        return value
-
-    if isinstance(value, Sequence):
-        if isinstance(value, MutableSequence):
-            new_value = type(value)()
-        else:
-            new_value = []  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        return new_value
-
-    if isinstance(value, Set):
-        if isinstance(value, MutableSet):
-            new_value = type(value)()
-        else:
-            new_value = set()  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        return new_value
-
-    if isinstance(value, Mapping):
-        if isinstance(value, MutableMapping):
-            new_value = type(value)()
-        else:
-            new_value = {}  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        return new_value
-
-    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
-        return value
-
-    if isinstance(value, (datetime.datetime, datetime.date)):
-        return value
-
-    raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
 def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
@@ -508,6 +508,33 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
     return aliases_results, legal_inputs
 
 
+def handle_elements(wanted_type, parameters, values, options_context=None):
+    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    validated_params = []
+    errors = []
+
+    # Get param name for strings so we can later display this value in a useful error message if needed
+    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+    kwargs = {}
+    if wanted_element_type == 'str' and isinstance(wanted_element_type, string_types):
+        if isinstance(parameters, string_types):
+            kwargs['param'] = parameters
+        elif isinstance(parameters, dict):
+            kwargs['param'] = list(parameters.keys())[0]
+
+    for value in values:
+        try:
+            validated_params.append(type_checker(value, **kwargs))
+        except (TypeError, ValueError) as e:
+            msg = "Elements value for option %s" % parameters
+            if options_context:
+                msg += " found in '%s'" % " -> ".join(options_context)
+            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
+            errors.append(msg)
+
+    return validated_params, errors
+
+
 def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
     """Check keys in module_parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
@@ -558,33 +585,6 @@ def get_type_validator(wanted):
         wanted = getattr(wanted, '__name__', to_native(type(wanted)))
 
     return type_checker, wanted
-
-
-def handle_elements(wanted_type, parameters, values, options_context=None):
-    type_checker, wanted_element_type = get_type_validator(wanted_type)
-    validated_params = []
-    errors = []
-
-    # Get param name for strings so we can later display this value in a useful error message if needed
-    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-    kwargs = {}
-    if wanted_element_type == 'str' and isinstance(wanted_element_type, string_types):
-        if isinstance(parameters, string_types):
-            kwargs['param'] = parameters
-        elif isinstance(parameters, dict):
-            kwargs['param'] = list(parameters.keys())[0]
-
-    for value in values:
-        try:
-            validated_params.append(type_checker(value, **kwargs))
-        except (TypeError, ValueError) as e:
-            msg = "Elements value for option %s" % parameters
-            if options_context:
-                msg += " found in '%s'" % " -> ".join(options_context)
-            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
-            errors.append(msg)
-
-    return validated_params, errors
 
 
 def validate_argument_types(argument_spec, module_parameters, prefix='', options_context=None):
