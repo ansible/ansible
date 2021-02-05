@@ -69,7 +69,8 @@ REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
-NO_LOG_REGEX = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
+NO_LOG_REGEX = re.compile(r'^(?:.+[-_\s])?(?:pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)|secret|token|key)(?:[-_\s].+)?$', re.I)
+
 
 REJECTLIST_IMPORTS = {
     'requests': {
@@ -93,6 +94,18 @@ OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
+
+
+def is_potential_secret_option(option_name):
+    if not NO_LOG_REGEX.match(option_name):
+        return False
+    # If this is a count, type, algorithm, timeout, or name, it is probably not a secret
+    if option_name.endswith(('_count', '_type', '_alg', '_algorithm', '_timeout', '_name', '_comment', '_bits')):
+        return False
+    # 'key' also matches 'publickey', which is generally not secret
+    if any(part in option_name for part in ('publickey', 'public_key')):
+        return False
+    return True
 
 
 def compare_dates(d1, d2):
@@ -1486,8 +1499,8 @@ class ModuleValidator(Validator):
             # Could this a place where secrets are leaked?
             # If it is type: path we know it's not a secret key as it's a file path.
             # If it is type: bool it is more likely a flag indicating that something is secret, than an actual secret.
-            if (data.get('no_log') is None and NO_LOG_REGEX.match(arg) and data.get('type') not in ("path", "bool")):
-                msg = "Argument '%s' in argument_spec appears to be a secret, though doesn't have `no_log` set" % arg
+            if (data.get('no_log') is None and is_potential_secret_option(arg) and data.get('type') not in ("path", "bool")):
+                msg = "Argument '%s' in argument_spec could be a secret, though doesn't have `no_log` set" % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)
                 self.reporter.error(
