@@ -78,13 +78,21 @@ class Validator():
 
         self._no_log_values.update(set_fallbacks(argument_spec, parameters))
 
-        alias_results, legal_inputs = handle_aliases(argument_spec, parameters)
+        try:
+            alias_results, legal_inputs = handle_aliases(argument_spec, parameters)
+        except ValueError as ve:
+            alias_results = []
+            self._add_error(to_native(ve))
+
         for option, alias in alias_results:
             warn('Both option %s and its alias %s are set.' % (option, alias))
 
         self._no_log_values.update(list_no_log_values(argument_spec, parameters))
 
-        unsupported_parameters = get_unsupported_parameters(argument_spec, parameters)
+        legal_inputs = alias_results + list(argument_spec.keys())
+        unsupported_parameters = get_unsupported_parameters(argument_spec, parameters, legal_inputs)
+
+        set_defaults(argument_spec, parameters, False)
 
         try:
             check_required_arguments(argument_spec, parameters)
@@ -98,7 +106,6 @@ class Validator():
         self._add_error(errors)
 
         self._sanitize_error_messages()
-
 
         # Sub Spec
         # _validated_parameters, errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
