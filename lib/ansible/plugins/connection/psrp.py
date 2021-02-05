@@ -472,7 +472,7 @@ class Connection(ConnectionBase):
         if rc != 0:
             raise AnsibleError(to_native(stderr))
 
-        put_output = json.loads(stdout)
+        put_output = json.loads(to_text(stdout))
         remote_sha1 = put_output.get("sha1")
 
         if not remote_sha1:
