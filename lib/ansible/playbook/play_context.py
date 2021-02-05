@@ -383,7 +383,7 @@ class PlayContext(Base):
 
                 var_val = getattr(self, prop)
                 for var_opt in var_list:
-                    if var_opt not in variables and var_val is not None:
+                    if var_val is not None:
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
