@@ -277,8 +277,8 @@ def main():
             level=dict(type='str', choices=['authNoPriv', 'authPriv']),
             integrity=dict(type='str', choices=['md5', 'sha']),
             privacy=dict(type='str', choices=['aes', 'des']),
-            authkey=dict(type='str'),
-            privkey=dict(type='str'),
+            authkey=dict(type='str', no_log=True),
+            privkey=dict(type='str', no_log=True),
         ),
         required_together=(
             ['username', 'level', 'integrity', 'authkey'],
