@@ -184,3 +184,7 @@ run_test_dryrun check_nomarkers_wet
 
 # Test the dry run without check markers
 run_test_dryrun check_nomarkers_dry --check
+
+# Ensure free/host_pinned non-lockstep strategies display correctly
+diff -u <(ANSIBLE_STRATEGY=free ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null) callback_default.out.free.stdout
+diff -u <(ANSIBLE_STRATEGY=host_pinned ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null) callback_default.out.host_pinned.stdout
