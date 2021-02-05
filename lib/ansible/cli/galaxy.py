@@ -1384,7 +1384,7 @@ class GalaxyCLI(CLI):
         :param artifacts_manager: Artifacts manager.
         """
 
-        output_format = context.CLIARGS.get('output_format', False)
+        output_format = context.CLIARGS['output_format']
         collections_search_paths = set(context.CLIARGS['collections_path'])
         collection_name = context.CLIARGS['collection']
         default_collections_path = AnsibleCollectionConfig.collection_paths
@@ -1437,7 +1437,7 @@ class GalaxyCLI(CLI):
 
                 fqcn_width, version_width = _get_collection_widths([collection])
 
-                if output_format in ('yaml', 'json'):
+                if output_format in {'yaml', 'json'}:
                     collections_in_paths[collection_path] = {
                         collection.fqcn: { 'version': collection.ver }
                     }
@@ -1465,7 +1465,7 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
-                if output_format in ('yaml', 'json'):
+                if output_format in {'yaml', 'json'}:
                     collections_in_paths[collection_path] = {
                         collection.fqcn: { 'version': collection.ver } for collection in collections
                     }
