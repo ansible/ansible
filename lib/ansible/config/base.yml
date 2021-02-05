@@ -1592,6 +1592,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
       '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
+    oracle: &rhelish
+      '8': /usr/libexec/platform-python
     redhat: *rhelish
     rhel: *rhelish
     ubuntu:
