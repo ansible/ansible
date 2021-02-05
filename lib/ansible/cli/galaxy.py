@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os.path
 import re
 import shutil
@@ -300,6 +301,10 @@ class GalaxyCLI(CLI):
         list_parser.set_defaults(func=self.execute_list)
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
+
+        if galaxy_type == 'collection':
+            list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
+                                     help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1379,9 +1384,11 @@ class GalaxyCLI(CLI):
         :param artifacts_manager: Artifacts manager.
         """
 
+        output_format = context.CLIARGS['output_format']
         collections_search_paths = set(context.CLIARGS['collections_path'])
         collection_name = context.CLIARGS['collection']
         default_collections_path = AnsibleCollectionConfig.collection_paths
+        collections_in_paths = {}
 
         warnings = []
         path_found = False
@@ -1428,6 +1435,13 @@ class GalaxyCLI(CLI):
                 except ValueError as val_err:
                     six.raise_from(AnsibleError(val_err), val_err)
 
+                if output_format in {'yaml', 'json'}:
+                    collections_in_paths[collection_path] = {
+                        collection.fqcn: {'version': collection.ver}
+                    }
+
+                    continue
+
                 fqcn_width, version_width = _get_collection_widths([collection])
 
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
@@ -1451,6 +1465,13 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
+                if output_format in {'yaml', 'json'}:
+                    collections_in_paths[collection_path] = {
+                        collection.fqcn: {'version': collection.ver} for collection in collections
+                    }
+
+                    continue
+
                 # Display header
                 fqcn_width, version_width = _get_collection_widths(collections)
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
@@ -1468,6 +1489,11 @@ class GalaxyCLI(CLI):
 
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+
+        if output_format == 'json':
+            display.display(json.dumps(collections_in_paths))
+        elif output_format == 'yaml':
+            display.display(yaml.safe_dump(collections_in_paths))
 
         return 0
 
