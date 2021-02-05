@@ -2,6 +2,6 @@
 - hosts: nonlockstep
   gather_facts: false
   tasks:
-    - command: sleep {{ 2 * i }}
-    - command: sleep {{ 2 * i }}
-    - command: sleep {{ 2 * i }}
+    - command: sleep {{ i }}
+    - command: sleep {{ i }}
+    - command: sleep {{ i }}
