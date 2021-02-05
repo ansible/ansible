@@ -1439,7 +1439,7 @@ class GalaxyCLI(CLI):
 
                 if output_format in {'yaml', 'json'}:
                     collections_in_paths[collection_path] = {
-                        collection.fqcn: { 'version': collection.ver }
+                        collection.fqcn: {'version': collection.ver}
                     }
 
                     continue
@@ -1467,7 +1467,7 @@ class GalaxyCLI(CLI):
 
                 if output_format in {'yaml', 'json'}:
                     collections_in_paths[collection_path] = {
-                        collection.fqcn: { 'version': collection.ver } for collection in collections
+                        collection.fqcn: {'version': collection.ver} for collection in collections
                     }
 
                     continue
