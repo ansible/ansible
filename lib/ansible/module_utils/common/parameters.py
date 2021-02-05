@@ -5,6 +5,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import os
+
 from ansible.module_utils.common._collections_compat import (
     KeysView,
     Sequence,
@@ -24,7 +26,7 @@ from ansible.module_utils.six import (
     string_types,
     text_type,
 )
-import q
+
 from ansible.module_utils.common.validation import (
     check_type_bits,
     check_type_bool,
@@ -78,6 +80,10 @@ DEFAULT_TYPE_VALIDATORS = {
     'bytes': check_type_bytes,
     'bits': check_type_bits,
 }
+
+
+class AnsibleFallbackNotFound(Exception):
+    pass
 
 
 def _return_datastructure_name(obj):
@@ -151,6 +157,40 @@ def list_no_log_values(argument_spec, params):
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
 
                         no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
+
+    return no_log_values
+
+
+def env_fallback(*args, **kwargs):
+    """Load value from environment variable"""
+
+    for arg in args:
+        if arg in os.environ:
+            return os.environ[arg]
+    raise AnsibleFallbackNotFound
+
+
+def set_fallbacks(argument_spec, module_parameters):
+    no_log_values = set()
+    for param, value in argument_spec.items():
+        fallback = value.get('fallback', (None,))
+        fallback_strategy = fallback[0]
+        fallback_args = []
+        fallback_kwargs = {}
+        if param not in module_parameters and fallback_strategy is not None:
+            for item in fallback[1:]:
+                if isinstance(item, dict):
+                    fallback_kwargs = item
+                else:
+                    fallback_args = item
+            try:
+                fallback_value = fallback_strategy(*fallback_args, **fallback_kwargs)
+            except AnsibleFallbackNotFound:
+                continue
+            else:
+                if value.get('no_log', False) and fallback_value:
+                    no_log_values.add(fallback_value)
+                module_parameters[param] = fallback_value
 
     return no_log_values
 
@@ -449,7 +489,7 @@ def validate_sub_spec(sub_spec, sub_parameters, wanted_type, prefix='', options_
     errors = []
     validated_params = {}
     unsupported_parameters = []
-    q(sub_spec)
+
     for param, value in sub_spec.items():
         if value.get('apply_defaults', False):
             if sub_parameters.get(value) is None:
@@ -495,10 +535,9 @@ def validate_sub_spec(sub_spec, sub_parameters, wanted_type, prefix='', options_
             errors.extend(_errors)
 
             # Sub-sub spec
-            q(element, options_context)
             sub_sub_spec = param.get('options')
             if sub_sub_spec:
-                q('sub sub spec')
+                pass
 
         options_context.pop()
 

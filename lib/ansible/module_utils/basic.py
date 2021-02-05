@@ -156,11 +156,13 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
+    env_fallback,
     get_unsupported_parameters,
     get_type_validator,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
+    set_fallbacks,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
@@ -239,14 +241,6 @@ _literal_eval = literal_eval
 # attempt to read from stdin.  Other code should not use this directly as it
 # is an internal implementation detail
 _ANSIBLE_ARGS = None
-
-
-def env_fallback(*args, **kwargs):
-    ''' Load value from environment '''
-    for arg in args:
-        if arg in os.environ:
-            return os.environ[arg]
-    raise AnsibleFallbackNotFound
 
 
 FILE_COMMON_ARGUMENTS = dict(
@@ -1948,25 +1942,7 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        for (k, v) in spec.items():
-            fallback = v.get('fallback', (None,))
-            fallback_strategy = fallback[0]
-            fallback_args = []
-            fallback_kwargs = {}
-            if k not in param and fallback_strategy is not None:
-                for item in fallback[1:]:
-                    if isinstance(item, dict):
-                        fallback_kwargs = item
-                    else:
-                        fallback_args = item
-                try:
-                    fallback_value = fallback_strategy(*fallback_args, **fallback_kwargs)
-                except AnsibleFallbackNotFound:
-                    continue
-                else:
-                    if v.get('no_log', False) and fallback_value:
-                        self.no_log_values.add(fallback_value)
-                    param[k] = fallback_value
+        self.no_log_values.update(set_fallbacks(spec, param))
 
     def _load_params(self):
         ''' read the input and set the params attribute.
