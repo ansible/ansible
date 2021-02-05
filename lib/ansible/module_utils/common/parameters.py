@@ -283,7 +283,9 @@ def set_fallbacks(argument_spec, module_parameters):
 
 
 def set_defaults(argument_spec, module_parameters, set_default=False):
-    """Set default values for parameters when no value is supplied
+    """Set default values for parameters when no value is supplied.
+
+    Modifies module_parameters directly.
 
     :param argument_spec: Argument spec
     :type argument_spec: dict
@@ -492,6 +494,8 @@ def remove_values(value, no_log_strings):
 def handle_aliases(argument_spec, params, alias_warnings=None):
     """Return a two item tuple. The first is a dictionary of aliases, the second is
     a list of legal inputs.
+
+    Modify supplied params by adding a new key for each alias.
 
     If a list is provided to the alias_warnings parameter, it will be filled with tuples
     (option, alias) in every case where both an option and its alias are specified.

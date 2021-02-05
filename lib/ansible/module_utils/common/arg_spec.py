@@ -15,6 +15,7 @@ from ansible.module_utils.common.parameters import (
     handle_aliases,
     list_no_log_values,
     remove_values,
+    set_defaults,
     set_fallbacks,
     validate_argument_types,  # Rename this because it actually does coercion?
     validate_argument_values,
@@ -98,12 +99,12 @@ class Validator():
             legal_inputs = list(alias_results.keys()) + list(argument_spec.keys())
         unsupported_parameters = get_unsupported_parameters(argument_spec, parameters, legal_inputs)
 
-        set_defaults(argument_spec, parameters, False)
-
         try:
             check_required_arguments(argument_spec, parameters)
         except TypeError as e:
             self._add_error(to_native(e))
+
+        self._no_log_values.update(set_defaults(argument_spec, parameters, False))
 
         self._validated_parameters, errors = validate_argument_types(argument_spec, parameters)
         self._add_error(errors)
