@@ -283,6 +283,21 @@ def set_fallbacks(argument_spec, module_parameters):
 
 
 def set_defaults(argument_spec, module_parameters, set_default=False):
+    """Set default values for parameters when no value is supplied
+
+    :param argument_spec: Argument spec
+    :type argument_spec: dict
+
+    :param module_parameters: Parameters passed to the module
+    :type module_parameters: dict
+
+    :param set: Whether or not to set the default values
+    :type set_value: bool
+
+    :returns: Set of strings that should not be logged.
+    :rtype: set
+    """
+
     no_log_values = set()
     for param, value in argument_spec.items():
 
