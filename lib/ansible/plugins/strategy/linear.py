@@ -49,6 +49,9 @@ display = Display()
 
 class StrategyModule(StrategyBase):
 
+    # Features
+    LOCKSTEP = True
+
     noop_task = None
 
     def _replace_with_noop(self, target):

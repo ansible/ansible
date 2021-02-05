@@ -293,6 +293,7 @@ class TaskQueueManager:
         strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
+        new_play.strategy_features = strategy.features
 
         # Because the TQM may survive multiple play runs, we start by marking
         # any hosts as failed in the iterator here which may have been marked

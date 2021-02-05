@@ -41,6 +41,7 @@ from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common.collections import ImmutableDict
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
@@ -185,6 +186,11 @@ class StrategyBase:
     # the throttling internally (as `free` does)
     ALLOW_BASE_THROTTLING = True
 
+    # Features
+    LOCKSTEP = False
+    BYPASS_HOST_LOOP = True
+    ANY_ERRORS_FATAL = True
+
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
@@ -236,6 +242,16 @@ class StrategyBase:
         self._hosts_cache_all = []
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
+
+    @property
+    def features(self):
+        return ImmutableDict(
+            {
+                'lockstep': self.LOCKSTEP,
+                'bypass_host_loop': self.BYPASS_HOST_LOOP,
+                'any_errors_fatal': self.ANY_ERRORS_FATAL,
+            }
+        )
 
     def _set_hosts_cache(self, play, refresh=True):
         """Responsible for setting _hosts_cache and _hosts_cache_all
