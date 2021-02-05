@@ -10,8 +10,8 @@ import re
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.constants import mk_boolean as boolean
 
 
 class ActionModule(ActionBase):
