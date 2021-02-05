@@ -22,12 +22,15 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.common.warnings import get_warning_messages, warn
 from ansible.module_utils.common.validation import (
     check_required_arguments,
 )
 
 from ansible.module_utils.six import string_types
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class Validator():
@@ -108,8 +111,6 @@ class Validator():
         errors = validate_argument_values(argument_spec, parameters)
         self._add_error(errors)
 
-        self._sanitize_error_messages()
-
         # Sub Spec
         # _validated_parameters, errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
         # self._validated_parameters.update(_validated_parameters)
@@ -120,6 +121,11 @@ class Validator():
 
         if unsupported_parameters:
             self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
+
+        self._sanitize_error_messages()
+        warnings = remove_values(get_warning_messages(), self._no_log_values)
+        for w in warnings:
+            display.warning(w)
 
         if self.error_messages:
             return False
