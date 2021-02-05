@@ -440,10 +440,10 @@ def main():
             type=dict(type='str'),
             source_image=dict(type='str'),
             zone=dict(required=True, type='str'),
-            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
-            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
+            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), kms_key_name=dict(type='str'))),
+            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), kms_key_name=dict(type='str'))),
             source_snapshot=dict(type='dict'),
-            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
+            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str', no_log=True), kms_key_name=dict(type='str'))),
         )
     )
 

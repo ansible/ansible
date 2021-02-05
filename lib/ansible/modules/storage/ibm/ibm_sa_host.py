@@ -95,7 +95,7 @@ def main():
             cluster=dict(),
             domain=dict(),
             iscsi_chap_name=dict(),
-            iscsi_chap_secret=dict()
+            iscsi_chap_secret=dict(no_log=True)
         )
     )
 
