@@ -31,6 +31,19 @@
       - "'dev.collection2 placeholder' in list_result.stdout"
       - "'dev.collection3 *' in list_result.stdout"
 
+- name: list collections in human format
+  command: ansible-galaxy collection list --format human
+  register: list_result_human
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+
+- assert:
+    that:
+      - "'dev.collection1 *' in list_result_human.stdout"
+      # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
+      - "'dev.collection2 placeholder' in list_result_human.stdout"
+      - "'dev.collection3 *' in list_result_human.stdout"
+
 - name: list collections in yaml format
   command: ansible-galaxy collection list --format yaml
   register: list_result_yaml
