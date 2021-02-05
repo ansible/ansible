@@ -142,8 +142,8 @@ class ElementSWAccount(object):
             state=dict(required=True, choices=['present', 'absent']),
             element_username=dict(required=True, aliases=["account_id"], type='str'),
             from_name=dict(required=False, default=None),
-            initiator_secret=dict(required=False, type='str'),
-            target_secret=dict(required=False, type='str'),
+            initiator_secret=dict(required=False, type='str', no_log=True),
+            target_secret=dict(required=False, type='str', no_log=True),
             attributes=dict(required=False, type='dict'),
             status=dict(required=False, type='str'),
         ))

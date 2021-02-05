@@ -482,7 +482,7 @@ def main():
         interface=dict(type='str', required=True),
         sparse=dict(type='bool', default=False),
         dr_prio=dict(type='str'),
-        hello_auth_key=dict(type='str'),
+        hello_auth_key=dict(type='str', no_log=True),
         hello_interval=dict(type='int'),
         jp_policy_out=dict(type='str'),
         jp_policy_in=dict(type='str'),

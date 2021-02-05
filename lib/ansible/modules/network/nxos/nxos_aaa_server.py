@@ -234,7 +234,7 @@ def default_aaa_server(existing, params, server_type):
 def main():
     argument_spec = dict(
         server_type=dict(type='str', choices=['radius', 'tacacs'], required=True),
-        global_key=dict(type='str'),
+        global_key=dict(type='str', no_log=True),
         encrypt_type=dict(type='str', choices=['0', '7']),
         deadtime=dict(type='str'),
         server_timeout=dict(type='str'),

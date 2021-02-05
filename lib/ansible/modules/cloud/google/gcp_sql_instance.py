@@ -688,7 +688,7 @@ def main():
                         options=dict(
                             ca_certificate=dict(type='str'),
                             client_certificate=dict(type='str'),
-                            client_key=dict(type='str'),
+                            client_key=dict(type='str', no_log=True),
                             connect_retry_interval=dict(type='int'),
                             dump_file_path=dict(type='str'),
                             master_heartbeat_period=dict(type='int'),

@@ -293,7 +293,7 @@ def main():
     argument_spec = dict(
         user=dict(required=True, type='str'),
         group=dict(type='str'),
-        pwd=dict(type='str'),
+        pwd=dict(type='str', no_log=True),
         privacy=dict(type='str'),
         authentication=dict(choices=['md5', 'sha']),
         encrypt=dict(type='bool'),

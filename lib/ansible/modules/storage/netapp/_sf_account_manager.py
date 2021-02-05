@@ -120,8 +120,8 @@ class SolidFireAccount(object):
             account_id=dict(required=False, type='int', default=None),
 
             new_name=dict(required=False, type='str', default=None),
-            initiator_secret=dict(required=False, type='str'),
-            target_secret=dict(required=False, type='str'),
+            initiator_secret=dict(required=False, type='str', no_log=True),
+            target_secret=dict(required=False, type='str', no_log=True),
             attributes=dict(required=False, type='dict'),
             status=dict(required=False, type='str'),
         ))
