@@ -39,13 +39,10 @@
 
 - assert:
     that:
-      - "{{ item.value | length == 3 }}"
-      - "{{ item.value[0].name == 'dev.collection1' }}"
-      - "{{ item.value[0].version == '*' }}"
-      - "{{ item.value[1].name == 'dev.collection2' }}"
-      - "{{ item.value[1].version == 'placeholder' }}"
-      - "{{ item.value[2].name == 'dev.collection3' }}"
-      - "{{ item.value[2].version == '*' }}"
+      - "item.value | length == 3"
+      - "item.value['dev.collection1'].version == '*'"
+      - "item.value['dev.collection2'].version == 'placeholder'"
+      - "item.value['dev.collection3'].version == '*'"
   with_dict: "{{ list_result_yaml.stdout | from_yaml }}"
 
 - name: list collections in json format
@@ -56,14 +53,35 @@
 
 - assert:
     that:
-      - "{{ item.value | length == 3 }}"
-      - "{{ item.value[0].name == 'dev.collection1' }}"
-      - "{{ item.value[0].version == '*' }}"
-      - "{{ item.value[1].name == 'dev.collection2' }}"
-      - "{{ item.value[1].version == 'placeholder' }}"
-      - "{{ item.value[2].name == 'dev.collection3' }}"
-      - "{{ item.value[2].version == '*' }}"
+      - "item.value | length == 3"
+      - "item.value['dev.collection1'].version == '*'"
+      - "item.value['dev.collection2'].version == 'placeholder'"
+      - "item.value['dev.collection3'].version == '*'"
   with_dict: "{{ list_result_json.stdout | from_json }}"
+
+- name: list single collection in json format
+  command: "ansible-galaxy collection list {{ item.key }} -o json"
+  register: list_single_result_json
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+  with_dict: "{{ { 'dev.collection1': '*', 'dev.collection2': 'placeholder', 'dev.collection3': '*' } }}"
+
+- assert:
+    that:
+      - "(item.stdout | from_json)[galaxy_dir + '/dev/ansible_collections'][item.item.key].version == item.item.value"
+  with_items: "{{ list_single_result_json.results }}"
+
+- name: list single collection in yaml format
+  command: "ansible-galaxy collection list {{ item.key }} -o yaml"
+  register: list_single_result_yaml
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
+  with_dict: "{{ { 'dev.collection1': '*', 'dev.collection2': 'placeholder', 'dev.collection3': '*' } }}"
+
+- assert:
+    that:
+      - "(item.stdout | from_yaml)[galaxy_dir + '/dev/ansible_collections'][item.item.key].version == item.item.value"
+  with_items: "{{ list_single_result_json.results }}"
 
 - name: install an artifact to the second collections path
   command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng {{ galaxy_verbosity }} -p "{{ galaxy_dir }}/prod"
