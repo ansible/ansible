@@ -96,6 +96,17 @@
       - "(item.stdout | from_yaml)[galaxy_dir + '/dev/ansible_collections'][item.item.key].version == item.item.value"
   with_items: "{{ list_single_result_json.results }}"
 
+- name: test that no json is emitted when no collection paths are usable
+  command: "ansible-galaxy collection list --format json"
+  register: list_result_error
+  ignore_errors: True
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: ""
+
+- assert:
+    that:
+      - "'{}' not in list_result_error.stdout"
+
 - name: install an artifact to the second collections path
   command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng {{ galaxy_verbosity }} -p "{{ galaxy_dir }}/prod"
   environment:
