@@ -141,6 +141,11 @@ options:
       - If I(client_cert) contains both the certificate and key, this option is not required.
     type: path
     version_added: '2.4'
+  ca_path:
+    description:
+      - PEM formatted file that contains a CA certificate to be used for validation
+    type: path
+    version_added: '2.11'
   src:
     description:
       - Path to file to be submitted to the remote server.
@@ -548,13 +553,12 @@ def form_urlencoded(body):
     return body
 
 
-def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
+def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
     redirected = False
     redir_info = {}
     r = {}
-
     src = module.params['src']
     if src:
         try:
@@ -594,6 +598,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
+                           ca_path=ca_path,
                            **kwargs)
 
     try:
@@ -636,6 +641,7 @@ def main():
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
+        ca_path=dict(type='path', default=None),
     )
 
     module = AnsibleModule(
@@ -658,7 +664,7 @@ def main():
     removes = module.params['removes']
     status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
-
+    ca_path = module.params['ca_path']
     dict_headers = module.params['headers']
 
     if not re.match('^[A-Z]+$', method):
@@ -702,7 +708,7 @@ def main():
     # Make the request
     start = datetime.datetime.utcnow()
     resp, content, dest = uri(module, url, dest, body, body_format, method,
-                              dict_headers, socket_timeout)
+                              dict_headers, socket_timeout, ca_path)
     resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     resp['status'] = int(resp['status'])
     resp['changed'] = False
