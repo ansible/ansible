@@ -1435,14 +1435,14 @@ class GalaxyCLI(CLI):
                 except ValueError as val_err:
                     six.raise_from(AnsibleError(val_err), val_err)
 
-                fqcn_width, version_width = _get_collection_widths([collection])
-
                 if output_format in {'yaml', 'json'}:
                     collections_in_paths[collection_path] = {
                         collection.fqcn: {'version': collection.ver}
                     }
 
                     continue
+
+                fqcn_width, version_width = _get_collection_widths([collection])
 
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
                 _display_collection(collection, fqcn_width, version_width)
