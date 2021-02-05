@@ -103,7 +103,7 @@ class PgPing(object):
             raw = raw.split()[1].split('.')
             self.version = dict(
                 major=int(raw[0]),
-                minor=int(raw[1]),
+                minor=int(raw[1].rstrip(',')),
             )
 
 

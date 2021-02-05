@@ -839,7 +839,7 @@ class PgClusterInfo(object):
         raw = raw.split()[1].split('.')
         self.pg_info["version"] = dict(
             major=int(raw[0]),
-            minor=int(raw[1]),
+            minor=int(raw[1].rstrip(',')),
         )
 
     def get_db_info(self):
