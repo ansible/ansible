@@ -32,7 +32,7 @@
       - "'dev.collection3 *' in list_result.stdout"
 
 - name: list collections in yaml format
-  command: ansible-galaxy collection list -o yaml
+  command: ansible-galaxy collection list --format yaml
   register: list_result_yaml
   environment:
     ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
@@ -46,7 +46,7 @@
   with_dict: "{{ list_result_yaml.stdout | from_yaml }}"
 
 - name: list collections in json format
-  command: ansible-galaxy collection list -o json
+  command: ansible-galaxy collection list --format json
   register: list_result_json
   environment:
     ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
@@ -60,7 +60,7 @@
   with_dict: "{{ list_result_json.stdout | from_json }}"
 
 - name: list single collection in json format
-  command: "ansible-galaxy collection list {{ item.key }} -o json"
+  command: "ansible-galaxy collection list {{ item.key }} --format json"
   register: list_single_result_json
   environment:
     ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"
@@ -72,7 +72,7 @@
   with_items: "{{ list_single_result_json.results }}"
 
 - name: list single collection in yaml format
-  command: "ansible-galaxy collection list {{ item.key }} -o yaml"
+  command: "ansible-galaxy collection list {{ item.key }} --format yaml"
   register: list_single_result_yaml
   environment:
     ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev:{{ galaxy_dir }}/prod"

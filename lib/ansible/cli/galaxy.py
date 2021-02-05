@@ -303,7 +303,7 @@ class GalaxyCLI(CLI):
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
         if galaxy_type == 'collection':
-            list_parser.add_argument('-o', '--output', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
+            list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
                                      help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
