@@ -20,6 +20,7 @@ security_fixes:
   - iap_start_workflow - `token_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
   - ibm_sa_host - `iscsi_chap_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
   - keycloak_client - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+  - keycloak_client - `registration_access_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
   - keycloak_clienttemplate - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
   - keycloak_group - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
   - librato_annotation - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
