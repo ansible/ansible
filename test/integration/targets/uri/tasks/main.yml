@@ -131,6 +131,48 @@
       - "stat_result.stat.exists == true"
       - "result.changed == true"
 
+- name: "get ca certificate {{ self_signed_host }}"
+  get_url:
+    url: "http://{{ httpbin_host }}/ca2cert.pem"
+    dest: "{{ remote_tmp_dir }}/ca2cert.pem"
+
+- name: test https fetch to a site with self signed certificate using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ output_dir }}/self-signed_using_ca_path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
+    validate_certs: yes
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/self-signed_using_ca_path.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - "stat_result.stat.exists == true"
+      - "result.changed == true"
+
+- name: test https fetch to a site with self signed certificate without using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+    validate_certs: yes
+  register: result
+  ignore_errors: true
+
+- stat:
+    path: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+  register: stat_result
+
+- name: Assure that https access to a host with self-signed certificate without providing ca_path fails
+  assert:
+    that:
+      - "stat_result.stat.exists == false"
+      - result is failed
+      - "'certificate verify failed' in result.msg"
+
 - name: test redirect without follow_redirects
   uri:
     url: 'https://{{ httpbin_host }}/redirect/2'

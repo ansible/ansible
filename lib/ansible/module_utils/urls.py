@@ -923,9 +923,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                             to_native(f.read(), errors='surrogate_or_strict')
                         )
                     )
-                else:
-                    ca_certs.append(f.read())
-            return ca_certs, cadata, paths_checked
+            return self.ca_path, cadata, paths_checked
 
         if not HAS_SSLCONTEXT:
             paths_checked.append('/etc/ssl/certs')

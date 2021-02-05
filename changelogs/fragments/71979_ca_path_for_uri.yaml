@@ -1,0 +1,2 @@
+minor_changes:
+  - uri - add ``ca_path`` argument to allow specification of a CA certificate (https://github.com/ansible/ansible/pull/71979).
