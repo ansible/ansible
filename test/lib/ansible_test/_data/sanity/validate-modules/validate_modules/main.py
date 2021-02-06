@@ -100,10 +100,13 @@ def is_potential_secret_option(option_name):
     if not NO_LOG_REGEX.match(option_name):
         return False
     # If this is a count, type, algorithm, timeout, or name, it is probably not a secret
-    if option_name.endswith(('_count', '_type', '_alg', '_algorithm', '_timeout', '_name', '_comment', '_bits')):
+    if option_name.endswith((
+            '_count', '_type', '_alg', '_algorithm', '_timeout', '_name', '_comment',
+            '_bits', '_id', '_identifier',
+    )):
         return False
     # 'key' also matches 'publickey', which is generally not secret
-    if any(part in option_name for part in ('publickey', 'public_key')):
+    if any(part in option_name for part in ('publickey', 'public_key', 'key_usage')):
         return False
     return True
 
