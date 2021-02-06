@@ -69,7 +69,7 @@ REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
-NO_LOG_REGEX = re.compile(r'^(?:.+[-_\s])?(?:pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)|secret|token|key)(?:[-_\s].+)?$', re.I)
+NO_LOG_REGEX = re.compile(r'(?:pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)|secret|token|key)', re.I)
 
 
 REJECTLIST_IMPORTS = {
@@ -102,11 +102,15 @@ def is_potential_secret_option(option_name):
     # If this is a count, type, algorithm, timeout, or name, it is probably not a secret
     if option_name.endswith((
             '_count', '_type', '_alg', '_algorithm', '_timeout', '_name', '_comment',
-            '_bits', '_id', '_identifier',
+            '_bits', '_id', '_identifier', '_period',
     )):
         return False
     # 'key' also matches 'publickey', which is generally not secret
-    if any(part in option_name for part in ('publickey', 'public_key', 'key_usage')):
+    if any(part in option_name for part in (
+            'publickey', 'public_key', 'keyusage', 'key_usage', 'keyserver', 'key_server',
+            'keysize', 'key_size', 'keyservice', 'key_service', 'pub_key', 'pubkey',
+            'keyboard', 'secretary',
+    )):
         return False
     return True
 
@@ -1502,7 +1506,10 @@ class ModuleValidator(Validator):
             # Could this a place where secrets are leaked?
             # If it is type: path we know it's not a secret key as it's a file path.
             # If it is type: bool it is more likely a flag indicating that something is secret, than an actual secret.
-            if (data.get('no_log') is None and is_potential_secret_option(arg) and data.get('type') not in ("path", "bool")):
+            if all((
+                    data.get('no_log') is None, is_potential_secret_option(arg),
+                    data.get('type') not in ("path", "bool"), data.get('choices') is None,
+            )):
                 msg = "Argument '%s' in argument_spec could be a secret, though doesn't have `no_log` set" % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)
