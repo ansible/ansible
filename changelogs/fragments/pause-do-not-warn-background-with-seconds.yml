@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - do not warn when running in the background if a timeout is provided (https://github.com/ansible/ansible/issues/73042)
