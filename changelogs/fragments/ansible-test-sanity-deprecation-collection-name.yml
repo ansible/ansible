@@ -1,0 +1,2 @@
+bugfixes:
+  - ansble-test - only require a collection name in deprecation warnings when necessary (https://github.com/ansible/ansible/pull/72987)
