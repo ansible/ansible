@@ -17,6 +17,7 @@ DOCUMENTATION = '''
 '''
 
 import os
+import pty
 import shutil
 import subprocess
 import fcntl
@@ -79,15 +80,32 @@ class Connection(ConnectionBase):
         else:
             cmd = map(to_bytes, cmd)
 
+        master = None
+        stdin = subprocess.PIPE
+        if sudoable and self.become and self.become.expect_prompt():
+            # Create a pty if sudoable for privlege escalation that needs it.
+            # Falls back to using a standard pipe if this fails, which may
+            # cause the command to fail in certain situations where we are escalating
+            # privileges or the command otherwise needs a pty.
+            try:
+                master, stdin = pty.openpty()
+            except (IOError, OSError) as e:
+                display.debug("Unable to open pty: %s" % to_native(e))
+
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, (text_type, binary_type)),
             executable=executable,
             cwd=self.cwd,
-            stdin=subprocess.PIPE,
+            stdin=stdin,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+
+        # if we created a master, we can close the other half of the pty now
+        if master is not None:
+            os.close(stdin)
+
         display.debug("done running command with Popen()")
 
         if self.become and self.become.expect_prompt() and sudoable:
@@ -120,13 +138,18 @@ class Connection(ConnectionBase):
 
             if not self.become.check_success(become_output):
                 become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                p.stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                os.write(master, to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         display.debug("getting output with communicate()")
         stdout, stderr = p.communicate(in_data)
         display.debug("done communicating")
+
+        # finally, close the other half of the pty, if it was created
+        if master:
+            os.close(master)
 
         display.debug("done with local.exec_command()")
         return (p.returncode, stdout, stderr)
