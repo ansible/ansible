@@ -97,14 +97,15 @@ class TestErrors(unittest.TestCase):
                  "the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
             )
 
-            # this line will not be found, as it is out of the index range
-            self.obj.ansible_pos = ('foo.yml', 2, 1)
-            e = AnsibleError(self.message, self.obj)
-            self.assertEqual(
-                e.message,
-                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on "
-                 "the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
-            )
+            with patch('ansible.errors.to_text', side_effect=IndexError('Raised intentionally')):
+                # raise an IndexError
+                self.obj.ansible_pos = ('foo.yml', 2, 1)
+                e = AnsibleError(self.message, self.obj)
+                self.assertEqual(
+                    e.message,
+                    ("This is the error message\n\nThe error appears to be in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on "
+                     "the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
+                )
 
         m = mock_open()
         m.return_value.readlines.return_value = ['this line has unicode \xf0\x9f\x98\xa8 in it!\n']
@@ -118,4 +119,33 @@ class TestErrors(unittest.TestCase):
                 ("This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the "
                  "file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis line has unicode \xf0\x9f\x98\xa8 in it!\n^ "
                  "here\n")
+            )
+
+    def test_get_error_lines_error_in_last_line(self):
+        m = mock_open()
+        m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n']
+
+        with patch('{0}.open'.format(BUILTINS), m):
+            # If the error occurs in the last line of the file, use the correct index to get the line
+            # and avoid the IndexError
+            self.obj.ansible_pos = ('foo.yml', 4, 1)
+            e = AnsibleError(self.message, self.obj)
+            self.assertEqual(
+                e.message,
+                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 4, column 1, but may\nbe elsewhere in the file depending on "
+                 "the exact syntax problem.\n\nThe offending line appears to be:\n\nthis is line 2\nthis is line 3\n^ here\n")
+            )
+
+    def test_get_error_lines_error_empty_lines_around_error(self):
+        """Test that trailing whitespace after the error is removed"""
+        m = mock_open()
+        m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n', '  \n', '   \n', ' ']
+
+        with patch('{0}.open'.format(BUILTINS), m):
+            self.obj.ansible_pos = ('foo.yml', 5, 1)
+            e = AnsibleError(self.message, self.obj)
+            self.assertEqual(
+                e.message,
+                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 5, column 1, but may\nbe elsewhere in the file depending on "
+                 "the exact syntax problem.\n\nThe offending line appears to be:\n\nthis is line 2\nthis is line 3\n^ here\n")
             )
