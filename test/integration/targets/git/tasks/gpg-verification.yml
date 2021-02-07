@@ -75,6 +75,8 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Clone repo and verify a signed lightweight tag
   environment:
@@ -84,6 +86,8 @@
     dest: "{{ git_gpg_dest }}"
     version: lightweight_tag/signed_commit
     verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Clone repo and verify an unsigned lightweight tag (should fail)
   environment:
@@ -95,12 +99,16 @@
     verify_commit: yes
   register: git_verify
   ignore_errors: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Check that unsigned lightweight tag verification failed
   assert:
     that:
       - git_verify is failed
       - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Clone repo and verify a signed commit
   environment:
@@ -110,6 +118,8 @@
     dest: "{{ git_gpg_dest }}"
     version: "{{ git_gpg_signed_commit.stdout }}"
     verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Clone repo and verify an unsigned commit
   environment:
@@ -121,12 +131,16 @@
     verify_commit: yes
   register: git_verify
   ignore_errors: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Check that unsigned commit verification failed
   assert:
     that:
       - git_verify is failed
       - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Clone repo and verify a signed annotated tag
   environment:
@@ -162,6 +176,8 @@
     dest: "{{ git_gpg_dest }}"
     version: some_branch/signed_tip
     verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Clone repo and verify an unsigned branch (should fail)
   environment:
@@ -173,18 +189,22 @@
     verify_commit: yes
   register: git_verify
   ignore_errors: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Check that unsigned branch verification failed
   assert:
     that:
       - git_verify is failed
       - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
 
 - name: GPG-VERIFICATION | Stop gpg-agent so we can remove any locks on the GnuPG dir
   command: gpgconf --kill gpg-agent
-  when: ansible_os_family != 'Suse' or ansible_distribution_version != '42.3'  # OpenSUSE 42.3 ships with an older version of gpg-agent that doesn't support this
   environment:
     GNUPGHOME: "{{ git_gpg_gpghome }}"
+  ignore_errors: yes
 
 - name: GPG-VERIFICATION | Remove GnuPG verification workdir
   file:
