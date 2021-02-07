@@ -168,6 +168,7 @@ rowcount:
     sample: 5
 '''
 
+import datetime
 import decimal
 
 try:
@@ -311,6 +312,9 @@ def main():
             for (key, val) in iteritems(row):
                 if isinstance(val, decimal.Decimal):
                     row[key] = float(val)
+
+                elif isinstance(val, datetime.timedelta):
+                    row[key] = str(val)
 
             query_result.append(row)
     except Psycopg2ProgrammingError as e:
