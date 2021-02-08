@@ -751,7 +751,7 @@ class User(object):
             out += _out
             err += _err
             if rc != 0:
-            return (rc, out, err)
+                return (rc, out, err)
 
         if self.groups is None or len(self.groups) == 0:
             return (rc, out, err)
