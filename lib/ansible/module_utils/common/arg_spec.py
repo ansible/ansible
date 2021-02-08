@@ -110,8 +110,7 @@ class Validator():
         self._add_error(errors)
 
         # Sub Spec
-        _validated_parameters, errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
-        # self._validated_parameters.update(_validated_parameters)
+        errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
         self._add_error(errors)
         unsupported_parameters.update(_unsupported)
 

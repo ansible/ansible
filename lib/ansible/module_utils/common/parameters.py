@@ -749,7 +749,6 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
     # FIXME: I don't think these vales will accumulate when being called recursively.
     errors = []
-    validated_params = {}
     unsupported_parameters = set()
     for param, value in argument_spec.items():
         wanted = value.get('type')
@@ -812,20 +811,22 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                 except TypeError as e:
                     errors.append(to_native(e))
 
+                # TODO: Need more checks here.
+
                 no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
 
                 _validated_params, _errors = validate_argument_types(sub_spec, sub_parameters, options_context)
-                validated_params.update(_validated_params)
+                sub_parameters.update(_validated_params)
                 errors.extend(_errors)
 
                 _errors = validate_argument_values(sub_spec, sub_parameters, options_context)
                 errors.extend(_errors)
 
-                # _validated_params, _errors, _unsupported_parameters = validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context)
-                # validated_params.update(_validated_params)
-                # errors.extend(_errors)
-                # unsupported_parameters.extend(_unsupported_parameters)
+                # Handle nested specs
+                _errors, _unsupported_parameters = validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context)
+                errors.extend(_errors)
+                unsupported_parameters.update(_unsupported_parameters)
 
             options_context.pop()
 
-    return validated_params, errors, unsupported_parameters
+    return errors, unsupported_parameters
