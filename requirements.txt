@@ -5,7 +5,7 @@
 # be suitable)
 jinja2
 PyYAML
-cryptography<3.4
+cryptography
 packaging
 # NOTE: resolvelib 0.x version bumps should be considered major/breaking
 # NOTE: and we should update the upper cap with care, at least until 1.0
