@@ -668,7 +668,7 @@ def validate_argument_types(argument_spec, module_parameters, prefix='', options
                 validated_params[param], _errors = handle_elements(wanted_elements, param, parameter, options_context)
                 errors.extend(_errors)
         except (TypeError, ValueError) as e:
-            msg = "argument %s is of type %s" % (param, type(value))
+            msg = "argument '%s' is of type %s" % (param, type(value))
             if options_context:
                 msg += " found in '%s'." % " -> ".join(options_context)
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
