@@ -241,13 +241,13 @@ options:
     password_expire_max:
         description:
             - Maximum number of days between password change.
-            - Supported on Linux Environment only.
+            - Supported on Linux only.
         type: int
         version_added: "2.11"
     password_expire_min:
         description:
             - Minimum number of days between password change.
-            - Supported on Linux Environment only.
+            - Supported on Linux only.
         type: int
         version_added: "2.11"
 
