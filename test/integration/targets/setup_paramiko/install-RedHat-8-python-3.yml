@@ -1,3 +1,5 @@
 - name: Install Paramiko for Python 3 on RHEL 8
   pip: # no python3-paramiko package exists for RHEL 8
-    name: paramiko
+    name:
+      - paramiko
+      - cryptography {{ cryptography_constraint }}

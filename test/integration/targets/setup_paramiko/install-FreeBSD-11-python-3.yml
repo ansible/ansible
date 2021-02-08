@@ -6,4 +6,6 @@
     name: pip==18.1
 - name: Install Paramiko for Python 3 on FreeBSD 11
   pip: # no py36-paramiko package exists for FreeBSD 11
-    name: paramiko
+    name:
+      - paramiko
+      - cryptography {{ cryptography_constraint }}
