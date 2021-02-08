@@ -82,10 +82,10 @@ class Validator():
         alias_warnings = []
         try:
             alias_results, legal_inputs = handle_aliases(argument_spec, parameters, alias_warnings=alias_warnings)
-        except ValueError as ve:
+        except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
-            self._add_error(to_native(ve))
+            self._add_error(to_native(e))
 
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option, alias))
