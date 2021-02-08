@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - cap ``cryptography`` at ``< 3.4`` for old pip versions.

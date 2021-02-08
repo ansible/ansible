@@ -223,15 +223,26 @@ def get_openssl_version(args, python, python_version):  # type: (EnvironmentConf
     return None
 
 
-def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
-    """Return the setuptools version for the given python."""
+def get_dunder_version(pkg, args, python):  # type: (str, EnvironmentConfig, str) -> t.Tuple[int]
+    """Return the pkg __version__ for the given python."""
+    code = 'import %s; print(%s.__version__)' % (pkg, pkg)
     try:
-        return str_to_version(raw_command([python, '-c', 'import setuptools; print(setuptools.__version__)'], capture=True)[0])
+        return str_to_version(raw_command([python, '-c', code], capture=True)[0])
     except SubprocessError:
         if args.explain:
             return tuple()  # ignore errors in explain mode in case setuptools is not aleady installed
 
         raise
+
+
+def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
+    """Return the version of setuptools for the given python."""
+    return get_dunder_version('setuptools', args, python)
+
+
+def get_pip_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
+    """Return the version of pip for the given python."""
+    return get_dunder_version('pip', args, python)
 
 
 def install_cryptography(args, python, python_version, pip):  # type: (EnvironmentConfig, str, str, t.List[str]) -> None
@@ -262,6 +273,7 @@ def get_cryptography_requirement(args, python, python_version):  # type: (Enviro
     """
     setuptools_version = get_setuptools_version(args, python)
     openssl_version = get_openssl_version(args, python, python_version)
+    pip_version = get_pip_version(args, python)
 
     if setuptools_version >= (18, 5):
         if python_version == '2.6':
@@ -273,7 +285,14 @@ def get_cryptography_requirement(args, python, python_version):  # type: (Enviro
             # see https://cryptography.io/en/latest/changelog.html#v3-2
             cryptography = 'cryptography < 3.2'
         else:
-            cryptography = 'cryptography'
+            if pip_version < (19,):
+                # cryptography >= 3.4 requires rustc to build from source.
+                # It also drops manylinux1 wheels. pip < 19 cannot install
+                # manylinux2010 wheels. So when we're on pip < 19, cap at
+                # cryptography 3.4.
+                cryptography = 'cryptography < 3.4'
+            else:
+                cryptography = 'cryptography'
     else:
         # cryptography 2.1+ requires setuptools 18.5+
         # see https://github.com/pyca/cryptography/blob/62287ae18383447585606b9d0765c0f1b8a9777c/setup.py#L26
