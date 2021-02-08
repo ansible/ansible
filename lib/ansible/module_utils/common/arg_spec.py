@@ -23,7 +23,7 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.common.warnings import get_warning_messages, warn
+from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.common.validation import (
     check_required_arguments,
 )
