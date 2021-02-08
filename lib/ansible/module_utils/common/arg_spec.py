@@ -29,9 +29,6 @@ from ansible.module_utils.common.validation import (
 )
 
 from ansible.module_utils.six import string_types
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class Validator():
@@ -125,8 +122,6 @@ class Validator():
 
         self._sanitize_error_messages()
         warnings = remove_values(get_warning_messages(), self._no_log_values)
-        for w in warnings:
-            display.warning(w)
 
         if self.error_messages:
             return False
