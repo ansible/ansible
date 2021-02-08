@@ -273,7 +273,9 @@ def get_cryptography_requirement(args, python, python_version):  # type: (Enviro
             # see https://cryptography.io/en/latest/changelog.html#v3-2
             cryptography = 'cryptography < 3.2'
         else:
-            cryptography = 'cryptography'
+            # cryptography 3.4+ fails to install on many systems
+            # this is a temporary work-around until a more permanent solution is available
+            cryptography = 'cryptography < 3.4'
     else:
         # cryptography 2.1+ requires setuptools 18.5+
         # see https://github.com/pyca/cryptography/blob/62287ae18383447585606b9d0765c0f1b8a9777c/setup.py#L26

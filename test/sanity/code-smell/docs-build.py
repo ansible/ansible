@@ -4,17 +4,37 @@ __metaclass__ = type
 
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 
 def main():
     base_dir = os.getcwd() + os.path.sep
     docs_dir = os.path.abspath('docs/docsite')
-    cmd = ['make', 'base_singlehtmldocs']
 
-    sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
-    stdout, stderr = sphinx.communicate()
+    # TODO: Remove this temporary hack to constrain 'cryptography' when we have
+    # a better story for dealing with it.
+    tmpfd, tmp = tempfile.mkstemp()
+    requirements_txt = os.path.join(base_dir, 'requirements.txt')
+    shutil.copy2(requirements_txt, tmp)
+    lines = []
+    with open(requirements_txt, 'r') as f:
+        for line in f.readlines():
+            if line.strip() == 'cryptography':
+                line = 'cryptography < 3.4\n'
+            lines.append(line)
+
+    with open(requirements_txt, 'w') as f:
+        f.writelines(lines)
+
+    try:
+        cmd = ['make', 'base_singlehtmldocs']
+        sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
+        stdout, stderr = sphinx.communicate()
+    finally:
+        shutil.move(tmp, requirements_txt)
 
     stdout = stdout.decode('utf-8')
     stderr = stderr.decode('utf-8')
