@@ -81,7 +81,7 @@ class Validator():
 
         alias_warnings = []
         try:
-            alias_results, legal_inputs = handle_aliases(argument_spec, parameters, alias_warnings=alias_warnings)
+            alias_results, legal_inputs = handle_aliases(argument_spec, parameters, alias_warnings)
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
