@@ -93,7 +93,6 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
         self._final_q = final_q
-        self._loop_eval_error = None
 
         self._task.squash()
 
@@ -106,17 +105,75 @@ class TaskExecutor:
         '''
 
         display.debug("in run() - task %s" % self._task._uuid)
-
+        res = []
         try:
             try:
                 items = self._get_loop_items()
-            except AnsibleUndefinedVariable as e:
-                # save the error raised here for use later
-                items = None
-                self._loop_eval_error = e
+            except AnsibleUndefinedVariable as loop_eval_error:
+                variables = self._job_vars
+                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+                try:
+                    self._update_play_context(variables, templar)
+                except AnsibleError:
+                    # we do not care about this error because we either skip the task or raise loop_eval_error
+                    pass
 
-            if items is not None:
-                if len(items) > 0:
+                try:
+                    if not self._task.evaluate_conditional(templar, variables):
+                        display.debug("when evaluation is False, skipping this task")
+                        res = dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+                except AnsibleError as e:
+                    display.v(to_text(e))
+                    raise loop_eval_error  # pylint: disable=raising-bad-type
+
+                if not res:
+                    raise loop_eval_error
+
+            if not res:
+                if items is None:
+                    # no loop
+                    display.debug("calling self._execute()")
+                    variables = self._job_vars
+                    templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+                    context_validation_error = None
+                    try:
+                        self._update_play_context(variables, templar)
+                    except AnsibleError as e:
+                        context_validation_error = e
+
+                    if not self._task.evaluate_conditional(templar, variables):
+                        display.debug("when evaluation is False, skipping this task")
+                        res = dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+
+                    if context_validation_error is not None:
+                        raise context_validation_error  # pylint: disable=raising-bad-type
+
+                    if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
+                        include_args = self._task.args.copy()
+                        include_file = include_args.pop('_raw_params', None)
+                        if not include_file:
+                            res = dict(failed=True, msg="No include file was specified to the include")
+
+                        include_file = templar.template(include_file)
+                        res = dict(include=include_file, include_args=include_args)
+
+                    # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
+                    elif self._task.action in C._ACTION_INCLUDE_ROLE:
+                        include_args = self._task.args.copy()
+                        res = dict(include_args=include_args)
+
+                    # Now we do final validation on the task, which sets all fields to their final values.
+                    try:
+                        self._task.post_validate(templar=templar)
+                    except AnsibleError:
+                        raise
+                    except Exception:
+                        res = dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
+                    if not res:
+                        res = self._execute(variables, templar)
+                    display.debug("_execute() done")
+                elif len(items) > 0:
+                    # loop with non-zero items
                     item_results = self._run_loop(items)
 
                     # create the overall result item
@@ -153,11 +210,8 @@ class TaskExecutor:
                     if res['skipped']:
                         res['msg'] = 'All items skipped'
                 else:
+                    # loop with now items to loop over
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
-            else:
-                display.debug("calling self._execute()")
-                res = self._execute()
-                display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
             if 'changed' not in res:
@@ -352,7 +406,61 @@ class TaskExecutor:
             # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
-            res = self._execute(variables=task_vars)
+
+            res = None
+            if task_vars:
+                variables = task_vars
+            else:
+                variables = self._job_vars
+
+            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+
+            context_validation_error = None
+            try:
+                self._update_play_context(variables, templar)
+            except AnsibleError as e:
+                # save the error, which we'll raise later if we don't end up
+                # skipping this task during the conditional evaluation step
+                context_validation_error = e
+
+            # Evaluate the conditional (if any) for this task, which we do before running
+            # the final task post-validation. We do this before the post validation due to
+            # the fact that the conditional may specify that the task be skipped due to a
+            # variable not being present which would otherwise cause validation to fail
+            if not self._task.evaluate_conditional(templar, variables):
+                display.debug("when evaluation is False, skipping this task")
+                res = dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+
+            # if we ran into an error while setting up the PlayContext, raise it now
+            if context_validation_error is not None:
+                raise context_validation_error  # pylint: disable=raising-bad-type
+
+            # if this task is a TaskInclude, we just return now with a success code so the
+            # main thread can expand the task list for the given host
+            if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
+                include_args = self._task.args.copy()
+                include_file = include_args.pop('_raw_params', None)
+                if not include_file:
+                    res = dict(failed=True, msg="No include file was specified to the include")
+
+                include_file = templar.template(include_file)
+                res = dict(include=include_file, include_args=include_args)
+
+            # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
+            elif self._task.action in C._ACTION_INCLUDE_ROLE:
+                include_args = self._task.args.copy()
+                res = dict(include_args=include_args)
+
+            # Now we do final validation on the task, which sets all fields to their final values.
+            try:
+                self._task.post_validate(templar=templar)
+            except AnsibleError:
+                raise
+            except Exception:
+                res = dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
+
+            if res is None:
+                res = self._execute(variables=variables, templar=templar)
             task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
@@ -409,95 +517,35 @@ class TaskExecutor:
 
         return results
 
-    def _execute(self, variables=None):
+    def _update_play_context(self, variables, templar):
+        # TODO: remove play_context as this does not take delegation into account, task itself should hold values
+        #  for connection/shell/become/terminal plugin options to finalize.
+        #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
+
+        # apply the given task's information to the connection info,
+        # which may override some fields already set by the play or
+        # the options specified on the command line
+        self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=variables, templar=templar)
+
+        # fields set from the play/task may be based on variables, so we have to
+        # do the same kind of post validation step on it here before we use it.
+        self._play_context.post_validate(templar=templar)
+
+        # now that the play context is finalized, if the remote_addr is not set
+        # default to using the host's address field as the remote address
+        if not self._play_context.remote_addr:
+            self._play_context.remote_addr = self._host.address
+
+        # We also add "magic" variables back into the variables dict to make sure
+        # a certain subset of variables exist.
+        self._play_context.update_vars(variables)
+
+    def _execute(self, variables, templar):
         '''
         The primary workhorse of the executor system, this runs the task
         on the specified host (which may be the delegated_to host) and handles
         the retry/until and block rescue/always execution
         '''
-
-        if variables is None:
-            variables = self._job_vars
-
-        templar = Templar(loader=self._loader, variables=variables)
-
-        context_validation_error = None
-        try:
-            # TODO: remove play_context as this does not take delegation into account, task itself should hold values
-            #  for connection/shell/become/terminal plugin options to finalize.
-            #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
-
-            # apply the given task's information to the connection info,
-            # which may override some fields already set by the play or
-            # the options specified on the command line
-            self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=variables, templar=templar)
-
-            # fields set from the play/task may be based on variables, so we have to
-            # do the same kind of post validation step on it here before we use it.
-            self._play_context.post_validate(templar=templar)
-
-            # now that the play context is finalized, if the remote_addr is not set
-            # default to using the host's address field as the remote address
-            if not self._play_context.remote_addr:
-                self._play_context.remote_addr = self._host.address
-
-            # We also add "magic" variables back into the variables dict to make sure
-            # a certain subset of variables exist.
-            self._play_context.update_vars(variables)
-
-        except AnsibleError as e:
-            # save the error, which we'll raise later if we don't end up
-            # skipping this task during the conditional evaluation step
-            context_validation_error = e
-
-        # Evaluate the conditional (if any) for this task, which we do before running
-        # the final task post-validation. We do this before the post validation due to
-        # the fact that the conditional may specify that the task be skipped due to a
-        # variable not being present which would otherwise cause validation to fail
-        try:
-            if not self._task.evaluate_conditional(templar, variables):
-                display.debug("when evaluation is False, skipping this task")
-                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
-        except AnsibleError as e:
-            # loop error takes precedence
-            if self._loop_eval_error is not None:
-                # Display the error from the conditional as well to prevent
-                # losing information useful for debugging.
-                display.v(to_text(e))
-                raise self._loop_eval_error  # pylint: disable=raising-bad-type
-            raise
-
-        # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
-        if self._loop_eval_error is not None:
-            raise self._loop_eval_error  # pylint: disable=raising-bad-type
-
-        # if we ran into an error while setting up the PlayContext, raise it now
-        if context_validation_error is not None:
-            raise context_validation_error  # pylint: disable=raising-bad-type
-
-        # if this task is a TaskInclude, we just return now with a success code so the
-        # main thread can expand the task list for the given host
-        if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
-            include_args = self._task.args.copy()
-            include_file = include_args.pop('_raw_params', None)
-            if not include_file:
-                return dict(failed=True, msg="No include file was specified to the include")
-
-            include_file = templar.template(include_file)
-            return dict(include=include_file, include_args=include_args)
-
-        # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
-        elif self._task.action in C._ACTION_INCLUDE_ROLE:
-            include_args = self._task.args.copy()
-            return dict(include_args=include_args)
-
-        # Now we do final validation on the task, which sets all fields to their final values.
-        try:
-            self._task.post_validate(templar=templar)
-        except AnsibleError:
-            raise
-        except Exception:
-            return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
