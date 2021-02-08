@@ -4,6 +4,9 @@
   roles:
       - { role: a, a_str: "roles" }
 
+  vars:
+    INT_VALUE: 42
+
   tasks:
 
       - name: "Valid simple role usage with include_role"
@@ -39,6 +42,12 @@
           tasks_from: "alternate"
         vars:
           a_int: 512
+
+      - name: "Valid simple role usage with a templated value"
+        import_role:
+          name: a
+        vars:
+          a_int: "{{ INT_VALUE }}"
 
       - name: "Call role entry point that is defined, but has no spec data"
         import_role:

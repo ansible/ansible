@@ -53,36 +53,41 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    # WARNING: modifies argument_spec
-    def build_args(self, argument_spec, task_vars):
-        args = {}
-        for key, attrs in iteritems(argument_spec):
-            if attrs is None:
-                argument_spec[key] = {'type': 'str'}
+    def get_args_from_task_vars(self, argument_spec, task_vars):
+        '''
+        Get any arguments that may come from `task_vars`.
 
-            if key in task_vars:
-                if isinstance(task_vars[key], string_types):
-                    value = self._templar.do_template(task_vars[key])
+        Expand templated variables so we can validate the actual values.
+
+        :param argument_spec: A dict of the argument spec.
+        :param task_vars: A dict of task variables.
+
+        :returns: A dict of values that can be validated against the arg spec.
+        '''
+        args = {}
+
+        for argument_name, argument_attrs in iteritems(argument_spec):
+            if argument_name in task_vars:
+                if isinstance(task_vars[argument_name], string_types):
+                    value = self._templar.do_template(task_vars[argument_name])
                     if value:
-                        args[key] = value
+                        args[argument_name] = value
                 else:
-                    args[key] = task_vars[key]
-            elif attrs:
-                if 'aliases' in attrs:
-                    for item in attrs['aliases']:
-                        if item in task_vars:
-                            args[key] = self._templar.do_template(task_vars[key])
-                elif 'default' in attrs and key not in args:
-                    args[key] = attrs['default']
+                    args[argument_name] = task_vars[argument_name]
         return args
 
     def run(self, tmp=None, task_vars=None):
         '''
-        Validate an arg spec
+        Validate an argument specification against a provided set of data.
 
-        :arg tmp: Deprecated. Do not use.
-        :arg dict task_vars: A dict of task variables.
-            Valid args include 'argument_spec', 'provided_arguments'
+        The `validate_argument_spec` module expects to receive the arguments:
+            - argument_spec: A dict whose keys are the valid argument names, and
+                  whose values are dicts of the argument attributes (type, etc).
+            - provided_arguments: A dict whose keys are the argument names, and
+                  whose values are the argument value.
+
+        :param tmp: Deprecated. Do not use.
+        :param task_vars: A dict of task variables.
         :return: An action result dict, including a 'argument_errors' key with a
             list of validation errors found.
         '''
@@ -99,7 +104,8 @@ class ActionModule(ActionBase):
         if 'argument_spec' not in self._task.args:
             raise AnsibleError('"argument_spec" arg is required in args: %s' % self._task.args)
 
-        # get the task var called argument_spec
+        # Get the task var called argument_spec. This will contain the arg spec
+        # data dict (for the proper entry point for a role).
         argument_spec_data = self._task.args.get('argument_spec')
 
         # the values that were passed in and will be checked against argument_spec
@@ -111,15 +117,10 @@ class ActionModule(ActionBase):
         if not isinstance(provided_arguments, dict):
             raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
 
-        # include arg spec data dict in return, use a copy since we 'pop' from it
-        # and modify it in place later.
-        orig_argument_spec_data = argument_spec_data.copy()
-
         module_params = provided_arguments
 
-        # apply any defaults from the arg spec and setup aliases
-        built_args = self.build_args(argument_spec_data, task_vars)
-        module_params.update(built_args)
+        args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
+        module_params.update(args_from_vars)
 
         module_args = {}
         module_args['argument_spec'] = argument_spec_data
@@ -129,21 +130,13 @@ class ActionModule(ActionBase):
             validating_module = ArgSpecValidatingAnsibleModule(**module_args)
             validating_module.check_for_errors()
         except AnsibleArgSpecError as e:
-            # result['_ansible_verbose_always'] = True
             result['failed'] = True
             result['msg'] = e.message
-            result['argument_spec_data'] = orig_argument_spec_data
+            result['argument_spec_data'] = argument_spec_data
             result['argument_errors'] = e.argument_errors
-
-            # TODO: we could return the passed in params which didn't meet arg spec,
-            #       but they likely need to have no_log applied to them...
-            # result['provided_arguments'] = provided_arguments
-
             return result
 
         result['changed'] = False
         result['msg'] = 'The arg spec validation passed'
-
-        # result['valid_provided_arguments'] = provided_arguments
 
         return result

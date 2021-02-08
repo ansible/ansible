@@ -305,7 +305,7 @@ role ``meta/main.yml`` file. All fields are lower-case.
 
         :type:
 
-           * The data type of the option.
+           * The data type of the option. Default is `str`.
            * If an option is of type ``list``, ``elements`` should be specified.
 
         :required:
