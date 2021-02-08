@@ -545,7 +545,7 @@ def handle_elements(wanted_type, parameters, values, options_context=None):
         try:
             validated_params.append(type_checker(value, **kwargs))
         except (TypeError, ValueError) as e:
-            msg = "Elements value for option %s" % parameters
+            msg = "Elements value for option '%s'" % parameters
             if options_context:
                 msg += " found in '%s'" % " -> ".join(options_context)
             msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
