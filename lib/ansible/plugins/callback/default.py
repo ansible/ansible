@@ -92,13 +92,13 @@ class CallbackModule(CallbackBase):
         else:
             if delegated_vars:
                 if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
-                    self._print_task_path(result._task, color=C.COLOR_ERROR)
+                    self._print_task_path(result._task)
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
                                                                             self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
             else:
                 if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
-                    self._print_task_path(result._task, color=C.COLOR_ERROR)
+                    self._print_task_path(result._task)
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
 
