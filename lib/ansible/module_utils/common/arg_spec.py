@@ -121,7 +121,6 @@ class Validator():
             self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
 
         self._sanitize_error_messages()
-        warnings = remove_values(get_warning_messages(), self._no_log_values)
 
         if self.error_messages:
             return False
