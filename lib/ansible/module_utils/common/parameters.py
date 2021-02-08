@@ -14,6 +14,7 @@ from itertools import chain
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.text.formatters import lenient_lowercase
+from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 from ansible.module_utils.common._collections_compat import (
@@ -36,6 +37,8 @@ from ansible.module_utils.six import (
 )
 
 from ansible.module_utils.common.validation import (
+    check_mutually_exclusive,
+    check_required_arguments,
     check_type_bits,
     check_type_bool,
     check_type_bytes,
@@ -741,35 +744,38 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
     if options_context is None:
         options_context = []
 
+    if no_log_values is None:
+        no_log_values = set()
+
+    # FIXME: I don't think these vales will accumulate when being called recursively.
     errors = []
     validated_params = {}
-    unsupported_parameters = []
+    unsupported_parameters = set()
     for param, value in argument_spec.items():
         wanted = value.get('type')
         if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == dict):
             sub_spec = value.get('options')
             if value.get('apply_defaults', False):
                 if sub_spec is not None:
-                    if module_parameters.get(value) is None:
-                        # FIXME: This is modifying the passed in arguments
-                        module_parameters[param] = {}
+                    if parameters.get(value) is None:
+                        parameters[param] = {}
                     else:
                         continue
-            elif sub_spec is None or param not in module_parameters or module_parameters[param] is None:
+            elif sub_spec is None or param not in parameters or parameters[param] is None:
                 continue
 
             # Keep track of context for warning messages
             options_context.append(param)
 
             # Make sure we can iterate over the elements
-            if isinstance(module_parameters[param], dict):
-                elements = [module_parameters[param]]
+            if isinstance(parameters[param], dict):
+                elements = [parameters[param]]
             else:
-                elements = module_parameters[param]
+                elements = parameters[param]
 
             for idx, sub_parameters in enumerate(elements):
                 if not isinstance(sub_parameters, dict):
-                    errors.append('value of %s must be of type dict or list of dicts' % param)
+                    errors.append("value of '%s' must be of type dict or list of dicts" % param)
 
                 # Set prefix for warning messages
                 new_prefix = prefix + param
@@ -777,11 +783,36 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                     new_prefix += '[%d]' % idx
                 new_prefix += '.'
 
-                options_aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
-                _unsupported_parameters = get_unsupported_parameters(sub_spec, sub_parameters)
-                if _unsupported_parameters:
-                    # errors.append('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
-                    unsupported_parameters.extend(_unsupported_parameters)
+                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
+
+                alias_warnings = []
+                try:
+                    options_aliases, legal_inputs = handle_aliases(sub_spec, sub_parameters, alias_warnings)
+                except (TypeError, ValueError) as e:
+                    options_aliases = {}
+                    legal_inputs = None
+                    errors.append(to_native(e))
+
+                for option, alias in alias_warnings:
+                    warn('Both option %s and its alias %s are set.' % (option, alias))
+
+                no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
+
+                if legal_inputs is None:
+                    legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
+                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs))
+
+                try:
+                    check_required_arguments(sub_spec, sub_parameters)
+                except TypeError as e:
+                    errors.append(to_native(e))
+
+                try:
+                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters)
+                except TypeError as e:
+                    errors.append(to_native(e))
+
+                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
 
                 _validated_params, _errors = validate_argument_types(sub_spec, sub_parameters, options_context)
                 validated_params.update(_validated_params)
@@ -790,10 +821,10 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                 _errors = validate_argument_values(sub_spec, sub_parameters, options_context)
                 errors.extend(_errors)
 
-                _validated_params, _errors, _unsupported_parameters = validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context)
-                validated_params.update(_validated_params)
-                errors.extend(_errors)
-                unsupported_parameters.extend(_unsupported_parameters)
+                # _validated_params, _errors, _unsupported_parameters = validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context)
+                # validated_params.update(_validated_params)
+                # errors.extend(_errors)
+                # unsupported_parameters.extend(_unsupported_parameters)
 
             options_context.pop()
 
