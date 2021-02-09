@@ -815,7 +815,7 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
                 no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
 
-                _validated_params, _errors = validate_argument_types(sub_spec, sub_parameters, options_context)
+                _validated_params, _errors = validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context)
                 sub_parameters.update(_validated_params)
                 errors.extend(_errors)
 
