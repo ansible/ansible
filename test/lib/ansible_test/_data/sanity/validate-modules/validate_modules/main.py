@@ -940,12 +940,12 @@ class ModuleValidator(Validator):
                     msg='No DOCUMENTATION provided'
                 )
             else:
-                documentation_exists = True
                 doc, errors, traces = parse_yaml(
                     doc_info['DOCUMENTATION']['value'],
                     doc_info['DOCUMENTATION']['lineno'],
                     self.name, 'DOCUMENTATION'
                 )
+                documentation_exists = bool(doc)
                 if doc:
                     add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
                 for error in errors:
@@ -959,7 +959,7 @@ class ModuleValidator(Validator):
                         path=self.object_path,
                         tracebk=trace
                     )
-                if not errors and not traces:
+                if doc and not errors and not traces:
                     missing_fragment = False
                     with CaptureStd():
                         try:

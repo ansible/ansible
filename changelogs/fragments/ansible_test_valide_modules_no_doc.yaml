@@ -1,0 +1,3 @@
+---
+bugfixes:
+- validate-modules - do not raise an exception if the ``DOCUMENTATION`` section exists but is empty. 
