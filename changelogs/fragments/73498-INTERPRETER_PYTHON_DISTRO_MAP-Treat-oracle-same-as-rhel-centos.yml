@@ -1,0 +1,2 @@
+bugfixes:
+- INTERPRETER_PYTHON_DISTRO_MAP - prefer ``/usr/libexec/platform-python`` on ``oraclelinux 8`` when other pythons are present.
