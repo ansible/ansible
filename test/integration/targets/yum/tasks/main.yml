@@ -74,3 +74,5 @@
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
     - ansible_architecture == 'x86_64'
+    # Our output parsing expects us to be on yum, not dnf
+    - ansible_distribution_major_version is version('7', '>=')
