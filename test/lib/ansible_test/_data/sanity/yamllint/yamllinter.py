@@ -199,7 +199,7 @@ class YamlChecker:
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
             for target in statement.targets:
-                if isinstance(target, ast.Tuple):
+                if not isinstance(target, ast.Name):
                     continue
 
                 if doc_types and target.id not in doc_types:
