@@ -33,9 +33,8 @@ from ansible.module_utils.common.validation import (
 from ansible.module_utils.six import string_types
 
 
-class Validator():
-    """Argument spec validator class"""
-
+class ArgumentSpecValidator():
+    """Argument spec validation class"""
 
     def __init__(self, argument_spec, parameters):
         self._error_messages = []

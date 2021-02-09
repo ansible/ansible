@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.common.arg_spec import Validator
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 
 
 def test_basic_spec():
@@ -49,8 +49,8 @@ def test_basic_spec():
         'param_bytes': 2048,
     }
 
-    v = Validator()
-    passed = v.validate(arg_spec, module_params)
+    v = ArgumentSpecValidator(arg_spec, parameters)
+    passed = v.validate()
 
     assert passed is True
     assert v.validated_parameters == expected
@@ -68,8 +68,8 @@ def test_spec_with_defaults():
         'param_str': 'DEFAULT',
     }
 
-    v = Validator()
-    passed = v.validate(arg_spec, module_params)
+    v = ArgumentSpecValidator(arg_spec, parameters)
+    passed = v.validate()
 
     assert passed is True
     assert v.validated_parameters == expected
@@ -92,8 +92,8 @@ def test_spec_with_elements():
         'param_list': [55, 33, 34, 22],
     }
 
-    v = Validator()
-    passed = v.validate(arg_spec, module_params)
+    v = ArgumentSpecValidator(arg_spec, parameters)
+    passed = v.validate()
 
     assert passed is True
     assert v.error_messages == []

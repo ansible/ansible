@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.common.arg_spec import Validator
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 
 
 def test_required_and_default():
@@ -13,8 +13,8 @@ def test_required_and_default():
         'param_req': {'required': True, 'default': 'DEFAULT'},
     }
 
-    v = Validator()
-    passed = v.validate(arg_spec, {})
+    v = ArgumentSpecValidator(arg_spec, {})
+    passed = v.validate()
 
     expected = [
         'internal error: required and default are mutually exclusive for param_req',

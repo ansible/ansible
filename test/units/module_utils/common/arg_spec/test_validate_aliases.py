@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.common.arg_spec import Validator
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 
 
 def test_spec_with_aliases():
@@ -18,7 +18,6 @@ def test_spec_with_aliases():
         'directory': '/tmp',
     }
 
-    v = Validator()
     passed = v.validate(arg_spec, parameters)
 
     assert passed is True
