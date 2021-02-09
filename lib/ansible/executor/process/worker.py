@@ -64,7 +64,7 @@ def skip_worker(host, task):
 
 
 def skip_worker_include_role(host, task):
-    # FIXME this check is still left in TaskExecutor._execute to account for loops
+    # FIXME remove this check from TaskExecutor
     if task.action == 'include_role':
         raise WorkerShortCircuit(
             TaskResult(
@@ -86,19 +86,18 @@ class MaybeWorker:
     to short-circuit worker creation in addition.
     '''
 
-    def __init__(self, tqm):
+    def __init__(self, tqm, allow_base_throttling):
         self._tqm = tqm
         self._workers = tqm._workers
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
         self._final_q = tqm._final_q
         self._cur_worker = 0
+        self._allow_base_throttling = allow_base_throttling
 
     def queue_task(self, host, task, task_vars, play_context):
         try:
             if not task.loop and not task.loop_with:
-                # FIXME remove code from TaskExecutor._execute() that is being moved into skip_worker
-                #       but keep/move it into TaskExecutor._run_loop() to account for loops
                 skip_worker(host, task)
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
@@ -122,7 +121,7 @@ class MaybeWorker:
             )
             display.debug("done sending task result for task %s" % task._uuid)
         else:
-            # FIXME the worker creation below should be abstracted further to account for additional processing models
+            # NOTE the worker creation below can potentially be abstracted further to account for additional processing models
 
             # FIXME play_context validation
             # FIXME task validation/templating
@@ -141,14 +140,13 @@ class MaybeWorker:
             # by the forks or serial setting), however a task/block/play may "throttle"
             # that limit down.
             rewind_point = len(self._workers)
-            # FIXME re-enable throttling, need to pass ALLOW_BASE_THROTTLING from the strategy
-            #if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-            #    if task.run_once:
-            #        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-            #    else:
-            #        if throttle <= rewind_point:
-            #            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-            #            rewind_point = throttle
+            if throttle > 0 and self._allow_base_throttling:
+                if task.run_once:
+                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                else:
+                    if throttle <= rewind_point:
+                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                        rewind_point = throttle
 
             queued = False
             starting_worker = self._cur_worker
