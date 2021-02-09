@@ -98,6 +98,48 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v2.10.7
+=========================
+
+Breaking Changes
+----------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- utm_proxy_auth_profile - the ``frontend_cookie_secret`` return value now contains a placeholder string instead of the module's ``frontend_cookie_secret`` parameter (https://github.com/ansible-collections/community.general/pull/1736).
+
+Major Changes
+-------------
+
+- Restricting the version of the community.okd collection to 1.0.0. The previously included version, 1.0.1, had a dependency on kubernetes.core and thus required the installation of an additional collection that was not included in Ansible 2.10. Version 1.0.0 is essentially identical to 1.0.1, except that it uses community.kubernetes, wihch is included in Ansible 2.10.
+
+ovirt.ovirt
+~~~~~~~~~~~
+
+- ovirt_system_option_info - Add new module (https://github.com/oVirt/ovirt-ansible-collection/pull/206).
+
+servicenow.servicenow
+~~~~~~~~~~~~~~~~~~~~~
+
+- add new tests (find with no result, search many)
+- add related tests
+- add support for ServiceNOW table api display_value exclude_reference_link and suppress_pagination_header
+- use new API for pysnow >=0.6.0
+
+Deprecated Features
+-------------------
+
+cisco.nxos
+~~~~~~~~~~
+
+- Deprecated `nxos_bgp` and `nxos_bgp_neighbor` modules in favor of `nxos_bgp_global` resource module.
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_host_firewall_manager - the creation of new rule with no ``allowed_ip`` entry in the ``allowed_hosts`` dictionary won't be allowed after 2.0.0 release.
+
 Porting Guide for v2.10.6
 =========================
 
