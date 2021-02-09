@@ -329,12 +329,12 @@ EXAMPLES = r'''
     expires: -1
 
 - name: Set maximum expiration date for password
-  user:
+  ansible.builtin.user:
     name: ram19
     password_expire_max: 10
 
 - name: Set minimum expiration date for password
-  user:
+  ansible.builtin.user:
     name: pushkar15
     password_expire_min: 5
 '''

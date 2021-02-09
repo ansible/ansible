@@ -57,7 +57,7 @@ author:
 
 EXAMPLES = r'''
 - name: Example using fail and when together
-  fail:
+  ansible.builtin.fail:
     msg: The system may not be provisioned according to the CMDB status.
   when: cmdb_status != "to-be-staged"
 '''

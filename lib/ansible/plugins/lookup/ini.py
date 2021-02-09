@@ -53,18 +53,18 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug: msg="User in integration is {{ lookup('ini', 'user', section='integration', file='users.ini') }}"
+- ansible.builtin.debug: msg="User in integration is {{ lookup('ini', 'user', section='integration', file='users.ini') }}"
 
-- debug: msg="User in production  is {{ lookup('ini', 'user', section='production',  file='users.ini') }}"
+- ansible.builtin.debug: msg="User in production  is {{ lookup('ini', 'user', section='production',  file='users.ini') }}"
 
-- debug: msg="user.name is {{ lookup('ini', 'user.name', type='properties', file='user.properties') }}"
+- ansible.builtin.debug: msg="user.name is {{ lookup('ini', 'user.name', type='properties', file='user.properties') }}"
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ item }}"
   loop: "{{ q('ini', '.*', section='section1', file='test.ini', re=True) }}"
 
 - name: Read an ini file with allow_no_value
-  debug:
+  ansible.builtin.debug:
     msg: "{{ lookup('ini', 'user', file='mysql.ini', section='mysqld', allow_no_value=True) }}"
 """
 

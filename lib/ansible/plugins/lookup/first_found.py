@@ -47,7 +47,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Set _found_file to the first existing file, raising an error if a file is not found
-  set_fact:
+  ansible.builtin.set_fact:
     _found_file: "{{ lookup('first_found', findme) }}"
   vars:
     findme:
@@ -56,7 +56,7 @@ EXAMPLES = """
       - /path/to/biz.txt
 
 - name: Set _found_file to the first existing file, or an empty list if no files found
-  set_fact:
+  ansible.builtin.set_fact:
     _found_file: "{{ lookup('first_found', files, paths=['/extra/path'], skip=True) }}"
   vars:
     files:
@@ -64,7 +64,7 @@ EXAMPLES = """
       - /path/to/bar.txt
 
 - name: Include tasks only if one of the files exist, otherwise skip the task
-  include_tasks:
+  ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_first_found:
     files:
@@ -73,7 +73,7 @@ EXAMPLES = """
     skip: True
 
 - name: Include tasks only if one of the files exists, otherwise skip
-  include_tasks: '{{ tasks_file }}'
+  ansible.builtin.include_tasks: '{{ tasks_file }}'
   when: tasks_file != ""
   vars:
     tasks_file: "{{ lookup('first_found', files=['tasks.yaml', 'other_tasks.yaml'], errors='ignore') }}"
@@ -82,7 +82,7 @@ EXAMPLES = """
         copy first existing file found to /some/file,
         looking in relative directories from where the task is defined and
         including any play objects that contain it
-  copy:
+  ansible.builtin.copy:
     src: "{{ lookup('first_found', findme) }}"
     dest: /some/file
   vars:
@@ -92,7 +92,7 @@ EXAMPLES = """
       - bar
 
 - name: same copy but specific paths
-  copy:
+  ansible.builtin.copy:
     src: "{{ lookup('first_found', params) }}"
     dest: /some/file
   vars:
@@ -106,7 +106,7 @@ EXAMPLES = """
         - /tmp/staging
 
 - name: INTERFACES | Create Ansible header for /etc/network/interfaces
-  template:
+  ansible.builtin.template:
     src: "{{ lookup('first_found', findme) }}"
     dest: "/etc/foo.conf"
   vars:
@@ -115,7 +115,7 @@ EXAMPLES = """
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
-  include_vars: "{{ lookup('first_found', params) }}"
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
   vars:
     params:
       files:

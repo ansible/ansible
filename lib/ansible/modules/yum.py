@@ -303,17 +303,17 @@ author:
 
 EXAMPLES = '''
 - name: Install the latest version of Apache
-  yum:
+  ansible.builtin.yum:
     name: httpd
     state: latest
 
 - name: Install Apache >= 2.4
-  yum:
+  ansible.builtin.yum:
     name: httpd>=2.4
     state: present
 
 - name: Install a list of packages (suitable replacement for 2.11 loop deprecation warning)
-  yum:
+  ansible.builtin.yum:
     name:
       - nginx
       - postgresql
@@ -321,7 +321,7 @@ EXAMPLES = '''
     state: present
 
 - name: Install a list of packages with a list variable
-  yum:
+  ansible.builtin.yum:
     name: "{{ packages }}"
   vars:
     packages:
@@ -329,69 +329,69 @@ EXAMPLES = '''
     - httpd-tools
 
 - name: Remove the Apache package
-  yum:
+  ansible.builtin.yum:
     name: httpd
     state: absent
 
 - name: Install the latest version of Apache from the testing repo
-  yum:
+  ansible.builtin.yum:
     name: httpd
     enablerepo: testing
     state: present
 
 - name: Install one specific version of Apache
-  yum:
+  ansible.builtin.yum:
     name: httpd-2.2.29-1.4.amzn1
     state: present
 
 - name: Upgrade all packages
-  yum:
+  ansible.builtin.yum:
     name: '*'
     state: latest
 
 - name: Upgrade all packages, excluding kernel & foo related packages
-  yum:
+  ansible.builtin.yum:
     name: '*'
     state: latest
     exclude: kernel*,foo*
 
 - name: Install the nginx rpm from a remote repo
-  yum:
+  ansible.builtin.yum:
     name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
 - name: Install nginx rpm from a local file
-  yum:
+  ansible.builtin.yum:
     name: /usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
 - name: Install the 'Development tools' package group
-  yum:
+  ansible.builtin.yum:
     name: "@Development tools"
     state: present
 
 - name: Install the 'Gnome desktop' environment group
-  yum:
+  ansible.builtin.yum:
     name: "@^gnome-desktop-environment"
     state: present
 
 - name: List ansible packages and register result to print with debug later
-  yum:
+  ansible.builtin.yum:
     list: ansible
   register: result
 
 - name: Install package with multiple repos enabled
-  yum:
+  ansible.builtin.yum:
     name: sos
     enablerepo: "epel,ol7_latest"
 
 - name: Install package with multiple repos disabled
-  yum:
+  ansible.builtin.yum:
     name: sos
     disablerepo: "epel,ol7_latest"
 
 - name: Download the nginx package but do not install it
-  yum:
+  ansible.builtin.yum:
     name:
       - nginx
     state: latest

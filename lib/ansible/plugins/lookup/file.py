@@ -31,10 +31,10 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
+- ansible.builtin.debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
 
 - name: display multiple file contents
-  debug: var=item
+  ansible.builtin.debug: var=item
   with_file:
     - "/path/to/foo.txt"
     - "bar.txt"  # will be looked in files/ dir relative to play or in role
