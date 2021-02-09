@@ -1,0 +1,2 @@
+bugfixes:
+  - Do not automatically recursively delete non empty directories.

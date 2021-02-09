@@ -518,7 +518,7 @@ def ensure_absent(path):
         diff = initial_diff(path, 'absent', prev_state)
 
         if not module.check_mode:
-            if prev_state == 'directory':
+            if prev_state == 'directory' and (params['recurse'] or params['force']):
                 try:
                     shutil.rmtree(b_path, ignore_errors=False)
                 except Exception as e:
