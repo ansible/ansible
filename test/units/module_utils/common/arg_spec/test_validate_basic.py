@@ -23,7 +23,7 @@ def test_basic_spec():
 
     }
 
-    module_params = {
+    parameters = {
         'param_str': 22,
         'param_list': 'one,two,three',
         'param_dict': 'first=star,last=lord',
@@ -62,7 +62,7 @@ def test_spec_with_defaults():
         'param_str': {'type': 'str', 'default': 'DEFAULT'},
     }
 
-    module_params = {}
+    parameters = {}
 
     expected = {
         'param_str': 'DEFAULT',
@@ -84,7 +84,7 @@ def test_spec_with_elements():
         }
     }
 
-    module_params = {
+    parameters = {
         'param_list': [55, 33, 34, '22'],
     }
 

@@ -18,7 +18,14 @@ def test_spec_with_aliases():
         'directory': '/tmp',
     }
 
-    passed = v.validate(arg_spec, parameters)
+    expected = {
+        'dir': '/tmp',
+        'directory': '/tmp',
+        'path': '/tmp',
+    }
+
+    v = ArgumentSpecValidator(arg_spec, parameters)
+    passed = v.validate()
 
     assert passed is True
-    assert v.validated_parameters == {'path': '/tmp'}
+    assert v.validated_parameters == expected
