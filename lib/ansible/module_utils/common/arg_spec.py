@@ -36,11 +36,11 @@ from ansible.module_utils.six import string_types
 class Validator():
     """Argument spec validator class"""
 
-    def __init__(self):
-        self._options_context = None
 
+    def __init__(self, argument_spec, parameters):
         self._error_messages = []
         self._no_log_values = set()
+        self.argument_spec = argument_spec
         # Make a copy of the original parameters to avoid changing them
         self._validated_parameters = deepcopy(parameters)
 
@@ -63,7 +63,7 @@ class Validator():
     def _sanitize_error_messages(self):
         self._error_messages = remove_values(self._error_messages, self._no_log_values)
 
-    def validate(self, argument_spec, parameters):
+    def validate(self):
         """Validate module parameters against argument spec.
 
         :Example:
