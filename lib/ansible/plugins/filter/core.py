@@ -41,7 +41,7 @@ from random import Random, SystemRandom, shuffle
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
-from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
+from ansible.module_utils.six import iteritems, string_types, integer_types, reraise, text_type
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
@@ -662,4 +662,5 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
+            'split': partial(unicode_wrap, text_type.split),
         }
