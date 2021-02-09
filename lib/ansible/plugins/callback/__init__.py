@@ -259,6 +259,11 @@ class CallbackBase(AnsiblePlugin):
                 for hidme in self._hide_in_debug:
                     result.pop(hidme, None)
 
+    def _print_task_path(self, task, color=C.COLOR_DEBUG):
+        path = task.get_path()
+        if path:
+            self._display.display(u"task path: %s" % path, color=color)
+
     def set_play_context(self, play_context):
         pass
 

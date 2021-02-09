@@ -16,7 +16,7 @@ set -eux
 run_test() {
 	local testname=$1
 
-	# outout was recorded w/o cowsay, ensure we reproduce the same
+	# output was recorded w/o cowsay, ensure we reproduce the same
 	export ANSIBLE_NOCOWS=1
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
@@ -29,6 +29,7 @@ run_test() {
     sed -i -e 's/included: .*\/test\/integration/included: ...\/test\/integration/g' "${OUTFILE}.${testname}.stdout"
     sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
     sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e "s#${ANSIBLE_PLAYBOOK_DIR}#TEST_PATH#g" "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
@@ -147,6 +148,14 @@ export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
 run_test failed_to_stderr
+export ANSIBLE_DISPLAY_FAILED_STDERR=0
+
+
+# Test displaying task path on failure
+export ANSIBLE_SHOW_TASK_PATH_ON_FAILURE=1
+run_test display_path_on_failure
+export ANSIBLE_SHOW_TASK_PATH_ON_FAILURE=0
+
 
 # Default settings with unreachable tasks
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1

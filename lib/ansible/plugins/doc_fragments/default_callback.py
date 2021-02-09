@@ -82,4 +82,17 @@ class ModuleDocFragment(object):
         ini:
           - key: check_mode_markers
             section: defaults
+      show_task_path_on_failure:
+        name: Show file path on failed tasks
+        description:
+          When a task fails, display the path to the file containing the failed task and the line number.
+          This information is displayed automatically for every task when running with C(-vv) or greater verbosity.
+        type: bool
+        default: no
+        env:
+          - name: ANSIBLE_SHOW_TASK_PATH_ON_FAILURE
+        ini:
+          - key: show_task_path_on_failure
+            section: defaults
+        version_added: '2.11'
 '''
