@@ -2355,3 +2355,78 @@ releases:
     - v2.10.5rc1_summary.yaml
     - wrap_native_text-non-collections-only.yml
     release_date: '2021-01-11'
+  2.10.6rc1:
+    changes:
+      bugfixes:
+      - Added unsafe_writes test.
+      - Always mention the name of the deprecated or tombstoned plugin in routing
+        deprecation/tombstone messages (https://github.com/ansible/ansible/pull/73059).
+      - Correct the inventory source error parse handling, specifically make the config
+        INVENTORY_ANY_UNPARSED_IS_FAILED work as expected.
+      - Enabled unsafe_writes for get_url which was ignoring the paramter.
+      - Fix incorrect variable scoping when using ``import with context`` in Jinja2
+        templates. (https://github.com/ansible/ansible/issues/72615)
+      - Restored unsafe_writes functionality which was being skipped.
+      - allow become method 'su' to work on 'local' connection by allocating a fake
+        tty.
+      - ansble-test - only require a collection name in deprecation warnings when
+        necessary (https://github.com/ansible/ansible/pull/72987)
+      - ansible-test - Temporarily limit ``cryptography`` to versions before 3.4 to
+        enable tests to function.
+      - ansible-test - The ``--remote`` option has been updated for Python 2.7 to
+        work around breaking changes in the newly released ``get-pip.py`` bootstrapper.
+      - ansible-test - The ``--remote`` option has been updated to use a versioned
+        ``get-pip.py`` bootstrapper to avoid issues with future releases.
+      - ansible-test sanity changelog test - bump dependency on antsibull-changelog
+        to 0.9.0 so that `fragments that add new plugins or objects <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_
+        will not fail validation (https://github.com/ansible/ansible/pull/73428).
+      - display correct error information when an error exists in the last line of
+        the file (https://github.com/ansible/ansible/issues/16456)
+      - facts - properly report virtualization facts for Linux guests running on bhyve
+        (https://github.com/ansible/ansible/issues/73167)
+      - git - Only pass ``--raw`` flag to git verify commands (verify-tag, verify-commit)
+        when ``gpg_whitelist`` is in use. Otherwise don't pass it so that non-whitelist
+        GPG validation still works on older Git versions. (https://github.com/ansible/ansible/issues/64469)
+      - import_playbook - change warning about extra parameters to deprecation (https://github.com/ansible/ansible/issues/72745)
+      - pause - do not warn when running in the background if a timeout is provided
+        (https://github.com/ansible/ansible/issues/73042)
+      - psrp connection plugin - ``to_text(stdout)`` before ``json.loads`` in psrp.Connection.put_file
+        in case ``stdout`` is bytes.
+      - validate-modules - do not raise an ``AttributeError`` if a value is assigned
+        to a module attribute in a try/except block.
+      minor_changes:
+      - ansible-test - Added Ubuntu 20.04 LTS image to the default completion list
+      - inventory cache - do not show a warning when the cache file does not (yet)
+        exist.
+      release_summary: '| Release Date: 2021-02-08
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - '**security issue** - Mask default and fallback values for ``no_log`` module
+        options (CVE-2021-20228)'
+    codename: When the Levee Breaks
+    fragments:
+    - 16456-correct-YAML-error-message-when-file-load-failed.yml
+    - 64469_git_no_raw.yml
+    - 72615-jinja-import-context-fix.yml
+    - 72745-import_playbook-deprecation-extra-params.yml
+    - 73059-improve-deprecation-texts.yml
+    - 73167-bhyve-facts.yml
+    - 73428-changelog-linting-bump-version.yml
+    - ansible-test-pip-bootstrap-s3.yml
+    - ansible-test-pip-bootstrap.yml
+    - ansible-test-sanity-deprecation-collection-name.yml
+    - ansible-test-ubuntu2004.yml
+    - cryptography-fix.yml
+    - enable_su_on_local.yaml
+    - fix_inventory_source_parse_error_handling.yml
+    - inventory-cache-file-missing-warning.yaml
+    - no_log-fallback.yml
+    - pause-do-not-warn-background-with-seconds.yml
+    - psrp-json-loads-bytes.yml
+    - unsafe_writes_fix.yml
+    - v2.10.6rc1_summary.yaml
+    - validate-modules_found_try_except_import_fails_module_attribute.yaml
+    release_date: '2021-02-08'

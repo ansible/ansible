@@ -5,6 +5,50 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-02-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Added Ubuntu 20.04 LTS image to the default completion list
+- inventory cache - do not show a warning when the cache file does not (yet) exist.
+
+Security Fixes
+--------------
+
+- **security issue** - Mask default and fallback values for ``no_log`` module options (CVE-2021-20228)
+
+Bugfixes
+--------
+
+- Added unsafe_writes test.
+- Always mention the name of the deprecated or tombstoned plugin in routing deprecation/tombstone messages (https://github.com/ansible/ansible/pull/73059).
+- Correct the inventory source error parse handling, specifically make the config INVENTORY_ANY_UNPARSED_IS_FAILED work as expected.
+- Enabled unsafe_writes for get_url which was ignoring the paramter.
+- Fix incorrect variable scoping when using ``import with context`` in Jinja2 templates. (https://github.com/ansible/ansible/issues/72615)
+- Restored unsafe_writes functionality which was being skipped.
+- allow become method 'su' to work on 'local' connection by allocating a fake tty.
+- ansble-test - only require a collection name in deprecation warnings when necessary (https://github.com/ansible/ansible/pull/72987)
+- ansible-test - Temporarily limit ``cryptography`` to versions before 3.4 to enable tests to function.
+- ansible-test - The ``--remote`` option has been updated for Python 2.7 to work around breaking changes in the newly released ``get-pip.py`` bootstrapper.
+- ansible-test - The ``--remote`` option has been updated to use a versioned ``get-pip.py`` bootstrapper to avoid issues with future releases.
+- ansible-test sanity changelog test - bump dependency on antsibull-changelog to 0.9.0 so that `fragments that add new plugins or objects <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_ will not fail validation (https://github.com/ansible/ansible/pull/73428).
+- display correct error information when an error exists in the last line of the file (https://github.com/ansible/ansible/issues/16456)
+- facts - properly report virtualization facts for Linux guests running on bhyve (https://github.com/ansible/ansible/issues/73167)
+- git - Only pass ``--raw`` flag to git verify commands (verify-tag, verify-commit) when ``gpg_whitelist`` is in use. Otherwise don't pass it so that non-whitelist GPG validation still works on older Git versions. (https://github.com/ansible/ansible/issues/64469)
+- import_playbook - change warning about extra parameters to deprecation (https://github.com/ansible/ansible/issues/72745)
+- pause - do not warn when running in the background if a timeout is provided (https://github.com/ansible/ansible/issues/73042)
+- psrp connection plugin - ``to_text(stdout)`` before ``json.loads`` in psrp.Connection.put_file in case ``stdout`` is bytes.
+- validate-modules - do not raise an ``AttributeError`` if a value is assigned to a module attribute in a try/except block.
+
 v2.10.5
 =======
 
