@@ -608,3 +608,12 @@
       - thing|quote == "''"
   vars:
     thing: null
+
+- name: split filter
+  assert:
+    that:
+      - splitty|map('split', ',')|flatten|map('int') == [1, 2, 3, 4, 5, 6]
+  vars:
+    splitty:
+      - "1,2,3"
+      - "4,5,6"
