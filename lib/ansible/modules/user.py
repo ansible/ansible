@@ -597,30 +597,6 @@ class User(object):
         if not self.module.check_mode and self.SHADOWFILE:
             return self.module.backup_local(self.SHADOWFILE)
 
-    def set_password_expire_max(self):
-        command_name = 'chage'
-        cmd = [self.module.get_bin_path(command_name, True)]
-        cmd.append('-M')
-        cmd.append(self.password_expire_max)
-        cmd.append(self.name)
-        if self.password_expire_max == spwd.getspnam(self.name).sp_max:
-            self.module.exit_json(changed=False)
-        else:
-            self.execute_command(cmd)
-            self.module.exit_json(changed=True)
-
-    def set_password_expire_min(self):
-        command_name = 'chage'
-        cmd = [self.module.get_bin_path(command_name, True)]
-        cmd.append('-m')
-        cmd.append(self.password_expire_min)
-        cmd.append(self.name)
-        if self.password_expire_min == spwd.getspnam(self.name).sp_min:
-            self.module.exit_json(changed=False)
-        else:
-            self.execute_command(cmd)
-            self.module.exit_json(changed=True)
-
     def remove_user_userdel(self):
         if self.local:
             command_name = 'luserdel'
@@ -1045,6 +1021,30 @@ class User(object):
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()[0]
         return info
+
+    def set_password_expire_max(self):
+        command_name = 'chage'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('-M')
+        cmd.append(self.password_expire_max)
+        cmd.append(self.name)
+        if self.password_expire_max == spwd.getspnam(self.name).sp_max:
+            self.module.exit_json(changed=False)
+        else:
+            self.execute_command(cmd)
+            self.module.exit_json(changed=True)
+
+    def set_password_expire_min(self):
+        command_name = 'chage'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('-m')
+        cmd.append(self.password_expire_min)
+        cmd.append(self.name)
+        if self.password_expire_min == spwd.getspnam(self.name).sp_min:
+            self.module.exit_json(changed=False)
+        else:
+            self.execute_command(cmd)
+            self.module.exit_json(changed=True)
 
     def user_password(self):
         passwd = ''
