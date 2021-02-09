@@ -209,11 +209,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
-        if not isinstance(self._role_vars, Mapping):
+        if self._role_vars is None:
+            self._role_vars = {}
+        elif not isinstance(self._role_vars, Mapping):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
-        if not isinstance(self._default_vars, Mapping):
+        if self._default_vars is None:
+            self._default_vars = {}
+        elif not isinstance(self._default_vars, Mapping):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         # load the role's other files, if they exist
@@ -268,7 +272,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                                          obj=handler_data, orig_exc=e)
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
-        data = {}
+        data = None
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
             # Valid extensions and ordering for roles is hard-coded to maintain portability
