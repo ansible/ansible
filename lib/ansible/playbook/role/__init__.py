@@ -293,7 +293,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                     new_data = self._loader.load_from_file(found)
                     if new_data:
                         if isinstance(new_data, Mapping):
-                            if allow_dir:
+                            if allow_dir and data is not None:
                                 data = combine_vars(data, new_data)
                             else:
                                 data = new_data
