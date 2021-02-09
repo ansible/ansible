@@ -1,0 +1,12 @@
+minor_changes:
+- "Collection routing: docker content from community.general migrated to community.docker (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: Cisco NSO content from community.network migrated to cisco.nso (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: OC content from community.general migrated to community.okd (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: PostgreSQL content from community.general migrated to community.postgresql (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: RouterOS content from community.network migrated to community.routeros (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: Hetzner Robot content from community.general migrated to community.hrobot (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: Google content from community.general migrated to community.google (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: Hashi Vault content from community.general migrated to community.hashi_vault (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: KubeVirt content from community.general migrated to community.kubevirt (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: FortiOS content from community.network migrated to community.fortios (https://github.com/ansible/ansible/pull/73046)."
+- "Collection routing: DellEMC content from community.general migrated to dellemc.openmanage (https://github.com/ansible/ansible/pull/73046)."

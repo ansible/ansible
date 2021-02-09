@@ -14,7 +14,7 @@ plugin_routing:
     chroot:
       redirect: community.general.chroot
     docker:
-      redirect: community.general.docker
+      redirect: community.docker.docker
     funcd:
       redirect: community.general.funcd
     iocage:
@@ -30,7 +30,7 @@ plugin_routing:
     lxd:
       redirect: community.general.lxd
     oc:
-      redirect: community.general.oc
+      redirect: community.okd.oc
     qubes:
       redirect: community.general.qubes
     saltstack:
@@ -719,47 +719,47 @@ plugin_routing:
     docker_service:
       redirect: community.general.docker_service
     docker_compose:
-      redirect: community.general.docker_compose
+      redirect: community.docker.docker_compose
     docker_config:
-      redirect: community.general.docker_config
+      redirect: community.docker.docker_config
     docker_container:
-      redirect: community.general.docker_container
+      redirect: community.docker.docker_container
     docker_container_info:
-      redirect: community.general.docker_container_info
+      redirect: community.docker.docker_container_info
     docker_host_info:
-      redirect: community.general.docker_host_info
+      redirect: community.docker.docker_host_info
     docker_image:
-      redirect: community.general.docker_image
+      redirect: community.docker.docker_image
     docker_image_info:
-      redirect: community.general.docker_image_info
+      redirect: community.docker.docker_image_info
     docker_login:
-      redirect: community.general.docker_login
+      redirect: community.docker.docker_login
     docker_network:
-      redirect: community.general.docker_network
+      redirect: community.docker.docker_network
     docker_network_info:
-      redirect: community.general.docker_network_info
+      redirect: community.docker.docker_network_info
     docker_node:
-      redirect: community.general.docker_node
+      redirect: community.docker.docker_node
     docker_node_info:
-      redirect: community.general.docker_node_info
+      redirect: community.docker.docker_node_info
     docker_prune:
-      redirect: community.general.docker_prune
+      redirect: community.docker.docker_prune
     docker_secret:
-      redirect: community.general.docker_secret
+      redirect: community.docker.docker_secret
     docker_stack:
-      redirect: community.general.docker_stack
+      redirect: community.docker.docker_stack
     docker_swarm:
-      redirect: community.general.docker_swarm
+      redirect: community.docker.docker_swarm
     docker_swarm_info:
-      redirect: community.general.docker_swarm_info
+      redirect: community.docker.docker_swarm_info
     docker_swarm_service:
-      redirect: community.general.docker_swarm_service
+      redirect: community.docker.docker_swarm_service
     docker_swarm_service_info:
-      redirect: community.general.docker_swarm_service_info
+      redirect: community.docker.docker_swarm_service_info
     docker_volume:
-      redirect: community.general.docker_volume
+      redirect: community.docker.docker_volume
     docker_volume_info:
-      redirect: community.general.docker_volume_info
+      redirect: community.docker.docker_volume_info
     gcdns_record:
       redirect: community.general.gcdns_record
     gcdns_zone:
@@ -885,31 +885,31 @@ plugin_routing:
     gcspanner:
       redirect: community.general.gcspanner
     gc_storage:
-      redirect: community.general.gc_storage
+      redirect: community.google.gc_storage
     gce_eip:
-      redirect: community.general.gce_eip
+      redirect: community.google.gce_eip
     gce_img:
-      redirect: community.general.gce_img
+      redirect: community.google.gce_img
     gce_instance_template:
-      redirect: community.general.gce_instance_template
+      redirect: community.google.gce_instance_template
     gce_labels:
-      redirect: community.general.gce_labels
+      redirect: community.google.gce_labels
     gce_lb:
-      redirect: community.general.gce_lb
+      redirect: community.google.gce_lb
     gce_mig:
-      redirect: community.general.gce_mig
+      redirect: community.google.gce_mig
     gce_net:
-      redirect: community.general.gce_net
+      redirect: community.google.gce_net
     gce_pd:
-      redirect: community.general.gce_pd
+      redirect: community.google.gce_pd
     gce_snapshot:
-      redirect: community.general.gce_snapshot
+      redirect: community.google.gce_snapshot
     gce_tag:
-      redirect: community.general.gce_tag
+      redirect: community.google.gce_tag
     gcpubsub:
-      redirect: community.general.gcpubsub
+      redirect: community.google.gcpubsub
     gcpubsub_info:
-      redirect: community.general.gcpubsub_info
+      redirect: community.google.gcpubsub_info
     heroku_collaborator:
       redirect: community.general.heroku_collaborator
     hwc_ecs_instance:
@@ -937,17 +937,17 @@ plugin_routing:
     hwc_vpc_subnet:
       redirect: community.general.hwc_vpc_subnet
     kubevirt_cdi_upload:
-      redirect: community.general.kubevirt_cdi_upload
+      redirect: community.kubevirt.kubevirt_cdi_upload
     kubevirt_preset:
-      redirect: community.general.kubevirt_preset
+      redirect: community.kubevirt.kubevirt_preset
     kubevirt_pvc:
-      redirect: community.general.kubevirt_pvc
+      redirect: community.kubevirt.kubevirt_pvc
     kubevirt_rs:
-      redirect: community.general.kubevirt_rs
+      redirect: community.kubevirt.kubevirt_rs
     kubevirt_template:
-      redirect: community.general.kubevirt_template
+      redirect: community.kubevirt.kubevirt_template
     kubevirt_vm:
-      redirect: community.general.kubevirt_vm
+      redirect: community.kubevirt.kubevirt_vm
     linode:
       redirect: community.general.linode
     linode_v4:
@@ -1403,49 +1403,49 @@ plugin_routing:
     mysql_variables:
       redirect: community.mysql.mysql_variables
     postgresql_copy:
-      redirect: community.general.postgresql_copy
+      redirect: community.postgresql.postgresql_copy
     postgresql_db:
-      redirect: community.general.postgresql_db
+      redirect: community.postgresql.postgresql_db
     postgresql_ext:
-      redirect: community.general.postgresql_ext
+      redirect: community.postgresql.postgresql_ext
     postgresql_idx:
-      redirect: community.general.postgresql_idx
+      redirect: community.postgresql.postgresql_idx
     postgresql_info:
-      redirect: community.general.postgresql_info
+      redirect: community.postgresql.postgresql_info
     postgresql_lang:
-      redirect: community.general.postgresql_lang
+      redirect: community.postgresql.postgresql_lang
     postgresql_membership:
-      redirect: community.general.postgresql_membership
+      redirect: community.postgresql.postgresql_membership
     postgresql_owner:
-      redirect: community.general.postgresql_owner
+      redirect: community.postgresql.postgresql_owner
     postgresql_pg_hba:
-      redirect: community.general.postgresql_pg_hba
+      redirect: community.postgresql.postgresql_pg_hba
     postgresql_ping:
-      redirect: community.general.postgresql_ping
+      redirect: community.postgresql.postgresql_ping
     postgresql_privs:
-      redirect: community.general.postgresql_privs
+      redirect: community.postgresql.postgresql_privs
     postgresql_publication:
-      redirect: community.general.postgresql_publication
+      redirect: community.postgresql.postgresql_publication
     postgresql_query:
-      redirect: community.general.postgresql_query
+      redirect: community.postgresql.postgresql_query
     postgresql_schema:
-      redirect: community.general.postgresql_schema
+      redirect: community.postgresql.postgresql_schema
     postgresql_sequence:
-      redirect: community.general.postgresql_sequence
+      redirect: community.postgresql.postgresql_sequence
     postgresql_set:
-      redirect: community.general.postgresql_set
+      redirect: community.postgresql.postgresql_set
     postgresql_slot:
-      redirect: community.general.postgresql_slot
+      redirect: community.postgresql.postgresql_slot
     postgresql_subscription:
-      redirect: community.general.postgresql_subscription
+      redirect: community.postgresql.postgresql_subscription
     postgresql_table:
-      redirect: community.general.postgresql_table
+      redirect: community.postgresql.postgresql_table
     postgresql_tablespace:
-      redirect: community.general.postgresql_tablespace
+      redirect: community.postgresql.postgresql_tablespace
     postgresql_user:
-      redirect: community.general.postgresql_user
+      redirect: community.postgresql.postgresql_user
     postgresql_user_obj_stat_info:
-      redirect: community.general.postgresql_user_obj_stat_info
+      redirect: community.postgresql.postgresql_user_obj_stat_info
     proxysql_backend_servers:
       redirect: community.proxysql.proxysql_backend_servers
     proxysql_global_variables:
@@ -1659,13 +1659,13 @@ plugin_routing:
     haproxy:
       redirect: community.general.haproxy
     hetzner_failover_ip:
-      redirect: community.general.hetzner_failover_ip
+      redirect: community.hrobot.failover_ip
     hetzner_failover_ip_info:
-      redirect: community.general.hetzner_failover_ip_info
+      redirect: community.hrobot.failover_ip_info
     hetzner_firewall:
-      redirect: community.general.hetzner_firewall
+      redirect: community.hrobot.firewall
     hetzner_firewall_info:
-      redirect: community.general.hetzner_firewall_info
+      redirect: community.hrobot.firewall_info
     infinity:
       redirect: community.general.infinity
     ip_netns:
@@ -2183,61 +2183,61 @@ plugin_routing:
         removal_date: 2019-11-06
         warning_text: bigip_gtm_facts has been removed please use bigip_device_info module.
     faz_device:
-      redirect: community.network.faz_device
+      redirect: community.fortios.faz_device
     fmgr_device:
-      redirect: community.network.fmgr_device
+      redirect: community.fortios.fmgr_device
     fmgr_device_config:
-      redirect: community.network.fmgr_device_config
+      redirect: community.fortios.fmgr_device_config
     fmgr_device_group:
-      redirect: community.network.fmgr_device_group
+      redirect: community.fortios.fmgr_device_group
     fmgr_device_provision_template:
-      redirect: community.network.fmgr_device_provision_template
+      redirect: community.fortios.fmgr_device_provision_template
     fmgr_fwobj_address:
-      redirect: community.network.fmgr_fwobj_address
+      redirect: community.fortios.fmgr_fwobj_address
     fmgr_fwobj_ippool:
-      redirect: community.network.fmgr_fwobj_ippool
+      redirect: community.fortios.fmgr_fwobj_ippool
     fmgr_fwobj_ippool6:
-      redirect: community.network.fmgr_fwobj_ippool6
+      redirect: community.fortios.fmgr_fwobj_ippool6
     fmgr_fwobj_service:
-      redirect: community.network.fmgr_fwobj_service
+      redirect: community.fortios.fmgr_fwobj_service
     fmgr_fwobj_vip:
-      redirect: community.network.fmgr_fwobj_vip
+      redirect: community.fortios.fmgr_fwobj_vip
     fmgr_fwpol_ipv4:
-      redirect: community.network.fmgr_fwpol_ipv4
+      redirect: community.fortios.fmgr_fwpol_ipv4
     fmgr_fwpol_package:
-      redirect: community.network.fmgr_fwpol_package
+      redirect: community.fortios.fmgr_fwpol_package
     fmgr_ha:
-      redirect: community.network.fmgr_ha
+      redirect: community.fortios.fmgr_ha
     fmgr_provisioning:
-      redirect: community.network.fmgr_provisioning
+      redirect: community.fortios.fmgr_provisioning
     fmgr_query:
-      redirect: community.network.fmgr_query
+      redirect: community.fortios.fmgr_query
     fmgr_script:
-      redirect: community.network.fmgr_script
+      redirect: community.fortios.fmgr_script
     fmgr_secprof_appctrl:
-      redirect: community.network.fmgr_secprof_appctrl
+      redirect: community.fortios.fmgr_secprof_appctrl
     fmgr_secprof_av:
-      redirect: community.network.fmgr_secprof_av
+      redirect: community.fortios.fmgr_secprof_av
     fmgr_secprof_dns:
-      redirect: community.network.fmgr_secprof_dns
+      redirect: community.fortios.fmgr_secprof_dns
     fmgr_secprof_ips:
-      redirect: community.network.fmgr_secprof_ips
+      redirect: community.fortios.fmgr_secprof_ips
     fmgr_secprof_profile_group:
-      redirect: community.network.fmgr_secprof_profile_group
+      redirect: community.fortios.fmgr_secprof_profile_group
     fmgr_secprof_proxy:
-      redirect: community.network.fmgr_secprof_proxy
+      redirect: community.fortios.fmgr_secprof_proxy
     fmgr_secprof_spam:
-      redirect: community.network.fmgr_secprof_spam
+      redirect: community.fortios.fmgr_secprof_spam
     fmgr_secprof_ssl_ssh:
-      redirect: community.network.fmgr_secprof_ssl_ssh
+      redirect: community.fortios.fmgr_secprof_ssl_ssh
     fmgr_secprof_voip:
-      redirect: community.network.fmgr_secprof_voip
+      redirect: community.fortios.fmgr_secprof_voip
     fmgr_secprof_waf:
-      redirect: community.network.fmgr_secprof_waf
+      redirect: community.fortios.fmgr_secprof_waf
     fmgr_secprof_wanopt:
-      redirect: community.network.fmgr_secprof_wanopt
+      redirect: community.fortios.fmgr_secprof_wanopt
     fmgr_secprof_web:
-      redirect: community.network.fmgr_secprof_web
+      redirect: community.fortios.fmgr_secprof_web
     ftd_configuration:
       redirect: community.network.ftd_configuration
     ftd_file_download:
@@ -2451,15 +2451,15 @@ plugin_routing:
     nos_facts:
       redirect: community.network.nos_facts
     nso_action:
-      redirect: community.network.nso_action
+      redirect: cisco.nso.nso_action
     nso_config:
-      redirect: community.network.nso_config
+      redirect: cisco.nso.nso_config
     nso_query:
-      redirect: community.network.nso_query
+      redirect: cisco.nso.nso_query
     nso_show:
-      redirect: community.network.nso_show
+      redirect: cisco.nso.nso_show
     nso_verify:
-      redirect: community.network.nso_verify
+      redirect: cisco.nso.nso_verify
     nuage_vspk:
       redirect: community.network.nuage_vspk
     onyx_aaa:
@@ -2593,9 +2593,9 @@ plugin_routing:
     vdirect_runnable:
       redirect: community.network.vdirect_runnable
     routeros_command:
-      redirect: community.network.routeros_command
+      redirect: community.routeros.command
     routeros_facts:
-      redirect: community.network.routeros_facts
+      redirect: community.routeros.facts
     slxos_command:
       redirect: community.network.slxos_command
     slxos_config:
@@ -2783,11 +2783,11 @@ plugin_routing:
     cobbler_system:
       redirect: community.general.cobbler_system
     idrac_firmware:
-      redirect: community.general.idrac_firmware
+      redirect: dellemc.openmanage.idrac_firmware
     idrac_server_config_profile:
-      redirect: community.general.idrac_server_config_profile
+      redirect: dellemc.openmanage.idrac_server_config_profile
     ome_device_info:
-      redirect: community.general.ome_device_info
+      redirect: dellemc.openmanage.ome_device_info
     foreman:
       redirect: community.general.foreman
     katello:
@@ -7626,11 +7626,11 @@ plugin_routing:
     dimensiondata:
       redirect: community.general.dimensiondata
     docker:
-      redirect: community.general.docker
+      redirect: community.docker.common
     docker.common:
-      redirect: community.general.docker.common
+      redirect: community.docker.common
     docker.swarm:
-      redirect: community.general.docker.swarm
+      redirect: community.docker.swarm
     ec2:
       redirect: amazon.aws.ec2
     ecs:
@@ -7645,11 +7645,11 @@ plugin_routing:
     firewalld:
       redirect: ansible.posix.firewalld
     gcdns:
-      redirect: community.general.gcdns
+      redirect: community.google.gcdns
     gce:
-      redirect: community.general.gce
+      redirect: community.google.gce
     gcp:
-      redirect: community.general.gcp
+      redirect: community.google.gcp
     gcp_utils:
       redirect: google.cloud.gcp_utils
     gitlab:
@@ -7659,7 +7659,7 @@ plugin_routing:
     heroku:
       redirect: community.general.heroku
     hetzner:
-      redirect: community.general.hetzner
+      redirect: community.hrobot.robot
     hwc_utils:
       redirect: community.general.hwc_utils
     ibm_sa_utils:
@@ -7687,7 +7687,7 @@ plugin_routing:
     known_hosts:
       redirect: community.general.known_hosts
     kubevirt:
-      redirect: community.general.kubevirt
+      redirect: community.kubevirt.kubevirt
     ldap:
       redirect: community.general.ldap
     linode:
@@ -7964,9 +7964,9 @@ plugin_routing:
     network.f5.urls:
       redirect: f5networks.f5_modules.urls
     network.fortianalyzer.common:
-      redirect: community.network.network.fortianalyzer.common
+      redirect: community.fortios.fortianalyzer.common
     network.fortianalyzer.fortianalyzer:
-      redirect: community.network.network.fortianalyzer.fortianalyzer
+      redirect: community.fortios.fortianalyzer.fortianalyzer
     network.fortimanager.common:
       redirect: fortinet.fortimanager.common
     network.fortimanager.fortimanager:
@@ -8484,9 +8484,9 @@ plugin_routing:
     network.nos.nos:
       redirect: community.network.network.nos.nos
     network.nso:
-      redirect: community.network.network.nso
+      redirect: cisco.nso.nso
     network.nso.nso:
-      redirect: community.network.network.nso.nso
+      redirect: cisco.nso.nso
     network.nxos:
       redirect: cisco.nxos.network.nxos
     network.nxos.argspec:
@@ -8658,9 +8658,9 @@ plugin_routing:
     network.restconf.restconf:
       redirect: ansible.netcommon.network.restconf.restconf
     network.routeros:
-      redirect: community.network.network.routeros
+      redirect: community.routeros.routeros
     network.routeros.routeros:
-      redirect: community.network.network.routeros.routeros
+      redirect: community.routeros.routeros
     network.skydive:
       redirect: community.skydive.network.skydive
     network.skydive.api:
@@ -8782,7 +8782,7 @@ plugin_routing:
     podman.common:
       redirect: containers.podman.podman.common
     postgres:
-      redirect: community.general.postgres
+      redirect: community.postgresql.postgres
     pure:
       redirect: community.general.pure
     rabbitmq:
@@ -8794,11 +8794,11 @@ plugin_routing:
     redhat:
       redirect: community.general.redhat
     remote_management.dellemc:
-      redirect: community.general.remote_management.dellemc
+      redirect: dellemc.openmanage
     remote_management.dellemc.dellemc_idrac:
-      redirect: community.general.remote_management.dellemc.dellemc_idrac
+      redirect: dellemc.openmanage.dellemc_idrac
     remote_management.dellemc.ome:
-      redirect: community.general.remote_management.dellemc.ome
+      redirect: dellemc.openmanage.ome
     remote_management.intersight:
       redirect: cisco.intersight.intersight
     remote_management.lxca:
@@ -8878,7 +8878,7 @@ plugin_routing:
     onyx:
       redirect: mellanox.onyx.onyx
     routeros:
-      redirect: community.network.routeros
+      redirect: community.routeros.routeros
     slxos:
       redirect: community.network.slxos
     voss:
@@ -8937,7 +8937,7 @@ plugin_routing:
     onyx:
       redirect: mellanox.onyx.onyx
     routeros:
-      redirect: community.network.routeros
+      redirect: community.routeros.routeros
     slxos:
       redirect: community.network.slxos
     sros:
@@ -9220,7 +9220,7 @@ plugin_routing:
     dimensiondata_wait:
       redirect: community.general.dimensiondata_wait
     docker:
-      redirect: community.general.docker
+      redirect: community.docker.docker
     emc:
       redirect: community.general.emc
     enos:
@@ -9230,7 +9230,7 @@ plugin_routing:
     gcp:
       redirect: google.cloud.gcp
     hetzner:
-      redirect: community.general.hetzner
+      redirect: community.hrobot.robot
     hpe3par:
       redirect: community.general.hpe3par
     hwc:
@@ -9250,9 +9250,9 @@ plugin_routing:
     keycloak:
       redirect: community.general.keycloak
     kubevirt_common_options:
-      redirect: community.general.kubevirt_common_options
+      redirect: community.kubevirt.kubevirt_common_options
     kubevirt_vm_options:
-      redirect: community.general.kubevirt_vm_options
+      redirect: community.kubevirt.kubevirt_vm_options
     ldap:
       redirect: community.general.ldap
     lxca_common:
@@ -9266,7 +9266,7 @@ plugin_routing:
     nios:
       redirect: community.general.nios
     nso:
-      redirect: community.network.nso
+      redirect: cisco.nso.nso
     oneview:
       redirect: community.general.oneview
     online:
@@ -9294,7 +9294,7 @@ plugin_routing:
     panos:
       redirect: community.network.panos
     postgres:
-      redirect: community.general.postgres
+      redirect: community.postgresql.postgres
     proxysql:
       redirect: community.proxysql.proxysql
     purestorage:
@@ -9483,7 +9483,7 @@ plugin_routing:
     exos:
       redirect: community.network.exos
     fortianalyzer:
-      redirect: community.network.fortianalyzer
+      redirect: community.fortios.fortianalyzer
     fortimanager:
       redirect: fortinet.fortimanager.fortimanager
     ftd:
@@ -9511,13 +9511,13 @@ plugin_routing:
     cloudscale:
       redirect: cloudscale_ch.cloud.inventory
     docker_machine:
-      redirect: community.general.docker_machine
+      redirect: community.docker.docker_machine
     docker_swarm:
-      redirect: community.general.docker_swarm
+      redirect: community.docker.docker_swarm
     gitlab_runners:
       redirect: community.general.gitlab_runners
     kubevirt:
-      redirect: community.general.kubevirt
+      redirect: community.kubevirt.kubevirt
     linode:
       redirect: community.general.linode
     nmap:
@@ -9583,9 +9583,9 @@ plugin_routing:
     flattened:
       redirect: community.general.flattened
     gcp_storage_file:
-      redirect: community.general.gcp_storage_file
+      redirect: community.google.gcp_storage_file
     hashi_vault:
-      redirect: community.general.hashi_vault
+      redirect: community.hashi_vault.hashi_vault
     hiera:
       redirect: community.general.hiera
     keyring:
