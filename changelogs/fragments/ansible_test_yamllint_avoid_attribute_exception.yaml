@@ -1,0 +1,3 @@
+---
+bugfixes:
+- yamllint - do not raise an ``AttributeError`` if a value is assigned to a module attribute at the top of the module.
