@@ -6,6 +6,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+from copy import deepcopy
+
 from ansible.module_utils.common._collections_compat import (
     Sequence,
 )
@@ -38,8 +40,9 @@ class Validator():
         self._options_context = None
 
         self._error_messages = []
-        self._validated_parameters = {}
         self._no_log_values = set()
+        # Make a copy of the original parameters to avoid changing them
+        self._validated_parameters = deepcopy(parameters)
 
     @property
     def error_messages(self):
