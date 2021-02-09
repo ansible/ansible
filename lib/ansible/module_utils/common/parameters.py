@@ -678,17 +678,12 @@ def validate_argument_types(argument_spec, parameters, prefix='', options_contex
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
             errors.append(msg)
 
-        # sub_spec = spec.get('options')
-        # if sub_spec:
-        #     validate_sub_spec(sub_spec, value, wanted_name, prefix, [param])
 
-    return validated_params, errors
-
-
-def validate_argument_values(argument_spec, module_parameters, options_context=None):
+def validate_argument_values(argument_spec, parameters, options_context=None, errors=None):
     """Ensure all arguments have the requested values, and there are no stray arguments"""
 
-    errors = []
+    if errors is None:
+        errors = []
 
     for param, spec in argument_spec.items():
         choices = spec.get('choices')
@@ -736,10 +731,8 @@ def validate_argument_values(argument_spec, module_parameters, options_context=N
                 msg += " found in %s" % " -> ".join(options_context)
             errors.append(msg)
 
-    return errors
 
-
-def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, no_log_values=None):
+def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
     """Validate sub argument spec. This function is recursive."""
 
     if options_context is None:
@@ -748,9 +741,15 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
     if no_log_values is None:
         no_log_values = set()
 
-    # FIXME: I don't think these vales will accumulate when being called recursively.
-    errors = []
-    unsupported_parameters = set()
+    if errors is None:
+        errors = []
+
+    if no_log_values is None:
+        no_log_values = set()
+
+    if unsupported_parameters is None:
+        unsupported_parameters = set()
+
     for param, value in argument_spec.items():
         wanted = value.get('type')
         if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == dict):
@@ -816,18 +815,10 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
                 no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
 
-                _validated_params, _errors = validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context)
-                sub_parameters.update(_validated_params)
-                errors.extend(_errors)
-
-                _errors = validate_argument_values(sub_spec, sub_parameters, options_context)
-                errors.extend(_errors)
+                validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
+                validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
 
                 # Handle nested specs
-                _errors, _unsupported_parameters = validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context)
-                errors.extend(_errors)
-                unsupported_parameters.update(_unsupported_parameters)
+                validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
 
             options_context.pop()
-
-    return errors, unsupported_parameters

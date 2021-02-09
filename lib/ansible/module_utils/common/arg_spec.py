@@ -42,6 +42,7 @@ class ArgumentSpecValidator():
         self.argument_spec = argument_spec
         # Make a copy of the original parameters to avoid changing them
         self._validated_parameters = deepcopy(parameters)
+        self._unsupported_parameters = set()
 
     @property
     def error_messages(self):
@@ -79,11 +80,11 @@ class ArgumentSpecValidator():
         :rtype: bool
         """
 
-        self._no_log_values.update(set_fallbacks(argument_spec, parameters))
+        self._no_log_values.update(set_fallbacks(self.argument_spec, self._validated_parameters))
 
         alias_warnings = []
         try:
-            alias_results, legal_inputs = handle_aliases(argument_spec, parameters, alias_warnings)
+            alias_results, legal_inputs = handle_aliases(self.argument_spec, self._validated_parameters, alias_warnings)
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
@@ -92,32 +93,29 @@ class ArgumentSpecValidator():
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option, alias))
 
-        self._no_log_values.update(list_no_log_values(argument_spec, parameters))
+        self._no_log_values.update(list_no_log_values(self.argument_spec, self._validated_parameters))
 
         if legal_inputs is None:
-            legal_inputs = list(alias_results.keys()) + list(argument_spec.keys())
-        unsupported_parameters = get_unsupported_parameters(argument_spec, parameters, legal_inputs)
+            legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
+        self._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, self._validated_parameters, legal_inputs))
 
         try:
-            check_required_arguments(argument_spec, parameters)
+            check_required_arguments(self.argument_spec, self._validated_parameters)
         except TypeError as e:
             self._add_error(to_native(e))
 
-        self._no_log_values.update(set_defaults(argument_spec, parameters, False))
+        self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters, False))
 
-        self._validated_parameters, errors = validate_argument_types(argument_spec, parameters)
-        self._add_error(errors)
+        validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._error_messages)
+        validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
 
-        errors = validate_argument_values(argument_spec, parameters)
-        self._add_error(errors)
+        validate_sub_spec(self.argument_spec, self._validated_parameters,
+                          errors=self._error_messages,
+                          no_log_values=self._no_log_values,
+                          unsupported_parameters=self._unsupported_parameters)
 
-        # Sub Spec
-        errors, _unsupported = validate_sub_spec(argument_spec, self._validated_parameters)
-        self._add_error(errors)
-        unsupported_parameters.update(_unsupported)
-
-        if unsupported_parameters:
-            self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(unsupported_parameters))))
+        if self._unsupported_parameters:
+            self._add_error('Unsupported parameters: %s' % ', '.join(sorted(list(self._unsupported_parameters))))
 
         self._sanitize_error_messages()
 
