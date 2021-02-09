@@ -1,0 +1,5 @@
+minor_changes:
+  - >-
+    default callback - add ``show_task_path_on_failure`` option to display file and
+    line number of tasks only on failed tasks when running at
+    normal verbosity level (https://github.com/ansible/ansible/issues/64625)
