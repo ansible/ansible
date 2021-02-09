@@ -1203,14 +1203,6 @@ class User(object):
             return None
         return ssh_public_key
 
-    def password_expire_set_max(self):
-        # by default we use the set_password_expire_max method
-        return self.set_password_expire_max()
-
-    def password_expire_set_min(self):
-        # by default we use the set_password_expire_min method
-        return self.set_password_expire_min()
-
     def create_user(self):
         # by default we use the create_user_useradd method
         return self.create_user_useradd()
@@ -3166,12 +3158,12 @@ def main():
     # deal with password expire max
     if user.password_expire_max:
         if user.user_exists():
-            (rc, out, err) = user.password_expire_set_max()
+            (rc, out, err) = user.set_password_expire_max()
 
     # deal with password expire min
     if user.password_expire_min:
         if user.user_exists():
-            (rc, out, err) = user.password_expire_set_min()
+            (rc, out, err) = user.set_password_expire_min()
 
     module.exit_json(**result)
 
