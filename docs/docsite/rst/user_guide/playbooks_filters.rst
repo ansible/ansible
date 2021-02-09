@@ -1612,6 +1612,12 @@ To concatenate a list into a string::
 
     {{ list | join(" ") }}
 
+To split a sting into a list::
+
+.. versionadded:: 2.11
+
+    {{ csv_string | split(",") }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
