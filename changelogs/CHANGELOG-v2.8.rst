@@ -5,6 +5,74 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.19rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-02-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Security Fixes
+--------------
+
+- **security issue** - Mask default and fallback values for ``no_log`` module options (CVE-2021-20228)
+- _sf_account_manager - `initiator_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- _sf_account_manager - `target_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- bitbucket_pipeline_variable - hide user sensitive information which are marked as ``secured`` from logging into the console (https://github.com/ansible-collections/community.general/pull/1635) (CVE-2021-20180).
+- ce_vrrp - `auth_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- docker_swarm - `signing_ca_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_backend_service - `oauth2_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_disk - `disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_disk - `source_image_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_disk - `source_snapshot_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_image - `image_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_image - `source_disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_instance_template - `disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_instance_template - `source_image_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_region_disk - `disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_region_disk - `source_snapshot_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_ssl_certificate - `private_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_vpn_tunnel - `shared_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_sql_instance - `client_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gitlab_runner - `registration_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- iap_start_workflow - `token_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- ibm_sa_host - `iscsi_chap_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_client - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_client - `registration_access_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_clienttemplate - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_group - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- librato_annotation - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- na_elementsw_account - `initiator_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- na_elementsw_account - `target_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- netscaler_lb_monitor - `radkey` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- nios_nsgroup - `tsig_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- nxos_aaa_server - `global_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- nxos_pim_interface - `hello_auth_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_firewall_policy - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_load_balancer - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_monitoring_policy - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_private_network - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_public_ip - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- ovirt - `instance_rootpw` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pagerduty_alert - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pagerduty_alert - `integration_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pagerduty_alert - `service_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pulp_repo - `feed_client_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- rax_clb_ssl - `private_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- snmp_facts - hide user sensitive information such as ``privkey`` and ``authkey`` from logging into the console (https://github.com/ansible-collections/community.general/pull/1621) (CVE-2021-20178).
+- spotinst_aws_elastigroup - `multai_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- spotinst_aws_elastigroup - `token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- utm_proxy_auth_profile - `frontend_cookie_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+
+Bugfixes
+--------
+
+- ansible-test - The ``--remote`` option has been updated for Python 2.7 to work around breaking changes in the newly released ``get-pip.py`` bootstrapper.
+- ansible-test - The ``--remote`` option has been updated to use a versioned ``get-pip.py`` bootstrapper to avoid issues with future releases.
+
 v2.8.18
 =======
 
