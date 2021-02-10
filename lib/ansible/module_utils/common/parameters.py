@@ -530,34 +530,6 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
     return aliases_results, legal_inputs
 
 
-def validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
-
-    if errors is None:
-        errors = []
-
-    type_checker, wanted_element_type = get_type_validator(wanted_type)
-    validated_parameters = []
-    # Get param name for strings so we can later display this value in a useful error message if needed
-    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-    kwargs = {}
-    if wanted_element_type == 'str' and isinstance(type_checker, string_types):
-        if isinstance(parameter, string_types):
-            kwargs['param'] = parameter
-        elif isinstance(parameter, dict):
-            kwargs['param'] = list(parameter.keys())[0]
-
-    for value in values:
-        try:
-            validated_parameters.append(type_checker(value, **kwargs))
-        except (TypeError, ValueError) as e:
-            msg = "Elements value for option '%s'" % parameter
-            if options_context:
-                msg += " found in '%s'" % " -> ".join(options_context)
-            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
-            errors.append(msg)
-    return validated_parameters
-
-
 def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
     """Check keys in module_parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
@@ -608,6 +580,34 @@ def get_type_validator(wanted):
         wanted = getattr(wanted, '__name__', to_native(type(wanted)))
 
     return type_checker, wanted
+
+
+def validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
+
+    if errors is None:
+        errors = []
+
+    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    validated_parameters = []
+    # Get param name for strings so we can later display this value in a useful error message if needed
+    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+    kwargs = {}
+    if wanted_element_type == 'str' and isinstance(type_checker, string_types):
+        if isinstance(parameter, string_types):
+            kwargs['param'] = parameter
+        elif isinstance(parameter, dict):
+            kwargs['param'] = list(parameter.keys())[0]
+
+    for value in values:
+        try:
+            validated_parameters.append(type_checker(value, **kwargs))
+        except (TypeError, ValueError) as e:
+            msg = "Elements value for option '%s'" % parameter
+            if options_context:
+                msg += " found in '%s'" % " -> ".join(options_context)
+            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
+            errors.append(msg)
+    return validated_parameters
 
 
 def validate_argument_types(argument_spec, parameters, prefix='', options_context=None, errors=None):
@@ -803,12 +803,14 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                 unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs))
 
                 try:
-                    check_required_arguments(sub_spec, sub_parameters)
+                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters)
                 except TypeError as e:
                     errors.append(to_native(e))
 
+                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
+
                 try:
-                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters)
+                    check_required_arguments(sub_spec, sub_parameters)
                 except TypeError as e:
                     errors.append(to_native(e))
 
