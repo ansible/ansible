@@ -110,8 +110,9 @@ todo:
     - Re-implement zip support using native zipfile module.
 notes:
     - Requires C(zipinfo) and C(gtar)/C(unzip) command on target host.
-    - Can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2) and I(.tar.xz) files using C(gtar).
-    - Does not handle I(.gz) files, I(.bz2) files or I(.xz) files that do not contain a I(.tar) archive.
+    - Requires C(zstd) command on target host to expand I(.tar.zst) files.
+    - Can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2), I(.tar.xz), and I(.tar.zst) files using C(gtar).
+    - Does not handle I(.gz) files, I(.bz2) files, I(.xz), or I(.zst) files that do not contain a I(.tar) archive.
     - Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not
       supported, it will always unpack the archive.
     - Existing files/directories in the destination which are not in the archive
@@ -891,9 +892,22 @@ class TarXzArchive(TgzArchive):
         self.zipflag = '-J'
 
 
+# Class to handle zstd compressed tar files
+class TarZstdArchive(TgzArchive):
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarZstdArchive, self).__init__(src, b_dest, file_args, module)
+        # GNU Tar supports the --use-compress-program option to
+        # specify which executable to use for
+        # compression/decompression.
+        #
+        # Note: some flavors of BSD tar support --zstd (e.g., FreeBSD
+        # 12.2), but the TgzArchive class only supports GNU Tar.
+        self.zipflag = '--use-compress-program=zstd'
+
+
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
-    handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive]
+    handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
     reasons = set()
     for handler in handlers:
         obj = handler(src, dest, file_args, module)
