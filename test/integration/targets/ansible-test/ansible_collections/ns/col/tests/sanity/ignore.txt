@@ -1,4 +1,3 @@
-plugins/filter/check_pylint.py pylint:blacklisted-name
 plugins/modules/bad.py import
 plugins/modules/bad.py pylint:ansible-bad-module-import
 tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function
