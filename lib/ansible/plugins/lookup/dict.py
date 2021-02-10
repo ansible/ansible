@@ -32,7 +32,7 @@ tasks:
   - name: Print phone records
     ansible.builtin.debug:
       msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-    loop: "{{ lookup('dict', users) }}"
+    loop: "{{ lookup('ansible.builtin.dict', users) }}"
   # with inline dictionary
   - name: show dictionary
     ansible.builtin.debug:
@@ -42,7 +42,7 @@ tasks:
   - name: set_fact when alice in key
     ansible.builtin.set_fact:
       alice_exists: true
-    loop: "{{ lookup('dict', users) }}"
+    loop: "{{ lookup('ansible.builtin.dict', users) }}"
     when: "'alice' in item.key"
 """
 

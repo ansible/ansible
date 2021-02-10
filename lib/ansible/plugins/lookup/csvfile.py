@@ -39,10 +39,10 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name:  Match 'Li' on the first column, return the second column (0 based index)
-  ansible.builtin.debug: msg="The atomic number of Lithium is {{ lookup('csvfile', 'Li', file='elements.csv', delimiter=',') }}"
+  ansible.builtin.debug: msg="The atomic number of Lithium is {{ lookup('ansible.builtin.csvfile', 'Li file=elements.csv delimiter=,') }}"
 
 - name: msg="Match 'Li' on the first column, but return the 3rd column (columns start counting after the match)"
-  ansible.builtin.debug: msg="The atomic mass of Lithium is {{ lookup('csvfile', 'Li', file='elements.csv', delimiter=',', col=2) }}"
+  ansible.builtin.debug: msg="The atomic mass of Lithium is {{ lookup('ansible.builtin.csvfile', 'Li file=elements.csv delimiter=, col=2') }}"
 
 - name: Define Values From CSV File, this reads file in one go, but you could also use col= to read each in it's own lookup.
   ansible.builtin.set_fact:
@@ -54,7 +54,7 @@ EXAMPLES = """
     neighbor_as: "{{ csvline[5] }}"
     neigh_int_ip: "{{ csvline[6] }}"
   vars:
-    csvline = "{{ lookup('csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
+    csvline = "{{ lookup('ansible.builtin.csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
   delegate_to: localhost
 """
 

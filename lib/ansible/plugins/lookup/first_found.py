@@ -48,7 +48,7 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: Set _found_file to the first existing file, raising an error if a file is not found
   ansible.builtin.set_fact:
-    _found_file: "{{ lookup('first_found', findme) }}"
+    _found_file: "{{ lookup('ansible.builtin.first_found', findme) }}"
   vars:
     findme:
       - /path/to/foo.txt
@@ -57,7 +57,7 @@ EXAMPLES = """
 
 - name: Set _found_file to the first existing file, or an empty list if no files found
   ansible.builtin.set_fact:
-    _found_file: "{{ lookup('first_found', files, paths=['/extra/path'], skip=True) }}"
+    _found_file: "{{ lookup('ansible.builtin.first_found', files, paths=['/extra/path'], skip=True) }}"
   vars:
     files:
       - /path/to/foo.txt
@@ -83,7 +83,7 @@ EXAMPLES = """
         looking in relative directories from where the task is defined and
         including any play objects that contain it
   ansible.builtin.copy:
-    src: "{{ lookup('first_found', findme) }}"
+    src: "{{ lookup('ansible.builtin.first_found', findme) }}"
     dest: /some/file
   vars:
     findme:
@@ -93,7 +93,7 @@ EXAMPLES = """
 
 - name: same copy but specific paths
   ansible.builtin.copy:
-    src: "{{ lookup('first_found', params) }}"
+    src: "{{ lookup('ansible.builtin.first_found', params) }}"
     dest: /some/file
   vars:
     params:
@@ -107,7 +107,7 @@ EXAMPLES = """
 
 - name: INTERFACES | Create Ansible header for /etc/network/interfaces
   ansible.builtin.template:
-    src: "{{ lookup('first_found', findme) }}"
+    src: "{{ lookup('ansible.builtin.first_found', findme)}}"
     dest: "/etc/foo.conf"
   vars:
     findme:
@@ -115,7 +115,7 @@ EXAMPLES = """
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
-  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  ansible.builtin.include_vars: "{{lookup('ansible.builtin.first_found', params)}}"
   vars:
     params:
       files:

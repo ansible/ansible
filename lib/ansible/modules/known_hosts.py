@@ -73,7 +73,7 @@ EXAMPLES = r'''
   ansible.builtin.known_hosts:
     path: /etc/ssh/ssh_known_hosts
     name: foo.com.invalid
-    key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+    key: "{{ lookup('ansible.builtin.file', 'pubkeys/foo.com.invalid') }}"
 
 - name: Another way to call known_hosts
   ansible.builtin.known_hosts:

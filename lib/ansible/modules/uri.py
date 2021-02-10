@@ -237,7 +237,7 @@ EXAMPLES = r'''
     user: your_username
     password: your_pass
     method: POST
-    body: "{{ lookup('file','issue.json') }}"
+    body: "{{ lookup('ansible.builtin.file','issue.json') }}"
     force_basic_auth: yes
     status_code: 201
     body_format: json
@@ -351,7 +351,7 @@ EXAMPLES = r'''
     ip_address: 192.0.2.1
   environment: |
       {
-        {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
+        {% for no_proxy in (lookup('ansible.builtin.env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
           {% if no_proxy | regex_search('\/') and
                 no_proxy | ipaddr('net') != '' and
                 no_proxy | ipaddr('net') != false and

@@ -125,7 +125,7 @@ EXAMPLES = r'''
   when: x == 0
 
 - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
-  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
   vars:
     params:
       files:

@@ -58,7 +58,7 @@ EXAMPLES = """
     - name: Set authorized ssh key, extracting just that data from 'users'
       ansible.posix.authorized_key:
         user: "{{ item.0.name }}"
-        key: "{{ lookup('file', item.1) }}"
+        key: "{{ lookup('ansible.builtin.file', item.1) }}"
       with_subelements:
          - "{{ users }}"
          - authorized
@@ -75,7 +75,7 @@ EXAMPLES = """
 
     - name: list groups for users that have them, don't error if groups key is missing
       ansible.builtin.debug: var=item
-      loop: "{{ q('subelements', users, 'groups', {'skip_missing': True}) }}"
+      loop: "{{ q('ansible.builtin.subelements', users, 'groups', {'skip_missing': True}) }}"
 """
 
 RETURN = """

@@ -37,31 +37,31 @@ DOCUMENTATION = """
 
 EXAMPLES = """
     - name: Show configured default become user
-      ansible.builtin.debug: msg="{{ lookup('config', 'DEFAULT_BECOME_USER')}}"
+      ansible.builtin.debug: msg="{{ lookup('ansible.builtin.config', 'DEFAULT_BECOME_USER')}}"
 
     - name: print out role paths
       ansible.builtin.debug:
-        msg: "These are the configured role paths: {{lookup('config', 'DEFAULT_ROLES_PATH')}}"
+        msg: "These are the configured role paths: {{lookup('ansible.builtin.config', 'DEFAULT_ROLES_PATH')}}"
 
     - name: find retry files, skip if missing that key
       ansible.builtin.find:
-        paths: "{{lookup('config', 'RETRY_FILES_SAVE_PATH')|default(playbook_dir, True)}}"
+        paths: "{{lookup('ansible.builtin.config', 'RETRY_FILES_SAVE_PATH')|default(playbook_dir, True)}}"
         patterns: "*.retry"
 
     - name: see the colors
       ansible.builtin.debug: msg="{{item}}"
-      loop: "{{lookup('config', 'COLOR_OK', 'COLOR_CHANGED', 'COLOR_SKIP', wantlist=True)}}"
+      loop: "{{lookup('ansible.builtin.config', 'COLOR_OK', 'COLOR_CHANGED', 'COLOR_SKIP', wantlist=True)}}"
 
     - name: skip if bad value in var
-      ansible.builtin.debug: msg="{{ lookup('config', config_in_var, on_missing='skip')}}"
+      ansible.builtin.debug: msg="{{ lookup('ansible.builtin.config', config_in_var, on_missing='skip')}}"
       var:
         config_in_var: UNKNOWN
 
     - name: show remote user and port for ssh connection
-      ansible.builtin.debug: msg={{q("config", "remote_user", "port", plugin_type="connection", plugin_name="ssh", on_missing='skip')}}
+      ansible.builtin.debug: msg={{q("ansible.builtin.config", "remote_user", "port", plugin_type="connection", plugin_name="ssh", on_missing='skip')}}
 
     - name: show remote_tmp setting for shell (sh) plugin
-      ansible.builtin.debug: msg={{q("config", "remote_tmp", plugin_type="shell", plugin_name="sh")}}
+      ansible.builtin.debug: msg={{q("ansible.builtin.config", "remote_tmp", plugin_type="shell", plugin_name="sh")}}
 """
 
 RETURN = """

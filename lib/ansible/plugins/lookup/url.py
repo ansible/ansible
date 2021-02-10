@@ -151,19 +151,19 @@ options:
 EXAMPLES = """
 - name: url lookup splits lines by default
   ansible.builtin.debug: msg="{{item}}"
-  loop: "{{ lookup('url', 'https://github.com/gremlin.keys', wantlist=True) }}"
+  loop: "{{ lookup('ansible.builtin.url', 'https://github.com/gremlin.keys', wantlist=True) }}"
 
 - name: display ip ranges
-  ansible.builtin.debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
 
 - name: url lookup using authentication
-  ansible.builtin.debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
 - name: url lookup using basic authentication
-  ansible.builtin.debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
-  ansible.builtin.debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """
