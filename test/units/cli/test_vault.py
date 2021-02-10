@@ -151,9 +151,12 @@ class TestVaultCli(unittest.TestCase):
                              'the_var_from_stdin',
                              '-',
                              '--prompt'])
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "The --prompt option is not supported if also reading input from stdin",
-                                cli.parse)
+        expected_error_msg = (
+            r'^The --prompt option is not supported if '
+            r'also reading input from stdin$'
+        )
+        with pytest.raises(errors.AnsibleOptionsError, match=expected_error_msg):
+            cli.parse()
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
