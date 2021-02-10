@@ -1,2 +1,2 @@
 minor_changes:
-  - Add support in the unarchive module for .tar.zst (zstd compression)
+  - unarchive - Add support for .tar.zst (zstd compression) (https://github.com/ansible/ansible/pull/73265).
