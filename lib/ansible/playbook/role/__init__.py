@@ -272,6 +272,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                                          obj=handler_data, orig_exc=e)
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
+        '''
+        Find and load role YAML files and return data found.
+        :param subdir: subdir of role to search (vars, files, tasks, handlers, defaults)
+        :param main: filename to match, will default to 'main.<ext>' if not provided.
+        :param allow_dir: If true we combine results of multiple matching files found.
+                          If false, highlander rules. Only for vars(dicts) and not tasks(lists).
+        '''
         data = None
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
@@ -293,7 +300,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
                     if new_data:
-                        if data is not None and isinstance(new_data, Mapping) and allow_dir:
+                        # if not allow_dir this should really break out, but since it always overwrote
+                        # with 'last found' ... keeping it the same way to not break existing roles.
+                        if allow_dir and data is not None and isinstance(new_data, Mapping):
                             data = combine_vars(data, new_data)
                         else:
                             data = new_data
