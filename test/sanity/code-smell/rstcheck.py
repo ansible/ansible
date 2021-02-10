@@ -28,6 +28,7 @@ def main():
                              stdin=subprocess.DEVNULL,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
+                             check=False,
                              )
 
     if process.stdout:
