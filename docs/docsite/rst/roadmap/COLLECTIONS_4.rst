@@ -22,8 +22,7 @@ Release schedule
 :2021-04-21: Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2021-04-26: last day for new collections to be **reviewed and approved** for inclusion in ansible-4
 :2021-04-26: last day for collections to make backwards incompatible releases that will be accepted into Ansible-4.
-:2021-04-27: ansible-4.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users
-             should test for bugs)
+:2021-04-27: ansible-4.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users should test for bugs)
 :2021-05-04: ansible-4.0.0 beta2
 :2021-05-11: ansible-4.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed.  Test and alert us to any blocker bugs)
 :2021-05-18: ansible-4.0.0 release
