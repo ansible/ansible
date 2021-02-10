@@ -10,21 +10,28 @@ import tempfile
 from collections import namedtuple
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 
+HAS_RPMFLUFF = True
+can_use_rpm_weak_deps = None
 try:
     from rpmfluff import SimpleRpmBuild
     from rpmfluff import YumRepoBuild
 except ImportError:
-    from rpmfluff.rpmbuild import SimpleRpmBuild
-    from rpmfluff.yumrepobuild import YumRepoBuild
-
-try:
-    from rpmfluff import can_use_rpm_weak_deps
-except ImportError:
     try:
-        from rpmfluff.utils import can_use_rpm_weak_deps
+        from rpmfluff.rpmbuild import SimpleRpmBuild
+        from rpmfluff.yumrepobuild import YumRepoBuild
     except ImportError:
-        can_use_rpm_weak_deps = None
+        HAS_RPMFLUFF = False
+else:
+    try:
+        from rpmfluff import can_use_rpm_weak_deps
+    except ImportError:
+        try:
+            from rpmfluff.utils import can_use_rpm_weak_deps
+        except ImportError:
+            can_use_rpm_weak_deps = None
+
 
 RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends'])
 
@@ -74,6 +81,16 @@ def main():
             'tempdir': {'type': 'path'},
         }
     )
+
+    if not HAS_RPMFLUFF:
+        system_interpreters = ['/usr/libexec/platform-python', '/usr/bin/python3', '/usr/bin/python']
+
+        interpreter = probe_interpreters_for_module(system_interpreters, 'rpmfluff')
+
+        if not interpreter or has_respawned():
+            module.fail_json('unable to find rpmfluff; tried {0}'.format(system_interpreters))
+
+        respawn_module(interpreter)
 
     arch = module.params['arch']
     tempdir = module.params['tempdir']
