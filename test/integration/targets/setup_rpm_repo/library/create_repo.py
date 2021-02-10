@@ -23,14 +23,16 @@ except ImportError:
         from rpmfluff.yumrepobuild import YumRepoBuild
     except ImportError:
         HAS_RPMFLUFF = False
-else:
+
+can_use_rpm_weak_deps = None
+if HAS_RPMFLUFF:
     try:
         from rpmfluff import can_use_rpm_weak_deps
     except ImportError:
         try:
             from rpmfluff.utils import can_use_rpm_weak_deps
         except ImportError:
-            can_use_rpm_weak_deps = None
+            pass
 
 
 RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends'])
