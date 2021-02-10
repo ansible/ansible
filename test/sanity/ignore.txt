@@ -72,6 +72,7 @@ lib/ansible/module_utils/six/__init__.py no-basestring
 lib/ansible/module_utils/six/__init__.py no-dict-iteritems
 lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
+lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
@@ -143,7 +144,6 @@ lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
-test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/filter/check_pylint.py pylint:blacklisted-name
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -202,8 +202,10 @@ test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPat
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
 test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
+test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
+test/support/integration/plugins/module_utils/cloud.py pylint:isinstance-second-argument-not-valid-type
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
@@ -212,6 +214,8 @@ test/support/integration/plugins/module_utils/database.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate

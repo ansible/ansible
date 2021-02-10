@@ -18,4 +18,6 @@ result = {None: None}[{}.get('something')]
 # pylint 2.3.1 and 2.4.4 report the following error but 2.5.0 and 2.6.0 do not
 #   blacklisted-name: Black listed name "foo"
 # see: https://github.com/PyCQA/pylint/issues/3701
+# regression: documented as a known issue and removed from ignore.txt so pylint can be upgraded to 2.6.0
+#             if future versions of pylint fix this issue then the ignore should be restored
 foo = {}.keys()

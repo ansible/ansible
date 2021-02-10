@@ -55,13 +55,15 @@ antsibull-changelog == 0.9.0
 antsibull >= 0.21.0
 
 # freeze pylint and its requirements for consistent test results
-astroid == 2.3.3
-isort == 4.3.15
+# NOTE: six is not frozen since it is a requirement for more than just pylint
+astroid == 2.4.2
+isort == 5.7.0
 lazy-object-proxy == 1.4.3
 mccabe == 0.6.1
-pylint == 2.3.1
-typed-ast == 1.4.1
-wrapt == 1.11.1
+pylint == 2.6.0
+toml == 0.10.2
+typed-ast == 1.4.2
+wrapt == 1.12.1
 
 # freeze pycodestyle for consistent test results
 pycodestyle == 2.6.0
