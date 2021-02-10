@@ -1,13 +1,3 @@
-- name: use python-apt
-  set_fact:
-    python_apt: python-apt
-  when: ansible_python_version is version('3', '<')
-
-- name: use python3-apt
-  set_fact:
-    python_apt: python3-apt
-  when: ansible_python_version is version('3', '>=')
-
 - name: use Debian mirror
   set_fact:
     distro_mirror: http://ftp.debian.org/debian
@@ -19,17 +9,14 @@
   when: ansible_distribution == 'Ubuntu'
 
 # UNINSTALL 'python-apt'
-#  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
+#  The `apt` module has the smarts to auto-install `python-apt(3)`.  To test, we
 #  will first uninstall `python-apt`.
-- name: check {{ python_apt }} with dpkg
-  shell: dpkg -s {{ python_apt }}
-  register: dpkg_result
-  ignore_errors: true
-
-- name: uninstall {{ python_apt }} with apt
-  apt: pkg={{ python_apt }} state=absent purge=yes
+- name: uninstall python-apt with apt
+  apt:
+    pkg: [python-apt, python3-apt]
+    state: absent
+    purge: yes
   register: apt_result
-  when: dpkg_result is successful
 
 # In check mode, auto-install of `python-apt` must fail
 - name: test fail uninstall hello without required apt deps in check mode
@@ -47,8 +34,8 @@
     - apt_result is failed
     - '"If run normally this module can auto-install it." in apt_result.msg'
 
-- name: check {{ python_apt }} with dpkg
-  shell: dpkg -s {{ python_apt }}
+- name: check with dpkg
+  shell: dpkg -s python-apt python3-apt
   register: dpkg_result
   ignore_errors: true
 
@@ -74,7 +61,6 @@
     - "'changed' in apt_result"
     - apt_result is not changed
     - "dpkg_result.rc == 1"
-    - "'Auto-installing missing dependency without updating cache: {{ python_apt }}' in apt_result.warnings"
 
 - name: Test installing fnmatch package
   apt:
@@ -115,9 +101,9 @@
       - apt_update_cache_1 is changed
       - apt_update_cache_2 is not changed
 
-- name: uninstall {{ python_apt }} with apt again
+- name: uninstall apt bindings with apt again
   apt:
-    pkg: "{{ python_apt }}"
+    pkg: [python-apt, python3-apt]
     state: absent
     purge: yes
 
@@ -140,7 +126,6 @@
     - "'changed' in apt_result"
     - apt_result is not changed
     - "dpkg_result.rc == 1"
-    - "'Updating cache and auto-installing missing dependency: {{ python_apt }}' in apt_result.warnings"
 
 # UNINSTALL AGAIN
 - name: uninstall hello with apt

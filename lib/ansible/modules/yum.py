@@ -1723,5 +1723,6 @@ def main():
     module_implementation = YumModule(module)
     module_implementation.run()
 
+
 if __name__ == '__main__':
     main()

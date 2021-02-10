@@ -579,7 +579,7 @@ def main():
         if params['install_python_apt']:
             install_python_apt(module, apt_pkg_name)
         else:
-            module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
+            module.fail_json(msg='%s is not installed, and install_python_apt is False' % apt_pkg_name)
 
         # try again to find the bindings in common places
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
