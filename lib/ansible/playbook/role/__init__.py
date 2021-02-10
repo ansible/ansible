@@ -275,9 +275,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''
         Find and load role YAML files and return data found.
         :param subdir: subdir of role to search (vars, files, tasks, handlers, defaults)
+        :type subdir: string
         :param main: filename to match, will default to 'main.<ext>' if not provided.
+        :type main: string
         :param allow_dir: If true we combine results of multiple matching files found.
                           If false, highlander rules. Only for vars(dicts) and not tasks(lists).
+        :type allow_dir: bool
+
+        :returns: data from the matched file(s), type can be dict or list depending on vars or tasks.
         '''
         data = None
         file_path = os.path.join(self._role_path, subdir)
