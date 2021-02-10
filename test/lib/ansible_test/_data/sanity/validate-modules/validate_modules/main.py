@@ -948,6 +948,13 @@ class ModuleValidator(Validator):
                 documentation_exists = bool(doc)
                 if doc:
                     add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
+                else:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='missing-documentation',
+                        msg='The DOCUMENTATION block is empty'
+                    )
+
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
