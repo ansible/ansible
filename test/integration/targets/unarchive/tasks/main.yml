@@ -4,6 +4,7 @@
 - import_tasks: test_tar_gz_creates.yml
 - import_tasks: test_tar_gz_owner_group.yml
 - import_tasks: test_tar_gz_keep_newer.yml
+- import_tasks: test_tar_zst.yml
 - import_tasks: test_zip.yml
 - import_tasks: test_exclude.yml
 - import_tasks: test_include.yml
