@@ -149,6 +149,17 @@ class TestVaultCli(unittest.TestCase):
                              'encrypt_string',
                              '--stdin-name',
                              'the_var_from_stdin',
+                             '--prompt'])
+
+        with pytest.raises(SystemExit):
+            cli.parse()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_encrypt_string_pseudostdin_prompt_error(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault',
+                             'encrypt_string',
                              '-',
                              '--prompt'])
         expected_error_msg = (
