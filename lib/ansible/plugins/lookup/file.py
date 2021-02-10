@@ -31,7 +31,7 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- ansible.builtin.debug: 
+- ansible.builtin.debug:
     msg: "the value of foo.txt is {{lookup('ansible.builtin.file', '/etc/foo.txt') }}"
 
 - name: display multiple file contents

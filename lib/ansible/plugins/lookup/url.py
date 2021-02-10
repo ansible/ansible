@@ -160,10 +160,12 @@ EXAMPLES = """
   ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
 - name: url lookup using basic authentication
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """
