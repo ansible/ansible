@@ -1,10 +1,13 @@
 .. _user_guide_index:
 
-.. note:: Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: mater, slave, blacklist, and whitelist. Because of the enormity of this endeavor, these changes will be implemented gradually over several upcoming releases. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see our CTO Chris Wright's message. 
-
 ##########
 User Guide
 ##########
+
+.. note::
+**Making Open Source More Inclusive**
+
+Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: mater, slave, blacklist, and whitelist. Because of the enormity of this endeavor, these changes will be implemented gradually over several upcoming releases. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_.
 
 Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, interacting with data, writing tasks, plays, and playbooks; executing playbooks, and reference materials. This page outlines the most common situations and questions that bring readers to this section. If you prefer a traditional table of contents, you can find one at the bottom of the page.
 
