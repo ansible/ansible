@@ -530,31 +530,32 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
     return aliases_results, legal_inputs
 
 
-def handle_elements(wanted_type, parameters, values, options_context=None):
-    type_checker, wanted_element_type = get_type_validator(wanted_type)
-    validated_params = []
-    errors = []
+def validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
 
+    if errors is None:
+        errors = []
+
+    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    validated_parameters = []
     # Get param name for strings so we can later display this value in a useful error message if needed
     # Only pass 'kwargs' to our checkers and ignore custom callable checkers
     kwargs = {}
-    if wanted_element_type == 'str' and isinstance(wanted_element_type, string_types):
-        if isinstance(parameters, string_types):
-            kwargs['param'] = parameters
-        elif isinstance(parameters, dict):
-            kwargs['param'] = list(parameters.keys())[0]
+    if wanted_element_type == 'str' and isinstance(type_checker, string_types):
+        if isinstance(parameter, string_types):
+            kwargs['param'] = parameter
+        elif isinstance(parameter, dict):
+            kwargs['param'] = list(parameter.keys())[0]
 
     for value in values:
         try:
-            validated_params.append(type_checker(value, **kwargs))
+            validated_parameters.append(type_checker(value, **kwargs))
         except (TypeError, ValueError) as e:
-            msg = "Elements value for option '%s'" % parameters
+            msg = "Elements value for option '%s'" % parameter
             if options_context:
                 msg += " found in '%s'" % " -> ".join(options_context)
             msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
             errors.append(msg)
-
-    return validated_params, errors
+    return validated_parameters
 
 
 def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
@@ -660,17 +661,17 @@ def validate_argument_types(argument_spec, parameters, prefix='', options_contex
 
         try:
             parameters[param] = type_checker(value, **kwargs)
-            wanted_elements = spec.get('elements', None)
-            if wanted_elements:
-                parameter = parameters[param]
-                if wanted_type != 'list' or not isinstance(parameter, list):
-                    msg = "Invalid type %s for option '%s'" % (wanted_name, parameter)
+            elements_wanted_type = spec.get('elements', None)
+            if elements_wanted_type:
+                elements = parameters[param]
+                if wanted_type != 'list' or not isinstance(elements, list):
+                    msg = "Invalid type %s for option '%s'" % (wanted_name, elements)
                     if options_context:
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
                     errors.append(msg)
-                parameters[param], _errors = handle_elements(wanted_elements, param, parameter, options_context)
-                errors.extend(_errors)
+                parameters[param] = validate_elements(elements_wanted_type, param, elements, options_context, errors)
+
         except (TypeError, ValueError) as e:
             msg = "argument '%s' is of type %s" % (param, type(value))
             if options_context:
