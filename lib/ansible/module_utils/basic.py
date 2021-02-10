@@ -1719,7 +1719,8 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        self.no_log_values.update(set_defaults(spec, param, pre))
+        set_default = not pre
+        self.no_log_values.update(set_defaults(spec, param, set_default))
 
     def _set_fallbacks(self, spec=None, param=None):
         if spec is None:

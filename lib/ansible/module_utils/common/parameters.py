@@ -285,19 +285,19 @@ def set_fallbacks(argument_spec, module_parameters):
     return no_log_values
 
 
-def set_defaults(argument_spec, module_parameters, set_default=False):
+def set_defaults(argument_spec, parameters, set_default=True):
     """Set default values for parameters when no value is supplied.
 
-    Modifies module_parameters directly.
+    Modifies parameters directly.
 
     :param argument_spec: Argument spec
     :type argument_spec: dict
 
-    :param module_parameters: Parameters passed to the module
-    :type module_parameters: dict
+    :param parameters: Parameters to evaluate
+    :type parameters: dict
 
-    :param set: Whether or not to set the default values
-    :type set_value: bool
+    :param set_default: Whether or not to set the default values
+    :type set_default: bool
 
     :returns: Set of strings that should not be logged.
     :rtype: set
@@ -312,12 +312,12 @@ def set_defaults(argument_spec, module_parameters, set_default=False):
 
         # This prevents setting defaults on required items on the 1st run,
         # otherwise will set things without a default to None on the 2nd.
-        if param not in module_parameters and (default is not None or not set_default):
+        if param not in parameters and (default is not None or set_default):
             # Make sure any default value for no_log fields are masked.
             if value.get('no_log', False) and default:
                 no_log_values.add(default)
 
-            module_parameters[param] = default
+            parameters[param] = default
 
     return no_log_values
 
