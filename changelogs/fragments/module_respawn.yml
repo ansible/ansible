@@ -4,4 +4,5 @@ minor_changes:
 - apt - module now works under any supported Python interpreter
 - apt_repository - module now works under any supported Python interpreter
 - dnf - module now works under any supported Python interpreter
+- package_facts - module support for apt and rpm now works under any supported Python interpreter
 - yum - module now works under any supported Python interpreter
