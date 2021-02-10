@@ -354,13 +354,14 @@ CLEAN_OP_CHANGED_STR = dict(
 
 apt = apt_pkg = None  # keep pylint happy by declaring unconditionally
 
+HAS_PYTHON_APT = False
 try:
     import apt
     import apt.debfile
     import apt_pkg
     HAS_PYTHON_APT = True
 except ImportError:
-    HAS_PYTHON_APT = False
+    pass
 
 
 class PolicyRcD(object):

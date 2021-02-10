@@ -77,7 +77,6 @@ def _create_payload():
     modlib_path = sys.modules['__main__']._modlib_path
     respawn_code_template = '''
 import runpy
-import json
 import sys
 
 module_fqn = '{module_fqn}'

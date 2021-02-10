@@ -629,7 +629,7 @@ def _load_params():
 
     try:
         params = json.loads(buffer.decode('utf-8'))
-    except ValueError as ve:
+    except ValueError:
         # This helper used too early for fail_json to work.
         print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
         sys.exit(1)

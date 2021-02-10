@@ -66,7 +66,7 @@ def _module_setup():
             continue
 
     # NB: this validation code must run after all the wrappers have been declared
-    unimplemented_funcs = set(_funcmap.keys()).difference(set(dir(_thismod)))
+    unimplemented_funcs = set(_funcmap).difference(dir(_thismod))
     if unimplemented_funcs:
         raise NotImplementedError('implementation is missing functions: {0}'.format(unimplemented_funcs))
 
