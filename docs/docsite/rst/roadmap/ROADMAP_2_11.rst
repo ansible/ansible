@@ -22,10 +22,10 @@ PRs must be raised well in advance of the dates below to have a chance of being 
   No new functionality (including modules/plugins) to any code
 
 - 2021-03-02 Beta 1
-- ????-??-?? Beta 2
+- 2021-03-15 Beta 2 (if necessary)
 
-- 2021-03-29 Release Candidate 1
-- ????-??-?? Release Candidate 2
+- 2021-03-29 Release Candidate 1 (and ``stable-2.11`` branching from ``devel``)
+- 2021-04-12 Release Candidate 2 (if necessary)
 
 - 2021-04-26 Release
 
