@@ -151,7 +151,6 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
     TYPE = 'generator'
 
-    # This is not actually private.
     # 3rd party plugins redefine this to
     # use custom group name sanitization
     # since constructed features enforce
