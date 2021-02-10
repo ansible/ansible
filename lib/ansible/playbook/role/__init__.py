@@ -300,13 +300,17 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
                     if new_data:
-                        # if not allow_dir this should really break out, but since it always overwrote
-                        # with 'last found' ... keeping it the same way to not break existing roles.
-                        if allow_dir and data is not None and isinstance(new_data, Mapping):
+                        if data is not None and isinstance(new_data, Mapping):
                             data = combine_vars(data, new_data)
                         else:
                             data = new_data
+
+                        # found data so no need to continue unless we want to merge
+                        if not allow_dir:
+                            break
+
             elif main is not None:
+                # this won't trigger with default only when <subdir>_from is specified
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
 
         return data
