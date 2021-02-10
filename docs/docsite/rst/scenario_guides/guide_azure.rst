@@ -146,9 +146,9 @@ Or, pass the following parameters for ADFS username/password:
 Other Cloud Environments
 ------------------------
 
-To use an Azure Cloud other than the default public cloud (eg, Azure China Cloud, Azure US Government Cloud, Azure Stack),
+To use an Azure Cloud other than the default public cloud (for example, Azure China Cloud, Azure US Government Cloud, Azure Stack),
 pass the "cloud_environment" argument to modules, configure it in a credential profile, or set the "AZURE_CLOUD_ENVIRONMENT"
-environment variable. The value is either a cloud name as defined by the Azure Python SDK (eg, "AzureChinaCloud",
+environment variable. The value is either a cloud name as defined by the Azure Python SDK (for example, "AzureChinaCloud",
 "AzureUSGovernment"; defaults to "AzureCloud") or an Azure metadata discovery URL (for Azure Stack).
 
 Creating Virtual Machines
@@ -163,37 +163,37 @@ Creating Individual Components
 
 An Azure module is available to help you create a storage account, virtual network, subnet, network interface,
 security group and public IP. Here is a full example of creating each of these and passing the names to the
-azure_rm_virtualmachine module at the end:
+``azure.azcollection.azure_rm_virtualmachine`` module at the end:
 
 .. code-block:: yaml
 
     - name: Create storage account
-      azure_rm_storageaccount:
+      azure.azcollection.azure_rm_storageaccount:
         resource_group: Testing
         name: testaccount001
         account_type: Standard_LRS
 
     - name: Create virtual network
-      azure_rm_virtualnetwork:
+      azure.azcollection.azure_rm_virtualnetwork:
         resource_group: Testing
         name: testvn001
         address_prefixes: "10.10.0.0/16"
 
     - name: Add subnet
-      azure_rm_subnet:
+      azure.azcollection.azure_rm_subnet:
         resource_group: Testing
         name: subnet001
         address_prefix: "10.10.0.0/24"
         virtual_network: testvn001
 
     - name: Create public ip
-      azure_rm_publicipaddress:
+      azure.azcollection.azure_rm_publicipaddress:
         resource_group: Testing
         allocation_method: Static
         name: publicip001
 
     - name: Create security group that allows SSH
-      azure_rm_securitygroup:
+      azure.azcollection.azure_rm_securitygroup:
         resource_group: Testing
         name: secgroup001
         rules:
@@ -205,7 +205,7 @@ azure_rm_virtualmachine module at the end:
             direction: Inbound
 
     - name: Create NIC
-      azure_rm_networkinterface:
+      azure.azcollection.azure_rm_networkinterface:
         resource_group: Testing
         name: testnic001
         virtual_network: testvn001
@@ -214,7 +214,7 @@ azure_rm_virtualmachine module at the end:
         security_group: secgroup001
 
     - name: Create virtual machine
-      azure_rm_virtualmachine:
+      azure.azcollection.azure_rm_virtualmachine:
         resource_group: Testing
         name: testvm001
         vm_size: Standard_D1
@@ -243,7 +243,7 @@ virtual network already with an existing subnet, you can run the following to cr
 
 .. code-block:: yaml
 
-    azure_rm_virtualmachine:
+    azure.azcollection.azure_rm_virtualmachine:
       resource_group: Testing
       name: testvm10
       vm_size: Standard_D1
@@ -264,19 +264,19 @@ If you want to create a VM in an availability zone,
 consider the following:
 
 * Both OS disk and data disk must be a 'managed disk', not an 'unmanaged disk'.
-* When creating a VM with the ``azure_rm_virtualmachine`` module,
+* When creating a VM with the ``azure.azcollection.azure_rm_virtualmachine`` module,
   you need to explicitly set the ``managed_disk_type`` parameter
   to change the OS disk to a managed disk.
-  Otherwise, the OS disk becomes  an unmanaged disk..
-* When you create a data disk with  the ``azure_rm_manageddisk`` module,
-  you need to  explicitly specify the  ``storage_account_type`` parameter
-  to make it a  managed disk.
+  Otherwise, the OS disk becomes an unmanaged disk.
+* When you create a data disk with the ``azure.azcollection.azure_rm_manageddisk`` module,
+  you need to explicitly specify the ``storage_account_type`` parameter
+  to make it a managed disk.
   Otherwise, the data disk will be an unmanaged disk.
 * A managed disk does not require a storage account or a storage container,
-  unlike  a n unmanaged disk.
+  unlike an unmanaged disk.
   In particular, note that once a VM is created on an unmanaged disk,
   an unnecessary storage container named "vhds" is automatically created.
-* When you create an IP address with the ``azure_rm_publicipaddress`` module,
+* When you create an IP address with the ``azure.azcollection.azure_rm_publicipaddress`` module,
   you must set the  ``sku`` parameter to ``standard``.
   Otherwise, the IP address cannot be used in an availability zone.
 
