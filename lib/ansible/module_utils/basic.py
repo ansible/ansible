@@ -167,6 +167,7 @@ from ansible.module_utils.common.parameters import (
     remove_values,
     set_defaults,
     set_fallbacks,
+    validate_argument_types,
     AnsibleFallbackNotFound,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
@@ -1644,28 +1645,6 @@ class AnsibleModule(object):
 
         return type_checker, wanted
 
-    def _handle_elements(self, wanted, param, values):
-        type_checker, wanted_name = self._get_wanted_type(wanted, param)
-        validated_params = []
-        # Get param name for strings so we can later display this value in a useful error message if needed
-        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-        kwargs = {}
-        if wanted_name == 'str' and isinstance(wanted, string_types):
-            if isinstance(param, string_types):
-                kwargs['param'] = param
-            elif isinstance(param, dict):
-                kwargs['param'] = list(param.keys())[0]
-        for value in values:
-            try:
-                validated_params.append(type_checker(value, **kwargs))
-            except (TypeError, ValueError) as e:
-                msg = "Elements value for option %s" % param
-                if self._options_context:
-                    msg += " found in '%s'" % " -> ".join(self._options_context)
-                msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_name, to_native(e))
-                self.fail_json(msg=msg)
-        return validated_params
-
     def _check_argument_types(self, spec=None, param=None, prefix=''):
         ''' ensure all arguments have the requested type '''
 
@@ -1674,44 +1653,11 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        for (k, v) in spec.items():
-            wanted = v.get('type', None)
-            if k not in param:
-                continue
+        errors = []
+        validate_argument_types(spec, param, errors=errors)
 
-            value = param[k]
-            if value is None:
-                continue
-
-            type_checker, wanted_name = self._get_wanted_type(wanted, k)
-            # Get param name for strings so we can later display this value in a useful error message if needed
-            # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-            kwargs = {}
-            if wanted_name == 'str' and isinstance(type_checker, string_types):
-                kwargs['param'] = list(param.keys())[0]
-
-                # Get the name of the parent key if this is a nested option
-                if prefix:
-                    kwargs['prefix'] = prefix
-
-            try:
-                param[k] = type_checker(value, **kwargs)
-                wanted_elements = v.get('elements', None)
-                if wanted_elements:
-                    if wanted != 'list' or not isinstance(param[k], list):
-                        msg = "Invalid type %s for option '%s'" % (wanted_name, param)
-                        if self._options_context:
-                            msg += " found in '%s'." % " -> ".join(self._options_context)
-                        msg += ", elements value check is supported only with 'list' type"
-                        self.fail_json(msg=msg)
-                    param[k] = self._handle_elements(wanted_elements, k, param[k])
-
-            except (TypeError, ValueError) as e:
-                msg = "argument %s is of type %s" % (k, type(value))
-                if self._options_context:
-                    msg += " found in '%s'." % " -> ".join(self._options_context)
-                msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
-                self.fail_json(msg=msg)
+        if errors:
+            self.fail_json(msg=errors[0])
 
     def _set_defaults(self, pre=True, spec=None, param=None):
         if spec is None:
