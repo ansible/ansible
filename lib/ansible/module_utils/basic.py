@@ -1609,7 +1609,6 @@ class AnsibleModule(object):
 
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
-                    self._set_internal_properties(spec, param)
                     self._check_arguments(spec, param, options_legal_inputs)
 
                     # check exclusive early
