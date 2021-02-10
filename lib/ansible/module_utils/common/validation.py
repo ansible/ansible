@@ -332,7 +332,10 @@ def safe_eval(value, locals=None, include_exceptions=False):
         return value
 
 
-def check_type_str(value, allow_conversion=True):
+# FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
+#        which is using those for the warning messaged based on string conversion warning settings.
+#        Not sure how to deal with that here since we don't have config state to query.
+def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,

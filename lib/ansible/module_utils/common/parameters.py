@@ -592,7 +592,7 @@ def validate_elements(wanted_type, parameter, values, options_context=None, erro
     # Get param name for strings so we can later display this value in a useful error message if needed
     # Only pass 'kwargs' to our checkers and ignore custom callable checkers
     kwargs = {}
-    if wanted_element_type == 'str' and isinstance(type_checker, string_types):
+    if wanted_element_type == 'str' and isinstance(wanted_type, string_types):
         if isinstance(parameter, string_types):
             kwargs['param'] = parameter
         elif isinstance(parameter, dict):
@@ -652,7 +652,7 @@ def validate_argument_types(argument_spec, parameters, prefix='', options_contex
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
         kwargs = {}
-        if wanted_name == 'str' and isinstance(type_checker, string_types):
+        if wanted_name == 'str' and isinstance(wanted_type, string_types):
             kwargs['param'] = list(parameters.keys())[0]
 
             # Get the name of the parent key if this is a nested option
