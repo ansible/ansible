@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2020 Ansible Project
+# Copyright (c) 2021 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -19,7 +19,7 @@ from ansible.module_utils.common.parameters import (
     remove_values,
     set_defaults,
     set_fallbacks,
-    validate_argument_types,  # Rename this because it actually does coercion?
+    validate_argument_types,
     validate_argument_values,
     validate_sub_spec,
 )
@@ -68,7 +68,8 @@ class ArgumentSpecValidator():
 
         :Example:
 
-        [good example goes here]
+        validator = ArgumentSpecValidator(argument_spec, parameters)
+        passeded = validator.validate()
 
         :param argument_spec: Specification of parameters, type, and valid values
         :type argument_spec: dict
