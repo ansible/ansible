@@ -6,6 +6,13 @@
       - unzip
   when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
 
+- name: Ensure zstd is present, if available
+  ignore_errors: true
+  package:
+    name:
+      - zstd
+  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+
 - name: prep our file
   copy:
     src: foo.txt
@@ -17,6 +24,28 @@
 
 - name: prep a tar.gz file
   shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{remote_tmp_dir}}
+
+- name: see if we have the zstd executable
+  ignore_errors: true
+  shell: zstd --version
+  register: zstd_available
+
+- when: zstd_available.rc == 0
+  block:
+    - name: find gnu tar
+      shell: |
+        #!/bin/sh
+        which gtar 2>/dev/null
+        if test $? -ne 0; then
+            if test -z "`tar --version | grep bsdtar`"; then
+               which tar
+            fi
+        fi
+      register: gnu_tar
+
+    - name: prep a tar.zst file
+      shell: "{{ gnu_tar.stdout }} --use-compress-program=zstd -cvf test-unarchive.tar.zst foo-unarchive.txt chdir={{remote_tmp_dir}}"
+      when: gnu_tar.stdout != ""
 
 - name: prep a chmodded file for zip
   copy:
