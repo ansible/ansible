@@ -276,7 +276,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
             # Valid extensions and ordering for roles is hard-coded to maintain portability
-            extensions = ['.yml', '.yaml', '.json']
+            extensions = ['.yml', '.yaml', '.json']  # same as default for YAML_FILENAME_EXTENSIONS
 
             # look for files w/o extensions before/after bare name depending on it being set or not
             # keep 'main' as original to figure out errors if no files found
@@ -287,18 +287,16 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 _main = main
                 extensions.insert(0, '')
 
+            # not really 'find_vars_files' but find_files_with_extensions_default_to_yaml_filename_extensions
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
                     if new_data:
-                        if isinstance(new_data, Mapping):
-                            if allow_dir and data is not None:
-                                data = combine_vars(data, new_data)
-                            else:
-                                data = new_data
+                        if data is not None and isinstance(new_data, Mapping) and allow_dir:
+                            data = combine_vars(data, new_data)
                         else:
-                            display.warning("Skipping '%s' vars file as it didn't produce a dictionary but a '%s'" % (to_text(found), type(new_data)))
+                            data = new_data
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
 
