@@ -1,0 +1,9 @@
+- hosts: localhost
+  tasks:
+    - set_fact:
+        unvaulted: "{{ lookup('unvault', 'vault') }}"
+    - debug:
+        msg: "{{ unvaulted }}"
+    - assert:
+        that:
+            - "unvaulted == 'foo: bar\n'"
