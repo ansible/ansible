@@ -1,0 +1,93 @@
+- name: collect selinux facts
+  setup:
+    gather_subset: ['!all', '!min', selinux]
+  register: fact_output
+
+- debug:
+    var: fact_output
+
+- name: create tempdir container in home
+  file:
+    path: ~/.selinux_tmp
+    state: directory
+
+- name: create tempdir
+  tempfile:
+    path: ~/.selinux_tmp
+    prefix: selinux_test
+    state: directory
+  register: tempdir
+
+- name: ls -1Zd tempdir to capture context from FS
+  shell: ls -1Zd '{{ tempdir.path }}'
+  register: tempdir_context_output
+
+- name: create a file under the tempdir with no context info specified (it should inherit parent context)
+  file:
+    path: '{{ tempdir.path }}/file_inherited_context'
+    state: touch
+  register: file_inherited_context
+
+- name: ls -1Z inherited file to capture context from FS
+  shell: ls -1Z '{{ tempdir.path }}/file_inherited_context'
+  register: inherited_context_output
+
+- name: copy the file with explicit overrides on all context values
+  copy:
+    remote_src: yes
+    src: '{{ tempdir.path }}/file_inherited_context'
+    dest: '{{ tempdir.path }}/file_explicit_context'
+    seuser: system_u
+    serole: system_r
+    setype: user_tmp_t
+    # default configs don't have MLS levels defined, so we can't test that yet
+    # selevel: s1
+  register: file_explicit_context
+
+- name: ls -1Z explicit file to capture context from FS
+  shell: ls -1Z '{{ tempdir.path }}/file_explicit_context'
+  register: explicit_context_output
+
+- name: alter the tempdir context
+  file:
+    path: '{{ tempdir.path }}'
+    seuser: system_u
+    serole: system_r
+    setype: user_tmp_t
+    # default configs don't have MLS levels defined, so we can't test that yet
+    # selevel: s1
+  register: tempdir_altered
+
+- name: ls -1Z tempdir to capture context from FS
+  shell: ls -1Z '{{ tempdir.path }}/file_explicit_context'
+  register: tempdir_altered_context_output
+
+- name: copy the explicit context file with default overrides on all context values
+  copy:
+    remote_src: yes
+    src: '{{ tempdir.path }}/file_explicit_context'
+    dest: '{{ tempdir.path }}/file_default_context'
+    seuser: _default
+    serole: _default
+    setype: _default
+    selevel: _default
+  register: file_default_context
+
+- name: see what matchpathcon thinks the context of default_file_context should be
+  shell: matchpathcon {{ file_default_context.dest }} | awk '{ print $2 }'
+  register: expected_default_context
+
+- assert:
+    that:
+    - fact_output.ansible_facts.ansible_selinux.config_mode in ['enforcing','permissive']
+    - fact_output.ansible_facts.ansible_selinux.mode in ['enforcing','permissive']
+    - fact_output.ansible_facts.ansible_selinux.status == 'enabled'
+    - fact_output.ansible_facts.ansible_selinux_python_present == true
+    # assert that secontext is set on the file results (injected by basic.py, for better or worse)
+    - tempdir.secontext is match('.+:.+:.+') and tempdir.secontext in tempdir_context_output.stdout
+    - file_inherited_context.secontext is match('.+:.+:.+') and file_inherited_context.secontext in inherited_context_output.stdout
+    - file_inherited_context.secontext == tempdir.secontext  # should've been inherited from the parent dir since not set explicitly
+    - file_explicit_context.secontext == 'system_u:system_r:user_tmp_t:s0' and file_explicit_context.secontext in explicit_context_output.stdout
+    - tempdir_altered.secontext == 'system_u:system_r:user_tmp_t:s0' and tempdir_altered.secontext in tempdir_altered_context_output.stdout
+    # the one with reset defaults should match the original tempdir context, not the altered one (ie, it was set by the original policy context, not inherited from the parent dir)
+    - file_default_context.secontext == expected_default_context.stdout_lines[0]

@@ -74,7 +74,7 @@ except ImportError:
 
 HAVE_SELINUX = False
 try:
-    import selinux
+    import ansible.module_utils.compat.selinux as selinux
     HAVE_SELINUX = True
 except ImportError:
     pass
@@ -763,6 +763,11 @@ class AnsibleModule(object):
         if not self.no_log:
             self._log_invocation()
 
+        # selinux state caching
+        self._selinux_enabled = None
+        self._selinux_mls_enabled = None
+        self._selinux_initial_context = None
+
         # finally, make sure we're in a sane working dir
         self._set_cwd()
 
@@ -876,37 +881,30 @@ class AnsibleModule(object):
     # by selinux.lgetfilecon().
 
     def selinux_mls_enabled(self):
-        if not HAVE_SELINUX:
-            return False
-        if selinux.is_selinux_mls_enabled() == 1:
-            return True
-        else:
-            return False
+        if self._selinux_mls_enabled is None:
+            self._selinux_mls_enabled = HAVE_SELINUX and selinux.is_selinux_mls_enabled() == 1
+
+        return self._selinux_mls_enabled
 
     def selinux_enabled(self):
-        if not HAVE_SELINUX:
-            seenabled = self.get_bin_path('selinuxenabled')
-            if seenabled is not None:
-                (rc, out, err) = self.run_command(seenabled)
-                if rc == 0:
-                    self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
-            return False
-        if selinux.is_selinux_enabled() == 1:
-            return True
-        else:
-            return False
+        if self._selinux_enabled is None:
+            self._selinux_enabled = HAVE_SELINUX and selinux.is_selinux_enabled() == 1
+
+        return self._selinux_enabled
 
     # Determine whether we need a placeholder for selevel/mls
     def selinux_initial_context(self):
-        context = [None, None, None]
-        if self.selinux_mls_enabled():
-            context.append(None)
-        return context
+        if self._selinux_initial_context is None:
+            self._selinux_initial_context = [None, None, None]
+            if self.selinux_mls_enabled():
+                self._selinux_initial_context.append(None)
+
+        return self._selinux_initial_context
 
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
         context = self.selinux_initial_context()
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not self.selinux_enabled():
             return context
         try:
             ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
@@ -921,7 +919,7 @@ class AnsibleModule(object):
 
     def selinux_context(self, path):
         context = self.selinux_initial_context()
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not self.selinux_enabled():
             return context
         try:
             ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
@@ -985,14 +983,14 @@ class AnsibleModule(object):
         return (False, None)
 
     def set_default_selinux_context(self, path, changed):
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not self.selinux_enabled():
             return changed
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
 
     def set_context_if_different(self, path, context, changed, diff=None):
 
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not self.selinux_enabled():
             return changed
 
         if self.check_file_absent_if_check_mode(path):
@@ -1460,7 +1458,7 @@ class AnsibleModule(object):
                 kwargs['state'] = 'hard'
             else:
                 kwargs['state'] = 'file'
-            if HAVE_SELINUX and self.selinux_enabled():
+            if self.selinux_enabled():
                 kwargs['secontext'] = ':'.join(self.selinux_context(path))
             kwargs['size'] = st[stat.ST_SIZE]
         return kwargs

@@ -1,0 +1,10 @@
+- name: check selinux config
+  shell: |
+    command -v getenforce &&
+    getenforce | grep -E 'Enforcing|Permissive'
+  ignore_errors: yes
+  register: selinux_state
+
+- name: run selinux tests
+  include_tasks: selinux.yml
+  when: selinux_state is success

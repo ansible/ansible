@@ -594,28 +594,22 @@
         - "not dnf_result is changed"
         - "dnf_result is failed"
 
-# setup for testing installing an RPM from url
+# setup for testing installing an RPM from local file
 
 - set_fact:
-    pkg_name: fpaste
+    pkg_name: noarchfake
+    pkg_path: '{{ repodir }}/noarchfake-1.0-1.noarch.rpm'
 
 - name: cleanup
   dnf:
     name: "{{ pkg_name }}"
     state: absent
 
-- set_fact:
-    pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/fpaste-0.3.9.1-1.fc27.noarch.rpm
 # setup end
 
-- name: download an rpm
-  get_url:
-    url: "{{ pkg_url }}"
-    dest: "/tmp/{{ pkg_name }}.rpm"
-
-- name: install the downloaded rpm
+- name: install a local noarch rpm from file
   dnf:
-    name: "/tmp/{{ pkg_name }}.rpm"
+    name: "{{ pkg_path }}"
     state: present
     disable_gpg_check: true
   register: dnf_result
@@ -628,7 +622,7 @@
 
 - name: install the downloaded rpm again
   dnf:
-    name: "/tmp/{{ pkg_name }}.rpm"
+    name: "{{ pkg_path }}"
     state: present
   register: dnf_result
 
@@ -645,7 +639,7 @@
 
 - name: install from url
   dnf:
-    name: "{{ pkg_url }}"
+    name: "file://{{ pkg_path }}"
     state: present
     disable_gpg_check: true
   register: dnf_result
