@@ -24,13 +24,6 @@
     args:
       name: "{{ rpm_repo_packages }}"
 
-  - name: Install rpmfluff from pip on RHEL 8 and later
-    pip:
-      name: rpmfluff
-    when:
-      - ansible_facts.distribution in ['RedHat', 'CentOS']
-      - ansible_facts.distribution_major_version is version('8', '>=')
-
   - set_fact:
       repos:
         - "fake-{{ ansible_architecture }}"

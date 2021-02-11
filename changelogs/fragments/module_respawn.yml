@@ -1,0 +1,8 @@
+minor_changes:
+- Module API - new module_respawn API allows modules that need to run under a specific Python interpreter to respawn in place under that interpreter
+- Module API - libselinux-python is no longer required for basic module API selinux operations (affects core modules assemble, blockinfile, copy, cron, file, get_url, lineinfile, setup, replace, unarchive, uri, user, yum_repository)
+- apt - module now works under any supported Python interpreter
+- apt_repository - module now works under any supported Python interpreter
+- dnf - module now works under any supported Python interpreter
+- package_facts - module support for apt and rpm now works under any supported Python interpreter
+- yum - module now works under any supported Python interpreter
