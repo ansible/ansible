@@ -1,0 +1,2 @@
+bugfixes:
+  - the unvault lookup plugin returned a byte string. Now returns a real string.

@@ -56,7 +56,7 @@ class LookupModule(LookupBase):
                 actual_file = self._loader.get_real_file(lookupfile, decrypt=True)
                 with open(actual_file, 'rb') as f:
                     b_contents = f.read()
-                ret.append(b_contents)
+                ret.append(to_text(b_contents))
             else:
                 raise AnsibleParserError('Unable to find file matching "%s" ' % term)
 
