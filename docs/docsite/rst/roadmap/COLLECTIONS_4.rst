@@ -18,7 +18,7 @@ Release schedule
 :2021-03-30: Ansible-4.0.0 alpha3
 :2021-04-13: Last day for new collections to be submitted for inclusion in Ansible 4. Note that collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
 :2021-04-13: Ansible-4.0.0 alpha4
-:2021-04-14: Community IRC Meeting topic: list any new collection reviews which block release.  list any backwards incompatible collection releases that beta1 should try to accommodate.
+:2021-04-14: Community IRC Meeting topic: list any new collection reviews which block release.  List any backwards incompatible collection releases that beta1 should try to accommodate.
 :2021-04-21: Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2021-04-26: Last day for new collections to be **reviewed and approved** for inclusion in Ansible 4.
 :2021-04-26: Last day for collections to make backwards incompatible releases that will be accepted into Ansible 4.
