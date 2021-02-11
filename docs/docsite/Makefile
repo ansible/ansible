@@ -31,6 +31,10 @@ ifdef PLUGINS
 endif
 endif
 
+ANSIBLE_VERSION_ARGS=
+ifdef ANSIBLE_VERSION
+	ANSIBLE_VERSION_ARGS=--ansible-version=$(ANSIBLE_VERSION)
+endif
 
 DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup netconf shell strategy vars
 
@@ -141,7 +145,7 @@ plugins:
 	if expr "$(VERSION)" : '.*[.]dev[0-9]\{1,\}$$' &> /dev/null; then \
 		$(PLUGIN_FORMATTER) base -o rst $(PLUGIN_ARGS);\
 	else \
-		$(PLUGIN_FORMATTER) full -o rst $(PLUGIN_ARGS);\
+		$(PLUGIN_FORMATTER) full -o rst $(ANSIBLE_VERSION_ARGS) $(PLUGIN_ARGS);\
 	fi
 
 # This only builds the plugin docs included with ansible-base
