@@ -16,10 +16,14 @@ def test_required_and_default():
     v = ArgumentSpecValidator(arg_spec, {})
     passed = v.validate()
 
-    expected = [
+    expected = {
+        'param_req': 'DEFAULT'
+    }
+
+    expected_errors = [
         'internal error: required and default are mutually exclusive for param_req',
-        'missing required arguments: param_req',
     ]
 
     assert passed is False
-    assert v.error_messages == expected
+    assert v.validated_parameters == expected
+    assert v.error_messages == expected_errors
