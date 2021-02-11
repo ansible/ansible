@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure we don't clobber role vars data when getting an empty file
