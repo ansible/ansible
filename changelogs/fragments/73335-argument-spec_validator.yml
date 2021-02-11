@@ -1,0 +1,4 @@
+major_changes:
+  - >-
+    add ``ArgumentSpecValidator`` class for validating parameters against an
+    argument spec outside of ``AnsibleModule`` (https://github.com/ansible/ansible/pull/73335)
