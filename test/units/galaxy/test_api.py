@@ -1073,7 +1073,12 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
     )
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
-    with pytest.raises(GalaxyError):
+    expected = (
+        r'Error when getting available collection versions for namespace\.collection '
+        r'from test \(https://galaxy\.server\.com/api/\) '
+        r'\(HTTP Code: 500, Message: Error Code: Unknown\)'
+    )
+    with pytest.raises(GalaxyError, match=expected):
         actual_versions = api.get_collection_versions('namespace', 'collection')
 
     with open(cache_file) as fd:
