@@ -696,7 +696,10 @@ class VaultLib:
             raise AnsibleVaultPasswordError('No valid vault secrets were supplied')
 
         if not is_encrypted(b_vaulttext):
-            raise AnsibleVaultError("The data provided is not a valid vault: %s" % vaulted())
+            msg = "input is not vault encrypted data. "
+            if filename:
+                msg += "%s is not a vault encrypted file" % to_native(filename)
+            raise AnsibleError(msg)
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
