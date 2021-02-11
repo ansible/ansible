@@ -140,51 +140,44 @@ import copy
 import random
 import time
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY3
+from ansible.module_utils.urls import fetch_url
+
+# init module names to keep pylint happy
+apt = apt_pkg = aptsources_distro = distro = None
+
 try:
     import apt
     import apt_pkg
     import aptsources.distro as aptsources_distro
+
     distro = aptsources_distro.get_distro()
+
     HAVE_PYTHON_APT = True
 except ImportError:
-    distro = None
     HAVE_PYTHON_APT = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
-
-
-if sys.version_info[0] < 3:
-    PYTHON_APT = 'python-apt'
-else:
-    PYTHON_APT = 'python3-apt'
 
 DEFAULT_SOURCES_PERM = 0o0644
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
-def install_python_apt(module):
+def install_python_apt(module, apt_pkg_name):
 
     if not module.check_mode:
         apt_get_path = module.get_bin_path('apt-get')
         if apt_get_path:
             rc, so, se = module.run_command([apt_get_path, 'update'])
             if rc != 0:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
-            rc, so, se = module.run_command([apt_get_path, 'install', PYTHON_APT, '-y', '-q'])
-            if rc == 0:
-                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
-                import apt
-                import apt_pkg
-                import aptsources.distro as aptsources_distro
-                distro = aptsources_distro.get_distro()
-                HAVE_PYTHON_APT = True
-            else:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (apt_pkg_name, se.strip()))
+            rc, so, se = module.run_command([apt_get_path, 'install', apt_pkg_name, '-y', '-q'])
+            if rc != 0:
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (apt_pkg_name, se.strip()))
     else:
-        module.fail_json(msg="%s must be installed to use check mode" % PYTHON_APT)
+        module.fail_json(msg="%s must be installed to use check mode" % apt_pkg_name)
 
 
 class InvalidSource(Exception):
@@ -552,10 +545,53 @@ def main():
     sourceslist = None
 
     if not HAVE_PYTHON_APT:
+        # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
+        # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
+        # 2) finding none, try to install a matching python-apt package for the current interpreter version;
+        #    we limit to the current interpreter version to try and avoid installing a whole other Python just
+        #    for apt support
+        # 3) if we installed a support package, try to respawn under what we think is the right interpreter (could be
+        #    the current interpreter again, but we'll let it respawn anyway for simplicity)
+        # 4) if still not working, return an error and give up (some corner cases not covered, but this shouldn't be
+        #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
+        #    system locations)
+
+        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+
+        if has_respawned():
+            # this shouldn't be possible; short-circuit early if it happens...
+            module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
+
+        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+
+        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+
+        if interpreter:
+            # found the Python bindings; respawn this module under the interpreter where we found them
+            respawn_module(interpreter)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+
+        # don't make changes if we're in check_mode
+        if module.check_mode:
+            module.fail_json(msg="%s must be installed to use check mode. "
+                                 "If run normally this module can auto-install it." % apt_pkg_name)
+
         if params['install_python_apt']:
-            install_python_apt(module)
+            install_python_apt(module, apt_pkg_name)
         else:
-            module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
+            module.fail_json(msg='%s is not installed, and install_python_apt is False' % apt_pkg_name)
+
+        # try again to find the bindings in common places
+        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+
+        if interpreter:
+            # found the Python bindings; respawn this module under the interpreter where we found them
+            # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
+            respawn_module(interpreter)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+        else:
+            # we've done all we can do; just tell the user it's busted and get out
+            module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
     if not repo:
         module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
