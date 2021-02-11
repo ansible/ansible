@@ -77,6 +77,7 @@ Plugins
 
 * inventory plugins - ``CachePluginAdjudicator.flush()`` now calls the underlying cache plugin's ``flush()`` instead of only deleting keys that it knows about. Inventory plugins should use ``delete()`` to remove any specific keys. As a user, this means that when an inventory plugin calls its ``clear_cache()`` method, facts could also be flushed from the cache. To work around this, users can configure inventory plugins to use a cache backend that is independent of the facts cache.
 * callback plugins - ``meta`` task execution is now sent to ``v2_playbook_on_task_start`` like any other task. By default, only explicit meta tasks are sent there. Callback plugins can opt-in to receiving internal, implicitly created tasks to act on those as well, as noted in the plugin development documentation.
+* The ``choices`` are now validated, so plugins that were using incorrect or incomplete choices will now issue an error if the value provided does not match. This has a simple fix: update the entries in ``choices`` to match reality.
 
 Porting custom scripts
 ======================
