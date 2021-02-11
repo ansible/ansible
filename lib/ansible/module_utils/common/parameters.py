@@ -264,14 +264,14 @@ def env_fallback(*args, **kwargs):
     raise AnsibleFallbackNotFound
 
 
-def set_fallbacks(argument_spec, module_parameters):
+def set_fallbacks(argument_spec, parameters):
     no_log_values = set()
     for param, value in argument_spec.items():
         fallback = value.get('fallback', (None,))
         fallback_strategy = fallback[0]
         fallback_args = []
         fallback_kwargs = {}
-        if param not in module_parameters and fallback_strategy is not None:
+        if param not in parameters and fallback_strategy is not None:
             for item in fallback[1:]:
                 if isinstance(item, dict):
                     fallback_kwargs = item
@@ -284,7 +284,7 @@ def set_fallbacks(argument_spec, module_parameters):
             else:
                 if value.get('no_log', False) and fallback_value:
                     no_log_values.add(fallback_value)
-                module_parameters[param] = fallback_value
+                parameters[param] = fallback_value
 
     return no_log_values
 
@@ -330,7 +330,7 @@ def list_no_log_values(argument_spec, params):
     """Return set of no log values
 
     :arg argument_spec: An argument spec dictionary from a module
-    :arg params: Dictionary of all module parameters
+    :arg params: Dictionary of all parameters
 
     :returns: Set of strings that should be hidden from output::
 
@@ -376,11 +376,11 @@ def list_no_log_values(argument_spec, params):
     return no_log_values
 
 
-def list_deprecations(argument_spec, params, prefix=''):
+def list_deprecations(argument_spec, parameters, prefix=''):
     """Return a list of deprecations
 
     :arg argument_spec: An argument spec dictionary from a module
-    :arg params: Dictionary of all module parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: List of dictionaries containing a message and version in which
         the deprecated parameter will be removed, or an empty list::
@@ -390,7 +390,7 @@ def list_deprecations(argument_spec, params, prefix=''):
 
     deprecations = []
     for arg_name, arg_opts in argument_spec.items():
-        if arg_name in params:
+        if arg_name in parameters:
             if prefix:
                 sub_prefix = '%s["%s"]' % (prefix, arg_name)
             else:
@@ -410,7 +410,7 @@ def list_deprecations(argument_spec, params, prefix=''):
             # Check sub-argument spec
             sub_argument_spec = arg_opts.get('options')
             if sub_argument_spec is not None:
-                sub_arguments = params[arg_name]
+                sub_arguments = parameters[arg_name]
                 if isinstance(sub_arguments, Mapping):
                     sub_arguments = [sub_arguments]
                 if isinstance(sub_arguments, list):
@@ -498,11 +498,11 @@ def remove_values(value, no_log_strings):
     return new_value
 
 
-def handle_aliases(argument_spec, params, alias_warnings=None):
+def handle_aliases(argument_spec, parameters, alias_warnings=None):
     """Return a two item tuple. The first is a dictionary of aliases, the second is
     a list of legal inputs.
 
-    Modify supplied params by adding a new key for each alias.
+    Modify supplied parameters by adding a new key for each alias.
 
     If a list is provided to the alias_warnings parameter, it will be filled with tuples
     (option, alias) in every case where both an option and its alias are specified.
@@ -526,21 +526,21 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
         for alias in aliases:
             legal_inputs.append(alias)
             aliases_results[alias] = k
-            if alias in params:
-                if k in params and alias_warnings is not None:
+            if alias in parameters:
+                if k in parameters and alias_warnings is not None:
                     alias_warnings.append((k, alias))
-                params[k] = params[alias]
+                parameters[k] = parameters[alias]
 
     return aliases_results, legal_inputs
 
 
-def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
-    """Check keys in module_parameters against those provided in legal_inputs
+def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None):
+    """Check keys in parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
     they will be generated using the argument_spec.
 
     :arg argument_spec: Dictionary of parameters, their type, and valid values.
-    :arg module_parameters: Dictionary of module parameters.
+    :arg parameters: Dictionary of parameters.
     :arg legal_inputs: List of valid key names property names. Overrides values
         in argument_spec.
 
@@ -549,10 +549,10 @@ def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=No
     """
 
     if legal_inputs is None:
-        aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
+        aliases, legal_inputs = handle_aliases(argument_spec, parameters)
 
     unsupported_parameters = set()
-    for k in module_parameters.keys():
+    for k in parameters.keys():
         if k not in legal_inputs:
             unsupported_parameters.add(k)
 
@@ -615,7 +615,7 @@ def validate_elements(wanted_type, parameter, values, options_context=None, erro
 
 
 def validate_argument_types(argument_spec, parameters, prefix='', options_context=None, errors=None):
-    """Validate that module parameter types match the type in the argument spec.
+    """Validate that parameter types match the type in the argument spec.
 
     Determine the appropriate type checker function and run each
     parameter value through that function. All error messages from type checker
@@ -634,7 +634,7 @@ def validate_argument_types(argument_spec, parameters, prefix='', options_contex
     :param options_context: List of contexts?
     :type options_context: list
 
-    :returns: Two item tuple containing validated and coerced module parameters
+    :returns: Two item tuple containing validated and coerced parameters
               and a list of any errors that were encountered.
     :rtype: tuple
 
