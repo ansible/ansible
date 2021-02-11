@@ -77,7 +77,7 @@ def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache
 
 def get_collection_versions(namespace='namespace', name='collection'):
     base_url = 'https://galaxy.server.com/api/v2/collections/{0}/{1}/'.format(namespace, name)
-    versions_url = versions_url = base_url + 'versions/'
+    versions_url = base_url + 'versions/'
 
     # Response for collection info
     responses = [
@@ -1079,7 +1079,7 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
         r'\(HTTP Code: 500, Message: Error Code: Unknown\)'
     )
     with pytest.raises(GalaxyError, match=expected):
-        actual_versions = api.get_collection_versions('namespace', 'collection')
+        api.get_collection_versions('namespace', 'collection')
 
     with open(cache_file) as fd:
         final_cache = json.loads(fd.read())
@@ -1109,9 +1109,10 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
 
     with open(cache_file) as fd:
         final_cache = json.loads(fd.read())
-        cached_server = final_cache['galaxy.server.com:']
-        cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
-        cached_versions = [r['version'] for r in cached_collection['results']]
+
+    cached_server = final_cache['galaxy.server.com:']
+    cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_versions = [r['version'] for r in cached_collection['results']]
 
     assert cached_versions == actual_versions == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
 
