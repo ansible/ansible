@@ -739,9 +739,6 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
     if options_context is None:
         options_context = []
 
-    if no_log_values is None:
-        no_log_values = set()
-
     if errors is None:
         errors = []
 
