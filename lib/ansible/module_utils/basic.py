@@ -1665,6 +1665,8 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
+        # The interface for set_defaults is different than _set_defaults()
+        # The third parameter controls whether or not defaults are actually set.
         set_default = not pre
         self.no_log_values.update(set_defaults(spec, param, set_default))
 
