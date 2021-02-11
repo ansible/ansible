@@ -1,3 +1,3 @@
-minor_changes:
+major_changes:
   - Support for role argument specification validation at role execution time.
   - ansible-doc CLI now supports listing roles (and their entry points) with argument spec data.
