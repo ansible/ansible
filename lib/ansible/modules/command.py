@@ -3,6 +3,7 @@
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
 # Copyright: (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2021, Guillaume-Jean Herbiet <gjherbiet+ansible@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -47,16 +48,27 @@ options:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
+      - When C(chroot) is used, the value is relative to the real root (not the chrooted root).
   removes:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
+      - When C(chroot) is used, the value is relative to the real root (not the chrooted root).
     version_added: "0.8"
   chdir:
     type: path
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
+  chroot:
+    type: path
+    description:
+      - Change root directory (chroot) to this path before running the command.
+  chroot_cmd:
+    type: str
+    description:
+      - Use this command to perform the root directory change (chroot).
+      - Defaults to 'chroot'.
   warn:
     description:
       - (deprecated) Enable or disable task warnings.
@@ -102,6 +114,7 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
+    - Guillaume-Jean Herbiet
 '''
 
 EXAMPLES = r'''
@@ -147,6 +160,13 @@ EXAMPLES = r'''
 - name: Safely use templated variable to run command. Always use the quote filter to avoid injection issues
   ansible.builtin.command: cat {{ myfile|quote }}
   register: myoutput
+
+# this task is skipped if the locale archive already exists in the chroot tree
+- name: Compile locale definition files in a chrooted system
+  ansible.builtin.command:
+    cmd: localedef -f UTF-8 -i en_US en_US.UTF-8
+    chroot: /mnt/chroot
+    creates: /mnt/chroot/usr/lib/locale/locale-archive
 '''
 
 RETURN = r'''
@@ -213,6 +233,19 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
+def check_chroot_cmd(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
 
 def check_command(module, commandline):
     arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
@@ -260,6 +293,8 @@ def main():
             _uses_shell=dict(type='bool', default=False),
             argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
+            chroot=dict(type='path'),
+            chroot_cmd=dict(type='str', default='chroot'),
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
@@ -273,6 +308,8 @@ def main():
     )
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
+    chroot = module.params['chroot']
+    chroot_cmd = module.params['chroot_cmd']
     executable = module.params['executable']
     args = module.params['_raw_params']
     argv = module.params['argv']
@@ -312,6 +349,36 @@ def main():
             os.chdir(chdir)
         except (IOError, OSError) as e:
             module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
+
+    if not shell and chroot:
+        try:
+            chroot = to_bytes(os.path.abspath(chroot), errors='surrogate_or_strict')
+        except ValueError as e:
+            module.fail_json(msg='Unable to use supplied chroot: %s' % to_text(e))
+
+        # Test if chroot is possible to specified directory
+        try:
+            real_root = os.open('/', os.O_RDONLY)
+            os.chroot(chroot)
+            os.fchdir(real_root)
+            os.chroot('.')
+            os.close(real_root)
+        except (IOError, OSError) as e:
+            module.fail_json(msg='Unable to change root directory before execution: %s' % to_text(e))
+
+        # Test specified chroot executable
+        try:
+            if check_chroot_cmd(chroot_cmd) is None:
+                module.fail_json(msg='Unable to find chroot executable %s at specified location or in path' % chroot_cmd)
+        except OSError as e:
+            module.fail_json(msg='Unable to check exitsance of chroot executable: %s' % to_text(e))
+
+        # Add chroot command to specified directory before actual command
+        if isinstance(args, list):
+            args.insert(0, chroot_cmd)
+            args.insert(1, chroot)
+        else:
+            args = chroot_cmd + ' ' + chroot + ' ' + args
 
     if creates:
         # do not run the command if the line contains creates=filename

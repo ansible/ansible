@@ -215,6 +215,49 @@
     that:
       - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
+# chroot
+
+- name: execute the test.sh script when chrooted via command
+  command: test_command_shell/test.sh
+  args:
+    chroot: "{{ output_dir }}"
+  register: command_result7
+
+- name: assert that the script executed correctly with chroot
+  assert:
+    that:
+      - command_result7.rc == 0
+      - command_result7.stderr == ''
+      - command_result7.stdout == 'win'
+
+- name: verify that afile.txt is absent in chroot directory
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
+
+- name: create afile.txt with create_afile.sh via command in chroot
+  command: test_command_shell/create_afile.sh test_command_shell/afile.txt
+  args:
+    chroot: "{{ output_dir }}"
+    creates: "{{ output_dir_test }}/afile.txt"
+
+- name: verify that afile.txt is present
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: file
+
+- name: re-run previous command in chroot, using creates with globbing
+  command: test_command_shell/create_afile.sh test_command_shell/afile.txt
+  args:
+    chroot: "{{ output_dir }}"
+    creates: "{{ output_dir_test }}/afile.*"
+  register: command_result8
+
+- name: assert that creates with globbing is working in chroot
+  assert:
+    that:
+      - command_result8 is not changed
+
 ##
 ## shell
 ##
