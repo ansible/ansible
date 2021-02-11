@@ -752,6 +752,16 @@ class SanityCodeSmellTest(SanityTest):
         """True if the test targets should include symlinks."""
         return self.__include_symlinks
 
+    @property
+    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
+        versions = super(SanityCodeSmellTest, self).supported_python_versions
+
+        if self.minimum_python_version:
+            versions = tuple(version for version in versions if str_to_version(version) >= str_to_version(self.minimum_python_version))
+
+        return versions
+
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if self.no_targets:
@@ -786,12 +796,6 @@ class SanityCodeSmellTest(SanityTest):
         :type python_version: str
         :rtype: TestResult
         """
-        if self.minimum_python_version:
-            if str_to_version(python_version) < str_to_version(self.minimum_python_version):
-                display.warning("Skipping sanity test '%s' on unsupported Python %s; requires Python %s or newer." % (
-                    self.name, python_version, self.minimum_python_version))
-                return SanitySkipped(self.name, 'Test requires Python %s or newer' % (self.minimum_python_version, ))
-
         cmd = [find_python(python_version), self.path]
 
         env = ansible_environment(args, color=False)
