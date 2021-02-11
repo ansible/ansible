@@ -141,7 +141,8 @@ def command_sanity(args):
             options = ''
 
             if test.supported_python_versions and version not in test.supported_python_versions:
-                display.warning("Skipping sanity test '%s' on unsupported Python %s." % (test.name, version))
+                display.warning("Skipping sanity test '%s' on Python %s. Supported Python versions: %s" % (
+                    test.name, version, ', '.join(test.supported_python_versions)))
                 result = SanitySkipped(test.name, skip_version)
             elif not args.python and version not in available_versions:
                 display.warning("Skipping sanity test '%s' on Python %s due to missing interpreter." % (test.name, version))
