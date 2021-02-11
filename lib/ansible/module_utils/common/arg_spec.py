@@ -25,7 +25,7 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.common.warnings import deprecate, warn
 from ansible.module_utils.common.validation import (
     check_required_arguments,
 )
@@ -84,8 +84,9 @@ class ArgumentSpecValidator():
         self._no_log_values.update(set_fallbacks(self.argument_spec, self._validated_parameters))
 
         alias_warnings = []
+        alias_deprecations = []
         try:
-            alias_results, legal_inputs = handle_aliases(self.argument_spec, self._validated_parameters, alias_warnings)
+            alias_results, legal_inputs = handle_aliases(self.argument_spec, self._validated_parameters, alias_warnings, alias_deprecations)
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
@@ -93,6 +94,11 @@ class ArgumentSpecValidator():
 
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option, alias))
+
+        for deprecation in alias_deprecations:
+            deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                      version=deprecation.get('version'), date=deprecation.get('date'),
+                      collection_name=deprecation.get('collection_name'))
 
         self._no_log_values.update(list_no_log_values(self.argument_spec, self._validated_parameters))
 
