@@ -12,3 +12,7 @@ set -eux
 # include/import can execute another instance of role
 [ "$(ansible-playbook allowed_dupes.yml -i ../../inventory --tags importrole "$@" | grep -c '"msg": "A"')" = "2" ]
 [ "$(ansible-playbook allowed_dupes.yml -i ../../inventory --tags includerole "$@" | grep -c '"msg": "A"')" = "2" ]
+
+
+# ensure role data is merged correctly
+ansible-playbook data_integrity.yml -i ../../inventory "$@"

@@ -39,10 +39,11 @@ class DictDataLoader(DataLoader):
         self._vault_secrets = None
 
     def load_from_file(self, path, cache=True, unsafe=False):
+        data = None
         path = to_text(path)
         if path in self._file_mapping:
-            return self.load(self._file_mapping[path], path)
-        return None
+            data = self.load(self._file_mapping[path], path)
+        return data
 
     # TODO: the real _get_file_contents returns a bytestring, so we actually convert the
     #       unicode/text it's created with to utf-8

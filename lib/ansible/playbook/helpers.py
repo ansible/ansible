@@ -236,7 +236,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     try:
                         data = loader.load_from_file(include_file)
-                        if data is None:
+                        if not data:
                             display.warning('file %s is empty and had no tasks to include' % include_file)
                             continue
                         elif not isinstance(data, list):
