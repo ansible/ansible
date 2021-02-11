@@ -105,10 +105,15 @@ class ArgumentSpecValidator():
         except TypeError as e:
             self._add_error(to_native(e))
 
+        # Just get no_log values without setting defaults. This adds the default values
+        # to the values we have set to no_log. This seems odd.
         self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters, False))
 
         validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._error_messages)
         validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
+
+        # Actually set default values
+        self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
 
         validate_sub_spec(self.argument_spec, self._validated_parameters,
                           errors=self._error_messages,
