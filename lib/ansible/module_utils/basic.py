@@ -1284,21 +1284,16 @@ class AnsibleModule(object):
 
         # this uses exceptions as it happens before we can safely call fail_json
         alias_warnings = []
-        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
+        alias_deprecations = []
+        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings, alias_deprecations)
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
 
-        deprecated_aliases = []
-        for i in spec.keys():
-            if 'deprecated_aliases' in spec[i].keys():
-                for alias in spec[i]['deprecated_aliases']:
-                    deprecated_aliases.append(alias)
+        for deprecation in alias_deprecations:
+            deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                      version=deprecation.get('version'), date=deprecation.get('date'),
+                      collection_name=deprecation.get('collection_name'))
 
-        for deprecation in deprecated_aliases:
-            if deprecation['name'] in param.keys():
-                deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                          version=deprecation.get('version'), date=deprecation.get('date'),
-                          collection_name=deprecation.get('collection_name'))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):

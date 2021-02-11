@@ -498,7 +498,7 @@ def remove_values(value, no_log_strings):
     return new_value
 
 
-def handle_aliases(argument_spec, parameters, alias_warnings=None):
+def handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprecations=None):
     """Return a two item tuple. The first is a dictionary of aliases, the second is
     a list of legal inputs.
 
@@ -506,6 +506,9 @@ def handle_aliases(argument_spec, parameters, alias_warnings=None):
 
     If a list is provided to the alias_warnings parameter, it will be filled with tuples
     (option, alias) in every case where both an option and its alias are specified.
+
+    If a list is provided to alias_deprecations, it will be populated with dictionaries,
+    each containing deprecation information for each alias found in argument_spec.
     """
 
     legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
@@ -516,13 +519,22 @@ def handle_aliases(argument_spec, parameters, alias_warnings=None):
         aliases = v.get('aliases', None)
         default = v.get('default', None)
         required = v.get('required', False)
+
+        if alias_deprecations is not None:
+            for alias in argument_spec[k].get('deprecated_aliases', []):
+                if alias.get('name') in parameters:
+                    alias_deprecations.append(alias)
+
         if default is not None and required:
             # not alias specific but this is a good place to check this
             raise ValueError("internal error: required and default are mutually exclusive for %s" % k)
+
         if aliases is None:
             continue
+
         if not is_iterable(aliases) or isinstance(aliases, (binary_type, text_type)):
             raise TypeError('internal error: aliases must be a list or tuple')
+
         for alias in aliases:
             legal_inputs.append(alias)
             aliases_results[alias] = k
