@@ -39,6 +39,10 @@ from ansible.module_utils.six import (
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
     check_required_arguments,
+    check_required_together,
+    check_required_one_of,
+    check_required_if,
+    check_required_by,
     check_type_bits,
     check_type_bool,
     check_type_bytes,
@@ -811,12 +815,23 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                 except TypeError as e:
                     errors.append(to_native(e))
 
-                # TODO: Need more checks here.
-
-                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
-
                 validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
                 validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
+
+                checks = [
+                    (check_required_together, 'required_together'),
+                    (check_required_one_of, 'required_one_of'),
+                    (check_required_if, 'required_if'),
+                    (check_required_by, 'required_by'),
+                ]
+
+                for check in checks:
+                    try:
+                        check[0](value.get(check[1]), parameters)
+                    except TypeError as e:
+                        errors.append(to_native(e))
+
+                no_log_values.update(set_defaults(sub_spec, sub_parameters))
 
                 # Handle nested specs
                 validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
