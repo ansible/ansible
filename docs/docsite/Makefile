@@ -31,6 +31,9 @@ ifdef PLUGINS
 endif
 endif
 
+ifdef ANSIBLE_VERSION
+	PLUGIN_ARGS="$(PLUGIN_ARGS) --ansible-version=$(ANSIBLE_VERSION)"
+endif
 
 DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup netconf shell strategy vars
 

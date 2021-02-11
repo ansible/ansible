@@ -19,6 +19,7 @@ from ansible.release import __version__ as ansible_base__version__
 # Pylint doesn't understand Python3 namespace modules.
 # pylint: disable=relative-beyond-top-level
 from ..commands import Command
+from ..errors import InvalidUserInput, MissingUserInput
 # pylint: enable=relative-beyond-top-level
 
 
@@ -77,16 +78,15 @@ def generate_full_docs(args):
 
     with TemporaryDirectory() as tmp_dir:
         sh.git(['clone', 'https://github.com/ansible-community/ansible-build-data'], _cwd=tmp_dir)
-        # This is wrong.  Once ansible and ansible-base major.minor versions get out of sync this
-        # will stop working.  We probably need to walk all subdirectories in reverse version order
-        # looking for the latest ansible version which uses something compatible with
-        # ansible_base_major_ver.
+        # If we want to calidate that the ansible version and ansible-base branch version match,
+        # this would be the place to do it.
+
         deps_files = glob.glob(os.path.join(tmp_dir, 'ansible-build-data',
-                                            ansible_base_major_ver, '*.deps'))
+                                            args.ansible_version, '*.deps'))
         if not deps_files:
             raise Exception('No deps files exist for version {0}'.format(ansible_base_major_ver))
 
-        # Find the latest version of the deps file for this version
+        # Find the latest version of the deps file for this major version
         latest = None
         latest_ver = Version('0')
         for filename in deps_files:
@@ -136,6 +136,8 @@ class CollectionPluginDocs(Command):
                             ' documentation location that says the module is in a collection and'
                             ' point to generated plugin documentation under the collections/'
                             ' hierarchy.')
+        # I think we should make the actions a subparser but need to look in git history and see if
+        # we tried that and changed it for some reason.
         parser.add_argument('action', action='store', choices=('full', 'base', 'named'),
                             default='full', help=cls._ACTION_HELP)
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
@@ -149,15 +151,25 @@ class CollectionPluginDocs(Command):
                             dest="limit_to", default=None,
                             help="Limit building module documentation to comma-separated list of"
                             " plugins. Specify non-existing plugin name for no plugins.")
+        parser.add_argument('--ansible-version', action='store',
+                            dest='ansible_version', default=None,
+                            help='The version of the ansible package to make documentation for.'
+                            '  This only makes sense when used with full.')
 
     @staticmethod
     def main(args):
-        # normalize CLI args
+        # normalize and validate CLI args
+
+        if args.ansible_version and args.action != 'full':
+            raise InvalidUserInput('--ansible-version is only for use with "full".')
 
         if not args.output_dir:
             args.output_dir = os.path.abspath(str(DEFAULT_OUTPUT_DIR))
 
         if args.action == 'full':
+            if args.ansible_version is None:
+                raise MissingUserInput('--ansible-version must be specified when used'
+                                       ' with "full".')
             return generate_full_docs(args)
 
         if args.action == 'base':
