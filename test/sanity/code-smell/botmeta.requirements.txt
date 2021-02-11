@@ -1,2 +1,2 @@
 pyyaml
-voluptuous
+voluptuous == 0.12.1
