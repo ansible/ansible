@@ -63,7 +63,7 @@ class ArgumentSpecValidator():
     def _sanitize_error_messages(self):
         self._error_messages = remove_values(self._error_messages, self._no_log_values)
 
-    def validate(self):
+    def validate(self, *args, **kwargs):
         """Validate module parameters against argument spec.
 
         :Example:
