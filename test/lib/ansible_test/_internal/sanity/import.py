@@ -105,7 +105,7 @@ class ImportTest(SanityMultipleVersion):
 
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 
-        results = []
+        messages = []
 
         for import_type, test, add_ansible_requirements in (
                 ('module', _get_module_test(True), False),
@@ -186,7 +186,6 @@ class ImportTest(SanityMultipleVersion):
 
             cmd = ['importer.py']
 
-            messages = []
             try:
                 with coverage_context(args):
                     stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
