@@ -560,7 +560,7 @@ def main():
             name=dict(type='str', required=True),
             user=dict(type='str'),
             job=dict(type='str', aliases=['value']),
-            cron_file=dict(type='str'),
+            cron_file=dict(type='path'),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             backup=dict(type='bool', default=False),
             minute=dict(type='str', default='*'),
