@@ -29,6 +29,7 @@ from ..util import (
     generate_pip_command,
     find_python,
     get_hash,
+    REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
 from ..util_common import (
@@ -63,7 +64,8 @@ from ..data import (
 )
 
 
-def _get_module_test(module_restrictions):
+def _get_module_test(module_restrictions: bool) -> t.Callable[[str], bool]:
+    """Create a predicate which tests whether a path can be used by modules or not."""
     module_path = data_context().content.module_path
     module_utils_path = data_context().content.module_utils_path
     if module_restrictions:
@@ -109,7 +111,7 @@ class ImportTest(SanityMultipleVersion):
                 ('module', _get_module_test(True), False),
                 ('plugin', _get_module_test(False), True),
         ):
-            if import_type == 'plugin' and python_version.startswith('2.6'):
+            if import_type == 'plugin' and python_version in REMOTE_ONLY_PYTHON_VERSIONS:
                 continue
 
             data = '\n'.join([path for path in paths if test(path)])
