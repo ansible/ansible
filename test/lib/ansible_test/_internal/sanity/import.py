@@ -64,7 +64,7 @@ from ..data import (
 )
 
 
-def _get_module_test(module_restrictions: bool) -> t.Callable[[str], bool]:
+def _get_module_test(module_restrictions):  # type: (bool) -> t.Callable[[str], bool]
     """Create a predicate which tests whether a path can be used by modules or not."""
     module_path = data_context().content.module_path
     module_utils_path = data_context().content.module_utils_path
