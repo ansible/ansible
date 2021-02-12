@@ -3,7 +3,7 @@
 OpenStack Ansible Modules
 =========================
 
-The OpenStack collection (on `Galaxy <https://galaxy.ansible.com/openstack/cloud>`_, source code `repository <https://opendev.org/openstack/ansible-collections-openstack.git>`_) contains modules for interacting with OpenStack as either an admin or an end user. If the module does not begin with ``os_``, it is either deprecated or soon to be deprecated. This document serves as developer coding guidelines for modules in this collection.
+The OpenStack collection (on `Galaxy <https://galaxy.ansible.com/openstack/cloud>`_, source code `repository <https://opendev.org/openstack/ansible-collections-openstack.git>`_) contains modules for interacting with OpenStack as either an admin or an end user. This document serves as developer coding guidelines for modules in this collection.
 
 .. contents::
    :local:
@@ -11,9 +11,8 @@ The OpenStack collection (on `Galaxy <https://galaxy.ansible.com/openstack/cloud
 Naming
 ------
 
-* All module names should start with ``os_``
-* Name any module that a cloud consumer would expect to use after the logical resource it manages: ``os_server`` not ``os_nova``. This naming convention acknowledges that the end user does not care which service manages the resource - that is a deployment detail. For example cloud consumers may not know whether their floating IPs are managed by Nova or Neutron.
-* Name any module that a cloud admin would expect to use with the service and the resource: ``os_keystone_domain``.
+* Name any module that a cloud consumer would expect to use after the logical resource it manages: ``openstack.cloud.server`` not ``openstack.cloud.nova``. This naming convention acknowledges that the end user does not care which service manages the resource - that is a deployment detail. For example cloud consumers may not know whether their floating IPs are managed by Nova or Neutron.
+* Name any module that a cloud admin would expect to use with the service and the resource: ``openstack.cloud.keystone_domain``.
 * If the module is one that a cloud admin and a cloud consumer could both use,
   the cloud consumer rules apply.
 
