@@ -46,6 +46,13 @@ lib/ansible/galaxy/collection/__init__.py compile-2.6!skip # 'ansible-galaxy col
 lib/ansible/galaxy/collection/galaxy_api_proxy.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/galaxy/dependency_resolution/dataclasses.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/galaxy/dependency_resolution/providers.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
+lib/ansible/module_utils/compat/selinux.py import-2.6!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.5!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
@@ -196,7 +203,6 @@ test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PS
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
-test/lib/ansible_test/_data/requirements/constraints.txt test-constraints
 test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt test-constraints
 test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
