@@ -24,7 +24,8 @@ DOCUMENTATION = '''
                 - Normally, for performance reasons, vars plugins get executed after the inventory sources complete the base inventory,
                   this option allows for getting vars related to hosts/groups from those plugins.
                 - The host_group_vars (enabled by default) 'vars plugin' is the one responsible for reading host_vars/ and group_vars/ directories.
-                - This will not execute plugins that are not supposed to execute at the 'inventory' stage, see vars plugins docs for details.
+                - This will execute all vars plugins, even those that are not supposed to execute at the 'inventory' stage.
+                  See vars plugins docs for details on 'stage'.
             required: false
             default: false
             type: boolean
