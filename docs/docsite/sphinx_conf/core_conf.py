@@ -100,6 +100,7 @@ exclude_patterns = [
     'porting_guides/porting_guides.rst',
     'porting_guides/porting_guide_2*',
     'porting_guides/porting_guide_3*',
+    'roadmap/index',
     'roadmap/ansible_roadmap_index.rst',
     'roadmap/old_roadmap_index.rst',
     'roadmap/ROADMAP_2_5.rst',

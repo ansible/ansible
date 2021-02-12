@@ -94,6 +94,7 @@ exclude_patterns = [
     '2.10_index.rst',
     'ansible_index.rst',
     'core_index.rst',
+    'porting_guides/core_porting_guides',
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
