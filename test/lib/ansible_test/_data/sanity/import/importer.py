@@ -27,6 +27,7 @@ def main():
     external_python = os.environ.get('SANITY_EXTERNAL_PYTHON') or sys.executable
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
+    import_type = os.environ.get('SANITY_IMPORTER_TYPE')
 
     try:
         # noinspection PyCompatibility
@@ -103,15 +104,16 @@ def main():
     # remove all modules under the ansible package
     list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__]))
 
-    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
-    # this more accurately reflects the environment that AnsiballZ runs modules under
-    # it also avoids issues with imports in the ansible package that are not allowed
-    ansible_module = types.ModuleType(ansible.__name__)
-    ansible_module.__file__ = ansible.__file__
-    ansible_module.__path__ = ansible.__path__
-    ansible_module.__package__ = ansible.__package__
+    if import_type == 'module':
+        # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
+        # this more accurately reflects the environment that AnsiballZ runs modules under
+        # it also avoids issues with imports in the ansible package that are not allowed
+        ansible_module = types.ModuleType(ansible.__name__)
+        ansible_module.__file__ = ansible.__file__
+        ansible_module.__path__ = ansible.__path__
+        ansible_module.__package__ = ansible.__package__
 
-    sys.modules[ansible.__name__] = ansible_module
+        sys.modules[ansible.__name__] = ansible_module
 
     class ImporterAnsibleModuleException(Exception):
         """Exception thrown during initialization of ImporterAnsibleModule."""
@@ -123,10 +125,11 @@ def main():
 
     class RestrictedModuleLoader:
         """Python module loader that restricts inappropriate imports."""
-        def __init__(self, path, name):
+        def __init__(self, path, name, restrict_to_module_paths):
             self.path = path
             self.name = name
             self.loaded_modules = set()
+            self.restrict_to_module_paths = restrict_to_module_paths
 
         def find_module(self, fullname, path=None):
             """Return self if the given fullname is restricted, otherwise return None.
@@ -138,6 +141,9 @@ def main():
                 return None  # ignore modules that are already being loaded
 
             if is_name_in_namepace(fullname, ['ansible']):
+                if not self.restrict_to_module_paths:
+                    return None  # for non-modules, everything in the ansible namespace is allowed
+
                 if fullname in ('ansible.module_utils.basic', 'ansible.module_utils.common.removed'):
                     return self  # intercept loading so we can modify the result
 
@@ -152,6 +158,9 @@ def main():
             if is_name_in_namepace(fullname, ['ansible_collections']):
                 if not collection_loader:
                     return self  # restrict access to collections when we are not testing a collection
+
+                if not self.restrict_to_module_paths:
+                    return None  # for non-modules, everything in the ansible namespace is allowed
 
                 if is_name_in_namepace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
@@ -196,24 +205,25 @@ def main():
             self.loaded_modules.add(fullname)
             return import_module(fullname)
 
-    def run():
+    def run(restrict_to_module_paths):
         """Main program function."""
         base_dir = os.getcwd()
         messages = set()
 
         for path in sys.argv[1:] or sys.stdin.read().splitlines():
             name = convert_relative_path_to_name(path)
-            test_python_module(path, name, base_dir, messages)
+            test_python_module(path, name, base_dir, messages, restrict_to_module_paths)
 
         if messages:
             sys.exit(10)
 
-    def test_python_module(path, name, base_dir, messages):
+    def test_python_module(path, name, base_dir, messages, restrict_to_module_paths):
         """Test the given python module by importing it.
         :type path: str
         :type name: str
         :type base_dir: str
         :type messages: set[str]
+        :type restrict_to_module_paths: bool
         """
         if name in sys.modules:
             return  # cannot be tested because it has already been loaded
@@ -230,13 +240,13 @@ def main():
 
         try:
             with monitor_sys_modules(path, messages):
-                with restrict_imports(path, name, messages):
+                with restrict_imports(path, name, messages, restrict_to_module_paths):
                     with capture_output(capture_normal):
                         import_module(name)
 
             if run_main:
                 with monitor_sys_modules(path, messages):
-                    with restrict_imports(path, name, messages):
+                    with restrict_imports(path, name, messages, restrict_to_module_paths):
                         with capture_output(capture_main):
                             runpy.run_module(name, run_name='__main__', alter_sys=True)
         except ImporterAnsibleModuleException:
@@ -398,13 +408,14 @@ def main():
             print(message)
 
     @contextlib.contextmanager
-    def restrict_imports(path, name, messages):
+    def restrict_imports(path, name, messages, restrict_to_module_paths):
         """Restrict available imports.
         :type path: str
         :type name: str
         :type messages: set[str]
+        :type restrict_to_module_paths: bool
         """
-        restricted_loader = RestrictedModuleLoader(path, name)
+        restricted_loader = RestrictedModuleLoader(path, name, restrict_to_module_paths)
 
         # noinspection PyTypeChecker
         sys.meta_path.insert(0, restricted_loader)
@@ -413,6 +424,10 @@ def main():
         try:
             yield
         finally:
+            if import_type == 'plugin':
+                from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+                _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
+
             if sys.meta_path[0] != restricted_loader:
                 report_message(path, 0, 0, 'metapath', 'changes to sys.meta_path[0] are not permitted', messages)
 
@@ -457,6 +472,26 @@ def main():
 
         with warnings.catch_warnings():
             warnings.simplefilter('error')
+            if sys.version_info[0] == 2:
+                warnings.filterwarnings(
+                    "ignore",
+                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
+                    " and will be removed in a future release.")
+                warnings.filterwarnings(
+                    "ignore",
+                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
+                    " and will be removed in the next release.")
+            if sys.version_info[:2] == (3, 5):
+                warnings.filterwarnings(
+                    "ignore",
+                    "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
+                warnings.filterwarnings(
+                    "ignore",
+                    "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
+            warnings.filterwarnings(
+                "ignore",
+                "The _yaml extension module is now located at yaml._yaml and its location is subject to change.  To use the "
+                "LibYAML-based parser and emitter, import from `yaml`: `from yaml import CLoader as Loader, CDumper as Dumper`.")
 
             try:
                 yield
@@ -464,7 +499,7 @@ def main():
                 sys.stdout = old_stdout
                 sys.stderr = old_stderr
 
-    run()
+    run(import_type == 'module')
 
 
 if __name__ == '__main__':

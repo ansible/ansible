@@ -5,6 +5,7 @@ __metaclass__ = type
 import contextlib
 import errno
 import fcntl
+import hashlib
 import inspect
 import os
 import pkgutil
@@ -53,6 +54,7 @@ from .encoding import (
 
 from .io import (
     open_binary_file,
+    read_binary_file,
     read_text_file,
 )
 
@@ -855,6 +857,21 @@ def open_zipfile(path, mode='r'):
     zib_obj = zipfile.ZipFile(path, mode=mode)
     yield zib_obj
     zib_obj.close()
+
+
+def get_hash(path):
+    """
+    :type path: str
+    :rtype: str | None
+    """
+    if not os.path.exists(path):
+        return None
+
+    file_hash = hashlib.sha256()
+
+    file_hash.update(read_binary_file(path))
+
+    return file_hash.hexdigest()
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

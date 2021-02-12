@@ -9,7 +9,6 @@ import re
 import time
 import textwrap
 import functools
-import hashlib
 import difflib
 import filecmp
 import random
@@ -44,7 +43,6 @@ from .cloud import (
 from .io import (
     make_dirs,
     open_text_file,
-    read_binary_file,
     read_text_file,
     write_text_file,
 )
@@ -70,6 +68,7 @@ from .util import (
     SUPPORTED_PYTHON_VERSIONS,
     str_to_version,
     version_to_str,
+    get_hash,
 )
 
 from .util_common import (
@@ -2026,7 +2025,7 @@ class EnvironmentDescription:
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
-        known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
+        known_hosts_hash = get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
         for version in sorted(versions):
             self.check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings)
@@ -2165,21 +2164,6 @@ class EnvironmentDescription:
         """
         with open_text_file(path) as script_fd:
             return script_fd.readline().strip()
-
-    @staticmethod
-    def get_hash(path):
-        """
-        :type path: str
-        :rtype: str | None
-        """
-        if not os.path.exists(path):
-            return None
-
-        file_hash = hashlib.sha256()
-
-        file_hash.update(read_binary_file(path))
-
-        return file_hash.hexdigest()
 
 
 class NoChangesDetected(ApplicationWarning):
