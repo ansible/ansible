@@ -221,3 +221,29 @@
                 - ansible_failed_result.validate_args_context.type == "role"
                 - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
                 - ansible_failed_result.argument_spec_data == alternate_expected_returned_spec
+
+- name: "New play to reset vars: Test role with no tasks can fail"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+      - block:
+        - name: "EXPECTED FAILURE: Test import_role of role role_with_no_tasks (missing a_str)"
+          import_role:
+            name: role_with_no_tasks
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+          - name: "Validate import_role failure"
+            assert:
+              that:
+                # NOTE: a bug here that prevents us from getting ansible_failed_task
+                - ansible_failed_result.argument_errors | length == 1
+                - "'missing required arguments: a_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "role_with_no_tasks"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/role_with_no_tasks')"

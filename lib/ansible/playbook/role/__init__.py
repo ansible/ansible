@@ -256,7 +256,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
-        self._prepend_validation_task(task_data)
+        task_data = self._prepend_validation_task(task_data)
 
         if task_data:
             try:
@@ -282,6 +282,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         exists for the entry point. Entry point defaults to `main`.
 
         :param task_data: List of tasks loaded from the role.
+
+        :returns: The (possibly modified) task list.
         '''
         if self._metadata.argument_specs:
             # Determine the role entry point so we can retrieve the correct argument spec.
@@ -298,6 +300,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 if not task_data:
                     task_data = []
                 task_data.insert(0, validation_task)
+        return task_data
 
     def _create_validation_task(self, argument_spec, entrypoint_name):
         '''Create a new task data structure that uses the validate_argument_spec action plugin.
@@ -315,7 +318,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         return {
             'action': {
-                'module': 'validate_argument_spec',
+                'module': 'ansible.builtin.validate_argument_spec',
                 # Pass only the 'options' portion of the arg spec to the module.
                 'argument_spec': argument_spec.get('options', {}),
                 'provided_arguments': self._role_params,
