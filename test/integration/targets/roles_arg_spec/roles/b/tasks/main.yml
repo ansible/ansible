@@ -1,0 +1,9 @@
+---
+- debug:
+    msg: "Role B"
+- debug:
+    var: b_str
+- debug:
+    var: b_int
+- debug:
+    var: b_bool
