@@ -45,6 +45,11 @@ ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
 endif
 
+MAJOR_VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --majorversion || echo error)
+ifeq ($(findstring error,$(MAJOR_VERSION)), error)
+$(error "version_helper failed to determine major version")
+endif
+
 assertrst:
 ifndef rst
 	$(error specify document or pattern with rst=somefile.rst)
@@ -65,9 +70,7 @@ core_generate_rst: collections_meta config cli keywords base_plugins testing
 ansible_structure: generate_rst
 	# We must have python and python-packaging for the version_helper
 	# script so use it for version comparison
-	# Note: return 0 if the requested ansible version is more recent than
-	# 2.10 return 1 if 2.10 or earlier was requested.
-	if python -c "import sys, packaging.version as p; sys.exit(not p.Version('$(ANSIBLE_VERSION)') >  p.Version('2.10'))" ; then \
+	if python -c "import sys, packaging.version as p; sys.exit(not p.Version('$(MAJOR_VERSION)') >  p.Version('2.10'))" ; then \
 		echo "Creating symlinks in generate_rst"; \
 		ln -sf ../rst/ansible_index.rst rst/index.rst; \
 		ln -sf ../sphinx_conf/ansible_conf.py rst/conf.py; \
