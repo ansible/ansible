@@ -1,6 +1,5 @@
 {
     "intercept": true,
-    "minimum_python_version": "3.6",
     "prefixes": [
         "changelogs/config.yaml",
         "changelogs/fragments/"
