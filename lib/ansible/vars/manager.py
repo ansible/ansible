@@ -321,72 +321,74 @@ class VariableManager:
                 pass
 
         if play:
-            all_vars = _combine_and_track(all_vars, play.get_vars(), "play vars")
+            temp_vars = combine_vars(all_vars, self._extra_vars)
+            temp_vars = combine_vars(temp_vars, magic_variables)
+            templar = Templar(loader=self._loader, variables=temp_vars)
+            all_vars = _combine_and_track(all_vars, play.get_vars(templar), "play vars")
 
-            vars_files = play.get_vars_files()
-            try:
-                for vars_file_item in vars_files:
-                    # create a set of temporary vars here, which incorporate the extra
-                    # and magic vars so we can properly template the vars_files entries
-                    temp_vars = combine_vars(all_vars, self._extra_vars)
-                    temp_vars = combine_vars(temp_vars, magic_variables)
-                    templar = Templar(loader=self._loader, variables=temp_vars)
+            # try:
+            #     for vars_file_item in vars_files:
+            #         # create a set of temporary vars here, which incorporate the extra
+            #         # and magic vars so we can properly template the vars_files entries
+            #         temp_vars = combine_vars(all_vars, self._extra_vars)
+            #         temp_vars = combine_vars(temp_vars, magic_variables)
+            #         templar = Templar(loader=self._loader, variables=temp_vars)
 
-                    # we assume each item in the list is itself a list, as we
-                    # support "conditional includes" for vars_files, which mimics
-                    # the with_first_found mechanism.
-                    vars_file_list = vars_file_item
-                    if not isinstance(vars_file_list, list):
-                        vars_file_list = [vars_file_list]
+            #         # we assume each item in the list is itself a list, as we
+            #         # support "conditional includes" for vars_files, which mimics
+            #         # the with_first_found mechanism.
+            #         vars_file_list = vars_file_item
+            #         if not isinstance(vars_file_list, list):
+            #             vars_file_list = [vars_file_list]
 
-                    # now we iterate through the (potential) files, and break out
-                    # as soon as we read one from the list. If none are found, we
-                    # raise an error, which is silently ignored at this point.
-                    try:
-                        for vars_file in vars_file_list:
-                            vars_file = templar.template(vars_file)
-                            if not (isinstance(vars_file, Sequence)):
-                                raise AnsibleError(
-                                    "Invalid vars_files entry found: %r\n"
-                                    "vars_files entries should be either a string type or "
-                                    "a list of string types after template expansion" % vars_file
-                                )
-                            try:
-                                data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
-                                if data is not None:
-                                    for item in data:
-                                        all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
-                                break
-                            except AnsibleFileNotFound:
-                                # we continue on loader failures
-                                continue
-                            except AnsibleParserError:
-                                raise
-                        else:
-                            # if include_delegate_to is set to False, we ignore the missing
-                            # vars file here because we're working on a delegated host
-                            if include_delegate_to:
-                                raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
-                    except (UndefinedError, AnsibleUndefinedVariable):
-                        if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                            raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
-                                                           % vars_file_item, obj=vars_file_item)
-                        else:
-                            # we do not have a full context here, and the missing variable could be because of that
-                            # so just show a warning and continue
-                            display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
-                            continue
+            #         # now we iterate through the (potential) files, and break out
+            #         # as soon as we read one from the list. If none are found, we
+            #         # raise an error, which is silently ignored at this point.
+            #         try:
+            #             for vars_file in vars_file_list:
+            #                 vars_file = templar.template(vars_file)
+            #                 if not (isinstance(vars_file, Sequence)):
+            #                     raise AnsibleError(
+            #                         "Invalid vars_files entry found: %r\n"
+            #                         "vars_files entries should be either a string type or "
+            #                         "a list of string types after template expansion" % vars_file
+            #                     )
+            #                 try:
+            #                     data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
+            #                     if data is not None:
+            #                         for item in data:
+            #                             all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
+            #                     break
+            #                 except AnsibleFileNotFound:
+            #                     # we continue on loader failures
+            #                     continue
+            #                 except AnsibleParserError:
+            #                     raise
+            #             else:
+            #                 # if include_delegate_to is set to False, we ignore the missing
+            #                 # vars file here because we're working on a delegated host
+            #                 if include_delegate_to:
+            #                     raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+            #         except (UndefinedError, AnsibleUndefinedVariable):
+            #             if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
+            #                 raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
+            #                                                % vars_file_item, obj=vars_file_item)
+            #             else:
+            #                 # we do not have a full context here, and the missing variable could be because of that
+            #                 # so just show a warning and continue
+            #                 display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
+            #                 continue
 
-                    display.vvv("Read vars_file '%s'" % vars_file_item)
-            except TypeError:
-                raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
-                                         "Got '%s' of type %s" % (vars_files, type(vars_files)))
+            #         display.vvv("Read vars_file '%s'" % vars_file_item)
+            # except TypeError:
+            #     raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
+            #                              "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
-            # By default, we now merge in all vars from all roles in the play,
-            # unless the user has disabled this via a config option
-            if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                for role in play.get_roles():
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False), "role '%s' vars" % role.name)
+            # # By default, we now merge in all vars from all roles in the play,
+            # # unless the user has disabled this via a config option
+            # if not C.DEFAULT_PRIVATE_ROLE_VARS:
+            #     for role in play.get_roles():
+            #         all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False), "role '%s' vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks

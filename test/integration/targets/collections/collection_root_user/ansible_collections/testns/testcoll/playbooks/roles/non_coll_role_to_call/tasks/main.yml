@@ -1,7 +1,7 @@
 - debug:
     msg: '{{ test_role_input | default("(undefined)") }}'
-  register: test_role_output
+  register: non_coll_role_to_call_test_role_output
 
 - assert:
     that:
-    - test_role_input is not defined or test_role_input == test_role_output.msg
+    - non_coll_role_to_call_test_role_input is not defined or test_role_input == non_coll_role_to_call_test_role_output.msg

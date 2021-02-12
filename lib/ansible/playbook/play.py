@@ -19,20 +19,26 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleFileNotFound, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -40,7 +46,7 @@ display = Display()
 __all__ = ['Play']
 
 
-class Play(Base, Taggable, CollectionSearch):
+class Play(Base, Taggable, CollectionSearch, Conditional):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -83,12 +89,12 @@ class Play(Base, Taggable, CollectionSearch):
 
     # =================================================================================
 
-    def __init__(self):
+    def __init__(self, parent=None):
         super(Play, self).__init__()
 
-        self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
+        self._parent = parent
         self.ROLE_CACHE = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
@@ -102,7 +108,7 @@ class Play(Base, Taggable, CollectionSearch):
         return self.name
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None, vars=None):
+    def load(data, variable_manager=None, loader=None, parent=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if data['hosts'] is None or all(host is None for host in data['hosts']):
                 raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
@@ -110,9 +116,7 @@ class Play(Base, Taggable, CollectionSearch):
                 data['name'] = ','.join(data['hosts'])
             else:
                 data['name'] = data['hosts']
-        p = Play()
-        if vars:
-            p.vars = vars.copy()
+        p = Play(parent)
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -199,7 +203,7 @@ class Play(Base, Taggable, CollectionSearch):
 
         roles = []
         for ri in role_includes:
-            roles.append(Role.load(ri, play=self))
+            roles.append(Role.load(ri, play=self, parent=self))
 
         self.roles[:0] = roles
 
@@ -287,8 +291,16 @@ class Play(Base, Taggable, CollectionSearch):
 
         return block_list
 
-    def get_vars(self):
-        return self.vars.copy()
+    def get_vars(self, templar=None):
+        # With adhoc, self._parent may be None
+        all_vars = {} if not self._parent else self._parent.get_vars()
+        all_vars = combine_vars(all_vars, self.vars)
+        all_vars = combine_vars(all_vars, self.get_vars_files_vars(templar))
+
+        if C.DEFAULT_PRIVATE_ROLE_VARS is False:
+            for role in self.get_roles():
+                all_vars = combine_vars(all_vars, role.get_vars())
+        return all_vars
 
     def get_vars_files(self):
         if self.vars_files is None:
@@ -296,6 +308,48 @@ class Play(Base, Taggable, CollectionSearch):
         elif not isinstance(self.vars_files, list):
             return [self.vars_files]
         return self.vars_files
+
+    def get_vars_files_vars(self, templar=None):
+        # Templar is required to template vars_files paths
+        # on a per host basis, and is only passed from
+        # VariableManager.get_vars
+        all_vars = {}
+        vars_files = self.get_vars_files()
+        try:
+            for vars_file_list in vars_files:
+                if not is_sequence(vars_file_list):
+                    vars_file_list = [vars_file_list]
+                try:
+                    for vars_file in vars_file_list:
+                        # vars_files is a list of lists
+                        # The inner list operates like fist_found
+                        if templar:
+                            vars_file = templar.template(vars_file)
+
+                        try:
+                            data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
+                            if data is not None:
+                                for item in data:
+                                    all_vars.update(item)
+                            break
+                        except AnsibleFileNotFound:
+                            # we continue on loader failures
+                            continue
+                        except AnsibleParserError:
+                            raise
+                    else:
+                        # If we made it here, and we have a templar,
+                        # and we didn't find a file, the error
+                        if templar:
+                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file)
+                except (UndefinedError, AnsibleUndefinedVariable):
+                    pass
+                display.vvv("Read vars_file '%s'" % vars_file)
+        except TypeError:
+            raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
+                                     "Got '%s' of type %s" % (vars_files, type(vars_files)))
+
+        return all_vars
 
     def get_handlers(self):
         return self.handlers[:]
@@ -320,6 +374,7 @@ class Play(Base, Taggable, CollectionSearch):
             roles.append(role.serialize())
         data['roles'] = roles
         data['included_path'] = self._included_path
+        data['parent'] = self._parent
 
         return data
 
@@ -327,6 +382,7 @@ class Play(Base, Taggable, CollectionSearch):
         super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
+        self._parent = data.get('parent')
         if 'roles' in data:
             role_data = data.get('roles', [])
             roles = []
@@ -338,9 +394,52 @@ class Play(Base, Taggable, CollectionSearch):
             setattr(self, 'roles', roles)
             del data['roles']
 
-    def copy(self):
+    def copy(self, **kwargs):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
-        new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
+        new_me._parent = self._parent
         return new_me
+
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._parent:
+            self._parent.set_loader(loader)
+
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
+        '''
+        Generic logic to get the attribute or parent attribute for a task value.
+        '''
+
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
+        try:
+            value = self._attributes[attr]
+
+            if hasattr(self._parent, 'get_plays'):
+                _parent = self._parent._parent
+            else:
+                _parent = self._parent
+
+            if _parent and (value is Sentinel or extend):
+                # vars are always inheritable, other attributes might not be for the parent but still should be fo
+                parent_value = _parent._attributes.get(attr, Sentinel)
+
+                if extend:
+                    value = self._extend_value(value, parent_value, prepend)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
+
+        return value
+
+    def all_parents_static(self):
+        return True

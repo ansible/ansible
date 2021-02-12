@@ -28,6 +28,7 @@ from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
+from ansible.utils.vars import get_unique_id
 
 display = Display()
 
@@ -37,13 +38,21 @@ __all__ = ['Playbook']
 
 class Playbook:
 
-    def __init__(self, loader):
+    def __init__(self, loader, parent=None):
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader = loader
         self._file_name = None
+        self._parent = parent
+        self._uuid = get_unique_id()
+
+    def __repr__(self):
+        return self.get_name()
+
+    def get_name(self):
+        return self._file_name
 
     @staticmethod
     def load(file_name, variable_manager=None, loader=None):
@@ -51,7 +60,10 @@ class Playbook:
         pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
         return pb
 
-    def _load_playbook_data(self, file_name, variable_manager, vars=None):
+    def _load_playbook_data(self, file_name, variable_manager, parent=None):
+
+        if parent is None:
+            parent = self
 
         if os.path.isabs(file_name):
             self._basedir = os.path.dirname(file_name)
@@ -95,7 +107,7 @@ class Playbook:
                 if any(action in entry for action in C._ACTION_INCLUDE):
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')
-                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
+                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader, parent=self)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
@@ -106,7 +118,7 @@ class Playbook:
                             break
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, parent=parent)
                 self._entries.append(entry_obj)
 
         # we're done, so restore the old basedir in the loader
@@ -115,5 +127,22 @@ class Playbook:
     def get_loader(self):
         return self._loader
 
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._parent:
+            self._parent.set_loader(loader)
+
     def get_plays(self):
         return self._entries[:]
+
+    def get_vars(self):
+        # This does nothing and has no purpose other than making
+        # Play.get_vars more simple and potentially faster
+        return {} if not self._parent else self._parent.get_vars()

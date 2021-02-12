@@ -59,6 +59,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         elif parent_block:
             self._parent = parent_block
 
+        if self._parent is None:
+            self._parent = role if role else play
+
         super(Block, self).__init__()
 
     def __repr__(self):
@@ -66,11 +69,11 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     def __eq__(self, other):
         '''object comparison based on _uuid'''
-        return self._uuid == other._uuid
+        return isinstance(other, Block) and self._uuid == other._uuid
 
     def __ne__(self, other):
         '''object comparison based on _uuid'''
-        return self._uuid != other._uuid
+        return isinstance(other, Block) and self._uuid != other._uuid
 
     def get_vars(self):
         '''
@@ -78,11 +81,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         of a role or task include which does, so return those if present.
         '''
 
-        all_vars = self.vars.copy()
-
-        if self._parent:
-            all_vars.update(self._parent.get_vars())
-
+        all_vars = self._parent.get_vars()
+        all_vars.update(self.vars.copy())
         return all_vars
 
     @staticmethod
@@ -169,26 +169,30 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     def get_dep_chain(self):
         if self._dep_chain is None:
             if self._parent:
-                return self._parent.get_dep_chain()
+                try:
+                    return self._parent.get_dep_chain()
+                except AttributeError:
+                    return None
             else:
                 return None
         else:
             return self._dep_chain[:]
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
+    def copy(self, exclude_parent=False, exclude_tasks=False, direct_parent=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
                 new_task = task.copy(exclude_parent=True)
                 if task._parent:
-                    new_task._parent = task._parent.copy(exclude_tasks=True)
+                    new_task._parent = task._parent.copy(exclude_tasks=True, direct_parent=True)
                     if task._parent == new_block:
                         # If task._parent is the same as new_block, just replace it
                         new_task._parent = new_block
                     else:
                         # task may not be a direct child of new_block, search for the correct place to insert new_block
                         cur_obj = new_task._parent
-                        while cur_obj._parent and cur_obj._parent != new_block:
+                        # Prevent the new block from becoming a parent higher than the Play
+                        while cur_obj._parent.__class__.__name__ != 'Play' and cur_obj._parent != new_block:
                             cur_obj = cur_obj._parent
 
                         cur_obj._parent = new_block
@@ -205,7 +209,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             new_me._dep_chain = self._dep_chain[:]
 
         new_me._parent = None
-        if self._parent and not exclude_parent:
+        if direct_parent:
+            new_me._parent = self._parent
+        elif exclude_parent is False:
             new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
@@ -376,8 +382,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             return tmp_list
 
         def evaluate_block(block):
-            new_block = block.copy(exclude_parent=True, exclude_tasks=True)
-            new_block._parent = block._parent
+            new_block = block.copy(direct_parent=True, exclude_tasks=True)
             new_block.block = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)
@@ -389,10 +394,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
 
     def get_include_params(self):
-        if self._parent:
+        try:
             return self._parent.get_include_params()
-        else:
-            return dict()
+        except AttributeError:
+            return {}
 
     def all_parents_static(self):
         '''
@@ -402,7 +407,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         the chain check the statically_loaded value of the parent.
         '''
         from ansible.playbook.task_include import TaskInclude
-        if self._parent:
+        if self._parent and hasattr(self._parent, 'all_parents_static'):
             if isinstance(self._parent, TaskInclude) and not self._parent.statically_loaded:
                 return False
             return self._parent.all_parents_static()
@@ -411,7 +416,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     def get_first_parent_include(self):
         from ansible.playbook.task_include import TaskInclude
-        if self._parent:
+        if self._parent and hasattr(self._parent, 'get_first_parent_include'):
             if isinstance(self._parent, TaskInclude):
                 return self._parent
             return self._parent.get_first_parent_include()

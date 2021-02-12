@@ -310,7 +310,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 self._attributes[name] = getattr(self, name)
             self._squashed = True
 
-    def copy(self):
+    def copy(self, **kwargs):
         '''
         Create a copy of this object and return it.
         '''

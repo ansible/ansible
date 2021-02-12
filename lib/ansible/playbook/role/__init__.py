@@ -100,12 +100,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
 
-    def __init__(self, play=None, from_files=None, from_include=False):
+    def __init__(self, play=None, from_files=None, from_include=False, parent=None):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
         self._role_params = dict()
         self._loader = None
+        self._parent = parent
 
         self._metadata = None
         self._play = play
@@ -137,7 +138,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, parent=None):
 
         if from_files is None:
             from_files = {}
@@ -171,7 +172,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include)
+            r = Role(play=play, from_files=from_files, from_include=from_include, parent=parent)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.get_name() not in play.ROLE_CACHE:
@@ -393,7 +394,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         deps = []
         if self._metadata:
             for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, play=self._play, parent_role=self)
+                r = Role.load(role_include, play=self._play, parent_role=self, parent=self._play)
                 deps.append(r)
 
         return deps
@@ -541,7 +542,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             block_list.extend(dep_blocks)
 
         for task_block in self._task_blocks:
-            new_task_block = task_block.copy()
+            new_task_block = task_block.copy(direct_parent=True)
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
             block_list.append(new_task_block)
@@ -575,6 +576,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         res['_default_vars'] = self._default_vars
         res['_had_task_run'] = self._had_task_run.copy()
         res['_completed'] = self._completed.copy()
+        res['_parent'] = self._parent
 
         if self._metadata:
             res['_metadata'] = self._metadata.serialize()
@@ -600,6 +602,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._default_vars = data.get('_default_vars', dict())
         self._had_task_run = data.get('_had_task_run', dict())
         self._completed = data.get('_completed', dict())
+        self._parent = data.get('parent')
 
         if include_deps:
             deps = []
@@ -624,6 +627,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             self._metadata = m
 
         super(Role, self).deserialize(data)
+
+    def copy(self, **kwargs):
+        new_me = super(Role, self).copy(**kwargs)
+        new_me._parent = self._parent
+        return new_me
 
     def set_loader(self, loader):
         self._loader = loader

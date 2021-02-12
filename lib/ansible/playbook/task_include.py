@@ -106,8 +106,8 @@ class TaskInclude(Task):
 
         return ds
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
-        new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
+    def copy(self, exclude_parent=False, exclude_tasks=False, direct_parent=False):
+        new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks, direct_parent=direct_parent)
         new_me.statically_loaded = self.statically_loaded
         return new_me
 
