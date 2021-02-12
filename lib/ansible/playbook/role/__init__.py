@@ -286,6 +286,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         :returns: The (possibly modified) task list.
         '''
         if self._metadata.argument_specs:
+            if self._dependencies:
+                display.warning("Dependent roles will run before roles with argument specs even if validation fails.")
+
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
             entrypoint = self._from_files.get('tasks', 'main')

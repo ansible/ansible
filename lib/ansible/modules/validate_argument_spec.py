@@ -54,7 +54,7 @@ argument_spec_data:
 validate_args_context:
   description: A dict of info about where validate_args_spec was used
   type: dict
-  returned: success, failure
+  returned: always
   sample:
     name: my_role
     type: role
