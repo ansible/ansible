@@ -1,12 +1,11 @@
-# Copyright 2018 Red Hat
+# Copyright 2021 Red Hat
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError, AnsibleModuleError
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-from ansible.module_utils import basic
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 
