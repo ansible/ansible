@@ -27,6 +27,7 @@ def main():
     external_python = os.environ.get('SANITY_EXTERNAL_PYTHON') or sys.executable
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
+    import_type = os.environ.get('SANITY_IMPORTER_TYPE')
 
     try:
         # noinspection PyCompatibility
@@ -102,15 +103,6 @@ def main():
 
     # remove all modules under the ansible package
     list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__]))
-
-    args = sys.argv[1:]
-    import_type = 'module'
-    try:
-        type_index = args.index('--type')
-        import_type = args[type_index + 1]
-        args = args[:type_index] + args[type_index + 2:]
-    except ValueError:
-        pass
 
     if import_type == 'module':
         # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
@@ -218,7 +210,7 @@ def main():
         base_dir = os.getcwd()
         messages = set()
 
-        for path in args or sys.stdin.read().splitlines():
+        for path in sys.argv[1:] or sys.stdin.read().splitlines():
             name = convert_relative_path_to_name(path)
             test_python_module(path, name, base_dir, messages, restrict_to_module_paths)
 

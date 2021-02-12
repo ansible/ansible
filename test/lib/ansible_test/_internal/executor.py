@@ -2025,7 +2025,7 @@ class EnvironmentDescription:
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
-        known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
+        known_hosts_hash = get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
         for version in sorted(versions):
             self.check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings)
@@ -2164,14 +2164,6 @@ class EnvironmentDescription:
         """
         with open_text_file(path) as script_fd:
             return script_fd.readline().strip()
-
-    @staticmethod
-    def get_hash(path):
-        """
-        :type path: str
-        :rtype: str | None
-        """
-        return get_hash(path)
 
 
 class NoChangesDetected(ApplicationWarning):
