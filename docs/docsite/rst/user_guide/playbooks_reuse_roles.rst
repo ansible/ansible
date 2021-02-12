@@ -292,7 +292,7 @@ role ``meta/main.yml`` file. All fields are lower-case.
 
     :options:
 
-        * Options are often called `parameters` or `arguments`. This section defines those options.
+        * Options are often called "parameters" or "arguments". This section defines those options.
         * For each role option (argument), you may include:
 
         :option-name:
