@@ -8,44 +8,7 @@ from ansible.errors import AnsibleError, AnsibleModuleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils import basic
 from ansible.module_utils.six import iteritems, string_types
-
-
-class AnsibleArgSpecError(AnsibleModuleError):
-    def __init__(self, *args, **kwargs):
-        self.argument_errors = kwargs.pop('argument_errors', [])
-        super(AnsibleArgSpecError, self).__init__(*args, **kwargs)
-
-
-class ArgSpecValidatingAnsibleModule(basic.AnsibleModule):
-    '''AnsibleModule but with overridden _load_params so it doesn't read from stdin/ANSIBLE_ARGS'''
-
-    def __init__(self, *args, **kwargs):
-        self._params = kwargs.pop('params', {})
-        # remove meta fields that aren't valid AnsibleModule args
-        self.arg_spec_name = kwargs.pop('name', None)
-        self.arg_spec_description = kwargs.pop('description', None)
-
-        self.arg_validation_errors = []
-        super(ArgSpecValidatingAnsibleModule, self).__init__(*args, **kwargs)
-
-    # AnsibleModule._load_params sets self.params from a global, so neuter it here
-    # so our passed in 'params' kwarg is used instead
-    def _load_params(self):
-        self.params = self._params
-
-    def fail_json(self, *args, **kwargs):
-        msg = kwargs.pop('msg', 'Unknown arg spec validation error')
-
-        clean_msg = basic.remove_values(msg, self.no_log_values)
-
-        self.arg_validation_errors.append(clean_msg)
-
-    def check_for_errors(self):
-        if not self.arg_validation_errors:
-            return
-
-        msg = 'Validation of arguments failed:\n%s' % '\n'.join(self.arg_validation_errors)
-        raise AnsibleArgSpecError(msg, argument_errors=self.arg_validation_errors)
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 
 
 class ActionModule(ActionBase):
@@ -117,23 +80,16 @@ class ActionModule(ActionBase):
         if not isinstance(provided_arguments, dict):
             raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
 
-        module_params = provided_arguments
-
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
-        module_params.update(args_from_vars)
+        provided_arguments.update(args_from_vars)
 
-        module_args = {}
-        module_args['argument_spec'] = argument_spec_data
-        module_args['params'] = module_params
+        validator = ArgumentSpecValidator(argument_spec_data, provided_arguments)
 
-        try:
-            validating_module = ArgSpecValidatingAnsibleModule(**module_args)
-            validating_module.check_for_errors()
-        except AnsibleArgSpecError as e:
+        if not validator.validate():
             result['failed'] = True
-            result['msg'] = e.message
+            result['msg'] = 'Validation of arguments failed:\n%s' % '\n'.join(validator.error_messages)
             result['argument_spec_data'] = argument_spec_data
-            result['argument_errors'] = e.argument_errors
+            result['argument_errors'] = validator.error_messages
             return result
 
         result['changed'] = False

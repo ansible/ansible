@@ -13,18 +13,18 @@
       expected:
           test1_1:
               argument_errors: [
-                  "argument tidy_expected is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
-                  "argument bust_some_stuff is of type <class 'str'> and we were unable to convert to int: <class 'str'> cannot be converted to an int",
-                  "argument some_list is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
-                  "argument some_dict is of type <class 'ansible.parsing.yaml.objects.AnsibleSequence'> and we were unable to convert to dict: <class 'ansible.parsing.yaml.objects.AnsibleSequence'> cannot be converted to a dict",
-                  "argument some_int is of type <class 'float'> and we were unable to convert to int: <class 'float'> cannot be converted to an int",
-                  "argument some_float is of type <class 'str'> and we were unable to convert to float: <class 'str'> cannot be converted to a float",
-                  "argument some_bytes is of type <class 'bytes'> and we were unable to convert to bytes: <class 'bytes'> cannot be converted to a Byte value",
-                  "argument some_bits is of type <class 'str'> and we were unable to convert to bits: <class 'str'> cannot be converted to a Bit value",
+                  "argument 'tidy_expected' is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
+                  "argument 'bust_some_stuff' is of type <class 'str'> and we were unable to convert to int: <class 'str'> cannot be converted to an int",
+                  "argument 'some_list' is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
+                  "argument 'some_dict' is of type <class 'ansible.parsing.yaml.objects.AnsibleSequence'> and we were unable to convert to dict: <class 'ansible.parsing.yaml.objects.AnsibleSequence'> cannot be converted to a dict",
+                  "argument 'some_int' is of type <class 'float'> and we were unable to convert to int: <class 'float'> cannot be converted to an int",
+                  "argument 'some_float' is of type <class 'str'> and we were unable to convert to float: <class 'str'> cannot be converted to a float",
+                  "argument 'some_bytes' is of type <class 'bytes'> and we were unable to convert to bytes: <class 'bytes'> cannot be converted to a Byte value",
+                  "argument 'some_bits' is of type <class 'str'> and we were unable to convert to bits: <class 'str'> cannot be converted to a Bit value",
                   "value of test1_choices must be one of: this paddle game, the astray, this remote control, the chair, got: My dog",
                   "value of some_choices must be one of: choice1, choice2, got: choice4",
-                  "argument some_second_level is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.  ",
-                  "argument third_level is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'multi_level_option -> second_level'. and we were unable to convert to int: <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> cannot be converted to an int"
+                  "argument 'some_second_level' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.  ",
+                  "argument 'third_level' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'multi_level_option -> second_level'. and we were unable to convert to int: <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> cannot be converted to an int"
                   ]
 
   tasks:
