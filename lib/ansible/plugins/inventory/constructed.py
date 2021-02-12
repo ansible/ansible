@@ -19,6 +19,16 @@ DOCUMENTATION = '''
             description: token that ensures this is a source file for the 'constructed' plugin.
             required: True
             choices: ['constructed']
+        use_vars_plugins:
+            description:
+                - Normally, for performance reasons, vars plugins get executed after the inventory sources complete the base inventory,
+                  this option allows for getting vars related to hosts/groups from those plugins.
+                - The host_group_vars (enabled by default) 'vars plugin' is the one responsible for reading host_vars/ and group_vars/ directories.
+                - This will not execute plugins that are not supposed to execute at the 'inventory' stage, see vars plugins docs for details.
+            required: false
+            default: false
+            type: boolean
+            version_added: '2.11'
     extends_documentation_fragment:
       - constructed
 '''
@@ -70,12 +80,13 @@ EXAMPLES = r'''
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleOptionsError
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
 from ansible.vars.fact_cache import FactCache
+from ansible.vars.plugins import get_vars_from_inventory_sources
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
@@ -100,12 +111,41 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         return valid
 
+    def get_all_host_vars(self, host, loader, sources):
+        ''' requires host object '''
+        return combine_vars(self.host_groupvars(host, loader, sources), self.host_vars(host, loader, sources))
+
+    def host_groupvars(self, host, loader, sources):
+        ''' requires host object '''
+        gvars = get_group_vars(host.get_groups())
+
+        if self.get_option('use_vars_plugins'):
+            gvars = combine_vars(gvars, get_vars_from_inventory_sources(loader, sources, host.get_groups(), 'all'))
+
+        return gvars
+
+    def host_vars(self, host, loader, sources):
+        ''' requires host object '''
+        hvars = host.get_vars()
+
+        if self.get_option('use_vars_plugins'):
+            hvars = combine_vars(hvars, get_vars_from_inventory_sources(loader, sources, [host], 'all'))
+
+        return hvars
+
     def parse(self, inventory, loader, path, cache=False):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
         self._read_config_data(path)
+
+        sources = []
+        try:
+            sources = inventory.processed_sources
+        except AttributeError:
+            if self.get_option('use_vars_plugins'):
+                raise AnsibleOptionsError("The option use_vars_plugins requires ansible >= 2.11.")
 
         strict = self.get_option('strict')
         fact_cache = FactCache()
@@ -114,7 +154,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
+                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
                 if host in fact_cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, fact_cache[host])
 
@@ -122,15 +162,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
-                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
+                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict, fetch_hostvars=False)
 
                 # constructed groups based variable values
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=False)
 
         except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
+            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e)

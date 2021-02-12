@@ -307,7 +307,9 @@ class InventoryManager(object):
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
 
-        if not parsed:
+        if parsed:
+            self._inventory.processed_sources.append(self._inventory.current_source)
+        else:
             # only warn/error if NOT using the default or using it and the file is present
             # TODO: handle 'non file' inventorya and detect vs hardcode default
             if source != '/etc/ansible/hosts' or os.path.exists(source):
