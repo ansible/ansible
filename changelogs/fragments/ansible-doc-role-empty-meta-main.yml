@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    ansible-doc - account for an empty ``meta/main.yml`` file when displaying
+    role information (https://github.com/ansible/ansible/pull/73590)
