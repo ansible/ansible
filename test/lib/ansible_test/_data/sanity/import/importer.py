@@ -213,22 +213,14 @@ def main():
             self.loaded_modules.add(fullname)
             return import_module(fullname)
 
-    def run(args):
+    def run(restrict_to_module_paths):
         """Main program function."""
         base_dir = os.getcwd()
         messages = set()
 
-        if import_type == 'module':
-            for path in args or sys.stdin.read().splitlines():
-                name = convert_relative_path_to_name(path)
-                test_python_module(path, name, base_dir, messages, True)
-        elif import_type == 'plugin':
-            for path in args or sys.stdin.read().splitlines():
-                name = convert_relative_path_to_name(path)
-                test_python_module(path, name, base_dir, messages, False)
-        else:
-            print('Invalid import type!')
-            sys.exit(1)
+        for path in args or sys.stdin.read().splitlines():
+            name = convert_relative_path_to_name(path)
+            test_python_module(path, name, base_dir, messages, restrict_to_module_paths)
 
         if messages:
             sys.exit(10)
@@ -499,9 +491,11 @@ def main():
                     " and will be removed in the next release.")
             if sys.version_info[:2] == (3, 5):
                 warnings.filterwarnings(
-                    "ignore", "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
+                    "ignore", 
+                    "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
                 warnings.filterwarnings(
-                    "ignore", "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
+                    "ignore", 
+                    "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
 
             try:
                 yield
@@ -509,7 +503,7 @@ def main():
                 sys.stdout = old_stdout
                 sys.stderr = old_stderr
 
-    run(args)
+    run(import_type == 'module')
 
 
 if __name__ == '__main__':

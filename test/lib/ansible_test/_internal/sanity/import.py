@@ -183,7 +183,7 @@ class ImportTest(SanityMultipleVersion):
 
             cmd = ['importer.py', '--type', import_type]
 
-            this_results = []
+            messages = []
             try:
                 with coverage_context(args):
                     stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
@@ -197,18 +197,18 @@ class ImportTest(SanityMultipleVersion):
 
                 pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
 
-                this_results = parse_to_list_of_dict(pattern, ex.stdout)
+                parsed = parse_to_list_of_dict(pattern, ex.stdout)
 
                 relative_temp_root = os.path.relpath(temp_root, data_context().content.root) + os.path.sep
 
-                this_results = [SanityMessage(
+                messages += [SanityMessage(
                     message=r['message'],
                     path=os.path.relpath(r['path'], relative_temp_root) if r['path'].startswith(relative_temp_root) else r['path'],
                     line=int(r['line']),
                     column=int(r['column']),
-                ) for r in this_results]
+                ) for r in parsed]
 
-            results.extend(settings.process_errors(this_results, paths))
+        results = settings.process_errors(messages, paths)
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)
