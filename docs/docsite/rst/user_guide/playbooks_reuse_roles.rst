@@ -305,13 +305,13 @@ role ``meta/main.yml`` file. All fields are lower-case.
 
         :type:
 
-           * The data type of the option. Default is `str`.
+           * The data type of the option. Default is ``str``.
            * If an option is of type ``list``, ``elements`` should be specified.
 
         :required:
 
            * Only needed if ``true``.
-           * If missing, we assume the option is not required.
+           * If missing, the option is not required.
 
         :default:
 
