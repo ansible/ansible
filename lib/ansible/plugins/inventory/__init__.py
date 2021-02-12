@@ -381,11 +381,12 @@ class Constructable(object):
                     continue
                 self.inventory.set_variable(host, varname, composite)
 
-    def _add_host_to_composed_groups(self, groups, variables, host, strict=False):
+    def _add_host_to_composed_groups(self, groups, variables, host, strict=False, fetch_hostvars=True):
         ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
-            variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
+            if fetch_hostvars:
+                variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
             self.templar.available_variables = variables
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
@@ -403,13 +404,14 @@ class Constructable(object):
                     # add host to group
                     self.inventory.add_child(group_name, host)
 
-    def _add_host_to_keyed_groups(self, keys, variables, host, strict=False):
+    def _add_host_to_keyed_groups(self, keys, variables, host, strict=False, fetch_hostvars=True):
         ''' helper to create groups for plugins based on variable values and add the corresponding hosts to it'''
         if keys and isinstance(keys, list):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
-                    variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
+                    if fetch_hostvars:
+                        variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:

@@ -51,6 +51,7 @@ class InventoryData(object):
         self.localhost = None
 
         self.current_source = None
+        self.processed_sources = []
 
         # Always create the 'all' and 'ungrouped' groups,
         for group in ('all', 'ungrouped'):
@@ -64,6 +65,7 @@ class InventoryData(object):
             'hosts': self.hosts,
             'local': self.localhost,
             'source': self.current_source,
+            'processed_sources': self.processed_sources
         }
         return data
 
@@ -73,6 +75,7 @@ class InventoryData(object):
         self.groups = data.get('groups')
         self.localhost = data.get('local')
         self.current_source = data.get('source')
+        self.processed_sources = data.get('processed_sources')
 
     def _create_implicit_localhost(self, pattern):
 
