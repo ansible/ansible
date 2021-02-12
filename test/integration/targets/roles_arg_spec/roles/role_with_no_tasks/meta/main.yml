@@ -1,0 +1,7 @@
+argument_specs:
+    main:
+        short_description: Main entry point for role role_with_no_tasks.
+        options:
+            a_str:
+                type: "str"
+                required: true

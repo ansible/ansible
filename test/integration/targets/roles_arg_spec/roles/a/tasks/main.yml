@@ -1,0 +1,3 @@
+---
+- debug:
+    msg: "Role A with {{ a_str }}"
