@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Updated the default test containers to version 3.1.0.
