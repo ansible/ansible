@@ -13,7 +13,6 @@ sphinx <= 2.1.2 ; python_version >= '2.7' # docs team hasn't  tested beyond 2.1.
 rstcheck >=3.3.1  # required for sphinx version >= 1.8
 pygments >= 2.4.0 # Pygments 2.4.0 includes bugfixes for YAML and YAML+Jinja lexers
 wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
-yamllint != 1.8.0, < 1.14.0 ; python_version < '2.7' # yamllint 1.8.0 and 1.14.0+ require python 2.7+
 pycrypto >= 2.6 # Need features found in 2.6 and greater
 ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
 idna < 2.6, >= 2.5 # linode requires idna < 2.9, >= 2.5, requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
@@ -26,13 +25,11 @@ ntlm-auth >= 1.3.0 # message encryption support using cryptography
 requests < 2.20.0 ; python_version < '2.7' # requests 2.20.0 drops support for python 2.6
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
-voluptuous >= 0.11.0 # Schema recursion via Self
 openshift >= 0.6.2, < 0.9.0 # merge_type support
 virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
 pathspec < 0.6.0 ; python_version < '2.7' # pathspec 0.6.0 and later require python 2.7 or later
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
 pyparsing < 3.0.0 ; python_version < '3.5' # pyparsing 3 and later require python 3.5 or later
-pyfmg == 0.6.1 # newer versions do not pass current unit tests
 pyyaml < 5.1 ; python_version < '2.7' # pyyaml 5.1 and later require python 2.7 or later
 pycparser < 2.19 ; python_version < '2.7' # pycparser 2.19 and later require python 2.7 or later
 mock >= 2.0.0 # needed for features backported from Python 3.6 unittest.mock (assert_called, assert_called_once...)
@@ -47,23 +44,3 @@ botocore >= 1.10.0 ; python_version >= '2.7' # adds support for the following AW
 setuptools < 37 ; python_version == '2.6' # setuptools 37 and later require python 2.7 or later
 setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require python 3.5 or later
 gssapi < 1.6.0 ; python_version <= '2.7' # gssapi 1.6.0 and later require python 3 or later
-
-# freeze antsibull-changelog for consistent test results
-antsibull-changelog == 0.9.0
-
-# Make sure we have a new enough antsibull for the CLI args we use
-antsibull >= 0.21.0
-
-# freeze pylint and its requirements for consistent test results
-# NOTE: six is not frozen since it is a requirement for more than just pylint
-astroid == 2.4.2
-isort == 5.7.0
-lazy-object-proxy == 1.4.3
-mccabe == 0.6.1
-pylint == 2.6.0
-toml == 0.10.2
-typed-ast == 1.4.2
-wrapt == 1.12.1
-
-# freeze pycodestyle for consistent test results
-pycodestyle == 2.6.0
