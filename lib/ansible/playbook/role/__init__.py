@@ -100,7 +100,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
 
-    def __init__(self, play=None, from_files=None, from_include=False):
+    def __init__(self, play=None, from_files=None, from_include=False, validate=True):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
@@ -118,6 +118,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._role_vars = dict()
         self._had_task_run = dict()
         self._completed = dict()
+        self._should_validate = validate
 
         if from_files is None:
             from_files = {}
@@ -137,7 +138,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True):
 
         if from_files is None:
             from_files = {}
@@ -171,7 +172,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include)
+            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.get_name() not in play.ROLE_CACHE:
@@ -256,7 +257,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
-        task_data = self._prepend_validation_task(task_data)
+        if self._should_validate:
+            task_data = self._prepend_validation_task(task_data)
 
         if task_data:
             try:

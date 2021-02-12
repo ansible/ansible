@@ -44,7 +44,7 @@ class IncludeRole(TaskInclude):
 
     BASE = ('name', 'role')  # directly assigned
     FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
-    OTHER_ARGS = ('apply', 'public', 'allow_duplicates')  # assigned to matching property
+    OTHER_ARGS = ('apply', 'public', 'allow_duplicates', 'rolespec_validate')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================
@@ -53,6 +53,7 @@ class IncludeRole(TaskInclude):
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
     _public = FieldAttribute(isa='bool', default=False, private=True)
+    _rolespec_validate = FieldAttribute(isa='bool', default=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -80,7 +81,7 @@ class IncludeRole(TaskInclude):
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files,
-                                from_include=True)
+                                from_include=True, validate=self.rolespec_validate)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
         if self.statically_loaded or self.public:

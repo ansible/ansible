@@ -67,6 +67,12 @@ options:
     type: str
     default: main
     version_added: '2.8'
+  rolespec_validate:
+    description:
+      - Perform role argument spec validation if an argument spec is defined.
+    type: bool
+    default: yes
+    version_added: '2.11'
 notes:
   - Handlers are made available to the whole play.
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
