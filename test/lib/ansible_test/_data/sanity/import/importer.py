@@ -488,6 +488,10 @@ def main():
                 warnings.filterwarnings(
                     "ignore", 
                     "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
+            warnings.filterwarnings(
+                "ignore",
+                "The _yaml extension module is now located at yaml._yaml and its location is subject to change.  To use the LibYAML-based parser and emitter, import from `yaml`: `from yaml import CLoader as Loader, CDumper as Dumper`.")
+
 
             try:
                 yield
