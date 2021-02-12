@@ -23,3 +23,10 @@ grep '@key0separatorvalue0' out.txt
 grep '@prefix_hostvalue1' out.txt
 grep '@prefix_item0' out.txt
 grep '@prefix_key0_value0' out.txt
+
+
+# test using use_vars_plugins
+ansible-inventory -i invs/1/one.yml -i invs/2/constructed.yml --graph | tee out.txt
+
+grep '@c_lola' out.txt
+grep '@c_group4testing' out.txt

@@ -1,0 +1,2 @@
+minor_changes:
+  - The constructed inventory plugin has new option to force using vars plugins on previouslly processed inventory sources.
