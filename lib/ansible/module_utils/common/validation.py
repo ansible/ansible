@@ -23,11 +23,11 @@ from ansible.module_utils.six import (
 )
 
 
-def count_terms(terms, module_parameters):
+def count_terms(terms, parameters):
     """Count the number of occurrences of a key in a given dictionary
 
     :arg terms: String or iterable of values to check
-    :arg module_parameters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: An integer that is the number of occurrences of the terms values
         in the provided dictionary.
@@ -36,17 +36,17 @@ def count_terms(terms, module_parameters):
     if not is_iterable(terms):
         terms = [terms]
 
-    return len(set(terms).intersection(module_parameters))
+    return len(set(terms).intersection(parameters))
 
 
-def check_mutually_exclusive(terms, module_parameters):
+def check_mutually_exclusive(terms, parameters):
     """Check mutually exclusive terms against argument parameters
 
     Accepts a single list or list of lists that are groups of terms that should be
     mutually exclusive with one another
 
-    :arg terms: List of mutually exclusive module parameters
-    :arg module_parameters: Dictionary of module parameters
+    :arg terms: List of mutually exclusive parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: Empty list or raises TypeError if the check fails.
     """
@@ -56,7 +56,7 @@ def check_mutually_exclusive(terms, module_parameters):
         return results
 
     for check in terms:
-        count = count_terms(check, module_parameters)
+        count = count_terms(check, parameters)
         if count > 1:
             results.append(check)
 
@@ -68,7 +68,7 @@ def check_mutually_exclusive(terms, module_parameters):
     return results
 
 
-def check_required_one_of(terms, module_parameters):
+def check_required_one_of(terms, parameters):
     """Check each list of terms to ensure at least one exists in the given module
     parameters
 
@@ -76,7 +76,7 @@ def check_required_one_of(terms, module_parameters):
 
     :arg terms: List of lists of terms to check. For each list of terms, at
         least one is required.
-    :arg module_parameters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: Empty list or raises TypeError if the check fails.
     """
@@ -86,7 +86,7 @@ def check_required_one_of(terms, module_parameters):
         return results
 
     for term in terms:
-        count = count_terms(term, module_parameters)
+        count = count_terms(term, parameters)
         if count == 0:
             results.append(term)
 
@@ -98,16 +98,16 @@ def check_required_one_of(terms, module_parameters):
     return results
 
 
-def check_required_together(terms, module_parameters):
+def check_required_together(terms, parameters):
     """Check each list of terms to ensure every parameter in each list exists
-    in the given module parameters
+    in the given parameters
 
     Accepts a list of lists or tuples
 
     :arg terms: List of lists of terms to check. Each list should include
         parameters that are all required when at least one is specified
-        in the module_parameters.
-    :arg module_parameters: Dictionary of module parameters
+        in the parameters.
+    :arg parameters: Dictionary of parameters
 
     :returns: Empty list or raises TypeError if the check fails.
     """
@@ -117,7 +117,7 @@ def check_required_together(terms, module_parameters):
         return results
 
     for term in terms:
-        counts = [count_terms(field, module_parameters) for field in term]
+        counts = [count_terms(field, parameters) for field in term]
         non_zero = [c for c in counts if c > 0]
         if len(non_zero) > 0:
             if 0 in counts:
@@ -130,14 +130,14 @@ def check_required_together(terms, module_parameters):
     return results
 
 
-def check_required_by(requirements, module_parameters):
+def check_required_by(requirements, parameters):
     """For each key in requirements, check the corresponding list to see if they
-    exist in module_parameters
+    exist in parameters
 
     Accepts a single string or list of values for each key
 
     :arg requirements: Dictionary of requirements
-    :arg module_parameters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: Empty dictionary or raises TypeError if the
     """
@@ -147,14 +147,14 @@ def check_required_by(requirements, module_parameters):
         return result
 
     for (key, value) in requirements.items():
-        if key not in module_parameters or module_parameters[key] is None:
+        if key not in parameters or parameters[key] is None:
             continue
         result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
         for required in value:
-            if required not in module_parameters or module_parameters[required] is None:
+            if required not in parameters or parameters[required] is None:
                 result[key].append(required)
 
     if result:
@@ -166,15 +166,15 @@ def check_required_by(requirements, module_parameters):
     return result
 
 
-def check_required_arguments(argument_spec, module_parameters):
+def check_required_arguments(argument_spec, parameters):
     """Check all paramaters in argument_spec and return a list of parameters
-    that are required but not present in module_parameters
+    that are required but not present in parameters
 
     Raises TypeError if the check fails
 
     :arg argument_spec: Argument spec dicitionary containing all parameters
         and their specification
-    :arg module_paramaters: Dictionary of module parameters
+    :arg module_paramaters: Dictionary of parameters
 
     :returns: Empty list or raises TypeError if the check fails.
     """
@@ -185,7 +185,7 @@ def check_required_arguments(argument_spec, module_parameters):
 
     for (k, v) in argument_spec.items():
         required = v.get('required', False)
-        if required and k not in module_parameters:
+        if required and k not in parameters:
             missing.append(k)
 
     if missing:
@@ -195,7 +195,7 @@ def check_required_arguments(argument_spec, module_parameters):
     return missing
 
 
-def check_required_if(requirements, module_parameters):
+def check_required_if(requirements, parameters):
     """Check parameters that are conditionally required
 
     Raises TypeError if the check fails
@@ -210,7 +210,7 @@ def check_required_if(requirements, module_parameters):
                 ['someint', 99, ('bool_param', 'string_param')],
             ]
 
-    :arg module_paramaters: Dictionary of module parameters
+    :arg module_paramaters: Dictionary of parameters
 
     :returns: Empty list or raises TypeError if the check fails.
         The results attribute of the exception contains a list of dictionaries.
@@ -257,9 +257,9 @@ def check_required_if(requirements, module_parameters):
         else:
             missing['requires'] = 'all'
 
-        if key in module_parameters and module_parameters[key] == val:
+        if key in parameters and parameters[key] == val:
             for check in requirements:
-                count = count_terms(check, module_parameters)
+                count = count_terms(check, parameters)
                 if count == 0:
                     missing['missing'].append(check)
         if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
@@ -277,13 +277,13 @@ def check_required_if(requirements, module_parameters):
     return results
 
 
-def check_missing_parameters(module_parameters, required_parameters=None):
+def check_missing_parameters(parameters, required_parameters=None):
     """This is for checking for required params when we can not check via
     argspec because we need more information than is simply given in the argspec.
 
     Raises TypeError if any required parameters are missing
 
-    :arg module_paramaters: Dictionary of module parameters
+    :arg module_paramaters: Dictionary of parameters
     :arg required_parameters: List of parameters to look for in the given module
         parameters
 
@@ -294,7 +294,7 @@ def check_missing_parameters(module_parameters, required_parameters=None):
         return missing_params
 
     for param in required_parameters:
-        if not module_parameters.get(param):
+        if not parameters.get(param):
             missing_params.append(param)
 
     if missing_params:
@@ -332,7 +332,10 @@ def safe_eval(value, locals=None, include_exceptions=False):
         return value
 
 
-def check_type_str(value, allow_conversion=True):
+# FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
+#        which is using those for the warning messaged based on string conversion warning settings.
+#        Not sure how to deal with that here since we don't have config state to query.
+def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,

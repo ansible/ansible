@@ -55,7 +55,6 @@ import time
 import traceback
 import types
 
-from collections import deque
 from itertools import chain, repeat
 
 try:
@@ -156,11 +155,20 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
+    _remove_values_conditions,
+    _sanitize_keys_conditions,
+    sanitize_keys,
+    env_fallback,
     get_unsupported_parameters,
     get_type_validator,
     handle_aliases,
     list_deprecations,
     list_no_log_values,
+    remove_values,
+    set_defaults,
+    set_fallbacks,
+    validate_argument_types,
+    AnsibleFallbackNotFound,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
@@ -241,14 +249,6 @@ _literal_eval = literal_eval
 _ANSIBLE_ARGS = None
 
 
-def env_fallback(*args, **kwargs):
-    ''' Load value from environment '''
-    for arg in args:
-        if arg in os.environ:
-            return os.environ[arg]
-    raise AnsibleFallbackNotFound
-
-
 FILE_COMMON_ARGUMENTS = dict(
     # These are things we want. About setting metadata (mode, ownership, permissions in general) on
     # created files (these are used by set_fs_attributes_if_different and included in
@@ -318,212 +318,6 @@ def get_all_subclasses(cls):
 
 
 # End compat shims
-
-
-def _remove_values_conditions(value, no_log_strings, deferred_removals):
-    """
-    Helper function for :meth:`remove_values`.
-
-    :arg value: The value to check for strings that need to be stripped
-    :arg no_log_strings: set of strings which must be stripped out of any values
-    :arg deferred_removals: List which holds information about nested
-        containers that have to be iterated for removals.  It is passed into
-        this function so that more entries can be added to it if value is
-        a container type.  The format of each entry is a 2-tuple where the first
-        element is the ``value`` parameter and the second value is a new
-        container to copy the elements of ``value`` into once iterated.
-    :returns: if ``value`` is a scalar, returns ``value`` with two exceptions:
-        1. :class:`~datetime.datetime` objects which are changed into a string representation.
-        2. objects which are in no_log_strings are replaced with a placeholder
-            so that no sensitive data is leaked.
-        If ``value`` is a container type, returns a new empty container.
-
-    ``deferred_removals`` is added to as a side-effect of this function.
-
-    .. warning:: It is up to the caller to make sure the order in which value
-        is passed in is correct.  For instance, higher level containers need
-        to be passed in before lower level containers. For example, given
-        ``{'level1': {'level2': 'level3': [True]} }`` first pass in the
-        dictionary for ``level1``, then the dict for ``level2``, and finally
-        the list for ``level3``.
-    """
-    if isinstance(value, (text_type, binary_type)):
-        # Need native str type
-        native_str_value = value
-        if isinstance(value, text_type):
-            value_is_text = True
-            if PY2:
-                native_str_value = to_bytes(value, errors='surrogate_or_strict')
-        elif isinstance(value, binary_type):
-            value_is_text = False
-            if PY3:
-                native_str_value = to_text(value, errors='surrogate_or_strict')
-
-        if native_str_value in no_log_strings:
-            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-        for omit_me in no_log_strings:
-            native_str_value = native_str_value.replace(omit_me, '*' * 8)
-
-        if value_is_text and isinstance(native_str_value, binary_type):
-            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
-        elif not value_is_text and isinstance(native_str_value, text_type):
-            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
-        else:
-            value = native_str_value
-
-    elif isinstance(value, Sequence):
-        if isinstance(value, MutableSequence):
-            new_value = type(value)()
-        else:
-            new_value = []  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        value = new_value
-
-    elif isinstance(value, Set):
-        if isinstance(value, MutableSet):
-            new_value = type(value)()
-        else:
-            new_value = set()  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        value = new_value
-
-    elif isinstance(value, Mapping):
-        if isinstance(value, MutableMapping):
-            new_value = type(value)()
-        else:
-            new_value = {}  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        value = new_value
-
-    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
-        stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
-        if stringy_value in no_log_strings:
-            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-        for omit_me in no_log_strings:
-            if omit_me in stringy_value:
-                return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-
-    elif isinstance(value, (datetime.datetime, datetime.date)):
-        value = value.isoformat()
-    else:
-        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
-
-    return value
-
-
-def remove_values(value, no_log_strings):
-    """ Remove strings in no_log_strings from value.  If value is a container
-    type, then remove a lot more.
-
-    Use of deferred_removals exists, rather than a pure recursive solution,
-    because of the potential to hit the maximum recursion depth when dealing with
-    large amounts of data (see issue #24560).
-    """
-
-    deferred_removals = deque()
-
-    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
-    new_value = _remove_values_conditions(value, no_log_strings, deferred_removals)
-
-    while deferred_removals:
-        old_data, new_data = deferred_removals.popleft()
-        if isinstance(new_data, Mapping):
-            for old_key, old_elem in old_data.items():
-                new_elem = _remove_values_conditions(old_elem, no_log_strings, deferred_removals)
-                new_data[old_key] = new_elem
-        else:
-            for elem in old_data:
-                new_elem = _remove_values_conditions(elem, no_log_strings, deferred_removals)
-                if isinstance(new_data, MutableSequence):
-                    new_data.append(new_elem)
-                elif isinstance(new_data, MutableSet):
-                    new_data.add(new_elem)
-                else:
-                    raise TypeError('Unknown container type encountered when removing private values from output')
-
-    return new_value
-
-
-def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
-    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
-    if isinstance(value, (text_type, binary_type)):
-        return value
-
-    if isinstance(value, Sequence):
-        if isinstance(value, MutableSequence):
-            new_value = type(value)()
-        else:
-            new_value = []  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        return new_value
-
-    if isinstance(value, Set):
-        if isinstance(value, MutableSet):
-            new_value = type(value)()
-        else:
-            new_value = set()  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        return new_value
-
-    if isinstance(value, Mapping):
-        if isinstance(value, MutableMapping):
-            new_value = type(value)()
-        else:
-            new_value = {}  # Need a mutable value
-        deferred_removals.append((value, new_value))
-        return new_value
-
-    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
-        return value
-
-    if isinstance(value, (datetime.datetime, datetime.date)):
-        return value
-
-    raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
-
-
-def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
-    """ Sanitize the keys in a container object by removing no_log values from key names.
-
-    This is a companion function to the `remove_values()` function. Similar to that function,
-    we make use of deferred_removals to avoid hitting maximum recursion depth in cases of
-    large data structures.
-
-    :param obj: The container object to sanitize. Non-container objects are returned unmodified.
-    :param no_log_strings: A set of string values we do not want logged.
-    :param ignore_keys: A set of string values of keys to not sanitize.
-
-    :returns: An object with sanitized keys.
-    """
-
-    deferred_removals = deque()
-
-    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
-    new_value = _sanitize_keys_conditions(obj, no_log_strings, ignore_keys, deferred_removals)
-
-    while deferred_removals:
-        old_data, new_data = deferred_removals.popleft()
-
-        if isinstance(new_data, Mapping):
-            for old_key, old_elem in old_data.items():
-                if old_key in ignore_keys or old_key.startswith('_ansible'):
-                    new_data[old_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
-                else:
-                    # Sanitize the old key. We take advantage of the sanitizing code in
-                    # _remove_values_conditions() rather than recreating it here.
-                    new_key = _remove_values_conditions(old_key, no_log_strings, None)
-                    new_data[new_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
-        else:
-            for elem in old_data:
-                new_elem = _sanitize_keys_conditions(elem, no_log_strings, ignore_keys, deferred_removals)
-                if isinstance(new_data, MutableSequence):
-                    new_data.append(new_elem)
-                elif isinstance(new_data, MutableSet):
-                    new_data.add(new_elem)
-                else:
-                    raise TypeError('Unknown container type encountered when removing private values from keys')
-
-    return new_value
 
 
 def heuristic_log_sanitize(data, no_log_values=None):
@@ -659,10 +453,6 @@ def missing_required_lib(library, reason=None, url=None):
             " If the required library is installed, but Ansible is using the wrong Python interpreter,"
             " please consult the documentation on ansible_python_interpreter")
     return msg
-
-
-class AnsibleFallbackNotFound(Exception):
-    pass
 
 
 class AnsibleModule(object):
@@ -1492,21 +1282,16 @@ class AnsibleModule(object):
 
         # this uses exceptions as it happens before we can safely call fail_json
         alias_warnings = []
-        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
+        alias_deprecations = []
+        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings, alias_deprecations)
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
 
-        deprecated_aliases = []
-        for i in spec.keys():
-            if 'deprecated_aliases' in spec[i].keys():
-                for alias in spec[i]['deprecated_aliases']:
-                    deprecated_aliases.append(alias)
+        for deprecation in alias_deprecations:
+            deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                      version=deprecation.get('version'), date=deprecation.get('date'),
+                      collection_name=deprecation.get('collection_name'))
 
-        for deprecation in deprecated_aliases:
-            if deprecation['name'] in param.keys():
-                deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                          version=deprecation.get('version'), date=deprecation.get('date'),
-                          collection_name=deprecation.get('collection_name'))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1818,7 +1603,6 @@ class AnsibleModule(object):
 
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
-                    self._set_internal_properties(spec, param)
                     self._check_arguments(spec, param, options_legal_inputs)
 
                     # check exclusive early
@@ -1854,28 +1638,6 @@ class AnsibleModule(object):
 
         return type_checker, wanted
 
-    def _handle_elements(self, wanted, param, values):
-        type_checker, wanted_name = self._get_wanted_type(wanted, param)
-        validated_params = []
-        # Get param name for strings so we can later display this value in a useful error message if needed
-        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-        kwargs = {}
-        if wanted_name == 'str' and isinstance(wanted, string_types):
-            if isinstance(param, string_types):
-                kwargs['param'] = param
-            elif isinstance(param, dict):
-                kwargs['param'] = list(param.keys())[0]
-        for value in values:
-            try:
-                validated_params.append(type_checker(value, **kwargs))
-            except (TypeError, ValueError) as e:
-                msg = "Elements value for option %s" % param
-                if self._options_context:
-                    msg += " found in '%s'" % " -> ".join(self._options_context)
-                msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_name, to_native(e))
-                self.fail_json(msg=msg)
-        return validated_params
-
     def _check_argument_types(self, spec=None, param=None, prefix=''):
         ''' ensure all arguments have the requested type '''
 
@@ -1884,61 +1646,22 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        for (k, v) in spec.items():
-            wanted = v.get('type', None)
-            if k not in param:
-                continue
+        errors = []
+        validate_argument_types(spec, param, errors=errors)
 
-            value = param[k]
-            if value is None:
-                continue
-
-            type_checker, wanted_name = self._get_wanted_type(wanted, k)
-            # Get param name for strings so we can later display this value in a useful error message if needed
-            # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-            kwargs = {}
-            if wanted_name == 'str' and isinstance(type_checker, string_types):
-                kwargs['param'] = list(param.keys())[0]
-
-                # Get the name of the parent key if this is a nested option
-                if prefix:
-                    kwargs['prefix'] = prefix
-
-            try:
-                param[k] = type_checker(value, **kwargs)
-                wanted_elements = v.get('elements', None)
-                if wanted_elements:
-                    if wanted != 'list' or not isinstance(param[k], list):
-                        msg = "Invalid type %s for option '%s'" % (wanted_name, param)
-                        if self._options_context:
-                            msg += " found in '%s'." % " -> ".join(self._options_context)
-                        msg += ", elements value check is supported only with 'list' type"
-                        self.fail_json(msg=msg)
-                    param[k] = self._handle_elements(wanted_elements, k, param[k])
-
-            except (TypeError, ValueError) as e:
-                msg = "argument %s is of type %s" % (k, type(value))
-                if self._options_context:
-                    msg += " found in '%s'." % " -> ".join(self._options_context)
-                msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
-                self.fail_json(msg=msg)
+        if errors:
+            self.fail_json(msg=errors[0])
 
     def _set_defaults(self, pre=True, spec=None, param=None):
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k, v) in spec.items():
-            default = v.get('default', None)
 
-            # This prevents setting defaults on required items on the 1st run,
-            # otherwise will set things without a default to None on the 2nd.
-            if k not in param and (default is not None or not pre):
-                # Make sure any default value for no_log fields are masked.
-                if v.get('no_log', False) and default:
-                    self.no_log_values.add(default)
-
-                param[k] = default
+        # The interface for set_defaults is different than _set_defaults()
+        # The third parameter controls whether or not defaults are actually set.
+        set_default = not pre
+        self.no_log_values.update(set_defaults(spec, param, set_default))
 
     def _set_fallbacks(self, spec=None, param=None):
         if spec is None:
@@ -1946,25 +1669,7 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        for (k, v) in spec.items():
-            fallback = v.get('fallback', (None,))
-            fallback_strategy = fallback[0]
-            fallback_args = []
-            fallback_kwargs = {}
-            if k not in param and fallback_strategy is not None:
-                for item in fallback[1:]:
-                    if isinstance(item, dict):
-                        fallback_kwargs = item
-                    else:
-                        fallback_args = item
-                try:
-                    fallback_value = fallback_strategy(*fallback_args, **fallback_kwargs)
-                except AnsibleFallbackNotFound:
-                    continue
-                else:
-                    if v.get('no_log', False) and fallback_value:
-                        self.no_log_values.add(fallback_value)
-                    param[k] = fallback_value
+        self.no_log_values.update(set_fallbacks(spec, param))
 
     def _load_params(self):
         ''' read the input and set the params attribute.
