@@ -256,6 +256,118 @@ You can pass other keywords, including variables and tags, when importing roles:
 
 When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
+Role Argument Validation
+========================
+
+Beginning with version 2.11, you may choose to enable role argument validation based on an argument
+specification defined in the role ``meta/main.yml`` file. When this argument specification is defined,
+a new task is inserted at the beginning of role execution that will validate the parameters supplied
+for the role against the specification. If the parameters fail validation, the role will fail execution.
+
+Specification Format
+--------------------
+
+The role argument specification must be defined in a top-level ``argument_specs`` block within the
+role ``meta/main.yml`` file. All fields are lower-case.
+
+:entry-point-name:
+
+    * The name of the role entry point.
+    * This should be ``main`` in the case of an unspecified entry point.
+    * This will be the base name of the tasks file to execute, with no ``.yml`` or ``.yaml`` file extension.
+
+    :short_description:
+
+        * A short, one-line description of the entry point.
+        * The ``short_description`` is displayed by ``ansible-doc -t role -l``.
+
+    :description:
+
+        * A longer description that may contain multiple lines.
+
+    :author:
+
+        * Name of the entry point authors.
+        * Use a multi-line list if there is more than one author.
+
+    :options:
+
+        * Options are often called "parameters" or "arguments". This section defines those options.
+        * For each role option (argument), you may include:
+
+        :option-name:
+
+           * The name of the option/argument.
+
+        :description:
+
+           * Detailed explanation of what this option does. It should be written in full sentences.
+
+        :type:
+
+           * The data type of the option. Default is ``str``.
+           * If an option is of type ``list``, ``elements`` should be specified.
+
+        :required:
+
+           * Only needed if ``true``.
+           * If missing, the option is not required.
+
+        :default:
+
+           * If ``required`` is false/missing, ``default`` may be specified (assumed 'null' if missing).
+           * Ensure that the default value in the docs matches the default value in the code. The actual
+             default for the role variable will always come from ``defaults/main.yml``.
+           * The default field must not be listed as part of the description, unless it requires additional information or conditions.
+           * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
+             (such as true/false or yes/no).  Choose the one that reads better in the context of the option.
+
+        :choices:
+
+           * List of option values.
+           * Should be absent if empty.
+
+        :elements:
+
+           * Specifies the data type for list elements when type is ``list``.
+
+        :suboptions:
+
+           * If this option takes a dict or list of dicts, you can define the structure here.
+
+Sample Specification
+--------------------
+
+.. code-block:: yaml
+
+ # roles/myapp/meta/main.yml
+ ---
+ argument_specs:
+   # roles/myapp/tasks/main.yml entry point
+   main:
+     short_description: The main entry point for the myapp role.
+     options:
+       myapp_int:
+         type: "int"
+         required: false
+         default: 42
+         description: "The integer value, defaulting to 42."
+
+       myapp_str:
+         type: "str"
+         required: true
+         description: "The string value"
+
+   # roles/maypp/tasks/alternate.yml entry point
+   alternate:
+     short_description: The alternate entry point for the myapp role.
+     options:
+       myapp_int:
+         type: "int"
+         required: false
+         default: 1024
+         description: "The integer value, defaulting to 1024."
+
 .. _run_role_twice:
 
 Running a role multiple times in one playbook

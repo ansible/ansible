@@ -1,0 +1,7 @@
+argument_specs:
+    main:
+        short_description: Main entry point for role C.
+        options:
+            c_int:
+                type: "int"
+                required: true

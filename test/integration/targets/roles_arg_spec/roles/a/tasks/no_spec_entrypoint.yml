@@ -1,0 +1,3 @@
+---
+- debug:
+    msg: "Role A no_spec_entrypoint"

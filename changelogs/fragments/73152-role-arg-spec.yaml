@@ -1,0 +1,4 @@
+major_changes:
+  - Support for role argument specification validation at role execution time.
+    When a role contains an argument spec, an implicit validation task is inserted
+    at the start of role execution.
