@@ -5,18 +5,44 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.common._collections_compat import Mapping
+import datetime
+import os
+
+from collections import deque
+from itertools import chain
+
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.formatters import lenient_lowercase
+from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
+
+from ansible.module_utils.common._collections_compat import (
+    KeysView,
+    Set,
+    Sequence,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    MutableSequence,
+)
 
 from ansible.module_utils.six import (
     binary_type,
     integer_types,
     string_types,
     text_type,
+    PY2,
+    PY3,
 )
 
 from ansible.module_utils.common.validation import (
+    check_mutually_exclusive,
+    check_required_arguments,
+    check_required_together,
+    check_required_one_of,
+    check_required_if,
+    check_required_by,
     check_type_bits,
     check_type_bool,
     check_type_bytes,
@@ -71,6 +97,10 @@ DEFAULT_TYPE_VALIDATORS = {
 }
 
 
+class AnsibleFallbackNotFound(Exception):
+    pass
+
+
 def _return_datastructure_name(obj):
     """ Return native stringified values from datastructures.
 
@@ -96,11 +126,211 @@ def _return_datastructure_name(obj):
         raise TypeError('Unknown parameter type: %s' % (type(obj)))
 
 
+def _remove_values_conditions(value, no_log_strings, deferred_removals):
+    """
+    Helper function for :meth:`remove_values`.
+
+    :arg value: The value to check for strings that need to be stripped
+    :arg no_log_strings: set of strings which must be stripped out of any values
+    :arg deferred_removals: List which holds information about nested
+        containers that have to be iterated for removals.  It is passed into
+        this function so that more entries can be added to it if value is
+        a container type.  The format of each entry is a 2-tuple where the first
+        element is the ``value`` parameter and the second value is a new
+        container to copy the elements of ``value`` into once iterated.
+    :returns: if ``value`` is a scalar, returns ``value`` with two exceptions:
+        1. :class:`~datetime.datetime` objects which are changed into a string representation.
+        2. objects which are in no_log_strings are replaced with a placeholder
+            so that no sensitive data is leaked.
+        If ``value`` is a container type, returns a new empty container.
+
+    ``deferred_removals`` is added to as a side-effect of this function.
+
+    .. warning:: It is up to the caller to make sure the order in which value
+        is passed in is correct.  For instance, higher level containers need
+        to be passed in before lower level containers. For example, given
+        ``{'level1': {'level2': 'level3': [True]} }`` first pass in the
+        dictionary for ``level1``, then the dict for ``level2``, and finally
+        the list for ``level3``.
+    """
+    if isinstance(value, (text_type, binary_type)):
+        # Need native str type
+        native_str_value = value
+        if isinstance(value, text_type):
+            value_is_text = True
+            if PY2:
+                native_str_value = to_bytes(value, errors='surrogate_or_strict')
+        elif isinstance(value, binary_type):
+            value_is_text = False
+            if PY3:
+                native_str_value = to_text(value, errors='surrogate_or_strict')
+
+        if native_str_value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            native_str_value = native_str_value.replace(omit_me, '*' * 8)
+
+        if value_is_text and isinstance(native_str_value, binary_type):
+            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
+        elif not value_is_text and isinstance(native_str_value, text_type):
+            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
+        else:
+            value = native_str_value
+
+    elif isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
+        if stringy_value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            if omit_me in stringy_value:
+                return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+
+    elif isinstance(value, (datetime.datetime, datetime.date)):
+        value = value.isoformat()
+    else:
+        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
+    return value
+
+
+def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
+    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
+    if isinstance(value, (text_type, binary_type)):
+        return value
+
+    if isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        return value
+
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        return value
+
+    raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
+
+def env_fallback(*args, **kwargs):
+    """Load value from environment variable"""
+
+    for arg in args:
+        if arg in os.environ:
+            return os.environ[arg]
+    raise AnsibleFallbackNotFound
+
+
+def set_fallbacks(argument_spec, parameters):
+    no_log_values = set()
+    for param, value in argument_spec.items():
+        fallback = value.get('fallback', (None,))
+        fallback_strategy = fallback[0]
+        fallback_args = []
+        fallback_kwargs = {}
+        if param not in parameters and fallback_strategy is not None:
+            for item in fallback[1:]:
+                if isinstance(item, dict):
+                    fallback_kwargs = item
+                else:
+                    fallback_args = item
+            try:
+                fallback_value = fallback_strategy(*fallback_args, **fallback_kwargs)
+            except AnsibleFallbackNotFound:
+                continue
+            else:
+                if value.get('no_log', False) and fallback_value:
+                    no_log_values.add(fallback_value)
+                parameters[param] = fallback_value
+
+    return no_log_values
+
+
+def set_defaults(argument_spec, parameters, set_default=True):
+    """Set default values for parameters when no value is supplied.
+
+    Modifies parameters directly.
+
+    :param argument_spec: Argument spec
+    :type argument_spec: dict
+
+    :param parameters: Parameters to evaluate
+    :type parameters: dict
+
+    :param set_default: Whether or not to set the default values
+    :type set_default: bool
+
+    :returns: Set of strings that should not be logged.
+    :rtype: set
+    """
+
+    no_log_values = set()
+    for param, value in argument_spec.items():
+
+        # TODO: Change the default value from None to Sentinel to differentiate between
+        #       user supplied None and a default value set by this function.
+        default = value.get('default', None)
+
+        # This prevents setting defaults on required items on the 1st run,
+        # otherwise will set things without a default to None on the 2nd.
+        if param not in parameters and (default is not None or set_default):
+            # Make sure any default value for no_log fields are masked.
+            if value.get('no_log', False) and default:
+                no_log_values.add(default)
+
+            parameters[param] = default
+
+    return no_log_values
+
+
 def list_no_log_values(argument_spec, params):
     """Return set of no log values
 
     :arg argument_spec: An argument spec dictionary from a module
-    :arg params: Dictionary of all module parameters
+    :arg params: Dictionary of all parameters
 
     :returns: Set of strings that should be hidden from output::
 
@@ -146,11 +376,11 @@ def list_no_log_values(argument_spec, params):
     return no_log_values
 
 
-def list_deprecations(argument_spec, params, prefix=''):
+def list_deprecations(argument_spec, parameters, prefix=''):
     """Return a list of deprecations
 
     :arg argument_spec: An argument spec dictionary from a module
-    :arg params: Dictionary of all module parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: List of dictionaries containing a message and version in which
         the deprecated parameter will be removed, or an empty list::
@@ -160,7 +390,7 @@ def list_deprecations(argument_spec, params, prefix=''):
 
     deprecations = []
     for arg_name, arg_opts in argument_spec.items():
-        if arg_name in params:
+        if arg_name in parameters:
             if prefix:
                 sub_prefix = '%s["%s"]' % (prefix, arg_name)
             else:
@@ -180,7 +410,7 @@ def list_deprecations(argument_spec, params, prefix=''):
             # Check sub-argument spec
             sub_argument_spec = arg_opts.get('options')
             if sub_argument_spec is not None:
-                sub_arguments = params[arg_name]
+                sub_arguments = parameters[arg_name]
                 if isinstance(sub_arguments, Mapping):
                     sub_arguments = [sub_arguments]
                 if isinstance(sub_arguments, list):
@@ -191,12 +421,94 @@ def list_deprecations(argument_spec, params, prefix=''):
     return deprecations
 
 
-def handle_aliases(argument_spec, params, alias_warnings=None):
+def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
+    """ Sanitize the keys in a container object by removing no_log values from key names.
+
+    This is a companion function to the `remove_values()` function. Similar to that function,
+    we make use of deferred_removals to avoid hitting maximum recursion depth in cases of
+    large data structures.
+
+    :param obj: The container object to sanitize. Non-container objects are returned unmodified.
+    :param no_log_strings: A set of string values we do not want logged.
+    :param ignore_keys: A set of string values of keys to not sanitize.
+
+    :returns: An object with sanitized keys.
+    """
+
+    deferred_removals = deque()
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _sanitize_keys_conditions(obj, no_log_strings, ignore_keys, deferred_removals)
+
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                if old_key in ignore_keys or old_key.startswith('_ansible'):
+                    new_data[old_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+                else:
+                    # Sanitize the old key. We take advantage of the sanitizing code in
+                    # _remove_values_conditions() rather than recreating it here.
+                    new_key = _remove_values_conditions(old_key, no_log_strings, None)
+                    new_data[new_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+        else:
+            for elem in old_data:
+                new_elem = _sanitize_keys_conditions(elem, no_log_strings, ignore_keys, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from keys')
+
+    return new_value
+
+
+def remove_values(value, no_log_strings):
+    """ Remove strings in no_log_strings from value.  If value is a container
+    type, then remove a lot more.
+
+    Use of deferred_removals exists, rather than a pure recursive solution,
+    because of the potential to hit the maximum recursion depth when dealing with
+    large amounts of data (see issue #24560).
+    """
+
+    deferred_removals = deque()
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _remove_values_conditions(value, no_log_strings, deferred_removals)
+
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                new_elem = _remove_values_conditions(old_elem, no_log_strings, deferred_removals)
+                new_data[old_key] = new_elem
+        else:
+            for elem in old_data:
+                new_elem = _remove_values_conditions(elem, no_log_strings, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from output')
+
+    return new_value
+
+
+def handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprecations=None):
     """Return a two item tuple. The first is a dictionary of aliases, the second is
     a list of legal inputs.
 
+    Modify supplied parameters by adding a new key for each alias.
+
     If a list is provided to the alias_warnings parameter, it will be filled with tuples
     (option, alias) in every case where both an option and its alias are specified.
+
+    If a list is provided to alias_deprecations, it will be populated with dictionaries,
+    each containing deprecation information for each alias found in argument_spec.
     """
 
     legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
@@ -207,31 +519,40 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
         aliases = v.get('aliases', None)
         default = v.get('default', None)
         required = v.get('required', False)
+
+        if alias_deprecations is not None:
+            for alias in argument_spec[k].get('deprecated_aliases', []):
+                if alias.get('name') in parameters:
+                    alias_deprecations.append(alias)
+
         if default is not None and required:
             # not alias specific but this is a good place to check this
             raise ValueError("internal error: required and default are mutually exclusive for %s" % k)
+
         if aliases is None:
             continue
+
         if not is_iterable(aliases) or isinstance(aliases, (binary_type, text_type)):
             raise TypeError('internal error: aliases must be a list or tuple')
+
         for alias in aliases:
             legal_inputs.append(alias)
             aliases_results[alias] = k
-            if alias in params:
-                if k in params and alias_warnings is not None:
+            if alias in parameters:
+                if k in parameters and alias_warnings is not None:
                     alias_warnings.append((k, alias))
-                params[k] = params[alias]
+                parameters[k] = parameters[alias]
 
     return aliases_results, legal_inputs
 
 
-def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=None):
-    """Check keys in module_parameters against those provided in legal_inputs
+def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None):
+    """Check keys in parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
     they will be generated using the argument_spec.
 
     :arg argument_spec: Dictionary of parameters, their type, and valid values.
-    :arg module_parameters: Dictionary of module parameters.
+    :arg parameters: Dictionary of parameters.
     :arg legal_inputs: List of valid key names property names. Overrides values
         in argument_spec.
 
@@ -240,10 +561,10 @@ def get_unsupported_parameters(argument_spec, module_parameters, legal_inputs=No
     """
 
     if legal_inputs is None:
-        aliases, legal_inputs = handle_aliases(argument_spec, module_parameters)
+        aliases, legal_inputs = handle_aliases(argument_spec, parameters)
 
     unsupported_parameters = set()
-    for k in module_parameters.keys():
+    for k in parameters.keys():
         if k not in legal_inputs:
             unsupported_parameters.add(k)
 
@@ -275,3 +596,256 @@ def get_type_validator(wanted):
         wanted = getattr(wanted, '__name__', to_native(type(wanted)))
 
     return type_checker, wanted
+
+
+def validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
+
+    if errors is None:
+        errors = []
+
+    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    validated_parameters = []
+    # Get param name for strings so we can later display this value in a useful error message if needed
+    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+    kwargs = {}
+    if wanted_element_type == 'str' and isinstance(wanted_type, string_types):
+        if isinstance(parameter, string_types):
+            kwargs['param'] = parameter
+        elif isinstance(parameter, dict):
+            kwargs['param'] = list(parameter.keys())[0]
+
+    for value in values:
+        try:
+            validated_parameters.append(type_checker(value, **kwargs))
+        except (TypeError, ValueError) as e:
+            msg = "Elements value for option '%s'" % parameter
+            if options_context:
+                msg += " found in '%s'" % " -> ".join(options_context)
+            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
+            errors.append(msg)
+    return validated_parameters
+
+
+def validate_argument_types(argument_spec, parameters, prefix='', options_context=None, errors=None):
+    """Validate that parameter types match the type in the argument spec.
+
+    Determine the appropriate type checker function and run each
+    parameter value through that function. All error messages from type checker
+    functions are returned. If any parameter fails to validate, it will not
+    be in the returned parameters.
+
+    :param argument_spec: Argument spec
+    :type argument_spec: dict
+
+    :param parameters: Parameters passed to module
+    :type parameters: dict
+
+    :param prefix: Name of the parent key that contains the spec. Used in the error message
+    :type prefix: str
+
+    :param options_context: List of contexts?
+    :type options_context: list
+
+    :returns: Two item tuple containing validated and coerced parameters
+              and a list of any errors that were encountered.
+    :rtype: tuple
+
+    """
+
+    if errors is None:
+        errors = []
+
+    for param, spec in argument_spec.items():
+        if param not in parameters:
+            continue
+
+        value = parameters[param]
+        if value is None:
+            continue
+
+        wanted_type = spec.get('type')
+        type_checker, wanted_name = get_type_validator(wanted_type)
+        # Get param name for strings so we can later display this value in a useful error message if needed
+        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+        kwargs = {}
+        if wanted_name == 'str' and isinstance(wanted_type, string_types):
+            kwargs['param'] = list(parameters.keys())[0]
+
+            # Get the name of the parent key if this is a nested option
+            if prefix:
+                kwargs['prefix'] = prefix
+
+        try:
+            parameters[param] = type_checker(value, **kwargs)
+            elements_wanted_type = spec.get('elements', None)
+            if elements_wanted_type:
+                elements = parameters[param]
+                if wanted_type != 'list' or not isinstance(elements, list):
+                    msg = "Invalid type %s for option '%s'" % (wanted_name, elements)
+                    if options_context:
+                        msg += " found in '%s'." % " -> ".join(options_context)
+                    msg += ", elements value check is supported only with 'list' type"
+                    errors.append(msg)
+                parameters[param] = validate_elements(elements_wanted_type, param, elements, options_context, errors)
+
+        except (TypeError, ValueError) as e:
+            msg = "argument '%s' is of type %s" % (param, type(value))
+            if options_context:
+                msg += " found in '%s'." % " -> ".join(options_context)
+            msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
+            errors.append(msg)
+
+
+def validate_argument_values(argument_spec, parameters, options_context=None, errors=None):
+    """Ensure all arguments have the requested values, and there are no stray arguments"""
+
+    if errors is None:
+        errors = []
+
+    for param, spec in argument_spec.items():
+        choices = spec.get('choices')
+        if choices is None:
+            continue
+
+        if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
+            if param in parameters:
+                # Allow one or more when type='list' param with choices
+                if isinstance(parameters[param], list):
+                    diff_list = ", ".join([item for item in parameters[param] if item not in choices])
+                    if diff_list:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
+                        if options_context:
+                            msg += " found in %s" % " -> ".join(options_context)
+                        errors.append(msg)
+                elif parameters[param] not in choices:
+                    # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
+                    # the value. If we can't figure this out, module author is responsible.
+                    lowered_choices = None
+                    if parameters[param] == 'False':
+                        lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_FALSE.intersection(choices)
+                        if len(overlap) == 1:
+                            # Extract from a set
+                            (parameters[param],) = overlap
+
+                    if parameters[param] == 'True':
+                        if lowered_choices is None:
+                            lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_TRUE.intersection(choices)
+                        if len(overlap) == 1:
+                            (parameters[param],) = overlap
+
+                    if parameters[param] not in choices:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
+                        if options_context:
+                            msg += " found in %s" % " -> ".join(options_context)
+                        errors.append(msg)
+        else:
+            msg = "internal error: choices for argument %s are not iterable: %s" % (param, choices)
+            if options_context:
+                msg += " found in %s" % " -> ".join(options_context)
+            errors.append(msg)
+
+
+def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
+    """Validate sub argument spec. This function is recursive."""
+
+    if options_context is None:
+        options_context = []
+
+    if errors is None:
+        errors = []
+
+    if no_log_values is None:
+        no_log_values = set()
+
+    if unsupported_parameters is None:
+        unsupported_parameters = set()
+
+    for param, value in argument_spec.items():
+        wanted = value.get('type')
+        if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == dict):
+            sub_spec = value.get('options')
+            if value.get('apply_defaults', False):
+                if sub_spec is not None:
+                    if parameters.get(value) is None:
+                        parameters[param] = {}
+                    else:
+                        continue
+            elif sub_spec is None or param not in parameters or parameters[param] is None:
+                continue
+
+            # Keep track of context for warning messages
+            options_context.append(param)
+
+            # Make sure we can iterate over the elements
+            if isinstance(parameters[param], dict):
+                elements = [parameters[param]]
+            else:
+                elements = parameters[param]
+
+            for idx, sub_parameters in enumerate(elements):
+                if not isinstance(sub_parameters, dict):
+                    errors.append("value of '%s' must be of type dict or list of dicts" % param)
+
+                # Set prefix for warning messages
+                new_prefix = prefix + param
+                if wanted == 'list':
+                    new_prefix += '[%d]' % idx
+                new_prefix += '.'
+
+                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
+
+                alias_warnings = []
+                try:
+                    options_aliases, legal_inputs = handle_aliases(sub_spec, sub_parameters, alias_warnings)
+                except (TypeError, ValueError) as e:
+                    options_aliases = {}
+                    legal_inputs = None
+                    errors.append(to_native(e))
+
+                for option, alias in alias_warnings:
+                    warn('Both option %s and its alias %s are set.' % (option, alias))
+
+                no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
+
+                if legal_inputs is None:
+                    legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
+                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs))
+
+                try:
+                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters)
+                except TypeError as e:
+                    errors.append(to_native(e))
+
+                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
+
+                try:
+                    check_required_arguments(sub_spec, sub_parameters)
+                except TypeError as e:
+                    errors.append(to_native(e))
+
+                validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
+                validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
+
+                checks = [
+                    (check_required_together, 'required_together'),
+                    (check_required_one_of, 'required_one_of'),
+                    (check_required_if, 'required_if'),
+                    (check_required_by, 'required_by'),
+                ]
+
+                for check in checks:
+                    try:
+                        check[0](value.get(check[1]), parameters)
+                    except TypeError as e:
+                        errors.append(to_native(e))
+
+                no_log_values.update(set_defaults(sub_spec, sub_parameters))
+
+                # Handle nested specs
+                validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
+
+            options_context.pop()
