@@ -298,8 +298,6 @@ def install_command_requirements(args, python_version=None, context=None, enable
         if args.raw:
             return
 
-    generate_egg_info(args)
-
     if not args.requirements:
         return
 
@@ -432,46 +430,6 @@ def pip_list(args, pip):
     """
     stdout = run_command(args, pip + ['list'], capture=True)[0]
     return stdout
-
-
-def generate_egg_info(args):
-    """
-    :type args: EnvironmentConfig
-    """
-    if args.explain:
-        return
-
-    ansible_version = get_ansible_version()
-
-    # inclusion of the version number in the path is optional
-    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
-    egg_info_path = ANSIBLE_LIB_ROOT + '_core-%s.egg-info' % ansible_version
-
-    if os.path.exists(egg_info_path):
-        return
-
-    egg_info_path = ANSIBLE_LIB_ROOT + '_core.egg-info'
-
-    if os.path.exists(egg_info_path):
-        return
-
-    # minimal PKG-INFO stub following the format defined in PEP 241
-    # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
-    # newer setuptools versions are happy with an empty directory
-    # including a stub here means we don't need to locate the existing file or have setup.py generate it when running from source
-    pkg_info = '''
-Metadata-Version: 1.0
-Name: ansible
-Version: %s
-Platform: UNKNOWN
-Summary: Radically simple IT automation
-Author-email: info@ansible.com
-License: GPLv3+
-''' % get_ansible_version()
-
-    pkg_info_path = os.path.join(egg_info_path, 'PKG-INFO')
-
-    write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
 def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None):
