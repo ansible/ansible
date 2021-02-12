@@ -247,3 +247,26 @@
                 - ansible_failed_result.validate_args_context.name == "role_with_no_tasks"
                 - ansible_failed_result.validate_args_context.type == "role"
                 - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/role_with_no_tasks')"
+
+- name: "New play to reset vars: Test disabling role validation with rolespec_validate=False"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+      - name: "Test import_role of role C (missing a_str), but validation turned off"
+        import_role:
+          name: c
+          rolespec_validate: False
+      - fail:
+          msg: "Should not get here"
+
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # We expect the role to actually run, but will fail because an undefined variable was referenced
+              # and validation wasn't performed up front (thus not returning 'argument_errors').
+              - "'argument_errors' not in ansible_failed_result"
+              - "'The task includes an option with an undefined variable.' in ansible_failed_result.msg"
