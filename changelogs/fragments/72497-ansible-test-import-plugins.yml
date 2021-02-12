@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - the ``import`` sanity test now also tries to import all non-module and non-module_utils Python files in ``lib/ansible/`` resp. ``plugins/`` (https://github.com/ansible/ansible/pull/72497)."
