@@ -146,13 +146,13 @@ class ImportTest(SanityMultipleVersion):
 
             env.update(
                 SANITY_TEMP_PATH=ResultType.TMP.path,
+                SANITY_IMPORTER_TYPE=import_type,
             )
 
             if data_context().content.collection:
                 env.update(
                     SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
                     SANITY_EXTERNAL_PYTHON=python,
-                    SANITY_IMPORTER_TYPE=import_type,
                 )
 
             virtualenv_python = os.path.join(virtual_environment_bin, 'python')
