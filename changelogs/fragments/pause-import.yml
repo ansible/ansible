@@ -1,0 +1,2 @@
+bugfixes:
+- "pause - catch additional error on setting up curses (https://github.com/ansible/ansible/pull/73588)."
