@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - add the collection plugin directories ``plugin_utils`` and ``sub_plugins`` to list of plugin types. This ensures such plugins are tested for the ``import`` sanity test (https://github.com/ansible/ansible/pull/73599)."
