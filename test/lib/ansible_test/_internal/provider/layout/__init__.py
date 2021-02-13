@@ -193,6 +193,10 @@ class LayoutProvider(PathProvider):
         'terminal',
         'test',
         'vars',
+        # The following are plugin directories not directly supported by ansible-core, but used in collections
+        # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
+        'plugin_utils',
+        'sub_plugins',
     )
 
     @abc.abstractmethod
