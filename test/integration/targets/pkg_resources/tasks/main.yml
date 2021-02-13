@@ -1,0 +1,3 @@
+- name: Verify that pkg_resources imports are functional
+  debug:
+    msg: "{{ lookup('check_pkg_resources') }}"
