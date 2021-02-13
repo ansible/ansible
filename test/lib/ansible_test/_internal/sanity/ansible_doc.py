@@ -58,6 +58,10 @@ class AnsibleDocTest(SanitySingleVersion):
             'module_utils',
             'terminal',
             'test',
+            # The following are plugin directories not directly supported by ansible-core (and thus also not by ansible-doc)
+            # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
+            'plugin_utils',
+            'sub_plugins',
         ])
 
         plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in unsupported_plugin_types]
