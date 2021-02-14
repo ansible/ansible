@@ -170,7 +170,7 @@ def check_required_by(requirements, parameters, add_required=None, none_is_not_s
         for required in value:
             if required not in parameters or (none_is_not_specified and parameters[required] is None):
                 result[key].append(required)
-                if key not in module_parameters and required in module_parameters and none_warnings is not None:
+                if key not in parameters and required in parameters and none_warnings is not None:
                     none_warnings.append('From ansible-base 2.15 on, the explicit none value specified'
                                          ' to %s will no longer be interpreted as "not specified"' % required)
             if add_required is not None:
