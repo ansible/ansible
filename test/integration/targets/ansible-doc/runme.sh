@@ -79,18 +79,18 @@ test "$current_role_out" == "$expected_role_out"
 
 #### test add_collection_to_versions_and_dates()
 
-current_out="$(ansible-doc --json --playbook-dir ./ testns.testcol.randommodule | sed 's/\s*$//' | sed 's/\s*"filename": "[^"]*",$//')"
-expected_out="$(sed 's/\s*"filename": "[^"]*",$//' randommodule.output)"
+current_out="$(ansible-doc --json --playbook-dir ./ testns.testcol.randommodule | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
+expected_out="$(sed 's/ *"filename": "[^"]*",$//' randommodule.output)"
 test "$current_out" == "$expected_out"
 
-current_out="$(ansible-doc --json --playbook-dir ./ -t cache testns.testcol.notjsonfile | sed 's/\s*$//' | sed 's/\s*"filename": "[^"]*",$//')"
-expected_out="$(sed 's/\s*"filename": "[^"]*",$//' notjsonfile.output)"
+current_out="$(ansible-doc --json --playbook-dir ./ -t cache testns.testcol.notjsonfile | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
+expected_out="$(sed 's/ *"filename": "[^"]*",$//' notjsonfile.output)"
 test "$current_out" == "$expected_out"
 
-current_out="$(ansible-doc --json --playbook-dir ./ -t lookup testns.testcol.noop | sed 's/\s*$//' | sed 's/\s*"filename": "[^"]*",$//')"
-expected_out="$(sed 's/\s*"filename": "[^"]*",$//' noop.output)"
+current_out="$(ansible-doc --json --playbook-dir ./ -t lookup testns.testcol.noop | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
+expected_out="$(sed 's/ *"filename": "[^"]*",$//' noop.output)"
 test "$current_out" == "$expected_out"
 
-current_out="$(ansible-doc --json --playbook-dir ./ -t vars testns.testcol.noop_vars_plugin | sed 's/\s*$//' | sed 's/\s*"filename": "[^"]*",$//')"
-expected_out="$(sed 's/\s*"filename": "[^"]*",$//' noop_vars_plugin.output)"
+current_out="$(ansible-doc --json --playbook-dir ./ -t vars testns.testcol.noop_vars_plugin | sed 's/ *$//' | sed 's/ *"filename": "[^"]*",$//')"
+expected_out="$(sed 's/ *"filename": "[^"]*",$//' noop_vars_plugin.output)"
 test "$current_out" == "$expected_out"
