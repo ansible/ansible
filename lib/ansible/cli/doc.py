@@ -732,8 +732,9 @@ class DocCLI(CLI, RoleMixin):
             if result.redirect_list and len(result.redirect_list) > 1:
                 # take the last one in the redirect list, we may have successfully jumped through N other redirects
                 target_module_name = result.redirect_list[-1]
-                raise PluginNotFound('%s was redirected to %s, which was not found in %s' % (plugin, target_module_name, search_paths))
-            raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
+                raise PluginNotFound('%s %s was redirected to %s, which was not found in %s' % (
+                    plugin_type, plugin, target_module_name, search_paths))
+            raise PluginNotFound('%s %s was not found in %s' % (plugin_type, plugin, search_paths))
         plugin_name = result.plugin_resolved_name
         filename = result.plugin_resolved_path
         collection_name = result.plugin_resolved_collection

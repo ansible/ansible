@@ -60,7 +60,7 @@
       register: result
     - assert:
         that:
-          - '"[WARNING]: module test_does_not_exist not found in:" in result.stderr'
+          - '"[WARNING]: module test_does_not_exist was not found in:" in result.stderr'
 
     - name: documented module
       command: ansible-doc test_docs
