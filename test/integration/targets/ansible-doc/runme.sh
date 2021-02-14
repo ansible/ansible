@@ -76,3 +76,17 @@ expected_role_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.TESTROLE\).*(.*)$/\1/' fakec
 test "$current_role_out" == "$expected_role_out"
 
 )
+
+#### test add_collection_to_versions_and_dates()
+
+current_out="$(ansible-doc --json --playbook-dir ./ testns.testcol.randommodule | sed 's/\s*"filename": "[^"]*",$//')"
+expected_out="$(sed 's/\s*"filename": "[^"]*",$//' randommodule.output)"
+test "$current_out" == "$expected_out"
+
+current_out="$(ansible-doc --json --playbook-dir ./ -t cache testns.testcol.notjsonfile | sed 's/\s*"filename": "[^"]*",$//')"
+expected_out="$(sed 's/\s*"filename": "[^"]*",$//' notjsonfile.output)"
+test "$current_out" == "$expected_out"
+
+current_out="$(ansible-doc --json --playbook-dir ./ -t lookup testns.testcol.noop | sed 's/\s*"filename": "[^"]*",$//')"
+expected_out="$(sed 's/\s*"filename": "[^"]*",$//' noop.output)"
+test "$current_out" == "$expected_out"

@@ -12,6 +12,10 @@ DOCUMENTATION = """
     short_description: returns input
     description:
       - this is a noop
+    deprecated:
+        alternative: Use some other lookup
+        why: Test deprecation
+        removed_in: '3.0.0'
 """
 
 EXAMPLES = """
@@ -22,6 +26,7 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: input given
+    version_added: 1.0.0
 """
 
 from ansible.module_utils.common._collections_compat import Sequence
