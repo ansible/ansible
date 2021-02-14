@@ -1,0 +1,2 @@
+bugfixes:
+- "core - improve error message when loading an action/module is redirected, but the result not found (https://github.com/ansible/ansible/pull/73603)."

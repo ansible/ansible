@@ -298,6 +298,7 @@ class ModuleArgsParser:
         non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
 
         # walk the filtered input dictionary to see if we recognize a module name
+        bad_attempts = []
         for item, value in iteritems(non_task_ds):
             is_action_candidate = False
             if item in BUILTIN_TASKS:
@@ -308,9 +309,13 @@ class ModuleArgsParser:
                 # If the plugin is resolved and redirected smuggle the list of candidate names via the task attribute 'internal_redirect_list'
                 context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
                 if not context.resolved:
+                    if context.redirect_list and len(context.redirect_list) > 1:
+                        bad_attempts.append((item, context.redirect_list[-1]))
                     context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
                     if context.resolved and context.redirect_list:
                         self.internal_redirect_list = context.redirect_list
+                    if not context.resolved and context.redirect_list and len(context.redirect_list) > 1:
+                        bad_attempts.append((item, context.redirect_list[-1]))
                 elif context.redirect_list:
                     self.internal_redirect_list = context.redirect_list
 
@@ -327,6 +332,11 @@ class ModuleArgsParser:
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
             if non_task_ds:  # there was one non-task action, but we couldn't find it
+                if bad_attempts:
+                    bad_action, redirect = bad_attempts[0]
+                    raise AnsibleParserError("module/action '{0}' was redirected to '{1}', which could "
+                                             "not be loaded.".format(bad_action, redirect),
+                                             obj=self._task_ds)
                 bad_action = list(non_task_ds.keys())[0]
                 raise AnsibleParserError("couldn't resolve module/action '{0}'. This often indicates a "
                                          "misspelling, missing collection, or incorrect module path.".format(bad_action),

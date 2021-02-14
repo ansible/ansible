@@ -557,8 +557,8 @@ class DocCLI(CLI, RoleMixin):
         for plugin in context.CLIARGS['args']:
             try:
                 doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
-            except PluginNotFound:
-                display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
+            except PluginNotFound as e:
+                display.warning("%s" % to_native(e))
                 continue
             except Exception as e:
                 display.vvv(traceback.format_exc())
@@ -729,6 +729,10 @@ class DocCLI(CLI, RoleMixin):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
         result = loader.find_plugin_with_context(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if not result.resolved:
+            if result.redirect_list and len(result.redirect_list) > 1:
+                # take the last one in the redirect list, we may have successfully jumped through N other redirects
+                target_module_name = result.redirect_list[-1]
+                raise PluginNotFound('%s was redirected to %s, which was not found in %s' % (plugin, target_module_name, search_paths))
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
         plugin_name = result.plugin_resolved_name
         filename = result.plugin_resolved_path
