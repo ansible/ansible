@@ -84,6 +84,66 @@
                         }
                     ],
                     "required": true
+                },
+                "testcol2depr": {
+                    "deprecated": {
+                        "alternative": "none",
+                        "collection_name": "testns.testcol2",
+                        "version": "2.0.0",
+                        "why": "Test option deprecation"
+                    },
+                    "description": [
+                        "A plugin option taken from testcol2 that is deprecated"
+                    ],
+                    "type": "str"
+                },
+                "testcol2option": {
+                    "description": [
+                        "A plugin option taken from testcol2"
+                    ],
+                    "env": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol2",
+                                "removed_at_date": "2020-01-31",
+                                "why": "Test deprecation"
+                            },
+                            "name": "FOO_BAR",
+                            "version_added": "1.2.0",
+                            "version_added_collection": "testns.testcol2"
+                        }
+                    ],
+                    "ini": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol2",
+                                "version": "3.0.0",
+                                "why": "Test deprecation"
+                            },
+                            "key": "foo",
+                            "section": "bar",
+                            "version_added": "1.1.0",
+                            "version_added_collection": "testns.testcol2"
+                        }
+                    ],
+                    "type": "str",
+                    "vars": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol2",
+                                "removed_at_date": "2040-12-31",
+                                "why": "Test deprecation"
+                            },
+                            "name": "foobar",
+                            "version_added": "1.3.0",
+                            "version_added_collection": "testns.testcol2"
+                        }
+                    ],
+                    "version_added": "1.0.0",
+                    "version_added_collection": "testns.testcol2"
                 }
             },
             "short_description": "JSON formatted files.",

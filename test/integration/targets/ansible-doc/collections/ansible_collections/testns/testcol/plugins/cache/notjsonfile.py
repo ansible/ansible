@@ -55,6 +55,8 @@ DOCUMENTATION = '''
               why: Test deprecation
               version: '3.0.0'
         type: integer
+    extends_documentation_fragment:
+        - testns.testcol2.plugin
 '''
 
 from ansible.plugins.cache import BaseFileCacheModule

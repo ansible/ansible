@@ -90,3 +90,7 @@ test "$current_out" == "$expected_out"
 current_out="$(ansible-doc --json --playbook-dir ./ -t lookup testns.testcol.noop | sed 's/\s*"filename": "[^"]*",$//')"
 expected_out="$(sed 's/\s*"filename": "[^"]*",$//' noop.output)"
 test "$current_out" == "$expected_out"
+
+current_out="$(ansible-doc --json --playbook-dir ./ -t vars testns.testcol.noop_vars_plugin | sed 's/\s*"filename": "[^"]*",$//')"
+expected_out="$(sed 's/\s*"filename": "[^"]*",$//' noop_vars_plugin.output)"
+test "$current_out" == "$expected_out"

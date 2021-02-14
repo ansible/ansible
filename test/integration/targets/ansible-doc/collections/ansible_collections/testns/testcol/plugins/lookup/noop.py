@@ -16,6 +16,8 @@ DOCUMENTATION = """
         alternative: Use some other lookup
         why: Test deprecation
         removed_in: '3.0.0'
+    extends_documentation_fragment:
+        - testns.testcol2.version_added
 """
 
 EXAMPLES = """

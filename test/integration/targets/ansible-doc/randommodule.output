@@ -54,6 +54,20 @@
                     "type": "str",
                     "version_added": "1.2.0",
                     "version_added_collection": "testns.testcol"
+                },
+                "testcol2option": {
+                    "description": [
+                        "An option taken from testcol2"
+                    ],
+                    "type": "str",
+                    "version_added": "1.0.0",
+                    "version_added_collection": "testns.testcol2"
+                },
+                "testcol2option2": {
+                    "description": [
+                        "Another option taken from testcol2"
+                    ],
+                    "type": "str"
                 }
             },
             "short_description": "A random module",
