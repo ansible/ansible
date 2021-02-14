@@ -69,7 +69,9 @@ def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
 
 class PluginNotFound(Exception):
-    pass
+    def __init__(self, message):
+        super(PluginNotFound, self).__init__(message)
+        self.message = message
 
 
 class RoleMixin(object):
@@ -558,7 +560,7 @@ class DocCLI(CLI, RoleMixin):
             try:
                 doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
             except PluginNotFound as e:
-                display.warning("%s" % to_native(e))
+                display.warning(e.message)
                 continue
             except Exception as e:
                 display.vvv(traceback.format_exc())
@@ -732,9 +734,9 @@ class DocCLI(CLI, RoleMixin):
             if result.redirect_list and len(result.redirect_list) > 1:
                 # take the last one in the redirect list, we may have successfully jumped through N other redirects
                 target_module_name = result.redirect_list[-1]
-                raise PluginNotFound('%s %s was redirected to %s, which was not found in %s' % (
+                raise PluginNotFound('%s %s was redirected to %s, which was not found in: %s' % (
                     plugin_type, plugin, target_module_name, search_paths))
-            raise PluginNotFound('%s %s was not found in %s' % (plugin_type, plugin, search_paths))
+            raise PluginNotFound('%s %s was not found in: %s' % (plugin_type, plugin, search_paths))
         plugin_name = result.plugin_resolved_name
         filename = result.plugin_resolved_path
         collection_name = result.plugin_resolved_collection
