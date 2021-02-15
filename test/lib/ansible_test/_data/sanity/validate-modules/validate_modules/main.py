@@ -945,7 +945,6 @@ class ModuleValidator(Validator):
                     doc_info['DOCUMENTATION']['lineno'],
                     self.name, 'DOCUMENTATION'
                 )
-                documentation_exists = bool(doc)
                 if doc:
                     add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
                 else:
