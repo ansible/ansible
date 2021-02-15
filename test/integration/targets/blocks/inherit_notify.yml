@@ -4,8 +4,8 @@
   - name: test notify inheritance in block
     notify: hello
     block:
-      - debug: msg=trigger it
-        changed: true
+    - debug: msg='trigger it'
+      changed_when: true
 
   handlers:
     - name: hello
