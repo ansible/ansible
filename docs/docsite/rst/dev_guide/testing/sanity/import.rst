@@ -31,7 +31,7 @@ must be imported in a try/except ImportError block as follows:
                msg=missing_required_lib('another_library'),
                exception=ANOTHER_LIBRARY_IMPORT_ERROR)
 
-1. In plugins:
+2. In plugins:
 
    .. code-block:: python
 
