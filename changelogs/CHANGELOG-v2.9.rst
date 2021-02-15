@@ -5,6 +5,143 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.18rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-02-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - The ``pylint`` sanity test is now supported on Python 3.8.
+- inventory cache - do not show a warning when the cache file does not (yet) exist.
+
+Security Fixes
+--------------
+
+- **security issue** - Mask default and fallback values for ``no_log`` module options (CVE-2021-20228)
+- _sf_account_manager - `initiator_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- _sf_account_manager - `target_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_active_directory - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_active_directory - `secret_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_filesystems - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_filesystems - `secret_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_pool - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_pool - `secret_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_snapshots - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- aws_netapp_cvs_snapshots - `secret_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- bitbucket_pipeline_variable - hide user sensitive information which are marked as ``secured`` from logging into the console (https://github.com/ansible-collections/community.general/pull/1635) (CVE-2021-20180).
+- ce_vrrp - `auth_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- cp_mgmt_vpn_community_meshed - `shared_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- cp_mgmt_vpn_community_star - `shared_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- docker_swarm - `signing_ca_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_backend_service - `oauth2_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_disk - `disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_disk - `source_image_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_disk - `source_snapshot_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_image - `image_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_image - `source_disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_instance_template - `disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_instance_template - `source_image_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_region_disk - `disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_region_disk - `source_snapshot_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_snapshot - `snapshot_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_snapshot - `source_disk_encryption_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_ssl_certificate - `private_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_compute_vpn_tunnel - `shared_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gcp_sql_instance - `client_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- gitlab_runner - `registration_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- iap_start_workflow - `token_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- ibm_sa_host - `iscsi_chap_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_client - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_client - `registration_access_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_clienttemplate - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- keycloak_group - `auth_client_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- librato_annotation - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- na_elementsw_account - `initiator_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- na_elementsw_account - `target_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- netscaler_lb_monitor - `radkey` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- nios_nsgroup - `tsig_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- nxos_aaa_server - `global_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- nxos_pim_interface - `hello_auth_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_firewall_policy - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_load_balancer - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_monitoring_policy - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_private_network - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- oneandone_public_ip - `auth_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- ovirt - `instance_rootpw` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pagerduty_alert - `api_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pagerduty_alert - `integration_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pagerduty_alert - `service_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- pulp_repo - `feed_client_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- rax_clb_ssl - `private_key` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- snmp_facts - hide user sensitive information such as ``privkey`` and ``authkey`` from logging into the console (https://github.com/ansible-collections/community.general/pull/1621) (CVE-2021-20178).
+- spotinst_aws_elastigroup - `multai_token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- spotinst_aws_elastigroup - `token` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+- utm_proxy_auth_profile - `frontend_cookie_secret` is now masked with no_log and no longer emitted in logging/output (CVE-2021-20191).
+
+Bugfixes
+--------
+
+- Fix incorrect variable scoping when using ``import with context`` in Jinja2 templates. (https://github.com/ansible/ansible/issues/72615)
+- ansible-test - The ``--remote`` option has been updated for Python 2.7 to work around breaking changes in the newly released ``get-pip.py`` bootstrapper.
+- ansible-test - The ``--remote`` option has been updated to use a versioned ``get-pip.py`` bootstrapper to avoid issues with future releases.
+- display correct error information when an error exists in the last line of the file (https://github.com/ansible/ansible/issues/16456)
+- facts - properly report virtualization facts for Linux guests running on bhyve (https://github.com/ansible/ansible/issues/73167)
+- mysql_user - add ``INVOKE LAMBDA`` privilege support (https://github.com/ansible-collections/community.general/issues/283).
+- mysql_user - add ``SHOW_ROUTINE`` privilege support (https://github.com/ansible-collections/community.mysql/issues/86).
+- mysql_user - add missed privileges to support (https://github.com/ansible-collections/community.general/issues/617).
+- pause - do not warn when running in the background if a timeout is provided (https://github.com/ansible/ansible/issues/73042)
+- postgresql_info - fix crash caused by wrong PgSQL version parsing (https://github.com/ansible-collections/community.postgresql/issues/40).
+- postgresql_ping - fix crash caused by wrong PgSQL version parsing (https://github.com/ansible-collections/community.postgresql/issues/40).
+- postgresql_query - fix datetime.timedelta type handling (https://github.com/ansible-collections/community.postgresql/issues/47).
+- postgresql_query - fix decimal handling (https://github.com/ansible-collections/community.postgresql/issues/45).
+- postgresql_set - return a message instead of traceback when a passed parameter has not been found (https://github.com/ansible-collections/community.postgresql/issues/41).
+- psrp connection plugin - ``to_text(stdout)`` before json.loads in psrp.Connection.put_file in case stdout is bytes.
+- win_find - Get-FileStat used [int] instead of [int64] for file size calculations
+
+v2.9.17
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2021-01-18
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Added a ``--export`` option to the ``ansible-test coverage combine`` command to facilitate multi-stage aggregation of coverage in CI pipelines.
+- ansible-test - added a ``--venv-system-site-packages`` option for use with the ``--venv`` option
+- ansible-test - virtualenv helper scripts now prefer ``venv`` on Python 3 over ``virtualenv`` if the ``ANSIBLE_TEST_PREFER_VENV`` environment variable is set
+- bigiq_device_info module - add information on BIG-IQ 7.x support
+
+Bugfixes
+--------
+
+- Fix bytestring vs string comparison in module_utils.basic.is_special_selinux_path() so that special-cased filesystems which don't support SELinux context attributes still allow files to be manipulated on them. (https://github.com/ansible/ansible/issues/70244)
+- Freeform actions did not work with ``ansible.builtin.`` or ``ansible.legacy.`` FQCN (https://github.com/ansible/ansible/pull/72958).
+- async - Fix Python 3 interpreter parsing from module by comparing with bytes (https://github.com/ansible/ansible/issues/70690)
+- bigiq_device_info module - fix iteration bug in a _transform_name_attribute method
+- docker_image - if ``push=true`` is used with ``repository``, and the image does not need to be tagged, still push. This can happen if ``repository`` and ``name`` are equal (https://github.com/ansible-collections/community.docker/issues/52, https://github.com/ansible-collections/community.docker/pull/53).
+- docker_image - report error when loading a broken archive that contains no image (https://github.com/ansible-collections/community.docker/issues/46, https://github.com/ansible-collections/community.docker/pull/55).
+- docker_image - report error when the loaded archive does not contain the specified image (https://github.com/ansible-collections/community.docker/issues/41, https://github.com/ansible-collections/community.docker/pull/55).
+- inventory - pass the vars dictionary to combine_vars instead of an individual key's value (https://github.com/ansible/ansible/issues/72975).
+- k8s - add support for python-kubernetes v12 and later - backport of support in community.kubernetes
+- paramiko connection plugin - Ensure we only reset the connection when one has been previously established (https://github.com/ansible/ansible/issues/65812)
+- systemd - preserve the full unit name when using a templated service and ``systemd`` failed to parse dbus due to a known bug in ``systemd`` (https://github.com/ansible/ansible/pull/72985)
+
+- unsafe_proxy - Ensure that data within a tuple is marked as unsafe (https://github.com/ansible/ansible/issues/65722)
+- user - do the right thing when ``password_lock=True`` and ``password`` are used together (https://github.com/ansible/ansible/issues/72992)
+
+
 v2.9.16
 =======
 

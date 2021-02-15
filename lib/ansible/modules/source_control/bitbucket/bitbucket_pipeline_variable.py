@@ -79,7 +79,7 @@ EXAMPLES = r'''
     secured: '{{ item.secured }}'
     state: present
   with_items:
-    - { name: AWS_ACCESS_KEY, value: ABCD1234 }
+    - { name: AWS_ACCESS_KEY, value: ABCD1234, secured: False }
     - { name: AWS_SECRET, value: qwe789poi123vbn0, secured: True }
 
 - name: Remove pipeline variable
@@ -92,7 +92,7 @@ EXAMPLES = r'''
 
 RETURN = r''' # '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, _load_params
 from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 
 error_messages = {
@@ -214,6 +214,14 @@ def delete_pipeline_variable(module, bitbucket, variable_uuid):
         ))
 
 
+class BitBucketPipelineVariable(AnsibleModule):
+    def __init__(self, *args, **kwargs):
+        params = _load_params() or {}
+        if params.get('secured'):
+            kwargs['argument_spec']['value'].update({'no_log': True})
+        super(BitBucketPipelineVariable, self).__init__(*args, **kwargs)
+
+
 def main():
     argument_spec = BitbucketHelper.bitbucket_argument_spec()
     argument_spec.update(
@@ -224,7 +232,7 @@ def main():
         secured=dict(type='bool', default=False),
         state=dict(type='str', choices=['present', 'absent'], required=True),
     )
-    module = AnsibleModule(
+    module = BitBucketPipelineVariable(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )

@@ -1693,6 +1693,55 @@ releases:
     - set_mode_if_different-symlink-sticky-dir.yml
     - v2.9.16rc1_summary.yaml
     release_date: '2020-12-07'
+  2.9.17:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.17_summary.yaml
+    release_date: '2021-01-18'
+  2.9.17rc1:
+    codename: Immigrant Song
+    fragments:
+    - 65722-unsafe-tuples.yml
+    - 65812-paramiko-attribute-error.yml
+    - 70244-selinux-special-fs.yml
+    - 70690-async-interpreter.yml
+    - 72958-fix-freeform-actions.yml
+    - 72979-fix-inventory-merge-hash-replace.yaml
+    - 72992-user-account-lock-always-changes.yml
+    - ansible-test-coverage-combine-export.yml
+    - ansible-test-venv-system-site-packages.yml
+    - ansible-test-venv-virtualenv-fallback.yml
+    - community.docker-53-docker_image-tag-push.yml
+    - community.docker-55-docker_image-loading.yml
+    - fix-bigiq-device-info.yaml
+    - k8s-support-kubernetes-v12.yml
+    - systemd-preserve-full-unit-name.yml
+    - v2.9.17rc1_summary.yaml
+    release_date: '2021-01-11'
+  2.9.18rc1:
+    codename: Immigrant Song
+    fragments:
+    - 16456-correct-YAML-error-message-when-file-load-failed.yml
+    - 42-postgresql_set_add_message_when_parameter_not_found.yml
+    - 43-postgresql_modules_fix_version_parsing.yml
+    - 46-postgresql_query_fix_decimal_handling.yml
+    - 51-postgresql_query_fix_datetime_timedelta_type_handling.yml
+    - 58466-FIX_win_find-Bug-Get-FileStat_fails_on_large_files.yml
+    - 72615-jinja-import-context-fix.yml
+    - 73167-bhyve-facts.yml
+    - 87-mysql_user_update_valid_privs_frozen_set.yml
+    - ansible-test-pip-bootstrap-s3.yml
+    - ansible-test-pip-bootstrap.yml
+    - ansible-test-pylint-python-3.8.yml
+    - cve_bitbucket_pipeline_variable.yml
+    - inventory-cache-file-missing-warning.yaml
+    - new-nolog-entries.yml
+    - no_log-fallback.yml
+    - pause-do-not-warn-background-with-seconds.yml
+    - psrp-json-loads-bytes.yml
+    - snmp_facts.yml
+    - v2.9.18rc1_summary.yaml
+    release_date: '2021-02-08'
   2.9.2:
     codename: Immigrant Song
     fragments:

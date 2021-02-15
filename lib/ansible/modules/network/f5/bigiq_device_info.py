@@ -45,6 +45,8 @@ options:
       - "!system-info"
       - "!vlans"
 extends_documentation_fragment: f5
+notes:
+  - With BIGIQ 7.0 and later, a few metadata fields not included/supported (for example, uptime, product_changelist, product_jobid)
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -644,11 +646,13 @@ system_info:
     product_changelist:
       description:
         - Changelist that product branches from.
+        - Not supported with BIGIQ 7.0 and later versions.
       type: int
       sample: 2557198
     product_jobid:
       description:
         - ID of the job that built the product version.
+        - Not supported with BIGIQ 7.0 and later versions.
       type: int
       sample: 1012030
     chassis_serial:
@@ -680,6 +684,7 @@ system_info:
     uptime:
       description:
         - Time, in seconds, since the system booted.
+        - Not supported with BIGIQ 7.0 and later versions.
       type: int
       sample: 603202
   sample: hash/dictionary of values
@@ -817,9 +822,12 @@ vlans:
   sample: hash/dictionary of values
 '''
 
+import copy
 import datetime
 import math
 import re
+
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -834,6 +842,7 @@ try:
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import bigiq_version
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -843,6 +852,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import bigiq_version
 
 
 def parseStats(entry):
@@ -1633,14 +1643,13 @@ class SystemInfoParameters(BaseParameters):
 
     def _transform_name_attribute(self, entry):
         if isinstance(entry, dict):
-            for k, v in iteritems(entry):
+            tmp = copy.deepcopy(entry)
+            for k, v in iteritems(tmp):
                 if k == 'tmName':
                     entry['name'] = entry.pop('tmName')
                 self._transform_name_attribute(v)
         elif isinstance(entry, list):
             for k in entry:
-                if k == 'tmName':
-                    entry['name'] = entry.pop('tmName')
                 self._transform_name_attribute(k)
         else:
             return
@@ -1713,13 +1722,14 @@ class SystemInfoFactManager(BaseManager):
         if tmp:
             result.update(tmp)
 
-        tmp = self.read_uptime_info_from_device()
-        if tmp:
-            result.update(tmp)
+        if LooseVersion(bigiq_version(self.client)) < LooseVersion('7.0.0'):
+            tmp = self.read_uptime_info_from_device()
+            if tmp:
+                result.update(tmp)
 
-        tmp = self.read_version_file_info_from_device()
-        if tmp:
-            result.update(tmp)
+            tmp = self.read_version_file_info_from_device()
+            if tmp:
+                result.update(tmp)
 
         return result
 

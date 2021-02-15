@@ -119,7 +119,8 @@ options:
     version_added: '1.4'
   no_password_changes:
     description:
-    - If C(yes), don't inspect database for password changes. Effective when
+    - If C(yes), don't inspect database for password changes.
+      If the user already exists, skips all password related checks. Effective when
       C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
       password changes as necessary.
     default: 'no'
@@ -157,6 +158,10 @@ notes:
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
+- On some systems (such as AWS RDS), C(pg_authid) is not accessible, thus, the module cannot compare
+  the current and desired C(password). In this case, the module assumes that the passwords are
+  different and changes it reporting that the state has been changed.
+  To skip all password related checks for existing users, use I(no_password_changes=yes).
 seealso:
 - module: postgresql_privs
 - module: postgresql_membership

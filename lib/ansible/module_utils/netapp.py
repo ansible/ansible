@@ -139,8 +139,8 @@ def aws_cvs_host_argument_spec():
     return dict(
         api_url=dict(required=True, type='str'),
         validate_certs=dict(required=False, type='bool', default=True),
-        api_key=dict(required=True, type='str'),
-        secret_key=dict(required=True, type='str')
+        api_key=dict(required=True, type='str', no_log=True),
+        secret_key=dict(required=True, type='str', no_log=True)
     )
 
 

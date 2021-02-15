@@ -188,7 +188,12 @@ class K8sAnsibleMixin(object):
                 kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
 
         # Override any values in the default configuration with Ansible parameters
-        configuration = kubernetes.client.Configuration()
+        # As of kubernetes-client v12.0.0, get_default_copy() is required here
+        try:
+            configuration = kubernetes.client.Configuration().get_default_copy()
+        except AttributeError:
+            configuration = kubernetes.client.Configuration()
+
         for key, value in iteritems(auth):
             if key in AUTH_ARG_MAP.keys() and value is not None:
                 if key == 'api_key':

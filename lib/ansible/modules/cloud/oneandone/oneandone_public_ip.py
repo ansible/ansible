@@ -277,7 +277,8 @@ def main():
         argument_spec=dict(
             auth_token=dict(
                 type='str',
-                default=os.environ.get('ONEANDONE_AUTH_TOKEN')),
+                default=os.environ.get('ONEANDONE_AUTH_TOKEN'),
+                no_log=True),
             api_url=dict(
                 type='str',
                 default=os.environ.get('ONEANDONE_API_URL')),

@@ -25,7 +25,7 @@ class BlacklistEntry:
         """
         self.alternative = alternative
         self.modules_only = modules_only
-        self.names = set(names) if names else None
+        self.names = set(names) if names else set()
         self.ignore_paths = ignore_paths
 
     def applies_to(self, path, name=None):

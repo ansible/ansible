@@ -10,7 +10,12 @@ cd ~/
 
 install_pip () {
     if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
-        curl --silent --show-error https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+        case "${python_version}" in
+            *)
+                pip_bootstrap_url="https://ansible-ci-files.s3.amazonaws.com/ansible-test/get-pip-20.3.4.py"
+                ;;
+        esac
+        curl --silent --show-error "${pip_bootstrap_url}" -o /tmp/get-pip.py
         "${python_interpreter}" /tmp/get-pip.py --disable-pip-version-check --quiet
         rm /tmp/get-pip.py
     fi
@@ -73,7 +78,7 @@ elif [ "${platform}" = "rhel" ]; then
 elif [ "${platform}" = "osx" ]; then
     while true; do
         pip install --disable-pip-version-check --quiet \
-            'virtualenv<20' \
+            'virtualenv==16.7.10' \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10

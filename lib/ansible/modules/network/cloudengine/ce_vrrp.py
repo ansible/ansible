@@ -1314,7 +1314,7 @@ def main():
         holding_multiplier=dict(type='str'),
         auth_mode=dict(type='str', choices=['simple', 'md5', 'none']),
         is_plain=dict(type='bool', default=False),
-        auth_key=dict(type='str'),
+        auth_key=dict(type='str', no_log=True),
         fast_resume=dict(type='str', choices=['enable', 'disable']),
         state=dict(type='str', default='present',
                    choices=['present', 'absent'])

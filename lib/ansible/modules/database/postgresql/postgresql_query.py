@@ -168,6 +168,9 @@ rowcount:
     sample: 5
 '''
 
+import datetime
+import decimal
+
 try:
     from psycopg2 import ProgrammingError as Psycopg2ProgrammingError
     from psycopg2.extras import DictCursor
@@ -300,8 +303,20 @@ def main():
     statusmessage = cursor.statusmessage
     rowcount = cursor.rowcount
 
+    query_result = []
     try:
-        query_result = [dict(row) for row in cursor.fetchall()]
+        for row in cursor.fetchall():
+            # Ansible engine does not support decimals.
+            # An explicit conversion is required on the module's side
+            row = dict(row)
+            for (key, val) in iteritems(row):
+                if isinstance(val, decimal.Decimal):
+                    row[key] = float(val)
+
+                elif isinstance(val, datetime.timedelta):
+                    row[key] = str(val)
+
+            query_result.append(row)
     except Psycopg2ProgrammingError as e:
         if to_native(e) == 'no results to fetch':
             query_result = {}

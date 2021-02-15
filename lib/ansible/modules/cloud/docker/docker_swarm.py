@@ -622,7 +622,7 @@ def main():
         name=dict(type='str'),
         labels=dict(type='dict'),
         signing_ca_cert=dict(type='str'),
-        signing_ca_key=dict(type='str'),
+        signing_ca_key=dict(type='str', no_log=True),
         ca_force_rotate=dict(type='int'),
         autolock_managers=dict(type='bool'),
         node_id=dict(type='str'),
