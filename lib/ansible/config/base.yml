@@ -147,7 +147,7 @@ BECOME_PASSWORD_FILE:
   ini:
   - {key: become_password_file, section: defaults}
   type: path
-  version_added: '2.11'
+  version_added: '2.12'
 AGNOSTIC_BECOME_PROMPT:
   name: Display an agnostic become prompt
   default: True
@@ -356,7 +356,7 @@ CONNECTION_PASSWORD_FILE:
   ini:
   - {key: connection_password_file, section: defaults}
   type: path
-  version_added: '2.11'
+  version_added: '2.12'
 COVERAGE_REMOTE_OUTPUT:
   name: Sets the output directory and filename prefix to generate coverage run info.
   description:
