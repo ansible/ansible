@@ -63,16 +63,70 @@ def cache_dir(tmp_path_factory, monkeypatch):
     yield cache_dir
 
 
-def get_test_galaxy_api(url, version, token_ins=None, token_value=None):
+def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache=True):
     token_value = token_value or "my token"
     token_ins = token_ins or GalaxyToken(token_value)
-    api = GalaxyAPI(None, "test", url)
+    api = GalaxyAPI(None, "test", url, no_cache=no_cache)
     # Warning, this doesn't test g_connect() because _availabe_api_versions is set here.  That means
     # that urls for v2 servers have to append '/api/' themselves in the input data.
     api._available_api_versions = {version: '%s' % version}
     api.token = token_ins
 
     return api
+
+
+def get_collection_versions(namespace='namespace', name='collection'):
+    base_url = 'https://galaxy.server.com/api/v2/collections/{0}/{1}/'.format(namespace, name)
+    versions_url = base_url + 'versions/'
+
+    # Response for collection info
+    responses = [
+        {
+            "id": 1000,
+            "href": base_url,
+            "name": name,
+            "namespace": {
+                "id": 30000,
+                "href": "https://galaxy.ansible.com/api/v1/namespaces/30000/",
+                "name": namespace,
+            },
+            "versions_url": versions_url,
+            "latest_version": {
+                "version": "1.0.5",
+                "href": versions_url + "1.0.5/"
+            },
+            "deprecated": False,
+            "created": "2021-02-09T16:55:42.749915-05:00",
+            "modified": "2021-02-09T16:55:42.749915-05:00",
+        }
+    ]
+
+    # Paginated responses for versions
+    page_versions = (('1.0.0', '1.0.1',), ('1.0.2', '1.0.3',), ('1.0.4', '1.0.5'),)
+    last_page = None
+    for page in range(1, len(page_versions) + 1):
+        if page < len(page_versions):
+            next_page = versions_url + '?page={0}'.format(page + 1)
+        else:
+            next_page = None
+
+        version_results = []
+        for version in page_versions[int(page - 1)]:
+            version_results.append(
+                {'version': version, 'href': versions_url + '{0}/'.format(version)}
+            )
+
+        responses.append(
+            {
+                'count': 6,
+                'next': next_page,
+                'previous': last_page,
+                'results': version_results,
+            }
+        )
+        last_page = page
+
+    return responses
 
 
 def test_api_no_auth():
@@ -972,6 +1026,98 @@ def test_cache_invalid_cache_content(content, cache_dir):
         actual_cache = fd.read()
     assert actual_cache == '{"version": 1}'
     assert stat.S_IMODE(os.stat(cache_file).st_mode) == 0o664
+
+
+def test_cache_complete_pagination(cache_dir, monkeypatch):
+
+    responses = get_collection_versions()
+    cache_file = os.path.join(cache_dir, 'api.json')
+
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v2', no_cache=False)
+
+    mock_open = MagicMock(
+        side_effect=[
+            StringIO(to_text(json.dumps(r)))
+            for r in responses
+        ]
+    )
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    actual_versions = api.get_collection_versions('namespace', 'collection')
+    assert actual_versions == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
+
+    with open(cache_file) as fd:
+        final_cache = json.loads(fd.read())
+
+    cached_server = final_cache['galaxy.server.com:']
+    cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_versions = [r['version'] for r in cached_collection['results']]
+
+    assert final_cache == api._cache
+    assert cached_versions == actual_versions
+
+
+def test_cache_flaky_pagination(cache_dir, monkeypatch):
+
+    responses = get_collection_versions()
+    cache_file = os.path.join(cache_dir, 'api.json')
+
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v2', no_cache=False)
+
+    # First attempt, fail midway through
+    mock_open = MagicMock(
+        side_effect=[
+            StringIO(to_text(json.dumps(responses[0]))),
+            StringIO(to_text(json.dumps(responses[1]))),
+            urllib_error.HTTPError(responses[1]['next'], 500, 'Error', {}, StringIO()),
+            StringIO(to_text(json.dumps(responses[3]))),
+        ]
+    )
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    expected = (
+        r'Error when getting available collection versions for namespace\.collection '
+        r'from test \(https://galaxy\.server\.com/api/\) '
+        r'\(HTTP Code: 500, Message: Error Code: Unknown\)'
+    )
+    with pytest.raises(GalaxyError, match=expected):
+        api.get_collection_versions('namespace', 'collection')
+
+    with open(cache_file) as fd:
+        final_cache = json.loads(fd.read())
+
+    assert final_cache == {
+        'version': 1,
+        'galaxy.server.com:': {
+            'modified': {
+                'namespace.collection': responses[0]['modified']
+            }
+        }
+    }
+
+    # Reset API
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v2', no_cache=False)
+
+    # Second attempt is successful so cache should be populated
+    mock_open = MagicMock(
+        side_effect=[
+            StringIO(to_text(json.dumps(r)))
+            for r in responses
+        ]
+    )
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    actual_versions = api.get_collection_versions('namespace', 'collection')
+    assert actual_versions == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
+
+    with open(cache_file) as fd:
+        final_cache = json.loads(fd.read())
+
+    cached_server = final_cache['galaxy.server.com:']
+    cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_versions = [r['version'] for r in cached_collection['results']]
+
+    assert cached_versions == actual_versions
 
 
 def test_world_writable_cache(cache_dir, monkeypatch):
