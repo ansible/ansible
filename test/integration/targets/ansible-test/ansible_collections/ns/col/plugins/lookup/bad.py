@@ -16,7 +16,7 @@ EXAMPLES = '''
     msg: "{{ lookup('ns.col.bad') }}"
 '''
 
-RETURN = ''''''
+RETURN = ''' # '''
 
 from ansible.plugins.lookup import LookupBase
 from ansible import constants
