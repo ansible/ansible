@@ -124,7 +124,7 @@ def get_collection_versions(namespace='namespace', name='collection'):
                 'results': version_results,
             }
         )
-        last_page = next_page
+        last_page = page
 
     return responses
 
