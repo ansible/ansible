@@ -1044,15 +1044,17 @@ def test_cache_complete_pagination(cache_dir, monkeypatch):
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
     actual_versions = api.get_collection_versions('namespace', 'collection')
+    assert actual_versions == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
 
     with open(cache_file) as fd:
         final_cache = json.loads(fd.read())
-        cached_server = final_cache['galaxy.server.com:']
-        cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
-        cached_versions = [r['version'] for r in cached_collection['results']]
+
+    cached_server = final_cache['galaxy.server.com:']
+    cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_versions = [r['version'] for r in cached_collection['results']]
 
     assert final_cache == api._cache
-    assert cached_versions == actual_versions == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
+    assert cached_versions == actual_versions
 
 
 def test_cache_flaky_pagination(cache_dir, monkeypatch):
