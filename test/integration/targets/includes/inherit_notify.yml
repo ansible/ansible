@@ -1,9 +1,10 @@
 - hosts: localhost
   gather_facts: false
   pre_tasks:
-  - include_tasks: tasks/trigger_change.yml
-    apply:
-      notify: hello
+  - include_tasks:
+      file: tasks/trigger_change.yml
+      apply:
+        notify: hello
 
   handlers:
     - name: hello
