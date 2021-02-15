@@ -29,6 +29,7 @@ __metaclass__ = type
 DEFAULT_TOP_DIR = pathlib.Path(__file__).parents[4]
 DEFAULT_OUTPUT_DIR = pathlib.Path(__file__).parents[4] / 'docs/docsite'
 
+
 class NoSuchFile(Exception):
     """An expected file was not found."""
 
