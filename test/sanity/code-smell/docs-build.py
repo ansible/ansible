@@ -13,6 +13,7 @@ import tempfile
 def main():
     base_dir = os.getcwd() + os.path.sep
     docs_dir = os.path.abspath('docs/docsite')
+    cmd = ['make', 'core_singlehtmldocs']
 
     # TODO: Remove this temporary hack to constrain 'cryptography' when we have
     # a better story for dealing with it.
