@@ -389,8 +389,6 @@ class GalaxyAPI:
             else:
                 path_cache['results'] = data
 
-            self._set_cache()
-
         return data
 
     def _add_auth_token(self, headers, url, token_type=None, required=False):
@@ -759,6 +757,7 @@ class GalaxyAPI:
         error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
                             % (namespace, name, version, self.name, self.api_server)
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
 
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
@@ -843,5 +842,6 @@ class GalaxyAPI:
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
 
         return versions
