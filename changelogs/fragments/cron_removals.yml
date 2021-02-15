@@ -1,2 +1,2 @@
 minor_changes:
-  - removed previouslly deprecated reboot and now requires either name or cron_file as unique identifier.
+  - M(cron), removed previously deprecated C(reboot) and now requires either C(name) or C(cron_file) as unique identifier.
