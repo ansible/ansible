@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Fix iosxr netconf_config integration teastcase.
+    update assert statement with valid condition.
