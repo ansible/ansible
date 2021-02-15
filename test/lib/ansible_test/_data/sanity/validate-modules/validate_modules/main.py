@@ -948,6 +948,8 @@ class ModuleValidator(Validator):
                 if doc:
                     add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
                 else:
+                    documentation_exists = True
+
                     self.reporter.error(
                         path=self.object_path,
                         code='missing-documentation',
