@@ -10,9 +10,10 @@ must be imported in a try/except ImportError block as follows:
 
     try:
         import another_library
-        HAS_ANOTHER_LIBRARY = True
     except ImportError:
         HAS_ANOTHER_LIBRARY = False
+    else:
+        HAS_ANOTHER_LIBRARY = True
 
 
     # Later in module code:
