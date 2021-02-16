@@ -21,8 +21,8 @@ description:
   from multiple sources. C(assemble) will take a directory of files that can be
   local or have already been transferred to the system, and concatenate them
   together to produce a destination file.
-- Files are assembled in string sorting order (all files to be assembled are taken together for sorting,
-  including individually specified ones).
+- Files are assembled in string sorting order on the specified directories and files, as well as on files
+  within specified directories.
 - Puppet calls this idea I(fragments).
 version_added: '0.5'
 options:
@@ -126,18 +126,21 @@ def assemble_from_fragments(src_paths, delimiter=None, compiled_regexp=None, ign
 
     src_files = list()
     # Create a list of fragment paths
-    for src_path in src_paths:
+    for src_path in sorted(src_paths):
         if os.path.isfile(src_path):
             src_files.append(src_path)
             continue
 
-        for f in os.listdir(src_path):
+        dir_files = list()
+        for f in sorted(os.listdir(src_path)):
             if compiled_regexp and not compiled_regexp.search(f):
                 continue
             fragment = os.path.join(src_path, f)
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
-            src_files.append(fragment)
+            dir_files.append(fragment)
+
+        src_files.extend(dir_files)
 
     tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
