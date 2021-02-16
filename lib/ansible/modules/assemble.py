@@ -21,13 +21,15 @@ description:
   from multiple sources. C(assemble) will take a directory of files that can be
   local or have already been transferred to the system, and concatenate them
   together to produce a destination file.
-- Files are assembled in string sorting order.
+- Files are assembled in string sorting order (all files to be assembled are taken together for sorting,
+  including individually specified ones).
 - Puppet calls this idea I(fragments).
 version_added: '0.5'
 options:
   src:
     description:
-    - A list of already existing directories full of source files.
+    - A list of paths to already existing directories full of source files and/or
+      individual files to be combined together.
     type: list
     elements: path
     required: true
@@ -58,6 +60,7 @@ options:
   regexp:
     description:
     - Assemble files only if C(regex) matches the filename.
+    - Files explicitly specified in the src list will be included irrespective of regex matching.
     - If not set, all files are assembled.
     - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
     - Uses L(Python regular expressions,http://docs.python.org/2/library/re.html).
@@ -65,6 +68,7 @@ options:
   ignore_hidden:
     description:
     - A boolean that controls if files that start with a '.' will be included or not.
+    - Files explicitly specified in the src list will be included, irrespective of ignore_hidden.
     type: bool
     default: no
     version_added: '2.0'
@@ -117,48 +121,58 @@ from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils._text import to_native
 
 
-def assemble_from_fragments(src_dirs, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
+def assemble_from_fragments(src_paths, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
     ''' assemble a file from a list of directories containing fragments '''
+
+    src_files = list()
+    # Create a list of fragment paths
+    for src_path in src_paths:
+        if os.path.isfile(src_path):
+            src_files.append(src_path)
+            continue
+
+        for f in os.listdir(src_path):
+            if compiled_regexp and not compiled_regexp.search(f):
+                continue
+            fragment = os.path.join(src_path, f)
+            if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
+                continue
+            src_files.append(fragment)
+
     tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
 
-    for src_dir in src_dirs:
-        for f in sorted(os.listdir(src_dir)):
-            if compiled_regexp and not compiled_regexp.search(f):
-                continue
-            fragment = os.path.join(src_dir, f)
-            if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
-                continue
-            with open(fragment, 'rb') as fragment_fh:
-                fragment_content = fragment_fh.read()
+    for src_file in src_files:
+        with open(src_file, 'rb') as fragment:
+            fragment_content = fragment.read()
 
-            # always put a newline between fragments if the previous fragment didn't end with a newline.
-            if add_newline:
-                tmp.write(b('\n'))
+        # always put a newline between fragments if the previous fragment didn't end with a newline.
+        if add_newline:
+            tmp.write(b('\n'))
 
-            # delimiters should only appear between fragments
-            if delimit_me:
-                if delimiter:
-                    # un-escape anything like newlines
-                    delimiter = codecs.escape_decode(delimiter)[0]
-                    tmp.write(delimiter)
-                    # always make sure there's a newline after the
-                    # delimiter, so lines don't run together
+        # delimiters should only appear between fragments
+        if delimit_me:
+            if delimiter:
+                # un-escape anything like newlines
+                delimiter = codecs.escape_decode(delimiter)[0]
+                tmp.write(delimiter)
+                # always make sure there's a newline after the
+                # delimiter, so lines don't run together
 
-                    # byte indexing differs on Python 2 and 3,
-                    # use indexbytes for compat
-                    # chr(10) == '\n'
-                    if indexbytes(delimiter, -1) != 10:
-                        tmp.write(b('\n'))
+                # byte indexing differs on Python 2 and 3,
+                # use indexbytes for compat
+                # chr(10) == '\n'
+                if indexbytes(delimiter, -1) != 10:
+                    tmp.write(b('\n'))
 
-            tmp.write(fragment_content)
-            delimit_me = True
-            if fragment_content.endswith(b('\n')):
-                add_newline = False
-            else:
-                add_newline = True
+        tmp.write(fragment_content)
+        delimit_me = True
+        if fragment_content.endswith(b('\n')):
+            add_newline = False
+        else:
+            add_newline = True
 
     tmp.close()
     return temp_path
@@ -205,12 +219,9 @@ def main():
     validate = module.params.get('validate', None)
 
     result = dict(src=src, dest=dest)
-    for src_dir in src:
-        if not os.path.exists(src_dir):
-            module.fail_json(msg="Source (%s) does not exist" % src_dir)
-
-        if not os.path.isdir(src_dir):
-            module.fail_json(msg="Source (%s) is not a directory" % src_dir)
+    for src_path in src:
+        if not os.path.exists(src_path):
+            module.fail_json(msg="Source (%s) does not exist" % src_path)
 
     if regexp is not None:
         try:
