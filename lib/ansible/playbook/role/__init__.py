@@ -290,7 +290,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''
         if self._metadata.argument_specs:
             if C.config.get_config_value('VALIDATE_ROLE_WITH_DEPS_WARNING') and self._dependencies:
-                display.warning("Dependent roles will run before roles with argument specs even if validation fails.")
+                display.warning("Role dependencies will run before the dependent role even if argument validation fails "
+                                "for the dependent role. To disable this warning, set VALIDATE_ROLE_WITH_DEPS_WARNING to False.")
 
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
