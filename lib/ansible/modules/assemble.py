@@ -27,8 +27,9 @@ version_added: '0.5'
 options:
   src:
     description:
-    - An already existing directory full of source files.
-    type: path
+    - A list of already existing directories full of source files.
+    type: list
+    elements: path
     required: true
   dest:
     description:
@@ -116,47 +117,48 @@ from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils._text import to_native
 
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
-    ''' assemble a file from a directory of fragments '''
+def assemble_from_fragments(src_dirs, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
+    ''' assemble a file from a list of directories containing fragments '''
     tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
 
-    for f in sorted(os.listdir(src_path)):
-        if compiled_regexp and not compiled_regexp.search(f):
-            continue
-        fragment = os.path.join(src_path, f)
-        if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
-            continue
-        with open(fragment, 'rb') as fragment_fh:
-            fragment_content = fragment_fh.read()
+    for src_dir in src_dirs:
+        for f in sorted(os.listdir(src_dir)):
+            if compiled_regexp and not compiled_regexp.search(f):
+                continue
+            fragment = os.path.join(src_dir, f)
+            if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
+                continue
+            with open(fragment, 'rb') as fragment_fh:
+                fragment_content = fragment_fh.read()
 
-        # always put a newline between fragments if the previous fragment didn't end with a newline.
-        if add_newline:
-            tmp.write(b('\n'))
+            # always put a newline between fragments if the previous fragment didn't end with a newline.
+            if add_newline:
+                tmp.write(b('\n'))
 
-        # delimiters should only appear between fragments
-        if delimit_me:
-            if delimiter:
-                # un-escape anything like newlines
-                delimiter = codecs.escape_decode(delimiter)[0]
-                tmp.write(delimiter)
-                # always make sure there's a newline after the
-                # delimiter, so lines don't run together
+            # delimiters should only appear between fragments
+            if delimit_me:
+                if delimiter:
+                    # un-escape anything like newlines
+                    delimiter = codecs.escape_decode(delimiter)[0]
+                    tmp.write(delimiter)
+                    # always make sure there's a newline after the
+                    # delimiter, so lines don't run together
 
-                # byte indexing differs on Python 2 and 3,
-                # use indexbytes for compat
-                # chr(10) == '\n'
-                if indexbytes(delimiter, -1) != 10:
-                    tmp.write(b('\n'))
+                    # byte indexing differs on Python 2 and 3,
+                    # use indexbytes for compat
+                    # chr(10) == '\n'
+                    if indexbytes(delimiter, -1) != 10:
+                        tmp.write(b('\n'))
 
-        tmp.write(fragment_content)
-        delimit_me = True
-        if fragment_content.endswith(b('\n')):
-            add_newline = False
-        else:
-            add_newline = True
+            tmp.write(fragment_content)
+            delimit_me = True
+            if fragment_content.endswith(b('\n')):
+                add_newline = False
+            else:
+                add_newline = True
 
     tmp.close()
     return temp_path
@@ -178,7 +180,7 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
-            src=dict(type='path', required=True),
+            src=dict(type='list', elements='path', required=True),
             delimiter=dict(type='str'),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
@@ -203,11 +205,12 @@ def main():
     validate = module.params.get('validate', None)
 
     result = dict(src=src, dest=dest)
-    if not os.path.exists(src):
-        module.fail_json(msg="Source (%s) does not exist" % src)
+    for src_dir in src:
+        if not os.path.exists(src_dir):
+            module.fail_json(msg="Source (%s) does not exist" % src_dir)
 
-    if not os.path.isdir(src):
-        module.fail_json(msg="Source (%s) is not a directory" % src)
+        if not os.path.isdir(src_dir):
+            module.fail_json(msg="Source (%s) is not a directory" % src_dir)
 
     if regexp is not None:
         try:
