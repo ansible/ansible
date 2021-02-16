@@ -58,7 +58,7 @@ EXAMPLES = """
     - name: Set authorized ssh key, extracting just that data from 'users'
       ansible.posix.authorized_key:
         user: "{{ item.0.name }}"
-        key: "{{ lookup('ansible.builtin.file', item.1) }}"
+        key: "{{ lookup('file', item.1) }}"
       with_subelements:
          - "{{ users }}"
          - authorized

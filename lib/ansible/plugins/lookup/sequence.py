@@ -39,31 +39,31 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: create some test users
-  ansible.builtin.user:
+  user:
     name: "{{ item }}"
     state: present
     groups: "evens"
   with_sequence: start=0 end=32 format=testuser%02x
 
 - name: create a series of directories with even numbers for some reason
-  ansible.builtin.file:
+  file:
     dest: "/var/stuff/{{ item }}"
     state: directory
   with_sequence: start=4 end=16 stride=2
 
 - name: a simpler way to use the sequence plugin create 4 groups
-  ansible.builtin.group:
+  group:
     name: "group{{ item }}"
     state: present
   with_sequence: count=4
 
 - name: the final countdown
-  ansible.builtin.debug:
+  debug:
     msg: "{{item}} seconds to detonation"
   with_sequence: start=10 end=0 stride=-1
 
 - name: Use of variable
-  ansible.builtin.debug:
+  debug:
     msg: "{{ item }}"
   with_sequence: start=1 end="{{ end_at }}"
   vars:

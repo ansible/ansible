@@ -82,40 +82,40 @@ options:
 
 EXAMPLES = '''
 - name: Add an apt key by id from a keyserver
-  ansible.builtin.apt_key:
+  apt_key:
     keyserver: keyserver.ubuntu.com
     id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
 - name: Add an Apt signing key, uses whichever key is at the URL
-  ansible.builtin.apt_key:
+  apt_key:
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Add an Apt signing key, will not download if present
-  ansible.builtin.apt_key:
+  apt_key:
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Remove a Apt specific signing key, leading 0x is valid
-  ansible.builtin.apt_key:
+  apt_key:
     id: 0x9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     state: absent
 
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
 - name: Add a key from a file on the Ansible server
-  ansible.builtin.apt_key:
-    data: "{{ lookup('ansible.builtin.file', 'apt.asc') }}"
+  apt_key:
+    data: "{{ lookup('file', 'apt.asc') }}"
     state: present
 
 - name: Add an Apt signing key to a specific keyring file
-  ansible.builtin.apt_key:
+  apt_key:
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
 - name: Add Apt signing key on remote server to keyring
-  ansible.builtin.apt_key:
+  apt_key:
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     file: /tmp/apt.gpg
     state: present

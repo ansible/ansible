@@ -73,15 +73,15 @@ author:
 '''
 
 EXAMPLES = r'''
-- ansible.builtin.assert: { that: "ansible_os_family != 'RedHat'" }
+- assert: { that: "ansible_os_family != 'RedHat'" }
 
-- ansible.builtin.assert:
+- assert:
     that:
       - "'foo' in some_command_result.stdout"
       - number_of_the_counting == 3
 
 - name: After version 2.7 both 'msg' and 'fail_msg' can customize failing assertion message
-  ansible.builtin.assert:
+  assert:
     that:
       - my_param <= 100
       - my_param >= 0
@@ -89,14 +89,14 @@ EXAMPLES = r'''
     success_msg: "'my_param' is between 0 and 100"
 
 - name: Please use 'msg' when ansible version is smaller than 2.7
-  ansible.builtin.assert:
+  assert:
     that:
       - my_param <= 100
       - my_param >= 0
     msg: "'my_param' must be between 0 and 100"
 
 - name: Use quiet to avoid verbose output
-  ansible.builtin.assert:
+  assert:
     that:
       - my_param <= 100
       - my_param >= 0

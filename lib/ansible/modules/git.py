@@ -230,43 +230,43 @@ notes:
 
 EXAMPLES = '''
 - name: Git checkout
-  ansible.builtin.git:
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
 - name: Read-write git checkout from github
-  ansible.builtin.git:
+  git:
     repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
 - name: Just ensuring the repo checkout exists
-  ansible.builtin.git:
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
 - name: Just get information about the repository whether or not it has already been cloned locally
-  ansible.builtin.git:
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
-  ansible.builtin.git:
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
 
 - name: Create git archive from repo
-  ansible.builtin.git:
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
 - name: Clone a repo with separate git directory
-  ansible.builtin.git:
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
@@ -279,7 +279,7 @@ EXAMPLES = '''
     version: master
 
 - name: Avoid hanging when http(s) password is missing
-  ansible.builtin.git:
+  git:
     repo: https://github.com/ansible/could-be-a-private-repo
     dest: /src/from-private-repo
   environment:

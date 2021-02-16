@@ -104,19 +104,19 @@ author:
 
 EXAMPLES = r'''
 - name: Unconditionally reboot the machine with all defaults
-  ansible.builtin.reboot:
+  reboot:
 
 - name: Reboot a slow machine that might have lots of updates to apply
-  ansible.builtin.reboot:
+  reboot:
     reboot_timeout: 3600
 
 - name: Reboot a machine with shutdown command in unusual place
-  ansible.builtin.reboot:
+  reboot:
     search_paths:
      - '/lib/molly-guard'
 
 - name: Reboot machine using a custom reboot command
-  ansible.builtin.reboot:
+  reboot:
     reboot_command: launchctl reboot userspace
     boot_time_command: uptime | cut -d ' ' -f 5
 

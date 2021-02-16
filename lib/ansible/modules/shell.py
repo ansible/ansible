@@ -108,37 +108,37 @@ author:
 
 EXAMPLES = r'''
 - name: Execute the command in remote shell; stdout goes to the specified file on the remote
-  ansible.builtin.shell: somescript.sh >> somelog.txt
+  shell: somescript.sh >> somelog.txt
 
 - name: Change the working directory to somedir/ before executing the command
-  ansible.builtin.shell: somescript.sh >> somelog.txt
+  shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
 
 # You can also use the 'args' form to provide the options.
 - name: This command will change the working directory to somedir/ and will only run when somedir/somelog.txt doesn't exist
-  ansible.builtin.shell: somescript.sh >> somelog.txt
+  shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
     creates: somelog.txt
 
 # You can also use the 'cmd' parameter instead of free form format.
 - name: This command will change the working directory to somedir/
-  ansible.builtin.shell:
+  shell:
     cmd: ls -l | grep log
     chdir: somedir/
 
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
-  ansible.builtin.shell: cat < /tmp/*txt
+  shell: cat < /tmp/*txt
   args:
     executable: /bin/bash
 
 - name: Run a command using a templated variable (always use quote filter to avoid injection)
-  ansible.builtin.shell: cat {{ myfile|quote }}
+  shell: cat {{ myfile|quote }}
 
 # You can use shell to run other executables to perform actions inline
 - name: Run expect to wait for a successful PXE boot via out-of-band CIMC
-  ansible.builtin.shell: |
+  shell: |
     set timeout 300
     spawn ssh admin@{{ cimc_host }}
 
@@ -158,7 +158,7 @@ EXAMPLES = r'''
 
 # Disabling warnings
 - name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning
-  ansible.builtin.shell: curl --socks5 localhost:9000 http://www.ansible.com
+  shell: curl --socks5 localhost:9000 http://www.ansible.com
   args:
     warn: no
 '''

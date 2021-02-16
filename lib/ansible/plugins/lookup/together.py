@@ -22,7 +22,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: item.0 returns from the 'a' list, item.1 returns from the '1' list
-  ansible.builtin.debug:
+  debug:
     msg: "{{ item.0 }} and {{ item.1 }}"
   with_together:
     - ['a', 'b', 'c', 'd']

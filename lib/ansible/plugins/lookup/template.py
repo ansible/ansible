@@ -58,7 +58,7 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: show templating results
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.template', './some_template.j2') }}"
+    msg: "{{ lookup('template', './some_template.j2') }}"
 
 - name: show templating results with different variable start and end string
   ansible.builtin.debug:

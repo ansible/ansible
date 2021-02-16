@@ -62,7 +62,7 @@ attributes:
 
 EXAMPLES = r'''
 - name: Template a file to /etc/file.conf
-  ansible.builtin.template:
+  template:
     src: /mytemplates/foo.j2
     dest: /etc/file.conf
     owner: bin
@@ -70,7 +70,7 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Template a file, using symbolic modes (equivalent to 0644)
-  ansible.builtin.template:
+  template:
     src: /mytemplates/foo.j2
     dest: /etc/file.conf
     owner: bin
@@ -78,7 +78,7 @@ EXAMPLES = r'''
     mode: u=rw,g=r,o=r
 
 - name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
-  ansible.builtin.template:
+  template:
     src: named.conf_{{ ansible_os_family }}.j2
     dest: /etc/named.conf
     group: named
@@ -86,19 +86,19 @@ EXAMPLES = r'''
     mode: 0640
 
 - name: Create a DOS-style text file from a template
-  ansible.builtin.template:
+  template:
     src: config.ini.j2
     dest: /share/windows/config.ini
     newline_sequence: '\r\n'
 
 - name: Copy a new sudoers file into place, after passing validation with visudo
-  ansible.builtin.template:
+  template:
     src: /mine/sudoers
     dest: /etc/sudoers
     validate: /usr/sbin/visudo -cf %s
 
 - name: Update sshd configuration safely, avoid locking yourself out
-  ansible.builtin.template:
+  template:
     src: etc/ssh/sshd_config.j2
     dest: /etc/ssh/sshd_config
     owner: root

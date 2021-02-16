@@ -56,26 +56,26 @@ seealso:
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: Include task list in play
-      ansible.builtin.include_tasks: stuff.yaml
+      include_tasks: stuff.yaml
 
-    - ansible.builtin.debug:
+    - debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: Include task list in play only if the condition is true
-      ansible.builtin.include_tasks: "{{ hostvar }}.yaml"
+      include_tasks: "{{ hostvar }}.yaml"
       when: hostvar is defined
 
 - name: Apply tags to tasks within included file
-  ansible.builtin.include_tasks:
+  include_tasks:
     file: install.yml
     apply:
       tags:
@@ -84,7 +84,7 @@ EXAMPLES = r'''
     - always
 
 - name: Apply tags to tasks within included file when using free-form
-  ansible.builtin.include_tasks: install.yml
+  include_tasks: install.yml
   args:
     apply:
       tags:

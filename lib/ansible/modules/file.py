@@ -125,21 +125,21 @@ author:
 
 EXAMPLES = r'''
 - name: Change file ownership, group and permissions
-  ansible.builtin.file:
+  file:
     path: /etc/foo.conf
     owner: foo
     group: foo
     mode: '0644'
 
 - name: Give insecure permissions to an existing file
-  ansible.builtin.file:
+  file:
     path: /work
     owner: root
     group: root
     mode: '1777'
 
 - name: Create a symbolic link
-  ansible.builtin.file:
+  file:
     src: /file/to/link/to
     dest: /path/to/symlink
     owner: foo
@@ -147,7 +147,7 @@ EXAMPLES = r'''
     state: link
 
 - name: Create two hard links
-  ansible.builtin.file:
+  file:
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
     state: hard
@@ -156,19 +156,19 @@ EXAMPLES = r'''
     - { src: z, dest: k }
 
 - name: Touch a file, using symbolic modes to set the permissions (equivalent to 0644)
-  ansible.builtin.file:
+  file:
     path: /etc/foo.conf
     state: touch
     mode: u=rw,g=r,o=r
 
 - name: Touch the same file, but add/remove some permissions
-  ansible.builtin.file:
+  file:
     path: /etc/foo.conf
     state: touch
     mode: u+rw,g-wx,o-rwx
 
 - name: Touch again the same file, but do not change times this makes the task idempotent
-  ansible.builtin.file:
+  file:
     path: /etc/foo.conf
     state: touch
     mode: u+rw,g-wx,o-rwx
@@ -176,26 +176,26 @@ EXAMPLES = r'''
     access_time: preserve
 
 - name: Create a directory if it does not exist
-  ansible.builtin.file:
+  file:
     path: /etc/some_directory
     state: directory
     mode: '0755'
 
 - name: Update modification and access time of given file
-  ansible.builtin.file:
+  file:
     path: /etc/some_file
     state: file
     modification_time: now
     access_time: now
 
 - name: Set access time based on seconds from epoch value
-  ansible.builtin.file:
+  file:
     path: /etc/another_file
     state: file
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
 
 - name: Recursively change ownership of a directory
-  ansible.builtin.file:
+  file:
     path: /etc/foo
     state: directory
     recurse: yes
@@ -203,12 +203,12 @@ EXAMPLES = r'''
     group: foo
 
 - name: Remove file (delete file)
-  ansible.builtin.file:
+  file:
     path: /etc/foo.txt
     state: absent
 
 - name: Recursively remove directory
-  ansible.builtin.file:
+  file:
     path: /etc/foo
     state: absent
 

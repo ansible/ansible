@@ -52,21 +52,21 @@ EXAMPLES = r'''
         msg: play1
 
 - name: Include a play after another play
-  ansible.builtin.import_playbook: otherplays.yaml
+  import_playbook: otherplays.yaml
 
 - name: Set variables on an imported playbook
-  ansible.builtin.import_playbook: otherplays.yml
+  import_playbook: otherplays.yml
   vars:
     service: httpd
 
 - name: This DOES NOT WORK
   hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: This fails because I'm inside a play already
-      ansible.builtin.import_playbook: stuff.yaml
+      import_playbook: stuff.yaml
 '''
 
 RETURN = r'''

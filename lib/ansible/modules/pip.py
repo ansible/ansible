@@ -141,26 +141,26 @@ author:
 
 EXAMPLES = '''
 - name: Install bottle python package
-  ansible.builtin.pip:
+  pip:
     name: bottle
 
 - name: Install bottle python package on version 0.11
-  ansible.builtin.pip:
+  pip:
     name: bottle==0.11
 
 - name: Install bottle python package with version specifiers
-  ansible.builtin.pip:
+  pip:
     name: bottle>0.10,<0.20,!=0.11
 
 - name: Install multi python packages with version specifiers
-  ansible.builtin.pip:
+  pip:
     name:
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
 - name: Install python package using a proxy
   # Pip doesn't use the standard environment variables, please use the CAPITALIZED ones below
-  ansible.builtin.pip:
+  pip:
     name: six
   environment:
     HTTP_PROXY: '127.0.0.1:8080'
@@ -168,70 +168,70 @@ EXAMPLES = '''
 
 # You do not have to supply '-e' option in extra_args
 - name: Install MyApp using one of the remote protocols (bzr+,hg+,git+,svn+)
-  ansible.builtin.pip:
+  pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
 - name: Install MyApp using one of the remote protocols (bzr+,hg+,git+)
-  ansible.builtin.pip:
+  pip:
     name: git+http://myrepo/app/MyApp
 
 - name: Install MyApp from local tarball
-  ansible.builtin.pip:
+  pip:
     name: file:///path/to/MyApp.tar.gz
 
 - name: Install bottle into the specified (virtualenv), inheriting none of the globally installed modules
-  ansible.builtin.pip:
+  pip:
     name: bottle
     virtualenv: /my_app/venv
 
 - name: Install bottle into the specified (virtualenv), inheriting globally installed modules
-  ansible.builtin.pip:
+  pip:
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_site_packages: yes
 
 - name: Install bottle into the specified (virtualenv), using Python 2.7
-  ansible.builtin.pip:
+  pip:
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
 
 - name: Install bottle within a user home directory
-  ansible.builtin.pip:
+  pip:
     name: bottle
     extra_args: --user
 
 - name: Install specified python requirements
-  ansible.builtin.pip:
+  pip:
     requirements: /my_app/requirements.txt
 
 - name: Install specified python requirements in indicated (virtualenv)
-  ansible.builtin.pip:
+  pip:
     requirements: /my_app/requirements.txt
     virtualenv: /my_app/venv
 
 - name: Install specified python requirements and custom Index URL
-  ansible.builtin.pip:
+  pip:
     requirements: /my_app/requirements.txt
     extra_args: -i https://example.com/pypi/simple
 
 - name: Install specified python requirements offline from a local directory with downloaded packages
-  ansible.builtin.pip:
+  pip:
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
 - name: Install bottle for Python 3.3 specifically, using the 'pip3.3' executable
-  ansible.builtin.pip:
+  pip:
     name: bottle
     executable: pip3.3
 
 - name: Install bottle, forcing reinstallation if it's already installed
-  ansible.builtin.pip:
+  pip:
     name: bottle
     state: forcereinstall
 
 - name: Install bottle while ensuring the umask is 0022 (to ensure other users can use it)
-  ansible.builtin.pip:
+  pip:
     name: bottle
     umask: "0022"
   become: True

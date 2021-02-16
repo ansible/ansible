@@ -69,20 +69,20 @@ author:
 
 EXAMPLES = r'''
 - name: Create groups based on the machine architecture
-  ansible.builtin.group_by:
+  group_by:
     key: machine_{{ ansible_machine }}
 
 - name: Create groups like 'virt_kvm_host'
-  ansible.builtin.group_by:
+  group_by:
     key: virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
 
 - name: Create nested groups
-  ansible.builtin.group_by:
+  group_by:
     key: el{{ ansible_distribution_major_version }}-{{ ansible_architecture }}
     parents:
       - el{{ ansible_distribution_major_version }}
 
 - name: Add all active hosts to a static group
-  ansible.builtin.group_by:
+  group_by:
     key: done
 '''

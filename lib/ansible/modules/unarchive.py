@@ -152,24 +152,24 @@ author: Michael DeHaan
 
 EXAMPLES = r'''
 - name: Extract foo.tgz into /var/lib/foo
-  ansible.builtin.unarchive:
+  unarchive:
     src: foo.tgz
     dest: /var/lib/foo
 
 - name: Unarchive a file that is already on the remote machine
-  ansible.builtin.unarchive:
+  unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
     remote_src: yes
 
 - name: Unarchive a file that needs to be downloaded (added in 2.0)
-  ansible.builtin.unarchive:
+  unarchive:
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
 
 - name: Unarchive a file with extra options
-  ansible.builtin.unarchive:
+  unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
     extra_opts:

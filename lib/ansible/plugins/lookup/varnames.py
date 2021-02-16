@@ -18,7 +18,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: List variables that start with qz_
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '^qz_.+')}}"
+  debug: msg="{{ lookup('varnames', '^qz_.+')}}"
   vars:
     qz_1: hello
     qz_2: world
@@ -26,13 +26,13 @@ EXAMPLES = """
     qz_: "I won't show either"
 
 - name: Show all variables
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+')}}"
+  debug: msg="{{ lookup('varnames', '.+')}}"
 
 - name: Show variables with 'hosts' in their names
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', 'hosts')}}"
+  debug: msg="{{ lookup('varnames', 'hosts')}}"
 
 - name: Find several related variables that end specific way
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+_zone$', '.+_location$') }}"
+  debug: msg="{{ lookup('varnames', '.+_zone$', '.+_location$') }}"
 
 """
 

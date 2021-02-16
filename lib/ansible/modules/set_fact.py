@@ -85,13 +85,13 @@ EXAMPLES = r'''
   ansible.builtin.set_fact: one_fact="something" other_fact="{{ local_var }}"
 
 - name: Setting host facts using complex arguments
-  ansible.builtin.set_fact:
+  set_fact:
     one_fact: something
     other_fact: "{{ local_var * 2 }}"
     another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
 
 - name: Setting facts so that they will be persisted in the fact cache
-  ansible.builtin.set_fact:
+  set_fact:
     one_fact: something
     other_fact: "{{ local_var * 2 }}"
     cacheable: yes
@@ -109,7 +109,7 @@ EXAMPLES = r'''
 # to proper boolean values when using the key=value syntax, however it is still
 # recommended that booleans be set using the complex argument style:
 - name:  Setting booleans using complex argument style
-  ansible.builtin.set_fact:
+  set_fact:
     one_fact: yes
     other_fact: no
 

@@ -111,18 +111,18 @@ requirements:
 
 EXAMPLES = '''
 - name: Checkout subversion repository to specified folder
-  ansible.builtin.subversion:
+  subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
 
 - name: Export subversion directory to folder
-  ansible.builtin.subversion:
+  subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
     export: yes
 
 - name: Get information about the repository whether or not it has already been cloned locally
-  ansible.builtin.subversion:
+  subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
     checkout: no

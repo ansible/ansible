@@ -58,27 +58,27 @@ EXAMPLES = r'''
         msg: play1
 
 - name: Include a play after another play
-  ansible.builtin.include: otherplays.yaml
+  include: otherplays.yaml
 
 
 - hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: Include task list in play
-      ansible.builtin.include: stuff.yaml
+      include: stuff.yaml
 
-    - ansible.builtin.debug:
+    - debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: Include task list in play only if the condition is true
-      ansible.builtin.include: "{{ hostvar }}.yaml"
+      include: "{{ hostvar }}.yaml"
       static: no
       when: hostvar is defined
 '''

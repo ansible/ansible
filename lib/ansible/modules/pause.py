@@ -67,18 +67,18 @@ notes:
 
 EXAMPLES = '''
 - name: Pause for 5 minutes to build app cache
-  ansible.builtin.pause:
+  pause:
     minutes: 5
 
 - name: Pause until you can verify updates to an application were successful
-  ansible.builtin.pause:
+  pause:
 
 - name: A helpful reminder of what to look out for post-update
-  ansible.builtin.pause:
+  pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
 
 - name: Pause to get some sensitive input
-  ansible.builtin.pause:
+  pause:
     prompt: "Enter a secret"
     echo: no
 '''

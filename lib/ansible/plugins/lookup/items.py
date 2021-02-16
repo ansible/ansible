@@ -23,7 +23,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: "loop through list"
-  ansible.builtin.debug:
+  debug:
     msg: "An item: {{ item }}"
   with_items:
     - 1
@@ -40,12 +40,12 @@ EXAMPLES = """
      - testuser2
 
 - name: "loop through list from a variable"
-  ansible.builtin.debug:
+  debug:
     msg: "An item: {{ item }}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users
-  ansible.builtin.user:
+  user:
     name: "{{ item.name }}"
     uid: "{{ item.uid }}"
     groups: "{{ item.groups }}"

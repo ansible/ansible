@@ -28,12 +28,12 @@ DOCUMENTATION = r"""
 
 EXAMPLES = r"""
 - name: raw result of running date command"
-  ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.pipe', 'date') }}"
+  debug:
+    msg: "{{ lookup('pipe', 'date') }}"
 
 - name: Always use quote filter to make sure your variables are safe to use with shell
-  ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.pipe', 'getent passwd ' + myuser | quote ) }}"
+  debug:
+    msg: "{{ lookup('pipe', 'getent passwd ' + myuser | quote ) }}"
 """
 
 RETURN = r"""

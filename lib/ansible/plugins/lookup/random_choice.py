@@ -17,7 +17,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Magic 8 ball for MUDs
-  ansible.builtin.debug:
+  debug:
     msg: "{{ item }}"
   with_random_choice:
      - "go through the door"

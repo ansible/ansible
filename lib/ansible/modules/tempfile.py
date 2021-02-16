@@ -57,18 +57,18 @@ author:
 
 EXAMPLES = """
 - name: Create temporary build directory
-  ansible.builtin.tempfile:
+  tempfile:
     state: directory
     suffix: build
 
 - name: Create temporary file
-  ansible.builtin.tempfile:
+  tempfile:
     state: file
     suffix: temp
   register: tempfile_1
 
 - name: Use the registered var and the file module to remove the temporary file
-  ansible.builtin.file:
+  file:
     path: "{{ tempfile_1.path }}"
     state: absent
   when: tempfile_1.path is defined

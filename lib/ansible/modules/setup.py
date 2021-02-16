@@ -105,48 +105,48 @@ author:
 
 EXAMPLES = """
 # Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
-# ansible all -m ansible.builtin.setup --tree /tmp/facts
+# ansible all -m setup --tree /tmp/facts
 
 # Display only facts regarding memory found by ansible on all hosts and output them.
-# ansible all -m ansible.builtin.setup -a 'filter=ansible_*_mb'
+# ansible all -m setup -a 'filter=ansible_*_mb'
 
 # Display only facts returned by facter.
-# ansible all -m ansible.builtin.setup -a 'filter=facter_*'
+# ansible all -m setup -a 'filter=facter_*'
 
 # Collect only facts returned by facter.
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,facter'
+# ansible all -m setup -a 'gather_subset=!all,!any,facter'
 
 - name: Collect only facts returned by facter
-  ansible.builtin.setup:
+  setup:
     gather_subset:
       - '!all'
       - '!any'
       - facter
 
 - name: Collect only selected facts
-  ansible.builtin.setup:
+  setup:
     filter:
       - 'ansible_distribution'
       - 'ansible_machine_id'
       - 'ansible_*_mb'
 
 # Display only facts about certain interfaces.
-# ansible all -m ansible.builtin.setup -a 'filter=ansible_eth[0-2]'
+# ansible all -m setup -a 'filter=ansible_eth[0-2]'
 
 # Restrict additional gathered facts to network and virtual (includes default minimum facts)
-# ansible all -m ansible.builtin.setup -a 'gather_subset=network,virtual'
+# ansible all -m setup -a 'gather_subset=network,virtual'
 
 # Collect only network and virtual (excludes default minimum facts)
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,network,virtual'
+# ansible all -m setup -a 'gather_subset=!all,!any,network,virtual'
 
 # Do not call puppet facter or ohai even if present.
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!facter,!ohai'
+# ansible all -m setup -a 'gather_subset=!facter,!ohai'
 
 # Only collect the default minimum amount of facts:
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all'
+# ansible all -m setup -a 'gather_subset=!all'
 
 # Collect no facts, even the default minimum subset of facts:
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!min'
+# ansible all -m setup -a 'gather_subset=!all,!min'
 
 # Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
 # ansible windows -m ansible.builtin.setup -a "fact_path='c:\\custom_facts'"

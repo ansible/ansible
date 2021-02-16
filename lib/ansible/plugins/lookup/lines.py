@@ -24,11 +24,11 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: We could read the file directly, but this shows output from command
-  ansible.builtin.debug: msg="{{ item }} is an output line from running cat on /etc/motd"
+  debug: msg="{{ item }} is an output line from running cat on /etc/motd"
   with_lines: cat /etc/motd
 
 - name: More useful example of looping over a command result
-  ansible.builtin.shell: "/usr/bin/frobnicate {{ item }}"
+  shell: "/usr/bin/frobnicate {{ item }}"
   with_lines:
     - "/usr/bin/frobnications_per_host --param {{ inventory_hostname }}"
 """

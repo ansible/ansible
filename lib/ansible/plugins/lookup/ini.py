@@ -59,7 +59,7 @@ EXAMPLES = """
 
 - ansible.builtin.debug: msg="user.name is {{ lookup('ansible.builtin.ini', 'user.name', type='properties', file='user.properties') }}"
 
-- ansible.builtin.debug:
+- debug:
     msg: "{{ item }}"
   loop: "{{ q('ansible.builtin.ini', '.*', section='section1', file='test.ini', re=True) }}"
 

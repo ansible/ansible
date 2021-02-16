@@ -107,18 +107,18 @@ extends_documentation_fragment:
 
 EXAMPLES = r'''
 - name: Assemble from fragments from a directory
-  ansible.builtin.assemble:
+  assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
 - name: Insert the provided delimiter between fragments
-  ansible.builtin.assemble:
+  assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
     delimiter: '### START FRAGMENT ###'
 
 - name: Assemble a new "sshd_config" file into place, after passing validation with sshd
-  ansible.builtin.assemble:
+  assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: /usr/sbin/sshd -t -f %s

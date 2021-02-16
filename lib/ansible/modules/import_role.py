@@ -85,22 +85,22 @@ seealso:
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - ansible.builtin.import_role:
+    - import_role:
         name: myrole
 
     - name: Run tasks/other.yaml instead of 'main'
-      ansible.builtin.import_role:
+      import_role:
         name: myrole
         tasks_from: other
 
     - name: Pass variables to role
-      ansible.builtin.import_role:
+      import_role:
         name: myrole
       vars:
         rolevar1: value from task
 
     - name: Apply condition to each task in role
-      ansible.builtin.import_role:
+      import_role:
         name: myrole
       when: not idontwanttorun
 '''

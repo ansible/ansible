@@ -66,10 +66,10 @@ author:
 
 EXAMPLES = r'''
 - name: Wait 600 seconds for target connection to become reachable/usable
-  ansible.builtin.wait_for_connection:
+  wait_for_connection:
 
 - name: Wait 300 seconds, but only start checking after 60 seconds
-  ansible.builtin.wait_for_connection:
+  wait_for_connection:
     delay: 60
     timeout: 300
 
@@ -84,10 +84,10 @@ EXAMPLES = r'''
     delegate_to: localhost
 
   - name: Wait for system to become reachable
-    ansible.builtin.wait_for_connection:
+    wait_for_connection:
 
   - name: Gather facts for first time
-    ansible.builtin.setup:
+    setup:
 
 # Build a new VM, wait for it to become ready and continue playbook
 - hosts: all
@@ -105,11 +105,11 @@ EXAMPLES = r'''
     delegate_to: localhost
 
   - name: Wait for system to become reachable over WinRM
-    ansible.builtin.wait_for_connection:
+    wait_for_connection:
       timeout: 900
 
   - name: Gather facts for first time
-    ansible.builtin.setup:
+    setup:
 '''
 
 RETURN = r'''

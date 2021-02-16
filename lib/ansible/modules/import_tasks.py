@@ -46,22 +46,22 @@ seealso:
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: Include task list in play
-      ansible.builtin.import_tasks: stuff.yaml
+      import_tasks: stuff.yaml
 
-    - ansible.builtin.debug:
+    - debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - ansible.builtin.debug:
+    - debug:
         msg: task1
 
     - name: Apply conditional to all imported tasks
-      ansible.builtin.import_tasks: stuff.yaml
+      import_tasks: stuff.yaml
       when: hostvar is defined
 '''
 

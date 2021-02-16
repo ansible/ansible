@@ -30,19 +30,19 @@ vars:
 tasks:
   # with predefined vars
   - name: Print phone records
-    ansible.builtin.debug:
+    debug:
       msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-    loop: "{{ lookup('ansible.builtin.dict', users) }}"
+    loop: "{{ lookup('dict', users) }}"
   # with inline dictionary
   - name: show dictionary
-    ansible.builtin.debug:
+    debug:
       msg: "{{item.key}}: {{item.value}}"
     with_dict: {a: 1, b: 2, c: 3}
   # Items from loop can be used in when: statements
   - name: set_fact when alice in key
-    ansible.builtin.set_fact:
+    set_fact:
       alice_exists: true
-    loop: "{{ lookup('ansible.builtin.dict', users) }}"
+    loop: "{{ lookup('dict', users) }}"
     when: "'alice' in item.key"
 """
 

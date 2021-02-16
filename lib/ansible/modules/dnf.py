@@ -279,45 +279,45 @@ author:
 
 EXAMPLES = '''
 - name: Install the latest version of Apache
-  ansible.builtin.dnf:
+  dnf:
     name: httpd
     state: latest
 
 - name: Install Apache >= 2.4
-  ansible.builtin.dnf:
+  dnf:
     name: httpd>=2.4
     state: present
 
 - name: Install the latest version of Apache and MariaDB
-  ansible.builtin.dnf:
+  dnf:
     name:
       - httpd
       - mariadb-server
     state: latest
 
 - name: Remove the Apache package
-  ansible.builtin.dnf:
+  dnf:
     name: httpd
     state: absent
 
 - name: Install the latest version of Apache from the testing repo
-  ansible.builtin.dnf:
+  dnf:
     name: httpd
     enablerepo: testing
     state: present
 
 - name: Upgrade all packages
-  ansible.builtin.dnf:
+  dnf:
     name: "*"
     state: latest
 
 - name: Install the nginx rpm from a remote repo
-  ansible.builtin.dnf:
+  dnf:
     name: 'http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm'
     state: present
 
 - name: Install nginx rpm from a local file
-  ansible.builtin.dnf:
+  dnf:
     name: /usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
@@ -327,32 +327,32 @@ EXAMPLES = '''
     state: present
 
 - name: Install the 'Development tools' package group
-  ansible.builtin.dnf:
+  dnf:
     name: '@Development tools'
     state: present
 
 - name: Autoremove unneeded packages installed as dependencies
-  ansible.builtin.dnf:
+  dnf:
     autoremove: yes
 
 - name: Uninstall httpd but keep its dependencies
-  ansible.builtin.dnf:
+  dnf:
     name: httpd
     state: absent
     autoremove: no
 
 - name: Install a modularity appstream with defined stream and profile
-  ansible.builtin.dnf:
+  dnf:
     name: '@postgresql:9.6/client'
     state: present
 
 - name: Install a modularity appstream with defined stream
-  ansible.builtin.dnf:
+  dnf:
     name: '@postgresql:9.6'
     state: present
 
 - name: Install a modularity appstream with defined profile
-  ansible.builtin.dnf:
+  dnf:
     name: '@postgresql/client'
     state: present
 '''

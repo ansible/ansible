@@ -46,18 +46,30 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
+<<<<<<< HEAD
 - name: Set _found_file to the first existing file, raising an error if a file is not found
   ansible.builtin.set_fact:
     _found_file: "{{ lookup('ansible.builtin.first_found', findme) }}"
+=======
+- name: show first existing file or ignore if none do
+  debug: msg={{lookup('first_found', findme, errors='ignore')}}
+>>>>>>> fix: remove FQCN from modules & plugins
   vars:
     findme:
       - /path/to/foo.txt
       - bar.txt  # will be looked in files/ dir relative to role and/or play
       - /path/to/biz.txt
 
+<<<<<<< HEAD
 - name: Set _found_file to the first existing file, or an empty list if no files found
   ansible.builtin.set_fact:
     _found_file: "{{ lookup('ansible.builtin.first_found', files, paths=['/extra/path'], skip=True) }}"
+=======
+- name: |
+        include tasks only if files exist.  Note the use of query() to return
+        a blank list for the loop if no files are found.
+  import_tasks: '{{ item }}'
+>>>>>>> fix: remove FQCN from modules & plugins
   vars:
     files:
       - /path/to/foo.txt
@@ -82,9 +94,13 @@ EXAMPLES = """
         copy first existing file found to /some/file,
         looking in relative directories from where the task is defined and
         including any play objects that contain it
+<<<<<<< HEAD
   ansible.builtin.copy:
     src: "{{ lookup('ansible.builtin.first_found', findme) }}"
     dest: /some/file
+=======
+  copy: src={{lookup('first_found', findme)}} dest=/some/file
+>>>>>>> fix: remove FQCN from modules & plugins
   vars:
     findme:
       - foo
@@ -92,9 +108,13 @@ EXAMPLES = """
       - bar
 
 - name: same copy but specific paths
+<<<<<<< HEAD
   ansible.builtin.copy:
     src: "{{ lookup('ansible.builtin.first_found', params) }}"
     dest: /some/file
+=======
+  copy: src={{lookup('first_found', params)}} dest=/some/file
+>>>>>>> fix: remove FQCN from modules & plugins
   vars:
     params:
       files:
@@ -106,8 +126,8 @@ EXAMPLES = """
         - /tmp/staging
 
 - name: INTERFACES | Create Ansible header for /etc/network/interfaces
-  ansible.builtin.template:
-    src: "{{ lookup('ansible.builtin.first_found', findme)}}"
+  template:
+    src: "{{ lookup('first_found', findme)}}"
     dest: "/etc/foo.conf"
   vars:
     findme:
@@ -115,7 +135,7 @@ EXAMPLES = """
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
-  ansible.builtin.include_vars: "{{lookup('ansible.builtin.first_found', params)}}"
+  include_vars: "{{lookup('first_found', params)}}"
   vars:
     params:
       files:

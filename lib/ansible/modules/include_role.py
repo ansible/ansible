@@ -96,22 +96,22 @@ seealso:
 '''
 
 EXAMPLES = r'''
-- ansible.builtin.include_role:
+- include_role:
     name: myrole
 
 - name: Run tasks/other.yaml instead of 'main'
-  ansible.builtin.include_role:
+  include_role:
     name: myrole
     tasks_from: other
 
 - name: Pass variables to role
-  ansible.builtin.include_role:
+  include_role:
     name: myrole
   vars:
     rolevar1: value from task
 
 - name: Use role in loop
-  ansible.builtin.include_role:
+  include_role:
     name: '{{ roleinputvar }}'
   loop:
     - '{{ roleinput1 }}'
@@ -120,12 +120,12 @@ EXAMPLES = r'''
     loop_var: roleinputvar
 
 - name: Conditional role
-  ansible.builtin.include_role:
+  include_role:
     name: myrole
   when: not idontwanttorun
 
 - name: Apply tags to tasks within included file
-  ansible.builtin.include_role:
+  include_role:
     name: install
     apply:
       tags:

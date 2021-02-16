@@ -206,36 +206,36 @@ notes:
 
 EXAMPLES = '''
 - name: Install apache httpd  (state=present is optional)
-  ansible.builtin.apt:
+  apt:
     name: apache2
     state: present
 
 - name: Update repositories cache and install "foo" package
-  ansible.builtin.apt:
+  apt:
     name: foo
     update_cache: yes
 
 - name: Remove "foo" package
-  ansible.builtin.apt:
+  apt:
     name: foo
     state: absent
 
 - name: Install the package "foo"
-  ansible.builtin.apt:
+  apt:
     name: foo
 
 - name: Install a list of packages
-  ansible.builtin.apt:
+  apt:
     pkg:
     - foo
     - foo-tools
 
 - name: Install the version '1.00' of package "foo"
-  ansible.builtin.apt:
+  apt:
     name: foo=1.00
 
 - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
-  ansible.builtin.apt:
+  apt:
     name: nginx
     state: latest
     default_release: squeeze-backports
@@ -248,60 +248,60 @@ EXAMPLES = '''
     allow_downgrade: yes
 
 - name: Install zfsutils-linux with ensuring conflicted packages (e.g. zfs-fuse) will not be removed.
-  ansible.builtin.apt:
+  apt:
     name: zfsutils-linux
     state: latest
     fail_on_autoremove: yes
 
 - name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
-  ansible.builtin.apt:
+  apt:
     name: openjdk-6-jdk
     state: latest
     install_recommends: no
 
 - name: Update all packages to their latest version
-  ansible.builtin.apt:
+  apt:
     name: "*"
     state: latest
 
 - name: Upgrade the OS (apt-get dist-upgrade)
-  ansible.builtin.apt:
+  apt:
     upgrade: dist
 
 - name: Run the equivalent of "apt-get update" as a separate step
-  ansible.builtin.apt:
+  apt:
     update_cache: yes
 
 - name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
-  ansible.builtin.apt:
+  apt:
     update_cache: yes
     cache_valid_time: 3600
 
 - name: Pass options to dpkg on run
-  ansible.builtin.apt:
+  apt:
     upgrade: dist
     update_cache: yes
     dpkg_options: 'force-confold,force-confdef'
 
 - name: Install a .deb package
-  ansible.builtin.apt:
+  apt:
     deb: /tmp/mypackage.deb
 
 - name: Install the build dependencies for package "foo"
-  ansible.builtin.apt:
+  apt:
     pkg: foo
     state: build-dep
 
 - name: Install a .deb package from the internet
-  ansible.builtin.apt:
+  apt:
     deb: https://example.com/python-ppq_0.1-1_all.deb
 
 - name: Remove useless packages from the cache
-  ansible.builtin.apt:
+  apt:
     autoclean: yes
 
 - name: Remove dependencies that are no longer required
-  ansible.builtin.apt:
+  apt:
     autoremove: yes
 '''
 

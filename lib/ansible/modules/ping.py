@@ -49,10 +49,10 @@ EXAMPLES = '''
 # ansible webservers -m ping
 
 - name: Example from an Ansible Playbook
-  ansible.builtin.ping:
+  ping:
 
 - name: Induce an exception to see what happens
-  ansible.builtin.ping:
+  ping:
     data: crash
 '''
 

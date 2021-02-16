@@ -37,23 +37,23 @@ DOCUMENTATION = """
 
 EXAMPLES = """
     - name: Show configured default become user
-      ansible.builtin.debug: msg="{{ lookup('ansible.builtin.config', 'DEFAULT_BECOME_USER')}}"
+      debug: msg="{{ lookup('config', 'DEFAULT_BECOME_USER')}}"
 
     - name: print out role paths
-      ansible.builtin.debug:
-        msg: "These are the configured role paths: {{lookup('ansible.builtin.config', 'DEFAULT_ROLES_PATH')}}"
+      debug:
+        msg: "These are the configured role paths: {{lookup('config', 'DEFAULT_ROLES_PATH')}}"
 
     - name: find retry files, skip if missing that key
-      ansible.builtin.find:
-        paths: "{{lookup('ansible.builtin.config', 'RETRY_FILES_SAVE_PATH')|default(playbook_dir, True)}}"
+      find:
+        paths: "{{lookup('config', 'RETRY_FILES_SAVE_PATH')|default(playbook_dir, True)}}"
         patterns: "*.retry"
 
     - name: see the colors
-      ansible.builtin.debug: msg="{{item}}"
-      loop: "{{lookup('ansible.builtin.config', 'COLOR_OK', 'COLOR_CHANGED', 'COLOR_SKIP', wantlist=True)}}"
+      debug: msg="{{item}}"
+      loop: "{{lookup('config', 'COLOR_OK', 'COLOR_CHANGED', 'COLOR_SKIP', wantlist=True)}}"
 
     - name: skip if bad value in var
-      ansible.builtin.debug: msg="{{ lookup('ansible.builtin.config', config_in_var, on_missing='skip')}}"
+      debug: msg="{{ lookup('config', config_in_var, on_missing='skip')}}"
       var:
         config_in_var: UNKNOWN
 

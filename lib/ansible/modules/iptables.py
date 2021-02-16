@@ -379,14 +379,14 @@ options:
 
 EXAMPLES = r'''
 - name: Block specific IP
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     source: 8.8.8.8
     jump: DROP
   become: yes
 
 - name: Forward port 80 to 8600
-  ansible.builtin.iptables:
+  iptables:
     table: nat
     chain: PREROUTING
     in_interface: eth0
@@ -399,14 +399,14 @@ EXAMPLES = r'''
   become: yes
 
 - name: Allow related and established connections
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
   become: yes
 
 - name: Allow new incoming SYN packets on TCP port 22 (SSH)
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 22
@@ -416,14 +416,14 @@ EXAMPLES = r'''
     comment: Accept new SSH connections.
 
 - name: Match on IP ranges
-  ansible.builtin.iptables:
+  iptables:
     chain: FORWARD
     src_range: 192.168.1.100-192.168.1.199
     dst_range: 10.0.0.1-10.0.0.50
     jump: ACCEPT
 
 - name: Allow source IPs defined in ipset "admin_hosts" on port 22
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     match_set: admin_hosts
     match_set_flags: src
@@ -431,7 +431,7 @@ EXAMPLES = r'''
     jump: ALLOW
 
 - name: Tag all outbound tcp packets with DSCP mark 8
-  ansible.builtin.iptables:
+  iptables:
     chain: OUTPUT
     jump: DSCP
     table: mangle
@@ -439,7 +439,7 @@ EXAMPLES = r'''
     protocol: tcp
 
 - name: Tag all outbound tcp packets with DSCP DiffServ class CS1
-  ansible.builtin.iptables:
+  iptables:
     chain: OUTPUT
     jump: DSCP
     table: mangle
@@ -447,7 +447,7 @@ EXAMPLES = r'''
     protocol: tcp
 
 - name: Insert a rule on line 5
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 8080
@@ -457,19 +457,19 @@ EXAMPLES = r'''
 
 # Think twice before running following task as this may lock target system
 - name: Set the policy for the INPUT chain to DROP
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     policy: DROP
 
 - name: Reject tcp with tcp-reset
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
 
 - name: Set tcp flags
-  ansible.builtin.iptables:
+  iptables:
     chain: OUTPUT
     jump: DROP
     protocol: tcp
@@ -482,20 +482,20 @@ EXAMPLES = r'''
         - FIN
 
 - name: Iptables flush filter
-  ansible.builtin.iptables:
+  iptables:
     chain: "{{ item }}"
     flush: yes
   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
 - name: Iptables flush nat
-  ansible.builtin.iptables:
+  iptables:
     table: nat
     chain: '{{ item }}'
     flush: yes
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
 
 - name: Log packets arriving into an user-defined chain
-  ansible.builtin.iptables:
+  iptables:
     chain: LOGGING
     action: append
     state: present
@@ -505,7 +505,7 @@ EXAMPLES = r'''
     log_level: info
 
 - name: Allow connections on multiple ports
-  ansible.builtin.iptables:
+  iptables:
     chain: INPUT
     protocol: tcp
     destination_ports:
