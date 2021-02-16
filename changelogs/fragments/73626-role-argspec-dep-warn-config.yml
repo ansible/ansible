@@ -1,0 +1,2 @@
+minor_changes:
+  - Adds a config option and env variable to control if the role arg spec dependency warning is emitted.
