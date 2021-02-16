@@ -2072,6 +2072,17 @@ STRING_CONVERSION_ACTION:
     - section: defaults
       key: string_conversion_action
   type: string
+VALIDATE_ROLE_WITH_DEPS_WARNING:
+  name: Validation of role with dependencies warning
+  default: True
+  description: Toggle to control showing warnings related to validating arg spec of role with dependencies.
+  env:
+    - name: ANSIBLE_VALIDATE_ROLE_WITH_DEPS_WARNING
+  ini:
+    - section: defaults
+      key: validate_role_with_deps_warning
+  type: bool
+  version_added: "2.11"
 VERBOSE_TO_STDERR:
   version_added: '2.8'
   description:

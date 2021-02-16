@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, binary_type, text_type
@@ -288,7 +289,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         :returns: The (possibly modified) task list.
         '''
         if self._metadata.argument_specs:
-            if self._dependencies:
+            if C.VALIDATE_ROLE_WITH_DEPS_WARNING and self._dependencies:
                 display.warning("Dependent roles will run before roles with argument specs even if validation fails.")
 
             # Determine the role entry point so we can retrieve the correct argument spec.
