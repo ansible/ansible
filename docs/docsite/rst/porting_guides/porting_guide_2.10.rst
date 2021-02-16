@@ -9,7 +9,7 @@ Ansible 2.10 Porting Guide
 
 .. warning::
 
-         In Ansible 2.10, many plugins and modules have migrated to Collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. Your playbooks should continue to work without any changes. We recommend you start using the fully-qualified collection name (FQCN) in your playbooks as the explicit and authoritative indicator of which collection to use as some collections may contain duplicate module names.
+         In Ansible 2.10, many plugins and modules have migrated to Collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. Your playbooks should continue to work without any changes. We recommend you start using the fully-qualified collection name (FQCN) in your playbooks as the explicit and authoritative indicator of which collection to use as some collections may contain duplicate module names. You can search the `index of all modules <https://docs.ansible.com/ansible/2.10/collections/index_module.html>`_ to find the collection a module has been relocated to.
 
 This section discusses the behavioral changes between Ansible 2.9 and Ansible 2.10.
 
