@@ -289,7 +289,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         :returns: The (possibly modified) task list.
         '''
         if self._metadata.argument_specs:
-            if C.VALIDATE_ROLE_WITH_DEPS_WARNING and self._dependencies:
+            if C.config.get_config_value('VALIDATE_ROLE_WITH_DEPS_WARNING') and self._dependencies:
                 display.warning("Dependent roles will run before roles with argument specs even if validation fails.")
 
             # Determine the role entry point so we can retrieve the correct argument spec.
