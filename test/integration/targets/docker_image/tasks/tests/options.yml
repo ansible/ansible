@@ -223,6 +223,14 @@
   register: load_image_3
   ignore_errors: true
 
+- name: load image (invalid image, old API version)
+  docker_image:
+    name: foo:bar
+    load_path: "{{ output_dir }}/image-invalid.tar"
+    source: load
+    api_version: "1.22"
+  register: load_image_4
+
 - assert:
     that:
     - load_image is changed
@@ -233,6 +241,8 @@
       "The archive did not contain image 'foo:bar'. Instead, found 'quay.io/ansible/docker-test-containers:hello-world'." == load_image_2.msg
     - load_image_3 is failed
     - '"Detected no loaded images. Archive potentially corrupt?" == load_image_3.msg'
+    - load_image_4 is changed
+    - "'The API version of your Docker daemon is < 1.23, which does not return the image loading result from the Docker daemon. Therefore, we cannot verify whether the expected image was loaded, whether multiple images where loaded, or whether the load actually succeeded. You should consider upgrading your Docker daemon.' in load_image_4.warnings"
 
 ####################################################################
 ## path ############################################################
