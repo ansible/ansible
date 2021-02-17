@@ -31,6 +31,10 @@ ifdef PLUGINS
 endif
 endif
 
+ANSIBLE_VERSION_ARGS=
+ifdef ANSIBLE_VERSION
+	ANSIBLE_VERSION_ARGS=--ansible-version=$(ANSIBLE_VERSION)
+endif
 
 DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup netconf shell strategy vars
 
@@ -39,6 +43,11 @@ PYTHON=python
 VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --raw || echo error)
 ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
+endif
+
+MAJOR_VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --majorversion || echo error)
+ifeq ($(findstring error,$(MAJOR_VERSION)), error)
+$(error "version_helper failed to determine major version")
 endif
 
 assertrst:
@@ -50,23 +59,47 @@ all: docs
 
 docs: htmldocs
 
+coredocs: core_htmldocs
+
 generate_rst: collections_meta config cli keywords plugins testing
-base_generate_rst: collections_meta config cli keywords base_plugins testing
+core_generate_rst: collections_meta config cli keywords base_plugins testing
 
-htmldocs: generate_rst
+# The following two symlinks are necessary to produce two different docsets
+# from the same set of rst files (Ansible the package docs, and core docs).
+# Symlink the relevant index into place for building Ansible docs
+ansible_structure: generate_rst
+	# We must have python and python-packaging for the version_helper
+	# script so use it for version comparison
+	if python -c "import sys, packaging.version as p; sys.exit(not p.Version('$(MAJOR_VERSION)') >  p.Version('2.10'))" ; then \
+		echo "Creating symlinks in generate_rst"; \
+		ln -sf ../rst/ansible_index.rst rst/index.rst; \
+		ln -sf ../sphinx_conf/ansible_conf.py rst/conf.py; \
+	else \
+		echo 'Creating symlinks for older ansible in generate_rst'; \
+		ln -sf ../rst/2.10_index.rst rst/index.rst; \
+		ln -sf ../sphinx_conf/2.10_conf.py rst/conf.py; \
+	fi
+
+# Symlink the relevant index into place for building core docs
+core_structure: core_generate_rst
+	@echo "Creating symlinks in core_generate_rst"
+	-ln -sf ../rst/core_index.rst rst/index.rst
+	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
+
+htmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-base_htmldocs: base_generate_rst
+core_htmldocs: core_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-singlehtmldocs: generate_rst
+singlehtmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
-base_singlehtmldocs: base_generate_rst
+core_singlehtmldocs: core_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
 linkcheckdocs: generate_rst
-		CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck
 
 webdocs: docs
 
@@ -99,6 +132,8 @@ clean:
 			rm -rf "rst/collections/$$filename"; \
 		fi \
 	done
+	@echo "Cleanning up generated ansible_structure"
+	find -type l -delete
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
 	rm -f rst/plugins/*/*.rst
@@ -122,11 +157,7 @@ config: ../templates/config.rst.j2
 # For now, if we're building on devel, just build base docs.  In the future we'll want to build docs that
 # are the latest versions on galaxy (using a different antsibull-docs subcommand)
 plugins:
-	if expr "$(VERSION)" : '.*[.]dev[0-9]\{1,\}$$' &> /dev/null; then \
-		$(PLUGIN_FORMATTER) base -o rst $(PLUGIN_ARGS);\
-	else \
-		$(PLUGIN_FORMATTER) full -o rst $(PLUGIN_ARGS);\
-	fi
+	$(PLUGIN_FORMATTER) full -o rst $(ANSIBLE_VERSION_ARGS) $(PLUGIN_ARGS);\
 
 # This only builds the plugin docs included with ansible-base
 base_plugins:

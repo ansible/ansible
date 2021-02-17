@@ -5,6 +5,8 @@ include requirements.txt
 recursive-include docs *
 include docs/docsite/rst/collections/all_plugins.rst
 exclude docs/docsite/rst_warnings
+exclude docs/docsite/rst/conf.py
+exclude docs/docsite/rst/index.rst
 recursive-exclude docs/docsite/_build *
 recursive-exclude docs/docsite/_extensions *.pyc *.pyo
 include examples/hosts
