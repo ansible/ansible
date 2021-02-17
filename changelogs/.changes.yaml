@@ -1718,6 +1718,11 @@ releases:
     - systemd-preserve-full-unit-name.yml
     - v2.9.17rc1_summary.yaml
     release_date: '2021-01-11'
+  2.9.18:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.18_summary.yaml
+    release_date: '2021-02-17'
   2.9.18rc1:
     codename: Immigrant Song
     fragments:
