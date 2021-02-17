@@ -10,5 +10,3 @@ Roadmaps
    ansible_roadmap_index
    ansible_base_roadmap_index
    old_roadmap_index
-
-   

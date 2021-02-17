@@ -5,6 +5,7 @@
 # useful targets:
 #   make clean ---------------- clean up
 #   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
+#   make coredocs ------------- produce core doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
@@ -269,6 +270,10 @@ epub:
 .PHONY: webdocs
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
+
+.PHONY: coredocs
+coredocs:
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) coredocs)
 
 .PHONY: linkcheckdocs
 linkcheckdocs:
