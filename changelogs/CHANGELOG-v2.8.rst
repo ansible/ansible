@@ -5,13 +5,13 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
-v2.8.19rc1
-==========
+v2.8.19
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-02-08
+| Release Date: 2021-02-17
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 

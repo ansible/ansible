@@ -1744,6 +1744,11 @@ releases:
     - rhel-7.9.yml
     - v2.8.18rc1_summary.yaml
     release_date: '2020-12-07'
+  2.8.19:
+    codename: How Many More Times
+    fragments:
+    - v2.8.19_summary.yaml
+    release_date: '2021-02-17'
   2.8.19rc1:
     codename: How Many More Times
     fragments:
