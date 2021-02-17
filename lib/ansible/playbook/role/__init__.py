@@ -34,10 +34,8 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
-display = Display()
 
 __all__ = ['Role', 'hash_params']
 
@@ -288,9 +286,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         :returns: The (possibly modified) task list.
         '''
         if self._metadata.argument_specs:
-            if self._dependencies:
-                display.warning("Dependent roles will run before roles with argument specs even if validation fails.")
-
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
             entrypoint = self._from_files.get('tasks', 'main')
