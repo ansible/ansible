@@ -2,7 +2,7 @@
 Ansible project 3.0
 ===================
 
-This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_11` for the most recent updates on ``ansible-base``.
+This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. Ansible 3.x.x includes ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for the most recent updates on ``ansible-base``.
 
 .. contents::
    :local:
@@ -43,3 +43,8 @@ Ansible 3.x.x minor releases will occur approximately every three weeks if chang
 
 
 For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
+
+ansible-base release
+====================
+
+Ansible 3.x.x works with ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for details.
