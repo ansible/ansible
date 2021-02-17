@@ -32,6 +32,8 @@ docs/man/man3/*
 docs/docsite/_build
 docs/docsite/*.html
 docs/docsite/htmlout
+docs/docsite/rst/conf.py
+docs/docsite/rst/index.rst
 docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
 docs/docsite/rst/dev_guide/collections_galaxy_meta.rst

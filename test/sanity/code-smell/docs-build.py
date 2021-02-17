@@ -30,7 +30,7 @@ def main():
         f.writelines(lines)
 
     try:
-        cmd = ['make', 'base_singlehtmldocs']
+        cmd = ['make', 'core_singlehtmldocs']
         sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
         stdout, stderr = sphinx.communicate()
     finally:
