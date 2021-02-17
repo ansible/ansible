@@ -13,6 +13,9 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import sys
 import os
 
