@@ -35,10 +35,12 @@ PYTHON=python
 MAJOR_VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --majorversion || echo error)
 
 ANSIBLE_VERSION_ARGS=
+ifndef ANSIBLE_VERSION
+  # Only needed to make stable-2.10 docs build correctly.  Do not apply to devel and future branches
+  ANSIBLE_VERSION=$(MAJOR_VERSION)
+endif
 ifdef ANSIBLE_VERSION
 	ANSIBLE_VERSION_ARGS=--ansible-version=$(ANSIBLE_VERSION)
-else
-  ANSIBLE_VERSION=$(MAJOR_VERSION)
 endif
 
 DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup netconf shell strategy vars
