@@ -2355,6 +2355,17 @@ releases:
     - v2.10.5rc1_summary.yaml
     - wrap_native_text-non-collections-only.yml
     release_date: '2021-01-11'
+  2.10.6:
+    changes:
+      release_summary: '| Release Date: 2021-02-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.6_summary.yaml
+    release_date: '2021-02-17'
   2.10.6rc1:
     changes:
       bugfixes:
