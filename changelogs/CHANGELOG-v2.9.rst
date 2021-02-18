@@ -11,7 +11,7 @@ v2.9.18
 Release Summary
 ---------------
 
-| Release Date: 2021-02-17
+| Release Date: 2021-02-18
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -89,6 +89,7 @@ Bugfixes
 --------
 
 - Fix incorrect variable scoping when using ``import with context`` in Jinja2 templates. (https://github.com/ansible/ansible/issues/72615)
+- ansible-test - Temporarily limit ``cryptography`` to versions before 3.4 to enable tests to function.
 - ansible-test - The ``--remote`` option has been updated for Python 2.7 to work around breaking changes in the newly released ``get-pip.py`` bootstrapper.
 - ansible-test - The ``--remote`` option has been updated to use a versioned ``get-pip.py`` bootstrapper to avoid issues with future releases.
 - display correct error information when an error exists in the last line of the file (https://github.com/ansible/ansible/issues/16456)
