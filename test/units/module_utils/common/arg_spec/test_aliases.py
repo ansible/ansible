@@ -10,19 +10,39 @@ import pytest
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 
-# id, argument spec, parameters, expected, error, deprecation, warning
+# id, argument spec, parameters, expected parameters, expected pass/fail, error, deprecation, warning
 ALIAS_TEST_CASES = [
     (
         "alias",
         {'path': {'aliases': ['dir', 'directory']}},
-        {
-            'dir': '/tmp',
-        },
+        {'dir': '/tmp'},
         {
             'dir': '/tmp',
             'path': '/tmp',
         },
+        True,
         "",
+        "",
+        "",
+    ),
+    (
+        "alias-invalid",
+        {'path': {'aliases': 'bad'}},
+        {},
+        {'path': None},
+        False,
+        "internal error: aliases must be a list or tuple",
+        "",
+        "",
+    ),
+    (
+        # This isn't related to aliases, but it exists in the alias handling code
+        "default-and-required",
+        {'name': {'default': 'ray', 'required': True}},
+        {},
+        {'name': 'ray'},
+        False,
+        "internal error: required and default are mutually exclusive for name",
         "",
         "",
     ),
@@ -38,6 +58,7 @@ ALIAS_TEST_CASES = [
             'directory': '/tmp',
             'path': '/tmp',
         },
+        True,
         "",
         "",
         "Both option path and its alias directory are set",
@@ -60,6 +81,7 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
             'not_yo_path': '/tmp',
         },
+        True,
         "",
         "Alias 'not_yo_path' is deprecated.",
         "",
@@ -68,15 +90,15 @@ ALIAS_TEST_CASES = [
 
 
 @pytest.mark.parametrize(
-    ('arg_spec', 'parameters', 'expected', 'error', 'deprecation', 'warning'),
-    ((i[1], i[2], i[3], i[4], i[5], i[6]) for i in ALIAS_TEST_CASES),
+    ('arg_spec', 'parameters', 'expected', 'passfail', 'error', 'deprecation', 'warning'),
+    ((i[1], i[2], i[3], i[4], i[5], i[6], i[7]) for i in ALIAS_TEST_CASES),
     ids=[i[0] for i in ALIAS_TEST_CASES]
 )
-def test_aliases(arg_spec, parameters, expected, error, deprecation, warning):
+def test_aliases(arg_spec, parameters, expected, passfail, error, deprecation, warning):
     v = ArgumentSpecValidator(arg_spec, parameters)
     passed = v.validate()
 
-    assert passed is True
+    assert passed is passfail
     assert v.validated_parameters == expected
 
     if not error:
