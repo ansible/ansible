@@ -1,2 +1,2 @@
 bugfixes:
-  - We should not have a warning displayed about dependencies when a role is validated. Move it to role docs instead.
+  - Remove the warning displayed when validating the arg spec of a role with dependencies and add it to the documentation.
