@@ -69,23 +69,10 @@
 # Need to handle various platforms here. Package name will not always be the same
 - name: Ensure mongod package is installed
   apt:
-    name: "{{ mongodb_packages.mongod }}"
-    state: present
-    force: yes
-  when:
-    - ansible_distribution == 'Ubuntu'
-
-- name: Ensure mongos package is installed
-  apt:
-    name: "{{ mongodb_packages.mongos }}"
-    state: present
-    force: yes
-  when:
-    - ansible_distribution == 'Ubuntu'
-
-- name: Ensure mongo client is installed
-  apt:
-    name: "{{ mongodb_packages.mongo }}"
+    name:
+      - "{{ mongodb_packages.mongod }}"
+      - "{{ mongodb_packages.mongos }}"
+      - "{{ mongodb_packages.mongo }}"
     state: present
     force: yes
   when:
@@ -128,21 +115,12 @@
   when:
     - ansible_distribution == "Fedora"
 
-- name: Ensure mongod package is installed
+- name: Ensure mongodb packages are installed
   yum:
-    name: "{{ mongodb_packages.mongod }}"
-    state: present
-  when: ansible_os_family == "RedHat"
-
-- name: Ensure mongos package is installed
-  yum:
-    name: "{{ mongodb_packages.mongos }}"
-    state: present
-  when: ansible_os_family == "RedHat"
-
-- name: Ensure mongo client is installed
-  yum:
-    name: "{{ mongodb_packages.mongo }}"
+    name:
+      - "{{ mongodb_packages.mongod }}"
+      - "{{ mongodb_packages.mongos }}"
+      - "{{ mongodb_packages.mongo }}"
     state: present
   when: ansible_os_family == "RedHat"
 # EOF Redhat

@@ -289,16 +289,11 @@
 - name: Murder all mongod processes
   shell: pkill -{{ kill_signal }} mongod || true;
 
-- name: Getting pids for mongod
-  pids:
-      name: mongod
-  register: pids_of_mongod
-
-- name: Wait for all mongod processes to exit
+- name: Wait for ports to get out of TIME_WAIT
   wait_for:
-    path: "/proc/{{ item }}/status"
-    state: absent
-  with_items: "{{ pids_of_mongod }}"
+    port: '{{ item }}'
+    state: drained
+  with_sequence: start=3001 end=3006
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"
