@@ -234,7 +234,7 @@ To reconfigure only the first 10 webservers in Boston, and then the next 10::
     ansible-playbook -i production webservers.yml --limit boston[0:9]
     ansible-playbook -i production webservers.yml --limit boston[10:19]
 
-The sample setup also supports basic ad-hoc commands::
+The sample setup also supports basic ad hoc commands::
 
     ansible boston -i production -m ping
     ansible boston -i production -m command -a '/sbin/reboot'

@@ -352,7 +352,7 @@ How do I see a list of all of the ansible\_ variables?
 
 Ansible by default gathers "facts" about the machines under management, and these facts can be accessed in playbooks
 and in templates. To see a list of all of the facts that are available about a machine, you can run the ``setup`` module
-as an ad-hoc action:
+as an ad hoc action:
 
 .. code-block:: shell-session
 
@@ -519,7 +519,7 @@ and distribution and local configuration.
 How do I generate encrypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ansible ad-hoc command is the easiest option:
+Ansible ad hoc command is the easiest option:
 
 .. code-block:: shell-session
 

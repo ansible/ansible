@@ -160,9 +160,9 @@ As with any effort to troubleshoot it's important to simplify the test case as m
 For Ansible this can be done by ensuring you are only running against one remote device:
 
 * Using ``ansible-playbook --limit switch1.example.net...``
-* Using an ad-hoc ``ansible`` command
+* Using an ad hoc ``ansible`` command
 
-`ad-hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::
+`ad hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::
 
   ansible -m arista.eos.eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=ansible.netcommon.network_cli' -u admin -k
 

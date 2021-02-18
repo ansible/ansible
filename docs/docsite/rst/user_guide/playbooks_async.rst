@@ -8,10 +8,10 @@ By default Ansible runs tasks synchronously, holding the connection to the remot
 .. contents::
    :local:
 
-Asynchronous ad-hoc tasks
+Asynchronous ad hoc tasks
 -------------------------
 
-You can execute long-running operations in the background with :ref:`ad-hoc tasks <intro_adhoc>`. For example, to execute ``long_running_operation`` asynchronously in the background, with a timeout (``-B``) of 3600 seconds, and without polling (``-P``)::
+You can execute long-running operations in the background with :ref:`ad hoc tasks <intro_adhoc>`. For example, to execute ``long_running_operation`` asynchronously in the background, with a timeout (``-B``) of 3600 seconds, and without polling (``-P``)::
 
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
