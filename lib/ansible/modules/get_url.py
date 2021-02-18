@@ -18,8 +18,7 @@ description:
      - By default, if an environment variable C(<protocol>_proxy) is set on
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
-       (see `setting the environment
-       <https://docs.ansible.com/playbooks_environment.html>`_),
+       (see R(setting the environment,playbooks_environment)),
        or by using the use_proxy option.
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
