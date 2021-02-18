@@ -264,6 +264,12 @@ specification defined in the role ``meta/main.yml`` file. When this argument spe
 a new task is inserted at the beginning of role execution that will validate the parameters supplied
 for the role against the specification. If the parameters fail validation, the role will fail execution.
 
+.. note::
+
+    When role argument validation is used on a role that has defined :ref:`dependencies <role_dependencies>`,
+    then validation on those dependencies will run before the dependent role, even if argument validation fails
+    for the dependent role.
+
 Specification Format
 --------------------
 
