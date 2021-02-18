@@ -8,6 +8,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.six import PY2
 
 
 # Each item is id, argument_spec, parameters, expected, error test string
@@ -86,6 +87,9 @@ INVALID_SPECS = [
 def test_invalid_spec(arg_spec, parameters, expected, error):
     v = ArgumentSpecValidator(arg_spec, parameters)
     passed = v.validate()
+
+    if PY2:
+        error = error.replace('class', 'type')
 
     assert error in v.error_messages[0]
     assert v.validated_parameters == expected
