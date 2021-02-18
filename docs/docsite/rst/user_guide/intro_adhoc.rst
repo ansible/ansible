@@ -1,18 +1,18 @@
 .. _intro_adhoc:
 
 *******************************
-Introduction to ad-hoc commands
+Introduction to ad hoc commands
 *******************************
 
-An Ansible ad-hoc command uses the `/usr/bin/ansible` command-line tool to automate a single task on one or more managed nodes. Ad-hoc commands are quick and easy, but they are not reusable. So why learn about ad-hoc commands first? Ad-hoc commands demonstrate the simplicity and power of Ansible. The concepts you learn here will port over directly to the playbook language. Before reading and executing these examples, please read :ref:`intro_inventory`.
+An Ansible ad hoc command uses the `/usr/bin/ansible` command-line tool to automate a single task on one or more managed nodes. ad hoc commands are quick and easy, but they are not reusable. So why learn about ad hoc commands first? ad hoc commands demonstrate the simplicity and power of Ansible. The concepts you learn here will port over directly to the playbook language. Before reading and executing these examples, please read :ref:`intro_inventory`.
 
 .. contents::
    :local:
 
-Why use ad-hoc commands?
+Why use ad hoc commands?
 ========================
 
-Ad-hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad-hoc command looks like this:
+ad hoc commands are great for tasks you repeat rarely. For example, if you want to power off all the machines in your lab for Christmas vacation, you could execute a quick one-liner in Ansible without writing a playbook. An ad hoc command looks like this:
 
 .. code-block:: bash
 
@@ -20,17 +20,17 @@ Ad-hoc commands are great for tasks you repeat rarely. For example, if you want 
 
 You can learn more about :ref:`patterns<intro_patterns>` and :ref:`modules<working_with_modules>` on other pages.
 
-Use cases for ad-hoc tasks
+Use cases for ad hoc tasks
 ==========================
 
-Ad-hoc tasks can be used to reboot servers, copy files, manage packages and users, and much more. You can use any Ansible module in an ad-hoc task. Ad-hoc tasks, like playbooks, use a declarative model,
+ad hoc tasks can be used to reboot servers, copy files, manage packages and users, and much more. You can use any Ansible module in an ad hoc task. ad hoc tasks, like playbooks, use a declarative model,
 calculating and executing the actions required to reach a specified final state. They
 achieve a form of idempotence by checking the current state before they begin and doing nothing unless the current state is different from the specified final state.
 
 Rebooting servers
 -----------------
 
-The default module for the ``ansible`` command-line utility is the :ref:`ansible.builtin.command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group:
+The default module for the ``ansible`` command-line utility is the :ref:`ansible.builtin.command module<command_module>`. You can use an ad hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group:
 
 .. code-block:: bash
 
@@ -79,7 +79,7 @@ evaluate the variable on the box you were on.
 Managing files
 --------------
 
-An ad-hoc task can harness the power of Ansible and SCP to transfer many files to multiple machines in parallel. To transfer a file directly to all servers in the [atlanta] group:
+An ad hoc task can harness the power of Ansible and SCP to transfer many files to multiple machines in parallel. To transfer a file directly to all servers in the [atlanta] group:
 
 .. code-block:: bash
 
@@ -112,7 +112,7 @@ As well as delete directories (recursively) and delete files:
 Managing packages
 -----------------
 
-You might also use an ad-hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it:
+You might also use an ad hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it:
 
 .. code-block:: bash
 
@@ -143,7 +143,7 @@ Ansible has modules for managing packages under many platforms. If there is no m
 Managing users and groups
 -------------------------
 
-You can create, manage, and remove user accounts on your managed nodes with ad-hoc tasks:
+You can create, manage, and remove user accounts on your managed nodes with ad hoc tasks:
 
 .. code-block:: bash
 
@@ -182,7 +182,7 @@ Ensure a service is stopped:
 Gathering facts
 ---------------
 
-Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad-hoc information about your systems. To see all facts:
+Facts represent discovered variables about a system. You can use facts to implement conditional execution of tasks but also just to get ad hoc information about your systems. To see all facts:
 
 .. code-block:: bash
 
