@@ -773,6 +773,12 @@ class ArchARMHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class AlmaLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Almalinux'
+    strategy_class = SystemdStrategy
+
+
 class ManjaroHostname(Hostname):
     platform = 'Linux'
     distribution = 'Manjaro'
