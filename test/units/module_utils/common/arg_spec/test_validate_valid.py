@@ -11,47 +11,259 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 
 # Each item is id, argument_spec, parameters, expected
 VALID_SPECS = [
-    [
-        'basic',
+    (
+        'str-no-type-specified',
+        {'name': {}},
+        {'name': 'rey'},
+        {'name': 'rey'},
+    ),
+    (
+        'str',
+        {'name': {'type': 'str'}},
+        {'name': 'rey'},
+        {'name': 'rey'},
+    ),
+    (
+        'str-convert',
+        {'name': {'type': 'str'}},
+        {'name': 5},
+        {'name': '5'},
+    ),
+    (
+        'list',
+        {'packages': {'type': 'list'}},
+        {'packages': ['vim', 'python']},
+        {'packages': ['vim', 'python']},
+    ),
+    (
+        'list-comma-string',
+        {'packages': {'type': 'list'}},
+        {'packages': 'vim,python'},
+        {'packages': ['vim', 'python']},
+    ),
+    (
+        'list-comma-string-space',
+        {'packages': {'type': 'list'}},
+        {'packages': 'vim, python'},
+        {'packages': ['vim', ' python']},
+    ),
+    (
+        'dict',
+        {'user': {'type': 'dict'}},
         {
-            'param_str': {'type': 'str'},
-            'param_list': {'type': 'list'},
-            'param_dict': {'type': 'dict'},
-            'param_bool': {'type': 'bool'},
-            'param_int': {'type': 'int'},
-            'param_float': {'type': 'float'},
-            'param_path': {'type': 'path'},
-            'param_raw': {'type': 'raw'},
-            'param_bytes': {'type': 'bytes'},
-            'param_bits': {'type': 'bits'},
-
+            'user':
+            {
+                'first': 'rey',
+                'last': 'skywalker',
+            }
         },
         {
-            'param_str': 22,
-            'param_list': 'one,two,three',
-            'param_dict': 'first=star,last=lord',
-            'param_bool': True,
-            'param_int': 22,
-            'param_float': 1.5,
-            'param_path': '/tmp',
-            'param_raw': 'raw',
-            'param_bytes': '2K',
-            'param_bits': '1Mb',
+            'user':
+            {
+                'first': 'rey',
+                'last': 'skywalker',
+            }
+        },
+    ),
+    (
+        'dict-k=v',
+        {'user': {'type': 'dict'}},
+        {'user': 'first=rey,last=skywalker'},
+        {
+            'user':
+            {
+                'first': 'rey',
+                'last': 'skywalker',
+            }
+        },
+    ),
+    (
+        'dict-k=v-spaces',
+        {'user': {'type': 'dict'}},
+        {'user': 'first=rey,   last=skywalker'},
+        {
+            'user':
+            {
+                'first': 'rey',
+                'last': 'skywalker',
+            }
+        },
+    ),
+    (
+        'bool',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
         },
         {
-            'param_str': '22',
-            'param_list': ['one', 'two', 'three'],
-            'param_dict': {'first': 'star', 'last': 'lord'},
-            'param_bool': True,
-            'param_float': 1.5,
-            'param_int': 22,
-            'param_path': '/tmp',
-            'param_raw': 'raw',
-            'param_bits': 1048576,
-            'param_bytes': 2048,
+            'enabled': True,
+            'disabled': False,
         },
-    ],
-    [
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-ints',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': 1,
+            'disabled': 0,
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-true-false',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': 'true',
+            'disabled': 'false',
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-yes-no',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': 'yes',
+            'disabled': 'no',
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-y-n',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': 'y',
+            'disabled': 'n',
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-on-off',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': 'on',
+            'disabled': 'off',
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-1-0',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': '1',
+            'disabled': '0',
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'bool-float',
+        {
+            'enabled': {'type': 'bool'},
+            'disabled': {'type': 'bool'},
+        },
+        {
+            'enabled': 1.0,
+            'disabled': 0.0,
+        },
+        {
+            'enabled': True,
+            'disabled': False,
+        },
+    ),
+    (
+        'float',
+        {'digit': {'type': 'float'}},
+        {'digit': 3.14159},
+        {'digit': 3.14159},
+    ),
+    (
+        'float-str',
+        {'digit': {'type': 'float'}},
+        {'digit': '3.14159'},
+        {'digit': 3.14159},
+    ),
+    (
+        'path',
+        {'path': {'type': 'path'}},
+        {'path': '~/bin'},
+        {'path': '/home/ansible/bin'},
+    ),
+    (
+        'raw',
+        {'raw': {'type': 'raw'}},
+        {'raw': 0x644},
+        {'raw': 0x644},
+    ),
+    (
+        'bytes',
+        {'bytes': {'type': 'bytes'}},
+        {'bytes': '2K'},
+        {'bytes': 2048},
+    ),
+    (
+        'bits',
+        {'bits': {'type': 'bits'}},
+        {'bits': '1Mb'},
+        {'bits': 1048576},
+    ),
+    (
+        'jsonarg',
+        {'some_json': {'type': 'jsonarg'}},
+        {'some_json': '{"users": {"bob": {"role": "accountant"}}}'},
+        {'some_json': '{"users": {"bob": {"role": "accountant"}}}'},
+    ),
+    (
+        'jsonarg-list',
+        {'some_json': {'type': 'jsonarg'}},
+        {'some_json': ['one', 'two']},
+        {'some_json': '["one", "two"]'},
+    ),
+    (
+        'jsonarg-dict',
+        {'some_json': {'type': 'jsonarg'}},
+        {'some_json': {"users": {"bob": {"role": "accountant"}}}},
+        {'some_json': '{"users": {"bob": {"role": "accountant"}}}'},
+    ),
+    (
         'defaults',
         {
             'param_str': {'type': 'str', 'default': 'DEFAULT'},
@@ -60,8 +272,8 @@ VALID_SPECS = [
         {
             'param_str': 'DEFAULT',
         },
-    ],
-    [
+    ),
+    (
         'elements',
         {
             'param_list': {
@@ -75,7 +287,7 @@ VALID_SPECS = [
         {
             'param_list': [55, 33, 34, 22],
         },
-    ],
+    ),
 ]
 
 
@@ -84,11 +296,14 @@ VALID_SPECS = [
     ((i[1], i[2], i[3]) for i in VALID_SPECS),
     ids=[i[0] for i in VALID_SPECS]
 )
-def test_valid_spec(arg_spec, parameters, expected):
+def test_valid_spec(arg_spec, parameters, expected, mocker):
+
+    mocker.patch('ansible.module_utils.common.validation.os.path.expanduser', return_value='/home/ansible/bin')
+    mocker.patch('ansible.module_utils.common.validation.os.path.expandvars', return_value='/home/ansible/bin')
 
     v = ArgumentSpecValidator(arg_spec, parameters)
     passed = v.validate()
 
-    assert passed is True
     assert v.validated_parameters == expected
     assert v.error_messages == []
+    assert passed is True
