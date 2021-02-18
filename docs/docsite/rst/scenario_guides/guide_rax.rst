@@ -100,7 +100,7 @@ The 'rax' module provides the ability to provision instances within Rackspace Cl
    them as module arguments, or by specifying the location of a credentials
    file.
 
-Here is a basic example of provisioning an instance in ad-hoc mode:
+Here is a basic example of provisioning an instance in ad hoc mode:
 
 .. code-block:: bash
 

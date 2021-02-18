@@ -21,7 +21,7 @@ Getting started
   * a :ref:`text introduction <intro_getting_started>`
 
 * I'm ready to learn about Ansible. What :ref:`basic_concepts` do I need to learn?
-* I want to use Ansible without writing a playbook. How do I use :ref:`ad-hoc commands <intro_adhoc>`?
+* I want to use Ansible without writing a playbook. How do I use :ref:`ad hoc commands <intro_adhoc>`?
 
 Writing tasks, plays, and playbooks
 ===================================

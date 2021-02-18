@@ -47,7 +47,7 @@ When you type something directly at the command line, you may feel that your han
 
 You can override all other settings from all other sources in all other precedence categories at the command line by  :ref:`general_precedence_extra_vars`, but that is not a command-line option, it is a way of passing a :ref:`variable<general_precedence_variables>`.
 
-At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad-hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
+At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
 
       ansible -u mike -m ping myhost -u carol
 
