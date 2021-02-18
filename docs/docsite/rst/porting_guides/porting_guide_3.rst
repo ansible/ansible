@@ -14,8 +14,14 @@ Ansible 3 Porting Guide
 
 Ansible 3 is based on Ansible-Base 2.10, which is the same major release as Ansible 2.10.  Therefore, there is no section on ansible-base in this porting guide.  If you are upgrading from Ansible 2.9, please first consult the Ansible 2.10 porting guide before continuing with the Ansible 3 porting guide.
 
-Porting Guide for v3.0.0b1
-==========================
+We suggest you read this page along with the `Ansible Changelog for 3.0 <https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst>`_ to understand what updates you may need to make.
+
+.. note::
+    Due to a scheduling conflict, the latest version of Ansible 2.10 (2.10.7) has a few collections which are newer than Ansible 3.0.0.  Ansible 3.1.0 will contain updated versions of those collections.
+
+
+Porting Guide for v3.0.0
+========================
 
 Breaking Changes
 ----------------
@@ -82,6 +88,7 @@ community.general
 - pkgng - passing ``name: *`` with ``state: absent`` will no longer remove every installed package from the system. It is now a noop. (https://github.com/ansible-collections/community.general/pull/569).
 - pkgng - passing ``name: *`` with ``state: latest`` or ``state: present`` will no longer install every package from the configured package repositories. Instead, ``name: *, state: latest`` will upgrade all already-installed packages, and ``name: *, state: present`` is a noop. (https://github.com/ansible-collections/community.general/pull/569).
 - proxmox_kvm - recognize ``force=yes`` in conjunction with ``state=absent`` to forcibly remove a running VM (https://github.com/ansible-collections/community.general/pull/849).
+- utm_proxy_auth_profile - the ``frontend_cookie_secret`` return value now contains a placeholder string instead of the module's ``frontend_cookie_secret`` parameter (https://github.com/ansible-collections/community.general/pull/1736).
 
 community.hashi_vault
 ~~~~~~~~~~~~~~~~~~~~~
@@ -143,6 +150,14 @@ cisco.aci
 community.general
 ~~~~~~~~~~~~~~~~~
 
+- For community.general 3.0.0, the ``ome_device_info``, ``idrac_firmware`` and ``idrac_server_config_profile`` modules will be moved to the `dellemc.openmanage <https://galaxy.ansible.com/dellemc/openmanage>`_ collection.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
+
+  If you use Ansible 2.9 and explicitly use the DellEMC modules mentioned above from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``dellemc.openmanage.`` instead of ``community.general.``,
+  for example replace ``community.general.ome_device_info`` in a task by ``dellemc.openmanage.ome_device_info``.
+
+  If you use ansible-base and installed ``community.general`` manually and rely on the DellEMC modules mentioned above, you have to make sure to install the ``dellemc.openmanage`` collection as well.
+  If you are using FQCNs, for example ``community.general.ome_device_info`` instead of ``ome_device_info``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - The community.general collection no longer depends on the ansible.netcommon collection (https://github.com/ansible-collections/community.general/pull/1561).
 - The community.general collection no longer depends on the ansible.posix collection (https://github.com/ansible-collections/community.general/pull/1157).
 
@@ -225,6 +240,14 @@ ovirt.ovirt
 - repositories - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/96).
 - shutdown_env - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/112).
 - vm_infra - Migrate role (https://github.com/oVirt/ovirt-ansible-collection/pull/93).
+
+servicenow.servicenow
+~~~~~~~~~~~~~~~~~~~~~
+
+- add new tests (find with no result, search many)
+- add related tests
+- add support for ServiceNOW table api display_value exclude_reference_link and suppress_pagination_header
+- use new API for pysnow >=0.6.0
 
 Removed Features
 ----------------
