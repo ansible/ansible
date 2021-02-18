@@ -364,8 +364,13 @@ RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
 content:
   description: The response body content.
-  returned: status not in status_code or return_content is true
+  returned: status not in status_code or return_content is true and reported Content-type is not "application/json"
   type: str
+  sample: ""
+json:
+  description: The response body content.
+  returned: if the reported Content-type is "application/json"
+  type: complex
   sample: "{}"
 cookies:
   description: The cookie values placed in cookie jar.
