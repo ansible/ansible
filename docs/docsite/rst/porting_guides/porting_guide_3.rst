@@ -14,7 +14,11 @@ Ansible 3 Porting Guide
 
 Ansible 3 is based on Ansible-Base 2.10, which is the same major release as Ansible 2.10.  Therefore, there is no section on ansible-base in this porting guide.  If you are upgrading from Ansible 2.9, please first consult the Ansible 2.10 porting guide before continuing with the Ansible 3 porting guide.
 
-Due to a scheduling conflict, the latest version of Ansible 2.10 (2.10.7) has a few collections which are newer than Ansible 3.0.0.  Ansible 3.1.0 will contain updated versions of those collections.
+We suggest you read this page along with the `Ansible Changelog for 3.0 <https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst>`_ to understand what updates you may need to make.
+
+.. note::
+    Due to a scheduling conflict, the latest version of Ansible 2.10 (2.10.7) has a few collections which are newer than Ansible 3.0.0.  Ansible 3.1.0 will contain updated versions of those collections.
+
 
 Porting Guide for v3.0.0
 ========================
