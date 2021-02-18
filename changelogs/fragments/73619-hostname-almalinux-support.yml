@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - add Almalinux support (https://github.com/ansible/ansible/pull/73619)
