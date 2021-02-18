@@ -9,7 +9,7 @@ Ansible Vault encrypts variables and files so you can protect sensitive content 
 .. warning::
     * Encryption with Ansible Vault ONLY protects 'data at rest'.  Once the content is decrypted ('data in use'), play and plugin authors are responsible for avoiding any secret disclosure, see :ref:`no_log <keep_secret_data>` for details on hiding output and :ref:`vault_securing_editor` for security considerations on editors you use with Ansible Vault.
 
-You can use encrypted variables and files in ad-hoc commands and playbooks by supplying the passwords you used to encrypt them. You can modify your ``ansible.cfg`` file to specify the location of a password file or to always prompt for the password.
+You can use encrypted variables and files in ad hoc commands and playbooks by supplying the passwords you used to encrypt them. You can modify your ``ansible.cfg`` file to specify the location of a password file or to always prompt for the password.
 
 .. contents::
    :local:

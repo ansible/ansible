@@ -53,7 +53,7 @@ or for my custom callback:
 
 This only affects :ref:`ansible-playbook` by default.
 
-Setting a callback plugin for ad-hoc commands
+Setting a callback plugin for ad hoc commands
 ---------------------------------------------
 
 The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout,

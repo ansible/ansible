@@ -433,7 +433,7 @@ This example shows the use of single quotes when they are required::
 
 Legacy key=value Style
 ----------------------
-The legacy ``key=value`` syntax is used on the command line for ad-hoc commands,
+The legacy ``key=value`` syntax is used on the command line for ad hoc commands,
 or inside playbooks. The use of this style is discouraged within playbooks
 because backslash characters need to be escaped, making playbooks harder to read.
 The legacy syntax depends on the specific implementation in Ansible, and quoting

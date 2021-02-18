@@ -26,7 +26,7 @@ The units of code Ansible executes. Each module has a particular use, from admin
 Tasks
 =====
 
-The units of action in Ansible. You can execute a single task once with an ad-hoc command.
+The units of action in Ansible. You can execute a single task once with an ad hoc command.
 
 Playbooks
 =========
