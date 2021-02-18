@@ -76,6 +76,20 @@ INVALID_SPECS = [
         },
         "Unsupported parameters: another, badparam",
     ),
+    (
+        'invalid-elements',
+        {'numbers': {'type': 'list', 'elements': 'int'}},
+        {'numbers': [55, 33, 34, {'key': 'value'}]},
+        {'numbers': [55, 33, 34]},
+        "Elements value for option 'numbers' is of type <class 'dict'> and we were unable to convert to int: <class 'dict'> cannot be converted to an int"
+    ),
+    (
+        'required',
+        {'req': {'required': True}},
+        {},
+        {'req': None},
+        "missing required arguments: req"
+    )
 ]
 
 
