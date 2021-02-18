@@ -28,7 +28,7 @@ DOCUMENTATION = """
          required: True
       encrypt:
         description:
-           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash; md5_crypt, bcrypt, sha256_crypt, sha512_crypt)
+           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash; md5_crypt, bcrypt, sha256_crypt, sha512_crypt).
            - If not provided, the password will be returned in plain text.
            - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
@@ -37,10 +37,11 @@ DOCUMENTATION = """
         version_added: "1.4"
         description:
           - Define comma separated list of names that compose a custom character set in the generated passwords.
-          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
-          - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
-          - "Other valid values include 'ascii_lowercase', 'ascii_uppercase', 'digits', 'hexdigits', 'octdigits', 'printable', 'punctuation' and 'whitespace'."
-          - Be aware that Python's 'hexdigits' includes lower and upper case version of a-f, so it is not a good choice as it doubles
+          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9, and punctuation (". , : - _").'
+          - "They can be either parts of Python's string module attributes or represented literally ( :, -)."
+          - "Though string modules can vary by Python version, valid values for both major releases include:
+            'ascii_lowercase', 'ascii_uppercase', 'digits', 'hexdigits', 'octdigits', 'printable', 'punctuation' and 'whitespace'."
+          - Be aware that Python's 'hexdigits' includes lower and upper case versions of a-f, so it is not a good choice as it doubles
             the chances of those values for systems that won't distinguish case, distorting the expected entropy.
           - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
         type: string
