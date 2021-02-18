@@ -265,28 +265,15 @@ VALID_SPECS = [
     ),
     (
         'defaults',
-        {
-            'param_str': {'type': 'str', 'default': 'DEFAULT'},
-        },
+        {'param': {'default': 'DEFAULT'}},
         {},
-        {
-            'param_str': 'DEFAULT',
-        },
+        {'param': 'DEFAULT'},
     ),
     (
         'elements',
-        {
-            'param_list': {
-                'type': 'list',
-                'elements': 'int',
-            }
-        },
-        {
-            'param_list': [55, 33, 34, '22'],
-        },
-        {
-            'param_list': [55, 33, 34, 22],
-        },
+        {'numbers': {'type': 'list', 'elements': 'int'}},
+        {'numbers': [55, 33, 34, '22']},
+        {'numbers': [55, 33, 34, 22]},
     ),
 ]
 
