@@ -159,7 +159,7 @@ class LinuxVirtual(Virtual):
                 if not found_virt:
                     virtual_facts['virtualization_type'] = 'RHEV'
                     found_virt = True
-            else:
+            elif product_name == 'RHEL':
                 guest_tech.add('RHV')
                 if not found_virt:
                     virtual_facts['virtualization_type'] = 'RHV'
