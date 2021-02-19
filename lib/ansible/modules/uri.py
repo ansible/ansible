@@ -71,7 +71,7 @@ options:
   return_content:
     description:
       - Whether or not to return the body of the response as a "content" key in
-        the dictionary result no matter it succeeded or failed.
+        the dictionary result no matter it succeeded or failed and independently of the reported Content-type.
       - Independently of this option, if the reported Content-type is "application/json", then the JSON is
         always loaded into a key called C(json) in the dictionary results.
     type: bool
@@ -364,7 +364,7 @@ RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
 content:
   description: The response body content.
-  returned: status not in status_code or return_content is true and reported Content-type is not "application/json"
+  returned: status not in status_code or return_content is true
   type: str
   sample: ""
 json:
