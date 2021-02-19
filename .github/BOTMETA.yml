@@ -14,27 +14,27 @@ files:
   $module_utils/powershell: *id001
   $modules:
     ignored: ryansb tomaszkiewicz
-  $modules/files/lineinfile.py: $team_ansible samdoran
-  $modules/files/stat.py:
+  $modules/lineinfile.py: $team_ansible samdoran
+  $modules/stat.py:
     ignored: bpennypacker
-  $modules/files/unarchive.py:
+  $modules/unarchive.py:
     ignored: dagwieers
     labels: m:unarchive
     maintainers: pileofrogs
-  $modules/inventory/add_host.py:
+  $modules/add_host.py:
     ignored: skvidal
     maintainers: $team_ansible
-  $modules/net_tools/basics/get_url.py: ptux
-  $modules/net_tools/basics/uri.py:
+  $modules/get_url.py: ptux
+  $modules/uri.py:
     ignored: romeotheriault
     maintainers: $team_ansible
-  $modules/packaging/language/pip.py: Lujeni webknjaz
-  $modules/packaging/os/yum.py:
+  $modules/pip.py: Lujeni webknjaz
+  $modules//yum.py:
     ignored: skvidal
     maintainers: $team_ansible kustodian
-  $modules/system/user.py: $team_ansible samdoran
-  $modules/utilities/logic/pause.py: samdoran
-  $modules/utilities/logic/wait_for.py: gregswift
+  $modules/user.py: $team_ansible samdoran
+  $modules/pause.py: samdoran
+  $modules/wait_for.py: gregswift
   $plugins/cliconf/:
     labels: networking
   $plugins/connection/psrp.py: *id001
