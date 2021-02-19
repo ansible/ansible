@@ -24,8 +24,7 @@ options:
   groups:
     description: >
       Add hosts to group based on Jinja2 conditionals.
-      A list of filters can be found here
-      U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html).
+      A list of filters can be found here :ref:`playbooks_filters`.
     type: dict
     default: {}
   keyed_groups:
