@@ -52,8 +52,8 @@ except ImportError:
     HAS_CURSES = False
 
 if HAS_CURSES:
-    MOVE_TO_BOL = curses.tigetstr('cr')
-    CLEAR_TO_EOL = curses.tigetstr('el')
+    MOVE_TO_BOL = curses.tigetstr('cr') or b'\r'
+    CLEAR_TO_EOL = curses.tigetstr('el') or b'\x1b[K'
 else:
     MOVE_TO_BOL = b'\r'
     CLEAR_TO_EOL = b'\x1b[K'
