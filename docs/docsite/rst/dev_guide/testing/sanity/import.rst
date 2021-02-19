@@ -47,7 +47,7 @@ must be imported in a try/except ImportError block as follows:
            ANOTHER_LIBRARY_IMPORT_ERROR = None
 
 
-       # Later in plugin code:
+       # Later in plugin code, for example in __init__ of the plugin:
 
        if ANOTHER_LIBRARY_IMPORT_ERROR:
            raise_from(
