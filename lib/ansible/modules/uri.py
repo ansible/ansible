@@ -371,7 +371,7 @@ json:
   description: The response body content.
   returned: if the reported Content-type is "application/json"
   type: raw
-  sample: "{}"
+  sample: ""
 cookies:
   description: The cookie values placed in cookie jar.
   returned: on success
