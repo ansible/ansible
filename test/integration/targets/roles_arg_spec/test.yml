@@ -71,7 +71,7 @@
 
   tasks:
       - block:
-        - name: "EXPECTED FAILURE: Invalid role usage"
+        - name: "Invalid role usage"
           include_role:
             name: b
           vars:
@@ -114,7 +114,7 @@
 
   tasks:
       - block:
-        - name: "EXPECTED FAILURE: Invalid role usage"
+        - name: "Invalid role usage"
           import_role:
             name: b
           vars:
@@ -172,7 +172,7 @@
 
   tasks:
       - block:
-        - name: "EXPECTED FAILURE: Test import_role of role C (missing a_str)"
+        - name: "Test import_role of role C (missing a_str)"
           import_role:
             name: c
           vars:
@@ -197,7 +197,7 @@
                 - ansible_failed_result.argument_spec_data == main_expected_returned_spec
 
       - block:
-        - name: "EXPECTED FAILURE: Test include_role of role C (missing a_int from `alternate` entry point)"
+        - name: "Test include_role of role C (missing a_int from `alternate` entry point)"
           include_role:
             name: c
           vars:
@@ -227,7 +227,7 @@
   gather_facts: false
   tasks:
       - block:
-        - name: "EXPECTED FAILURE: Test import_role of role role_with_no_tasks (missing a_str)"
+        - name: "Test import_role of role role_with_no_tasks (missing a_str)"
           import_role:
             name: role_with_no_tasks
 
