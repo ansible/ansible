@@ -1,0 +1,2 @@
+minor_changes:
+- "module_defaults - add module ec2_vpc_endpoint_service_info from community.aws to aws module_defaults group (https://github.com/ansible/ansible/pull/73669)."
