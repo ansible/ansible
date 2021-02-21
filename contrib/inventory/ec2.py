@@ -705,6 +705,8 @@ class Ec2Inventory(object):
                             instance.tags[tag['Key']] = tag['Value']
                         if self.tags_match_filters(instance.tags):
                             self.add_rds_instance(instance, region)
+                    if marker:
+                        db_instances = client.describe_db_instances(Marker=marker)
                     if not marker:
                         break
         except boto.exception.BotoServerError as e:
