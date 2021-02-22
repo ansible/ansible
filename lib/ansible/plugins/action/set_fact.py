@@ -49,7 +49,8 @@ class ActionModule(ActionBase):
                     raise AnsibleActionFail("The variable name '%s' is not valid. Variables must start with a letter or underscore character, "
                                             "and contain only letters, numbers and underscores." % k)
 
-                #NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case, right now it converts matching explicit yaml strings also.
+                # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
+                # right now it converts matching explicit YAML strings also when 'non native'.
                 if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v, strict=False)
                 facts[k] = v

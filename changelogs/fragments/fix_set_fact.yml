@@ -1,2 +1,2 @@
 bugfixes:
-  - Corrected and expanded documentation as well as now raise errors that were previouslly ignored.
+  - '[set_fact] Corrected and expanded documentation as well as now raise errors that were previously ignored.'
