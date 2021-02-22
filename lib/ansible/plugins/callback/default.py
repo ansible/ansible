@@ -175,7 +175,8 @@ class CallbackModule(CallbackBase):
         self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.display_failed_stderr)
 
     def v2_playbook_on_no_hosts_matched(self):
-        self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
+        if self.display_skipped_hosts:
+            self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
 
     def v2_playbook_on_no_hosts_remaining(self):
         self._display.banner("NO MORE HOSTS LEFT")
