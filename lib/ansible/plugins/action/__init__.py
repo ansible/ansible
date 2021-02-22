@@ -89,7 +89,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * Module parameters.  These are stored in self._task.args
         """
 
-        result = {}
+        result = {'changed': False, 'failed': False}
 
         if tmp is not None:
             result['warning'] = ['ActionModule.run() no longer honors the tmp parameter. Action'
