@@ -45,7 +45,7 @@ notes:
       unless C(DEFAULT_JINJA2_NATIVE) is enabled.  This is done so the C(var=value) booleans,
       otherwise it would only be able to create strings, but it also prevents using those values to create YAML strings.
       Using the setting will restrict k=v to strings, but will allow you to specify string or boolean in YAML.
-    - To create lists/arrays or dictionary/hashes use YAML notation C(var: [val1, val2])."
+    - "To create lists/arrays or dictionary/hashes use YAML notation C(var: [val1, val2])."
     - Since 'cacheable' is now a module param, 'cacheable' is no longer a valid fact name.
     - This action does not use a connection and always executes on the controller.
 seealso:
@@ -72,7 +72,7 @@ EXAMPLES = r'''
     other_fact: "{{ local_var * 2 }}"
     cacheable: yes
 
-- name: Creating list and dictionary variables:
+- name: Creating list and dictionary variables
   set_fact:
     one_dict:
         something: here
@@ -82,7 +82,7 @@ EXAMPLES = r'''
         - b
         - c
 
-- name: Creating list and dictionary variables using 'shorthand' YAML:
+- name: Creating list and dictionary variables using 'shorthand' YAML
   set_fact:
     two_dict: {'something': here2, 'other': somewhere}
     two_list: [1,2,3]
