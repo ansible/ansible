@@ -357,16 +357,16 @@
       - libslang2-dev
 
 # https://github.com/ansible/ansible/issues/38995
-#- name: build-dep for a package
-#  apt:
-#    name: tree
-#    state: build-dep
-#  register: apt_result
-#
-#- name: Check the result
-#  assert:
-#    that:
-#      - apt_result is changed
+- name: build-dep for a package
+  apt:
+    name: tree
+    state: build-dep
+  register: apt_result
+
+- name: Check the result
+  assert:
+    that:
+      - apt_result is changed
 
 - name: build-dep for a package (idempotency)
   apt:
