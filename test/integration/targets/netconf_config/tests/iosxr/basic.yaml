@@ -29,6 +29,6 @@
 
 - assert:
     that:
-      - "'failed' not in result"
+      - "result.failed == false"
 
 - debug: msg="END netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"
