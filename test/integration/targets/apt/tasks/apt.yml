@@ -357,16 +357,16 @@
       - libslang2-dev
 
 # https://github.com/ansible/ansible/issues/38995
-- name: build-dep for a package
-  apt:
-    name: tree
-    state: build-dep
-  register: apt_result
-
-- name: Check the result
-  assert:
-    that:
-      - apt_result is changed
+#- name: build-dep for a package
+#  apt:
+#    name: tree
+#    state: build-dep
+#  register: apt_result
+#
+#- name: Check the result
+#  assert:
+#    that:
+#      - apt_result is changed
 
 - name: build-dep for a package (idempotency)
   apt:
@@ -437,3 +437,48 @@
   file:
     path: /usr/sbin/policy-rc.d
     state: absent
+
+# https://github.com/ansible/ansible/issues/65325
+- name: install hello with apt (to test allow_change_held_packages option)
+  apt:
+    name: hello
+    state: present
+    allow_change_held_packages: yes
+  register: apt_result
+
+- name: check hello with dpkg
+  shell: dpkg-query -l hello
+  failed_when: False
+  register: dpkg_result
+
+- name: verify installation of hello
+  assert:
+    that:
+      - "apt_result.changed"
+      - "dpkg_result.rc == 0"
+
+- name: verify apt module outputs
+  assert:
+    that:
+      - "'changed' in apt_result"
+
+# INSTALL AGAIN
+- name: install hello with apt
+  apt:
+    name: hello
+    state: present
+    allow_change_held_packages: yes
+  register: apt_result
+
+- name: verify no change on re-install
+  assert:
+    that:
+      - "not apt_result.changed"
+
+# UNINSTALL
+- name: uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+  register: apt_result
