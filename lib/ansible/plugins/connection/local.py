@@ -12,6 +12,8 @@ DOCUMENTATION = '''
         - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.
     author: ansible (@core)
     version_added: historical
+    extends_documentation_fragment:
+        - connection_pipelining
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
@@ -82,7 +84,7 @@ class Connection(ConnectionBase):
 
         master = None
         stdin = subprocess.PIPE
-        if sudoable and self.become and self.become.expect_prompt():
+        if sudoable and self.become and self.become.expect_prompt() and not self.get_option('pipelining'):
             # Create a pty if sudoable for privlege escalation that needs it.
             # Falls back to using a standard pipe if this fails, which may
             # cause the command to fail in certain situations where we are escalating
