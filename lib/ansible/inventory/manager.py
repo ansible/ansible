@@ -244,6 +244,7 @@ class InventoryManager(object):
         ''' Generate or update inventory for the source provided '''
 
         parsed = False
+        failures = []
         display.debug(u'Examining possible inventory source: %s' % source)
 
         # use binary for path functions
@@ -272,7 +273,6 @@ class InventoryManager(object):
             self._inventory.current_source = source
 
             # try source with each plugin
-            failures = []
             for plugin in self._fetch_inventory_plugins():
 
                 plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
@@ -635,6 +635,8 @@ class InventoryManager(object):
                     b_limit_file = to_bytes(x[1:])
                     if not os.path.exists(b_limit_file):
                         raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                    if not os.path.isfile(b_limit_file):
+                        raise AnsibleError(u'Limit starting with "@" must be a file, not a directory: %s' % b_limit_file)
                     with open(b_limit_file) as fd:
                         results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
                 else:
