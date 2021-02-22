@@ -106,6 +106,7 @@ options:
       - Allows changing the version of a package which is on the apt hold list
     type: bool
     default: 'no'
+    version_added: '2.12'
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
