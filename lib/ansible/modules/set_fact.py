@@ -39,6 +39,8 @@ options:
     default: no
     version_added: "2.4"
 notes:
+    - Because of the nature of tasks, set_fact will produce 'static' values for a variable.
+      Unlike normal 'lazy' variables, the value gets evaluated and templated on assignment.
     - Some boolean values (yes, no, true, false) will always be converted to boolean type,
       unless C(DEFAULT_JINJA2_NATIVE) is enabled.  This is done so the C(var=value) booleans,
       otherwise it would only be able to create strings, but it also prevents using those values to create YAML strings.
