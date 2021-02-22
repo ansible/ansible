@@ -113,6 +113,8 @@ ANSIBLE_PIPELINING:
   env:
     - name: ANSIBLE_PIPELINING
   ini:
+  - section: defaults
+    key: pipelining
   - section: connection
     key: pipelining
   type: boolean
