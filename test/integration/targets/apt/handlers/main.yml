@@ -1,7 +1,4 @@
 ---
-- name: remove package hello from hold list
-  shell: apt-mark unhold hello
-
 - name: remove package hello
   apt:
     name: hello
