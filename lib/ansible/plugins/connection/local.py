@@ -105,9 +105,7 @@ class Connection(ConnectionBase):
         )
 
         # if we created a master, we can close the other half of the pty now, otherwise master is stdin
-        if master is None:
-            master = stdin
-        else:
+        if master is not None:
             os.close(stdin)
 
         display.debug("done running command with Popen()")
@@ -142,7 +140,10 @@ class Connection(ConnectionBase):
 
             if not self.become.check_success(become_output):
                 become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                os.write(master, to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                if master is None:
+                    p.stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                else:
+                    os.write(master, to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
 
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
