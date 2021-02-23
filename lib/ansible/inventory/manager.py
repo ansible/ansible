@@ -311,7 +311,7 @@ class InventoryManager(object):
             self._inventory.processed_sources.append(self._inventory.current_source)
         else:
             # only warn/error if NOT using the default or using it and the file is present
-            # TODO: handle 'non file' inventorya and detect vs hardcode default
+            # TODO: handle 'non file' inventory and detect vs hardcode default
             if source != '/etc/ansible/hosts' or os.path.exists(source):
 
                 if failures:
@@ -321,7 +321,7 @@ class InventoryManager(object):
                         if 'tb' in fail:
                             display.vvv(to_text(fail['tb']))
 
-                # final erorr/warning on inventory source failure
+                # final error/warning on inventory source failure
                 if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                     raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
                 else:
