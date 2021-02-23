@@ -685,7 +685,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     if src is None:
         if follow:
             # use the current target of the link as the source
-            src = to_native(os.path.realpath(b_path), errors='strict')
+            src = to_native(os.readlink(b_path), errors='strict')
             b_src = to_bytes(src, errors='surrogate_or_strict')
 
     if not os.path.islink(b_path) and os.path.isdir(b_path):
