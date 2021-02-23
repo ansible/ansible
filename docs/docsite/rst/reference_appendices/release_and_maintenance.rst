@@ -3,7 +3,9 @@
 Release and maintenance
 =======================
 
-This section describes the Ansible and ``ansible-base`` releases. Ansible is the package that most users install. ``ansible-base`` is primarily for developers.
+This section describes the Ansible and ``ansible-core`` releases.
+Ansible is the package that most users install. ``ansible-core`` is
+primarily for developers.
 
 .. contents::
    :local:
@@ -62,45 +64,48 @@ devel                                   In development (2.11 unreleased, trunk)
 .. _2.5 Release Notes: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
 
 
-ansible-base release cycle
--------------------------------
+ansible-core release cycle
+--------------------------
 
-``ansible-base`` is developed and released on a flexible release cycle.
+``ansible-core`` is developed and released on a flexible release cycle.
 This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details.
 
-``ansible-base`` has a graduated maintenance structure that extends to three major releases.
+``ansible-core`` has a graduated maintenance structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
 see the chart in :ref:`release_schedule` for the degrees to which current releases are maintained.
 
-If you are using a release of ``ansible-base`` that is no longer maintained, we strongly
+If you are using a release of ``ansible-core`` that is no longer maintained, we strongly
 encourage you to upgrade as soon as possible in order to benefit from the
 latest features and security fixes.
 
-Older, unmaintained versions of ``ansible-base`` can contain unfixed security
+Older, unmaintained versions of ``ansible-core`` can contain unfixed security
 vulnerabilities (*CVE*).
 
 You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible
 playbooks to run on newer versions.
 
-You can install ``ansible-base`` with ``pip``. See :ref:`intro_installation_guide` for details.
+You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guide` for details.
 
-.. note:: ``ansible-base`` maintenance continues for 3 releases.  Thus the latest release receives
+.. note:: ``ansible-core`` maintenance continues for 3 releases.  Thus the latest release receives
     security and general bug fixes when it is first released, security and critical bug fixes when
-    the next ``ansible-base`` version is released, and **only** security fixes once the follow on to that version is released.
+    the next ``ansible-core`` version is released, and **only** security fixes once the follow on
+    to that version is released.
 
 
 .. _release_schedule:
 
 
-This table links to the release notes for each major ``ansible-base`` release. These release notes (changelogs) contain the dates and significant changes in each minor release.
+This table links to the release notes for each major ``ansible-core``
+release. These release notes (changelogs) contain the dates and
+significant changes in each minor release.
 
-==================================      =================================================
-    ``ansible-base`` Release                         Status
-==================================      =================================================
-devel                                   In development (2.11 unreleased, trunk)
-`2.10 ansible-base Release Notes`_      Maintained (security **and** general bug fixes)
-==================================      =================================================
+============================================= ======================================================
+ ``ansible-core`` / ``ansible-base`` Release                          Status
+============================================= ======================================================
+devel                                         In development (ansible-core 2.11 unreleased, trunk)
+`2.10 ansible-base Release Notes`_            Maintained (security **and** general bug fixes)
+============================================= ======================================================
 
 
 .. _2.10 ansible-base Release Notes:
@@ -113,13 +118,15 @@ devel                                   In development (2.11 unreleased, trunk)
 Development and stable version maintenance workflow
 -----------------------------------------------------
 
-The Ansible community develops and maintains Ansible and ``ansible-base`` on GitHub_.
+The Ansible community develops and maintains Ansible and ``ansible-core`` on GitHub_.
 
 Collection updates (new modules, plugins, features and bugfixes) will always be integrated in what will become the next version of Ansible. This work is tracked within the individual collection repositories.
 
-Ansible and ``ansible-base`` provide bugfixes and security improvements for the most recent major release. The previous
-major release of ``ansible-base`` will only receive fixes for security issues and critical bugs.``ansible-base`` only applies
-security fixes to releases which are two releases old. This work is tracked on the
+Ansible and ``ansible-core`` provide bugfixes and security improvements
+for the most recent major release. The previous major release of
+``ansible-core`` will only receive fixes for security issues and
+critical bugs. ``ansible-core`` only applies security fixes to releases
+which are two releases old. This work is tracked on the
 ``stable-<version>`` git branches.
 
 The fixes that land in maintained stable branches will eventually be released
@@ -143,15 +150,15 @@ We've got :ref:`examples and instructions on creating changelog fragments <chang
 Release candidates
 ^^^^^^^^^^^^^^^^^^^
 
-Before a new release or version of Ansible or ``ansible-base`` can be done, it will typically go
-through a release candidate process.
+Before a new release or version of Ansible or ``ansible-core`` can be
+done, it will typically go through a release candidate process.
 
 This provides the Ansible community the opportunity to test these releases and report
 bugs or issues they might come across.
 
-Ansible and ``ansible-base`` tag the first release candidate (``RC1``) which is usually scheduled
-to last five business days. The final release is done if no major bugs or
-issues are identified during this period.
+Ansible and ``ansible-core`` tag the first release candidate (``RC1``)
+which is usually scheduled to last five business days. The final release
+is done if no major bugs or issues are identified during this period.
 
 If there are major problems with the first candidate, a second candidate will
 be tagged (``RC2``) once the necessary fixes have landed.
@@ -160,8 +167,8 @@ If no problems have been reported after two business days, the final release is
 done.
 
 More release candidates can be tagged as required, so long as there are
-bugs that the Ansible  or ``ansible-base`` core maintainers consider should be fixed before the
-final release.
+bugs that the Ansible  or ``ansible-core`` core maintainers consider
+should be fixed before the final release.
 
 .. _release_freezing:
 
@@ -188,12 +195,12 @@ Ansible deprecation cycle
 
 Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 2.10.2, and do not remove the feature until 2.12.0.  Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Thus the removal should not happen before the next major Ansible release. This is up to each collection maintainer and cannot be guaranteed.
 
-ansible-base deprecation cycle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ansible-core deprecation cycle
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The cycle is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release),
 so the feature is normally removed in the 4th release after we announce the deprecation.
-For example, something deprecated in 2.7 will be removed in 2.11, assuming we don't jump to 3.x before that point.
+For example, something deprecated in 2.9 will be removed in 2.13, assuming we don't jump to 3.x before that point.
 The tracking is tied to the number of releases, not the release numbering.
 
 For modules/plugins, we keep the documentation after the removal for users of older versions.
