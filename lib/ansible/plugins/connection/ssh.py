@@ -1268,6 +1268,10 @@ class Connection(ConnectionBase):
         run_reset = False
         if controlpersist and len(cp_arg) > 0:
             cp_path = cp_arg[0].split(b"=", 1)[-1]
+            cp_replace = {
+                b'%h': self.host, b'%p': str(self.port), b'%r': self.user}
+            for key, val in cp_replace.items():
+                cp_path = cp_path.replace(key, to_bytes(val))
             if os.path.exists(cp_path):
                 run_reset = True
         elif controlpersist:
