@@ -64,10 +64,18 @@ class AdHocCLI(CLI):
 
         return options
 
-    def _play_ds(self, pattern, async_val, poll):
-        check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
-
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
+    def _play_ds(self, pattern, async_val, poll, loader):
+        if context.CLIARGS['module_args'].startswith(u"@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            args = loader.load_from_file(context.CLIARGS['module_args'][1:])
+        elif context.CLIARGS['module_args'][0] in [u'/', u'.']:
+            raise AnsibleOptionsError("Please prepend extra_vars filename '%s' with '@'" % context.CLIARGS['module_args'])
+        elif context.CLIARGS['module_args'][0] in [u'[', u'{']:
+            args = loader.load(context.CLIARGS['module_args'])
+        else:
+            check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
+            args = parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)
+        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': args},
                   'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
@@ -124,7 +132,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 
-        play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
+        play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'], loader)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # used in start callback
