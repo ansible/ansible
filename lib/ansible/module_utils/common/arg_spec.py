@@ -158,8 +158,6 @@ class ArgumentSpecValidator():
         validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._error_messages)
         validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
 
-        self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
-
         checks = (
             {'func': check_required_together, 'attr': getattr(self, 'required_together')},
             {'func': check_required_one_of, 'attr': getattr(self, 'required_one_of')},
@@ -173,6 +171,8 @@ class ArgumentSpecValidator():
                     check['func'](check['attr'], self._validated_parameters)
                 except TypeError as te:
                     self._add_error(to_native(te))
+
+        self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
 
         validate_sub_spec(self.argument_spec, self._validated_parameters,
                           errors=self._error_messages,
