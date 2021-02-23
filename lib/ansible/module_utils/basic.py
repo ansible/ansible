@@ -521,7 +521,7 @@ class AnsibleModule(object):
                                                self.required_one_of,
                                                self.required_if,
                                                self.required_by,
-                                               _name = self._name,
+                                               _name=self._name,
                                                )
         self.validator.validate()
 
