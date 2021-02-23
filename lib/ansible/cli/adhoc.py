@@ -67,7 +67,7 @@ class AdHocCLI(CLI):
         return options
 
     def _play_ds(self, pattern, async_val, poll):
-        if context.CLIARGS['module_args'].startswith([u'[', u'{']):
+        if context.CLIARGS['module_args'].startswith((u'[', u'{')):
             args = json.loads(context.CLIARGS['module_args'])
         else:
             check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
