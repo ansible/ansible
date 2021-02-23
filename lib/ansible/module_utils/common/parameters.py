@@ -830,16 +830,16 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                 validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
                 validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
 
-                checks = [
-                    (check_required_together, 'required_together'),
-                    (check_required_one_of, 'required_one_of'),
-                    (check_required_if, 'required_if'),
-                    (check_required_by, 'required_by'),
-                ]
+                checks = (
+                    {'func': check_required_together, 'attr': 'required_together'},
+                    {'func': check_required_one_of, 'attr': 'required_one_of'},
+                    {'func': check_required_if, 'attr': 'required_if'},
+                    {'func': check_required_by, 'attr': 'required_by'},
+                )
 
                 for check in checks:
                     try:
-                        check[0](value.get(check[1]), sub_parameters)
+                        check['func'](value.get(check['attr']), sub_parameters)
                     except TypeError as e:
                         errors.append(to_native(e))
 
