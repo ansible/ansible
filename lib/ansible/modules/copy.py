@@ -138,7 +138,9 @@ author:
 attributes:
   - name: diff_mode
     status: true
+    version_added: '0.9'
   - name: check_mode
+    version_added: '0.9'
     status: true
 '''
 
