@@ -63,6 +63,9 @@ notes:
     C(/bin/bash -c "/path/to/something | grep else").
   - The question, or key, under I(responses) is a python regex match. Case
     insensitive searches are indicated with a prefix of C(?i).
+  - The C(pexpect) library used by this module operates with a search window
+    of 2000 bytes, and does not use a multiline regex match. To perform a
+    start of line bound match, use a pattern like ``(?m)^pattern``
   - By default, if a question is encountered multiple times, its string
     response will be repeated. If you need different responses for successive
     question matches, instead of a string response, use a list of strings as
@@ -108,11 +111,11 @@ except ImportError:
     HAS_PEXPECT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def response_closure(module, question, responses):
-    resp_gen = (u'%s\n' % to_text(r).rstrip(u'\n') for r in responses)
+    resp_gen = (b'%s\n' % to_bytes(r).rstrip(b'\n') for r in responses)
 
     def wrapped(info):
         try:
@@ -156,9 +159,9 @@ def main():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
-            response = u'%s\n' % to_text(value).rstrip(u'\n')
+            response = b'%s\n' % to_bytes(value).rstrip(b'\n')
 
-        events[to_text(key)] = response
+        events[to_bytes(key)] = response
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -196,13 +199,18 @@ def main():
     try:
         try:
             # Prefer pexpect.run from pexpect>=4
-            out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
-                                  events=events, cwd=chdir, echo=echo,
-                                  encoding='utf-8')
+            b_out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
+                                    events=events, cwd=chdir, echo=echo,
+                                    encoding=None)
         except TypeError:
-            # Use pexpect.runu in pexpect>=3.3,<4
-            out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
-                                   events=events, cwd=chdir, echo=echo)
+            # Use pexpect._run in pexpect>=3.3,<4
+            # pexpect.run doesn't support `echo`
+            # pexpect.runu doesn't support encoding=None
+            b_out, rc = pexpect._run(args, timeout=timeout, withexitstatus=True,
+                                     events=events, extra_args=None, logfile=None,
+                                     cwd=chdir, env=None, _spawn=pexpect.spawn,
+                                     echo=echo)
+
     except (TypeError, AttributeError) as e:
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify
@@ -217,12 +225,12 @@ def main():
     endd = datetime.datetime.now()
     delta = endd - startd
 
-    if out is None:
-        out = ''
+    if b_out is None:
+        b_out = b''
 
     result = dict(
         cmd=args,
-        stdout=out.rstrip('\r\n'),
+        stdout=to_native(b_out).rstrip('\r\n'),
         rc=rc,
         start=str(startd),
         end=str(endd),
