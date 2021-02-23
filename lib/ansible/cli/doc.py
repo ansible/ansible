@@ -54,6 +54,7 @@ def jdump(text):
     try:
         display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
     except TypeError as e:
+        display.vvv(traceback.format_exc())
         raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
 
 
@@ -314,6 +315,7 @@ class DocCLI(CLI, RoleMixin):
 
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
+        self._attrib_desc = {}
 
     @classmethod
     def tty_ify(cls, text):
@@ -455,9 +457,23 @@ class DocCLI(CLI, RoleMixin):
         # display results
         DocCLI.pager("\n".join(text))
 
+    def _load_attribute_descs(self):
+        self._attrib_desc = from_yaml(pkgutil.get_data('ansible', 'attribute_desc.yml'))
+
     @staticmethod
     def _list_keywords():
         return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
+
+    @staticmethod
+    def append_attribute_desc(attrs):
+        descs = from_yaml(pkgutil.get_data('ansible', 'attribute_desc.yml'))
+        for item in attrs:
+            if 'name' in item:
+                try:
+                    item[item['name']] = descs[item['name']]
+                except KeyError:
+                    item[item['name']] = 'UNDOCUMENTED'
+                del item['name']
 
     @staticmethod
     def _get_keywords_docs(keys):
@@ -780,7 +796,8 @@ class DocCLI(CLI, RoleMixin):
             try:
                 text = DocCLI.get_man_text(doc, collection_name, plugin_type)
             except Exception as e:
-                raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)))
+                display.vvv(traceback.format_exc())
+                raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)), orig_exc=e)
 
         return text
 
@@ -874,6 +891,7 @@ class DocCLI(CLI, RoleMixin):
                 pfiles[plugin] = filename
 
             except Exception as e:
+                display.vvv(traceback.format_exc())
                 raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         return pfiles
@@ -921,9 +939,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def _dump_yaml(struct, indent):
-        return DocCLI.tty_ify('\n'.join([indent + line for line in
-                                         yaml.dump(struct, default_flow_style=False,
-                                                   Dumper=AnsibleDumper).split('\n')]))
+        return DocCLI.tty_ify('\n'.join([indent + line for line in yaml.dump(struct, default_flow_style=False, Dumper=AnsibleDumper).split('\n')]))
 
     @staticmethod
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
@@ -1051,6 +1067,12 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
                 text.append('')
 
+            if doc.get('attributes'):
+                DocCLI.append_attribute_desc(doc['attributes'])
+                text.append("ATTRIBUTES:\n")
+                text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+                text.append('')
+
             # generic elements we will handle identically
             for k in ('author',):
                 if k not in doc:
@@ -1113,6 +1135,12 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('options', False):
             text.append("OPTIONS (= is mandatory):\n")
             DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
+            text.append('')
+
+        if doc.get('attributes', False):
+            DocCLI.append_attribute_desc(doc['attributes'])
+            text.append("ATTRIBUTES:\n")
+            text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
             text.append('')
 
         if doc.get('notes', False):

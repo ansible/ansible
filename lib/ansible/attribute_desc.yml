@@ -1,0 +1,7 @@
+async: Supports being used with the ``async`` keyword
+bypass_host_loop: Forces a 'global' task that does not execute per host, cannot be used in non lockstep strategies
+check_mode: Can run in check_mode and return changed status prediction
+connection: Uses the target's configured connection information to execute code on it
+delegation: Can be used in conjunction with delegate_to and related keywords
+diff_mode: Will return details on what has changed when in diff mode
+facts: Action returns an ``ansible_facts`` dictionary that will update existing host facts

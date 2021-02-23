@@ -179,17 +179,28 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
                     doc['seealso'] = []
                 doc['seealso'].extend(seealso)
 
-        if 'options' not in fragment:
-            raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
+        if 'options' not in fragment and 'attributes' not in fragment:
+            raise Exception("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
         # ensure options themselves are directly merged
-        if 'options' in doc:
-            try:
-                merge_fragment(doc['options'], fragment.pop('options'))
-            except Exception as e:
-                raise AnsibleError("%s options (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
-        else:
-            doc['options'] = fragment.pop('options')
+        if 'options' in fragment:
+            if 'options' in doc:
+                try:
+                    merge_fragment(doc['options'], fragment.pop('options'))
+                except Exception as e:
+                    raise AnsibleError("%s options (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+            else:
+                doc['options'] = fragment.pop('options')
+
+        # same with fragments as with options
+        if 'attributes' in fragment:
+            if 'attributes' in doc:
+                try:
+                    doc['attributes'] = combine_vars(fragment.pop('attributes'), doc['attributes'])
+                except Exception as e:
+                    raise AnsibleError("%s attributes (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+            else:
+                doc['attributes'] = fragment.pop('attributes')
 
         # merge rest of the sections
         try:
