@@ -839,7 +839,7 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
                 for check in checks:
                     try:
-                        check[0](value.get(check[1]), parameters)
+                        check[0](value.get(check[1]), sub_parameters)
                     except TypeError as e:
                         errors.append(to_native(e))
 
