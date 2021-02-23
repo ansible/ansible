@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
+
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -64,14 +66,9 @@ class AdHocCLI(CLI):
 
         return options
 
-    def _play_ds(self, pattern, async_val, poll, loader):
-        if context.CLIARGS['module_args'].startswith(u"@"):
-            # Argument is a YAML file (JSON is a subset of YAML)
-            args = loader.load_from_file(context.CLIARGS['module_args'][1:])
-        elif context.CLIARGS['module_args'][0] in [u'/', u'.']:
-            raise AnsibleOptionsError("Please prepend extra_vars filename '%s' with '@'" % context.CLIARGS['module_args'])
-        elif context.CLIARGS['module_args'][0] in [u'[', u'{']:
-            args = loader.load(context.CLIARGS['module_args'])
+    def _play_ds(self, pattern, async_val, poll):
+        if context.CLIARGS['module_args'].startswith([u'[', u'{']):
+            args = json.loads(context.CLIARGS['module_args'])
         else:
             check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
             args = parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)
@@ -132,7 +129,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 
-        play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'], loader)
+        play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # used in start callback
