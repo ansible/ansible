@@ -388,7 +388,6 @@
 - name: assert that the link target was unmodified
   assert:
     that:
-      - 'file10_result is changed'
       - 'file10_target_stat["stat"]["mode"] == "0644"'
 
 

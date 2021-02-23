@@ -1,0 +1,2 @@
+bugfixes:
+  - file - prevent link src from being rewritten when src is not specified explicitly (https://github.com/ansible/ansible/issues/65448)
