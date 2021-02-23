@@ -104,8 +104,10 @@ class Connection(ConnectionBase):
             stderr=subprocess.PIPE,
         )
 
-        # if we created a master, we can close the other half of the pty now
-        if master is not None:
+        # if we created a master, we can close the other half of the pty now, otherwise master is stdin
+        if master is None:
+            master = stdin
+        else:
             os.close(stdin)
 
         display.debug("done running command with Popen()")
