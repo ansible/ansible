@@ -716,7 +716,7 @@ def validate_argument_values(argument_spec, parameters, options_context=None, er
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
                         if options_context:
-                            msg += " found in %s" % " -> ".join(options_context)
+                            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                         errors.append(msg)
                 elif parameters[param] not in choices:
                     # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
@@ -740,12 +740,12 @@ def validate_argument_values(argument_spec, parameters, options_context=None, er
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
                         if options_context:
-                            msg += " found in %s" % " -> ".join(options_context)
+                            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                         errors.append(msg)
         else:
             msg = "internal error: choices for argument %s are not iterable: %s" % (param, choices)
             if options_context:
-                msg += " found in %s" % " -> ".join(options_context)
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             errors.append(msg)
 
 
@@ -816,14 +816,14 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
                 unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs))
 
                 try:
-                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters)
+                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
                 except TypeError as e:
                     errors.append(to_native(e))
 
                 no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
 
                 try:
-                    check_required_arguments(sub_spec, sub_parameters)
+                    check_required_arguments(sub_spec, sub_parameters, options_context)
                 except TypeError as e:
                     errors.append(to_native(e))
 
@@ -839,7 +839,7 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
                 for check in checks:
                     try:
-                        check['func'](value.get(check['attr']), sub_parameters)
+                        check['func'](value.get(check['attr']), sub_parameters, options_context)
                     except TypeError as e:
                         errors.append(to_native(e))
 
