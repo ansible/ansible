@@ -912,6 +912,8 @@ class GalaxyCLI(CLI):
             else:
                 in_templates_dir = rel_root_dir == 'templates'
 
+            # Filter out ignored directory names
+            # Use [:] to mutate the list os.walk uses
             dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
