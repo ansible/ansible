@@ -770,7 +770,7 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
             sub_spec = value.get('options')
             if value.get('apply_defaults', False):
                 if sub_spec is not None:
-                    if parameters.get(value) is None:
+                    if parameters.get(param) is None:
                         parameters[param] = {}
                     else:
                         continue
