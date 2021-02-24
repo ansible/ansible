@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-galaxy - fixed galaxy role init command (https://github.com/ansible/ansible/issues/71977)."
