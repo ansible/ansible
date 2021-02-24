@@ -162,7 +162,7 @@ class PlayContext(Base):
             if option:
                 flag = options[option].get('name')
                 if flag:
-                    setattr(self, flag, self.connection.get_option(flag))
+                    setattr(self, flag, self.plugin.get_option(flag))
 
     def set_attributes_from_play(self, play):
         self.force_handlers = play.force_handlers
