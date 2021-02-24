@@ -329,7 +329,10 @@ class ConfigManager(object):
         ftype = get_config_type(cfile)
         if cfile is not None:
             if ftype == 'ini':
-                self._parsers[cfile] = configparser.ConfigParser()
+                kwargs = {}
+                if PY3:
+                    kwargs['inline_comment_prefixes'] = (';',)
+                self._parsers[cfile] = configparser.ConfigParser(**kwargs)
                 with open(to_bytes(cfile), 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
