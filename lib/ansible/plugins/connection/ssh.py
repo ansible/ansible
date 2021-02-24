@@ -503,7 +503,7 @@ def _ssh_retry(func):
     return wrapped
 
 
-class Connection(ConnectionBase)
+class Connection(ConnectionBase):
     ''' ssh based connections '''
 
     transport = 'ssh'
@@ -666,7 +666,7 @@ class Connection(ConnectionBase)
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
-        self.port = self.get_option('port') or self._play_context.port:
+        self.port = self.get_option('port') or self._play_context.port
         if self.port is not None:
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
