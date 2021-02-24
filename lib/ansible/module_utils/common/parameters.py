@@ -546,7 +546,7 @@ def handle_aliases(argument_spec, parameters, alias_warnings=None, alias_depreca
     return aliases_results, legal_inputs
 
 
-def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None):
+def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None):
     """Check keys in parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
     they will be generated using the argument_spec.
@@ -555,6 +555,8 @@ def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None):
     :arg parameters: Dictionary of parameters.
     :arg legal_inputs: List of valid key names property names. Overrides values
         in argument_spec.
+    :arg options_context: List of parent keys for tracking the context of where
+        a parameter is defined.
 
     :returns: Set of unsupported parameters. Empty set if no unsupported parameters
         are found.
@@ -566,7 +568,11 @@ def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None):
     unsupported_parameters = set()
     for k in parameters.keys():
         if k not in legal_inputs:
-            unsupported_parameters.add(k)
+            context = k
+            if options_context:
+                context = tuple(options_context + [k])
+
+            unsupported_parameters.add(context)
 
     return unsupported_parameters
 
@@ -813,7 +819,7 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
                 if legal_inputs is None:
                     legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
-                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs))
+                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
 
                 try:
                     check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
