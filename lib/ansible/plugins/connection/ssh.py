@@ -302,7 +302,6 @@ DOCUMENTATION = '''
           - name: ansible_ssh_use_tty
             version_added: '2.7'
       timeout:
-        name: Connection timeout
         default: 10
         description:
             - This is the default ammount of time we will wait while establishing an ssh connection
