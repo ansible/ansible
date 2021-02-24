@@ -102,15 +102,6 @@ class PlayContext(Base):
     # docker FIXME: remove these
     _docker_extra_args = FieldAttribute(isa='string')
 
-    # ssh # FIXME: remove these
-    _ssh_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
-    _ssh_args = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
-    _ssh_common_args = FieldAttribute(isa='string')
-    _sftp_extra_args = FieldAttribute(isa='string')
-    _scp_extra_args = FieldAttribute(isa='string')
-    _ssh_extra_args = FieldAttribute(isa='string')
-    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
-
     # ???
     _connection_lockfd = FieldAttribute(isa='int')
 

@@ -484,7 +484,7 @@ def _ssh_retry(func):
     return wrapped
 
 
-class Connection(ConnectionBase):
+class Connection(ConnectionBase)
     ''' ssh based connections '''
 
     transport = 'ssh'
@@ -692,7 +692,7 @@ class Connection(ConnectionBase):
         # (i.e. inventory or task settings or overrides on the command line).
 
         for opt in (u'ssh_common_args', u'{0}_extra_args'.format(subsystem)):
-            attr = self.get_option(opt) or getattr(self._play_context, opt, None)
+            attr = self.get_option(opt)
             if attr is not None:
                 b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
                 self._add_args(b_command, b_args, u"PlayContext set %s" % opt)
@@ -928,8 +928,7 @@ class Connection(ConnectionBase):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
         # TODO: bcoca would like to use SelectSelector() when open
-        # filehandles is low, then switch to more efficient ones when higher.
-        # select is faster when filehandles is low.
+        # select is faster when filehandles is low and we only ever handle 1.
         selector = selectors.DefaultSelector()
         selector.register(p.stdout, selectors.EVENT_READ)
         selector.register(p.stderr, selectors.EVENT_READ)

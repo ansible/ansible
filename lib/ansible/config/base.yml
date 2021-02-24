@@ -1463,6 +1463,8 @@ GALAXY_CACHE_DIR:
   type: path
   version_added: '2.11'
 HOST_KEY_CHECKING:
+  # note: constant not in use by ssh plugin anymore
+  # TODO: check non ssh connection plugins for use/migration
   name: Check host keys
   default: True
   description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
