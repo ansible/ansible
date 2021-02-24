@@ -180,7 +180,14 @@ class ArgumentSpecValidator():
                           unsupported_parameters=self._unsupported_parameters)
 
         if self._unsupported_parameters:
-            unsupported_string = ", ".join(sorted(list(self._unsupported_parameters)))
+            flattened_names = []
+            for item in self._unsupported_parameters:
+                if isinstance(item, tuple):
+                    flattened_names.append(".".join(item))
+                else:
+                    flattened_names.append(item)
+
+            unsupported_string = ", ".join(sorted(list(flattened_names)))
             supported_string = ", ".join(self.valid_parameter_names)
             self._add_error("Unsupported parameters for ({0}) {1}: {2}. "
                             "Supported parameters include: {3}.".format(self._name, self._kind, unsupported_string, supported_string))

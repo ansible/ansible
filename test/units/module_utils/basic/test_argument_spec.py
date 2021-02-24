@@ -496,7 +496,7 @@ class TestComplexOptions:
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
-        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: invalid found in foobar. Supported parameters include'),
+        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: foobar.invalid. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]},
          'parameters are mutually exclusive: bam|bam1 found in foobar'),
@@ -520,7 +520,7 @@ class TestComplexOptions:
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option
         ({'foobar': {"foo": "hello", "bam": "good", "invalid": "bad"}},
-         'module: invalid found in foobar. Supported parameters include'),
+         'module: foobar.invalid. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': {"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}},
          'parameters are mutually exclusive: bam|bam1 found in foobar'),
