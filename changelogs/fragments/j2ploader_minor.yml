@@ -1,0 +1,2 @@
+bugfixes:
+  - Better fqcn detection on j2 plugin loader and clarified comments.
