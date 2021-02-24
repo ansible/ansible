@@ -1250,7 +1250,7 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        ssh_executable = self.get_option('ssh_executable') or self._play_context.ssh_executable
+        ssh_executable = self.get_option('ssh_executable')
 
         # -tt can cause various issues in some environments so allow the user
         # to disable it as a troubleshooting method.
@@ -1299,7 +1299,7 @@ class Connection(ConnectionBase):
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = self._build_command(self.get_option('ssh_executable') or self._play_context.ssh_executable, 'ssh', '-O', 'stop', self.host)
+        cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
         controlpersist, controlpath = self._persistence_controls(cmd)
         cp_arg = [a for a in cmd if a.startswith(b"ControlPath=")]
 
