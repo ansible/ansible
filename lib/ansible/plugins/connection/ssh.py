@@ -22,10 +22,12 @@ DOCUMENTATION = '''
     options:
       host:
           description: Hostname/ip to connect to.
-          default: inventory_hostname
           vars:
+               - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
+               - name: delegated_vars['ansible_host']
+               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if ssh should check host keys
           type: boolean
@@ -652,20 +654,14 @@ class Connection(ConnectionBase)
         if self._play_context.verbosity > 3:
             b_command.append(b'-vvv')
 
-        #
-        # Next, we add [ssh_connection]ssh_args from ansible.cfg.
-        #
-
+        # Next, we add ssh_args
         ssh_args = self.get_option('ssh_args')
         if ssh_args:
             b_args = [to_bytes(a, errors='surrogate_or_strict') for a in
                       self._split_ssh_args(ssh_args)]
             self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
 
-        # Now we add various arguments controlled by configuration file settings
-        # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
-        # a combination thereof.
-
+        # Now we add various arguments that have their own specific settings defined in docs above.
         if not self.get_option('host_key_checking'):
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
@@ -690,7 +686,7 @@ class Connection(ConnectionBase)
                 u"ansible_password/ansible_ssh_password not set"
             )
 
-        self.remote_user = self.get_option('remote_user') or self._play_context.remote_user
+        self.remote_user = self.get_option('remote_user')
         if self.remote_user:
             self._add_args(
                 b_command,
@@ -698,7 +694,7 @@ class Connection(ConnectionBase)
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
-        timeout = self.get_option('timeout') or self._play_context.timeout
+        timeout = self.get_option('timeout')
         self._add_args(
             b_command,
             (b"-o", b"ConnectTimeout=" + to_bytes(timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
@@ -940,7 +936,7 @@ class Connection(ConnectionBase)
         # select timeout should be longer than the connect timeout, otherwise
         # they will race each other when we can't connect, and the connect
         # timeout usually fails
-        timeout = 2 + (self.get_option('timeout') or self._play_context.timeout)
+        timeout = 2 + self.get_option('timeout')
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
