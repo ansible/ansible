@@ -766,7 +766,7 @@ def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None
 
     for param, value in argument_spec.items():
         wanted = value.get('type')
-        if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == dict):
+        if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == 'dict'):
             sub_spec = value.get('options')
             if value.get('apply_defaults', False):
                 if sub_spec is not None:
