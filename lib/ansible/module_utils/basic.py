@@ -735,16 +735,16 @@ class AnsibleModule(object):
         return (uid, gid)
 
     def find_mount_point(self, path):
-        path_is_bytes = False
-        if isinstance(path, binary_type):
-            path_is_bytes = True
+        '''
+            Takes a path and returns it's mount point
+
+        :param path: a string type with a filesystem path
+        :returns: the path to the mount point as a text type
+        '''
 
         b_path = os.path.realpath(to_bytes(os.path.expanduser(os.path.expandvars(path)), errors='surrogate_or_strict'))
         while not os.path.ismount(b_path):
             b_path = os.path.dirname(b_path)
-
-        if path_is_bytes:
-            return b_path
 
         return to_text(b_path, errors='surrogate_or_strict')
 
