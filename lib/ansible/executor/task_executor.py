@@ -906,7 +906,7 @@ class TaskExecutor:
             if k in variables:
                 options[k] = templar.template(variables[k])
         # TODO move to task method?
-        plugin.set_options(task_keys=task_keys, var_options=options, cli_options=)
+        plugin.set_options(task_keys=task_keys, var_options=options)
 
         return option_vars
 
