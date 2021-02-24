@@ -72,6 +72,8 @@ DOCUMENTATION = '''
           vars:
               - name: ansible_ssh_args
                 version_added: '2.7'
+          cli:
+              - name: ssh_args
       ssh_common_args:
           description: Common extra args for all ssh CLI tools
           ini:
@@ -83,6 +85,8 @@ DOCUMENTATION = '''
                 version_added: '2.7'
           vars:
               - name: ansible_ssh_common_args
+          cli:
+              - name: ssh_common_args
       ssh_executable:
           default: ssh
           description:
@@ -130,6 +134,8 @@ DOCUMENTATION = '''
             - key: scp_extra_args
               section: ssh_connection
               version_added: '2.7'
+          cli:
+            - name: scp_extra_args
       sftp_extra_args:
           description: Extra exclusive to the ``sftp`` CLI
           vars:
@@ -141,6 +147,8 @@ DOCUMENTATION = '''
             - key: sftp_extra_args
               section: ssh_connection
               version_added: '2.7'
+          cli:
+            - name: sftp_extra_args
       ssh_extra_args:
           description: Extra exclusive to the 'ssh' CLI
           vars:
@@ -152,6 +160,8 @@ DOCUMENTATION = '''
             - key: ssh_extra_args
               section: ssh_connection
               version_added: '2.7'
+          cli:
+            - name: ssh_extra_args
       retries:
           description: Number of attempts to connect.
           default: 3
@@ -190,6 +200,8 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_user
             - name: ansible_ssh_user
+          cli:
+            - name: user
       pipelining:
           env:
             - name: ANSIBLE_PIPELINING
@@ -202,6 +214,7 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_pipelining
             - name: ansible_ssh_pipelining
+
       private_key_file:
           description:
               - Path to private key file to use for authentication
@@ -213,6 +226,8 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_private_key_file
             - name: ansible_ssh_private_key_file
+          cli:
+            - name: private_key_file
 
       control_path:
         description:
@@ -303,6 +318,8 @@ DOCUMENTATION = '''
         vars:
           - name: ansible_ssh_timeout
             version_added: '2.11'
+        cli:
+          - name: timeout
         type: integer
 '''
 
@@ -658,7 +675,7 @@ class Connection(ConnectionBase)
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self.get_option('private_key_file') or self._play_context.private_key_file
+        key = self.get_option('private_key_file')
         if key:
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
