@@ -20,6 +20,7 @@ def test_add_sequence():
 
     assert v.error_messages == errors
 
+
 def test_invalid_error_message():
     v = ArgumentSpecValidator({}, {})
 
