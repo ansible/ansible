@@ -1,0 +1,2 @@
+bugfixes:
+  - ensure find_mount_point consistently returns text.
