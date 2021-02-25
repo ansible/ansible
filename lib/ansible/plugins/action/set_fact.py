@@ -20,7 +20,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleActionFail
 from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
 
