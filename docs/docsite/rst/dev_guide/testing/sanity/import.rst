@@ -1,8 +1,7 @@
 import
 ======
 
-All Python imports in the directories specified that are not from a limited set of possibilities listed below
-must be imported in a try/except ImportError block as follows:
+Ansible allows unchecked imports of some libraries from specific directories, listed at the bottom of this section. Import all other Python libraries in a try/except ImportError block as follows:
 
 1. In modules:
 
