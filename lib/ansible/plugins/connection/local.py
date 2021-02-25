@@ -12,6 +12,8 @@ DOCUMENTATION = '''
         - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.
     author: ansible (@core)
     version_added: historical
+    extends_documentation_fragment:
+        - connection_pipelining
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
@@ -82,7 +84,7 @@ class Connection(ConnectionBase):
 
         master = None
         stdin = subprocess.PIPE
-        if sudoable and self.become and self.become.expect_prompt():
+        if sudoable and self.become and self.become.expect_prompt() and not self.get_option('pipelining'):
             # Create a pty if sudoable for privlege escalation that needs it.
             # Falls back to using a standard pipe if this fails, which may
             # cause the command to fail in certain situations where we are escalating
@@ -102,7 +104,7 @@ class Connection(ConnectionBase):
             stderr=subprocess.PIPE,
         )
 
-        # if we created a master, we can close the other half of the pty now
+        # if we created a master, we can close the other half of the pty now, otherwise master is stdin
         if master is not None:
             os.close(stdin)
 
@@ -138,7 +140,10 @@ class Connection(ConnectionBase):
 
             if not self.become.check_success(become_output):
                 become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                os.write(master, to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                if master is None:
+                    p.stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                else:
+                    os.write(master, to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
 
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)

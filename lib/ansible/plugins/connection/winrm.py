@@ -14,6 +14,8 @@ DOCUMENTATION = """
         - This plugin allows extra arguments to be passed that are supported by the protocol but not explicitly defined here.
           They should take the form of variables declared with the following pattern `ansible_winrm_<option>`.
     version_added: "2.0"
+    extends_documentation_fragment:
+        - connection_pipelining
     requirements:
         - pywinrm (python library)
     options:

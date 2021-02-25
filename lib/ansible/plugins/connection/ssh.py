@@ -16,6 +16,8 @@ DOCUMENTATION = '''
           a password manually to decrypt an ssh key when using this connection plugin (which is the default). The
           use of ``ssh-agent`` is highly recommended.
     author: ansible (@core)
+    extends_documentation_fragment:
+        - connection_pipelining
     version_added: historical
     options:
       host:
@@ -190,23 +192,14 @@ DOCUMENTATION = '''
             - name: ansible_user
             - name: ansible_ssh_user
       pipelining:
-          default: ANSIBLE_PIPELINING
-          description:
-            - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
-              by executing many Ansible modules without actual file transfer.
-            - This can result in a very significant performance improvement when enabled.
-            - However this conflicts with privilege escalation (become).
-              For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
-              which is why this feature is disabled by default.
           env:
             - name: ANSIBLE_PIPELINING
             - name: ANSIBLE_SSH_PIPELINING
           ini:
-            - section: defaults
+            - section: connection
               key: pipelining
             - section: ssh_connection
               key: pipelining
-          type: boolean
           vars:
             - name: ansible_pipelining
             - name: ansible_ssh_pipelining
