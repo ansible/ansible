@@ -15,3 +15,6 @@ ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory_with_no_space"  ansible -m ping tes
 ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory with space"  ansible -m ping testhost -i ../../inventory "$@"
 
 ANSIBLE_CONFIG=nonexistent.cfg ansible-config dump --only-changed -v | grep 'No config file found; using defaults'
+
+# https://github.com/ansible/ansible/pull/73715
+ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | grep "'ansibull'"
