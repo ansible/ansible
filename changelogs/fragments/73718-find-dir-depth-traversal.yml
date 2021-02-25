@@ -1,0 +1,2 @@
+bugfixes:
+  - find module - Stop traversing directories past the requested depth. (https://github.com/ansible/ansible/issues/73627)
