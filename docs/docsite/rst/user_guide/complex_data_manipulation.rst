@@ -94,6 +94,13 @@ There are several ways to do it in Ansible, this is just one example:
     }
 
 
+.. code-block:: YAML+Jinja
+ :caption: Get the unique list of values of a variable that vary per host
+
+    vars:
+        unique_value_list: "{{ groups['all'] | map ('extract', hostvars, 'varname') | list | unique}}"
+
+
 .. _find_mount_point:
 
 Find mount point
