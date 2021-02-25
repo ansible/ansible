@@ -289,6 +289,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.host = "some_host"
 
         conn.set_option('retries', 9)
+        conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
 
         # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
@@ -302,10 +303,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
-        conn._bare_run.side_effect = None
 
         # test with SCP_IF_SSH enabled
-        conn.set_option('scp_if_ssh', True)
+        conn.set_option('scp_if_ssh', 'True')
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
