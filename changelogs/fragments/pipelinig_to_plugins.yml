@@ -1,0 +1,2 @@
+bugfixes:
+  - Restructured pipelining settings to be at the connection plugins leaving base config as global and for backwards compatiblity.
