@@ -71,6 +71,7 @@
           - 'find_test0.msg is defined'
           - 'find_test0.matched == 8'
           - 'find_test0.files | length == 8'
+          - 'find_test0.examined == 16'
 
 - name: find the xml and img files
   find:
@@ -207,3 +208,46 @@
         that:
             - failed_path.files == []
             - failed_path.msg.startswith("Skipped '{{mypath}}' path due to this access issue")
+
+- name: test number of examined directories/files
+  block:
+    - name: Get all files/directories in the path
+      find:
+        paths: "{{ output_dir_test }}"
+        recurse: yes
+        file_type: any
+      register: total_contents
+
+    - assert:
+        that:
+          - total_contents.matched == 18
+          - total_contents.examined == 18
+
+    - name: Get files and directories with depth
+      find:
+        paths: "{{ output_dir_test }}"
+        recurse: yes
+        file_type: any
+        depth: 2
+      register: contents_with_depth
+
+    - assert:
+        that:
+          - contents_with_depth.matched == 8
+          # dir contents are considered until the depth exceeds the requested depth
+          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
+          - contents_with_depth.examined == 12
+
+    - name: Find files with depth
+      find:
+        paths: "{{ output_dir_test }}"
+        depth: 2
+        recurse: yes
+      register: files_with_depth
+
+    - assert:
+        that:
+          - files_with_depth.matched == 4
+          # dir contents are considered until the depth exceeds the requested depth
+          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
+          - files_with_depth.examined == 12
