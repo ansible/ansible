@@ -522,7 +522,6 @@ class AnsibleModule(object):
                                                self.required_one_of,
                                                self.required_if,
                                                self.required_by,
-                                               _name=self._name,
                                                )
         self.validator.validate()
 
@@ -531,7 +530,7 @@ class AnsibleModule(object):
 
         # Fail for validation errors, even in check mode
         if self.validator.error_messages:
-            self.fail_json(msg=self.validator.error_messages[0])
+            self.fail_json(msg=self.validator.error_messages[0].format(name=self._name, kind='module'))
 
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)

@@ -48,8 +48,6 @@ class ArgumentSpecValidator():
                  required_one_of=None,
                  required_if=None,
                  required_by=None,
-                 _kind='module',
-                 _name=None,
                  ):
 
         self._error_messages = []
@@ -57,8 +55,6 @@ class ArgumentSpecValidator():
         self._validated_parameters = deepcopy(parameters)  # Make a copy of the original parameters to avoid changing them
         self._valid_parameter_names = []
         self._unsupported_parameters = set()
-        self._kind = _kind
-        self._name = _name or os.path.basename(__file__)
         self.argument_spec = argument_spec
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
@@ -187,10 +183,10 @@ class ArgumentSpecValidator():
                 else:
                     flattened_names.append(item)
 
+            unsupported_prefix = "Unsupported parameters for ({name}) {kind}:"
             unsupported_string = ", ".join(sorted(list(flattened_names)))
             supported_string = ", ".join(self.valid_parameter_names)
-            self._add_error("Unsupported parameters for ({0}) {1}: {2}. "
-                            "Supported parameters include: {3}.".format(self._name, self._kind, unsupported_string, supported_string))
+            self._add_error("{0} {1}. Supported parameters include: {2}.".format(unsupported_prefix, unsupported_string, supported_string))
 
         self._sanitize_error_messages()
 
