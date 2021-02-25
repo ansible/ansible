@@ -512,6 +512,7 @@ class AnsibleModule(object):
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
+
         self._load_params()
         self._set_internal_properties()
 
@@ -527,8 +528,14 @@ class AnsibleModule(object):
 
         self.params.update(self.validator.validated_parameters)
         self.no_log_values.update(self.validator._no_log_values)
+
+        # Fail for validation errors, even in check mode
         if self.validator.error_messages:
             self.fail_json(msg=self.validator.error_messages[0])
+
+        if self.check_mode and not self.supports_check_mode:
+            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
+
         # self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
