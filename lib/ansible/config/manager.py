@@ -494,7 +494,7 @@ class ConfigManager(object):
                 if value is None and 'cli' in defs[config]:
                     # avoid circular import .. until valid
                     from ansible import context
-                    value, origin = self._loop_entries(context.CLI, defs[config]['cli'])
+                    value, origin = self._loop_entries(context.CLIARGS, defs[config]['cli'])
                     origin = 'cli: %s' % origin
 
                 # env vars are next precedence
