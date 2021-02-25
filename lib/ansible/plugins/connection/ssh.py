@@ -685,11 +685,11 @@ class Connection(ConnectionBase):
                 u"ansible_password/ansible_ssh_password not set"
             )
 
-        self.remote_user = self.get_option('remote_user')
-        if self.remote_user:
+        self.user = self.get_option('remote_user')
+        if self.user:
             self._add_args(
                 b_command,
-                (b"-o", b'User="%s"' % to_bytes(self.remote_user, errors='surrogate_or_strict')),
+                (b"-o", b'User="%s"' % to_bytes(self.user, errors='surrogate_or_strict')),
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
@@ -1230,7 +1230,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.remote_user), host=self._play_context.remote_addr)
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self._play_context.remote_addr)
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             # Become method 'runas' is done in the wrapper that is executed,
