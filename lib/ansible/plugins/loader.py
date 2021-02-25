@@ -966,22 +966,23 @@ class Jinja2Loader(PluginLoader):
 
     The filter and test plugins are Jinja2 plugins encapsulated inside of our plugin format.
     The way the calling code is setup, we need to do a few things differently in the all() method
+
+    We can't use the base class version because of file == plugin assumptions and dedupe logic
     """
     def find_plugin(self, name, collection_list=None):
 
-        # Nothing using Jinja2Loader should be using this method w/o collections.
-        # We can't use the base class version because of file == plugin assumptions and dedupe logic.
-        if AnsibleCollectionRef.is_valid_fqcr(name) or collection_list:
+        if '.' in name:  # NOTE: this is wrong way to detect collection
             return super(Jinja2Loader, self).find_plugin(name, collection_list=collection_list)
 
+        # Nothing is currently using this method
         raise AnsibleError('No code should call "find_plugin" for Jinja2Loaders (Not implemented)')
 
     def get(self, name, *args, **kwargs):
-        # Nothing using Jinja2Loader should be useing this method w/o collections.
-        # We can't use the base class version because of file == plugin assumptions and dedupe logic.
-        if AnsibleCollectionRef.is_valid_fqcr(name) or kwargs.get('collection_list', False):
+
+        if '.' in name:  # NOTE: this is wrong way to detect collection
             return super(Jinja2Loader, self).get(name, *args, **kwargs)
 
+        # Nothing is currently using this method
         raise AnsibleError('No code should call "get" for Jinja2Loaders (Not implemented)')
 
     def all(self, *args, **kwargs):
