@@ -56,7 +56,7 @@ must be imported in a try/except ImportError block as follows:
            # If you target only newer Python 3 versions, you can also use the
            # 'raise ... from ...' syntax.
 
-The following shows which unchecked imports are allowed from which directories:
+Ansible allows the following unchecked imports from these specific directories:
 
 * ansible-core:
 
