@@ -546,8 +546,6 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = [b'sshpass', b'-d41', b'ssh', b'-C']
-        #self.conn.get_option = MagicMock()
-        #self.conn.get_option.return_value = True
 
         exception_info = pytest.raises(AnsibleAuthenticationFailure, self.conn.exec_command, 'sshpass', 'some data')
         assert exception_info.value.message == ('Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout: '
@@ -577,8 +575,6 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
-        #self.conn.get_option = MagicMock()
-        #self.conn.get_option.return_value = True
 
         return_code, b_stdout, b_stderr = self.conn.exec_command('ssh', 'some data')
         assert return_code == 0
@@ -604,8 +600,6 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
-        #self.conn.get_option = MagicMock()
-        #self.conn.get_option.return_value = True
 
         pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'ssh', 'some data')
         assert self.mock_popen.call_count == 10
@@ -618,8 +612,6 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
-        #self.conn.get_option = MagicMock()
-        #self.conn.get_option.return_value = True
 
         self.mock_popen.side_effect = [Exception('bad')] * 10
         pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')
