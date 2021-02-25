@@ -183,10 +183,10 @@ class ArgumentSpecValidator():
                 else:
                     flattened_names.append(item)
 
-            unsupported_prefix = "Unsupported parameters for ({name}) {kind}:"
             unsupported_string = ", ".join(sorted(list(flattened_names)))
             supported_string = ", ".join(self.valid_parameter_names)
-            self._add_error("{0} {1}. Supported parameters include: {2}.".format(unsupported_prefix, unsupported_string, supported_string))
+            self._add_error("Unsupported parameters for ({{name}}) {{kind}}: {0}. "
+                            "Supported parameters include: {1}.".format(unsupported_string, supported_string))
 
         self._sanitize_error_messages()
 
