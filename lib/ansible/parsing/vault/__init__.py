@@ -498,9 +498,8 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
 
     def _run(self, command):
         try:
-            p = subprocess.Popen(command,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+            # STDERR not captured to make it easier for users to prompt for input in their scripts
+            p = subprocess.Popen(command, stdout=subprocess.PIPE)
         except OSError as e:
             msg_format = "Problem running vault password client script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
