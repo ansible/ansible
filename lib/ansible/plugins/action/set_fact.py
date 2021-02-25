@@ -60,7 +60,7 @@ class ActionModule(ActionBase):
         if not facts:
             raise AnsibleActionFail('Unable to create any variables with provided arguments')
         else:
-            result['changed'] = True
+            # just as _facts actions, we don't set changed=true as we are not modifying the actual host
             result['ansible_facts'] = facts
             result['_ansible_facts_cacheable'] = cacheable
 
