@@ -29,7 +29,6 @@ from io import BytesIO
 import ansible.errors
 
 from ansible.executor.module_common import recursive_finder
-from ansible.module_utils.six import PY2
 
 
 # These are the modules that are brought in by module_utils/basic.py  This may need to be updated
