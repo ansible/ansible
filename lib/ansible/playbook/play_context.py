@@ -381,7 +381,7 @@ class PlayContext(Base):
         if self._attributes['connection'] == 'smart':
             conn_type = 'ssh'
             # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
+            if not check_for_controlpersist('ssh') and paramiko is not None:
                 conn_type = "paramiko"
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
