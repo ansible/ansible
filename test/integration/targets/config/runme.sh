@@ -16,4 +16,5 @@ ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory with space"  ansible -m ping testho
 
 ANSIBLE_CONFIG=nonexistent.cfg ansible-config dump --only-changed -v | grep 'No config file found; using defaults'
 
-ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | grep "'/etc/ansible/hosts'"
+# https://github.com/ansible/ansible/pull/73715
+ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | grep "'ansibull'"
