@@ -109,16 +109,15 @@ ANSIBLE_PIPELINING:
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
     - This option is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
+    - This is a global option, each connection plugin can override either by having more specific options or not supporting pipelining at all.
   env:
     - name: ANSIBLE_PIPELINING
-    - name: ANSIBLE_SSH_PIPELINING
   ini:
+  - section: defaults
+    key: pipelining
   - section: connection
     key: pipelining
-  - section: ssh_connection
-    key: pipelining
   type: boolean
-  yaml: {key: plugins.connection.pipelining}
 ANSIBLE_SSH_ARGS:
   # TODO: move to ssh plugin
   default: -C -o ControlMaster=auto -o ControlPersist=60s
