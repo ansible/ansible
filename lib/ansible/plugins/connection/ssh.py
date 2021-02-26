@@ -53,7 +53,9 @@ DOCUMENTATION = '''
               - name: ansible_ssh_pass
               - name: ansible_ssh_password
       sshpass_prompt:
-          description: Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+          description:
+              - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+              - Defaults to ``Enter PIN for`` when pkcs11_provider is set.
           default: ''
           ini:
               - section: 'ssh_connection'
@@ -637,20 +639,17 @@ class Connection(ConnectionBase):
         if conn_password or pkcs11_provider:
             if not self._sshpass_available():
                 raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
+            if not conn_password and pkcs11_provider:
+                raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
 
-        if conn_password and pkcs11_provider:
-            self.sshpass_pipe = os.pipe()
-            b_command += [b'sshpass',
-                          b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict'),
-                          b'-P',
-                          b'Enter PIN for ']
-        elif not conn_password and pkcs11_provider:
-            raise AnsibleError("To use pkcs11_provider you must specify a password/pin")
-        elif conn_password:
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
             password_prompt = self.get_option('sshpass_prompt')
+            if not password_prompt and pkcs11_provider:
+                # Set default password prompt for pkcs11_provider to make it clear its a PIN
+                password_prompt = 'Enter PIN for '
+
             if password_prompt:
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
 
