@@ -323,7 +323,7 @@ DOCUMENTATION = '''
           - name: timeout
         type: integer
       pkcs11_provider:
-        version_added: '2.7'
+        version_added: '2.12'
         default: ""
         description:
           - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
