@@ -634,7 +634,7 @@ class Connection(ConnectionBase):
         # If we want to use password authentication, we have to set up a pipe to
         # write the password to sshpass.
         pkcs11_provider = self.get_option("pkcs11_provider")
-        if conn_password or len(pkcs11_provider) >= 1:
+        if conn_password or pkcs11_provider:
             if not self._sshpass_available():
                 raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
 
