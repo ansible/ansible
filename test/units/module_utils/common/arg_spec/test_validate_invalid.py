@@ -74,7 +74,7 @@ INVALID_SPECS = [
             'badparam': '',
             'another': '',
         },
-        "Unsupported parameters: another, badparam",
+        "Unsupported parameters for (ansible_unittest) module: another, badparam. Supported parameters include: name.",
     ),
     (
         'invalid-elements',
@@ -105,6 +105,6 @@ def test_invalid_spec(arg_spec, parameters, expected, error):
     if PY2:
         error = error.replace('class', 'type')
 
-    assert error in v.error_messages[0]
+    assert error in v.error_messages[0].format(name='ansible_unittest', kind='module')
     assert v.validated_parameters == expected
     assert passed is False
