@@ -644,7 +644,7 @@ class Connection(ConnectionBase):
                           b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict'),
                           b'-P',
                           b'Enter PIN for ']
-        elif conn_password and len(pkcs11_provider) > 0:
+        elif not conn_password and pkcs11_provider:
             raise AnsibleError("To use pkcs11_provider you must specify a password/pin")
         elif conn_password:
             self.sshpass_pipe = os.pipe()
