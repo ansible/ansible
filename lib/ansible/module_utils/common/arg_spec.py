@@ -38,7 +38,44 @@ from ansible.module_utils.six import string_types
 
 
 class ArgumentSpecValidator():
-    """Argument spec validation class"""
+    """Argument spec validation class
+
+    This will evaluate the given parameters against a provide argument spec, coerce
+    provided arguments to the specified type, and return a boolean for overall
+    pass/fail of the validation and coercion. Any errors with the validation are
+    stored in the ``error_messages`` property.
+
+    A copy of the original parameters is stored in the ``validated_parameters``
+    property. This will be mutated in order to ensure the parameters match
+    the specified type. The original parameters and argument_spec are unaltered.
+
+    :param argument_spec: Specification of valid parameters and their type. May
+        include nested argument specs.
+    :type argument_spec: dict
+
+    :param parameters: Terms to be validated and coerced to the correct type.
+    :type parameters: dict
+
+    :param mutually_exclusive: List or list of lists of terms that should not
+        be provided together.
+    :type: list, optional
+
+    :param required_together: List of lists of terms that are required together.
+    :type: list, optional
+
+    :param required_one_of: List of lists of terms, on of which in each list
+        is required.
+    :type: list, optional
+
+    :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
+        one of [parameters] is required is ``parameter`` == ``value``.
+    :type: list, optional
+
+    :param required_by: Dictionary of parameter names that contain a list of
+        parameters required by each key in the dictionary.
+    :type: dict, optional
+
+    """
 
     def __init__(self, argument_spec, parameters,
                  mutually_exclusive=None,
@@ -95,12 +132,21 @@ class ArgumentSpecValidator():
         self._error_messages = remove_values(self._error_messages, self._no_log_values)
 
     def validate(self, *args, **kwargs):
-        """Validate module parameters against argument spec.
+        """Validate module parameters against argument spec. Returns True/False
+        for overall pass/fail of validation and coercion.
+
+        For unsupported parameters, a format string is added to ``self.error_messages``
+        with ``name`` and ``kind`` fields. These should be replaced with the name
+        of the plugin and the plugin kind so the message is useful to the reader.
 
         :Example:
 
         validator = ArgumentSpecValidator(argument_spec, parameters)
-        passeded = validator.validate()
+        passed = validator.validate()
+        if not passed:
+            sys.exit("Validation failed: {0}".format(", ".join(validator.error_messages), name='name', kind='module'))
+
+        valid_params = validator.validated_parameters
 
         :param argument_spec: Specification of parameters, type, and valid values
         :type argument_spec: dict
