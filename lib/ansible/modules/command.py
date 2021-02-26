@@ -43,10 +43,17 @@ options:
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
       - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
+  uses:
+    type: path
+    description:
+      - A name or glob pattern of files used by the command. If no matching file exists, this task will fail.
+      - In combination with C(creates), this task will be run only if all created files are newer than all used files.
+    version_added: "2.11"
   creates:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
+      - In case C(uses) is defined, created files must exist I(and) be younger than all used files for the task to be skipped.
   removes:
     type: path
     description:
@@ -261,6 +268,7 @@ def main():
             argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
+            uses=dict(type='path'),
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
@@ -276,6 +284,7 @@ def main():
     executable = module.params['executable']
     args = module.params['_raw_params']
     argv = module.params['argv']
+    uses = module.params['uses']
     creates = module.params['creates']
     removes = module.params['removes']
     warn = module.params['warn']
@@ -313,17 +322,38 @@ def main():
         except (IOError, OSError) as e:
             module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
 
+    if uses:
+        # fail if none of the files used by the command exists
+        used_files = glob.glob(uses)
+        if not used_files:
+            module.fail_json(msg='None of the used files %s was found.' % uses)
+
     if creates:
-        # do not run the command if the line contains creates=filename
-        # and the filename already exists.  This allows idempotence
-        # of command executions.
-        if glob.glob(creates):
-            module.exit_json(
-                cmd=args,
-                stdout="skipped, since %s exists" % creates,
-                changed=False,
-                rc=0
-            )
+        created_files = glob.glob(creates)
+
+        if created_files:
+            if uses:
+                # if all of the created files are younger than the used files
+                # do not run the command to allow for idempotence.
+                used_mtimes = map(os.path.getmtime, used_files)
+                created_mtimes = map(os.path.getmtime, created_files)
+                if max(used_mtimes) <= min(created_mtimes):
+                    module.exit_json(
+                        cmd=args,
+                        stdout="skipped, since %s is younger than %s" % (creates, uses),
+                        changed=False,
+                        rc=0
+                    )
+            else:
+                # do not run the command if the line contains creates=filename
+                # and the filename already exists.  This allows idempotence
+                # of command executions.
+                module.exit_json(
+                    cmd=args,
+                    stdout="skipped, since %s exists" % creates,
+                    changed=False,
+                    rc=0
+                )
 
     if removes:
         # do not run the command if the line contains removes=filename
