@@ -638,7 +638,7 @@ class Connection(ConnectionBase):
             if not self._sshpass_available():
                 raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
 
-        if conn_password and len(pkcs11_provider) >= 1:
+        if conn_password and pkcs11_provider:
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass',
                           b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict'),
@@ -661,7 +661,7 @@ class Connection(ConnectionBase):
         #
 
         # pkcs11 mode allows the use of Smartcards or Yubikey devices
-        if conn_password and len(pkcs11_provider) > 0:
+        if conn_password and pkcs11_provider:
             self._add_args(b_command,
                            (b"-o", b"KbdInteractiveAuthentication=no",
                             b"-o", b"PreferredAuthentications=publickey",
