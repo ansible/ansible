@@ -22,9 +22,11 @@ version_added: "1.4"
 options:
   file:
     description:
-      - The file name from which variables should be loaded.
-      - If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
-    type: path
+      - The file name(s) from which variables should be loaded.
+      - If a path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
+      - When including multiple files values are updated in given order.
+    elements: path
+    type: list
     version_added: "2.2"
   dir:
     description:
@@ -70,6 +72,12 @@ options:
     type: bool
     default: no
     version_added: "2.7"
+  skip_if_missing:
+    description:
+      - Ignore non-existent files instead of reporting an error.
+    type: bool
+    default: no
+    version_added: "2.11"
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.
@@ -147,6 +155,14 @@ EXAMPLES = r'''
       - 'yaml'
       - 'yml'
       - 'json'
+
+- name: Include multiple files, if available. (2.11)
+  include_vars:
+    file:
+      - 'default.yml'
+      - 'overwrite.yml'
+      - 'missing.yml'
+    skip_if_missing: True
 '''
 
 RETURN = r'''

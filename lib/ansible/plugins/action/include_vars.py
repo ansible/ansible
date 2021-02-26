@@ -7,7 +7,7 @@ __metaclass__ = type
 from os import path, walk
 import re
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
@@ -19,7 +19,7 @@ class ActionModule(ActionBase):
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
-    VALID_FILE_ARGUMENTS = ['file', '_raw_params']
+    VALID_FILE_ARGUMENTS = ['file', '_raw_params', 'skip_if_missing']
     VALID_ALL = ['name']
 
     def _set_dir_defaults(self):
@@ -46,6 +46,7 @@ class ActionModule(ActionBase):
     def _set_args(self):
         """ Set instance variables based on the arguments that were passed """
 
+        self.skip_if_missing = self._task.args.get('skip_if_missing', False)
         self.return_results_as_name = self._task.args.get('name', None)
         self.source_dir = self._task.args.get('dir', None)
         self.source_file = self._task.args.get('file', None)
@@ -114,12 +115,23 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
         else:
             try:
-                self.source_file = self._find_needle('vars', self.source_file)
-                failed, err_msg, updated_results = (
-                    self._load_files(self.source_file)
-                )
-                if not failed:
-                    results.update(updated_results)
+                if not isinstance(self.source_file, list):
+                    self.source_file = [self.source_file]
+                for source_file in self.source_file:
+                    try:
+                        source_file = self._find_needle('vars', source_file)
+                        failed, err_msg, updated_results = (
+                            self._load_files(source_file)
+                        )
+                    except AnsibleFileNotFound as e:
+                        if self.skip_if_missing:
+                            failed = False
+                            err_msg = ''
+                            updated_results = dict()
+                        else:
+                            raise e
+                    if not failed:
+                        results.update(updated_results)
 
             except AnsibleError as e:
                 failed = True

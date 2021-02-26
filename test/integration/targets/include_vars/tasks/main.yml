@@ -162,3 +162,21 @@
     that:
       - "'my_custom_service' == service_name_fqcn"
       - "'my_custom_service' == service_name_tmpl_fqcn"
+
+- name: include multiple var files if available
+  include_vars:
+    file:
+      - "all/all.yml"
+      - "missing.yml"
+      - "environments/development/services/webapp.yml"
+      - "environments/development/all.yml"
+    name: multiple
+    skip_if_missing: True
+
+- name: verify that multiple files have been included
+  assert:
+    that:
+      - "multiple['unchanged'] == True"
+      - "multiple['testing'] == 789"
+      - "multiple['base_dir'] == 'environments/development'"
+      - "multiple['webapp_containers'] == 20"
