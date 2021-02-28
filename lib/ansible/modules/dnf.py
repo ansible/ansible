@@ -708,10 +708,7 @@ class DnfModule(YumDnf):
 
     def _is_installed(self, pkg):
         installed = self.base.sack.query().installed()
-        if installed.filter(name=pkg):
-            return True
-        else:
-            return False
+        return bool(installed.filter(name=pkg))
 
     def _is_newer_version_installed(self, pkg_name):
         candidate_pkg = self._packagename_dict(pkg_name)
@@ -731,13 +728,8 @@ class DnfModule(YumDnf):
                 candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
             )
 
-            if evr_cmp == 1:
-                return True
-            else:
-                return False
-
+            return evr_cmp == 1
         else:
-
             return False
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
@@ -752,21 +744,31 @@ class DnfModule(YumDnf):
                     # on a system's package set (pending the yum repo has many old
                     # NVRs indexed)
                     if upgrade:
-                        if is_installed:
+                        if is_installed:  # Case 1
+                            # TODO: Is this case reachable?
+                            #
+                            # _is_installed() demands a name (*not* NVR) or else is always False
+                            # (wildcards are treated literally).
+                            #
+                            # Meanwhile, _is_newer_version_installed() demands something versioned
+                            # or else is always false.
+                            #
+                            # I fail to see how they can both be true at the same time for any
+                            # given pkg_spec. -re
                             self.base.upgrade(pkg_spec)
-                        else:
-                            self.base.install(pkg_spec)
-                    else:
-                        self.base.install(pkg_spec)
-                else:  # Nothing to do, report back
+                        else:  # Case 2
+                            self.base.install(pkg_spec, strict=self.base.conf.strict)
+                    else:  # Case 3
+                        self.base.install(pkg_spec, strict=self.base.conf.strict)
+                else:  # Case 4, Nothing to do, report back
                     pass
-            elif is_installed:  # An potentially older (or same) version is installed
-                if upgrade:
+            elif is_installed:  # A potentially older (or same) version is installed
+                if upgrade:  # Case 5
                     self.base.upgrade(pkg_spec)
-                else:  # Nothing to do, report back
+                else:  # Case 6, Nothing to do, report back
                     pass
-            else:  # The package is not installed, simply install it
-                self.base.install(pkg_spec)
+            else:  # Case 7, The package is not installed, simply install it
+                self.base.install(pkg_spec, strict=self.base.conf.strict)
 
             return {'failed': False, 'msg': '', 'failure': '', 'rc': 0}
 
@@ -885,9 +887,9 @@ class DnfModule(YumDnf):
                 try:
                     if self._is_newer_version_installed(self._package_dict(pkg)['nevra']):
                         if self.allow_downgrade:
-                            self.base.package_install(pkg)
+                            self.base.package_install(pkg, strict=self.base.conf.strict)
                     else:
-                        self.base.package_install(pkg)
+                        self.base.package_install(pkg, strict=self.base.conf.strict)
                 except Exception as e:
                     self.module.fail_json(
                         msg="Error occured attempting remote rpm operation: {0}".format(to_native(e)),
@@ -1079,9 +1081,13 @@ class DnfModule(YumDnf):
                         response['results'].append("Packages providing %s not installed due to update_only specified" % spec)
                 else:
                     for pkg_spec in pkg_specs:
-                        # best effort causes to install the latest package
-                        # even if not previously installed
-                        self.base.conf.best = True
+                        # Previously we forced base.conf.best=True here.
+                        # However in 2.11+ there is a self.nobest option, so defer to that.
+                        # Note, however, that just because nobest isn't set, doesn't mean that
+                        # base.conf.best is actually true. We only force it false in
+                        # _configure_base(), we never set it to true, and it can default to false.
+                        # Thus, we still need to explicitly set it here.
+                        self.base.conf.best = not self.nobest
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             if install_result['msg']:
@@ -1161,6 +1167,15 @@ class DnfModule(YumDnf):
                     self.base.autoremove()
 
         try:
+            # NOTE for people who go down the rabbit hole of figuring out why
+            # resolve() throws DepsolveError here on dep conflict, but not when
+            # called from the CLI: It's controlled by conf.best. When best is
+            # set, Hawkey will fail the goal, and resolve() in dnf.base.Base
+            # will throw. Otherwise if it's not set, the update (install) will
+            # be (almost silently) removed from the goal, and Hawkey will report
+            # success. Note that in this case, similar to the CLI, skip_broken
+            # does nothing to help here, so we don't take it into account at
+            # all.
             if not self.base.resolve(allow_erasing=self.allowerasing):
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
