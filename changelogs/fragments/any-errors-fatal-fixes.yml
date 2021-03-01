@@ -1,0 +1,4 @@
+---
+bugfixes:
+- any_errors_fatal param has priority over max_fail_percentage
+- ITERATING_ALWAYS state considered failed when there were not rescued tasks in block

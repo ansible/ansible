@@ -474,23 +474,31 @@ class PlayIterator:
     def _check_failed_state(self, state):
         if state is None:
             return False
-        elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
-            return True
-        elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
-            return True
-        elif state.fail_state != self.FAILED_NONE:
-            if state.run_state == self.ITERATING_RESCUE and state.fail_state & self.FAILED_RESCUE == 0:
-                return False
-            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state & self.FAILED_ALWAYS == 0:
-                return False
-            else:
-                return not (state.did_rescue and state.fail_state & self.FAILED_ALWAYS == 0)
-        elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
-            cur_block = state._blocks[state.cur_block]
-            if len(cur_block.rescue) > 0 and state.fail_state & self.FAILED_RESCUE == 0:
-                return False
-            else:
-                return True
+
+        if state.run_state == self.ITERATING_SETUP:
+            return state.fail_state & self.FAILED_SETUP != 0
+
+        if state.run_state == self.ITERATING_TASKS:
+            child_failed = self._check_failed_state(state.tasks_child_state)
+            rescue_available = len(state._blocks[state.cur_block].rescue) > 0
+            rescue_failed = state.fail_state & self.FAILED_RESCUE != 0
+            return child_failed and (not rescue_available or rescue_failed)
+
+        if state.run_state == self.ITERATING_RESCUE:
+            child_failed = self._check_failed_state(state.rescue_child_state)
+            itself_failed = state.fail_state & self.FAILED_RESCUE != 0
+            return child_failed or itself_failed
+
+        if state.run_state == self.ITERATING_ALWAYS:
+            child_failed = self._check_failed_state(state.always_child_state)
+            itself_failed = state.fail_state & self.FAILED_ALWAYS != 0
+            tasks_failed = state.fail_state & self.FAILED_TASKS != 0 and not state.did_rescue
+            return child_failed or itself_failed or tasks_failed
+
+        if state.run_state == self.ITERATING_COMPLETE:
+            failed = state.fail_state != self.FAILED_NONE
+            return failed and not state.did_rescue
+
         return False
 
     def is_failed(self, host):

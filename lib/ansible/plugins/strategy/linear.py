@@ -417,21 +417,20 @@ class StrategyModule(StrategyBase):
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
-                    dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
                     for host in hosts_left:
-                        (s, _) = iterator.get_next_task_for_host(host, peek=True)
-                        # the state may actually be in a child state, use the get_active_state()
-                        # method in the iterator to figure out the true active state
-                        s = iterator.get_active_state(s)
-                        if s.run_state not in dont_fail_states or \
-                           s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
+                        if iterator.is_failed(host):
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
-                if iterator._play.max_fail_percentage is not None and len(results) > 0:
-                    percentage = iterator._play.max_fail_percentage / 100.0
+                max_fail_percentage = iterator._play.max_fail_percentage
+                if task and task.any_errors_fatal:
+                    # explicitely set any_errors_fatal and max_fail_percentage have conflicting behavior
+                    # any_errors_fatal has priority as more precisely targeted
+                    max_fail_percentage = 0
+                if max_fail_percentage is not None and len(results) > 0:
+                    percentage = max_fail_percentage / 100.0
 
                     if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
                         for host in hosts_left:
