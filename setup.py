@@ -360,7 +360,7 @@ static_setup_params = dict(
     url='https://ansible.com/',
     project_urls={
         'Bug Tracker': 'https://github.com/ansible/ansible/issues',
-        'CI: Shippable': 'https://app.shippable.com/github/ansible/ansible',
+        'CI: Azure Pipelines': 'https://dev.azure.com/ansible/ansible/',
         'Code of Conduct': 'https://docs.ansible.com/ansible/latest/community/code_of_conduct.html',
         'Documentation': 'https://docs.ansible.com/ansible/',
         'Mailing lists': 'https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information',
