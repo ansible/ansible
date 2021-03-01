@@ -44,7 +44,8 @@ def _module_setup():
         security_policyvers={},
         selinux_getenforcemode=dict(argtypes=[POINTER(c_int)]),
         security_getenforce={},
-        lsetfilecon=dict(argtypes=[_to_char_p, _to_char_p], restype=_check_rc)
+        lsetfilecon=dict(argtypes=[_to_char_p, _to_char_p], restype=_check_rc),
+        selinux_getpolicytype=dict(argtypes=[POINTER(c_char_p)], restype=_check_rc),
     )
 
     _thismod = sys.modules[__name__]
@@ -77,6 +78,15 @@ def selinux_getenforcemode():
     enforcemode = c_int()
     rc = _selinux_lib.selinux_getenforcemode(byref(enforcemode))
     return [rc, enforcemode.value]
+
+
+def selinux_getpolicytype():
+    con = c_char_p()
+    try:
+        rc = _selinux_lib.selinux_getpolicytype(byref(con))
+        return [rc, to_native(con.value)]
+    finally:
+        _selinux_lib.freecon(con)
 
 
 def lgetfilecon_raw(path):
