@@ -722,6 +722,7 @@ def test_fqcr_parsing_valid(ref, ref_type, expected_collection,
     ('fqcn', 'expected'),
     (
         ('ns1.coll2', True),
+        ('ns1#coll2', False),
         ('def.coll3', False),
         ('ns4.return', False),
         ('assert.this', False),
@@ -742,6 +743,7 @@ def test_fqcn_validation(fqcn, expected):
     [
         ('no_dots_at_all_action', 'action', ValueError, 'is not a valid collection reference'),
         ('no_nscoll.myaction', 'action', ValueError, 'is not a valid collection reference'),
+        ('no_nscoll%myaction', 'action', ValueError, 'is not a valid collection reference'),
         ('ns.coll.myaction', 'bogus', ValueError, 'invalid collection ref_type'),
     ])
 def test_fqcr_parsing_invalid(ref, ref_type, expected_error_type, expected_error_expression):

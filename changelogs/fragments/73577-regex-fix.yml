@@ -1,0 +1,2 @@
+bugfixes:
+  - Improved/fixed regular expressions in ``validate-modules/validate_modules/schema.py`` and ``utils/collection_loader/_collection_finder.py`` (https://github.com/ansible/ansible/pull/73577).
