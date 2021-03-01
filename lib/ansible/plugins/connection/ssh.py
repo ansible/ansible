@@ -1142,7 +1142,7 @@ class Connection(ConnectionBase):
         methods = []
 
         # Use the transfer_method option if set, otherwise use scp_if_ssh
-        ssh_transfer_method = self.get_option('ssh_transfer_method') or self._play_context.ssh_transfer_method
+        ssh_transfer_method = self.get_option('ssh_transfer_method')
         if ssh_transfer_method is not None:
             if ssh_transfer_method == 'smart':
                 methods = smart_methods
