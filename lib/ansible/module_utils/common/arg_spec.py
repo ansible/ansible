@@ -63,12 +63,12 @@ class ArgumentSpecValidator():
     :param required_together: List of lists of terms that are required together.
     :type: list, optional
 
-    :param required_one_of: List of lists of terms, on of which in each list
+    :param required_one_of: List of lists of terms, one of which in each list
         is required.
     :type: list, optional
 
     :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
-        one of [parameters] is required is ``parameter`` == ``value``.
+        one of [parameters] is required if ``parameter`` == ``value``.
     :type: list, optional
 
     :param required_by: Dictionary of parameter names that contain a list of
