@@ -6,17 +6,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
-# ansible-console is an interactive REPL shell for ansible
-# with built-in tab completion for all the documented modules
-#
-# Available commands:
-#  cd - change host/group (you can use host patterns eg.: app*.dc*:!app01*)
-#  list - list available hosts in the current path
-#  forks - change fork
-#  become - become
-#  ! - forces shell module instead of the ansible module (!yum update -y)
-
 import atexit
 import cmd
 import getpass
@@ -42,7 +31,30 @@ display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
-    ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
+    '''
+       A REPL that allows for running ad-hoc tasks against a chosen inventory
+       from a nice shell with built-in tab completion (based on dominis'
+       ansible-shell).
+
+       It supports several commands, and you can modify its configuration at
+       runtime:
+
+       - `cd [pattern]`: change host/group (you can use host patterns eg.: app*.dc*:!app01*)
+       - `list`: list available hosts in the current path
+       - `list groups`: list groups included in the current path
+       - `become`: toggle the become flag
+       - `!`: forces shell module instead of the ansible module (!yum update -y)
+       - `verbosity [num]`: set the verbosity level
+       - `forks [num]`: set the number of forks
+       - `become_user [user]`: set the become_user
+       - `remote_user [user]`: set the remote_user
+       - `become_method [method]`: set the privilege escalation method
+       - `check [bool]`: toggle check mode
+       - `diff [bool]`: toggle diff mode
+       - `timeout [integer]`: set the timeout of tasks in seconds (0 to disable)
+       - `help [command/module]`: display documentation for the command or module
+       - `exit`: exit ansible-console
+    '''
 
     modules = []
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
@@ -55,7 +67,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         super(ConsoleCLI, self).__init__(args)
 
-        self.intro = 'Welcome to the ansible console.\nType help or ? to list commands.\n'
+        self.intro = 'Welcome to the ansible console. Type help or ? to list commands.\n'
 
         self.groups = []
         self.hosts = []
@@ -82,7 +94,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def init_parser(self):
         super(ConsoleCLI, self).init_parser(
             desc="REPL console for executing Ansible tasks.",
-            epilog="This is not a live session/connection, each task executes in the background and returns it's results."
+            epilog="This is not a live session/connection: each task is executed in the background and returns its results."
         )
         opt_help.add_runas_options(self.parser)
         opt_help.add_inventory_options(self.parser)
@@ -112,7 +124,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def cmdloop(self):
         try:
             cmd.Cmd.cmdloop(self)
+
         except KeyboardInterrupt:
+            self.cmdloop()
+
+        except EOFError:
+            self.display("[Ansible-console was exited]")
             self.do_exit(self)
 
     def set_prompt(self):
@@ -344,22 +361,25 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.v("become_method changed to %s" % self.become_method)
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
+            display.v("Current become_method is %s" % self.become_method)
 
     def do_check(self, arg):
         """Toggle whether plays run with check mode"""
         if arg:
             self.check_mode = boolean(arg, strict=False)
-            display.v("check mode changed to %s" % self.check_mode)
+            display.display("check mode changed to %s" % self.check_mode)
         else:
             display.display("Please specify check mode value, e.g. `check yes`")
+            display.v("check mode is currently %s." % self.check_mode)
 
     def do_diff(self, arg):
         """Toggle whether plays run with diff"""
         if arg:
             self.diff = boolean(arg, strict=False)
-            display.v("diff mode changed to %s" % self.diff)
+            display.display("diff mode changed to %s" % self.diff)
         else:
             display.display("Please specify a diff value , e.g. `diff yes`")
+            display.v("diff mode is currently %s" % self.diff)
 
     def do_timeout(self, arg):
         """Set the timeout"""
@@ -377,7 +397,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def do_exit(self, args):
         """Exits from the console"""
-        sys.stdout.write('\n')
+        sys.stdout.write('\nAnsible-console was exited.\n')
         return -1
 
     do_EOF = do_exit
