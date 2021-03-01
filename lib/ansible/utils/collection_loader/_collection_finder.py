@@ -701,7 +701,7 @@ class AnsibleCollectionRef:
 
     # FIXME: tighten this up to match Python identifier reqs, etc
     VALID_SUBDIRS_RE = re.compile(to_text(r'^\w+(\.\w+)*$'))
-    VALID_FQCR_RE = re.compile(to_text(r'^\w+\.\w+\.\w+(\.\w+)*$'))  # can have 0-N included subdirs as well
+    VALID_FQCR_RE = re.compile(to_text(r'^\w+(\.\w+){2,}$'))  # can have 0-N included subdirs as well
 
     def __init__(self, collection_name, subdirs, resource, ref_type):
         """

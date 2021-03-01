@@ -45,7 +45,7 @@ def isodate(v, error_code=None):
     return v
 
 
-COLLECTION_NAME_RE = re.compile('^([^.]+.[^.]+)$')
+COLLECTION_NAME_RE = re.compile(r'^([^.]+(\.[^.]+)+)$')
 
 
 def collection_name(v, error_code=None):
