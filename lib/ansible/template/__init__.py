@@ -56,6 +56,7 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
+from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
@@ -974,58 +975,58 @@ class Templar:
     def _lookup(self, name, *args, **kwargs):
         instance = lookup_loader.get(name, loader=self._loader, templar=self)
 
-        if instance is not None:
-            wantlist = kwargs.pop('wantlist', False)
-            allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
-            errors = kwargs.pop('errors', 'strict')
-
-            from ansible.utils.listify import listify_lookup_plugin_terms
-            loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
-            # safely catch run failures per #5059
-            try:
-                ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
-            except (AnsibleUndefinedVariable, UndefinedError) as e:
-                raise AnsibleUndefinedVariable(e)
-            except Exception as e:
-                if self._fail_on_lookup_errors:
-                    msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
-                          (name, type(e), to_text(e))
-                    if errors == 'warn':
-                        display.warning(msg)
-                    elif errors == 'ignore':
-                        display.display(msg, log_only=True)
-                    else:
-                        raise AnsibleError(to_native(msg))
-                ran = [] if wantlist else None
-
-            if ran and not allow_unsafe:
-                if wantlist:
-                    ran = wrap_var(ran)
-                else:
-                    try:
-                        if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
-                            ran = wrap_var(NativeJinjaText(",".join(ran)))
-                        else:
-                            ran = wrap_var(",".join(ran))
-                    except TypeError:
-                        # Lookup Plugins should always return lists.  Throw an error if that's not
-                        # the case:
-                        if not isinstance(ran, Sequence):
-                            raise AnsibleError("The lookup plugin '%s' did not return a list."
-                                               % name)
-
-                        # The TypeError we can recover from is when the value *inside* of the list
-                        # is not a string
-                        if len(ran) == 1:
-                            ran = wrap_var(ran[0])
-                        else:
-                            ran = wrap_var(ran)
-
-                if self.cur_context:
-                    self.cur_context.unsafe = True
-            return ran
-        else:
+        if instance is None:
             raise AnsibleError("lookup plugin (%s) not found" % name)
+
+        wantlist = kwargs.pop('wantlist', False)
+        allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
+        errors = kwargs.pop('errors', 'strict')
+
+        loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
+        # safely catch run failures per #5059
+        try:
+            ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
+        except (AnsibleUndefinedVariable, UndefinedError) as e:
+            raise AnsibleUndefinedVariable(e)
+        except Exception as e:
+            if self._fail_on_lookup_errors:
+                msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
+                      (name, type(e), to_text(e))
+                if errors == 'warn':
+                    display.warning(msg)
+                elif errors == 'ignore':
+                    display.display(msg, log_only=True)
+                else:
+                    raise AnsibleError(to_native(msg))
+            return [] if wantlist else None
+
+        if ran and allow_unsafe is False:
+            if self.cur_context:
+                self.cur_context.unsafe = True
+
+            if wantlist:
+                return wrap_var(ran)
+
+            try:
+                if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
+                    ran = wrap_var(NativeJinjaText(",".join(ran)))
+                else:
+                    ran = wrap_var(",".join(ran))
+            except TypeError:
+                # Lookup Plugins should always return lists.  Throw an error if that's not
+                # the case:
+                if not isinstance(ran, Sequence):
+                    raise AnsibleError("The lookup plugin '%s' did not return a list."
+                                       % name)
+
+                # The TypeError we can recover from is when the value *inside* of the list
+                # is not a string
+                if len(ran) == 1:
+                    ran = wrap_var(ran[0])
+                else:
+                    ran = wrap_var(ran)
+
+        return ran
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
         if self.jinja2_native and not isinstance(data, string_types):
