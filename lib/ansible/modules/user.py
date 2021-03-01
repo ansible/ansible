@@ -250,6 +250,18 @@ options:
             - Supported on Linux only.
         type: int
         version_added: "2.11"
+    subuid:
+        description:
+            - UID range allocated for use by newuidmap.
+            - Supported on Linux only.
+            - Currently only C(subuid=present) is supported.
+        type: str
+    subgid:
+        description:
+            - GID range allocated for use by newgidmap.
+            - Supported on Linux only.
+            - Currently only C(subgid=present) is supported.
+        type: str
 
 notes:
   - There are specific requirements per platform on user management utilities. However
@@ -433,6 +445,16 @@ password_expire_min:
   returned: When user exists
   type: int
   sample: 20
+subuid:
+  description: UID range allocated for use by newuidmap
+  returned: When subuid range has been allocated
+  type: str
+  sample: 100000-165535
+subgid:
+  description: GID range allocated for use by newuidmap
+  returned: When subgid range has been allocated
+  type: str
+  sample: 100000-165535
 '''
 
 
@@ -488,6 +510,8 @@ class User(object):
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
+    SUBUID = '/etc/subuid'
+    SUBGID = '/etc/subgid'
 
     def __new__(cls, *args, **kwargs):
         new_cls = get_platform_subclass(User)
@@ -529,6 +553,8 @@ class User(object):
         self.role = module.params['role']
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
+        self.subuid = module.params['subuid']
+        self.subgid = module.params['subgid']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -1048,6 +1074,57 @@ class User(object):
             self.execute_command(cmd)
             self.module.exit_json(changed=True)
 
+    def find_new_id_range(self, id):
+        if id == 'uid':
+            min_label = 'SUB_UID_MIN'
+            max_label = 'SUB_UID_MAX'
+            count_label = 'SUB_UID_COUNT'
+            filename = self.SUBUID
+        else:
+            min_label = 'SUB_GID_MIN'
+            max_label = 'SUB_GID_MAX'
+            count_label = 'SUB_GID_COUNT'
+            filename = self.SUBGID
+        min_id = 100000
+        max_id = 600100000
+        count = 65536
+        new_id = min_id
+        new_max_id = min_id + count - 1
+        if os.path.exists(self.LOGIN_DEFS) and os.access(self.LOGIN_DEFS, os.R_OK):
+            with open(self.LOGIN_DEFS, 'r') as f:
+                for line in f:
+                    if line.startswith(min_label):
+                        min_id = int(line.split()[1])
+                    if line.startswith(max_label):
+                        max_id = int(line.split()[1])
+                    if line.startswith(count_label):
+                        count = int(line.split()[1])
+        if os.path.exists(filename) and os.access(filename, os.R_OK):
+            with open(filename, 'r') as f:
+                for line in f:
+                    f_subid = int(line.split(':')[1])
+                    f_count = int(line.split(':')[2])
+                    if (f_subid + f_count) > new_id:
+                        new_id = f_subid + f_count
+                        new_max_id = new_id + count - 1
+        return new_id, new_max_id
+
+    def set_subuid(self):
+        command_name = 'usermod'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('--add-subuids')
+        cmd.append('{}-{}'.format(*self.find_new_id_range('uid')))
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+
+    def set_subgid(self):
+        command_name = 'usermod'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('--add-subgids')
+        cmd.append('{}-{}'.format(*self.find_new_id_range('gid')))
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+
     def user_password(self):
         passwd = ''
         expires = ''
@@ -1083,6 +1160,17 @@ class User(object):
                         passwd = line.split(':')[1]
                         expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
+
+    def parse_subid(self, filename):
+        subid = ''
+        count = ''
+        if os.path.exists(filename) and os.access(filename, os.R_OK):
+            with open(filename, 'r') as f:
+                for line in f:
+                    if line.startswith('%s:' % self.name):
+                        subid = int(line.split(':')[1])
+                        count = int(line.split(':')[2])
+        return subid, count
 
     def get_ssh_key_path(self):
         info = self.user_info()
@@ -3018,6 +3106,8 @@ def main():
             login_class=dict(type='str'),
             password_expire_max=dict(type='int', no_log=False),
             password_expire_min=dict(type='int', no_log=False),
+            subuid=dict(type='str'),
+            subgid=dict(type='str'),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
@@ -3156,6 +3246,40 @@ def main():
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
+
+        # deal with subuid
+        if user.subuid:
+            if user.user_exists():
+                subid, count = user.parse_subid(user.SUBUID)
+                if subid and count:
+                    result['subuid'] = '{0}-{1}'.format(subid, subid + count - 1)
+                else:
+                    result['subuid'] = 'absent'
+                    if user.subuid == 'present':
+                        (rc, out, err) = user.set_subuid()
+                        if rc == 0:
+                            subid, count = user.parse_subid(user.SUBUID)
+                            result['subuid'] = '{0}-{1}'.format(subid, subid + count - 1)
+                        else:
+                            result['subuid'] = err.strip()
+                        result['changed'] = True
+
+        # deal with subgid
+        if user.subgid:
+            if user.user_exists():
+                subid, count = user.parse_subid(user.SUBGID)
+                if subid and count:
+                    result['subgid'] = '{0}-{1}'.format(subid, subid + count - 1)
+                else:
+                    result['subgid'] = 'absent'
+                    if user.subgid == 'present':
+                        (rc, out, err) = user.set_subgid()
+                        if rc == 0:
+                            subid, count = user.parse_subid(user.SUBGID)
+                            result['subgid'] = '{0}-{1}'.format(subid, subid + count - 1)
+                        else:
+                            result['subgid'] = err.strip()
+                        result['changed'] = True
 
     # deal with password expire max
     if user.password_expire_max:
