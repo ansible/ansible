@@ -144,7 +144,7 @@ class ArgumentSpecValidator():
         validator = ArgumentSpecValidator(argument_spec, parameters)
         passed = validator.validate()
         if not passed:
-            sys.exit("Validation failed: {0}".format(", ".join(validator.error_messages), name='name', kind='module'))
+            sys.exit("Validation failed: {0}".format(", ".join(validator.error_messages).format(name='name', kind='module'))
 
         valid_params = validator.validated_parameters
 
