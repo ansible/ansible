@@ -138,7 +138,7 @@ def incidental_report(args):
 
     if coverage_data.missing_jobs or coverage_data.extra_jobs:
         check_failed(args, 'unexpected results from Shippable -- missing jobs: %s, extra jobs: %s\n'
-                           'make sure the tests were successfull and the all results were downloaded\n' % (
+                           'make sure the tests were successful and the all results were downloaded\n' % (
                                sorted(coverage_data.missing_jobs), sorted(coverage_data.extra_jobs)))
 
     if not coverage_data.paths:
