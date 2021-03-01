@@ -1,7 +1,7 @@
 import
 ======
 
-Ansible allows unchecked imports of some libraries from specific directories, listed at the bottom of this section. This allows Ansible to give better error messages to the user, and is a requirement for other sanity tests (such as ``validate-modules``). Import all other Python libraries in a try/except ImportError block as follows:
+Ansible allows unchecked imports of some libraries from specific directories, listed at the bottom of this section. Import all other Python libraries in a try/except ImportError block to support sanity tests such as ``validate-modules`` and to allow Ansible to give better error messages to the user. To import a library in a try/except ImportError block:
 
 1. In modules:
 
