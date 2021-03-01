@@ -232,6 +232,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.host = "some_host"
 
         conn.set_option('retries', 9)
+        conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
 
         # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
