@@ -1,0 +1,137 @@
+---
+name: 🐛 Bug report
+description: Create a report to help us improve
+issue_body: false  # default: true, adds a classic WSYWIG textarea, if on
+
+body:
+- type: markdown
+  attributes:
+    value: |
+      ⚠
+      Verify first that your issue is not [already reported on GitHub][issue search].
+      Also test if the latest release and devel branch are affected too.
+      *Complete **all** sections as described, this form is processed automatically.*
+
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
+
+
+- type: textarea
+  attributes:
+    label: SUMMARY
+    description: Explain the problem briefly below.
+    placeholder: >-
+      When I try to do X with ansible-core from the devel branch on GitHub, Y
+      breaks in a way Z under the env E. Here are all the details I know
+      about this problem...
+  validations:
+    required: true
+
+- type: dropdown
+  attributes:
+    label: ISSUE TYPE
+    # FIXME: Once GitHub allows defining the default choice, update this
+    options:
+    - Bug Report
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: COMPONENT NAME
+    description: >-
+      Write the short name of the module, plugin, task or feature below,
+      *use your best guess if unsure*.
+    placeholder: dnf, apt, yum, pip, user etc.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: ANSIBLE VERSION
+    description: >-
+      Paste verbatim output from `ansible --version` between
+      tripple backticks.
+    value: |
+      ```console (paste below)
+      $ ansible --version
+
+      ```
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: CONFIGURATION
+    description: >-
+      Paste verbatim output from `ansible-config dump --only-changed` between quotes.
+    value: |
+      ```console (paste below)
+      $ ansible-config dump --only-changed
+
+      ```
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: OS / ENVIRONMENT
+    description: >-
+      Provide all relevant information below, e.g. target OS versions,
+      network device firmware, etc.
+    placeholder: RHEL 8, CentOS Stream etc.
+  validations:
+    required: true
+
+
+- type: textarea
+  attributes:
+    label: STEPS TO REPRODUCE
+    description: |
+      Describe exactly how to reproduce the problem, using a minimal test-case. It would *really* help us understand your problem if you could also pased any playbooks, configs and commands you used.
+
+      **HINT:** You can paste https://gist.github.com links for larger files.
+    value: |
+      <!--- Paste example playbooks or commands between quotes below -->
+      ```yaml (paste below)
+
+      ```
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: EXPECTED RESULTS
+    description: >-
+      Describe what you expected to happen when running the steps above.
+    placeholder: >-
+      I expected X to happen because I assumed Y and was shocked
+      that it did not.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: ACTUAL RESULTS
+    description: |
+      Describe what actually happened. If possible run with extra verbosity (`-vvvv`).
+
+      Paste verbatim command output between quotes.
+    value: |
+      ```console (paste below)
+
+      ```
+  validations:
+    required: true
+
+
+- type: checkboxes
+  attributes:
+    label: Code of Conduct
+    description: |
+      Read the [Ansible Code of Conduct][CoC] first.
+
+      [CoC]: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--bug_report.yml
+    options:
+    - label: I agree to follow the Ansible Code of Conduct
+      required: true
+...
