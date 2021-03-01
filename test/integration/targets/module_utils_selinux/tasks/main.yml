@@ -27,7 +27,7 @@
 - assert:
     that:
     - selinux_facts is success and selinux_facts.ansible_facts.ansible_selinux is defined
-    - (selinux_facts.ansible_facts.ansible_selinux.status == 'disabled' if selinux_state is not success else True)
+    - (selinux_facts.ansible_facts.ansible_selinux.status in ['disabled', 'Missing selinux Python library'] if selinux_state is not success else True)
     - (selinux_facts.ansible_facts.ansible_selinux.status == 'enabled' if selinux_state is success else True)
     - (selinux_facts.ansible_facts.ansible_selinux.mode in ['enforcing', 'permissive'] if selinux_state is success else True)
     - (selinux_facts.ansible_facts.ansible_selinux.type == selinux_policytype if selinux_state is success else True)
