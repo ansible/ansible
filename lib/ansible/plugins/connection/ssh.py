@@ -707,7 +707,7 @@ class Connection(ConnectionBase):
             attr = self.get_option(opt)
             if attr is not None:
                 b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
-                self._add_args(b_command, b_args, u"PlayContext set %s" % opt)
+                self._add_args(b_command, b_args, u"Set %s" % opt)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
         # already been set.
