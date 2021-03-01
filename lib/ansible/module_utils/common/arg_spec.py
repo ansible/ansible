@@ -90,12 +90,12 @@ class ArgumentSpecValidator():
         self._validated_parameters = deepcopy(parameters)  # Make a copy of the original parameters to avoid changing them
         self._valid_parameter_names = []
         self._unsupported_parameters = set()
+        self._mutually_exclusive = mutually_exclusive
+        self._required_together = required_together
+        self._required_one_of = required_one_of
+        self._required_if = required_if
+        self._required_by = required_by
         self.argument_spec = argument_spec
-        self.mutually_exclusive = mutually_exclusive
-        self.required_together = required_together
-        self.required_one_of = required_one_of
-        self.required_if = required_if
-        self.required_by = required_by
 
     @property
     def error_messages(self):
@@ -184,7 +184,7 @@ class ArgumentSpecValidator():
         self._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, self._validated_parameters, legal_inputs))
 
         try:
-            check_mutually_exclusive(self.mutually_exclusive, self._validated_parameters)
+            check_mutually_exclusive(self._mutually_exclusive, self._validated_parameters)
         except TypeError as te:
             self._add_error(to_native(te))
 
@@ -199,10 +199,10 @@ class ArgumentSpecValidator():
         validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
 
         checks = (
-            {'func': check_required_together, 'attr': getattr(self, 'required_together')},
-            {'func': check_required_one_of, 'attr': getattr(self, 'required_one_of')},
-            {'func': check_required_if, 'attr': getattr(self, 'required_if')},
-            {'func': check_required_by, 'attr': getattr(self, 'required_by')},
+            {'func': check_required_together, 'attr': getattr(self, '_required_together')},
+            {'func': check_required_one_of, 'attr': getattr(self, '_required_one_of')},
+            {'func': check_required_if, 'attr': getattr(self, '_required_if')},
+            {'func': check_required_by, 'attr': getattr(self, '_required_by')},
         )
 
         for check in checks:
