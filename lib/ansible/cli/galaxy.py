@@ -370,7 +370,7 @@ class GalaxyCLI(CLI):
     def add_refresh_token_options(self, parser, parents=None):
         galaxy_type = 'collection'
         refresh_parser = parser.add_parser('refresh-token', parents=parents,
-                                           help='Refresh the Automation Hub access token')
+                                           help='Refresh the Automation Hub access tokens for all servers')
         refresh_parser.set_defaults(func=self.execute_refresh_token)
 
     def add_install_options(self, parser, parents=None):
