@@ -157,19 +157,9 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
-    _remove_values_conditions,
-    _sanitize_keys_conditions,
-    _validate_argument_types,
-    sanitize_keys,
     env_fallback,
-    get_unsupported_parameters,
-    get_type_validator,
-    handle_aliases,
-    list_deprecations,
-    list_no_log_values,
     remove_values,
-    set_defaults,
-    set_fallbacks,
+    sanitize_keys,
     AnsibleFallbackNotFound,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
@@ -189,24 +179,6 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
-    check_mutually_exclusive,
-    check_required_arguments,
-    check_required_by,
-    check_required_if,
-    check_required_one_of,
-    check_required_together,
-    count_terms,
-    check_type_bool,
-    check_type_bits,
-    check_type_bytes,
-    check_type_float,
-    check_type_int,
-    check_type_jsonarg,
-    check_type_list,
-    check_type_dict,
-    check_type_path,
-    check_type_raw,
-    check_type_str,
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
