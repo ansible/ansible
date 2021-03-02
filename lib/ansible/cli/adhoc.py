@@ -52,6 +52,8 @@ class AdHocCLI(CLI):
         self.parser.add_argument('-m', '--module-name', dest='module_name',
                                  help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
+        self.parser.add_argument('--env', dest='environment', action='append',
+                                 help='Environment vars to use in executing the module')
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
     def post_process_args(self, options):
@@ -67,8 +69,12 @@ class AdHocCLI(CLI):
     def _play_ds(self, pattern, async_val, poll):
         check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
+        environment = {}
+        for env in context.CLIARGS['environment']:
+            environment.update(parse_kv(env))
+
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
-                  'timeout': context.CLIARGS['task_timeout']}
+                  'timeout': context.CLIARGS['task_timeout'], 'environment': environment}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):
