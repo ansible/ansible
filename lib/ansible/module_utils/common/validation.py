@@ -39,6 +39,34 @@ def count_terms(terms, parameters):
     return len(set(terms).intersection(parameters))
 
 
+def safe_eval(value, locals=None, include_exceptions=False):
+    # do not allow method calls to modules
+    if not isinstance(value, string_types):
+        # already templated to a datavaluestructure, perhaps?
+        if include_exceptions:
+            return (value, None)
+        return value
+    if re.search(r'\w\.\w+\(', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    # do not allow imports
+    if re.search(r'import \w+', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    try:
+        result = literal_eval(value)
+        if include_exceptions:
+            return (result, None)
+        else:
+            return result
+    except Exception as e:
+        if include_exceptions:
+            return (value, e)
+        return value
+
+
 def check_mutually_exclusive(terms, parameters, options_context=None):
     """Check mutually exclusive terms against argument parameters
 
@@ -314,34 +342,6 @@ def check_missing_parameters(parameters, required_parameters=None):
         raise TypeError(to_native(msg))
 
     return missing_params
-
-
-def safe_eval(value, locals=None, include_exceptions=False):
-    # do not allow method calls to modules
-    if not isinstance(value, string_types):
-        # already templated to a datavaluestructure, perhaps?
-        if include_exceptions:
-            return (value, None)
-        return value
-    if re.search(r'\w\.\w+\(', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    # do not allow imports
-    if re.search(r'import \w+', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    try:
-        result = literal_eval(value)
-        if include_exceptions:
-            return (result, None)
-        else:
-            return result
-    except Exception as e:
-        if include_exceptions:
-            return (value, e)
-        return value
 
 
 # FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
