@@ -52,7 +52,7 @@ class AdHocCLI(CLI):
         self.parser.add_argument('-m', '--module-name', dest='module_name',
                                  help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
-        self.parser.add_argument('--env', dest='environment', action='append',
+        self.parser.add_argument('--env', dest='environment', action='append', default=[],
                                  help='Environment vars to use in executing the module')
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
