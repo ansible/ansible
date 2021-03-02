@@ -252,6 +252,10 @@ You can use the Infoblox dynamic inventory script to import your network node in
 
 - `infoblox.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
 
+.. note::
+
+    Please note that the inventory script only works when Ansible 2.9, 2.10 or 3 have been installed. The inventory script will eventually be removed from `community.general <https://galaxy.ansible.com/community/general>`_, and will not work if `community.general` is only installed with `ansible-galaxy collection install`. Please use the inventory plugin from `infoblox.nios_modules <https://galaxy.ansible.com/infoblox/nios_modules>`_ instead.
+
 To use the Infoblox dynamic inventory script:
 
 #. Download the ``infoblox.yaml`` file and save it in the ``/etc/ansible`` directory.
