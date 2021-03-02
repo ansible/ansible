@@ -255,6 +255,259 @@ def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_remov
     raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
+def _validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
+
+    if errors is None:
+        errors = []
+
+    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    validated_parameters = []
+    # Get param name for strings so we can later display this value in a useful error message if needed
+    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+    kwargs = {}
+    if wanted_element_type == 'str' and isinstance(wanted_type, string_types):
+        if isinstance(parameter, string_types):
+            kwargs['param'] = parameter
+        elif isinstance(parameter, dict):
+            kwargs['param'] = list(parameter.keys())[0]
+
+    for value in values:
+        try:
+            validated_parameters.append(type_checker(value, **kwargs))
+        except (TypeError, ValueError) as e:
+            msg = "Elements value for option '%s'" % parameter
+            if options_context:
+                msg += " found in '%s'" % " -> ".join(options_context)
+            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
+            errors.append(msg)
+    return validated_parameters
+
+
+def _validate_argument_types(argument_spec, parameters, prefix='', options_context=None, errors=None):
+    """Validate that parameter types match the type in the argument spec.
+
+    Determine the appropriate type checker function and run each
+    parameter value through that function. All error messages from type checker
+    functions are returned. If any parameter fails to validate, it will not
+    be in the returned parameters.
+
+    :param argument_spec: Argument spec
+    :type argument_spec: dict
+
+    :param parameters: Parameters passed to module
+    :type parameters: dict
+
+    :param prefix: Name of the parent key that contains the spec. Used in the error message
+    :type prefix: str
+
+    :param options_context: List of contexts?
+    :type options_context: list
+
+    :returns: Two item tuple containing validated and coerced parameters
+              and a list of any errors that were encountered.
+    :rtype: tuple
+
+    """
+
+    if errors is None:
+        errors = []
+
+    for param, spec in argument_spec.items():
+        if param not in parameters:
+            continue
+
+        value = parameters[param]
+        if value is None:
+            continue
+
+        wanted_type = spec.get('type')
+        type_checker, wanted_name = get_type_validator(wanted_type)
+        # Get param name for strings so we can later display this value in a useful error message if needed
+        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+        kwargs = {}
+        if wanted_name == 'str' and isinstance(wanted_type, string_types):
+            kwargs['param'] = list(parameters.keys())[0]
+
+            # Get the name of the parent key if this is a nested option
+            if prefix:
+                kwargs['prefix'] = prefix
+
+        try:
+            parameters[param] = type_checker(value, **kwargs)
+            elements_wanted_type = spec.get('elements', None)
+            if elements_wanted_type:
+                elements = parameters[param]
+                if wanted_type != 'list' or not isinstance(elements, list):
+                    msg = "Invalid type %s for option '%s'" % (wanted_name, elements)
+                    if options_context:
+                        msg += " found in '%s'." % " -> ".join(options_context)
+                    msg += ", elements value check is supported only with 'list' type"
+                    errors.append(msg)
+                parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors)
+
+        except (TypeError, ValueError) as e:
+            msg = "argument '%s' is of type %s" % (param, type(value))
+            if options_context:
+                msg += " found in '%s'." % " -> ".join(options_context)
+            msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
+            errors.append(msg)
+
+
+def _validate_argument_values(argument_spec, parameters, options_context=None, errors=None):
+    """Ensure all arguments have the requested values, and there are no stray arguments"""
+
+    if errors is None:
+        errors = []
+
+    for param, spec in argument_spec.items():
+        choices = spec.get('choices')
+        if choices is None:
+            continue
+
+        if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
+            if param in parameters:
+                # Allow one or more when type='list' param with choices
+                if isinstance(parameters[param], list):
+                    diff_list = ", ".join([item for item in parameters[param] if item not in choices])
+                    if diff_list:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
+                        if options_context:
+                            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
+                        errors.append(msg)
+                elif parameters[param] not in choices:
+                    # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
+                    # the value. If we can't figure this out, module author is responsible.
+                    lowered_choices = None
+                    if parameters[param] == 'False':
+                        lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_FALSE.intersection(choices)
+                        if len(overlap) == 1:
+                            # Extract from a set
+                            (parameters[param],) = overlap
+
+                    if parameters[param] == 'True':
+                        if lowered_choices is None:
+                            lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_TRUE.intersection(choices)
+                        if len(overlap) == 1:
+                            (parameters[param],) = overlap
+
+                    if parameters[param] not in choices:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
+                        if options_context:
+                            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
+                        errors.append(msg)
+        else:
+            msg = "internal error: choices for argument %s are not iterable: %s" % (param, choices)
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
+            errors.append(msg)
+
+
+def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
+    """Validate sub argument spec. This function is recursive."""
+
+    if options_context is None:
+        options_context = []
+
+    if errors is None:
+        errors = []
+
+    if no_log_values is None:
+        no_log_values = set()
+
+    if unsupported_parameters is None:
+        unsupported_parameters = set()
+
+    for param, value in argument_spec.items():
+        wanted = value.get('type')
+        if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == 'dict'):
+            sub_spec = value.get('options')
+            if value.get('apply_defaults', False):
+                if sub_spec is not None:
+                    if parameters.get(param) is None:
+                        parameters[param] = {}
+                    else:
+                        continue
+            elif sub_spec is None or param not in parameters or parameters[param] is None:
+                continue
+
+            # Keep track of context for warning messages
+            options_context.append(param)
+
+            # Make sure we can iterate over the elements
+            if isinstance(parameters[param], dict):
+                elements = [parameters[param]]
+            else:
+                elements = parameters[param]
+
+            for idx, sub_parameters in enumerate(elements):
+                if not isinstance(sub_parameters, dict):
+                    errors.append("value of '%s' must be of type dict or list of dicts" % param)
+
+                # Set prefix for warning messages
+                new_prefix = prefix + param
+                if wanted == 'list':
+                    new_prefix += '[%d]' % idx
+                new_prefix += '.'
+
+                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
+
+                alias_warnings = []
+                try:
+                    options_aliases, legal_inputs = handle_aliases(sub_spec, sub_parameters, alias_warnings)
+                except (TypeError, ValueError) as e:
+                    options_aliases = {}
+                    legal_inputs = None
+                    errors.append(to_native(e))
+
+                for option, alias in alias_warnings:
+                    warn('Both option %s and its alias %s are set.' % (option, alias))
+
+                no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
+
+                if legal_inputs is None:
+                    legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
+                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
+
+                try:
+                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
+                except TypeError as e:
+                    errors.append(to_native(e))
+
+                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
+
+                try:
+                    check_required_arguments(sub_spec, sub_parameters, options_context)
+                except TypeError as e:
+                    errors.append(to_native(e))
+
+                _validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
+                _validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
+
+                checks = (
+                    {'func': check_required_together, 'attr': 'required_together'},
+                    {'func': check_required_one_of, 'attr': 'required_one_of'},
+                    {'func': check_required_if, 'attr': 'required_if'},
+                    {'func': check_required_by, 'attr': 'required_by'},
+                )
+
+                for check in checks:
+                    try:
+                        check['func'](value.get(check['attr']), sub_parameters, options_context)
+                    except TypeError as e:
+                        errors.append(to_native(e))
+
+                no_log_values.update(set_defaults(sub_spec, sub_parameters))
+
+                # Handle nested specs
+                _validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
+
+            options_context.pop()
+
+
 def env_fallback(*args, **kwargs):
     """Load value from environment variable"""
 
@@ -602,256 +855,3 @@ def get_type_validator(wanted):
         wanted = getattr(wanted, '__name__', to_native(type(wanted)))
 
     return type_checker, wanted
-
-
-def validate_elements(wanted_type, parameter, values, options_context=None, errors=None):
-
-    if errors is None:
-        errors = []
-
-    type_checker, wanted_element_type = get_type_validator(wanted_type)
-    validated_parameters = []
-    # Get param name for strings so we can later display this value in a useful error message if needed
-    # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-    kwargs = {}
-    if wanted_element_type == 'str' and isinstance(wanted_type, string_types):
-        if isinstance(parameter, string_types):
-            kwargs['param'] = parameter
-        elif isinstance(parameter, dict):
-            kwargs['param'] = list(parameter.keys())[0]
-
-    for value in values:
-        try:
-            validated_parameters.append(type_checker(value, **kwargs))
-        except (TypeError, ValueError) as e:
-            msg = "Elements value for option '%s'" % parameter
-            if options_context:
-                msg += " found in '%s'" % " -> ".join(options_context)
-            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
-            errors.append(msg)
-    return validated_parameters
-
-
-def validate_argument_types(argument_spec, parameters, prefix='', options_context=None, errors=None):
-    """Validate that parameter types match the type in the argument spec.
-
-    Determine the appropriate type checker function and run each
-    parameter value through that function. All error messages from type checker
-    functions are returned. If any parameter fails to validate, it will not
-    be in the returned parameters.
-
-    :param argument_spec: Argument spec
-    :type argument_spec: dict
-
-    :param parameters: Parameters passed to module
-    :type parameters: dict
-
-    :param prefix: Name of the parent key that contains the spec. Used in the error message
-    :type prefix: str
-
-    :param options_context: List of contexts?
-    :type options_context: list
-
-    :returns: Two item tuple containing validated and coerced parameters
-              and a list of any errors that were encountered.
-    :rtype: tuple
-
-    """
-
-    if errors is None:
-        errors = []
-
-    for param, spec in argument_spec.items():
-        if param not in parameters:
-            continue
-
-        value = parameters[param]
-        if value is None:
-            continue
-
-        wanted_type = spec.get('type')
-        type_checker, wanted_name = get_type_validator(wanted_type)
-        # Get param name for strings so we can later display this value in a useful error message if needed
-        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
-        kwargs = {}
-        if wanted_name == 'str' and isinstance(wanted_type, string_types):
-            kwargs['param'] = list(parameters.keys())[0]
-
-            # Get the name of the parent key if this is a nested option
-            if prefix:
-                kwargs['prefix'] = prefix
-
-        try:
-            parameters[param] = type_checker(value, **kwargs)
-            elements_wanted_type = spec.get('elements', None)
-            if elements_wanted_type:
-                elements = parameters[param]
-                if wanted_type != 'list' or not isinstance(elements, list):
-                    msg = "Invalid type %s for option '%s'" % (wanted_name, elements)
-                    if options_context:
-                        msg += " found in '%s'." % " -> ".join(options_context)
-                    msg += ", elements value check is supported only with 'list' type"
-                    errors.append(msg)
-                parameters[param] = validate_elements(elements_wanted_type, param, elements, options_context, errors)
-
-        except (TypeError, ValueError) as e:
-            msg = "argument '%s' is of type %s" % (param, type(value))
-            if options_context:
-                msg += " found in '%s'." % " -> ".join(options_context)
-            msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
-            errors.append(msg)
-
-
-def validate_argument_values(argument_spec, parameters, options_context=None, errors=None):
-    """Ensure all arguments have the requested values, and there are no stray arguments"""
-
-    if errors is None:
-        errors = []
-
-    for param, spec in argument_spec.items():
-        choices = spec.get('choices')
-        if choices is None:
-            continue
-
-        if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
-            if param in parameters:
-                # Allow one or more when type='list' param with choices
-                if isinstance(parameters[param], list):
-                    diff_list = ", ".join([item for item in parameters[param] if item not in choices])
-                    if diff_list:
-                        choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
-                        if options_context:
-                            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-                        errors.append(msg)
-                elif parameters[param] not in choices:
-                    # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
-                    # the value. If we can't figure this out, module author is responsible.
-                    lowered_choices = None
-                    if parameters[param] == 'False':
-                        lowered_choices = lenient_lowercase(choices)
-                        overlap = BOOLEANS_FALSE.intersection(choices)
-                        if len(overlap) == 1:
-                            # Extract from a set
-                            (parameters[param],) = overlap
-
-                    if parameters[param] == 'True':
-                        if lowered_choices is None:
-                            lowered_choices = lenient_lowercase(choices)
-                        overlap = BOOLEANS_TRUE.intersection(choices)
-                        if len(overlap) == 1:
-                            (parameters[param],) = overlap
-
-                    if parameters[param] not in choices:
-                        choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
-                        if options_context:
-                            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-                        errors.append(msg)
-        else:
-            msg = "internal error: choices for argument %s are not iterable: %s" % (param, choices)
-            if options_context:
-                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-            errors.append(msg)
-
-
-def validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
-    """Validate sub argument spec. This function is recursive."""
-
-    if options_context is None:
-        options_context = []
-
-    if errors is None:
-        errors = []
-
-    if no_log_values is None:
-        no_log_values = set()
-
-    if unsupported_parameters is None:
-        unsupported_parameters = set()
-
-    for param, value in argument_spec.items():
-        wanted = value.get('type')
-        if wanted == 'dict' or (wanted == 'list' and value.get('elements', '') == 'dict'):
-            sub_spec = value.get('options')
-            if value.get('apply_defaults', False):
-                if sub_spec is not None:
-                    if parameters.get(param) is None:
-                        parameters[param] = {}
-                    else:
-                        continue
-            elif sub_spec is None or param not in parameters or parameters[param] is None:
-                continue
-
-            # Keep track of context for warning messages
-            options_context.append(param)
-
-            # Make sure we can iterate over the elements
-            if isinstance(parameters[param], dict):
-                elements = [parameters[param]]
-            else:
-                elements = parameters[param]
-
-            for idx, sub_parameters in enumerate(elements):
-                if not isinstance(sub_parameters, dict):
-                    errors.append("value of '%s' must be of type dict or list of dicts" % param)
-
-                # Set prefix for warning messages
-                new_prefix = prefix + param
-                if wanted == 'list':
-                    new_prefix += '[%d]' % idx
-                new_prefix += '.'
-
-                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
-
-                alias_warnings = []
-                try:
-                    options_aliases, legal_inputs = handle_aliases(sub_spec, sub_parameters, alias_warnings)
-                except (TypeError, ValueError) as e:
-                    options_aliases = {}
-                    legal_inputs = None
-                    errors.append(to_native(e))
-
-                for option, alias in alias_warnings:
-                    warn('Both option %s and its alias %s are set.' % (option, alias))
-
-                no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
-
-                if legal_inputs is None:
-                    legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
-                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
-
-                try:
-                    check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
-                except TypeError as e:
-                    errors.append(to_native(e))
-
-                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
-
-                try:
-                    check_required_arguments(sub_spec, sub_parameters, options_context)
-                except TypeError as e:
-                    errors.append(to_native(e))
-
-                validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
-                validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
-
-                checks = (
-                    {'func': check_required_together, 'attr': 'required_together'},
-                    {'func': check_required_one_of, 'attr': 'required_one_of'},
-                    {'func': check_required_if, 'attr': 'required_if'},
-                    {'func': check_required_by, 'attr': 'required_by'},
-                )
-
-                for check in checks:
-                    try:
-                        check['func'](value.get(check['attr']), sub_parameters, options_context)
-                    except TypeError as e:
-                        errors.append(to_native(e))
-
-                no_log_values.update(set_defaults(sub_spec, sub_parameters))
-
-                # Handle nested specs
-                validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
-
-            options_context.pop()

@@ -159,6 +159,7 @@ from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     _remove_values_conditions,
     _sanitize_keys_conditions,
+    _validate_argument_types,
     sanitize_keys,
     env_fallback,
     get_unsupported_parameters,
@@ -169,7 +170,6 @@ from ansible.module_utils.common.parameters import (
     remove_values,
     set_defaults,
     set_fallbacks,
-    validate_argument_types,
     AnsibleFallbackNotFound,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,

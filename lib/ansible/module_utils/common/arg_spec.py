@@ -12,15 +12,15 @@ from ansible.module_utils.common._collections_compat import (
 )
 
 from ansible.module_utils.common.parameters import (
+    _validate_argument_types,
+    _validate_argument_values,
+    _validate_sub_spec,
     get_unsupported_parameters,
     handle_aliases,
     list_no_log_values,
     remove_values,
     set_defaults,
     set_fallbacks,
-    validate_argument_types,
-    validate_argument_values,
-    validate_sub_spec,
 )
 
 from ansible.module_utils.common.text.converters import to_native
@@ -195,8 +195,8 @@ class ArgumentSpecValidator():
         except TypeError as e:
             self._add_error(to_native(e))
 
-        validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._error_messages)
-        validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
+        _validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._error_messages)
+        _validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
 
         checks = (
             {'func': check_required_together, 'attr': getattr(self, '_required_together')},
@@ -214,10 +214,10 @@ class ArgumentSpecValidator():
 
         self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
 
-        validate_sub_spec(self.argument_spec, self._validated_parameters,
-                          errors=self._error_messages,
-                          no_log_values=self._no_log_values,
-                          unsupported_parameters=self._unsupported_parameters)
+        _validate_sub_spec(self.argument_spec, self._validated_parameters,
+                           errors=self._error_messages,
+                           no_log_values=self._no_log_values,
+                           unsupported_parameters=self._unsupported_parameters)
 
         if self._unsupported_parameters:
             flattened_names = []
