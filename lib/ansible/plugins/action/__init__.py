@@ -1149,6 +1149,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _parse_returned_data(self, res):
         try:
             data, warnings = load_json(res.get('stdout', u''))
+            for w in warnings:
+                 display.warning(w)
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
