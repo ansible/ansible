@@ -74,12 +74,17 @@ class AdHocCLI(CLI):
             environment.update(parse_kv(env))
 
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
-                  'timeout': context.CLIARGS['task_timeout'], 'environment': environment}
+                  'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):
-            mytask['async_val'] = async_val
-            mytask['poll'] = poll
+        if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS:
+            if any(frozenset((async_val, poll))):
+                mytask['async_val'] = async_val
+                mytask['poll'] = poll
+            if environment:
+                mytask['environment'] = environment
+        elif environment:
+                mytask['action']['args']['apply'] = {'environment': environment}
 
         return dict(
             name="Ansible Ad-Hoc",
