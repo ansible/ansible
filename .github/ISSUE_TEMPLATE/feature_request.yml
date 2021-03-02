@@ -17,7 +17,7 @@ body:
 
 - type: textarea
   attributes:
-    label: SUMMARY
+    label: Summary
     description: Describe the new feature/improvement briefly below.
     placeholder: >-
       I am trying to do X with ansible-core from the devel branch on GitHub and
@@ -28,7 +28,7 @@ body:
 
 - type: dropdown
   attributes:
-    label: ISSUE TYPE
+    label: Issue Type
     # FIXME: Once GitHub allows defining the default choice, update this
     options:
     - Feature Idea
@@ -37,7 +37,7 @@ body:
 
 - type: input
   attributes:
-    label: COMPONENT NAME
+    label: Component Type
     description: >-
       Write the short name of the module, plugin, task or feature below,
       *use your best guess if unsure*.
@@ -47,7 +47,7 @@ body:
 
 - type: textarea
   attributes:
-    label: ADDITIONAL INFORMATION
+    label: Additional Information
     description: |
       Describe how the feature would be used, why it is needed and what it would solve.
 
