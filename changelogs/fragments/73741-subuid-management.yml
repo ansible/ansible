@@ -1,0 +1,4 @@
+minor_changes:
+  - >-
+    support ``subuid`` and ``subgid`` attributes for users on Linux
+    (https://github.com/ansible/ansible/issues/68199)
