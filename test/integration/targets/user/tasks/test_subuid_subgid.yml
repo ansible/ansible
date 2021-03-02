@@ -1,0 +1,44 @@
+# https://github.com/ansible/ansible/issues/68199
+- name: Test setting subuid and subgid
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  block:
+    - name: create user
+      user:
+        name: ansibulluser
+        state: present
+
+    - name: add subuid
+      user:
+        name: ansibulluser
+        subuid: present
+      register: subuid_1_0
+
+    - name: again add subuid
+      user:
+        name: ansibulluser
+        subuid: present
+      register: subuid_1_1
+
+    - name: validate result for subuid
+      assert:
+        that:
+          - subuid_1_0 is changed
+          - subuid_1_1 is not changed
+
+    - name: add subgid
+      user:
+        name: ansibulluser
+        subgid: present
+      register: subgid_2_0
+
+    - name: again add subgid
+      user:
+        name: ansibulluser
+        subgid: present
+      register: subgid_2_1
+
+    - name: validate result for subgid
+      assert:
+        that:
+          - subgid_2_0 is changed
+          - subgid_2_1 is not changed
