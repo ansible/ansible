@@ -176,7 +176,7 @@ def opts_docs(cli_class_name, cli_module_name):
             # docs['actions'][action] = {}
             # docs['actions'][action]['name'] = action
             action_info['name'] = action
-            action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
+            action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action.replace('-', '_')).__doc__)
 
             # docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
             action_doc_list = opt_doc_list(parser)
