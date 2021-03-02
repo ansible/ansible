@@ -665,7 +665,7 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
-        self.port = self.get_option('port') or self._play_context.port
+        self.port = self.get_option('port')
         if self.port is not None:
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
@@ -1297,23 +1297,25 @@ class Connection(ConnectionBase):
         return self._file_transport_command(in_path, out_path, 'get')
 
     def reset(self):
-        # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
-        controlpersist, controlpath = self._persistence_controls(cmd)
-        cp_arg = [a for a in cmd if a.startswith(b"ControlPath=")]
 
-        # only run the reset if the ControlPath already exists or if it isn't
-        # configured and ControlPersist is set
         run_reset = False
-        if controlpersist and len(cp_arg) > 0:
-            cp_path = cp_arg[0].split(b"=", 1)[-1]
-            if os.path.exists(cp_path):
-                run_reset = True
-        elif controlpersist:
+
+        # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
+        # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
+        # 'check' will determine this.
+        cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
+        display.vvv(u'sending connection check: %s' % to_text(cmd))
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        status_code = p.wait()
+        if status_code != 0:
+            display.vvv(u"No connection ot reset: %s" % to_text(stderr))
+        else:
             run_reset = True
 
         if run_reset:
-            display.vvv(u'sending stop: %s' % to_text(cmd))
+            cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
+            display.vvv(u'sending connection stop: %s' % to_text(cmd))
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()
