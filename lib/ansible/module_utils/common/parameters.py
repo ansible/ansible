@@ -15,6 +15,7 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.text.formatters import lenient_lowercase
 from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.errors import AnsibleFallbackNotFound
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 from ansible.module_utils.common._collections_compat import (
@@ -95,10 +96,6 @@ DEFAULT_TYPE_VALIDATORS = {
     'bytes': check_type_bytes,
     'bits': check_type_bits,
 }
-
-
-class AnsibleFallbackNotFound(Exception):
-    pass
 
 
 def _return_datastructure_name(obj):

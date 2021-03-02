@@ -160,12 +160,12 @@ from ansible.module_utils.common.parameters import (
     env_fallback,
     remove_values,
     sanitize_keys,
-    AnsibleFallbackNotFound,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
 )
 
+from ansible.module_utils.errors import AnsibleFallbackNotFound
 from ansible.module_utils.six import (
     PY2,
     PY3,
