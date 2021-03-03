@@ -1309,7 +1309,7 @@ class Connection(ConnectionBase):
         stdout, stderr = p.communicate()
         status_code = p.wait()
         if status_code != 0:
-            display.vvv(u"No connection ot reset: %s" % to_text(stderr))
+            display.vvv(u"No connection to reset: %s" % to_text(stderr))
         else:
             run_reset = True
 
