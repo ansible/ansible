@@ -250,6 +250,8 @@ def add_connect_options(parser):
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
     connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
                                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+
+    # ssh only
     connect_group.add_argument('--ssh-common-args', default='', dest='ssh_common_args',
                                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
     connect_group.add_argument('--sftp-extra-args', default='', dest='sftp_extra_args',

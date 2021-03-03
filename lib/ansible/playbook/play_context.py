@@ -102,15 +102,6 @@ class PlayContext(Base):
     # docker FIXME: remove these
     _docker_extra_args = FieldAttribute(isa='string')
 
-    # ssh # FIXME: remove these
-    _ssh_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
-    _ssh_args = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
-    _ssh_common_args = FieldAttribute(isa='string')
-    _sftp_extra_args = FieldAttribute(isa='string')
-    _scp_extra_args = FieldAttribute(isa='string')
-    _ssh_extra_args = FieldAttribute(isa='string')
-    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
-
     # ???
     _connection_lockfd = FieldAttribute(isa='int')
 
@@ -171,7 +162,7 @@ class PlayContext(Base):
             if option:
                 flag = options[option].get('name')
                 if flag:
-                    setattr(self, flag, self.connection.get_option(flag))
+                    setattr(self, flag, plugin.get_option(flag))
 
     def set_attributes_from_play(self, play):
         self.force_handlers = play.force_handlers
@@ -189,10 +180,6 @@ class PlayContext(Base):
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
         self.verbosity = context.CLIARGS.get('verbosity')  # Else default
-        self.ssh_common_args = context.CLIARGS.get('ssh_common_args')  # Else default
-        self.ssh_extra_args = context.CLIARGS.get('ssh_extra_args')  # Else default
-        self.sftp_extra_args = context.CLIARGS.get('sftp_extra_args')  # Else default
-        self.scp_extra_args = context.CLIARGS.get('scp_extra_args')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
@@ -394,7 +381,7 @@ class PlayContext(Base):
         if self._attributes['connection'] == 'smart':
             conn_type = 'ssh'
             # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
+            if not check_for_controlpersist('ssh') and paramiko is not None:
                 conn_type = "paramiko"
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems

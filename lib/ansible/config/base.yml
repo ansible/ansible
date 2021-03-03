@@ -118,60 +118,6 @@ ANSIBLE_PIPELINING:
   - section: connection
     key: pipelining
   type: boolean
-ANSIBLE_SSH_ARGS:
-  # TODO: move to ssh plugin
-  default: -C -o ControlMaster=auto -o ControlPersist=60s
-  description:
-    - If set, this will override the Ansible default ssh arguments.
-    - In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may be appropriate.
-    - Be aware that if `-o ControlPath` is set in ssh_args, the control path setting is not used.
-  env: [{name: ANSIBLE_SSH_ARGS}]
-  ini:
-  - {key: ssh_args, section: ssh_connection}
-  yaml: {key: ssh_connection.ssh_args}
-ANSIBLE_SSH_CONTROL_PATH:
-  # TODO: move to ssh plugin
-  default: null
-  description:
-    - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
-    - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
-    - Before 2.3 it defaulted to `control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r`.
-    - Be aware that this setting is ignored if `-o ControlPath` is set in ssh args.
-  env: [{name: ANSIBLE_SSH_CONTROL_PATH}]
-  ini:
-  - {key: control_path, section: ssh_connection}
-  yaml: {key: ssh_connection.control_path}
-ANSIBLE_SSH_CONTROL_PATH_DIR:
-  # TODO: move to ssh plugin
-  default: ~/.ansible/cp
-  description:
-    - This sets the directory to use for ssh control path if the control path setting is null.
-    - Also, provides the `%(directory)s` variable for the control path setting.
-  env: [{name: ANSIBLE_SSH_CONTROL_PATH_DIR}]
-  ini:
-  - {key: control_path_dir, section: ssh_connection}
-  yaml: {key: ssh_connection.control_path_dir}
-ANSIBLE_SSH_EXECUTABLE:
-  # TODO: move to ssh plugin, note that ssh_utils  refs this and needs to be updated if removed
-  default: ssh
-  description:
-    - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
-    - This option is usually not required, it might be useful when access to system ssh is restricted,
-      or when using ssh wrappers to connect to remote hosts.
-  env: [{name: ANSIBLE_SSH_EXECUTABLE}]
-  ini:
-  - {key: ssh_executable, section: ssh_connection}
-  yaml: {key: ssh_connection.ssh_executable}
-  version_added: "2.2"
-ANSIBLE_SSH_RETRIES:
-  # TODO: move to ssh plugin
-  default: 0
-  description: Number of attempts to establish a connection before we give up and report the host as 'UNREACHABLE'
-  env: [{name: ANSIBLE_SSH_RETRIES}]
-  ini:
-  - {key: retries, section: ssh_connection}
-  type: integer
-  yaml: {key: ssh_connection.retries}
 ANY_ERRORS_FATAL:
   name: Make Task failures fatal
   default: False
@@ -1090,16 +1036,6 @@ DEFAULT_ROLES_PATH:
   - {key: roles_path, section: defaults}
   type: pathspec
   yaml: {key: defaults.roles_path}
-DEFAULT_SCP_IF_SSH:
-  # TODO: move to ssh plugin
-  default: smart
-  description:
-    - "Preferred method to use when transferring files over ssh."
-    - When set to smart, Ansible will try them until one succeeds or they all fail.
-    - If set to True, it will force 'scp', if False it will use 'sftp'.
-  env: [{name: ANSIBLE_SCP_IF_SSH}]
-  ini:
-  - {key: scp_if_ssh, section: ssh_connection}
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
   default: fuse, nfs, vboxsf, ramfs, 9p, vfat
@@ -1113,25 +1049,6 @@ DEFAULT_SELINUX_SPECIAL_FS:
   ini:
   - {key: special_context_filesystems, section: selinux}
   type: list
-DEFAULT_SFTP_BATCH_MODE:
-  # TODO: move to ssh plugin
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
-  ini:
-  - {key: sftp_batch_mode, section: ssh_connection}
-  type: boolean
-  yaml: {key: ssh_connection.sftp_batch_mode}
-DEFAULT_SSH_TRANSFER_METHOD:
-  # TODO: move to ssh plugin
-  default:
-  description: 'unused?'
-  #  - "Preferred method to use when transferring files over ssh"
-  #  - Setting to smart will try them until one succeeds or they all fail
-  #choices: ['sftp', 'scp', 'dd', 'smart']
-  env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
-  ini:
-  - {key: transfer_method, section: ssh_connection}
 DEFAULT_STDOUT_CALLBACK:
   name: Main display callback plugin
   default: default
@@ -1554,6 +1471,8 @@ GALAXY_CACHE_DIR:
   type: path
   version_added: '2.11'
 HOST_KEY_CHECKING:
+  # note: constant not in use by ssh plugin anymore
+  # TODO: check non ssh connection plugins for use/migration
   name: Check host keys
   default: True
   description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
