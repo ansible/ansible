@@ -971,7 +971,7 @@ class Jinja2Loader(PluginLoader):
     """
     def find_plugin(self, name, collection_list=None):
 
-        if '.' in name:  # NOTE: this is wrong way to detect collection
+        if '.' in name:  # NOTE: this is wrong way, use: AnsibleCollectionRef.is_valid_fqcr(name) or collection_list
             return super(Jinja2Loader, self).find_plugin(name, collection_list=collection_list)
 
         # Nothing is currently using this method
@@ -979,7 +979,7 @@ class Jinja2Loader(PluginLoader):
 
     def get(self, name, *args, **kwargs):
 
-        if '.' in name:  # NOTE: this is wrong way to detect collection
+        if '.' in name:  # NOTE: this is wrong way to detect collection, see note above for example
             return super(Jinja2Loader, self).get(name, *args, **kwargs)
 
         # Nothing is currently using this method
