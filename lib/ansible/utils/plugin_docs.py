@@ -6,7 +6,7 @@ __metaclass__ = type
 
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
@@ -194,14 +194,31 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
                 doc['options'] = fragment.pop('options')
 
         # same with fragments as with options
+        attributes = []
         if 'attributes' in fragment:
             if 'attributes' in doc:
-                try:
-                    doc['attributes'] = combine_vars(fragment.pop('attributes'), doc['attributes'])
-                except Exception as e:
-                    raise AnsibleError("%s attributes (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+                used = []
+                for attr in fragment['attributes']:
+                    for docattr in doc['attributes']:
+                        if attr['name'] == docattr['name']:
+                            attributes.append(combine_vars(attr, docattr))
+                            used.append(docattr['name'])
+                            break
+                    else:
+                        attributes.append(attr)
+
+                del fragment['attributes']
+
+                # add any unconsumed from doc
+                for attr in doc['attributes']:
+                    if attr['name'] not in used:
+                        attributes.append(attr)
             else:
-                doc['attributes'] = fragment.pop('attributes')
+                attributes = fragment.pop('attributes')
+
+        if attributes:
+            print(attributes)
+            doc['attributes'] = attributes
 
         # merge rest of the sections
         try:
