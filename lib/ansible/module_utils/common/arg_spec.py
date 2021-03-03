@@ -208,16 +208,16 @@ class ArgumentSpecValidator():
         _validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._errors)
 
         checks = (
-            {'func': check_required_together, 'attr': getattr(self, '_required_together')},
-            {'func': check_required_one_of, 'attr': getattr(self, '_required_one_of')},
-            {'func': check_required_if, 'attr': getattr(self, '_required_if')},
-            {'func': check_required_by, 'attr': getattr(self, '_required_by')},
+            {'func': check_required_together, 'attr': '_required_together'},
+            {'func': check_required_one_of, 'attr': '_required_one_of'},
+            {'func': check_required_if, 'attr': '_required_if'},
+            {'func': check_required_by, 'attr': '_required_by'},
         )
 
         for check in checks:
             if check['attr'] is not None:
                 try:
-                    check['func'](check['attr'], self._validated_parameters)
+                    check['func'](getattr(self, check['attr']), self._validated_parameters)
                 except TypeError as te:
                     self._add_error(AnsibleValidationError(to_native(te), check['attr'].lstrip('_')))
 
