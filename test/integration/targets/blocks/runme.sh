@@ -100,3 +100,6 @@ cat role_complete_test.out
 [ "$(grep -c 'Tagged task' role_complete_test.out)" -eq 2 ]
 [ "$(grep -c 'Not tagged task' role_complete_test.out)" -eq 0 ]
 rm -f role_complete_test.out
+
+# test notify inheritance
+ansible-playbook inherit_notify.yml "$@"

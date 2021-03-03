@@ -61,6 +61,31 @@ class _DeprecatedSequenceConstant(Sequence):
 
 
 # CONSTANTS ### yes, actual ones
+
+# The following are hard-coded action names
+_ACTION_DEBUG = add_internal_fqcns(('debug', ))
+_ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
+_ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
+_ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
+_ACTION_INCLUDE = add_internal_fqcns(('include', ))
+_ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
+_ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
+_ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_META = add_internal_fqcns(('meta', ))
+_ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
+_ACTION_SETUP = add_internal_fqcns(('setup', ))
+_ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
+_ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
+_ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_ALL_IMPORT_PLAYBOOKS = _ACTION_INCLUDE + _ACTION_IMPORT_PLAYBOOK
+_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
+_ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
+_ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
+_ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
+
 # http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
 COLOR_CODES = {
     'black': u'0;30', 'bright gray': u'0;37',
@@ -178,28 +203,3 @@ for setting in config.data.get_settings():
 
 for warn in config.WARNINGS:
     _warning(warn)
-
-
-# The following are hard-coded action names
-_ACTION_DEBUG = add_internal_fqcns(('debug', ))
-_ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
-_ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
-_ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
-_ACTION_INCLUDE = add_internal_fqcns(('include', ))
-_ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
-_ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
-_ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
-_ACTION_META = add_internal_fqcns(('meta', ))
-_ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
-_ACTION_SETUP = add_internal_fqcns(('setup', ))
-_ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
-_ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
-_ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
-_ACTION_ALL_IMPORT_PLAYBOOKS = _ACTION_INCLUDE + _ACTION_IMPORT_PLAYBOOK
-_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
-_ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
-_ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
-_ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
-_ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
-_ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
-_ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
