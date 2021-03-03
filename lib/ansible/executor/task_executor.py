@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
 import pty
 import time
 import json
@@ -20,7 +19,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import iteritems, string_types, binary_type
+from ansible.module_utils.six import iteritems, binary_type
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
@@ -33,7 +32,7 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.vars import combine_vars, isidentifier, subset_required_by_plugin
 
 display = Display()
 
@@ -158,6 +157,9 @@ class TaskExecutor:
                 display.debug("calling self._execute()")
                 res = self._execute()
                 display.debug("_execute() done")
+
+                # really only used in loop context
+                del res['_ansible_clean_vars']
 
             # make sure changed is set in the result, if it's not present
             if 'changed' not in res:
@@ -391,19 +393,10 @@ class TaskExecutor:
             results.append(res)
             del task_vars[loop_var]
 
-            # clear 'connection related' plugin variables for next iteration
-            if self._connection:
-                clear_plugins = {
-                    'connection': self._connection._load_name,
-                    'shell': self._connection._shell._load_name
-                }
-                if self._connection.become:
-                    clear_plugins['become'] = self._connection.become._load_name
-
-                for plugin_type, plugin_name in iteritems(clear_plugins):
-                    for var in C.config.get_plugin_vars(plugin_type, plugin_name):
-                        if var in task_vars and var not in self._job_vars:
-                            del task_vars[var]
+            clean = res.pop('_ansible_clean_vars', [])
+            for var in clean:
+                if var in task_vars and var not in self._job_vars:
+                    del task_vars[var]
 
         self._task.no_log = no_log
 
@@ -697,6 +690,9 @@ class TaskExecutor:
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(af))
 
+        # list vars to clean for next iteration
+        result['_ansible_clean_vars'] = plugin_vars
+
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
         # may be item-specific, ie. "notify: service {{item}}"
@@ -900,36 +896,15 @@ class TaskExecutor:
             # Some plugins are assigned to private attrs, ``become`` is not
             plugin = getattr(self._connection, plugin_type)
 
-        option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
-        options = {}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
-        # TODO move to task method?
+        option_vars, options = subset_required_by_plugin(plugin._load_namee, plugin_type, variables, templar, getattr(plugin, 'allow_extras', False))
+
         plugin.set_options(task_keys=task_keys, var_options=options)
 
         return option_vars
 
     def _set_connection_options(self, variables, templar):
 
-        # keep list of variable names possibly consumed
-        varnames = []
-
-        # grab list of usable vars for this plugin
-        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
-        varnames.extend(option_vars)
-
-        # create dict of 'templated vars'
-        options = {'_extras': {}}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
-
-        # add extras if plugin supports them
-        if getattr(self._connection, 'allow_extras', False):
-            for k in variables:
-                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
-                    options['_extras'][k] = templar.template(variables[k])
+        varnames, options = subset_required_by_plugin(self._connection._load_name, 'connection', variables, templar, getattr(self._connection, 'allow_extras', False))
 
         task_keys = self._task.dump_attrs()
 

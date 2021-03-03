@@ -27,6 +27,15 @@ __all__ = ['ConnectionBase', 'ensure_connect']
 BUFSIZE = 65536
 
 
+def get_connection(task, host, vm, pc, stdin):
+
+    # template/check ansible_connection
+    # fallback to task.connection
+    # if smart: check cp for ssh or paramiko
+    # connection, plugin_load_context = connection_loader.get_with_context(name, play_context, stdin, pid)
+    pass
+
+
 def ensure_connect(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
