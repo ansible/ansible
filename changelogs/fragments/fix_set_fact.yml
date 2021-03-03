@@ -1,0 +1,2 @@
+bugfixes:
+  - '[set_fact] Corrected and expanded documentation as well as now raise errors that were previously ignored.'
