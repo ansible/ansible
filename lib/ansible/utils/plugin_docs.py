@@ -13,7 +13,7 @@ from ansible.module_utils.common._collections_compat import MutableMapping, Muta
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
-from ansbile.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
