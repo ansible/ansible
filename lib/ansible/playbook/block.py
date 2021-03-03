@@ -38,7 +38,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     _rescue = FieldAttribute(isa='list', default=list, inherit=False)
     _always = FieldAttribute(isa='list', default=list, inherit=False)
 
-    # other fields
+    # other fields for task compat
+    _notify = FieldAttribute(isa='list')
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
 
