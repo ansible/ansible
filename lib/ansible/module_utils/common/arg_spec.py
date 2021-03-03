@@ -238,7 +238,8 @@ class ArgumentSpecValidator():
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
             supported_string = ", ".join(self.valid_parameter_names)
-            self._add_error(AnsibleValidationError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string), 'unsupported_parameters'))
+            self._add_error(
+                AnsibleValidationError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string), 'unsupported_parameters'))
 
         if self.error_messages:
             raise(self._errors)
