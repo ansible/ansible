@@ -27,7 +27,7 @@ __all__ = ['ConnectionBase', 'ensure_connect']
 BUFSIZE = 65536
 
 
-def get_connection(task, host, vm, pc, stdin):
+def get_connection(task, host, vm, stdin):
 
     # template/check ansible_connection
     # fallback to task.connection
@@ -85,18 +85,16 @@ class ConnectionBase(AnsiblePlugin):
 
         self.success_key = None
         self.prompt = None
-        self._connected = False
         self._socket_path = None
 
         # helper plugins
         self._shell = shell
+        self.become = None
 
         # we always must have shell
         if not self._shell:
             shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
             self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
-
-        self.become = None
 
     def set_become_plugin(self, plugin):
         self.become = plugin
