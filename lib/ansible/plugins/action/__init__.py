@@ -22,7 +22,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleAction
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
-from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.json_utils import load_json
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -1148,11 +1148,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _parse_returned_data(self, res):
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
+            data, warnings = load_json(res.get('stdout', u''))
             for w in warnings:
-                display.warning(w)
-
-            data = json.loads(filtered_output)
+                 display.warning(w)
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
