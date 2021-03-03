@@ -167,6 +167,7 @@ test/integration/targets/collections_relative_imports/collection_root/ansible_co
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
+test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip

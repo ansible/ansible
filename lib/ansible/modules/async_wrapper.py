@@ -74,7 +74,7 @@ def _filter_non_json_lines(data):
     Used to filter unrelated output around module JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
 
-    Filters leading lines before first line-starting occurrence of '{' or '[', and filter all
+    Filters leading lines before first line-starting occurrence of '{', and filter all
     trailing lines after matching close character (working from the bottom of output).
     '''
     warnings = []
@@ -85,10 +85,6 @@ def _filter_non_json_lines(data):
     for start, line in enumerate(lines):
         line = line.strip()
         if line.startswith(u'{'):
-            endchar = u'}'
-            break
-        elif line.startswith(u'['):
-            endchar = u']'
             break
     else:
         raise ValueError('No start of json char found')
@@ -97,7 +93,7 @@ def _filter_non_json_lines(data):
     lines = lines[start:]
 
     for reverse_end_offset, line in enumerate(reversed(lines)):
-        if line.strip().endswith(endchar):
+        if line.strip().endswith(u'}'):
             break
     else:
         raise ValueError('No end of json char found')
