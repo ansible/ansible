@@ -1148,7 +1148,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _parse_returned_data(self, res):
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
+            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''), objects_only=True)
             for w in warnings:
                 display.warning(w)
 
