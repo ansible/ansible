@@ -51,6 +51,7 @@ def check_for_controlpersist(ssh_executable):
     return has_cp
 
 
+# TODO: move to 'smart' connection plugin that subclasses to ssh/paramiko as needed.
 def set_default_transport():
 
     # deal with 'smart' connection .. one time ..
@@ -59,7 +60,7 @@ def set_default_transport():
         # not be as common anymore.
 
         # see if SSH can support ControlPersist if not use paramiko
-        if not check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE) and paramiko is not None:
+        if not check_for_controlpersist('ssh') and paramiko is not None:
             C.DEFAULT_TRANSPORT = "paramiko"
         else:
             C.DEFAULT_TRANSPORT = "ssh"

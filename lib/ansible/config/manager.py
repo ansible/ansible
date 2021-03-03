@@ -491,6 +491,12 @@ class ConfigManager(object):
                     if value is not None:
                         origin = 'keyword: %s' % keyword
 
+                if value is None and 'cli' in defs[config]:
+                    # avoid circular import .. until valid
+                    from ansible import context
+                    value, origin = self._loop_entries(context.CLIARGS, defs[config]['cli'])
+                    origin = 'cli: %s' % origin
+
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
                     value, origin = self._loop_entries(py3compat.environ, defs[config]['env'])
