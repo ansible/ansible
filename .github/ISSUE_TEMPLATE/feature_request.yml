@@ -1,0 +1,62 @@
+---
+name: ✨ Feature request
+description: Suggest an idea for this project
+issue_body: false  # default: true, adds a classic WSYWIG textarea, if on
+
+body:
+- type: markdown
+  attributes:
+    value: |
+      ⚠
+      Verify first that your issue is not [already reported on GitHub][issue search].
+      Also test if the latest release and devel branch are affected too.
+      *Complete **all** sections as described, this form is processed automatically.*
+
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
+
+
+- type: textarea
+  attributes:
+    label: Summary
+    description: Describe the new feature/improvement briefly below.
+    placeholder: >-
+      I am trying to do X with ansible-core from the devel branch on GitHub and
+      I think that implementing a feature Y would be very helpful for me and
+      every other user of ansible-core because of Z.
+  validations:
+    required: true
+
+- type: dropdown
+  attributes:
+    label: Issue Type
+    # FIXME: Once GitHub allows defining the default choice, update this
+    options:
+    - Feature Idea
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: Component Type
+    description: >-
+      Write the short name of the module, plugin, task or feature below,
+      *use your best guess if unsure*.
+    placeholder: dnf, apt, yum, pip, user etc.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Additional Information
+    description: |
+      Describe how the feature would be used, why it is needed and what it would solve.
+
+      **HINT:** You can paste https://gist.github.com links for larger files.
+    value: |
+      <!--- Paste example playbooks or commands between quotes below -->
+      ```yaml (paste below)
+
+      ```
+  validations:
+    required: true
+...
