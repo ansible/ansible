@@ -177,7 +177,17 @@ def namespace_facts(facts):
 
 
 def subset_required_by_plugin(name, ptype, variables, templar, extras=False):
-    ''' return subset of variables relevant to the specific plugin with values templated '''
+    '''
+       Create a subset of variables relevant to the specific plugin with values templated
+
+    :param name: name of plugin
+    :param ptype: type of plugin
+    :param variables: dictionary containing all available varaibles, from which we extract subset
+    :param temlpar: Templar object to process values of subseted variables
+    :param extras: If plugin allows for 'extras' or non explicitly defined settings in plugin docs
+
+    :returns: a list of valid variable names for the plugin and a dictionary with the templated subset
+    '''
 
     # holds templated relevant options
     options = {}
