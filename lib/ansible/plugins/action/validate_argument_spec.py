@@ -8,6 +8,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import AnsibleValidationErrorMultiple
 
 
 class ActionModule(ActionBase):
@@ -84,11 +85,13 @@ class ActionModule(ActionBase):
 
         validator = ArgumentSpecValidator(argument_spec_data, provided_arguments)
 
-        if not validator.validate():
+        try:
+            validator.validate()
+        except AnsibleValidationErrorMultiple as exc:
             result['failed'] = True
-            result['msg'] = 'Validation of arguments failed:\n%s' % '\n'.join(validator.error_messages)
+            result['msg'] = 'Validation of arguments failed:\n%s' % '\n'.join(exc.messages)
             result['argument_spec_data'] = argument_spec_data
-            result['argument_errors'] = validator.error_messages
+            result['argument_errors'] = exc.messages
             return result
 
         result['changed'] = False
