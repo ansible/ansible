@@ -32,7 +32,7 @@ import json
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
 # changes are propagated there.
-def _filter_non_json_lines(data):
+def _filter_non_json_lines(data, objects_only=False):
     '''
     Used to filter unrelated output around module JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
@@ -50,7 +50,7 @@ def _filter_non_json_lines(data):
         if line.startswith(u'{'):
             endchar = u'}'
             break
-        elif line.startswith(u'['):
+        elif not objects_only and line.startswith(u'['):
             endchar = u']'
             break
     else:
