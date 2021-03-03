@@ -254,13 +254,13 @@ options:
         description:
             - UID range allocated for use by newuidmap.
             - Supported on Linux only.
-            - Currently only C(subuid=present) is supported.
+            - Currently only C(subuid=present) and C(subuid=absent) are supported.
         type: str
     subgid:
         description:
             - GID range allocated for use by newgidmap.
             - Supported on Linux only.
-            - Currently only C(subgid=present) is supported.
+            - Currently only C(subgid=present) and C(subgid=absent) are supported.
         type: str
 
 notes:
@@ -1122,6 +1122,22 @@ class User(object):
         cmd = [self.module.get_bin_path(command_name, True)]
         cmd.append('--add-subgids')
         cmd.append('{}-{}'.format(*self.find_new_id_range('gid')))
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+
+    def del_subuid(self, id_range):
+        command_name = 'usermod'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('--del-subuids')
+        cmd.append(id_range)
+        cmd.append(self.name)
+        return self.execute_command(cmd)
+
+    def del_subgid(self, id_range):
+        command_name = 'usermod'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('--del-subgids')
+        cmd.append(id_range)
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -3253,6 +3269,13 @@ def main():
                 subid, count = user.parse_subid(user.SUBUID)
                 if subid and count:
                     result['subuid'] = '{0}-{1}'.format(subid, subid + count - 1)
+                    if user.subuid == 'absent':
+                        (rc, out, err) = user.del_subuid(result['subuid'])
+                        if rc == 0:
+                            result['subuid'] = 'absent'
+                        else:
+                            result['subuid'] = err.strip()
+                        result['changed'] = True
                 else:
                     result['subuid'] = 'absent'
                     if user.subuid == 'present':
@@ -3270,6 +3293,13 @@ def main():
                 subid, count = user.parse_subid(user.SUBGID)
                 if subid and count:
                     result['subgid'] = '{0}-{1}'.format(subid, subid + count - 1)
+                    if user.subgid == 'absent':
+                        (rc, out, err) = user.del_subgid(result['subgid'])
+                        if rc == 0:
+                            result['subuid'] = 'absent'
+                        else:
+                            result['subuid'] = err.strip()
+                        result['changed'] = True
                 else:
                     result['subgid'] = 'absent'
                     if user.subgid == 'present':

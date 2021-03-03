@@ -7,16 +7,16 @@
         name: ansibulluser
         state: present
 
-    - name: add subuid
+    - name: remove subuid
       user:
         name: ansibulluser
-        subuid: present
+        subuid: absent
       register: subuid_1_0
 
-    - name: again add subuid
+    - name: again remove subuid
       user:
         name: ansibulluser
-        subuid: present
+        subuid: absent
       register: subuid_1_1
 
     - name: validate result for subuid
@@ -24,6 +24,42 @@
         that:
           - subuid_1_0 is changed
           - subuid_1_1 is not changed
+
+    - name: add subuid
+      user:
+        name: ansibulluser
+        subuid: present
+      register: subuid_2_0
+
+    - name: again add subuid
+      user:
+        name: ansibulluser
+        subuid: present
+      register: subuid_2_1
+
+    - name: validate result for subuid
+      assert:
+        that:
+          - subuid_2_0 is changed
+          - subuid_2_1 is not changed
+
+    - name: remove subgid
+      user:
+        name: ansibulluser
+        subgid: absent
+      register: subgid_1_0
+
+    - name: again remove subgid
+      user:
+        name: ansibulluser
+        subgid: absent
+      register: subgid_1_1
+
+    - name: validate result for subgid
+      assert:
+        that:
+          - subgid_1_0 is changed
+          - subgid_1_1 is not changed
 
     - name: add subgid
       user:
