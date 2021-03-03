@@ -15,7 +15,7 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.text.formatters import lenient_lowercase
 from ansible.module_utils.common.warnings import warn
-from ansible.module_utils.errors import AnsibleFallbackNotFound
+from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationError, AnsibleValidationErrorMultiple
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
 from ansible.module_utils.common._collections_compat import (
@@ -276,7 +276,7 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
             if options_context:
                 msg += " found in '%s'" % " -> ".join(options_context)
             msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
-            errors.append(msg)
+            errors.append(AnsibleValidationError(msg, "elements"))
     return validated_parameters
 
 
@@ -339,7 +339,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                     if options_context:
                         msg += " found in '%s'." % " -> ".join(options_context)
                     msg += ", elements value check is supported only with 'list' type"
-                    errors.append(msg)
+                    errors.append(AnsibleValidationError(msg, "argument_type"))
                 parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors)
 
         except (TypeError, ValueError) as e:
@@ -347,7 +347,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             if options_context:
                 msg += " found in '%s'." % " -> ".join(options_context)
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
-            errors.append(msg)
+            errors.append(AnsibleValidationError(msg, "argument_type"))
 
 
 def _validate_argument_values(argument_spec, parameters, options_context=None, errors=None):
@@ -371,7 +371,7 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
                         if options_context:
                             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-                        errors.append(msg)
+                        errors.append(AnsibleValidationError(msg, "argument_value"))
                 elif parameters[param] not in choices:
                     # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
                     # the value. If we can't figure this out, module author is responsible.
@@ -395,12 +395,12 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
                         msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
                         if options_context:
                             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-                        errors.append(msg)
+                        errors.append(AnsibleValidationError(msg, "argument_value"))
         else:
             msg = "internal error: choices for argument %s are not iterable: %s" % (param, choices)
             if options_context:
                 msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-            errors.append(msg)
+            errors.append(AnsibleValidationError(msg, "argument_value"))
 
 
 def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
@@ -442,7 +442,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
 
             for idx, sub_parameters in enumerate(elements):
                 if not isinstance(sub_parameters, dict):
-                    errors.append("value of '%s' must be of type dict or list of dicts" % param)
+                    errors.append(AnsibleValidationError("value of '%s' must be of type dict or list of dicts" % param, "sub_parameters_type"))
 
                 # Set prefix for warning messages
                 new_prefix = prefix + param
@@ -458,12 +458,15 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 except (TypeError, ValueError) as e:
                     options_aliases = {}
                     legal_inputs = None
-                    errors.append(to_native(e))
+                    errors.append(AnsibleValidationError(to_native(e), "aliases"))
 
                 for option, alias in alias_warnings:
                     warn('Both option %s and its alias %s are set.' % (option, alias))
 
-                no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
+                try:
+                    no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
+                except TypeError as te:
+                    errors.append(AnsibleValidationError(to_native(te), "no_log"))
 
                 if legal_inputs is None:
                     legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
@@ -472,14 +475,14 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 try:
                     check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
                 except TypeError as e:
-                    errors.append(to_native(e))
+                    errors.append(AnsibleValidationError(to_native(e), 'mutually_exclusive'))
 
                 no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
 
                 try:
                     check_required_arguments(sub_spec, sub_parameters, options_context)
                 except TypeError as e:
-                    errors.append(to_native(e))
+                    errors.append(AnsibleValidationError(to_native(e), 'required_arguments'))
 
                 _validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
                 _validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
@@ -495,7 +498,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                     try:
                         check['func'](value.get(check['attr']), sub_parameters, options_context)
                     except TypeError as e:
-                        errors.append(to_native(e))
+                        errors.append(AnsibleValidationError(to_native(e), check['attr']))
 
                 no_log_values.update(set_defaults(sub_spec, sub_parameters))
 

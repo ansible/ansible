@@ -23,6 +23,7 @@ from ansible.module_utils.common.parameters import (
     set_fallbacks,
 )
 
+from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.warnings import deprecate, warn
 from ansible.module_utils.common.validation import (
@@ -41,9 +42,9 @@ class ArgumentSpecValidator():
     """Argument spec validation class
 
     This will evaluate the given parameters against a provide argument spec, coerce
-    provided arguments to the specified type, and return a boolean for overall
-    pass/fail of the validation and coercion. Any errors with the validation are
-    stored in the ``error_messages`` property.
+    provided arguments to the specified type, and return the validated parameters
+    on success on raise AnsibleValidationErrorMultiple if validation fails. Any
+    errors with the validation are stored in the ``error_messages`` property.
 
     A copy of the original parameters is stored in the ``validated_parameters``
     property. This will be mutated in order to ensure the parameters match
@@ -77,6 +78,7 @@ class ArgumentSpecValidator():
 
     """
 
+    # TODO: Move parameters to the `validate()` method.
     def __init__(self, argument_spec, parameters,
                  mutually_exclusive=None,
                  required_together=None,
@@ -85,7 +87,7 @@ class ArgumentSpecValidator():
                  required_by=None,
                  ):
 
-        self._error_messages = []
+        self._errors = AnsibleValidationErrorMultiple()
         self._no_log_values = set()
         self._validated_parameters = deepcopy(parameters)  # Make a copy of the original parameters to avoid changing them
         self._valid_parameter_names = []
@@ -99,7 +101,7 @@ class ArgumentSpecValidator():
 
     @property
     def error_messages(self):
-        return self._error_messages
+        return remove_values(self._errors.messages, self._no_log_values)
 
     @property
     def validated_parameters(self):
@@ -120,16 +122,15 @@ class ArgumentSpecValidator():
         self._valid_parameter_names = valid_parameter_names
         return valid_parameter_names
 
-    def _add_error(self, error):
-        if isinstance(error, string_types):
-            self._error_messages.append(error)
+    def _add_error(self, error, error_type=None):
+        if isinstance(error, AnsibleValidationError):
+            self._errors.append(error)
+        elif isinstance(error, string_types):
+            self._errors.append(AnsibleValidationError(error, error_type))
         elif isinstance(error, Sequence):
-            self._error_messages.extend(error)
+            self._errors.extend(error)
         else:
             raise ValueError('Error messages must be a string or sequence not a %s' % type(error))
-
-    def _sanitize_error_messages(self):
-        self._error_messages = remove_values(self._error_messages, self._no_log_values)
 
     def validate(self, *args, **kwargs):
         """Validate module parameters against argument spec. Returns True/False
@@ -167,7 +168,7 @@ class ArgumentSpecValidator():
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
-            self._add_error(to_native(e))
+            self._add_error(AnsibleValidationError(to_native(e), "alias"))
 
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option, alias))
@@ -177,26 +178,34 @@ class ArgumentSpecValidator():
                       version=deprecation.get('version'), date=deprecation.get('date'),
                       collection_name=deprecation.get('collection_name'))
 
-        self._no_log_values.update(list_no_log_values(self.argument_spec, self._validated_parameters))
+        try:
+            self._no_log_values.update(list_no_log_values(self.argument_spec, self._validated_parameters))
+        except TypeError as te:
+            self._add_error(AnsibleValidationError(to_native(te), "no_log"))
 
         if legal_inputs is None:
             legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
-        self._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, self._validated_parameters, legal_inputs))
+        try:
+            self._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, self._validated_parameters, legal_inputs))
+        except TypeError as te:
+            self._add_error(AnsibleValidationError(to_native(te)), "required_and_default")
+        except ValueError as ve:
+            self._add_error(AnsibleValidationError(to_native(ve), "aliases"))
 
         try:
             check_mutually_exclusive(self._mutually_exclusive, self._validated_parameters)
         except TypeError as te:
-            self._add_error(to_native(te))
+            self._add_error(AnsibleValidationError(to_native(te), "mutually_exclusive"))
 
         self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters, False))
 
         try:
             check_required_arguments(self.argument_spec, self._validated_parameters)
         except TypeError as e:
-            self._add_error(to_native(e))
+            self._add_error(AnsibleValidationError(to_native(e), "required_arguments"))
 
-        _validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._error_messages)
-        _validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._error_messages)
+        _validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._errors)
+        _validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._errors)
 
         checks = (
             {'func': check_required_together, 'attr': getattr(self, '_required_together')},
@@ -210,12 +219,12 @@ class ArgumentSpecValidator():
                 try:
                     check['func'](check['attr'], self._validated_parameters)
                 except TypeError as te:
-                    self._add_error(to_native(te))
+                    self._add_error(AnsibleValidationError(to_native(te), check['attr'].lstrip('_')))
 
         self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
 
         _validate_sub_spec(self.argument_spec, self._validated_parameters,
-                           errors=self._error_messages,
+                           errors=self._errors,
                            no_log_values=self._no_log_values,
                            unsupported_parameters=self._unsupported_parameters)
 
@@ -229,12 +238,11 @@ class ArgumentSpecValidator():
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
             supported_string = ", ".join(self.valid_parameter_names)
-            self._add_error("Unsupported parameters for ({{name}}) {{kind}}: {0}. "
-                            "Supported parameters include: {1}.".format(unsupported_string, supported_string))
-
-        self._sanitize_error_messages()
+            self._add_error(AnsibleValidationError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string), 'unsupported_parameters'))
 
         if self.error_messages:
-            return False
+            raise(self._errors)
         else:
-            return True
+            # TODO: Change this to an object that has the validated params rather than
+            #       storing them on the Validator.
+            return self.validated_parameters

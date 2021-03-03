@@ -40,11 +40,9 @@ def test_sub_spec():
     }
 
     v = ArgumentSpecValidator(arg_spec, parameters)
-    passed = v.validate()
 
-    assert passed is True
+    assert v.validate() == expected
     assert v.error_messages == []
-    assert v.validated_parameters == expected
 
 
 def test_nested_sub_spec():
@@ -99,8 +97,6 @@ def test_nested_sub_spec():
     }
 
     v = ArgumentSpecValidator(arg_spec, parameters)
-    passed = v.validate()
 
-    assert passed is True
+    assert v.validate() == expected
     assert v.error_messages == []
-    assert v.validated_parameters == expected

@@ -8,17 +8,20 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
 
 
 def test_add_sequence():
     v = ArgumentSpecValidator({}, {})
     errors = [
-        'one error',
-        'another error',
+        AnsibleValidationError('one error'),
+        AnsibleValidationError('another error'),
     ]
     v._add_error(errors)
 
-    assert v.error_messages == errors
+    assert v.error_messages == [err.msg for err in errors]
+    assert v._errors.messages == [err.msg for err in errors]
+    assert isinstance(v._errors, AnsibleValidationErrorMultiple)
 
 
 def test_invalid_error_message():

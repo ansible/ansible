@@ -289,8 +289,7 @@ def test_valid_spec(arg_spec, parameters, expected, mocker):
     mocker.patch('ansible.module_utils.common.validation.os.path.expandvars', return_value='/home/ansible/bin')
 
     v = ArgumentSpecValidator(arg_spec, parameters)
-    passed = v.validate()
 
+    assert v.validate() == expected
     assert v.validated_parameters == expected
     assert v.error_messages == []
-    assert passed is True
