@@ -59,4 +59,16 @@ body:
       ```
   validations:
     required: true
+
+
+- type: checkboxes
+  attributes:
+    label: Code of Conduct
+    description: |
+      Read the [Ansible Code of Conduct][CoC] first.
+
+      [CoC]: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--feature_request.yml
+    options:
+    - label: I agree to follow the Ansible Code of Conduct
+      required: true
 ...
