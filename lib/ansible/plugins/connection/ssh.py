@@ -637,7 +637,7 @@ class Connection(ConnectionBase):
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
 
         if binary == 'ssh':
-            b_command += [to_bytes(self._play_context.ssh_executable, errors='surrogate_or_strict')]
+            b_command += [to_bytes(self.get_option('ssh_executable'), errors='surrogate_or_strict')]
         else:
             b_command += [to_bytes(binary, errors='surrogate_or_strict')]
 
