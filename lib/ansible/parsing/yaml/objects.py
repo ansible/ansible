@@ -83,7 +83,7 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
     pass
 
 
-class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
+class AnsibleVaultEncryptedUnicode(Sequence, AnsibleUnicode):
     '''Unicode like object that is not evaluated (decrypted) until it needs to be'''
     __UNSAFE__ = True
     __ENCRYPTED__ = True

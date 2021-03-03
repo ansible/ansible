@@ -49,6 +49,15 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         self._vault_to_text = vault_to_text
         super(AnsibleJSONEncoder, self).__init__(**kwargs)
 
+    def encode(self, o):
+        if getattr(o, '__ENCRYPTED__', False):
+            # vault object
+            if self._vault_to_text:
+                o = to_text(o, errors='surrogate_or_strict')
+            else:
+                o = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
+        return json.JSONEncoder.encode(self, o)
+
     # NOTE: ALWAYS inform AWS/Tower when new items get added as they consume them downstream via a callback
     def default(self, o):
         if getattr(o, '__ENCRYPTED__', False):

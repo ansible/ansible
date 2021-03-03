@@ -13,6 +13,9 @@
 
     - debug:
         msg: "{{ vaulted_value|type_debug }}"
+    
+    - debug:
+        msg: "{{ vaulted_value|escape }}"
 
     - assert:
         that:
