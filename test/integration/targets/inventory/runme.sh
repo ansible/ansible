@@ -85,3 +85,6 @@ if ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=True ansible -m ping localhost -i "$
     echo "Empty directory should cause failure when ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=True"
     exit 1
 fi
+
+# ensure we don't traceback on inventory due to variables with int as key
+ansible-inventory  -i inv_with_int.yml --list "$@"
