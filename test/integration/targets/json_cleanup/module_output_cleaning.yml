@@ -22,4 +22,5 @@
          - this stuff should be ignored
          - [ looks like a json list]
          - '[ looks like a json list]'
+         - ' looks like a json list'
          - moar garbage
