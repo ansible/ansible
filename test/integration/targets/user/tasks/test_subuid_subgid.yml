@@ -1,6 +1,6 @@
 # https://github.com/ansible/ansible/issues/68199
 - name: Test setting subuid and subgid
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse'] and [ansible_facts.distribution, ansible_facts.distribution_major_version] != ['CentOS', '6']
   block:
     - name: create user
       user:
