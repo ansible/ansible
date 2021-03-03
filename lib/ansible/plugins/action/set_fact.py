@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleActionFail
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -37,8 +38,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        facts = dict()
-
+        facts = {}
         cacheable = boolean(self._task.args.pop('cacheable', False))
 
         if self._task.args:
@@ -46,16 +46,23 @@ class ActionModule(ActionBase):
                 k = self._templar.template(k)
 
                 if not isidentifier(k):
-                    result['failed'] = True
-                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
-                                     "letters, numbers and underscores." % k)
-                    return result
+                    raise AnsibleActionFail("The variable name '%s' is not valid. Variables must start with a letter or underscore character, "
+                                            "and contain only letters, numbers and underscores." % k)
 
+                # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
+                # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
                 if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v, strict=False)
                 facts[k] = v
+        else:
+            raise AnsibleActionFail('No key/value pairs provided, at least one is required for this action to succeed')
 
-        result['changed'] = False
-        result['ansible_facts'] = facts
-        result['_ansible_facts_cacheable'] = cacheable
+        if facts:
+            # just as _facts actions, we don't set changed=true as we are not modifying the actual host
+            result['ansible_facts'] = facts
+            result['_ansible_facts_cacheable'] = cacheable
+        else:
+            # this should not happen, but JIC we get here
+            raise AnsibleActionFail('Unable to create any variables with provided arguments')
+
         return result
