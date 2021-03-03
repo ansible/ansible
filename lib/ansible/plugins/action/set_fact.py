@@ -50,18 +50,19 @@ class ActionModule(ActionBase):
                                             "and contain only letters, numbers and underscores." % k)
 
                 # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
-                # right now it converts matching explicit YAML strings also when 'non native'.
+                # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
                 if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v, strict=False)
                 facts[k] = v
         else:
             raise AnsibleActionFail('No key/value pairs provided, at least one is required for this action to succeed')
 
-        if not facts:
-            raise AnsibleActionFail('Unable to create any variables with provided arguments')
-        else:
+        if facts:
             # just as _facts actions, we don't set changed=true as we are not modifying the actual host
             result['ansible_facts'] = facts
             result['_ansible_facts_cacheable'] = cacheable
+        else:
+            # this should not happen, but JIC we get here
+            raise AnsibleActionFail('Unable to create any variables with provided arguments')
 
         return result
