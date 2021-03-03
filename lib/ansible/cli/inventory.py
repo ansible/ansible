@@ -8,6 +8,9 @@ __metaclass__ = type
 import sys
 
 import argparse
+import pkgutil
+import os
+
 from operator import attrgetter
 
 from ansible import constants as C
@@ -16,6 +19,8 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.six import string_types
+from ansible.template import Templar
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -76,17 +81,22 @@ class InventoryCLI(CLI):
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
         action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
+
+        #TODO: deprecate for template
         action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
                                   help='create inventory graph, if supplying pattern it must be a valid group name')
         self.parser.add_argument_group(action_group)
 
         # graph
+        action_group.add_argument("--template", action="store", default='json', dest='template', help='Jinja2 temlpate used to output the result')
+        self.parser.add_argument("--vars", action="store_true", default=False, dest='show_vars',
+                                 help='Add vars to graph display, ignored unless used with --graph')
+
+        #TODO: deprecate both for template
         self.parser.add_argument("-y", "--yaml", action="store_true", default=False, dest='yaml',
                                  help='Use YAML format instead of default JSON, ignored for --graph')
         self.parser.add_argument('--toml', action='store_true', default=False, dest='toml',
                                  help='Use TOML format instead of default JSON, ignored for --graph')
-        self.parser.add_argument("--vars", action="store_true", default=False, dest='show_vars',
-                                 help='Add vars to graph display, ignored unless used with --graph')
 
         # list
         self.parser.add_argument("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
@@ -129,6 +139,7 @@ class InventoryCLI(CLI):
         self.loader, self.inventory, self.vm = self._play_prereqs()
 
         results = None
+        template = None
         if context.CLIARGS['host']:
             hosts = self.inventory.get_hosts(context.CLIARGS['host'])
             if len(hosts) != 1:
@@ -139,17 +150,28 @@ class InventoryCLI(CLI):
             # FIXME: should we template first?
             results = self.dump(myvars)
 
-        elif context.CLIARGS['graph']:
-            results = self.inventory_graph()
         elif context.CLIARGS['list']:
-            top = self._get_group('all')
-            if context.CLIARGS['yaml']:
-                results = self.yaml_inventory(top)
+
+            if context.CLIARGS['template']:
+                template = context.CLIARGS['template']
+            elif context.CLIARGS['yaml']:
+                template =  'yaml.j2'
             elif context.CLIARGS['toml']:
-                results = self.toml_inventory(top)
+                template =  'toml.j2'
             else:
-                results = self.json_inventory(top)
-            results = self.dump(results)
+                template =  'json.j2'
+                #results = self.yaml_inventory(top)
+                #results = self.toml_inventory(top)
+                #results = self.json_inventory(top)
+        elif context.CLIARGS['graph']:
+            # TODO: deprecate for template option
+            template =  'graph.j2'
+
+        if results is None and template is not None:
+
+            # get top from pattern (default is all)
+            top = context.CLIARGS['pattern']
+            results = self.dump_templated_results(top, template)
 
         if results:
             outfile = context.CLIARGS['output_file']
@@ -166,26 +188,53 @@ class InventoryCLI(CLI):
 
         sys.exit(1)
 
-    @staticmethod
-    def dump(stuff):
+    def dump_templated_results(self, top, template):
 
-        if context.CLIARGS['yaml']:
-            import yaml
-            from ansible.parsing.yaml.dumper import AnsibleDumper
-            results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
-        elif context.CLIARGS['toml']:
-            from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
-            if not HAS_TOML:
-                raise AnsibleError(
-                    'The python "toml" library is required when using the TOML output format'
-                )
-            results = toml_dumps(stuff)
-        else:
-            import json
-            from ansible.parsing.ajson import AnsibleJSONEncoder
-            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
+        def format_host(host):
+            return {'name': host.name, 'vars': self._get_host_variables(host)}
 
-        return results
+        def format_group(pgroup):
+            if isinstance(pgroup, string_types):
+                group = self._get_group(pgroup)
+
+            if group is None:
+                raise AnsibleOptionsError("Processing invalid group: %s" % pgroup)
+
+            result = {'name': group.name, 'hosts': [], 'children':[], 'vars': {}}
+
+            if group.name != 'all':
+                result['hosts'] = [format_host(h) for h in sorted(group.hosts, key=attrgetter('name'))]
+
+            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
+                result['children'].append(format_group(subgroup.name))
+
+            if context.CLIARGS['export']:
+                result['vars'] = self._get_group_variables(group)
+
+            return result
+
+        # get template string
+        try:
+            tstring = ''
+            if os.path.isabs(template):
+                tstring = open(template).read()
+            else:
+                # FIXME: not finding/reading data
+                for ext in ('' , '.j2'):
+                    template = ''.join([template, ext])
+                    tstring = pkgutil.get_data('ansible.inventory.templates', template)
+                    if tstring:
+                        break
+        except Exception as e:
+            raise AnsibleOptionsError("Invalid template option supplied, could not find a match for '%s': %s" % (template, to_native(e)))
+
+        print(tstring)
+        # start data tree
+        groups = [format_group(top)]
+
+        # template
+        t = Templar(self.loader, variables={'groups': groups, 'export': context.CLIARGS['export']})
+        return t.template(tstring)
 
     def _get_group_variables(self, group):
 
@@ -276,117 +325,3 @@ class InventoryCLI(CLI):
             return '\n'.join(self._graph_group(start_at))
         else:
             raise AnsibleOptionsError("Pattern must be valid group name when using --graph")
-
-    def json_inventory(self, top):
-
-        seen = set()
-
-        def format_group(group):
-            results = {}
-            results[group.name] = {}
-            if group.name != 'all':
-                results[group.name]['hosts'] = [h.name for h in sorted(group.hosts, key=attrgetter('name'))]
-            results[group.name]['children'] = []
-            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
-                results[group.name]['children'].append(subgroup.name)
-                if subgroup.name not in seen:
-                    results.update(format_group(subgroup))
-                    seen.add(subgroup.name)
-            if context.CLIARGS['export']:
-                results[group.name]['vars'] = self._get_group_variables(group)
-
-            self._remove_empty(results[group.name])
-            if not results[group.name]:
-                del results[group.name]
-
-            return results
-
-        results = format_group(top)
-
-        # populate meta
-        results['_meta'] = {'hostvars': {}}
-        hosts = self.inventory.get_hosts()
-        for host in hosts:
-            hvars = self._get_host_variables(host)
-            if hvars:
-                results['_meta']['hostvars'][host.name] = hvars
-
-        return results
-
-    def yaml_inventory(self, top):
-
-        seen = []
-
-        def format_group(group):
-            results = {}
-
-            # initialize group + vars
-            results[group.name] = {}
-
-            # subgroups
-            results[group.name]['children'] = {}
-            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
-                if subgroup.name != 'all':
-                    results[group.name]['children'].update(format_group(subgroup))
-
-            # hosts for group
-            results[group.name]['hosts'] = {}
-            if group.name != 'all':
-                for h in sorted(group.hosts, key=attrgetter('name')):
-                    myvars = {}
-                    if h.name not in seen:  # avoid defining host vars more than once
-                        seen.append(h.name)
-                        myvars = self._get_host_variables(host=h)
-                    results[group.name]['hosts'][h.name] = myvars
-
-            if context.CLIARGS['export']:
-                gvars = self._get_group_variables(group)
-                if gvars:
-                    results[group.name]['vars'] = gvars
-
-            self._remove_empty(results[group.name])
-
-            return results
-
-        return format_group(top)
-
-    def toml_inventory(self, top):
-        seen = set()
-        has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
-
-        def format_group(group):
-            results = {}
-            results[group.name] = {}
-
-            results[group.name]['children'] = []
-            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
-                if subgroup.name == 'ungrouped' and not has_ungrouped:
-                    continue
-                if group.name != 'all':
-                    results[group.name]['children'].append(subgroup.name)
-                results.update(format_group(subgroup))
-
-            if group.name != 'all':
-                for host in sorted(group.hosts, key=attrgetter('name')):
-                    if host.name not in seen:
-                        seen.add(host.name)
-                        host_vars = self._get_host_variables(host=host)
-                    else:
-                        host_vars = {}
-                    try:
-                        results[group.name]['hosts'][host.name] = host_vars
-                    except KeyError:
-                        results[group.name]['hosts'] = {host.name: host_vars}
-
-            if context.CLIARGS['export']:
-                results[group.name]['vars'] = self._get_group_variables(group)
-
-            self._remove_empty(results[group.name])
-            if not results[group.name]:
-                del results[group.name]
-
-            return results
-
-        results = format_group(top)
-
-        return results

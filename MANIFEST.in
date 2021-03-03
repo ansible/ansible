@@ -18,7 +18,7 @@ recursive-include lib/ansible/executor/powershell *.ps1
 recursive-include lib/ansible/module_utils/csharp *.cs
 recursive-include lib/ansible/module_utils/powershell *.psm1
 recursive-include lib/ansible/modules/windows *.ps1
-recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep
+recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep lib/ansible/inventory/templates
 recursive-include lib/ansible/config *.yml
 recursive-include licenses *.txt
 recursive-include packaging *

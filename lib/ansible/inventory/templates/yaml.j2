@@ -1,0 +1,27 @@
+{% seenhosts = set() %}
+{% seengroups = set() %}
+{% for group in groups recursive %}
+{{group.name}}:
+{% if group.name not in seengroups %}
+	children:
+	  {% for child in group.children %}
+	  {% loop(group.children) %}
+	  {% endfor %}
+	hosts:
+	{% for host in group.hosts %}
+		{{host.name}}:
+		{% if host.name not in seenhosts %}
+			{% host.name.append(seenhosts%}
+			{% for varname in host.vars.keys() %}
+			{{varname}}: {{host.vars[varname]|to_yaml}}
+			{% endfor %}
+		{% endif %}
+	{% endfor %}
+	{% if export %}
+	vars:
+	{% for varname in group.vars.keys() %}
+      {{varname}}: {{group.vars[varname]|to_yaml}}
+    {% endfor %}
+	{% endif %}
+{% endif %}
+{% endfor %}
