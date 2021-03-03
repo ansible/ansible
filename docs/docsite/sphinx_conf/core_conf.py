@@ -13,6 +13,9 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import sys
 import os
 
@@ -34,7 +37,7 @@ sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 # the repository version needs to be the one that is loaded:
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
 
-VERSION = '2.10'
+VERSION = 'devel'
 AUTHOR = 'Ansible, Inc'
 
 
@@ -62,7 +65,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible'
-copyright = "2019 Red Hat, Inc."
+copyright = "2021 Red Hat, Inc."
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -87,8 +90,26 @@ today_fmt = '%B %d, %Y'
 
 # A list of glob-style patterns that should be excluded when looking
 # for source files.
-# OBSOLETE - removing this - dharmabumstead 2018-02-06
-# exclude_patterns = ['modules']
+exclude_patterns = [
+    '2.10_index.rst',
+    'ansible_index.rst',
+    'core_index.rst',
+    'galaxy',
+    'network',
+    'scenario_guides',
+    'porting_guides/porting_guides.rst',
+    'porting_guides/porting_guide_2*',
+    'porting_guides/porting_guide_3*',
+    'roadmap/index.rst',
+    'roadmap/ansible_roadmap_index.rst',
+    'roadmap/old_roadmap_index.rst',
+    'roadmap/ROADMAP_2_5.rst',
+    'roadmap/ROADMAP_2_6.rst',
+    'roadmap/ROADMAP_2_7.rst',
+    'roadmap/ROADMAP_2_8.rst',
+    'roadmap/ROADMAP_2_9.rst',
+    'roadmap/COLLECTIONS*'
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -128,7 +149,7 @@ rst_epilog = """
 
 html_theme_path = ['../_themes']
 html_theme = 'sphinx_rtd_theme'
-html_short_title = 'Ansible Documentation'
+html_short_title = 'Ansible Core Documentation'
 html_show_sphinx = False
 
 html_theme_options = {
@@ -147,7 +168,7 @@ html_context = {
     'current_version': version,
     'latest_version': '2.10',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.9', '2.9_ja', '2.8', 'devel'),
+    'available_versions': ('devel'),
     'css_files': ('_static/ansible.css',  # overrides to the standard theme
                   ),
 }
@@ -159,7 +180,7 @@ html_context = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'Ansible Documentation'
+html_title = 'Ansible Core Documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
