@@ -84,7 +84,7 @@ class AdHocCLI(CLI):
             if environment:
                 mytask['environment'] = environment
         elif environment:
-                mytask['action']['args']['apply'] = {'environment': environment}
+            mytask['action']['args']['apply'] = {'environment': environment}
 
         return dict(
             name="Ansible Ad-Hoc",
