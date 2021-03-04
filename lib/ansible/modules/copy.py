@@ -124,7 +124,6 @@ extends_documentation_fragment:
 - action_common_attributes
 notes:
 - The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
-- Supports C(check_mode).
 seealso:
 - module: ansible.builtin.assemble
 - module: ansible.builtin.fetch
