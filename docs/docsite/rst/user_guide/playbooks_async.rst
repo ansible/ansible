@@ -72,6 +72,9 @@ poll value is set by the ``DEFAULT_POLL_INTERVAL`` setting if you do not specify
   task when run in check mode. See :ref:`check_mode_dry` on how to
   skip a task in check mode.
 
+.. note::
+   When an async task completes with polling enabled, the temporary async job cache
+   file (by default in ~/.ansible_async/) is automatically removed.
 
 Concurrent tasks: poll = 0
 --------------------------
@@ -108,6 +111,11 @@ You may run a task asynchronously by specifying a poll value of 0::
 .. note::
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
+
+.. note::
+   When running with ``poll: 0``, Ansible will not automatically cleanup the async job cache file.
+   You will need to manually clean this up with the :ref:`async_status <async_status_module>` module
+   with ``mode: cleanup``.
 
 If you would like to perform a task asynchronously and check on it later you can perform a task similar to the
 following::
