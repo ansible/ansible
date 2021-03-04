@@ -1123,7 +1123,6 @@ class DocCLI(CLI, RoleMixin):
             text.append('')
 
         if doc.get('attributes', False):
-            DocCLI.append_attribute_desc(doc['attributes'])
             text.append("ATTRIBUTES:\n")
             text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
             text.append('')

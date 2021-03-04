@@ -136,10 +136,10 @@ author:
 - Ansible Core Team
 - Michael DeHaan
 attributes:
-  - name: diff_mode
+  diff_mode:
     support: full
     version_added: '0.9'
-  - name: check_mode
+  check_mode:
     version_added: '0.9'
     support: full
 '''

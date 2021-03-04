@@ -194,31 +194,14 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
                 doc['options'] = fragment.pop('options')
 
         # same with fragments as with options
-        attributes = []
         if 'attributes' in fragment:
             if 'attributes' in doc:
-                used = []
-                for attr in fragment['attributes']:
-                    for docattr in doc['attributes']:
-                        if attr['name'] == docattr['name']:
-                            attributes.append(combine_vars(attr, docattr))
-                            used.append(docattr['name'])
-                            break
-                    else:
-                        attributes.append(attr)
-
-                del fragment['attributes']
-
-                # add any unconsumed from doc
-                for attr in doc['attributes']:
-                    if attr['name'] not in used:
-                        attributes.append(attr)
+                try:
+                    merge_fragment(doc['attributes'], fragment.pop('attributes'))
+                except Exception as e:
+                    raise AnsibleError("%s attributes (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
             else:
-                attributes = fragment.pop('attributes')
-
-        if attributes:
-            print(attributes)
-            doc['attributes'] = attributes
+                doc['attributes'] = fragment.pop('attributes')
 
         # merge rest of the sections
         try:
