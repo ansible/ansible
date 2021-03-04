@@ -12,11 +12,11 @@ Ansible community package                             ansible-core
 each major release is a new major version (4.0.0)     continues "classic Ansible" versioning (2.11)
 follows semantic versioning rules                     does not use semantic versioning
 maintains only one version at a time                  maintains latest version plus two older versions
-includes language, runtime, and selected Collections  includes only the language and runtime
+includes language, runtime, and builtin Collections  includes only the language and runtime
 developed and maintained in Collection repositories   developed and maintained in ansible/ansible repo
 ====================================================  =================================================
 
-Most community users install the Ansible community package. The ``ansible-core`` option is primarily for developers.
+Most community users install the Ansible community package. The ``ansible-core`` option is primarily for developers and users who want to install only collections they need.
 
 .. contents::
    :local:
@@ -30,7 +30,7 @@ The two community releases are related - the release cycle follows this pattern:
 
 #. Release of a new ansible-core major version, for example, ansible-core 2.11
 
-   * New release of ansible-core and two prior versions are now maintained (ansible-base 2.10, Ansible 2.9)
+   * New release of ansible-core and two prior versions are now maintained (in this case, ansible-base 2.10, Ansible 2.9)
    * Work on new features for ansible-core continues in the ``devel`` branch
 
 #. Collection freeze (no new Collections or new versions of existing Collections) on the Ansible community package
@@ -58,11 +58,11 @@ Older, unmaintained versions of the Ansible community package might contain unfi
 
 Each major release of the Ansible community package accepts the latest released version of each included Collection and the latest released version of ansible-core. Major releases of the Ansible community package can contain breaking changes in the modules and other plugins within the included Collections and/or in core features.
 
-The Ansible community package follows semantic versioning rules. Minor releases of the Ansible community package accept only backwards-compatible changes in included Collections. Collections must also use semantic versioning, so the Collection version numbers reflect this rule. For example, if Ansible 3.0.0 releases with community.general 2.0.0, then all minor releases of Ansible 3.x (such as Ansible 3.1.0 or Ansible 3.5.0) must include a 2.x release of community.general (such as 2.8.0 or 2.9.5).
+The Ansible community package follows semantic versioning rules. Minor releases of the Ansible community package accept only backwards-compatible changes in included Collections, in other words, not Collections major releases. Collections must also use semantic versioning, so the Collection version numbers reflect this rule. For example, if Ansible 3.0.0 releases with community.general 2.0.0, then all minor releases of Ansible 3.x (such as Ansible 3.1.0 or Ansible 3.5.0) must include a 2.x release of community.general (such as 2.8.0 or 2.9.5) and not 3.x.x or later major releases.
 
 Work in Collections is tracked within the individual Collection repositories.
 
-You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible playbooks to run on newer versions. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, You can download the Ansible release from `<https://releases.ansible.com/ansible/>`_.
+You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible playbooks to run on newer versions. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, you can download the Ansible release from `<https://releases.ansible.com/ansible/>`_.
 
 This table links to the release notes for each major Ansible release. These release notes (changelogs) contain the dates and significant changes in each minor release.
 
@@ -112,7 +112,7 @@ significant changes in each minor release.
 ============================================= ======================================================
 devel                                         In development (ansible-core 2.11 unreleased, trunk)
 `2.10 ansible-base Release Notes`_            Maintained (security **and** general bug fixes)
-`2.9 Release Notes`_                          Maintained (pre-collections)(security **and** critical bug fixes)
+`2.9 Release Notes`_                          Maintained (pre-collections) (security **and** critical bug fixes)
 `2.8 Release Notes`_                          Maintained (pre-collections) (security fixes only)
 `2.7 Release Notes`_                          Unmaintained (end of life)
 `2.6 Release Notes`_                          Unmaintained (end of life)
@@ -166,7 +166,7 @@ Development and stable version maintenance workflow
 In between releases, the Ansible community develops and maintains ``ansible-core`` on GitHub_, with a workflow that looks like this:
 
  * Developers add new features and bug fixes to the ``devel`` branch.
- * Each new feature and each notable bug fix includes a changelog fragment describing the work.
+ * Each new feature and each bug fix includes a changelog fragment describing the work.
  * The development team backports bug fixes to one, two, or three stable branches, depending on the severity of the bug. They do not backport new features.
  * Release engineers create a minor release for each maintained version every three weeks to ensure that the latest bug fixes are available to users.
  * At the end of the development period, the release engineers impose a feature freeze and the work of creating a new release begins.
@@ -180,7 +180,7 @@ We generally do not provide fixes for unmaintained releases of Ansible, however,
 Changelogs
 ^^^^^^^^^^
 
-We generate changelogs based on fragments. Here is the generated changelog for 2.9_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
+We generate changelogs based on fragments. When creating new features for existing modules and plugins or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
 For guidance on creating changelog fragments, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide.
 
@@ -198,7 +198,7 @@ Since Ansible is a package of individual collections, the deprecation cycle depe
 ansible-core deprecation cycle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The cycle is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we don't jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering.
+The cycle is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we do not jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering.
 
 For modules/plugins that remain in ansible-core, we keep the documentation after the removal for users of older versions.
 
