@@ -648,10 +648,6 @@ class Templar:
         self._cached_result = {}
         self._basedir = loader.get_basedir() if loader else './'
 
-        # flags to determine whether certain failures during templating
-        # should result in fatal errors being raised
-        self._fail_on_lookup_errors = True
-        self._fail_on_filter_errors = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
         environment_class = AnsibleNativeEnvironment if USE_JINJA2_NATIVE else AnsibleEnvironment
@@ -904,10 +900,7 @@ class Templar:
                 return variable
 
         except AnsibleFilterError:
-            if self._fail_on_filter_errors:
-                raise
-            else:
-                return variable
+            raise
 
     def is_template(self, data):
         '''lets us know if data has a template'''
@@ -1033,16 +1026,15 @@ class Templar:
             return [] if wantlist else None
         except Exception as e:
             # errors not handled by lookup
-            if self._fail_on_lookup_errors:
-                msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
-                      (name, type(e), to_text(e))
-                if errors == 'warn':
-                    display.warning(msg)
-                elif errors == 'ignore':
-                    display.display(msg, log_only=True)
-                else:
-                    display.vvv('exception during Jinja2 execution: {0}'.format(format_exc()))
-                    raise AnsibleError(to_native(msg), orig_exc=e)
+            msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
+                  (name, type(e), to_text(e))
+            if errors == 'warn':
+                display.warning(msg)
+            elif errors == 'ignore':
+                display.display(msg, log_only=True)
+            else:
+                display.vvv('exception during Jinja2 execution: {0}'.format(format_exc()))
+                raise AnsibleError(to_native(msg), orig_exc=e)
             return [] if wantlist else None
 
         if ran and allow_unsafe is False:
