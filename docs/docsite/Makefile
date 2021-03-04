@@ -20,6 +20,10 @@ ifndef BUILDDIR
 	BUILDDIR = _build
 endif
 
+ifndef POTDIR
+	POTDIR = $(BUILDDIR)/gettext
+endif
+
 # Backwards compat for separate VARS
 PLUGIN_ARGS=
 ifdef MODULES
@@ -97,16 +101,19 @@ core_structure: core_generate_rst
 gettext_structure: gettext_generate_rst
 	@echo "Creating symlinks in gettext_generate_rst"
 	-ln -sf ../rst/core_index.rst rst/index.rst
-	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
+	-ln -sf ../sphinx_conf/all_conf.py rst/conf.py
 
 gettext: gettext_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx gettext
+	# if msgcat is installed handle all indexes, otherwise use the index from gettext_structure.
+	-msgcat "$(POTDIR)/core_index.pot" "$(POTDIR)/ansible_index.pot" "$(POTDIR)/2.10_index.pot" > "$(POTDIR)/tmp_index.pot" && mv "$(POTDIR)/tmp_index.pot" "$(POTDIR)/index.pot"
+	rm "$(POTDIR)/core_index.pot" "$(POTDIR)/ansible_index.pot" "$(POTDIR)/2.10_index.pot"
 
 generate-po:
 ifeq ($(LANGUAGES),)
 	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to support. (Exampe: fr,es)'
 else
-	(cd docs/docsite/; sphinx-intl update -w 0 -d rst/locales -p _build/gettext -l $(LANGUAGES))
+	(cd docs/docsite/; sphinx-intl update -w 0 -d rst/locales -p "$(POTDIR)" -l $(LANGUAGES))
 endif
 
 needs-translation:
