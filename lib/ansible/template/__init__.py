@@ -807,67 +807,66 @@ class Templar:
             variable = self._convert_bare_variable(variable)
 
         if isinstance(variable, string_types):
-            result = variable
+            if not self.is_possibly_template(variable):
+                return variable
 
-            if self.is_possibly_template(variable):
-                # Check to see if the string we are trying to render is just referencing a single
-                # var.  In this case we don't want to accidentally change the type of the variable
-                # to a string by using the jinja template renderer. We just want to pass it.
-                only_one = self.SINGLE_VAR.match(variable)
-                if only_one:
-                    var_name = only_one.group(1)
-                    if var_name in self._available_variables:
-                        resolved_val = self._available_variables[var_name]
-                        if isinstance(resolved_val, NON_TEMPLATED_TYPES):
-                            return resolved_val
-                        elif resolved_val is None:
-                            return C.DEFAULT_NULL_REPRESENTATION
+            # Check to see if the string we are trying to render is just referencing a single
+            # var.  In this case we don't want to accidentally change the type of the variable
+            # to a string by using the jinja template renderer. We just want to pass it.
+            only_one = self.SINGLE_VAR.match(variable)
+            if only_one:
+                var_name = only_one.group(1)
+                if var_name in self._available_variables:
+                    resolved_val = self._available_variables[var_name]
+                    if isinstance(resolved_val, NON_TEMPLATED_TYPES):
+                        return resolved_val
+                    elif resolved_val is None:
+                        return C.DEFAULT_NULL_REPRESENTATION
 
-                # Using a cache in order to prevent template calls with already templated variables
-                sha1_hash = None
-                if cache:
-                    variable_hash = sha1(text_type(variable).encode('utf-8'))
-                    options_hash = sha1(
-                        (
-                            text_type(preserve_trailing_newlines) +
-                            text_type(escape_backslashes) +
-                            text_type(fail_on_undefined) +
-                            text_type(overrides)
-                        ).encode('utf-8')
-                    )
-                    sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
-                if cache and sha1_hash in self._cached_result:
-                    result = self._cached_result[sha1_hash]
-                else:
-                    result = self.do_template(
-                        variable,
-                        preserve_trailing_newlines=preserve_trailing_newlines,
-                        escape_backslashes=escape_backslashes,
-                        fail_on_undefined=fail_on_undefined,
-                        overrides=overrides,
-                        disable_lookups=disable_lookups,
-                    )
+            # Using a cache in order to prevent template calls with already templated variables
+            sha1_hash = None
+            if cache:
+                variable_hash = sha1(text_type(variable).encode('utf-8'))
+                options_hash = sha1(
+                    (
+                        text_type(preserve_trailing_newlines) +
+                        text_type(escape_backslashes) +
+                        text_type(fail_on_undefined) +
+                        text_type(overrides)
+                    ).encode('utf-8')
+                )
+                sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
 
-                    if not self.jinja2_native:
-                        unsafe = hasattr(result, '__UNSAFE__')
-                        if convert_data and not self._no_type_regex.match(variable):
-                            # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                            if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                                    result.startswith("[") or result in ("True", "False"):
-                                eval_results = safe_eval(result, include_exceptions=True)
-                                if eval_results[1] is None:
-                                    result = eval_results[0]
-                                    if unsafe:
-                                        result = wrap_var(result)
-                                else:
-                                    # FIXME: if the safe_eval raised an error, should we do something with it?
-                                    pass
+                if sha1_hash in self._cached_result:
+                    return self._cached_result[sha1_hash]
 
-                    # we only cache in the case where we have a single variable
-                    # name, to make sure we're not putting things which may otherwise
-                    # be dynamic in the cache (filters, lookups, etc.)
-                    if cache and only_one:
-                        self._cached_result[sha1_hash] = result
+            result = self.do_template(
+                variable,
+                preserve_trailing_newlines=preserve_trailing_newlines,
+                escape_backslashes=escape_backslashes,
+                fail_on_undefined=fail_on_undefined,
+                overrides=overrides,
+                disable_lookups=disable_lookups,
+            )
+
+            if not self.jinja2_native:
+                unsafe = hasattr(result, '__UNSAFE__')
+                if convert_data and not self._no_type_regex.match(variable):
+                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                            result.startswith("[") or result in ("True", "False"):
+                        eval_results = safe_eval(result, include_exceptions=True)
+                        if eval_results[1] is None:
+                            result = eval_results[0]
+                            if unsafe:
+                                result = wrap_var(result)
+                        # FIXME: if the safe_eval raised an error, should we do something with it?
+
+            # we only cache in the case where we have a single variable
+            # name, to make sure we're not putting things which may otherwise
+            # be dynamic in the cache (filters, lookups, etc.)
+            if cache and only_one:
+                self._cached_result[sha1_hash] = result
 
             return result
 
