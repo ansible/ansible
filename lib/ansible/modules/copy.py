@@ -137,11 +137,11 @@ author:
 - Michael DeHaan
 attributes:
   - name: diff_mode
-    status: true
+    support: full
     version_added: '0.9'
   - name: check_mode
     version_added: '0.9'
-    status: true
+    support: full
 '''
 
 EXAMPLES = r'''

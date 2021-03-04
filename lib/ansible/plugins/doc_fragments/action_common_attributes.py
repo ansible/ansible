@@ -12,17 +12,24 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r'''
 attributes:
     - name: async
-      status: yes
+      description: Supports being used with the ``async`` keyword
+      support: full
     - name: bypass_host_loop
-      status: no
+      description: Forces a 'global' task that does not execute per host, cannot be used in non lockstep strategies
+      support: no
     - name: check_mode
-      status: no
+      description: Can run in check_mode and return changed status prediction
+      support: no
     - name: connection
-      status: yes
+      description: Uses the target's configured connection information to execute code on it
+      support: full
     - name: delegation
-      status: yes
+      description: Can be used in conjunction with delegate_to and related keywords
+      support: full
     - name: diff_mode
-      status: no
+      description: Will return details on what has changed when in diff mode
+      support: no
     - name: facts
-      status: no
+      description: Action returns an ``ansible_facts`` dictionary that will update existing host facts
+      support: no
 '''

@@ -457,23 +457,9 @@ class DocCLI(CLI, RoleMixin):
         # display results
         DocCLI.pager("\n".join(text))
 
-    def _load_attribute_descs(self):
-        self._attrib_desc = from_yaml(pkgutil.get_data('ansible', 'attribute_desc.yml'))
-
     @staticmethod
     def _list_keywords():
         return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
-
-    @staticmethod
-    def append_attribute_desc(attrs):
-        descs = from_yaml(pkgutil.get_data('ansible', 'attribute_desc.yml'))
-        for item in attrs:
-            if 'name' in item:
-                try:
-                    item[item['name']] = descs[item['name']]
-                except KeyError:
-                    item[item['name']] = 'UNDOCUMENTED'
-                del item['name']
 
     @staticmethod
     def _get_keywords_docs(keys):
@@ -1068,7 +1054,6 @@ class DocCLI(CLI, RoleMixin):
                 text.append('')
 
             if doc.get('attributes'):
-                DocCLI.append_attribute_desc(doc['attributes'])
                 text.append("ATTRIBUTES:\n")
                 text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
                 text.append('')
