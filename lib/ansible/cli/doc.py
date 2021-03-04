@@ -315,7 +315,6 @@ class DocCLI(CLI, RoleMixin):
 
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
-        self._attrib_desc = {}
 
     @classmethod
     def tty_ify(cls, text):
