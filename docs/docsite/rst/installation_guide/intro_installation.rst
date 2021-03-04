@@ -525,15 +525,14 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
 
 .. _shell_completion:
 
-Installing Ansible command shell completion
-===========================================
+Adding Ansible command shell completion
+=======================================
 
-As of Ansible 2.9, shell completion of the Ansible command line utilities is available and provided through an optional dependency
-called ``argcomplete``. ``argcomplete`` supports bash, and has limited support for zsh and tcsh.
+As of Ansible 2.9, you can add shell completion of the Ansible command line utilities by installing an optional dependency called ``argcomplete``. ``argcomplete`` supports bash, and has limited support for zsh and tcsh.
 
 You can install ``python-argcomplete`` from EPEL on Red Hat Enterprise based distributions, and or from the standard OS repositories for many other distributions.
 
-For more information about installing and configuration see the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_.
+For more information about installation and configuration, see the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_.
 
 Installing ``argcomplete`` on RHEL, CentOS, or Fedora
 -----------------------------------------------------
