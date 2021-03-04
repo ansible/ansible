@@ -12,6 +12,9 @@ else
 CPUS ?= $(shell nproc)
 endif
 
+# Intenationalisation and Localisation
+LANGUAGES ?=
+
 # Sets the build output directory for the main docsite if it's not already specified
 ifndef BUILDDIR
 	BUILDDIR = _build
@@ -66,7 +69,7 @@ core_generate_rst: collections_meta config cli keywords base_plugins testing
 
 # At the moment localizing the plugins and collections is not required for the ongoing
 # localisation effort. It will come at a later time.
-gettext_generate_rst: config cli keywords testing
+gettext_generate_rst: collections_meta config cli keywords testing
 
 # The following two symlinks are necessary to produce two different docsets
 # from the same set of rst files (Ansible the package docs, and core docs).
@@ -98,6 +101,20 @@ gettext_structure: gettext_generate_rst
 
 gettext: gettext_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx gettext
+
+generate-po:
+ifeq ($(LANGUAGES),)
+	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to support. (Exampe: fr,es)'
+else
+	(cd docs/docsite/; sphinx-intl update -w 0 -d rst/locales -p _build/gettext -l $(LANGUAGES))
+endif
+
+needs-translation:
+ifeq ($(LANGUAGES),)
+	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to support. (Exampe: fr,es)'
+else
+	(cd docs/docsite/; sphinx-intl stat -d rst/locales -l $(LANGUAGES) | grep -E ' [1-9][0-9]* (fuzzy|untranslated)' | sort)
+endif
 
 htmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
