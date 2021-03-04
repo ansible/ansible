@@ -154,15 +154,15 @@ class LinuxVirtual(Virtual):
                 found_virt = True
 
         if sys_vendor == 'Red Hat':
-            if product_name == 'RHEV Hypervisor':
-                guest_tech.add('RHEV')
-                if not found_virt:
-                    virtual_facts['virtualization_type'] = 'RHEV'
-                    found_virt = True
-            elif product_name == 'RHEL':
+            if product_family == 'RHV':
                 guest_tech.add('RHV')
                 if not found_virt:
                     virtual_facts['virtualization_type'] = 'RHV'
+                    found_virt = True
+            elif product_family == 'RHEV Hypervisor':
+                guest_tech.add('RHEV')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'RHEV'
                     found_virt = True
 
         if product_name in ('VMware Virtual Platform', 'VMware7,1'):
