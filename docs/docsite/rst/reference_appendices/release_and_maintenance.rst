@@ -12,11 +12,11 @@ Ansible community package                             ansible-core
 Uses new versioning (2.10, then 3.0.0)                Continues "classic Ansible" versioning (2.10, then 2.11)
 Follows semantic versioning rules                     Does not use semantic versioning
 Maintains only one version at a time                  Maintains latest version plus two older versions
-Includes language, runtime, and builtin Collections   Includes only the language and runtime
+Includes language, runtime, and selected Collections  Includes language, runtime, and builtin plugins
 Developed and maintained in Collection repositories   Developed and maintained in ansible/ansible repository
 ====================================================  ========================================================
 
-Most community users install the Ansible community package. The ``ansible-core`` option is primarily for developers and users who want to install only collections they need.
+Many community users install the Ansible community package. The Ansible community package offers the functionality that existed in Ansible 2.9, with more than 85 Collections containing thousands of modules and plugins. The ``ansible-core`` option is primarily for developers and users who want to install only the collections they need.
 
 .. contents::
    :local:
