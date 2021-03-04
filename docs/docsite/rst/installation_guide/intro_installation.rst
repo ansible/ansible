@@ -7,7 +7,7 @@ Installing Ansible
 
 Ansible is an agentless automation tool that you install on a control node. From the control node, Ansible manages machines and other devices remotely (by default, over the SSH protocol).
 
-Installing Ansible for use at the command line is simple. You do not need to install a database, you do not need to install anything on the nodes you want to manage, and you do not need to run any daemons. You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.
+To install Ansible for use at the command line, simply install the Ansible package on one machine (which could easily be a laptop). You do not need to install a database or run any daemons. Ansible can manage an entire fleet of remote machines from that one control node.
 
 .. contents::
   :local:
@@ -32,9 +32,6 @@ When choosing a control node, remember that any management system benefits from 
 
     Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer.
 
-.. warning::
-
-    Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine (the managed node) and should be listed in the module specific docs.
 
 .. _managed_node_requirements:
 
@@ -42,6 +39,10 @@ Managed node requirements
 -------------------------
 
 Although you do not need a daemon on your managed nodes, you do need a way for Ansible to communicate with them. For most managed nodes, Ansible makes a connection over SSH and transfers modules using SFTP. If SSH works but SFTP is not available on some of your managed nodes, you can switch to SCP in :ref:`ansible.cfg <ansible_configuration_settings>`. For any machine or device that can run Python, you also need Python 2 (version 2.6 or later) or Python 3 (version 3.5 or later).
+
+.. warning::
+
+    Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine (the managed node) and should be listed in the module specific docs.
 
 .. note::
 
