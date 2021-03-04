@@ -6,15 +6,15 @@ Releases and maintenance
 
 This section describes release cycles, rules, and maintenance schedules for both Ansible community projects: the Ansible community package and ``ansible-core``. The two projects have different versioning systems, maintenance structures, contents, and workflows.
 
-====================================================  =================================================
+====================================================  ========================================================
 Ansible community package                             ansible-core
-====================================================  =================================================
-each major release is a new major version (4.0.0)     continues "classic Ansible" versioning (2.11)
-follows semantic versioning rules                     does not use semantic versioning
-maintains only one version at a time                  maintains latest version plus two older versions
-includes language, runtime, and builtin Collections  includes only the language and runtime
-developed and maintained in Collection repositories   developed and maintained in ansible/ansible repo
-====================================================  =================================================
+====================================================  ========================================================
+Uses new versioning (2.10, then 3.0.0)                Continues "classic Ansible" versioning (2.10, then 2.11)
+Follows semantic versioning rules                     Does not use semantic versioning
+Maintains only one version at a time                  Maintains latest version plus two older versions
+Includes language, runtime, and builtin Collections   Includes only the language and runtime
+Developed and maintained in Collection repositories   Developed and maintained in ansible/ansible repository
+====================================================  ========================================================
 
 Most community users install the Ansible community package. The ``ansible-core`` option is primarily for developers and users who want to install only collections they need.
 
@@ -79,8 +79,8 @@ Ansible Community Package Release       Status
 .. _2.10: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
 
 
-Release cycle for ansible-base/ansible-core
--------------------------------------------
+Release cycle for ansible-core
+-------------------------------
 
 ``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details.
 
