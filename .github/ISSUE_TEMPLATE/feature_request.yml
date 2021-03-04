@@ -37,7 +37,7 @@ body:
 
 - type: input
   attributes:
-    label: Component Type
+    label: Component Name
     description: >-
       Write the short name of the module, plugin, task or feature below,
       *use your best guess if unsure*.
