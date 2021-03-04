@@ -46,7 +46,7 @@ Although you do not need a daemon on your managed nodes, you do need a way for A
 
 .. note::
 
-   * If you have SELinux enabled on remote nodes, you will also want to install      libselinux-python on them before using any copy/file/template related functions in Ansible. You can use the :ref:`yum module<yum_module>` or :ref:`dnf module<dnf_module>` in Ansible to install this package on remote systems that do not have it.
+   * If you have SELinux enabled on remote nodes, you will also want to install libselinux-python on them before using any copy/file/template related functions in Ansible. You can use the :ref:`yum module<yum_module>` or :ref:`dnf module<dnf_module>` in Ansible to install this package on remote systems that do not have it.
 
    * By default, before the first Python module in a playbook runs on a host, Ansible attempts to discover a suitable Python interpreter on that host. You can override the discovery behavior by setting the :ref:`ansible_python_interpreter<ansible_python_interpreter>` inventory variable to a specific interpreter, and in other ways. See :ref:`interpreter_discovery` for details.
 
