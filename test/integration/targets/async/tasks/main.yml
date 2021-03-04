@@ -42,6 +42,25 @@
         - async_result.finished == 1
         - async_result is finished
 
+- name: assert temp async directory exists
+  stat:
+    path: "~/.ansible_async"
+  register: dir_st
+
+- assert:
+    that:
+      - dir_st.stat.isdir is defined and dir_st.stat.isdir
+
+- name: stat temp async status file
+  stat:
+    path: "~/.ansible_async/{{ async_result.ansible_job_id }}"
+  register: tmp_async_file_st
+
+- name: validate automatic cleanup of temp async status file on completed run
+  assert:
+    that:
+      - not tmp_async_file_st.stat.exists
+
 - name: test async without polling
   command: sleep 5
   async: 30

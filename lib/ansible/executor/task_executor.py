@@ -795,6 +795,28 @@ class TaskExecutor:
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
+            # If the async task finished, automatically cleanup the temporary
+            # status file left behind.
+            cleanup_task = Task().load(
+                {
+                    'async_status': {
+                        'jid': async_jid,
+                        'mode': 'cleanup',
+                    },
+                    'environment': self._task.environment,
+                }
+            )
+            cleanup_handler = self._shared_loader_obj.action_loader.get(
+                'ansible.legacy.async_status',
+                task=cleanup_task,
+                connection=self._connection,
+                play_context=self._play_context,
+                loader=self._loader,
+                templar=templar,
+                shared_loader_obj=self._shared_loader_obj,
+            )
+            cleanup_handler.run(task_vars=task_vars)
+            cleanup_handler.cleanup(force=True)
             async_handler.cleanup(force=True)
             return async_result
 
