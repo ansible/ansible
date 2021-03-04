@@ -5,8 +5,7 @@ Installing Ansible
 ===================
 
 This page describes how to install Ansible on different platforms.
-Ansible is an agentless automation tool that by default manages machines over the SSH protocol. Once installed, Ansible does
-not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
+Ansible is an agentless automation tool that by default manages machines over the SSH protocol. Once installed, Ansible does not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
 
 
 .. contents::
@@ -15,7 +14,7 @@ not add a database, and there will be no daemons to start or keep running.  You 
 Prerequisites
 --------------
 
-You install Ansible on a control node, which then uses SSH (by default) to communicate with your managed nodes (those end devices you want to automate).
+You install Ansible on a control node, which then uses SSH (by default) to communicate with your managed nodes (those end devices you want to automate). Control nodes and managed nodes have different minimum requirements.
 
 .. _control_node_requirements:
 
@@ -27,11 +26,6 @@ This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_.
 
 When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
-
-.. note::
-
-    macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
-
 
 .. warning::
 
@@ -72,24 +66,36 @@ later).
 
 .. _what_version:
 
-Selecting an Ansible version to install
----------------------------------------
+Selecting an Ansible artifact and version to install
+----------------------------------------------------
 
-Which Ansible version to install is based on your particular needs. You can choose any of the following ways to install Ansible:
+Ansible distributes two artifacts: a community package called ``ansible`` and a minimalist language and runtime called ``ansible-core`` (called `ansible-base` in version 2.10). Choose the Ansible artifact and version that matches your particular needs.
+
+Ansible community package
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``ansible`` package includes ansible-core plus a range of community curated Collections. It recreates and expands on the functionality that was included in Ansible 2.9.
+
+You can choose any of the following ways to install the Ansible community package:
 
 * Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu).
 * Install with ``pip`` (the Python package manager).
-* Install ``ansible-base`` from source to access the development (``devel``) version to develop or test the latest features.
+
+`ansible-core`
+^^^^^^^^^^^^^^
+
+Ansible also distributes a minimalist object called ``ansible-core`` (or ``ansible-base in version 2.10). It contains the Ansible language, runtime, and a short list of core modules and other plugins. You can build functionality on top of ``ansible-core`` by installing collections from Galaxy, Automation Hub, or any other source.
+
+You can choose any of the following ways to install ``ansible-core``:
+
+* Install ``ansible-base`` (version 2.10) with ``pip``.
+* Install ``ansible-core`` from source from the ansible/ansible GitHub repository to access the development (``devel``) version to develop or test the latest features.
 
 .. note::
 
-	You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+	You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
-
-Ansible creates new releases two to three times a year. Due to this short release cycle,
-minor bugs will generally be fixed in the next release rather than maintaining backports on the stable branch.
-Major bugs will still have maintenance releases when needed, though these are infrequent.
-
+Ansible generally creates new releases twice a year. See :ref:`release_and_maintenance` for information on release timing and maintenance of older releases.
 
 .. _installing_the_control_node:
 .. _from_yum:
@@ -161,8 +167,6 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 .. code-block:: bash
 
     $ make deb
-
-You may also wish to run from source to get the development branch, which is covered below.
 
 Installing Ansible on Debian
 ----------------------------
@@ -240,7 +244,11 @@ The instructions can be found in :ref:`from_pip`. If you are running macOS versi
 
 .. note::
 
-	If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+	To upgrade from Ansible 2.9 or older to Ansible 3 or later, you must ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+
+.. note::
+
+   macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" errors.
 
 If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
 
@@ -306,24 +314,22 @@ Update of the software will be managed by the swupd tool::
 Installing Ansible with ``pip``
 --------------------------------
 
-Ansible can be installed with ``pip``, the Python package manager. If ``pip`` isn't already available on your system of Python, run the following commands to install it::
+Ansible can be installed with ``pip``, the Python package manager. If ``pip`` is not already available on your system of Python, run the following commands to install it::
 
     $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ python get-pip.py --user
 
 .. note::
 
-  	If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+  	To upgrade from Ansible 2.9 or older to Ansible 2.10 or later, you must ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
 
 Then install Ansible [1]_::
 
     $ python -m pip install --user ansible
 
-
 .. tip::
 
-    If this is your first time installing packages with pip, you may need to perform some additional configuration before you are able to run
-    Ansible. See the Python documentation on `installing to the user site`_ for more information.
+    If this is your first time installing packages with pip, you may need to perform some additional configuration before you are able to run Ansible. See the Python documentation on `installing to the user site`_ for more information.
 
 .. _installing to the user site: https://packaging.python.org/tutorials/installing-packages/#installing-to-the-user-site
 
@@ -365,8 +371,7 @@ If you do not uninstall the older version of Ansible, you will see the following
 
     ...
 
-As explained by the message, to upgrade you must first remove the version of Ansible installed and then install it
-to the latest version.
+As explained by the message, to upgrade you must first remove the version of Ansible installed and then install it to the latest version.
 
 .. code-block:: console
 
@@ -375,21 +380,21 @@ to the latest version.
 
 .. _from_pip_devel:
 
-Installing the development version of ``ansible-base``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing the development version of ``ansible-core``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+In Ansible 2.10 and later, the `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``.
 
 .. note::
 
-    You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+    You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
 .. note::
 
     If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
 
 
-You can install the development version of ``ansible-base`` directly from GitHub with pip.
+You can install the development version of ``ansible-core`` directly from GitHub with pip.
 
 .. code-block:: bash
 
@@ -401,7 +406,7 @@ Replace ``devel`` in the URL mentioned above, with any other branch or tag on Gi
 
     $ python -m pip install --user https://github.com/ansible/ansible/archive/stable-2.9.tar.gz
 
-See :ref:`from_source` for instructions on how to run ``ansible-base`` directly from source, without the requirement of installation.
+See :ref:`from_source` for instructions on how to run ``ansible-core`` directly from source, without the requirement of installation.
 
 .. _from_pip_venv:
 
@@ -420,16 +425,16 @@ Ansible can also be installed inside a new or existing ``virtualenv``::
 
 .. _from_source:
 
-Running ``ansible-base`` from source (devel)
+Running ``ansible-core`` from source (devel)
 ---------------------------------------------
 
-In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``.
 
 .. note::
 
-	You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+	You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
-``ansible-base`` is easy to run from source. You do not need ``root`` permissions
+``ansible-core`` is easy to run from source. You do not need ``root`` permissions
 to use it and there is no software to actually install. No daemons
 or database setup are required.
 
@@ -438,14 +443,14 @@ or database setup are required.
    If you want to use Ansible Tower as the control node, do not use a source installation of Ansible. Please use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version.
 
 
-To install from source, clone the ``ansible-base`` git repository:
+To install from source, clone the ``ansible-core`` git repository:
 
 .. code-block:: bash
 
     $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
 
-Once ``git`` has cloned the ``ansible-base`` repository, setup the Ansible environment:
+Once ``git`` has cloned the ``ansible-core`` repository, setup the Ansible environment:
 
 Using Bash:
 
@@ -472,7 +477,7 @@ Ansible also uses the following Python modules that need to be installed [1]_:
 
     $ python -m pip install --user -r ./requirements.txt
 
-To update ``ansible-base`` checkouts, use pull-with-rebase so any local changes are replayed.
+To update ``ansible-core`` checkouts, use pull-with-rebase so any local changes are replayed.
 
 .. code-block:: bash
 
@@ -602,7 +607,7 @@ See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest
 
 .. _getting_ansible:
 
-``ansible-base`` on GitHub
+``ansible-core`` on GitHub
 ---------------------------
 
 You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
