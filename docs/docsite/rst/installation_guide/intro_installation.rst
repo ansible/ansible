@@ -5,7 +5,9 @@
 Installing Ansible
 ******************
 
-Ansible is an agentless automation tool that you install on a control node, and from there Ansible manages machines and other devices remotely (by default, over the SSH protocol). Installing Ansible for use at the command line is simple. You do not need to install a database, you do not need to install anything on the nodes you want to manage, and you do not need to run any daemons. You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.
+Ansible is an agentless automation tool that you install on a control node. From the control node, Ansible manages machines and other devices remotely (by default, over the SSH protocol).
+
+Installing Ansible for use at the command line is simple. You do not need to install a database, you do not need to install anything on the nodes you want to manage, and you do not need to run any daemons. You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.
 
 .. contents::
   :local:
@@ -394,6 +396,7 @@ Update of the software will be managed by the swupd tool::
    $ sudo swupd update
 
 .. _from_pip_devel:
+.. _getting_ansible:
 
 Installing and running the ``devel`` branch from source
 =======================================================
@@ -409,6 +412,10 @@ New features are added to ``ansible-core`` on a branch called ``devel``. If you 
 .. note::
 
    If you want to use Ansible Tower as the control node, do not install or run the ``devel`` branch of Ansible. Use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version.
+
+If you are running Ansible from source, you may also wish to follow the `Ansible GitHub project <https://github.com/ansible/ansible>`_. We track issues, document bugs, and share feature ideas in this and other related repositories.
+
+For more information on getting involved in the Ansible project, see the :ref:`ansible_community_guide`. For more information on creating Ansible modules and Collections, see the :ref:`developer_guide`.
 
 Installing ``devel`` from GitHub with ``pip``
 ---------------------------------------------
@@ -605,15 +612,6 @@ Using ``argcomplete`` with zsh or tcsh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_.
-
-.. _getting_ansible:
-
-``ansible-core`` on GitHub
----------------------------
-
-You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
-you have a GitHub account. This is also where we keep the issue tracker for sharing
-bugs and feature ideas.
 
 
 .. seealso::
