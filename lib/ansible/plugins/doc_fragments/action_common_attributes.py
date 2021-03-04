@@ -17,6 +17,9 @@ attributes:
     async:
       description: Supports being used with the ``async`` keyword
       support: full
+    become:
+      description: Is usable alongside become keywords.
+      support: full
     bypass_host_loop:
       description: Forces a 'global' task that does not execute per host, cannot be used in non lockstep strategies
       support: no
@@ -34,5 +37,14 @@ attributes:
       support: no
     facts:
       description: Action returns an ``ansible_facts`` dictionary that will update existing host facts
+      support: no
+    proprietary:
+      description: Can only be run against specific proprietary OS, normally a network appliance or similar.
+      support: no
+    posix:
+      description: Can be run against most POSIX (and GNU/Linux) OS targets.
+      support: full
+    windows:
+      description: Can be run against Windows OS targets.
       support: no
 '''
