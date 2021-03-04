@@ -10,6 +10,9 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
+#   make gettext -------------- produce POT files for docs
+#   make generate-po ---------- generate language specfic po file
+#   make needs-translation ---- generate list of file with unstranlated or fuzzy string for a specific language
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 
 ########################################################
@@ -284,19 +287,11 @@ gettext:
 
 .PHONY: generate-po
 generate-po:
-ifeq ($(LANGUAGES),)
-	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to suppor. (Exampe: fr,es)'
-else
-	(cd docs/docsite/; sphinx-intl update -w 0 -d rst/locales -p _build/gettext -l $(LANGUAGES))
-endif
+	(cd docs/docsite/; CPUS=$(CPUS) LANGUAGES=$(LANGUAGES) $(MAKE) generate-po)
 
-.PHONY: list-po-needs-translation
-list-po-needs-translation:
-ifeq ($(LANGUAGES),)
-	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to suppor. (Exampe: fr,es)'
-else
-	(cd docs/docsite/; sphinx-intl stat -d rst/locales -l $(LANGUAGES) | grep -E ' [1-9][0-9]* (fuzzy|untranslated)' | sort)
-endif
+.PHONY: needs-translation
+needs-translation:
+	(cd docs/docsite/; CPUS=$(CPUS) LANGUAGES=$(LANGUAGES) $(MAKE) needs-translation)
 
 .PHONY: linkcheckdocs
 linkcheckdocs:
