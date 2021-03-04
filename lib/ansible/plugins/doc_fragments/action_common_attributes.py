@@ -11,6 +11,9 @@ class ModuleDocFragment(object):
     # Standard documentation fragment
     DOCUMENTATION = r'''
 attributes:
+    action:
+      description: Indicates this has a corresponding action plugin so some parts of the options can be executed on the controller.
+      support: no
     async:
       description: Supports being used with the ``async`` keyword
       support: full
