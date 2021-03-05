@@ -21,12 +21,10 @@ import json
 import os
 import stat
 
-from ansible.module_utils.six.moves import configparser
-from ansible.module_utils.six.moves import StringIO
-
+from ansible.module_utils._text import to_text
 from ansible.module_utils.facts.utils import get_file_content
-
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.six.moves import configparser, StringIO
 
 
 class LocalFactCollector(BaseFactCollector):
@@ -46,14 +44,14 @@ class LocalFactCollector(BaseFactCollector):
             return local_facts
 
         local = {}
+        # go over .fact files, run executables, read rest, skip bad with warning and note
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
-            # where it will sit under local facts
+            # use filename for key where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact', '')
             if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
-                # run it
-                # if that fails, skip it
                 failed = None
                 try:
+                    # run it
                     rc, out, err = module.run_command(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
@@ -72,7 +70,7 @@ class LocalFactCollector(BaseFactCollector):
             try:
                 fact = json.loads(out)
             except UnicodeError:
-                fact = 'error loading fact - output of running %s was not utf-8' % fn
+                fact = 'error loading fact - output of running "%s" was not utf-8' % fn
                 module.warn(fact)
             except ValueError:
                 # if that fails read it with ConfigParser
@@ -80,7 +78,7 @@ class LocalFactCollector(BaseFactCollector):
                 try:
                     cp.readfp(StringIO(out))
                 except configparser.Error:
-                    fact = "error loading fact as JSON or ini - please check content"
+                    fact = "error loading facts as JSON or ini - please check content: %s" % fn
                     module.warn(fact)
                 else:
                     fact = {}
