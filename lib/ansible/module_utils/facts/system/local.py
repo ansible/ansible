@@ -95,7 +95,7 @@ class LocalFactCollector(BaseFactCollector):
                             val = cp.get(sect, opt)
                             fact[sect][opt] = val
             except Exception as e:
-                fact = "error loading fact file (%s) as JSON: %s" % (fn, to_text(e))
+                fact = "Failed to convert (%s) to JSON: %s" % (fn, to_text(e))
                 module.warn(fact)
 
             local[fact_base] = fact
