@@ -119,9 +119,9 @@ attribute_schema = Schema(
                 'description': Any(list_string_types, *string_types),
                 'support': Any(['full', 'none', 'partial']),
                 'notes': Any(list_string_types, *string_types)
-                'deprecated': Any(deprecation_schema()),
+            #    'deprecated': Any(deprecation_schema()),
             },
-            partial(version_added, error_code='module-invalid-version-added', accept_historical=not),
+            #partial(version_added, error_code='module-invalid-version-added', accept_historical=not),
         ),
     ]
 )
