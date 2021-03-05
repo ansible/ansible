@@ -58,10 +58,36 @@ class WorkerShortCircuit(StopIteration):
         self.task_result = task_result
 
 
-def skip_worker(host, task):
+def skip_worker(host, task, templar):
     # FIXME skip_worker_when(host, task)
-    # FIXME skip_worker_include_tasks(host, task)
+    skip_worker_include_tasks(host, task, templar)
     skip_worker_include_role(host, task)
+
+
+def skip_worker_include_tasks(host, task, templar):
+    if task.action not in C._ACTION_ALL_INCLUDE_TASKS:
+        return
+
+    include_args = task.args.copy()
+    include_file = include_args.pop('_raw_params', None)
+    if not include_file:
+        return_data = dict(
+            failed=True,
+            msg="No include file was specified to the include"
+        )
+    else:
+        return_data = dict(
+            include=templar.template(include_file),
+            include_args=include_args,
+        )
+
+    raise WorkerShortCircuit(
+        TaskResult(
+            host=host.name,
+            task=task._uuid,
+            return_data=return_data
+        )
+    )
 
 
 def skip_worker_include_role(host, task):
@@ -70,9 +96,9 @@ def skip_worker_include_role(host, task):
             TaskResult(
                 host=host.name,
                 task=task._uuid,
-                return_data={
-                    'include_args': task.args.copy(),
-                }
+                return_data=dict(
+                    include_args=task.args.copy(),
+                )
             )
         )
 
@@ -98,7 +124,8 @@ class MaybeWorker:
     def queue_task(self, host, task, task_vars, play_context):
         try:
             if not task.loop and not task.loop_with:
-                skip_worker(host, task)
+                templar = Templar(loader=self._loader, variables=task_vars)
+                skip_worker(host, task, templar)
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?

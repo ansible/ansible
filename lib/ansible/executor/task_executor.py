@@ -150,20 +150,9 @@ class TaskExecutor:
                         if context_validation_error is not None:
                             raise context_validation_error  # pylint: disable=raising-bad-type
 
-                        if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
-                            include_args = self._task.args.copy()
-                            include_file = include_args.pop('_raw_params', None)
-                            if not include_file:
-                                return dict(failed=True, msg="No include file was specified to the include")
-
-                            include_file = templar.template(include_file)
-                            return dict(include=include_file, include_args=include_args)
-
                         # Now we do final validation on the task, which sets all fields to their final values.
                         try:
                             self._task.post_validate(templar=templar)
-                        except AnsibleError:
-                            raise
                         except Exception:
                             return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
 
