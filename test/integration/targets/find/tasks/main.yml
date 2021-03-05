@@ -108,8 +108,8 @@
 
     - assert:
         that:
-          - total_contents.matched == 18
-          - total_contents.examined == 18
+          - total_contents.matched == 16
+          - total_contents.examined == 16
 
     - name: Get files and directories with depth
       find:
@@ -121,10 +121,10 @@
 
     - assert:
         that:
-          - contents_with_depth.matched == 8
+          - contents_with_depth.matched == 6
           # dir contents are considered until the depth exceeds the requested depth
-          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
-          - contents_with_depth.examined == 12
+          # there are 6 files/directories in the requested depth and 4 that exceed it by 1
+          - contents_with_depth.examined == 10
 
     - name: Find files with depth
       find:
@@ -135,7 +135,7 @@
 
     - assert:
         that:
-          - files_with_depth.matched == 4
+          - files_with_depth.matched == 2
           # dir contents are considered until the depth exceeds the requested depth
-          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
-          - files_with_depth.examined == 12
+          # there are 6 files/directories in the requested depth and 4 that exceed it by 1
+          - files_with_depth.examined == 10
