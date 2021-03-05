@@ -1,0 +1,2 @@
+minor_changes:
+- distribution - add facts about Amazon Linux Distribution facts (https://github.com/ansible/ansible/issues/73742).
