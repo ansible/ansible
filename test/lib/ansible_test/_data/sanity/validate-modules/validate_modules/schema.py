@@ -112,7 +112,7 @@ seealso_schema = Schema(
 )
 
 attribute_schema = Schema(
-    [
+    {
         Any(
             {
                 Required('name'): Any(*string_types),
@@ -123,7 +123,7 @@ attribute_schema = Schema(
             },
             #partial(version_added, error_code='module-invalid-version-added', accept_historical=not),
         ),
-    ]
+    }
 )
 
 argument_spec_types = ['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw',
