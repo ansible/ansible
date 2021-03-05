@@ -41,5 +41,5 @@
         - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
         - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
         - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
-        - setup_result['ansible_facts']['ansible_local']['badscript'].startswith("Failure executing fact script")
+        - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
         - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
