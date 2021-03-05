@@ -59,10 +59,10 @@ class LocalFactCollector(BaseFactCollector):
                 except UnicodeError:
                     fact = 'error loading fact - output of running %s was not utf-8' % fn
                     local[fact_base] = fact
-                    local_facts['local'] = local
                     module.warn(fact)
-                    return local_facts
+                    continue
             else:
+                # ignores exceptions and returns empty
                 out = get_file_content(fn, default='')
 
             # load raw json
