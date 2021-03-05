@@ -141,6 +141,8 @@ class TaskExecutor:
                     # Now we do final validation on the task, which sets all fields to their final values.
                     try:
                         self._task.post_validate(templar=templar)
+                    except AnsibleError:
+                        raise
                     except Exception:
                         res = dict(
                             changed=False,
