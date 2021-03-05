@@ -171,6 +171,7 @@ class MaybeWorker:
                 except AnsibleError as e:
                     context_validation_error = e
                 skip_worker(host, task, task_vars, templar, new_play_context)
+                task.post_validate(templar=templar)
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?

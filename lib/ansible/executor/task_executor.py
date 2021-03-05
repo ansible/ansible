@@ -133,25 +133,9 @@ class TaskExecutor:
                 if items is None:
                     # no loop
                     display.debug("calling self._execute()")
-                    variables = self._job_vars
                     # FIXME we could pass the templar from MaybeWorker
-                    templar = Templar(loader=self._loader, variables=variables)
-
-                    # FIXME move this to MaybeWorker?
-                    # Now we do final validation on the task, which sets all fields to their final values.
-                    try:
-                        self._task.post_validate(templar=templar)
-                    except AnsibleError:
-                        raise
-                    except Exception:
-                        res = dict(
-                            changed=False,
-                            failed=True,
-                            _ansible_no_log=self._play_context.no_log,
-                            exception=to_text(traceback.format_exc())
-                        )
-                    else:
-                        res = self._execute(variables, templar)
+                    templar = Templar(loader=self._loader, variables=self._job_vars)
+                    res = self._execute(self._job_vars, templar)
                     display.debug("_execute() done")
                 elif len(items) > 0:
                     # loop with non-zero items
