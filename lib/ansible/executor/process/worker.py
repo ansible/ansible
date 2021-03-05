@@ -36,6 +36,7 @@ except Exception:
     # need to take charge of calling it.
     pass
 
+from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
@@ -44,6 +45,7 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
+from ansible.utils.unsafe_proxy import wrap_var
 
 __all__ = ['WorkerProcess']
 
@@ -59,13 +61,11 @@ class WorkerShortCircuit(StopIteration):
 def skip_worker(host, task):
     # FIXME skip_worker_when(host, task)
     # FIXME skip_worker_include_tasks(host, task)
-    # FIXME skip_worker_include_role(host, task)
-    pass
+    skip_worker_include_role(host, task)
 
 
 def skip_worker_include_role(host, task):
-    # FIXME remove this check from TaskExecutor
-    if task.action == 'include_role':
+    if task.action in C._ACTION_INCLUDE_ROLE:
         raise WorkerShortCircuit(
             TaskResult(
                 host=host.name,
@@ -113,13 +113,36 @@ class MaybeWorker:
             display.debug("skipping creating a worker for %s/%s" % (host, task))
             display.debug("sending task result for task %s" % task._uuid)
             self._tqm.send_callback('v2_runner_on_start', host, task)
-            self._final_q.send_task_result(
-                host.name,
-                task._uuid,
-                short_circuit.task_result,
-                task_fields=task.dump_attrs(),
-            )
+            self._final_q.send_task_result(short_circuit.task_result)
             display.debug("done sending task result for task %s" % task._uuid)
+        except AnsibleError as e:
+            self._final_q.send_task_result(
+                TaskResult(
+                    host=host.name,
+                    task=task._uuid,
+                    return_data=dict(
+                        failed=True,
+                        msg=wrap_var(to_text(e, nonstring='simplerepr')),
+                        _ansible_no_log=play_context.no_log  # FIXME play_context
+                    ),
+                    task_fields=task.dump_attrs(),
+                )
+            )
+        except Exception as e:
+            self._final_q.send_task_result(
+                TaskResult(
+                    host=host.name,
+                    task=task._uuid,
+                    return_data=dict(
+                        failed=True,
+                        msg='Unexpected failure during module execution.',
+                        exception=to_text(traceback.format_exc()),
+                        stdout='',
+                        _ansible_no_log=play_context.no_log
+                    ),
+                    task_fields=task.dump_attrs(),
+                )
+            )
         else:
             # NOTE the worker creation below can potentially be abstracted further to account for additional processing models
 
@@ -156,7 +179,16 @@ class MaybeWorker:
 
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
+                    worker_prc = WorkerProcess(
+                        self._final_q,
+                        task_vars,
+                        host,
+                        task,
+                        play_context,
+                        self._loader,
+                        self._variable_manager,
+                        plugin_loader
+                    )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()

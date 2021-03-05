@@ -159,11 +159,6 @@ class TaskExecutor:
                             include_file = templar.template(include_file)
                             return dict(include=include_file, include_args=include_args)
 
-                        # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
-                        elif self._task.action in C._ACTION_INCLUDE_ROLE:
-                            include_args = self._task.args.copy()
-                            return dict(include_args=include_args)
-
                         # Now we do final validation on the task, which sets all fields to their final values.
                         try:
                             self._task.post_validate(templar=templar)
