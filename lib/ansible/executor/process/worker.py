@@ -152,20 +152,25 @@ class MaybeWorker:
     def queue_task(self, host, task, task_vars, play_context):
         try:
             if not task.loop and not task.loop_with:
+                # NOTE ansible_search_path is (secretly!) set in TaskExecutor._get_loop_items
+                task_vars['ansible_search_path'] = task.get_search_path()
+                if self._loader.get_basedir() not in task_vars['ansible_search_path']:
+                    task_vars['ansible_search_path'].append(self._loader.get_basedir())
+
                 templar = Templar(loader=self._loader, variables=task_vars)
                 try:
-                    play_context = play_context.set_task_and_variable_override(
+                    new_play_context = play_context.set_task_and_variable_override(
                         task=task,
                         variables=task_vars,
                         templar=templar
                     )
-                    play_context.post_validate(templar=templar)
-                    if not play_context.remote_addr:
-                        play_context.remote_addr = host.address
-                    play_context.update_vars(task_vars)
+                    new_play_context.post_validate(templar=templar)
+                    if not new_play_context.remote_addr:
+                        new_play_context.remote_addr = host.address
+                    new_play_context.update_vars(task_vars)
                 except AnsibleError as e:
                     context_validation_error = e
-                skip_worker(host, task, task_vars, templar, play_context)
+                skip_worker(host, task, task_vars, templar, new_play_context)
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?
@@ -175,7 +180,7 @@ class MaybeWorker:
                 #       3. create a result per item
                 #       4. send result per time
                 #       5. send ALL results
-                pass
+                new_play_context = play_context
         except WorkerShortCircuit as short_circuit:
             display.debug("skipping creating a worker for %s/%s" % (host, task))
             display.debug("sending task result for task %s" % task._uuid)
@@ -251,7 +256,7 @@ class MaybeWorker:
                         task_vars,
                         host,
                         task,
-                        play_context,
+                        new_play_context,
                         self._loader,
                         self._variable_manager,
                         plugin_loader
