@@ -149,9 +149,13 @@ class MaybeWorker:
         self._cur_worker = 0
         self._allow_base_throttling = allow_base_throttling
 
-    def queue_task(self, host, task, task_vars, play_context):
+    def queue_task(self, host, a_task, task_vars, play_context):
+        # !!!
+        task = a_task.copy()
+
         try:
             if not task.loop and not task.loop_with:
+                # not a loop, everything is moved here pre fork from TaskExecutor._execute()
                 # NOTE ansible_search_path is (secretly!) set in TaskExecutor._get_loop_items
                 task_vars['ansible_search_path'] = task.get_search_path()
                 if self._loader.get_basedir() not in task_vars['ansible_search_path']:
@@ -159,19 +163,23 @@ class MaybeWorker:
 
                 templar = Templar(loader=self._loader, variables=task_vars)
                 try:
-                    new_play_context = play_context.set_task_and_variable_override(
+                    play_context = play_context.set_task_and_variable_override(
                         task=task,
                         variables=task_vars,
                         templar=templar
                     )
-                    new_play_context.post_validate(templar=templar)
-                    if not new_play_context.remote_addr:
-                        new_play_context.remote_addr = host.address
-                    new_play_context.update_vars(task_vars)
+                    play_context.post_validate(templar=templar)
+                    if not play_context.remote_addr:
+                        play_context.remote_addr = host.address
+                    play_context.update_vars(task_vars)
                 except AnsibleError as e:
                     context_validation_error = e
-                skip_worker(host, task, task_vars, templar, new_play_context)
+                # TaskExecutor still adds vars like register and ansible_facts inside the fork
+                templar.available_variables = task_vars
+                skip_worker(host, task, task_vars, templar, play_context)
+                task.squash()
                 task.post_validate(templar=templar)
+                throttle = task.throttle
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?
@@ -181,7 +189,11 @@ class MaybeWorker:
                 #       3. create a result per item
                 #       4. send result per time
                 #       5. send ALL results
-                new_play_context = play_context
+                templar = Templar(loader=self._loader, variables=task_vars)
+                try:
+                    throttle = int(templar.template(task.throttle))
+                except Exception as e:
+                    raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
         except WorkerShortCircuit as short_circuit:
             display.debug("skipping creating a worker for %s/%s" % (host, task))
             display.debug("sending task result for task %s" % task._uuid)
@@ -196,7 +208,7 @@ class MaybeWorker:
                     return_data=dict(
                         failed=True,
                         msg=wrap_var(to_text(e, nonstring='simplerepr')),
-                        _ansible_no_log=play_context.no_log  # FIXME play_context
+                        _ansible_no_log=play_context.no_log
                     ),
                     task_fields=task.dump_attrs(),
                 )
@@ -218,17 +230,6 @@ class MaybeWorker:
             )
         else:
             # NOTE the worker creation below can potentially be abstracted further to account for additional processing models
-
-            # FIXME play_context validation
-            # FIXME task validation/templating
-
-            # create a templar and template things we need later for the queuing process
-            templar = Templar(loader=self._loader, variables=task_vars)
-
-            try:
-                throttle = int(templar.template(task.throttle))
-            except Exception as e:
-                raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
 
             # Determine the "rewind point" of the worker list. This means we start
             # iterating over the list of workers until the end of the list is found.
@@ -257,7 +258,7 @@ class MaybeWorker:
                         task_vars,
                         host,
                         task,
-                        new_play_context,
+                        play_context,
                         self._loader,
                         self._variable_manager,
                         plugin_loader
