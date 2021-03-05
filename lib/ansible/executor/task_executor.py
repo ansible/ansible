@@ -134,33 +134,22 @@ class TaskExecutor:
                     # no loop
                     display.debug("calling self._execute()")
                     variables = self._job_vars
-                    templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+                    # FIXME we could pass the templar from MaybeWorker
+                    templar = Templar(loader=self._loader, variables=variables)
 
-                    def _pre_execute(variables, templar):
-                        context_validation_error = None
-                        try:
-                            self._update_play_context(variables, templar)
-                        except AnsibleError as e:
-                            context_validation_error = e
-
-                        if not self._task.evaluate_conditional(templar, variables):
-                            display.debug("when evaluation is False, skipping this task")
-                            return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
-
-                        if context_validation_error is not None:
-                            raise context_validation_error  # pylint: disable=raising-bad-type
-
-                        # Now we do final validation on the task, which sets all fields to their final values.
-                        try:
-                            self._task.post_validate(templar=templar)
-                        except Exception:
-                            return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
-
-                    res = _pre_execute(variables, templar)
-
-                    if res is None:
+                    # FIXME move this to MaybeWorker?
+                    # Now we do final validation on the task, which sets all fields to their final values.
+                    try:
+                        self._task.post_validate(templar=templar)
+                    except Exception:
+                        res = dict(
+                            changed=False,
+                            failed=True,
+                            _ansible_no_log=self._play_context.no_log,
+                            exception=to_text(traceback.format_exc())
+                        )
+                    else:
                         res = self._execute(variables, templar)
-
                     display.debug("_execute() done")
                 elif len(items) > 0:
                     # loop with non-zero items

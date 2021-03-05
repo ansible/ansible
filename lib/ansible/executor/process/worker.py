@@ -58,10 +58,36 @@ class WorkerShortCircuit(StopIteration):
         self.task_result = task_result
 
 
-def skip_worker(host, task, templar):
-    # FIXME skip_worker_when(host, task)
+context_validation_error = None
+
+
+def skip_worker(host, task, task_vars, templar, play_context):
+    skip_worker_when(host, task, task_vars, templar, play_context)
+
+    if context_validation_error is not None:
+        raise context_validation_error  # pylint: disable=raising-bad-type
+
     skip_worker_include_tasks(host, task, templar)
     skip_worker_include_role(host, task)
+
+
+def skip_worker_when(host, task, task_vars, templar, play_context):
+    if not task.evaluate_conditional(templar, task_vars):
+        display.debug("when evaluation is False, skipping this task")
+
+        raise WorkerShortCircuit(
+            TaskResult(
+                host=host.name,
+                task=task._uuid,
+                return_data=dict(
+                    changed=False,
+                    skipped=True,
+                    skip_reason='Conditional result was False',
+                    _ansible_no_log=play_context.no_log
+                ),
+                task_fields=task.dump_attrs(),
+            )
+        )
 
 
 def skip_worker_include_tasks(host, task, templar):
@@ -85,7 +111,8 @@ def skip_worker_include_tasks(host, task, templar):
         TaskResult(
             host=host.name,
             task=task._uuid,
-            return_data=return_data
+            return_data=return_data,
+            task_fields=task.dump_attrs(),
         )
     )
 
@@ -98,7 +125,8 @@ def skip_worker_include_role(host, task):
                 task=task._uuid,
                 return_data=dict(
                     include_args=task.args.copy(),
-                )
+                ),
+                task_fields=task.dump_attrs(),
             )
         )
 
@@ -125,7 +153,19 @@ class MaybeWorker:
         try:
             if not task.loop and not task.loop_with:
                 templar = Templar(loader=self._loader, variables=task_vars)
-                skip_worker(host, task, templar)
+                try:
+                    play_context = play_context.set_task_and_variable_override(
+                        task=task,
+                        variables=task_vars,
+                        templar=templar
+                    )
+                    play_context.post_validate(templar=templar)
+                    if not play_context.remote_addr:
+                        play_context.remote_addr = host.address
+                    play_context.update_vars(task_vars)
+                except AnsibleError as e:
+                    context_validation_error = e
+                skip_worker(host, task, task_vars, templar, play_context)
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?
