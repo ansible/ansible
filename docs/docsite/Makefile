@@ -12,9 +12,16 @@ else
 CPUS ?= $(shell nproc)
 endif
 
+# Intenationalisation and Localisation
+LANGUAGES ?=
+
 # Sets the build output directory for the main docsite if it's not already specified
 ifndef BUILDDIR
 	BUILDDIR = _build
+endif
+
+ifndef POTDIR
+	POTDIR = $(BUILDDIR)/gettext
 endif
 
 # Backwards compat for separate VARS
@@ -64,6 +71,10 @@ coredocs: core_htmldocs
 generate_rst: collections_meta config cli keywords plugins testing
 core_generate_rst: collections_meta config cli keywords base_plugins testing
 
+# At the moment localizing the plugins and collections is not required for the ongoing
+# localisation effort. It will come at a later time.
+gettext_generate_rst: collections_meta config cli keywords testing
+
 # The following two symlinks are necessary to produce two different docsets
 # from the same set of rst files (Ansible the package docs, and core docs).
 # Symlink the relevant index into place for building Ansible docs
@@ -85,6 +96,32 @@ core_structure: core_generate_rst
 	@echo "Creating symlinks in core_generate_rst"
 	-ln -sf ../rst/core_index.rst rst/index.rst
 	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
+
+# Symlink the relevant index into place for building core docs
+gettext_structure: gettext_generate_rst
+	@echo "Creating symlinks in gettext_generate_rst"
+	-ln -sf ../rst/core_index.rst rst/index.rst
+	-ln -sf ../sphinx_conf/all_conf.py rst/conf.py
+
+gettext: gettext_structure
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx gettext
+	# if msgcat is installed handle all indexes, otherwise use the index from gettext_structure.
+	-msgcat "$(POTDIR)/core_index.pot" "$(POTDIR)/ansible_index.pot" "$(POTDIR)/2.10_index.pot" > "$(POTDIR)/tmp_index.pot" && mv "$(POTDIR)/tmp_index.pot" "$(POTDIR)/index.pot"
+	rm "$(POTDIR)/core_index.pot" "$(POTDIR)/ansible_index.pot" "$(POTDIR)/2.10_index.pot"
+
+generate-po:
+ifeq ($(LANGUAGES),)
+	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to support. (Exampe: fr,es)'
+else
+	(cd docs/docsite/; sphinx-intl update -w 0 -d rst/locales -p "$(POTDIR)" -l $(LANGUAGES))
+endif
+
+needs-translation:
+ifeq ($(LANGUAGES),)
+	@echo 'LANGUAGES is not defined. It is mandatory. LANGUAGES should be a comma separated list of languages to support. (Exampe: fr,es)'
+else
+	(cd docs/docsite/; sphinx-intl stat -d rst/locales -l $(LANGUAGES) | grep -E ' [1-9][0-9]* (fuzzy|untranslated)' | sort)
+endif
 
 htmldocs: ansible_structure
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
