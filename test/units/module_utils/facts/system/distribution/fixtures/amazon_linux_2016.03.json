@@ -1,0 +1,40 @@
+{
+    "name": "Amazon 2016.03",
+    "platform.release": "4.14.94-73.73.amzn1.x86_64",
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "Amazon",
+        "distribution_major_version": "2016",
+        "distribution_minor_version": "03",
+        "os_family": "RedHat",
+        "distribution_version": "2016.03"
+    },
+    "platform.dist": [
+        "amzn",
+        "2016.03",
+        ""
+    ],
+    "input": {
+        "/etc/os-release": "NAME=\"Amazon Linux AMI\"\nVERSION=\"2016.03\"\nID=\"amzn\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"2016.03\"\nPRETTY_NAME=\"Amazon Linux AMI 2016.03\"\nANSI_COLOR=\"0;33\"\nCPE_NAME=\"cpe:/o:amazon:linux:2016.03:ga\"\nHOME_URL=\"http://aws.amazon.com/amazon-linux-ami/\"\n",
+        "/etc/system-release": "Amazon Linux AMI release 2016.03\n"
+    },
+    "distro": {
+        "version_best": "2016.03",
+        "os_release_info": {
+            "name": "Amazon Linux AMI",
+            "ansi_color": "0;33",
+            "id_like": "rhel fedora",
+            "version_id": "2016.03",
+            "pretty_name": "Amazon Linux AMI 2016.03",
+            "version": "2016.03",
+            "home_url": "http://aws.amazon.com/amazon-linux-ami/",
+            "cpe_name": "cpe:/o:amazon:linux:2016.03:ga",
+            "id": "amzn"
+        },
+        "version": "2016.03",
+        "codename": "",
+        "lsb_release_info": {},
+        "id": "amzn",
+        "name": "Amazon Linux AMI"
+    }
+}

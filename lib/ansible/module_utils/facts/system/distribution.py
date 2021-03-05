@@ -59,6 +59,7 @@ class DistributionFiles:
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
         {'path': '/etc/vmware-release', 'name': 'VMwareESX', 'allowempty': True},
         {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
+        {'path': '/etc/os-release', 'name': 'Amazon'},
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
@@ -222,9 +223,17 @@ class DistributionFiles:
         if 'Amazon' not in data:
             return False, amazon_facts
         amazon_facts['distribution'] = 'Amazon'
-        version = [n for n in data.split() if n.isdigit()]
-        version = version[0] if version else 'NA'
-        amazon_facts['distribution_version'] = version
+        if path == '/etc/os-release':
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                amazon_facts['distribution_version'] = version.group(1)
+                amazon_facts['distribution_major_version'] = version.group(1).split('.')[0]
+                amazon_facts['distribution_minor_version'] = version.group(1).split('.')[1]
+        else:
+            version = [n for n in data.split() if n.isdigit()]
+            version = version[0] if version else 'NA'
+            amazon_facts['distribution_version'] = version
+
         return True, amazon_facts
 
     def parse_distribution_file_OpenWrt(self, name, data, path, collected_facts):
