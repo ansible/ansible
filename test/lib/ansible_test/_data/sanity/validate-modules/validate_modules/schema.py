@@ -111,6 +111,20 @@ seealso_schema = Schema(
     ]
 )
 
+attribute_schema = Schema(
+    [
+        Any(
+            {
+                Required('name'): Any(*string_types),
+                'description': Any(list_string_types, *string_types),
+                'support': Any(['full', 'none', 'partial']),
+                'notes': Any(list_string_types, *string_types)
+                'deprecated': Any(deprecation_schema()),
+            },
+            partial(version_added, error_code='module-invalid-version-added', accept_historical=not),
+        ),
+    ]
+)
 
 argument_spec_types = ['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw',
                        'sid', 'str']
@@ -505,6 +519,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         'options': Any(None, *list_dict_option_schema(for_collection)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
+        'attributes': attribute_schema,
     }
 
     if for_collection:
