@@ -17,7 +17,7 @@
           mode: '0775'
         - name: goodscript
           mode: '0775'
-        - name: unreadable.fact
+        - name: unreadable
           mode: '0000'
 
 - name: force fact gather to get ansible_local
