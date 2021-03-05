@@ -66,12 +66,18 @@ class LocalFactCollector(BaseFactCollector):
                 # ignores exceptions and returns empty
                 out = get_file_content(fn, default='')
 
+            try:
+                # ensure we have unicode
+                out = to_text(out, errors='surrogate_or_strict')
+            except UnicodeError:
+                fact = 'error loading fact - output of running "%s" was not utf-8' % fn
+                local[fact_base] = fact
+                module.warn(fact)
+                continue
+
             # try to read it as json first
             try:
                 fact = json.loads(out)
-            except UnicodeError:
-                fact = 'error loading fact - output of running "%s" was not utf-8' % fn
-                module.warn(fact)
             except ValueError:
                 # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
@@ -88,6 +94,9 @@ class LocalFactCollector(BaseFactCollector):
                         for opt in cp.options(sect):
                             val = cp.get(sect, opt)
                             fact[sect][opt] = val
+            except Exception as e:
+                fact = "error loading fact file (%S) as JSON: %s" % (fn, to_text(e))
+                module.warn(fact)
 
             local[fact_base] = fact
 
