@@ -51,31 +51,36 @@ class LocalFactCollector(BaseFactCollector):
             fact_base = os.path.basename(fn).replace('.fact', '')
             if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
                 # run it
-                # try to read it as json first
-                # if that fails read it with ConfigParser
                 # if that fails, skip it
+                failed = None
                 try:
                     rc, out, err = module.run_command(fn)
-                except UnicodeError:
-                    fact = 'error loading fact - output of running %s was not utf-8' % fn
-                    local[fact_base] = fact
-                    module.warn(fact)
+                    if rc != 0:
+                        failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
+                except (IOError, OSError) as e:
+                    failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
+
+                if failed is not None:
+                    local[fact_base] = failed
+                    module.warn(failed)
                     continue
             else:
                 # ignores exceptions and returns empty
                 out = get_file_content(fn, default='')
 
-            # load raw json
-            fact = 'loading %s' % fact_base
+            # try to read it as json first
             try:
                 fact = json.loads(out)
+            except UnicodeError:
+                fact = 'error loading fact - output of running %s was not utf-8' % fn
+                module.warn(fact)
             except ValueError:
-                # load raw ini
+                # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
                 try:
                     cp.readfp(StringIO(out))
                 except configparser.Error:
-                    fact = "error loading fact - please check content"
+                    fact = "error loading fact as JSON or ini - please check content"
                     module.warn(fact)
                 else:
                     fact = {}
