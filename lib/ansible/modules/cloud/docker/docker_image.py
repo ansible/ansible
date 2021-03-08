@@ -451,7 +451,7 @@ if docker_version is not None:
         else:
             from docker.auth.auth import resolve_repository_name
         from docker.utils.utils import parse_repository_tag
-        from docker.errors import DockerException
+        from docker.errors import DockerException, NotFound
     except ImportError:
         # missing Docker SDK for Python handled in module_utils.docker.common
         pass
@@ -557,6 +557,8 @@ class ImageManager(DockerBaseClass):
                     self.client.fail('Cannot find the image %s locally.' % name)
             if not self.check_mode and image and image['Id'] == self.results['image']['Id']:
                 self.results['changed'] = False
+        else:
+            self.results['image'] = image
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)
@@ -574,7 +576,7 @@ class ImageManager(DockerBaseClass):
         '''
         name = self.name
         if is_image_name_id(name):
-            image = self.client.find_image_by_id(name)
+            image = self.client.find_image_by_id(name, accept_missing_image=True)
         else:
             image = self.client.find_image(name, self.tag)
             if self.tag:
@@ -583,6 +585,9 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 try:
                     self.client.remove_image(name, force=self.force_absent)
+                except NotFound:
+                    # If the image vanished while we were trying to remove it, don't fail
+                    pass
                 except Exception as exc:
                     self.fail("Error removing image %s - %s" % (name, str(exc)))
 

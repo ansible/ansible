@@ -172,7 +172,7 @@ import traceback
 
 try:
     from docker import utils
-    from docker.errors import DockerException
+    from docker.errors import DockerException, NotFound
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -220,7 +220,7 @@ class ImageManager(DockerBaseClass):
         for name in names:
             if is_image_name_id(name):
                 self.log('Fetching image %s (ID)' % (name))
-                image = self.client.find_image_by_id(name)
+                image = self.client.find_image_by_id(name, accept_missing_image=True)
             else:
                 repository, tag = utils.parse_repository_tag(name)
                 if not tag:
@@ -237,6 +237,8 @@ class ImageManager(DockerBaseClass):
         for image in images:
             try:
                 inspection = self.client.inspect_image(image['Id'])
+            except NotFound:
+                pass
             except Exception as exc:
                 self.fail("Error inspecting image %s - %s" % (image['Id'], str(exc)))
             results.append(inspection)
