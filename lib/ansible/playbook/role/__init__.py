@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
@@ -33,8 +34,10 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
+display = Display()
 
 __all__ = ['Role', 'hash_params']
 
@@ -207,14 +210,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
         if self._role_vars is None:
-            self._role_vars = dict()
-        elif not isinstance(self._role_vars, dict):
+            self._role_vars = {}
+        elif not isinstance(self._role_vars, Mapping):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
-            self._default_vars = dict()
-        elif not isinstance(self._default_vars, dict):
+            self._default_vars = {}
+        elif not isinstance(self._default_vars, Mapping):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         # load the role's other files, if they exist
@@ -269,32 +272,53 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                                          obj=handler_data, orig_exc=e)
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
+        '''
+        Find and load role YAML files and return data found.
+        :param subdir: subdir of role to search (vars, files, tasks, handlers, defaults)
+        :type subdir: string
+        :param main: filename to match, will default to 'main.<ext>' if not provided.
+        :type main: string
+        :param allow_dir: If true we combine results of multiple matching files found.
+                          If false, highlander rules. Only for vars(dicts) and not tasks(lists).
+        :type allow_dir: bool
+
+        :returns: data from the matched file(s), type can be dict or list depending on vars or tasks.
+        '''
+        data = None
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            # Valid extensions and ordering for roles is hard-coded to maintain
-            # role portability
-            extensions = ['.yml', '.yaml', '.json']
-            # If no <main> is specified by the user, look for files with
-            # extensions before bare name. Otherwise, look for bare name first.
+            # Valid extensions and ordering for roles is hard-coded to maintain portability
+            extensions = ['.yml', '.yaml', '.json']  # same as default for YAML_FILENAME_EXTENSIONS
+
+            # look for files w/o extensions before/after bare name depending on it being set or not
+            # keep 'main' as original to figure out errors if no files found
             if main is None:
                 _main = 'main'
                 extensions.append('')
             else:
                 _main = main
                 extensions.insert(0, '')
+
+            # not really 'find_vars_files' but find_files_with_extensions_default_to_yaml_filename_extensions
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
-                data = {}
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
-                    if new_data and allow_dir:
-                        data = combine_vars(data, new_data)
-                    else:
-                        data = new_data
-                return data
+                    if new_data:
+                        if data is not None and isinstance(new_data, Mapping):
+                            data = combine_vars(data, new_data)
+                        else:
+                            data = new_data
+
+                        # found data so no need to continue unless we want to merge
+                        if not allow_dir:
+                            break
+
             elif main is not None:
+                # this won't trigger with default only when <subdir>_from is specified
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
-        return None
+
+        return data
 
     def _load_dependencies(self):
         '''
