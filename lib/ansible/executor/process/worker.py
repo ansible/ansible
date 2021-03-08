@@ -152,6 +152,7 @@ class MaybeWorker:
     def queue_task(self, host, a_task, task_vars, play_context):
         # !!!
         task = a_task.copy()
+        # FIXME copy play_context?
 
         try:
             if not task.loop and not task.loop_with:

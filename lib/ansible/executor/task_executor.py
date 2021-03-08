@@ -105,31 +105,32 @@ class TaskExecutor:
         '''
 
         display.debug("in run() - task %s" % self._task._uuid)
-        res = []
+        res = None
         try:
             try:
                 items = self._get_loop_items()
             except AnsibleUndefinedVariable as loop_eval_error:
-                variables = self._job_vars
-                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+                # An error occured during loop items evaluation. Ignore the error if the task would have been skipped.
+                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
                 try:
-                    self._update_play_context(variables, templar)
+                    self._update_play_context(self._job_vars, templar)
                 except AnsibleError:
                     # we do not care about this error because we either skip the task or raise loop_eval_error
                     pass
 
                 try:
-                    if not self._task.evaluate_conditional(templar, variables):
+                    if self._task.evaluate_conditional(templar, self._job_vars):
+                        raise loop_eval_error
+                    else:
                         display.debug("when evaluation is False, skipping this task")
                         res = dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
                 except AnsibleError as e:
+                    # debugging info for why the conditional failed
                     display.v(to_text(e))
+                    # loop error takes precedence
                     raise loop_eval_error  # pylint: disable=raising-bad-type
 
-                if not res:
-                    raise loop_eval_error
-
-            if not res:
+            if res is None:
                 if items is None:
                     # no loop
                     display.debug("calling self._execute()")
@@ -138,7 +139,7 @@ class TaskExecutor:
                     res = self._execute(self._job_vars, templar)
                     display.debug("_execute() done")
                 elif len(items) > 0:
-                    # loop with non-zero items
+                    # loop with items
                     item_results = self._run_loop(items)
 
                     # create the overall result item
@@ -175,7 +176,7 @@ class TaskExecutor:
                     if res['skipped']:
                         res['msg'] = 'All items skipped'
                 else:
-                    # loop with now items to loop over
+                    # loop with no items to loop over
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
 
             # make sure changed is set in the result, if it's not present
