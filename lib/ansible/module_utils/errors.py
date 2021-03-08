@@ -10,7 +10,7 @@ class AnsibleFallbackNotFound(Exception):
     pass
 
 
-class AnsibleValidationError(TypeError, ValueError):
+class AnsibleValidationError(Exception):
     """Single validation error"""
 
     def __init__(self, message, error_type=None):
