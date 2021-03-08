@@ -14,6 +14,7 @@ class AnsibleValidationError(Exception):
     """Single validation error"""
 
     def __init__(self, message, error_type=None):
+        super(AnsibleValidationError, self).__init__(message)
         self.error_message = message
         self.error_type = error_type
 
