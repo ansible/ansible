@@ -2168,6 +2168,12 @@ class Container(DockerBaseClass):
                 match = self._compare(getattr(self.parameters, key), value, compare)
 
                 if not match:
+                    if key == 'expected_healthcheck' and config_mapping['disable_healthcheck'] and self.parameters.disable_healthcheck:
+                        # If the healthcheck is disabled (both in parameters and for the current container), and the user
+                        # requested strict comparison for healthcheck, the comparison will fail. That's why we ignore the
+                        # expected_healthcheck comparison in this case.
+                        continue
+
                     # no match. record the differences
                     p = getattr(self.parameters, key)
                     c = value

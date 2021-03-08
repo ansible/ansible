@@ -1562,6 +1562,21 @@
   register: healthcheck_6
   ignore_errors: yes
 
+- name: healthcheck (disabled, idempotency, strict)
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test:
+      - NONE
+    force_kill: yes
+    comparisons:
+      '*': strict
+  register: healthcheck_7
+  ignore_errors: yes
+
 - name: healthcheck (string in healthcheck test, changed)
   docker_container:
     image: quay.io/ansible/docker-test-containers:alpine3.8
@@ -1571,7 +1586,7 @@
     healthcheck:
       test: "sleep 1"
     force_kill: yes
-  register: healthcheck_7
+  register: healthcheck_8
   ignore_errors: yes
 
 - name: healthcheck (string in healthcheck test, idempotency)
@@ -1583,7 +1598,7 @@
     healthcheck:
       test: "sleep 1"
     force_kill: yes
-  register: healthcheck_8
+  register: healthcheck_9
   ignore_errors: yes
 
 - name: cleanup
@@ -1601,8 +1616,9 @@
     - healthcheck_4 is not changed
     - healthcheck_5 is changed
     - healthcheck_6 is not changed
-    - healthcheck_7 is changed
-    - healthcheck_8 is not changed
+    - healthcheck_7 is not changed
+    - healthcheck_8 is changed
+    - healthcheck_9 is not changed
   when: docker_py_version is version('2.0.0', '>=')
 - assert:
     that:
