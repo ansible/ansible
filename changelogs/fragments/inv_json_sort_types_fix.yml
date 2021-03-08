@@ -1,2 +1,2 @@
 bugfixes:
-  - Deal with failures when sorting JSON and you have incompatible key types.
+  - ansible-inventory CLI - Deal with failures when sorting JSON and you have incompatible key types (https://github.com/ansible/ansible/issues/68950).
