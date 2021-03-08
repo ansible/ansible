@@ -21,7 +21,7 @@ yum:
   baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/{{mongodb_version}}/x86_64/
   gpgcheck: 1
   gpgkey: https://www.mongodb.org/static/pgp/server-{{mongodb_version}}.asc
-  redhat8url: https://repo.mongodb.org/yum/redhat/7/mongodb-org/{{mongodb_version}}/x86_64/
+  redhat8url: https://repo.mongodb.org/yum/redhat/8/mongodb-org/{{mongodb_version}}/x86_64/
   fedoraurl: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/{{mongodb_version}}/x86_64/
 
 debian_packages_py2:

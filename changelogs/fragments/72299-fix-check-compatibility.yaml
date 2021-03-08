@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - mongodb_replicaset - fixes check_compatibility function (https://github.com/ansible-collections/community.mongodb/issues/230).
