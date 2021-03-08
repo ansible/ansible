@@ -217,14 +217,14 @@ class ConnectionBase(AnsiblePlugin):
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self.get_option('remote_addr'))
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self.get_option('remote_addr'))
 
     def connection_unlock(self):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self.get_option('remote_addr'))
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
@@ -309,8 +309,9 @@ class NetworkConnectionBase(ConnectionBase):
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
         if self.get_option('persistent_log_messages'):
-            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
+            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self.get_option('remote_addr')
             logpath = getattr(C, 'DEFAULT_LOG_PATH')
             if logpath is not None:
                 warning += " to %s" % logpath
@@ -333,8 +334,8 @@ class NetworkConnectionBase(ConnectionBase):
         '''
         ssh = connection_loader.get('ssh', class_only=True)
         control_path = ssh._create_control_path(
-            self._play_context.remote_addr, self._play_context.port,
-            self._play_context.remote_user, self._play_context.connection,
+            self.get_option('remote_addr'), self.get_option('port'),
+            self.get_option('remote_user'), self._play_context.connection,
             self._ansible_playbook_pid
         )
 

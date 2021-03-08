@@ -90,7 +90,7 @@ class ActionModule(ActionBase):
             # now we execute script, always assume changed.
             result['changed'] = True
 
-            if not self._play_context.check_mode:
+            if not self._taskcheck_mode:
                 # transfer the file to a remote tmp location
                 tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
                                                             os.path.basename(source))
@@ -118,7 +118,7 @@ class ActionModule(ActionBase):
                 else:
                     script_cmd = ' '.join([env_string, target_command])
 
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 raise _AnsibleActionDone()
 
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)

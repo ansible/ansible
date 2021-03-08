@@ -43,7 +43,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         try:
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 raise AnsibleActionSkip('check mode not (yet) supported for this module')
 
             source = self._task.args.get('src', None)
@@ -121,7 +121,7 @@ class ActionModule(ActionBase):
                 if 'inventory_hostname' in task_vars:
                     target_name = task_vars['inventory_hostname']
                 else:
-                    target_name = self._play_context.remote_addr
+                    target_name = self._connection.get('remote_addr')
                 dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
             if remote_checksum in ('0', '1', '2', '3', '4', '5'):

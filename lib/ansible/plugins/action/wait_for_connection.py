@@ -69,7 +69,7 @@ class ActionModule(ActionBase):
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             display.vvv("wait_for_connection: skipping for check_mode")
             return dict(skipped=True)
 

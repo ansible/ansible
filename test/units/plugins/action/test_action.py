@@ -628,6 +628,10 @@ class TestActionBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = 'copy'
         mock_task.args = dict(a=1, b=2, c=3)
+        mock_task.no_log = False
+        mock_task.check_mode = True
+        mock_task.diff = False
+        mock_task.async_val = 0
 
         # create a mock connection, so we don't actually try and connect to things
         def build_module_command(env_string, shebang, cmd, arg_path=None):
@@ -750,15 +754,14 @@ class TestActionBase(unittest.TestCase):
 
     def test__remote_expand_user_relative_pathing(self):
         action_base = _action_base()
-        action_base._play_context.remote_addr = 'bar'
+        action_base._connection.get_option = MagicMock()
+        action_base._connection.get_option.return_value = 'bar'
         action_base._low_level_execute_command = MagicMock(return_value={'stdout': b'../home/user'})
         action_base._connection._shell.join_path.return_value = '../home/user/foo'
         with self.assertRaises(AnsibleError) as cm:
             action_base._remote_expand_user('~/foo')
-        self.assertEqual(
-            cm.exception.message,
-            "'bar' returned an invalid relative home directory path containing '..'"
-        )
+        self.assertEqual(cm.exception.message,
+                         "'bar' returned an invalid relative home directory path containing '..'")
 
 
 class TestActionBaseCleanReturnedData(unittest.TestCase):

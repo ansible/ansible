@@ -140,7 +140,7 @@ class ActionModule(ActionBase):
 
             if path_checksum != dest_stat['checksum']:
 
-                if self._play_context.diff:
+                if self._task.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
                 remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')

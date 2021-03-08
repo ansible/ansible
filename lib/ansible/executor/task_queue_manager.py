@@ -307,7 +307,7 @@ class TaskQueueManager:
         # during initialization, the PlayContext will clear the start_at_task
         # field to signal that a matching task was found, so check that here
         # and remember it so we don't try to skip tasks on future plays
-        if context.CLIARGS.get('start_at_task') is not None and play_context.start_at_task is None:
+        if context.CLIARGS.get('start_at_task') is not None and iterator.start_at_task is None:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out

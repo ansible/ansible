@@ -48,9 +48,8 @@ class TestCopyResultExclude(unittest.TestCase):
 
         task = MagicMock(Task)
         task.async_val = False
-
         task.args = {'_raw_params': 'Args1'}
-        self.play_context.check_mode = False
+        task.check_mode = False
 
         self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})

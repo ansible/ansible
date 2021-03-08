@@ -22,6 +22,7 @@ __metaclass__ = type
 import fnmatch
 
 from ansible import constants as C
+from ansible import context
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
@@ -149,6 +150,7 @@ class PlayIterator:
         self._play = play
         self._blocks = []
         self._variable_manager = variable_manager
+        self.start_at_task = context.CLIARGS.get('start_at_task', None)
 
         # Default options to gather
         gather_subset = self._play.gather_subset
@@ -196,13 +198,13 @@ class PlayIterator:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
-            if play_context.start_at_task is not None and not start_at_done:
+            if self.start_at_task is not None and not start_at_done:
                 while True:
                     (s, task) = self.get_next_task_for_host(host, peek=True)
                     if s.run_state == self.ITERATING_COMPLETE:
                         break
-                    if task.name == play_context.start_at_task or (task.name and fnmatch.fnmatch(task.name, play_context.start_at_task)) or \
-                       task.get_name() == play_context.start_at_task or fnmatch.fnmatch(task.get_name(), play_context.start_at_task):
+                    if task.name == self.start_at_task or (task.name and fnmatch.fnmatch(task.name, self.start_at_task)) or \
+                       task.get_name() == self.start_at_task or fnmatch.fnmatch(task.get_name(), self.start_at_task):
                         start_at_matched = True
                         break
                     else:
@@ -217,7 +219,7 @@ class PlayIterator:
             # we have our match, so clear the start_at_task field on the
             # play context to flag that we've started at a task (and future
             # plays won't try to advance)
-            play_context.start_at_task = None
+            self.start_at_task = None
 
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,

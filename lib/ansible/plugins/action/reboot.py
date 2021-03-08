@@ -411,7 +411,7 @@ class ActionModule(ActionBase):
             msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             return {'changed': True, 'elapsed': 0, 'rebooted': True}
 
         if task_vars is None:

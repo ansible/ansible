@@ -67,6 +67,7 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
     def set_options(self, task_keys=None, var_options=None, direct=None):
         '''
         Sets the _options attribute with the configuration/keyword information for this plugin
+        Note that other sources like config/cli can already be set by this point.
 
         :arg task_keys: Dict with playbook keywords that affect this option
         :arg var_options: Dict with either 'connection variables'

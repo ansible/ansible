@@ -100,9 +100,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
-        elif self._play_context.check_mode and not self._supports_check_mode:
+        elif self._task.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async_val and self._play_context.check_mode:
+        elif self._task.async_val and self._task.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         # Error if invalid argument is passed
@@ -219,19 +219,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._connection.become:
             become_kwargs['become'] = True
             become_kwargs['become_method'] = self._connection.become.name
-            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
-                                                                              playcontext=self._play_context)
-            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
-                                                                                  playcontext=self._play_context)
-            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
-                                                                               playcontext=self._play_context)
+            become_kwargs['become_user'] = self._connection.become.get_option('become_user', playcontext=self._play_context)
+            become_kwargs['become_password'] = self._connection.become.get_option('become_pass', playcontext=self._play_context)
+            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags', playcontext=self._play_context)
 
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
+                mc = use_vars.get('ansible_module_compression', C.DEFAULT_MODULE_COMPRESSION)
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
                                                                             task_vars=use_vars,
-                                                                            module_compression=self._play_context.module_compression,
+                                                                            module_compression=mc,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             **become_kwargs)
@@ -308,10 +306,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Determines if we are required and can do pipelining
         '''
 
-        try:
-            is_enabled = self._connection.get_option('pipelining')
-        except (KeyError, AttributeError, ValueError):
-            is_enabled = self._play_context.pipelining
+        is_enabled = self._connection.get_option('pipelining')
 
         # winrm supports async pipeline
         # TODO: make other class property 'has_async_pipelining' to separate cases
@@ -343,17 +338,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
-        # TODO: use 'current user running ansible' as fallback when moving away from play_context
+        # TODO: use 'current user running ansible' as fallback
         # pwd.getpwuid(os.getuid()).pw_name
-        remote_user = None
-        try:
-            remote_user = self._connection.get_option('remote_user')
-        except KeyError:
-            # plugin does not have remote_user option, fallback to default and/play_context
-            remote_user = getattr(self._connection, 'default_user', None) or self._play_context.remote_user
-        except AttributeError:
-            # plugin does not use config system, fallback to old play_context
-            remote_user = self._play_context.remote_user
+        remote_user = self._connection.get_option('remote_user')
         return remote_user
 
     def _is_become_unprivileged(self):
@@ -849,7 +836,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             expanded = initial_fragment
 
         if '..' in os.path.dirname(expanded).split('/'):
-            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._connection.get_option('remote_addr'))
 
         return expanded
 
@@ -864,7 +851,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
@@ -873,13 +860,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # set no log in the module arguments, if required
         no_target_syslog = C.config.get_config_value('DEFAULT_NO_TARGET_SYSLOG', variables=task_vars)
-        module_args['_ansible_no_log'] = self._play_context.no_log or no_target_syslog
+        module_args['_ansible_no_log'] = self._task.no_log or no_target_syslog
 
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
         # let module know we are in diff mode
-        module_args['_ansible_diff'] = self._play_context.diff
+        module_args['_ansible_diff'] = self._task.diff
 
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
@@ -905,7 +892,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
         # make sure all commands use the designated shell executable
-        module_args['_ansible_shell_executable'] = self._play_context.executable
+        module_args['_ansible_shell_executable'] = task_vars.get('ansible_shell_executable', C.DEFAULT_EXECUTABLE)
 
         # make sure modules are aware if they need to keep the remote files
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
@@ -1330,7 +1317,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
-        if self._play_context.no_log:
+        if self._task.no_log:
             if 'before' in diff:
                 diff["before"] = u""
             if 'after' in diff:
