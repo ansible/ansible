@@ -250,6 +250,14 @@ options:
             - Supported on Linux only.
         type: int
         version_added: "2.11"
+    umask:
+        description:
+            - Sets the umask of the user.
+            - Does nothing when used with other platforms.
+            - Currently supported on Linux.
+            - Does not work on Fedora versions >= 32.
+        type: str
+        version_added: "2.11"
 
 notes:
   - There are specific requirements per platform on user management utilities. However
@@ -529,6 +537,7 @@ class User(object):
         self.role = module.params['role']
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
+        self.umask = module.params['umask']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -708,6 +717,10 @@ class User(object):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
         else:
             cmd.append('-M')
 
@@ -1357,6 +1370,10 @@ class FreeBsdUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
+
         if self.shell is not None:
             cmd.append('-s')
             cmd.append(self.shell)
@@ -1433,6 +1450,10 @@ class FreeBsdUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1613,6 +1634,10 @@ class OpenBSDUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
+
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -1785,6 +1810,10 @@ class NetBSDUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -1970,6 +1999,10 @@ class SunOS(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         if self.profile is not None:
             cmd.append('-P')
@@ -2576,6 +2609,10 @@ class AIX(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
+
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -2901,6 +2938,10 @@ class BusyBox(User):
             cmd.append('-k')
             cmd.append(self.skeleton)
 
+        if self.umask is not None:
+            cmd.append('-K')
+            cmd.append('UMASK=' + self.umask)
+
         if self.system:
             cmd.append('-S')
 
@@ -3046,6 +3087,7 @@ def main():
             profile=dict(type='str'),
             authorization=dict(type='str'),
             role=dict(type='str'),
+            umask=dict(type='str'),
         ),
         supports_check_mode=True,
     )
