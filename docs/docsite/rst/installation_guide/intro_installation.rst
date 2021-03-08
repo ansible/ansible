@@ -530,7 +530,7 @@ Packaging Ansible or wanting to build a local package yourself, but don't want t
 
 .. note::
 
-	If you are creating your own Ansible package, you must also download or package ``ansible-base`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz.
+	If you are creating your own Ansible package, you must also download or package ``ansible-core`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-core/ansible-core-{{VERSION}}.tar.gz.
 
 These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
 

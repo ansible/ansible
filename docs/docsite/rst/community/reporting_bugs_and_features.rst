@@ -17,7 +17,7 @@ Security bugs
 
 Ansible practices responsible disclosure - if this is a security-related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to any public groups, and you will receive a prompt response.
 
-Bugs in ansible-base
+Bugs in ansible-core
 --------------------
 
 If you find a bug that affects multiple plugins, a plugin that remained in the ansible/ansible repo, or the overall functioning of Ansible, report it to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_. You need a free GitHub account.  Before reporting a bug, use the bug/issue search to see if the issue has already been reported. If you are not sure if something is a bug yet, you can report the behavior on the :ref:`mailing list or IRC first <communication>`.
@@ -46,11 +46,11 @@ Many bugs only affect a single module or plugin. If you find a bug that affects 
   #. Click on the Issue Tracker link for that collection.
   #. Follow the contributor guidelines or instructions in the collection repo.
 
-If you are not sure whether a bug is in ansible-base or in a collection, you can report the behavior on the :ref:`mailing list or IRC first <communication>`.
+If you are not sure whether a bug is in ansible-core or in a collection, you can report the behavior on the :ref:`mailing list or IRC first <communication>`.
 
 .. _request_features:
 
 Requesting a feature
 ====================
 
-The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-base or against a collection. See also :ref:`ansible_collection_merge_requirements`.
+The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`.

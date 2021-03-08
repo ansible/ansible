@@ -198,7 +198,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :seealso:
 
   * A list of references to other modules, documentation or Internet resources
-  * In Ansible 2.10 and later, references to modules must use  the FQCN or ``ansible.builtin`` for modules in ``ansible-base``.
+  * In Ansible 2.10 and later, references to modules must use  the FQCN or ``ansible.builtin`` for modules in ``ansible-core``.
   * A reference can be one of the following formats:
 
 
@@ -341,7 +341,7 @@ Per playbook best practices, each example should include a ``name:`` line::
 
 The ``name:`` line should be capitalized and not include a trailing dot.
 
-Use a fully qualified collection name (FQCN) as a part of the module's name like in the example above. For modules in ``ansible-base``, use the ``ansible.builtin.`` identifier, for example ``ansible.builtin.debug``.
+Use a fully qualified collection name (FQCN) as a part of the module's name like in the example above. For modules in ``ansible-core``, use the ``ansible.builtin.`` identifier, for example ``ansible.builtin.debug``.
 
 If your examples use boolean options, use yes/no values. Since the documentation generates boolean values as yes/no, having the examples use these values as well makes the module documentation more consistent.
 
