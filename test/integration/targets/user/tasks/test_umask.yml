@@ -21,8 +21,18 @@
     path: "{{ user_home_prefix[ansible_facts.system] }}/umaskuser_test_2"
   register: umaskuser_test_2_path
 
+- name: remove created users
+  user:
+    name: "{{ item }}"
+    state: absent
+  register: umaskuser_test_remove
+  loop:
+    - umaskuser_test_1
+    - umaskuser_test_2
+
 - name: Ensure correct umask has been set on created users
   assert:
     that:
       - umaskuser_test_1_path.stat.mode == "0777"
       - umaskuser_test_2_path.stat.mode == "0700"
+      - umaskuser_test_remove is changed
