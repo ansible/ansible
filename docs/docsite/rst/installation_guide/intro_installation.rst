@@ -79,11 +79,11 @@ Which Ansible version to install is based on your particular needs. You can choo
 
 * Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu).
 * Install with ``pip`` (the Python package manager).
-* Install ``ansible-base`` from source to access the development (``devel``) version to develop or test the latest features.
+* Install ``ansible-core`` from source to access the development (``devel``) version to develop or test the latest features.
 
 .. note::
 
-	You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+	You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
 
 Ansible creates new releases two to three times a year. Due to this short release cycle,
@@ -354,14 +354,14 @@ If you do not uninstall the older version of Ansible, you will see the following
 
 .. code-block:: console
 
-    Cannot install ansible-base with a pre-existing ansible==2.x installation.
+    Cannot install ansible-core with a pre-existing ansible==2.x installation.
 
-    Installing ansible-base with ansible-2.9 or older currently installed with
+    Installing ansible-core with ansible-2.9 or older currently installed with
     pip is known to cause problems. Please uninstall ansible and install the new
     version:
 
     pip uninstall ansible
-    pip install ansible-base
+    pip install ansible-core
 
     ...
 
@@ -375,33 +375,33 @@ to the latest version.
 
 .. _from_pip_devel:
 
-Installing the development version of ``ansible-base``
+Installing the development version of ``ansible-core``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``.
 
 .. note::
 
-    You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+    You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
 .. note::
 
     If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
 
 
-You can install the development version of ``ansible-base`` directly from GitHub with pip.
+You can install the development version of ``ansible-core`` directly from GitHub with pip.
 
 .. code-block:: bash
 
     $ python -m pip install --user https://github.com/ansible/ansible/archive/devel.tar.gz
 
-Replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install older versions of Ansible (prior to ``ansible-base`` 2.10.) This installs all of Ansible.
+Replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install older versions of Ansible (prior to ``ansible-core`` 2.10.) This installs all of Ansible.
 
 .. code-block:: bash
 
     $ python -m pip install --user https://github.com/ansible/ansible/archive/stable-2.9.tar.gz
 
-See :ref:`from_source` for instructions on how to run ``ansible-base`` directly from source, without the requirement of installation.
+See :ref:`from_source` for instructions on how to run ``ansible-core`` directly from source, without the requirement of installation.
 
 .. _from_pip_venv:
 
@@ -420,16 +420,16 @@ Ansible can also be installed inside a new or existing ``virtualenv``::
 
 .. _from_source:
 
-Running ``ansible-base`` from source (devel)
+Running ``ansible-core`` from source (devel)
 ---------------------------------------------
 
-In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``.
 
 .. note::
 
-	You should only run ``ansible-base`` from ``devel`` if you are modifying ``ansible-base`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+	You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
-``ansible-base`` is easy to run from source. You do not need ``root`` permissions
+``ansible-core`` is easy to run from source. You do not need ``root`` permissions
 to use it and there is no software to actually install. No daemons
 or database setup are required.
 
@@ -438,14 +438,14 @@ or database setup are required.
    If you want to use Ansible Tower as the control node, do not use a source installation of Ansible. Please use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version.
 
 
-To install from source, clone the ``ansible-base`` git repository:
+To install from source, clone the ``ansible-core`` git repository:
 
 .. code-block:: bash
 
     $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
 
-Once ``git`` has cloned the ``ansible-base`` repository, setup the Ansible environment:
+Once ``git`` has cloned the ``ansible-core`` repository, setup the Ansible environment:
 
 Using Bash:
 
@@ -472,7 +472,7 @@ Ansible also uses the following Python modules that need to be installed [1]_:
 
     $ python -m pip install --user -r ./requirements.txt
 
-To update ``ansible-base`` checkouts, use pull-with-rebase so any local changes are replayed.
+To update ``ansible-core`` checkouts, use pull-with-rebase so any local changes are replayed.
 
 .. code-block:: bash
 
@@ -511,7 +511,7 @@ Packaging Ansible or wanting to build a local package yourself, but don't want t
 
 .. note::
 
-	If you are creating your own Ansible package, you must also download or package ``ansible-base`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz.
+	If you are creating your own Ansible package, you must also download or package ``ansible-core`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-core/ansible-core-{{VERSION}}.tar.gz.
 
 These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
 
@@ -602,7 +602,7 @@ See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest
 
 .. _getting_ansible:
 
-``ansible-base`` on GitHub
+``ansible-core`` on GitHub
 ---------------------------
 
 You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if

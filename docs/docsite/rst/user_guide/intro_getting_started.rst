@@ -119,7 +119,7 @@ Resources
 - `Katakoda <https://katacoda.com/rhel-labs>`_
 - `Workshops <https://github.com/ansible/workshops>`_
 - `Ansible Examples <https://github.com/ansible/ansible-examples>`_
-- `Ansible Baseline <https://github.com/ansible/ansible-baseline>`_
+- `Ansible Baseline <https://github.com/ansible/ansible-coreline>`_
 
 Next steps
 ==========

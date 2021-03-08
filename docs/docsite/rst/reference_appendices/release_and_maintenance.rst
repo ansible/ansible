@@ -101,14 +101,14 @@ release. These release notes (changelogs) contain the dates and
 significant changes in each minor release.
 
 ============================================= ======================================================
- ``ansible-core`` / ``ansible-base`` Release                          Status
+ ``ansible-core`` / ``ansible-core`` Release                          Status
 ============================================= ======================================================
 devel                                         In development (ansible-core 2.11 unreleased, trunk)
-`2.10 ansible-base Release Notes`_            Maintained (security **and** general bug fixes)
+`2.10 ansible-core Release Notes`_            Maintained (security **and** general bug fixes)
 ============================================= ======================================================
 
 
-.. _2.10 ansible-base Release Notes:
+.. _2.10 ansible-core Release Notes:
 .. _2.10-base: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
 .. _support_life:
 .. _methods:
