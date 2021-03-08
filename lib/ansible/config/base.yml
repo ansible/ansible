@@ -5,7 +5,7 @@ ALLOW_WORLD_READABLE_TMPFILES:
   name: Allow world-readable temporary files
   default: False
   description:
-    - This setting has been moved to the individual shell plugins as a plugin option :ref:`shell`.
+    - This setting has been moved to the individual shell plugins as a plugin option :ref:`shell_plugins`.
     - The existing configuration settings are still accepted with the shell plugin adding additional options, like variables.
     - This message will be removed in 2.14.
   type: boolean
