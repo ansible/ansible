@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - fix healthcheck disabling idempotency issue with strict comparison (https://github.com/ansible-collections/community.docker/issues/85)."
