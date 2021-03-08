@@ -140,6 +140,7 @@ class LinuxVirtual(Virtual):
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
+        product_family = get_file_content('/sys/devices/virtual/dmi/id/product_family')
 
         if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
             guest_tech.add('kvm')
