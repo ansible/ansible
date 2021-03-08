@@ -1,0 +1,35 @@
+
+PLAY [nonlockstep] *************************************************************
+
+TASK [command] *****************************************************************
+changed: [testhost10]
+
+TASK [command] *****************************************************************
+changed: [testhost10]
+
+TASK [command] *****************************************************************
+changed: [testhost10]
+
+TASK [command] *****************************************************************
+changed: [testhost11]
+
+TASK [command] *****************************************************************
+changed: [testhost11]
+
+TASK [command] *****************************************************************
+changed: [testhost11]
+
+TASK [command] *****************************************************************
+changed: [testhost12]
+
+TASK [command] *****************************************************************
+changed: [testhost12]
+
+TASK [command] *****************************************************************
+changed: [testhost12]
+
+PLAY RECAP *********************************************************************
+testhost10                 : ok=3    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+testhost11                 : ok=3    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+testhost12                 : ok=3    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
