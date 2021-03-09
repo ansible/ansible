@@ -6,12 +6,16 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-class AnsibleFallbackNotFound(Exception):
-    pass
+class AnsibleError(Exception):
+    """Base Ansible Exception"""
 
 
-class AnsibleValidationError(Exception):
-    """Single validation error"""
+class AnsibleFallbackNotFound(AnsibleError):
+    """Fallback validator was not found"""
+
+
+class AnsibleValidationError(AnsibleError):
+    """Single argument spec validation error"""
 
     def __init__(self, message, error_type=None):
         super(AnsibleValidationError, self).__init__(message)
@@ -24,7 +28,7 @@ class AnsibleValidationError(Exception):
 
 
 class AnsibleValidationErrorMultiple(AnsibleValidationError):
-    """Multiple validation errors"""
+    """Multiple argument spec validation errors"""
 
     def __init__(self, errors=None):
         self.errors = errors[:] if errors else []
