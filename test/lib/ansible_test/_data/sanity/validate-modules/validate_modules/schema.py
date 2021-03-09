@@ -111,6 +111,7 @@ seealso_schema = Schema(
     ]
 )
 
+
 argument_spec_types = ['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw',
                        'sid', 'str']
 
@@ -198,6 +199,7 @@ def argument_spec_schema(for_collection):
     any_string_types = Any(*string_types)
     schema = {
         any_string_types: {
+            'attributes': Any(*argument_spec_types),
             'type': Any(is_callable, *argument_spec_types),
             'elements': Any(*argument_spec_types),
             'default': object,
@@ -504,7 +506,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         'options': Any(None, *list_dict_option_schema(for_collection)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
-        'attributes': Any(None, 'dict', 'raw'),
+        'attributes': Any(*argument_spec_types)
     }
 
     if for_collection:
