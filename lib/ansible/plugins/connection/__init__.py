@@ -13,10 +13,11 @@ from abc import abstractmethod, abstractproperty
 from functools import wraps
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.display import Display
-from ansible.plugins.loader import connection_loader, get_shell_plugin
+from ansible.plugins.loader import connection_loader, become_loader, get_shell_plugin
 from ansible.utils.path import unfrackpath
 
 display = Display()
@@ -27,13 +28,46 @@ __all__ = ['ConnectionBase', 'ensure_connect']
 BUFSIZE = 65536
 
 
-def get_connection(task, host, vm, stdin):
+def get_connection(task, templar, stdin, play_context=None):
+    ''' return a connection plugin from info given '''
 
-    # template/check ansible_connection
-    # fallback to task.connection
-    # if smart: check cp for ssh or paramiko
-    # connection, plugin_load_context = connection_loader.get_with_context(name, play_context, stdin, pid)
-    pass
+    variables = template.get_variables()
+
+    # Note for backwards compat, should go away in future
+    if play_context is None:
+        from ansible.playbook.play_context import PlayContext
+        play_context = PlayContext()
+
+    # template/check ansible_connection, fallback to task.connection
+    name = None
+    try:
+        name = templar.template(variables.get('ansible_connection'))
+    except Exception:
+        # TODO: narrow down exceptions
+        name = task.connection
+
+    # load become
+    if variables.get('ansible_become_method'):
+        become_plugin = templar.template(variables['ansible_become_method'])
+    else:
+        become_plugin = task.become_method
+
+    if become_plugin:
+        play_context.set_become_plugin(become_plugin)
+
+    if name is None:
+        raise AnsibleError('Unable to determine connection name from varaibles or task')
+    else:
+        if name == 'smart':
+            # TODO: if smart: check cp for ssh or paramiko
+            name = 'ssh'
+        # this also internally loads shell plugin
+        connection, plugin_load_context = connection_loader.get_with_context(name, play_context, stdin, os.getpid())
+
+    if become_plugin:
+        connection.set_become_plugin(become_loader.get(become_plugin))
+
+    return connection
 
 
 def ensure_connect(func):
@@ -55,6 +89,7 @@ class ConnectionBase(AnsiblePlugin):
     always_pipeline_modules = False  # eg, winrm
     has_tty = True  # for interacting with become plugins
     # When running over this connection type, prefer modules written in a certain language
+
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
     module_implementation_preferences = ('',)

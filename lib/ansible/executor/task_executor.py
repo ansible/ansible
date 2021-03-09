@@ -25,6 +25,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.connection import get_connection
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -807,58 +808,63 @@ class TaskExecutor:
         correct connection object from the list of connection plugins
         '''
 
-        # use magic var if it exists, if not, let task inheritance do it's thing.
-        if cvars.get('ansible_connection') is not None:
-            self._play_context.connection = templar.template(cvars['ansible_connection'])
-        else:
-            self._play_context.connection = self._task.connection
+        try:
+            connection = get_connection(self._task, templar, self._stdin, cvars, self._play_context)
+        except Exception:
+            # TODO: can remove this once above is working.
 
-        # TODO: play context has logic to update the connection for 'smart'
-        # (default value, will chose between ssh and paramiko) and 'persistent'
-        # (really paramiko), eventually this should move to task object itself.
-        connection_name = self._play_context.connection
-
-        # load connection
-        conn_type = connection_name
-        connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
-            conn_type,
-            self._play_context,
-            self._new_stdin,
-            task_uuid=self._task._uuid,
-            ansible_playbook_pid=to_text(os.getppid())
-        )
-
-        if not connection:
-            raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
-
-        # load become plugin if needed
-        if cvars.get('ansible_become') is not None:
-            become = boolean(templar.template(cvars['ansible_become']))
-        else:
-            become = self._task.become
-
-        if become:
-            if cvars.get('ansible_become_method'):
-                become_plugin = self._get_become(templar.template(cvars['ansible_become_method']))
+            # use magic var if it exists, if not, let task inheritance do it's thing.
+            if cvars.get('ansible_connection') is not None:
+                self._play_context.connection = templar.template(cvars['ansible_connection'])
             else:
-                become_plugin = self._get_become(self._task.become_method)
+                self._play_context.connection = self._task.connection
 
-            try:
-                connection.set_become_plugin(become_plugin)
-            except AttributeError:
-                # Older connection plugin that does not support set_become_plugin
-                pass
+            # TODO: play context has logic to update the connection for 'smart'
+            # (default value, will chose between ssh and paramiko) and 'persistent'
+            # (really paramiko), eventually this should move to task object itself.
+            connection_name = self._play_context.connection
 
-            if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
-                raise AnsibleError(
-                    "The '%s' connection does not provide a TTY which is required for the selected "
-                    "become plugin: %s." % (conn_type, become_plugin.name)
-                )
+            # load connection
+            conn_type = connection_name
+            connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
+                conn_type,
+                self._play_context,
+                self._new_stdin,
+                task_uuid=self._task._uuid,
+                ansible_playbook_pid=to_text(os.getppid())
+            )
 
-            # Backwards compat for connection plugins that don't support become plugins
-            # Just do this unconditionally for now, we could move it inside of the
-            # AttributeError above later
-            self._play_context.set_become_plugin(become_plugin.name)
+            if not connection:
+                raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+
+            # load become plugin if needed
+            if cvars.get('ansible_become') is not None:
+                become = boolean(templar.template(cvars['ansible_become']))
+            else:
+                become = self._task.become
+
+            if become:
+                if cvars.get('ansible_become_method'):
+                    become_plugin = self._get_become(templar.template(cvars['ansible_become_method']))
+                else:
+                    become_plugin = self._get_become(self._task.become_method)
+
+                try:
+                    connection.set_become_plugin(become_plugin)
+                except AttributeError:
+                    # Older connection plugin that does not support set_become_plugin
+                    pass
+
+                if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
+                    raise AnsibleError(
+                        "The '%s' connection does not provide a TTY which is required for the selected "
+                        "become plugin: %s." % (conn_type, become_plugin.name)
+                    )
+
+                # Backwards compat for connection plugins that don't support become plugins
+                # Just do this unconditionally for now, we could move it inside of the
+                # AttributeError above later
+                self._play_context.set_become_plugin(become_plugin.name)
 
         # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
