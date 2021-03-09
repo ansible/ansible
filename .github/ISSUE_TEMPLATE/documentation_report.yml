@@ -86,18 +86,12 @@ body:
   validations:
     required: true
 
-- type: textarea
+- type: markdown
   attributes:
-    label: Additional Information
-    description: |
+    value: |
+      **Additional Information**
+
       Describe how this improves the documentation, e.g. before/after situation or screenshots.
 
-      **Tip:** It's not possible to upload the screenshot via this field directly but you can use the last textarea in this form to attach them.
-
       **HINT:** You can paste https://gist.github.com links for larger files.
-    placeholder: >-
-      When the improvement is applied, it makes it more straightforward
-      to understand X.
-  validations:
-    required: true
 ...
