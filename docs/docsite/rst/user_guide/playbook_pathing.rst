@@ -23,15 +23,20 @@ Relative paths used in a task typically refer to remote files and directories on
 Resolving local paths
 ---------------------
 
-Ansible tries to find local files first in the current task's role, then in other roles that included or depend on the current role, and finally in the current play. This way, if multiple files with the same filename exist, Ansible will find the file that is closest to the current task and that is most likely to be file you wanted.
+Ansible tries to find local files first relative to the current task's role, then relative to other roles that included or depend on the current role, then relative to the file in which the task is defined, and finally relative to the current play. This way, if multiple files with the same filename exist, Ansible will find the file that is closest to the current task and that is most likely to be file you wanted.
 
-Specifically, Ansible searches these locations:
+Specifically, Ansible tries to find the file
 
-1. In the active role's matching "files", "vars", "templates", or "tasks" subdirectory, depending on which kind of file it is searching for.
-2. In a previous role's matching subdirectory, if that role called into this current role with an `include_role` or `import_role` task or with a role dependency.
-3. In the active play's matching subdirectory as well as directly in the active play's directory.
+1. In the active role's "files", "vars", "templates", or "tasks" subdirectory, depending on which kind of file it is searching for.
+2. Directly in the active role's directory.
+3. In a previous role's appropriate subdirectory, if that role called into this current role with `include_role` or `import_role` or with a role dependency.
+4. Directly in that previous role's directory.
+5. In the current task's appropriate directory.
+6. Directly in the current task's directory.
+7. In the active play's appropriate subdirectory.
+8. Directly in the active play's directory.
 
-Ansible does not search the current working directory. (The directory you're in when you execute Ansible.) Also, Ansible will only search within a role if you actually included it with an `include_role` or `import_role` task or a dependency. If you use `include`, `include_task` or `import_task` to include just the tasks from a specific file but not the full role, Ansible will not try to search that role.
+Ansible does not search the current working directory. (The directory you're in when you execute Ansible.) Also, Ansible will only search within a role if you actually included it with an `include_role` or `import_role` task or a dependency. If you use `include`, `include_task` or `import_task` to include just the tasks from a specific file but not the full role, Ansible will search relative to that task file but not relative to its role.
 
 When you execute Ansible, the variable `ansible_search_path` will contain the paths searched, in the order they were searched in but without listing their subdirectories. If you run Ansible in verbosity level 5 by passing the `-vvvvv` argument, Ansible will report each directory while it searches.
 
