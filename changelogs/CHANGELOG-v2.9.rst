@@ -5,6 +5,41 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.19rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-03-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - now makes a better attempt to support podman when calling ``docker images`` and asking for JSON format.
+- module_defaults - add module ec2_vpc_endpoint_service_info from community.aws to aws module_defaults group (https://github.com/ansible/ansible/pull/73669).
+- module_defaults - add module iam_saml_federation from community.aws to aws module_defaults group (https://github.com/ansible/ansible/pull/73669).
+
+Bugfixes
+--------
+
+- ConfigManager - Normalize ConfigParser between Python2 and Python3 for handling comments (https://github.com/ansible/ansible/issues/73709)
+- add AlmaLinux to fact gathering (https://github.com/ansible/ansible/pull/73458)
+- default callback - Ensure that the ``host_pinned`` strategy is not treated as lockstep (https://github.com/ansible/ansible/issues/73364)
+- docker_container - fix healthcheck disabling idempotency issue with strict comparison (https://github.com/ansible-collections/community.docker/issues/85).
+- docker_image - fix crash on loading images with versions of Docker SDK for Python before 2.5.0 (https://github.com/ansible-collections/community.docker/issues/72, https://github.com/ansible-collections/community.docker/pull/73).
+- docker_image - prevent module failure when removing image that is removed between inspection and removal (https://github.com/ansible-collections/community.docker/pull/87).
+- docker_image - prevent module failure when removing non-existant image by ID (https://github.com/ansible-collections/community.docker/pull/87).
+- docker_image_info - prevent module failure when image vanishes between listing and inspection (https://github.com/ansible-collections/community.docker/pull/87).
+- docker_image_info - prevent module failure when querying non-existant image by ID (https://github.com/ansible-collections/community.docker/pull/87).
+- hostname - add Almalinux support (https://github.com/ansible/ansible/pull/73619)
+- mongodb_replicaset - fixes check_compatibility function (https://github.com/ansible-collections/community.mongodb/issues/230).
+- openssl_csr - no longer fails when comparing CSR without basic constraint when ``basic_constraints`` is specified (https://github.com/ansible-collections/community.crypto/issues/179, https://github.com/ansible-collections/community.crypto/pull/180).
+- terraform - reset out and err before plan creation (https://github.com/ansible/ansible/issues/64369)
+- yamllint - do not raise an ``AttributeError`` if a value is assigned to a module attribute at the top of the module.
+
 v2.9.18
 =======
 

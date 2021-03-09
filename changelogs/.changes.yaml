@@ -1748,6 +1748,25 @@ releases:
     - snmp_facts.yml
     - v2.9.18rc1_summary.yaml
     release_date: '2021-02-08'
+  2.9.19rc1:
+    codename: Immigrant Song
+    fragments:
+    - 66322-moved_line_causing_terraform_output_suppression.yml
+    - 72299-fix-check-compatibility.yaml
+    - 73364-default-callback-host-pinned-not-lockstep.yml
+    - 73619-hostname-almalinux-support.yml
+    - 73669-module_defaults-iam_saml_federation.yml
+    - 73670-module_defaults-ec2_vpc_endpoint_service_info.yml
+    - 73709-normalize-configparser.yml
+    - ansible-test-podman-json-format.yml
+    - ansible_test_yamllint_avoid_attribute_exception.yaml
+    - community.cryto-180-openssl-csr-basic-constraint.yml
+    - community.docker-73-docker_image-fix-old-docker-py-version.yml
+    - community.docker-87-docker_image-load-image-ids.yml
+    - community.docker-88-docker_container-healthcheck.yml
+    - support_almalinux.yml
+    - v2.9.19rc1_summary.yaml
+    release_date: '2021-03-08'
   2.9.2:
     codename: Immigrant Song
     fragments:
