@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 from ansible.module_utils.errors import AnsibleValidationErrorMultiple
 from ansible.module_utils.six import PY2
 
@@ -100,13 +100,17 @@ INVALID_SPECS = [
     ids=[i[0] for i in INVALID_SPECS]
 )
 def test_invalid_spec(arg_spec, parameters, expected, error):
-    v = ArgumentSpecValidator(arg_spec, parameters)
+    v = ArgumentSpecValidator(arg_spec)
+
     with pytest.raises(AnsibleValidationErrorMultiple) as exc_info:
-        v.validate()
+        v.validate(parameters)
 
     if PY2:
         error = error.replace('class', 'type')
 
     assert error in exc_info.value.msg
     assert error in v.error_messages[0]
-    assert v.validated_parameters == expected
+
+    # FIXME: There is no way to get the partially validated params if validation
+    #        fail since no result object is returned.
+    # assert v.validated_parameters == expected

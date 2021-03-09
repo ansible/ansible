@@ -488,7 +488,7 @@ class AnsibleModule(object):
         self._load_params()
         self._set_internal_properties()
 
-        self.validator = ArgumentSpecValidator(self.argument_spec, self.params,
+        self.validator = ArgumentSpecValidator(self.argument_spec,
                                                self.mutually_exclusive,
                                                self.required_together,
                                                self.required_one_of,
@@ -497,9 +497,8 @@ class AnsibleModule(object):
                                                )
 
         try:
-            self.validator.validate()
+            validation_result = self.validator.validate(self.params)
         except AnsibleValidationErrorMultiple as exc:
-            self.params.update(self.validator.validated_parameters)
             self.no_log_values.update(self.validator._no_log_values)
 
             # Fail for validation errors, even in check mode
@@ -508,10 +507,9 @@ class AnsibleModule(object):
                 msg = "Unsupported parameters for ({name}) {kind}: {msg}".format(name=self._name, kind='module', msg=exc.errors[0].error_message)
 
             self.fail_json(msg=msg)
-        finally:
-            self.params.update(self.validator.validated_parameters)
-            self.no_log_values.update(self.validator._no_log_values)
 
+        self.no_log_values.update(self.validator._no_log_values)
+        self.params.update(validation_result.validated_parameters)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 

@@ -7,8 +7,8 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import AnsibleValidationErrorMultiple
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 
 # id, argument spec, parameters, expected parameters, expected pass/fail, error, deprecation, warning
@@ -96,16 +96,17 @@ ALIAS_TEST_CASES = [
     ids=[i[0] for i in ALIAS_TEST_CASES]
 )
 def test_aliases(arg_spec, parameters, expected, passfail, error, deprecation, warning):
-    v = ArgumentSpecValidator(arg_spec, parameters)
+    v = ArgumentSpecValidator(arg_spec)
 
     if passfail:
-        assert v.validate() == expected
-        assert v.validated_parameters == expected
+        result = v.validate(parameters)
+        assert isinstance(result, ValidationResult)
+        assert result.validated_parameters == expected
         assert v.error_messages == []
     else:
         # Not passing validation will raise an exception
         with pytest.raises(AnsibleValidationErrorMultiple) as exc_info:
-            v.validate()
+            v.validate(parameters)
         assert error in exc_info.value.msg
         assert error in v.error_messages[0]
 

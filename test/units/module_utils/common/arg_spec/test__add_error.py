@@ -12,7 +12,7 @@ from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidatio
 
 
 def test_add_sequence():
-    v = ArgumentSpecValidator({}, {})
+    v = ArgumentSpecValidator({})
     errors = [
         AnsibleValidationError('one error'),
         AnsibleValidationError('another error'),
@@ -25,7 +25,7 @@ def test_add_sequence():
 
 
 def test_invalid_error_message():
-    v = ArgumentSpecValidator({}, {})
+    v = ArgumentSpecValidator({})
 
     with pytest.raises(ValueError, match="Error messages must be a string or sequence not a"):
         v._add_error(None)

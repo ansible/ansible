@@ -83,10 +83,10 @@ class ActionModule(ActionBase):
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
         provided_arguments.update(args_from_vars)
 
-        validator = ArgumentSpecValidator(argument_spec_data, provided_arguments)
+        validator = ArgumentSpecValidator(argument_spec_data)
 
         try:
-            validator.validate()
+            validator.validate(provided_arguments)
         except AnsibleValidationErrorMultiple as exc:
             result['failed'] = True
             result['msg'] = 'Validation of arguments failed:\n%s' % '\n'.join(exc.messages)

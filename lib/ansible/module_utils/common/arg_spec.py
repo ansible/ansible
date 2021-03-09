@@ -38,24 +38,37 @@ from ansible.module_utils.common.validation import (
 from ansible.module_utils.six import string_types
 
 
-class ArgumentSpecValidator():
+class ValidationResult:
+    """Result of argument spec validation.
+
+    :param parameters: Terms to be validated and coerced to the correct type.
+    :type parameters: dict
+
+    """
+
+    def __init__(self, parameters):
+        self._no_log_values = set()
+        self._unsupported_parameters = set()
+        self._validated_parameters = deepcopy(parameters)
+
+    @property
+    def validated_parameters(self):
+        return self._validated_parameters
+
+    @property
+    def unsupported_parameters(self):
+        return self._unsupported_parameters
+
+
+class ArgumentSpecValidator:
     """Argument spec validation class
 
-    This will evaluate the given parameters against a provide argument spec, coerce
-    provided arguments to the specified type, and return the validated parameters
-    on success on raise AnsibleValidationErrorMultiple if validation fails. Any
-    errors with the validation are stored in the ``error_messages`` property.
-
-    A copy of the original parameters is stored in the ``validated_parameters``
-    property. This will be mutated in order to ensure the parameters match
-    the specified type. The original parameters and argument_spec are unaltered.
+    Creates a validator based on the ``argument_spec`` that can be used to
+    validate a number of parameters using the ``validate()`` method.
 
     :param argument_spec: Specification of valid parameters and their type. May
         include nested argument specs.
     :type argument_spec: dict
-
-    :param parameters: Terms to be validated and coerced to the correct type.
-    :type parameters: dict
 
     :param mutually_exclusive: List or list of lists of terms that should not
         be provided together.
@@ -75,11 +88,10 @@ class ArgumentSpecValidator():
     :param required_by: Dictionary of parameter names that contain a list of
         parameters required by each key in the dictionary.
     :type: dict, optional
-
     """
 
     # TODO: Move parameters to the `validate()` method.
-    def __init__(self, argument_spec, parameters,
+    def __init__(self, argument_spec,
                  mutually_exclusive=None,
                  required_together=None,
                  required_one_of=None,
@@ -89,9 +101,7 @@ class ArgumentSpecValidator():
 
         self._errors = AnsibleValidationErrorMultiple()
         self._no_log_values = set()
-        self._validated_parameters = deepcopy(parameters)  # Make a copy of the original parameters to avoid changing them
         self._valid_parameter_names = []
-        self._unsupported_parameters = set()
         self._mutually_exclusive = mutually_exclusive
         self._required_together = required_together
         self._required_one_of = required_one_of
@@ -102,10 +112,6 @@ class ArgumentSpecValidator():
     @property
     def error_messages(self):
         return remove_values(self._errors.messages, self._no_log_values)
-
-    @property
-    def validated_parameters(self):
-        return self._validated_parameters
 
     @property
     def valid_parameter_names(self):
@@ -132,22 +138,22 @@ class ArgumentSpecValidator():
         else:
             raise ValueError('Error messages must be a string or sequence not a %s' % type(error))
 
-    def validate(self, *args, **kwargs):
-        """Validate module parameters against argument spec. Returns True/False
-        for overall pass/fail of validation and coercion.
+    def validate(self, parameters, *args, **kwargs):
+        """Validate module parameters against argument spec. Returns a validation
+        object if successful or raises AnsibleValidationErrorMultiple exception.
 
-        For unsupported parameters, a format string is added to ``self.error_messages``
-        with ``name`` and ``kind`` fields. These should be replaced with the name
-        of the plugin and the plugin kind so the message is useful to the reader.
+        Error messages in the AnsibleValidationErrorMultiple exception may contain
+        no_log values and should be sanitized before logging or displaying.
 
         :Example:
 
-        validator = ArgumentSpecValidator(argument_spec, parameters)
-        passed = validator.validate()
-        if not passed:
-            sys.exit("Validation failed: {0}".format(", ".join(validator.error_messages).format(name='name', kind='module'))
+        validator = ArgumentSpecValidator(argument_spec)
+        try:
+            result = validator.validate(parameters)
+        except AnsibleValidationErrorMultiple as exc:
+            sys.exit("Validation failed: {0}".format(", ".join(validator.error_messages))
 
-        valid_params = validator.validated_parameters
+        valid_params = result.validated_parameters
 
         :param argument_spec: Specification of parameters, type, and valid values
         :type argument_spec: dict
@@ -155,16 +161,18 @@ class ArgumentSpecValidator():
         :param parameters: Parameters provided to the role
         :type parameters: dict
 
-        :returns: True if no errors were encountered, False if any errors were encountered.
-        :rtype: bool
+        :return: Object containing validated parameters.
+        :rtype: ValidationResult
         """
 
-        self._no_log_values.update(set_fallbacks(self.argument_spec, self._validated_parameters))
+        result = ValidationResult(parameters)
+
+        result._no_log_values.update(set_fallbacks(self.argument_spec, result._validated_parameters))
 
         alias_warnings = []
         alias_deprecations = []
         try:
-            alias_results, legal_inputs = handle_aliases(self.argument_spec, self._validated_parameters, alias_warnings, alias_deprecations)
+            alias_results, legal_inputs = handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations)
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
@@ -179,33 +187,33 @@ class ArgumentSpecValidator():
                       collection_name=deprecation.get('collection_name'))
 
         try:
-            self._no_log_values.update(list_no_log_values(self.argument_spec, self._validated_parameters))
+            self._no_log_values.update(list_no_log_values(self.argument_spec, result._validated_parameters))
         except TypeError as te:
             self._add_error(AnsibleValidationError(to_native(te), "no_log"))
 
         if legal_inputs is None:
             legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
         try:
-            self._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, self._validated_parameters, legal_inputs))
+            result._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
         except TypeError as te:
             self._add_error(AnsibleValidationError(to_native(te)), "required_and_default")
         except ValueError as ve:
             self._add_error(AnsibleValidationError(to_native(ve), "aliases"))
 
         try:
-            check_mutually_exclusive(self._mutually_exclusive, self._validated_parameters)
+            check_mutually_exclusive(self._mutually_exclusive, result._validated_parameters)
         except TypeError as te:
             self._add_error(AnsibleValidationError(to_native(te), "mutually_exclusive"))
 
-        self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters, False))
+        self._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters, False))
 
         try:
-            check_required_arguments(self.argument_spec, self._validated_parameters)
+            check_required_arguments(self.argument_spec, result._validated_parameters)
         except TypeError as e:
             self._add_error(AnsibleValidationError(to_native(e), "required_arguments"))
 
-        _validate_argument_types(self.argument_spec, self._validated_parameters, errors=self._errors)
-        _validate_argument_values(self.argument_spec, self._validated_parameters, errors=self._errors)
+        _validate_argument_types(self.argument_spec, result._validated_parameters, errors=self._errors)
+        _validate_argument_values(self.argument_spec, result._validated_parameters, errors=self._errors)
 
         checks = (
             {'func': check_required_together, 'attr': '_required_together'},
@@ -217,20 +225,20 @@ class ArgumentSpecValidator():
         for check in checks:
             if check['attr'] is not None:
                 try:
-                    check['func'](getattr(self, check['attr']), self._validated_parameters)
+                    check['func'](getattr(self, check['attr']), result._validated_parameters)
                 except TypeError as te:
                     self._add_error(AnsibleValidationError(to_native(te), check['attr'].lstrip('_')))
 
-        self._no_log_values.update(set_defaults(self.argument_spec, self._validated_parameters))
+        self._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters))
 
-        _validate_sub_spec(self.argument_spec, self._validated_parameters,
+        _validate_sub_spec(self.argument_spec, result._validated_parameters,
                            errors=self._errors,
                            no_log_values=self._no_log_values,
-                           unsupported_parameters=self._unsupported_parameters)
+                           unsupported_parameters=result._unsupported_parameters)
 
-        if self._unsupported_parameters:
+        if result._unsupported_parameters:
             flattened_names = []
-            for item in self._unsupported_parameters:
+            for item in result._unsupported_parameters:
                 if isinstance(item, tuple):
                     flattened_names.append(".".join(item))
                 else:
@@ -244,6 +252,4 @@ class ArgumentSpecValidator():
         if self.error_messages:
             raise(self._errors)
         else:
-            # TODO: Change this to an object that has the validated params rather than
-            #       storing them on the Validator.
-            return self.validated_parameters
+            return result

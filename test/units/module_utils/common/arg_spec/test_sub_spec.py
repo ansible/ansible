@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 
 
 def test_sub_spec():
@@ -39,9 +39,11 @@ def test_sub_spec():
         }
     }
 
-    v = ArgumentSpecValidator(arg_spec, parameters)
+    v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
 
-    assert v.validate() == expected
+    assert isinstance(result, ValidationResult)
+    assert result.validated_parameters == expected
     assert v.error_messages == []
 
 
@@ -96,7 +98,9 @@ def test_nested_sub_spec():
         }
     }
 
-    v = ArgumentSpecValidator(arg_spec, parameters)
+    v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
 
-    assert v.validate() == expected
+    assert isinstance(result, ValidationResult)
+    assert result.validated_parameters == expected
     assert v.error_messages == []

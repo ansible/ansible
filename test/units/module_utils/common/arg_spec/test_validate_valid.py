@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 
 # Each item is id, argument_spec, parameters, expected
 VALID_SPECS = [
@@ -288,8 +288,9 @@ def test_valid_spec(arg_spec, parameters, expected, mocker):
     mocker.patch('ansible.module_utils.common.validation.os.path.expanduser', return_value='/home/ansible/bin')
     mocker.patch('ansible.module_utils.common.validation.os.path.expandvars', return_value='/home/ansible/bin')
 
-    v = ArgumentSpecValidator(arg_spec, parameters)
+    v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
 
-    assert v.validate() == expected
-    assert v.validated_parameters == expected
+    assert isinstance(result, ValidationResult)
+    assert result.validated_parameters == expected
     assert v.error_messages == []
