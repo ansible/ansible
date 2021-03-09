@@ -72,6 +72,7 @@ DOCUMENTATION = """
                 - List of localized strings to match for prompt detection
                 - If empty we'll use the built in one
             default: []
+            type: list
             ini:
               - section: su_become_plugin
                 key: localized_prompts
