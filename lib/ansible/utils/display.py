@@ -28,11 +28,17 @@ import os
 import random
 import subprocess
 import sys
-import textwrap
 import time
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
+
+# wrap becomes noop if not using tty
+if sys.__stdin__.isatty():
+    from textwrap import wrap
+else:
+    def wrap(text, width, **kwargs):
+        return text
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -383,7 +389,7 @@ class Display(metaclass=Singleton):
         if removed:
             raise AnsibleError(message_text)
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+        wrapped = wrap(message_text, self.columns, drop_whitespace=False)
         message_text = "\n".join(wrapped) + "\n"
 
         if message_text not in self._deprecations:
@@ -394,7 +400,7 @@ class Display(metaclass=Singleton):
 
         if not formatted:
             new_msg = "[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:
             new_msg = "\n[WARNING]: \n%s" % msg
@@ -450,7 +456,7 @@ class Display(metaclass=Singleton):
     def error(self, msg, wrap_text=True):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg
