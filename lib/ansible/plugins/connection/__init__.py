@@ -28,10 +28,11 @@ __all__ = ['ConnectionBase', 'ensure_connect']
 BUFSIZE = 65536
 
 
-def get_connection(task, templar, stdin, play_context=None):
+def get_connection(task, templar, stdin, variables=None, play_context=None):
     ''' return a connection plugin from info given '''
 
-    variables = template.get_variables()
+    if variables is None:
+        variables = template.get_variables()
 
     # Note for backwards compat, should go away in future
     if play_context is None:
