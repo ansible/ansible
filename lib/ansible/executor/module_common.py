@@ -948,7 +948,8 @@ def recursive_finder(name, module_fqn, module_data, zf):
             module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
                                                   mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
         elif py_module_name[0] == 'ansible_collections':
-            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, child_is_redirected=child_is_redirected, is_optional=is_optional)
+            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
+                                                      child_is_redirected=child_is_redirected, is_optional=is_optional)
         else:
             # FIXME: dot-joined result
             display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
@@ -976,7 +977,8 @@ def recursive_finder(name, module_fqn, module_data, zf):
             raise AnsibleError("Unable to import %s due to %s" % (module_info.fq_name_parts, e.msg))
 
         finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
-        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports) for m in finder.submodules if m not in py_module_cache)
+        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
+                                  for m in finder.submodules if m not in py_module_cache)
 
         # we've processed this item, add it to the output list
         py_module_cache[module_info.fq_name_parts] = (module_info.source_code, module_info.output_path)

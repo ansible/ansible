@@ -5,8 +5,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import sys
 from ansible.module_utils.basic import AnsibleModule
+
+# internal constants to keep pylint from griping about constant-valued conditionals
+_private_false = False
+_private_true = True
 
 # module_utils import statements nested below any block are considered optional "best-effort" for AnsiballZ to include.
 # test a number of different import shapes and nesting types to exercise this...
@@ -34,7 +37,7 @@ try:
 except ImportError:
     fromnope1 = None
 
-if False:
+if _private_false:
     from ansible.module_utils.alsobogus import fromnope2
 else:
     fromnope2 = None
@@ -47,10 +50,10 @@ except ImportError:
 
 # deepish nested with multiple block types- make sure the AST walker made it all the way down
 try:
-    if True:
-        if True:
-            if True:
-                if True:
+    if _private_true:
+        if _private_true:
+            if _private_true:
+                if _private_true:
                     try:
                         import ansible.module_utils.stillbogus as nope2
                     except ImportError:
@@ -69,8 +72,6 @@ try:
     from ansible_collections.bogusns.boguscoll.plugins.module_utils.bogus import collnope2
 except ImportError:
     collnope2 = None
-
-
 
 module = AnsibleModule(argument_spec={})
 
