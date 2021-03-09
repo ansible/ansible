@@ -46,6 +46,13 @@ import typing as t
 from functools import wraps
 from struct import unpack, pack
 
+# wrap becomes noop if not using tty
+if sys.__stdin__.isatty():
+    from textwrap import wrap
+else:
+    def wrap(text, width, **kwargs):
+        return text
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
 from ansible.module_utils.common.text.converters import to_bytes, to_text
@@ -573,7 +580,7 @@ class Display(metaclass=Singleton):
         if removed:
             raise AnsibleError(message_text)
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+        wrapped = wrap(message_text, self.columns, drop_whitespace=False)
         message_text = "\n".join(wrapped) + "\n"
 
         if message_text not in self._deprecations:
@@ -585,7 +592,7 @@ class Display(metaclass=Singleton):
 
         if not formatted:
             new_msg = "[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:
             new_msg = "\n[WARNING]: \n%s" % msg
@@ -645,7 +652,7 @@ class Display(metaclass=Singleton):
     def error(self, msg: str, wrap_text: bool = True) -> None:
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg
