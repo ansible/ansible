@@ -2441,3 +2441,67 @@ releases:
     - v2.10.6rc1_summary.yaml
     - validate-modules_found_try_except_import_fails_module_attribute.yaml
     release_date: '2021-02-08'
+  2.10.7rc1:
+    changes:
+      bugfixes:
+      - ConfigManager - Normalize ConfigParser between Python2 and Python3 to for
+        handling comments (https://github.com/ansible/ansible/issues/73709)
+      - InventoryManager - Fix unhandled exception when given limit file was actually
+        a directory.
+      - InventoryManager - Fix unhandled exception when inventory directory was empty
+        or contained empty subdirectories (https://github.com/ansible/ansible/issues/73658).
+      - add AlmaLinux to fact gathering (https://github.com/ansible/ansible/pull/73458)
+      - ansible-galaxy - fixed galaxy role init command (https://github.com/ansible/ansible/issues/71977).
+      - ansible-inventory CLI - Deal with failures when sorting JSON and you have
+        incompatible key types (https://github.com/ansible/ansible/issues/68950).
+      - ansible-test - Running tests using an installed version of ``ansible-test``
+        against one Python version from another no longer fails due to a missing ``egg-info``
+        directory. This could occur when testing plugins which import ``pkg_resources``.
+      - ansible-test - Running tests using an installed version of ``ansible-test``
+        no longer generates an error attempting to create an ``egg-info`` directory
+        when an existing one is not found in the expected location. This could occur
+        if the existing ``egg-info`` directory included a Python version specifier
+        in the name.
+      - default callback - Ensure that the ``host_pinned`` strategy is not treated
+        as lockstep (https://github.com/ansible/ansible/issues/73364)
+      - ensure find_mount_point consistently returns text.
+      - ensure we don't clobber role vars data when getting an empty file
+      - find module - Stop traversing directories past the requested depth. (https://github.com/ansible/ansible/issues/73627)
+      - hostname - add Almalinux support (https://github.com/ansible/ansible/pull/73619)
+      - runtime routing - redirect ``firewalld`` to ``ansible.posix.firewalld`` FQCN
+        (https://github.com/ansible/ansible/issues/73689).
+      - the unvault lookup plugin returned a byte string. Now returns a real string.
+      - yamllint - do not raise an ``AttributeError`` if a value is assigned to a
+        module attribute at the top of the module.
+      minor_changes:
+      - ansible-test - Generation of an ``egg-info`` directory, if needed, is now
+        done after installing test dependencies and before running tests. When running
+        from an installed version of ``ansible-test`` a temporary directory is used
+        to avoid permissions issues. Previously it was done before installing test
+        dependencies and adjacent to the installed directory.
+      - ansible-test - now makes a better attempt to support podman when calling ``docker
+        images`` and asking for JSON format.
+      release_summary: '| Release Date: 2021-03-08
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - 71977-ansible-galaxy-role-init.yml
+    - 73364-default-callback-host-pinned-not-lockstep.yml
+    - 73456-let-vault-lookup-output-string.yml
+    - 73619-hostname-almalinux-support.yml
+    - 73658-inventorymanager-throws-on-empty-inventory-dir.yml
+    - 73689-move-firewalld-to-ansible-posix.yaml
+    - 73709-normalize-configparser.yml
+    - 73718-find-dir-depth-traversal.yml
+    - ansible-test-egg-info-handling.yml
+    - ansible-test-podman-json-format.yml
+    - ansible_test_yamllint_avoid_attribute_exception.yaml
+    - fix_mount_point.yml
+    - fix_role_var_loading.yml
+    - inv_json_sort_types_fix.yml
+    - support_almalinux.yml
+    - v2.10.7rc1_summary.yaml
+    release_date: '2021-03-08'

@@ -5,6 +5,42 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-03-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Generation of an ``egg-info`` directory, if needed, is now done after installing test dependencies and before running tests. When running from an installed version of ``ansible-test`` a temporary directory is used to avoid permissions issues. Previously it was done before installing test dependencies and adjacent to the installed directory.
+- ansible-test - now makes a better attempt to support podman when calling ``docker images`` and asking for JSON format.
+
+Bugfixes
+--------
+
+- ConfigManager - Normalize ConfigParser between Python2 and Python3 to for handling comments (https://github.com/ansible/ansible/issues/73709)
+- InventoryManager - Fix unhandled exception when given limit file was actually a directory.
+- InventoryManager - Fix unhandled exception when inventory directory was empty or contained empty subdirectories (https://github.com/ansible/ansible/issues/73658).
+- add AlmaLinux to fact gathering (https://github.com/ansible/ansible/pull/73458)
+- ansible-galaxy - fixed galaxy role init command (https://github.com/ansible/ansible/issues/71977).
+- ansible-inventory CLI - Deal with failures when sorting JSON and you have incompatible key types (https://github.com/ansible/ansible/issues/68950).
+- ansible-test - Running tests using an installed version of ``ansible-test`` against one Python version from another no longer fails due to a missing ``egg-info`` directory. This could occur when testing plugins which import ``pkg_resources``.
+- ansible-test - Running tests using an installed version of ``ansible-test`` no longer generates an error attempting to create an ``egg-info`` directory when an existing one is not found in the expected location. This could occur if the existing ``egg-info`` directory included a Python version specifier in the name.
+- default callback - Ensure that the ``host_pinned`` strategy is not treated as lockstep (https://github.com/ansible/ansible/issues/73364)
+- ensure find_mount_point consistently returns text.
+- ensure we don't clobber role vars data when getting an empty file
+- find module - Stop traversing directories past the requested depth. (https://github.com/ansible/ansible/issues/73627)
+- hostname - add Almalinux support (https://github.com/ansible/ansible/pull/73619)
+- runtime routing - redirect ``firewalld`` to ``ansible.posix.firewalld`` FQCN (https://github.com/ansible/ansible/issues/73689).
+- the unvault lookup plugin returned a byte string. Now returns a real string.
+- yamllint - do not raise an ``AttributeError`` if a value is assigned to a module attribute at the top of the module.
+
 v2.10.6
 =======
 
