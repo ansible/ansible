@@ -6,15 +6,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-class AnsibleError(Exception):
-    """Base Ansible Exception"""
-
-
-class AnsibleFallbackNotFound(AnsibleError):
+class AnsibleFallbackNotFound(Exception):
     """Fallback validator was not found"""
 
 
-class AnsibleValidationError(AnsibleError):
+class AnsibleValidationError(Exception):
     """Single argument spec validation error"""
 
     def __init__(self, message, error_type=None):
