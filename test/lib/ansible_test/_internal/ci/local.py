@@ -58,9 +58,10 @@ class Local(CIProvider):
 
     def generate_resource_prefix(self):  # type: () -> str
         """Return a resource prefix specific to this CI provider."""
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
-
-        prefix = 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
+        prefix = 'ansible-test-%d-%s' % (
+            random.randint(10000000, 99999999),
+            platform.node().split('.')[0],
+        )
 
         return prefix
 
