@@ -523,6 +523,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         All(
             Schema(
                 doc_schema_dict,
+                extra=ALLOW_EXTRA
             ),
             partial(version_added, error_code='module-invalid-version-added', accept_historical=not for_collection),
         )
