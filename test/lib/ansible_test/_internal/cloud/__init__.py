@@ -313,6 +313,7 @@ class CloudProvider(CloudBase):
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         self.resource_prefix = self.ci_provider.generate_resource_prefix()
+        self.resource_prefix = re.sub(r'[^a-zA-Z0-9]+', '-', self.resource_prefix)[:63].lower().rstrip('-')
 
         atexit.register(self.cleanup)
 
