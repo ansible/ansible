@@ -202,7 +202,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for key in ds:
             try:
                 if not allow_private and self._valid_attrs[key].private:
-                    raise AnsibleParserError("'%s' cannot be set as it is a private attribute for a %s" % (key, self.__class__.__name__), obj=ds)
+                    raise AnsibleParserError("'%s' is not a settable attribute for a %s" % (key, self.__class__.__name__), obj=ds)
             except KeyError:
                 pass  # we can ignore invalid attributes as they are handled later on in _validate_attributes
 
@@ -608,15 +608,16 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
 class Base(FieldAttributeBase):
 
+    # basic
     _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
+    _path = FieldAttribute(isa='string', static=True, private=True, inherit=False)
 
     # connection/transport
     _connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
     _port = FieldAttribute(isa='int')
     _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
-
-    # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
+    _conn_pass = FieldAttribute(isa='string', default='', private=True, static=True)
 
     # module default params
     _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
@@ -631,7 +632,7 @@ class Base(FieldAttributeBase):
     _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
     _throttle = FieldAttribute(isa='int', default=0)
-    _timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT)
+    _timeout = FieldAttribute(isa='int', default=cliargs_deffered_get('task_timeout'))
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
@@ -642,6 +643,6 @@ class Base(FieldAttributeBase):
     _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
     _become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
     _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
+    _become_pass = FieldAttribute(isa='string', default='', private=True, static=True)
 
-    # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []
