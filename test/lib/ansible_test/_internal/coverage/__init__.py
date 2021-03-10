@@ -125,6 +125,7 @@ def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> 
     coverage_dir = path or ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=%s' % language in f]
+    print(sorted(coverage_files))
 
     return coverage_files
 

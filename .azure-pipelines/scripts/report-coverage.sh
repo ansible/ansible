@@ -5,6 +5,8 @@ set -o pipefail -eu
 
 PATH="${PWD}/bin:${PATH}"
 
+python -c "import os; print(sorted(os.listdir('coverage/')))"
+
 if ! ansible-test --help >/dev/null 2>&1; then
     # Install the devel version of ansible-test for generating code coverage reports.
     # This is only used by Ansible Collections, which are typically tested against multiple Ansible versions (in separate jobs).
@@ -13,3 +15,4 @@ if ! ansible-test --help >/dev/null 2>&1; then
 fi
 
 ansible-test coverage xml --stub --venv --venv-system-site-packages --color -v
+

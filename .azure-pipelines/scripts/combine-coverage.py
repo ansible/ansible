@@ -56,5 +56,8 @@ def main():
     print('##vso[task.setVariable variable=outputPath]%s' % output_path)
 
 
+import os
+
 if __name__ == '__main__':
     main()
+    print(sorted(os.listdir("coverage/")))

@@ -43,7 +43,6 @@
     ignore_errors: True
     register: result
 
-  - debug: var=result
   - name: Make sure we failed in AnsiBallZ
     assert:
       that:
@@ -104,8 +103,16 @@
       datetime: "2020-10-05T10:05:05"
     register: datetimetest
 
-  - name:
-    assert:
+  - assert:
       that:
         - datetimetest.date == '2020-10-05'
         - datetimetest.datetime == '2020-10-05T10:05:05'
+
+  - name: Test that optional imports behave properly
+    test_optional:
+    register: optionaltest
+
+  - assert:
+      that:
+      - optionaltest is success
+      - optionaltest.msg == 'all missing optional imports behaved as expected'
