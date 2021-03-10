@@ -74,9 +74,8 @@ Ansible Community Package Release       Status
 ==================================      =================================================
 
 
-.. _3.0 Release Notes:
-.. _2.10 Release Notes:
-.. _2.10: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
+.. _3.0 Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst
+.. _2.10 Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
 
 
 Release cycle for ansible-core
