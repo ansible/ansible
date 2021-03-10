@@ -66,7 +66,7 @@ except NameError:
 
 display = Display()
 
-ModuleUtilsProcessEntry = namedtuple('ModuleUtilsInfo', ['name_parts', 'is_ambiguous', 'has_redirected_child'])
+ModuleUtilsProcessEntry = namedtuple('ModuleUtilsInfo', ['name_parts', 'is_ambiguous', 'has_redirected_child', 'is_optional'])
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -441,7 +441,7 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 
 class ModuleDepFinder(ast.NodeVisitor):
-    def __init__(self, module_fqn, is_pkg_init=False, *args, **kwargs):
+    def __init__(self, module_fqn, tree, is_pkg_init=False, *args, **kwargs):
         """
         Walk the ast tree for the python module.
         :arg module_fqn: The fully qualified name to reach this module in dotted notation.
@@ -465,7 +465,9 @@ class ModuleDepFinder(ast.NodeVisitor):
         .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
+        self._tree = tree  # squirrel this away so we can compare node parents to it
         self.submodules = set()
+        self.optional_imports = set()
         self.module_fqn = module_fqn
         self.is_pkg_init = is_pkg_init
 
@@ -474,17 +476,20 @@ class ModuleDepFinder(ast.NodeVisitor):
             ImportFrom: self.visit_ImportFrom,
         }
 
+        self.visit(tree)
+
     def generic_visit(self, node):
         """Overridden ``generic_visit`` that makes some assumptions about our
         use case, and improves performance by calling visitors directly instead
         of calling ``visit`` to offload calling visitors.
         """
-        visit_map = self._visit_map
         generic_visit = self.generic_visit
+        visit_map = self._visit_map
         for field, value in ast.iter_fields(node):
             if isinstance(value, list):
                 for item in value:
                     if isinstance(item, (Import, ImportFrom)):
+                        item.parent = node
                         visit_map[item.__class__](item)
                     elif isinstance(item, AST):
                         generic_visit(item)
@@ -503,6 +508,9 @@ class ModuleDepFinder(ast.NodeVisitor):
                     alias.name.startswith('ansible_collections.')):
                 py_mod = tuple(alias.name.split('.'))
                 self.submodules.add(py_mod)
+                # if the import's parent is the root document, it's a required import, otherwise it's optional
+                if node.parent != self._tree:
+                    self.optional_imports.add(py_mod)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -564,6 +572,9 @@ class ModuleDepFinder(ast.NodeVisitor):
         if py_mod:
             for alias in node.names:
                 self.submodules.add(py_mod + (alias.name,))
+                # if the import's parent is the root document, it's a required import, otherwise it's optional
+                if node.parent != self._tree:
+                    self.optional_imports.add(py_mod + (alias.name,))
 
         self.generic_visit(node)
 
@@ -627,12 +638,13 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
 
 
 class ModuleUtilLocatorBase:
-    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False):
+    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False, is_optional=False):
         self._is_ambiguous = is_ambiguous
         # a child package redirection could cause intermediate package levels to be missing, eg
         # from ansible.module_utils.x.y.z import foo; if x.y.z.foo is redirected, we may not have packages on disk for
         # the intermediate packages x.y.z, so we'll need to supply empty packages for those
         self._child_is_redirected = child_is_redirected
+        self._is_optional = is_optional
         self.found = False
         self.redirected = False
         self.fq_name_parts = fq_name_parts
@@ -661,6 +673,8 @@ class ModuleUtilLocatorBase:
         try:
             collection_metadata = _get_collection_metadata(self._collection_name)
         except ValueError as ve:  # collection not found or some other error related to collection load
+            if self._is_optional:
+                return False
             raise AnsibleError('error processing module_util {0} loading redirected collection {1}: {2}'
                                .format('.'.join(name_parts), self._collection_name, to_native(ve)))
 
@@ -819,8 +833,8 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
 
 
 class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
-    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False):
-        super(CollectionModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous, child_is_redirected)
+    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False, is_optional=False):
+        super(CollectionModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous, child_is_redirected, is_optional)
 
         if fq_name_parts[0] != 'ansible_collections':
             raise Exception('CollectionModuleUtilLocator can only locate from ansible_collections, got {0}'.format(fq_name_parts))
@@ -912,20 +926,19 @@ def recursive_finder(name, module_fqn, module_data, zf):
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
-    finder = ModuleDepFinder(module_fqn)
-    finder.visit(tree)
+    finder = ModuleDepFinder(module_fqn, tree)
 
     # the format of this set is a tuple of the module name and whether or not the import is ambiguous as a module name
     # or an attribute of a module (eg from x.y import z <-- is z a module or an attribute of x.y?)
-    modules_to_process = [ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules]
+    modules_to_process = [ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports) for m in finder.submodules]
 
     # HACK: basic is currently always required since module global init is currently tied up with AnsiballZ arg input
-    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False))
+    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False, is_optional=False))
 
     # we'll be adding new modules inline as we discover them, so just keep going til we've processed them all
     while modules_to_process:
         modules_to_process.sort()  # not strictly necessary, but nice to process things in predictable and repeatable order
-        py_module_name, is_ambiguous, child_is_redirected = modules_to_process.pop(0)
+        py_module_name, is_ambiguous, child_is_redirected, is_optional = modules_to_process.pop(0)
 
         if py_module_name in py_module_cache:
             # this is normal; we'll often see the same module imported many times, but we only need to process it once
@@ -935,7 +948,8 @@ def recursive_finder(name, module_fqn, module_data, zf):
             module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
                                                   mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
         elif py_module_name[0] == 'ansible_collections':
-            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, child_is_redirected=child_is_redirected)
+            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
+                                                      child_is_redirected=child_is_redirected, is_optional=is_optional)
         else:
             # FIXME: dot-joined result
             display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
@@ -944,6 +958,9 @@ def recursive_finder(name, module_fqn, module_data, zf):
 
         # Could not find the module.  Construct a helpful error message.
         if not module_info.found:
+            if is_optional:
+                # this was a best-effort optional import that we couldn't find, oh well, move along...
+                continue
             # FIXME: use dot-joined candidate names
             msg = 'Could not find imported module support code for {0}.  Looked for ({1})'.format(module_fqn, module_info.candidate_names_joined)
             raise AnsibleError(msg)
@@ -959,9 +976,9 @@ def recursive_finder(name, module_fqn, module_data, zf):
         except (SyntaxError, IndentationError) as e:
             raise AnsibleError("Unable to import %s due to %s" % (module_info.fq_name_parts, e.msg))
 
-        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), module_info.is_package)
-        finder.visit(tree)
-        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules if m not in py_module_cache)
+        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
+        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
+                                  for m in finder.submodules if m not in py_module_cache)
 
         # we've processed this item, add it to the output list
         py_module_cache[module_info.fq_name_parts] = (module_info.source_code, module_info.output_path)
@@ -972,7 +989,7 @@ def recursive_finder(name, module_fqn, module_data, zf):
             accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
             normalized_name = tuple(accumulated_pkg_name)  # extra machinations to get a hashable type (list is not)
             if normalized_name not in py_module_cache:
-                modules_to_process.append((normalized_name, False, module_info.redirected))
+                modules_to_process.append(ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=is_optional))
 
     for py_module_name in py_module_cache:
         py_module_file_name = py_module_cache[py_module_name][1]
