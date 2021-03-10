@@ -50,7 +50,7 @@ The two community releases are related - the release cycle follows this pattern:
 Release cycle for the Ansible community package
 -----------------------------------------------
 
-The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details. Between major versions we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins as well as bug fixes.
+The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes.
 
 Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired.
 
@@ -154,7 +154,7 @@ Ansible and ``ansible-core`` tag the first release candidate (RC1) which is usua
 
 If there are major problems with the first candidate, the team and the community fix them and tag a second release candidate (RC2). This second candidate lasts for a shorter duration than the first. If no problems have been reported for an RC2 after two business days, the second release candidate becomes the final release.
 
-If there are major problems in RC2, the cycle begins again with another release candidate and repeats until the core maintainers agree that all major problems have been fixed.
+If there are major problems in RC2, the cycle begins again with another release candidate and repeats until the maintainers agree that all major problems have been fixed.
 
 
 .. _development_and_stable_version_maintenance_workflow:
@@ -184,7 +184,7 @@ We generate changelogs based on fragments. When creating new features for existi
 For guidance on creating changelog fragments, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide.
 
 
-Deprecation Cycles
+Deprecation cycles
 ------------------
 
 Sometimes we remove a feature, normally in favor of a reimplementation that we hope does a better job. To do this we have a deprecation cycle. First we mark a feature as 'deprecated'. This is normally accompanied with warnings to the user as to why we deprecated it, what alternatives they should switch to and when (which version) we are scheduled to remove the feature permanently.
