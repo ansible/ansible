@@ -92,17 +92,11 @@ see the chart in :ref:`release_schedule` for the degrees to which current releas
 
 .. note::
 
-   Older, unmaintained versions of ``ansible-core`` can contain unfixed security vulnerabilities (*CVEs*). If you are using a release of ``ansible-core`` that is no longer maintained, we strongly encourage you to upgrade as soon as possible to benefit from the latest features and security fixes.
+   Older, unmaintained versions of ``ansible-core`` can contain unfixed security vulnerabilities (*CVEs*). If you are using a release of ``ansible-core`` that is no longer maintained, we strongly encourage you to upgrade as soon as possible to benefit from the latest features and security fixes. ``ansible-core`` maintenance continues for 3 releases.  Thus the latest release receives security and general bug fixes when it is first released, security and critical bug fixes when the next ``ansible-core`` version is released, and **only** security fixes once the follow on to that version is released.
 
 You can refer to the :ref:`core_porting_guides` for tips on updating your playbooks to run on newer versions of ``ansible-core``.
 
 You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guide` for details.
-
-.. note:: ``ansible-core`` maintenance continues for 3 releases.  Thus the latest release receives
-    security and general bug fixes when it is first released, security and critical bug fixes when
-    the next ``ansible-core`` version is released, and **only** security fixes once the follow on
-    to that version is released.
-
 
 .. _release_schedule:
 
