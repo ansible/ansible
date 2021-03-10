@@ -54,7 +54,7 @@ The Ansible community team typically releases two major versions of the communit
 
 Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired.
 
-.. note:
+.. note::
 
    Older, unmaintained versions of the Ansible community package might contain unfixed security vulnerabilities (*CVEs*). If you are using a release of the Ansible community package that is no longer maintained, we strongly encourage you to upgrade as soon as possible in order to benefit from the latest features and security fixes.
 
@@ -90,7 +90,7 @@ Release cycle for ansible-core
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
 see the chart in :ref:`release_schedule` for the degrees to which current releases are maintained.
 
-.. note:
+.. note::
 
    Older, unmaintained versions of ``ansible-core`` can contain unfixed security vulnerabilities (*CVEs*). If you are using a release of ``ansible-core`` that is no longer maintained, we strongly encourage you to upgrade as soon as possible to benefit from the latest features and security fixes.
 
