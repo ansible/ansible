@@ -199,7 +199,6 @@ def argument_spec_schema(for_collection):
     any_string_types = Any(*string_types)
     schema = {
         any_string_types: {
-            'attributes': Any(*argument_spec_types),
             'type': Any(is_callable, *argument_spec_types),
             'elements': Any(*argument_spec_types),
             'default': object,
@@ -506,7 +505,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         'options': Any(None, *list_dict_option_schema(for_collection)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
-        'attributes': Any(*argument_spec_types)
     }
 
     if for_collection:
@@ -525,7 +523,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         All(
             Schema(
                 doc_schema_dict,
-                extra=PREVENT_EXTRA
             ),
             partial(version_added, error_code='module-invalid-version-added', accept_historical=not for_collection),
         )
