@@ -632,7 +632,7 @@ class Base(FieldAttributeBase):
     _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
     _throttle = FieldAttribute(isa='int', default=0)
-    _timeout = FieldAttribute(isa='int', default=cliargs_deffered_get('task_timeout'))
+    _timeout = FieldAttribute(isa='int', default=cliargs_defferred_get('task_timeout'))
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
