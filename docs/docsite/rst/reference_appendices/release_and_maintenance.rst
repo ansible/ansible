@@ -206,8 +206,9 @@ Changelogs
 
 We generate changelogs based on fragments. When creating new features for existing modules and plugins or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
-For guidance on creating changelog fragments, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide.
+To add changelog fragments to Collections in the Ansible community package, we recommend the `antsibull-changelog utility <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_.
 
+To add changelog fragments for new features and bux fixes in ``ansible-core``, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide.
 
 Deprecation cycles
 ==================
