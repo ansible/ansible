@@ -79,8 +79,13 @@ class ActionModule(ActionBase):
                             self._display.warning('Ignoring "%s" as it is not used in "%s"' % (unused, module))
 
                 # get defaults for specific module
+                if module in self.BUILTIN_SVC_MGR_MODULES:
+                    redirect_list = [module]
+                else:
+                    context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
+                    redirect_list = context.redirect_list
                 new_module_args = get_action_args_with_defaults(
-                    module, new_module_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list
+                    module, new_module_args, self._task.module_defaults, self._templar, redirect_list
                 )
 
                 # collection prefix known internal modules to avoid collisions from collections search, while still allowing library/ overrides
