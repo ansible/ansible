@@ -335,7 +335,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, type='str', aliases=['host']),
-            key=dict(required=False, type='str'),
+            key=dict(required=False, type='str', no_log=False),
             path=dict(default="~/.ssh/known_hosts", type='path'),
             hash_host=dict(required=False, type='bool', default=False),
             state=dict(default='present', choices=['absent', 'present']),

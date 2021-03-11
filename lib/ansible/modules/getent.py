@@ -99,7 +99,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             database=dict(type='str', required=True),
-            key=dict(type='str'),
+            key=dict(type='str', no_log=False),
             service=dict(type='str'),
             split=dict(type='str'),
             fail_key=dict(type='bool', default=True),

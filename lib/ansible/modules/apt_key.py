@@ -363,7 +363,7 @@ def main():
             url=dict(type='str'),
             data=dict(type='str'),
             file=dict(type='path'),
-            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin'),
+            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin', no_log=False),
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),

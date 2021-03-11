@@ -116,6 +116,7 @@ Codes
   multiple-utils-per-requires                                  Imports              Error                  ``Ansible.ModuleUtils`` requirements do not support multiple modules per statement
   multiple-csharp-utils-per-requires                           Imports              Error                  Ansible C# util requirements do not support multiple utils per statement
   no-default-for-required-parameter                            Documentation        Error                  Option is marked as required but specifies a default. Arguments with a default should not be marked as required
+  no-log-needed                                                Parameters           Error                  Option name suggests that the option contains a secret value, while ``no_log`` is not specified for this option in the argument spec. If this is a false positive, explicitly set ``no_log=False``
   nonexistent-parameter-documented                             Documentation        Error                  Argument is listed in DOCUMENTATION.options, but not accepted by the module
   option-incorrect-version-added                               Documentation        Error                  ``version_added`` for new option is incorrect
   option-invalid-version-added                                 Documentation        Error                  ``version_added`` for option is not a valid version number
