@@ -12,7 +12,7 @@ Release schedule
 =================
 
 
-:2021-01-26: New Collections will be reviewed for inclusion in Ansible 4. Request to include new collection can be submitted to this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
+:2021-01-26: New Collections will be reviewed for inclusion in Ansible 4. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
 :2021-03-03: Ansible-4.0.0 alpha1 (biweekly ``ansible`` alphas.  These are timed to coincide with the start of the ``ansible-core-2.11`` pre-releases).
 :2021-03-16: Ansible-4.0.0 alpha2
 :2021-03-30: Ansible-4.0.0 alpha3
