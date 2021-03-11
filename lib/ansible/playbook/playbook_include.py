@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 import ansible.constants as C
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
@@ -130,7 +130,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         up with what we expect the proper attributes to be
         '''
 
-        ds = super(PlaybookInclude, self).preprocess_data(new_ds, allow_private=allow_private)
+        ds = super(PlaybookInclude, self).preprocess_data(ds, allow_private=allow_private)
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure
