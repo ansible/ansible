@@ -3,20 +3,12 @@
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
   name: Allow world-readable temporary files
-  deprecated:
-    why: moved to a per plugin approach that is more flexible
-    version: "2.14"
-    alternatives: mostly the same config will work, but now controlled from the plugin itself and not using the general constant.
   default: False
   description:
-    - This makes the temporary files created on the machine world-readable and will issue a warning instead of failing the task.
-    - It is useful when becoming an unprivileged user.
-  env: []
-  ini:
-  - {key: allow_world_readable_tmpfiles, section: defaults}
+    - This setting has been moved to the individual shell plugins as a plugin option :ref:`shell_plugins`.
+    - The existing configuration settings are still accepted with the shell plugin adding additional options, like variables.
+    - This message will be removed in 2.14.
   type: boolean
-  yaml: {key: defaults.allow_world_readable_tmpfiles}
-  version_added: "2.1"
 ANSIBLE_CONNECTION_PATH:
   name: Path of ansible-connection script
   default: null
