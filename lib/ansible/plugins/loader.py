@@ -603,7 +603,12 @@ class PluginLoader:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
                         plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
 
-                        if candidate_name != plugin_load_context.original_name and candidate_name not in plugin_load_context.redirect_list:
+                        # Pending redirects are added to the redirect_list at the beginning of _resolve_plugin_step.
+                        # Once redirects are resolved, ensure the final FQCN is added here.
+                        # e.g. 'ns.coll.module' is included rather than only 'module' if a collections list is provided:
+                        # - module:
+                        #   collections: ['ns.coll']
+                        if plugin_load_context.resolved and candidate_name not in plugin_load_context.redirect_list:
                             plugin_load_context.redirect_list.append(candidate_name)
 
                     if plugin_load_context.resolved or plugin_load_context.pending_redirect:  # if we got an answer or need to chase down a redirect, return
