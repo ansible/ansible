@@ -387,7 +387,7 @@ class StrategyBase:
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
-                    self._tqm.send_callback('v2_runner_on_start', host, task)
+                    self._tqm.send_callback('v2_runner_on_start', host, task.copy(private=False))
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
@@ -583,7 +583,7 @@ class StrategyBase:
                     self._tqm._stats.increment('ignored', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
-                self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
+                self._tqm.send_callback('v2_runner_on_failed', tr_clean, ignore_errors=ignore_errors)
             elif task_result.is_unreachable():
                 ignore_unreachable = original_task.ignore_unreachable
                 if not ignore_unreachable:
@@ -593,10 +593,10 @@ class StrategyBase:
                     self._tqm._stats.increment('skipped', original_host.name)
                     task_result._result['skip_reason'] = 'Host %s is unreachable' % original_host.name
                 self._tqm._stats.increment('dark', original_host.name)
-                self._tqm.send_callback('v2_runner_on_unreachable', task_result)
+                self._tqm.send_callback('v2_runner_on_unreachable', tr_clean)
             elif task_result.is_skipped():
                 self._tqm._stats.increment('skipped', original_host.name)
-                self._tqm.send_callback('v2_runner_on_skipped', task_result)
+                self._tqm.send_callback('v2_runner_on_skipped', tr_clean)
             else:
                 role_ran = True
 
@@ -624,7 +624,7 @@ class StrategyBase:
                                 if target_handler is not None:
                                     found = True
                                     if target_handler.notify_host(original_host):
-                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler.copy(private=False), original_host)
 
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
@@ -641,7 +641,7 @@ class StrategyBase:
                                             found = True
 
                                         if listening_handler.notify_host(original_host):
-                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
+                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler.copy(private=False), original_host)
 
                                 # and if none were found, then we raise an error
                                 if not found:
@@ -711,7 +711,7 @@ class StrategyBase:
 
                 if 'diff' in task_result._result:
                     if self._diff or getattr(original_task, 'diff', False):
-                        self._tqm.send_callback('v2_on_file_diff', task_result)
+                        self._tqm.send_callback('v2_on_file_diff', tr_clean)
 
                 if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
@@ -719,7 +719,7 @@ class StrategyBase:
                         self._tqm._stats.increment('changed', original_host.name)
 
                 # finally, send the ok for this task
-                self._tqm.send_callback('v2_runner_on_ok', task_result)
+                self._tqm.send_callback('v2_runner_on_ok', tr_clean)
 
             # register final results
             if original_task.register:
@@ -966,7 +966,7 @@ class StrategyBase:
                 iterator.mark_host_failed(host)
                 self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
-                self._tqm.send_callback('v2_runner_on_failed', tr)
+                self._tqm.send_callback('v2_runner_on_failed', tr.clean_copy())
             return []
 
         # finally, send the callback and return the list of blocks loaded
@@ -1008,7 +1008,7 @@ class StrategyBase:
         notified_hosts += failed_hosts
 
         if len(notified_hosts) > 0:
-            self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+            self._tqm.send_callback('v2_playbook_on_handler_task_start', handler.copy(private=False))
 
         bypass_host_loop = False
         try:
@@ -1135,7 +1135,7 @@ class StrategyBase:
         skipped = False
         msg = ''
         skip_reason = '%s conditional evaluated to False' % meta_action
-        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+        self._tqm.send_callback('v2_playbook_on_task_start', task.copy(private=False), is_conditional=False)
 
         # These don't support "when" conditionals
         if meta_action in ('noop', 'flush_handlers', 'refresh_inventory', 'reset_connection') and task.when:
@@ -1251,7 +1251,7 @@ class StrategyBase:
 
         res = TaskResult(target_host, task, result)
         if skipped:
-            self._tqm.send_callback('v2_runner_on_skipped', res)
+            self._tqm.send_callback('v2_runner_on_skipped', res.clean_copy())
         return [res]
 
     def get_hosts_left(self, iterator):

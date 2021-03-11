@@ -180,7 +180,7 @@ class PlaybookExecutor:
                         # we are actually running plays
                         batches = self._get_serialized_batches(play)
                         if len(batches) == 0:
-                            self._tqm.send_callback('v2_playbook_on_play_start', play)
+                            self._tqm.send_callback('v2_playbook_on_play_start', play.copy(private=False))
                             self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                         for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch

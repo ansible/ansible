@@ -306,7 +306,7 @@ class StrategyModule(StrategyBase):
                                 # we don't care if it just shows the raw name
                                 display.debug("templating failed for some reason")
                             display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                            self._tqm.send_callback('v2_playbook_on_task_start', task.copy(private=False), is_conditional=False)
                             task.name = saved_name
                             callback_sent = True
                             display.debug("sending task start callback")

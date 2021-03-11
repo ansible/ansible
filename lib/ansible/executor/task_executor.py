@@ -802,7 +802,7 @@ class TaskExecutor:
                         self._host.name,
                         async_task,  # We send the full task here, because the controller knows nothing about it, the TE created it
                         async_result,
-                        task_fields=self._task.dump_attrs(),
+                        task_fields=self._task.dump_attrs(private=False),
                     ),
                 )
 

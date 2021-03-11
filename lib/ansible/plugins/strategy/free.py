@@ -201,7 +201,7 @@ class StrategyModule(StrategyBase):
                                 if task.any_errors_fatal:
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
                                                     "as tasks are executed independently on each host")
-                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                                self._tqm.send_callback('v2_playbook_on_task_start', task.copy(private=False), is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
                                 # each task is counted as a worker being busy
                                 workers_free -= 1

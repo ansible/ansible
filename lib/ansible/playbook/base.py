@@ -320,7 +320,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 self._attributes[name] = getattr(self, name)
             self._squashed = True
 
-    def copy(self):
+    def copy(self, private=True):
         '''
         Create a copy of this object and return it.
         '''
@@ -328,19 +328,21 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         new_me = self.__class__()
 
         for name in self._valid_attrs.keys():
-            if name in self._alias_attrs:
+            if name in self._alias_attrs or not private and self._attributes[name].private:
                 continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
             new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
 
-        new_me._loader = self._loader
-        new_me._variable_manager = self._variable_manager
+        if private:
+            new_me._loader = self._loader
+            new_me._variable_manager = self._variable_manager
+
         new_me._validated = self._validated
         new_me._finalized = self._finalized
         new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
-        if hasattr(self, '_ds'):
+        if hasattr(self, '_ds') and private:
             new_me._ds = self._ds
 
         return new_me
@@ -528,13 +530,15 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return [i for i, _ in itertools.groupby(combined) if i is not None]
 
-    def dump_attrs(self):
+    def dump_attrs(self, private=True):
         '''
         Dumps all attributes to a dictionary
         '''
         attrs = {}
         for (name, attribute) in iteritems(self._valid_attrs):
             attr = getattr(self, name)
+            if not private and attr.private:
+                continue
             if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
             else:
