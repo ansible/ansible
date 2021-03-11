@@ -337,8 +337,8 @@ class Play(Base, Taggable, CollectionSearch):
             setattr(self, 'roles', roles)
             del data['roles']
 
-    def copy(self):
-        new_me = super(Play, self).copy()
+    def copy(self, private=True):
+        new_me = super(Play, self).copy(private=private)
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path

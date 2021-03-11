@@ -401,8 +401,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             all_vars.update(self.vars)
         return all_vars
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
-        new_me = super(Task, self).copy()
+    def copy(self, private=True, exclude_parent=False, exclude_tasks=False):
+        new_me = super(Task, self).copy(private=private)
 
         # if the task has an associated list of candidate names, copy it to the new object too
         new_me._ansible_internal_redirect_list = self._ansible_internal_redirect_list[:]

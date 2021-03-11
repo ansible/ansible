@@ -182,7 +182,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         else:
             return self._dep_chain[:]
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
+    def copy(self, private=True, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
@@ -204,7 +204,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                 new_task_list.append(new_task)
             return new_task_list
 
-        new_me = super(Block, self).copy()
+        new_me = super(Block, self).copy(private=private)
         new_me._play = self._play
         new_me._use_handlers = self._use_handlers
 

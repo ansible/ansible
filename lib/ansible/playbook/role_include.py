@@ -157,9 +157,9 @@ class IncludeRole(TaskInclude):
 
         return ir
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
+    def copy(self, private=True, exclude_parent=False, exclude_tasks=False):
 
-        new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
+        new_me = super(IncludeRole, self).copy(private=private, exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
