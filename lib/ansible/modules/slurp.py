@@ -72,7 +72,7 @@ encoding:
 source:
     description: Actual path of file slurped
     returned: success
-    type: path
+    type: str
     sample: "/var/run/sshd.pid"
 '''
 
