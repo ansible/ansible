@@ -26,6 +26,10 @@ For your control node (the machine that runs Ansible), you can use any machine w
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_.
 
+.. warning::
+
+    Please note that some plugins that run on the control node have additional requirements. These requirements should be listed in the plugin documentation.
+
 When choosing a control node, remember that any management system benefits from being run near the machines being managed. If you are using Ansible to manage machines in a cloud, consider using a machine inside that cloud as your control node. In most cases Ansible will perform better from a machine on the cloud than from a machine on the open Internet.
 
 .. warning::
@@ -42,7 +46,7 @@ Although you do not need a daemon on your managed nodes, you do need a way for A
 
 .. warning::
 
-    Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine (the managed node) and should be listed in the module specific docs.
+    Please note that some modules have additional requirements that need to be satisfied on the 'target' machine (the managed node). These requirements should be listed in the module documentation.
 
 .. note::
 
