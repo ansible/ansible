@@ -1,3 +1,5 @@
+.. _ansible_4_roadmap:
+
 ===================
 Ansible project 4.0
 ===================
@@ -43,6 +45,11 @@ Ansible minor releases
 =======================
 
 Ansible 4.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-core-2.11.x.  Ansible 4.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-4.0.0 ships with community-crypto-2.1.0; Ansible-4.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0).
+
+
+.. note::
+
+    Minor releases will stop when Ansible-5 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
 For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
