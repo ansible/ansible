@@ -56,7 +56,7 @@ options:
               "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
         type: bool
         default: 'no'
-        version_added: "2.11"
+        version_added: "2.12"
     ssh_opts:
         description:
             - Creates a wrapper script and exports the path as GIT_SSH
