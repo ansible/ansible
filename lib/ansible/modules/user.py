@@ -257,7 +257,7 @@ options:
             - Currently supported on Linux.
             - Does not work on Fedora versions >= 32.
         type: str
-        version_added: "2.11"
+        version_added: "2.12"
 
 notes:
   - There are specific requirements per platform on user management utilities. However
