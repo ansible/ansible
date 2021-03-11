@@ -22,7 +22,7 @@ Before you install Ansible, review the requirements for a control node. Before y
 Control node requirements
 -------------------------
 
-For your control node (the machine that runs Ansible), you can use any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Ansible 2.11 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. Ansible 2.12 will require Python 3.8 or newer to function on the control node. Starting with Ansible 2.11, the project will only be packaged for Python 3.8 and newer.
+For your control node (the machine that runs Ansible), you can use any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. ansible-core 2.11 and Ansible 4.0.0 will make Python 3.8 a soft dependency for the control node, but will function with the aforementioned requirements. ansible-core 2.12 and Ansible 5.0.0 will require Python 3.8 or newer to function on the control node. Starting with ansible-core 2.11, the project will only be packaged for Python 3.8 and newer.
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_.
 
@@ -76,7 +76,7 @@ You can choose any of the following ways to install the Ansible community packag
 Installing `ansible-core`
 -------------------------
 
-Ansible also distributes a minimalist object called ``ansible-core`` (or ``ansible-base in version 2.10). It contains the Ansible language, runtime, and a short list of core modules and other plugins. You can build functionality on top of ``ansible-core`` by installing collections from Galaxy, Automation Hub, or any other source.
+Ansible also distributes a minimalist object called ``ansible-core`` (or ``ansible-base`` in version 2.10). It contains the Ansible language, runtime, and a short list of core modules and other plugins. You can build functionality on top of ``ansible-core`` by installing collections from Galaxy, Automation Hub, or any other source.
 
 You can choose any of the following ways to install ``ansible-core``:
 
