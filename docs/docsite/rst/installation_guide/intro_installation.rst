@@ -215,13 +215,13 @@ On CentOS:
 
 RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
 
-To enable the Ansible repository for RHEL 8, run the following command:
+To enable the Ansible Engine repository for RHEL 8, run the following command:
 
 .. code-block:: bash
 
     $ sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
 
-To enable the Ansible repository for RHEL 7, run the following command:
+To enable the Ansible Engine repository for RHEL 7, run the following command:
 
 .. code-block:: bash
 
