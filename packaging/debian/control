@@ -8,7 +8,7 @@ Homepage: https://github.com/ansible/ansible/
 
 Package: ansible-core
 Architecture: all
-Depends: python3-jinja2, python3-yaml, python3-paramiko, python3-cryptography, sshpass, ${misc:Depends}, ${python:Depends}
+Depends: python3-jinja2, python3-yaml, python3-paramiko, python3-cryptography, python3-packaging, sshpass, ${misc:Depends}, ${python:Depends}
 Description: Ansible IT Automation
  Ansible is a radically simple model-driven configuration management,
  multi-node deployment, and remote task execution system. Ansible works
