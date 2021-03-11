@@ -39,8 +39,13 @@ Release Schedule
 
 Ansible-2.10.x patch releases will occur roughly every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-base-2.10.x.  Ansible-2.10.x patch releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed (example: Ansible-2.10 ships with community-crypto-1.1.0; ansible-2.10.1 may ship with community-crypto-1.2.0 but would not ship with community-crypto-2.0.0).
 
-Breaking changes may be introduced in ansible-2.11.0 although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly.
 
-The rough schedule for Ansible-2.11 and beyond (such as how many months we'll aim for between versions) is still to be discussed and likely will be made after 2.10.0 has been released.
+.. note::
+
+    Minor releases will stop when :ref:`Ansible-3 <ansible_3_roadmap>` is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
+
+
+Breaking changes may be introduced in ansible-3.0 although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly.
+
 
 For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
