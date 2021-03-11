@@ -13,6 +13,19 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
+# Connection and fact module pairs in 2.8's CONNECTION_FACTS_MODULES
+# Corresponding fact modules for these connections should continue
+# to work with unqualified names in module defaults
+LEGACY_FACT_CONNECTIONS = {
+    'eos': 'eos_facts',
+    'frr': 'frr_facts',
+    'ios': 'ios_facts',
+    'iosxr': 'iosxr_facts',
+    'junos': 'junos_facts',
+    'nxos': 'nxos_facts',
+    'vyos': 'vyos_facts',
+}
+
 
 class ActionModule(ActionBase):
 
@@ -41,7 +54,16 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list)
+        if fact_module in self._legacy_module_defaults:
+            redirect_list = [self._legacy_module_defaults[fact_module]]
+        else:
+            redirect_list = self._shared_loader_obj.module_loader.find_plugin_with_context(
+                fact_module, collection_list=self._task.collections
+            ).redirect_list
+
+        mod_args = get_action_args_with_defaults(
+            fact_module, mod_args, self._task.module_defaults, self._templar, redirect_list
+        )
 
         return mod_args
 
@@ -58,16 +80,29 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
+        self._legacy_module_defaults = {}  # FQCN, legacy name pairs
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
+        modules, default_source = C.config.get_config_value_and_origin('FACTS_MODULES', variables=task_vars)
+
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
-            connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
+            connection_map, source = C.config.get_config_value_and_origin('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-            modules.extend([connection_map.get(network_os or self._connection._load_name, 'ansible.legacy.setup')])
+
+            connection_module = connection_map.get(network_os or self._connection._load_name)
+            if connection_module:
+                if source == 'default' and (network_os or self._connection._load_name) in LEGACY_FACT_CONNECTIONS:
+                    legacy_module = LEGACY_FACT_CONNECTIONS.get(network_os or self._connection._load_name)
+                    self._legacy_module_defaults[connection_module] = legacy_module
+            else:
+                if default_source == 'default':
+                    self._legacy_module_defaults['ansible.legacy.setup'] = 'setup'
+                connection_module = 'ansible.legacy.setup'
+
+            modules.append(connection_module)
             modules.pop(modules.index('smart'))
 
         failed = {}
