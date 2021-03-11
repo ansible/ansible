@@ -58,7 +58,23 @@ EXAMPLES = r'''
 # 2179
 '''
 
-RETURN = r'''#'''
+RETURN = r'''
+content:
+    description: Encoded file content
+    returned: success
+    type: str
+    sample: "MjE3OQo="
+encoding:
+    description: Type of encoding used for file
+    returned: success
+    type: str
+    sample: "base64"
+source:
+    description: Actual path of file slurped
+    returned: success
+    type: str
+    sample: "/var/run/sshd.pid"
+'''
 
 import base64
 import os
