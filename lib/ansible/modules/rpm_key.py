@@ -233,7 +233,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            key=dict(type='str', required=True),
+            key=dict(type='str', required=True, no_log=False),
             fingerprint=dict(type='str'),
             validate_certs=dict(type='bool', default=True),
         ),
