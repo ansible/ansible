@@ -47,8 +47,10 @@ class DateTimeFactCollector(BaseFactCollector):
         date_time_facts['minute'] = now.strftime('%M')
         date_time_facts['second'] = now.strftime('%S')
         date_time_facts['epoch'] = now.strftime('%s')
+        # epoch returns float or string in some non-linux environments
         if date_time_facts['epoch'] == '' or date_time_facts['epoch'][0] == '%':
             date_time_facts['epoch'] = str(int(epoch_ts))
+        # epoch_int always returns integer format of epoch
         date_time_facts['epoch_int'] = str(int(now.strftime('%s')))
         if date_time_facts['epoch_int'] == '' or date_time_facts['epoch_int'][0] == '%':
             date_time_facts['epoch_int'] = str(int(epoch_ts))
