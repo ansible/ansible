@@ -521,15 +521,16 @@ class PathMapper:
                     }
 
         if is_subdir(path, data_context().content.plugin_paths['connection']):
+            units_dir = os.path.join(data_context().content.unit_path, 'plugins', 'connection')
             if name == '__init__':
                 return {
                     'integration': self.integration_all_target,
                     'windows-integration': self.integration_all_target,
                     'network-integration': self.integration_all_target,
-                    'units': 'test/units/plugins/connection/',
+                    'units': units_dir,
                 }
 
-            units_path = 'test/units/plugins/connection/test_%s.py' % name
+            units_path = os.path.join(units_dir, 'test_%s.py' % name)
 
             if units_path not in self.units_paths:
                 units_path = None
@@ -605,7 +606,8 @@ class PathMapper:
                 posix_integration_fallback = None
 
             target = self.integration_targets_by_name.get('inventory_%s' % name)
-            units_path = 'test/units/plugins/inventory/test_%s.py' % name
+            units_dir = os.path.join(data_context().content.unit_path, 'plugins', 'inventory')
+            units_path = os.path.join(units_dir, 'test_%s.py' % name)
 
             if units_path not in self.units_paths:
                 units_path = None
