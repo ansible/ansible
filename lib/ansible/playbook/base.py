@@ -545,6 +545,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 else:
                     setattr(self, attr, value)
 
+        self._finalized = True
+        self._squashed = True
+
     def serialize(self):
         '''
         Serializes the object derived from the base object into
