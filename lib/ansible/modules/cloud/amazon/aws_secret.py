@@ -327,7 +327,7 @@ def main():
             'description': dict(default=""),
             'kms_key_id': dict(),
             'secret_type': dict(choices=['binary', 'string'], default="string"),
-            'secret': dict(default=""),
+            'secret': dict(default="", no_log=True),
             'tags': dict(type='dict', default={}),
             'rotation_lambda': dict(),
             'rotation_interval': dict(type='int', default=30),
