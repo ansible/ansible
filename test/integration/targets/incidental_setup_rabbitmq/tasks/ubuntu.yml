@@ -37,7 +37,7 @@
 
 - name: Install RabbitMQ Server
   apt:
-    deb: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-server_3.7.14-1_all.deb
+    deb: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_rabbitmq/rabbitmq-server_3.7.14-1_all.deb
 
 - name: Install RabbitMQ TLS dependencies
   apt:
