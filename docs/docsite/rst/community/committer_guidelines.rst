@@ -25,7 +25,7 @@ Any other new features and changes to high level design should go through the pr
 Features, high-level design, and roadmap of Ansible collections
 ===============================================================
 
-Collections maintainers define features, high-level design, and roadmap of the collections themselves and are responsible for merging new fearures to `Ansible collections <https://github.com/ansible-collections/>`_ based on proposals discussed with their communities.
+Collections maintainers define features, high-level design, and roadmap of the collections themselves and are responsible for merging new features to `Ansible collections <https://github.com/ansible-collections/>`_ based on proposals discussed with their communities.
 
 Our workflow on GitHub
 ======================
