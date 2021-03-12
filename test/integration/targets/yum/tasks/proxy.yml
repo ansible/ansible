@@ -2,7 +2,7 @@
   block:
     - name: install tinyproxy
       yum:
-        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm'
+        name: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm'
         state: installed
 
     # systemd doesn't play nice with this in a container for some reason
@@ -25,7 +25,7 @@
 
     - name: install ninvaders with unauthenticated proxy
       yum:
-        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        name: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
         state: installed
       register: yum_proxy_result
 
@@ -84,7 +84,7 @@
 
     - name: install ninvaders with authenticated proxy
       yum:
-        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        name: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
         state: installed
       register: yum_proxy_result
 
@@ -134,7 +134,7 @@
 
     - name: install ninvaders with proxy, proxy_username, and proxy_password config in yum.conf
       yum:
-        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        name: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
         state: installed
       register: yum_proxy_result
 

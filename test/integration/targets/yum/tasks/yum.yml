@@ -532,7 +532,7 @@
 
 - name: try to install from non existing url
   yum:
-    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/non-existing-1.0.0.fc26.noarch.rpm
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: yum_result
   ignore_errors: yes
@@ -580,7 +580,7 @@
 
 - name: try to install uncompatible arch rpm on non-ppc64le, should fail
   yum:
-    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/banner-1.3.4-3.el7.ppc64le.rpm
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/banner-1.3.4-3.el7.ppc64le.rpm
     state: present
   register: yum_result
   ignore_errors: True
@@ -597,7 +597,7 @@
 
 - name: try to install uncompatible arch rpm on ppc64le, should fail
   yum:
-    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm
     state: present
   register: yum_result
   ignore_errors: True
