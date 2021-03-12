@@ -14,3 +14,4 @@
             that:
               - ansible_failed_task.name == "Fail"
               - ansible_failed_task.action == "fail"
+              - ansible_failed_task.parent is not defined
