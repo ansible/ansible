@@ -1,4 +1,3 @@
 bugfixes:
 - "Setup virtualization_facts - add RHV and oVirt type (https://github.com/ansible/ansible/pull/72876)."
-- "This change will fully work from the 4.4.6 oVirt engine, for lower versions, there was a change
-  between cluster versions (https://gerrit.ovirt.org/#/c/ovirt-engine/+/113781/)."
+- "This change will fully work for VMs in clusters at cluster level 4.4 or newer."
