@@ -58,7 +58,7 @@ Individuals with direct commit access are entrusted with powers that allow them 
   - Merge your own pull requests. Someone else should have a chance to review and approve the pull request merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes.
   - Forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most.
   - Drag your community team members down. Discuss the technical merits of any pull requests you review. Avoid negativity and personal comments. For more guidance on being a good community member, read our :ref:`code_of_conduct`.
-  - Forget about the maintenance burden. Some things are really cool to have, but they might not be worth shoehorning in if the maintenance burden is too great.
+  - Forget about the maintenance burden. High-maintenance features may not be worth adding.
   - Break playbooks. Always keep backwards compatibility in mind.
   - Forget to keep it simple. Complexity breeds all kinds of problems.
 
