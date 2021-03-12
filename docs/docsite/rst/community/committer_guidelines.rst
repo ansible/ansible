@@ -67,7 +67,7 @@ Individuals with direct commit access are entrusted with powers that allow them 
   - Squash, avoid merges whenever possible, use GitHub's squash commits or cherry pick if needed (bisect thanks you).
   - Be active. Committers who have no activity on the project (through merges, triage, commits, and so on) will have their permissions suspended.
   - Consider backwards compatibility (goes back to "do not break existing playbooks").
-  - Write `tests <https://docs.ansible.com/ansible/latest/dev_guide/testing.html>`_ and be sure that other's pull requests you are reviewing are covered well. Pull requests with tests are looked at with more priority than pull requests without tests that should have them included. While not all changes require tests, be sure to add them for new features, bug fixes, and functionality changes.
+  - Write  :ref:`tests<developing_testing>` and be sure that other's pull requests you are reviewing are covered well. Pull requests with tests are looked at with more priority than pull requests without tests that should have them included. While not all changes require tests, be sure to add them for new features, bug fixes, and functionality changes.
   - Discuss with other committers, specially when you are unsure of something.
   - Document! If your pull request is a new feature or a change to behavior, make sure you have updated all associated documentation or have notified the right people to do so. It also helps to add the version of ``ansible-core`` or ``collection`` against which this documentation is compatible (to avoid confusion between stable and devel docs, for backwards compatibility, and so on).
   - Consider scope, sometimes a fix can be generalized.
