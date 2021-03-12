@@ -37,6 +37,7 @@ from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
 
 __all__ = ['Role', 'hash_params']
@@ -97,8 +98,8 @@ def hash_params(params):
 
 class Role(Base, Conditional, Taggable, CollectionSearch):
 
-    _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool')
+    delegate_to = FieldAttribute(isa='string')
+    delegate_facts = FieldAttribute(isa='bool')
 
     def __init__(self, play=None, from_files=None, from_include=False, validate=True):
         self._role_name = None
@@ -198,15 +199,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             self.add_parent(parent_role)
 
         # copy over all field attributes from the RoleInclude
-        # update self._attributes directly, to avoid squashing
-        for (attr_name, dump) in self._valid_attrs.items():
+        # update self.__dict__ directly, to avoid squashing
+        for attr_name in self.fattributes().keys():
             if attr_name in ('when', 'tags'):
-                self._attributes[attr_name] = self._extend_value(
-                    self._attributes[attr_name],
-                    role_include._attributes[attr_name],
+                self.__dict__[attr_name] = self._extend_value(
+                    self.__dict__.get(attr_name, Sentinel),
+                    role_include.__dict__.get(attr_name, Sentinel)
                 )
             else:
-                self._attributes[attr_name] = role_include._attributes[attr_name]
+                self.__dict__[attr_name] = role_include.__dict__.get(attr_name, Sentinel)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)

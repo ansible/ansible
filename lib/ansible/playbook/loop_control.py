@@ -25,12 +25,12 @@ from ansible.playbook.base import FieldAttributeBase
 
 class LoopControl(FieldAttributeBase):
 
-    _loop_var = FieldAttribute(isa='str', default='item')
-    _index_var = FieldAttribute(isa='str')
-    _label = FieldAttribute(isa='str')
-    _pause = FieldAttribute(isa='float', default=0)
-    _extended = FieldAttribute(isa='bool')
-    _extended_allitems = FieldAttribute(isa='bool', default=True)
+    loop_var = FieldAttribute(isa='str', default='item')
+    index_var = FieldAttribute(isa='str')
+    label = FieldAttribute(isa='str')
+    pause = FieldAttribute(isa='float', default=0)
+    extended = FieldAttribute(isa='bool')
+    extended_allitems = FieldAttribute(isa='bool', default=True)
 
     def __init__(self):
         super(LoopControl, self).__init__()

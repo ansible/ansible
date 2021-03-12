@@ -42,11 +42,11 @@ def get_reserved_names(include_private=True):
         aobj = aclass()
 
         # build ordered list to loop over and dict with attributes
-        for attribute in aobj.__dict__['_attributes']:
-            if 'private' in attribute:
-                private.add(attribute)
+        for name in aobj.fattributes():
+            if 'private' in name:
+                private.add(name)
             else:
-                public.add(attribute)
+                public.add(name)
 
     # local_action is implicit with action
     if 'action' in public:
