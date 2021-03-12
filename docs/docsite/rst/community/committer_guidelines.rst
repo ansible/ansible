@@ -14,7 +14,7 @@ That said, use the trust wisely.
 
 If you abuse the trust and break components and builds, and so on, the trust level falls and you may be asked not to commit or you may lose your commit privileges.
 
-Features, high-level design, and roadmap of Ansible-core
+Features, high-level design, and roadmap of ansible-core
 ========================================================
 
 As a core team member, you are an integral part of the team that develops the :ref:`roadmap <roadmaps>`. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, and so on, for various releases. Red Hat, the company, and the Ansible team must get these changes completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it affects a lot of other parts within Ansible.
