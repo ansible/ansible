@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-test - ensure unit test paths for connection and inventory plugins are correctly identified for collections (https://github.com/ansible/ansible/issues/73876).
