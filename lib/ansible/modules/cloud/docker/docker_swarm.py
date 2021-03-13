@@ -92,6 +92,8 @@ options:
     description:
       - Swarm token used to join a swarm cluster.
       - Used with I(state=join).
+      - If this value is specified, the corresponding value in the return values will be censored by Ansible.
+        This is a side-effect of this value not being logged.
     type: str
   remote_addrs:
     description:
@@ -243,12 +245,20 @@ swarm_facts:
           type: dict
           contains:
               Worker:
-                  description: Token to create a new *worker* node
+                  description:
+                    - Token to join the cluster as a new *worker* node.
+                    - "B(Note:) if this value has been specified as I(join_token), the value here will not
+                       be the token, but C(VALUE_SPECIFIED_IN_NO_LOG_PARAMETER). If you pass I(join_token),
+                       make sure your playbook/role does not depend on this return value!"
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
               Manager:
-                  description: Token to create a new *manager* node
+                  description:
+                    - Token to join the cluster as a new *manager* node.
+                    - "B(Note:) if this value has been specified as I(join_token), the value here will not
+                       be the token, but C(VALUE_SPECIFIED_IN_NO_LOG_PARAMETER). If you pass I(join_token),
+                       make sure your playbook/role does not depend on this return value!"
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
@@ -610,7 +620,7 @@ def main():
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list', elements='str'),
-        join_token=dict(type='str'),
+        join_token=dict(type='str', no_log=True),
         snapshot_interval=dict(type='int'),
         task_history_retention_limit=dict(type='int'),
         keep_old_snapshots=dict(type='int'),
