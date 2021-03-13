@@ -97,12 +97,12 @@ LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
 
 def is_potential_secret_option(option_name):
-    if not NO_LOG_REGEX.match(option_name):
+    if not NO_LOG_REGEX.search(option_name):
         return False
-    # If this is a count, type, algorithm, timeout, or name, it is probably not a secret
+    # If this is a count, type, algorithm, timeout, filename, or name, it is probably not a secret
     if option_name.endswith((
             '_count', '_type', '_alg', '_algorithm', '_timeout', '_name', '_comment',
-            '_bits', '_id', '_identifier', '_period',
+            '_bits', '_id', '_identifier', '_period', '_file', '_filename',
     )):
         return False
     # 'key' also matches 'publickey', which is generally not secret
