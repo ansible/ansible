@@ -132,7 +132,7 @@ class NetAppCDOTUser(object):
                                        choices=['community', 'password',
                                                 'publickey', 'domain',
                                                 'nsswitch', 'usm']),
-            set_password=dict(required=False, type='str', default=None),
+            set_password=dict(required=False, type='str', default=None, no_log=True),
             role_name=dict(required=False, type='str'),
 
             vserver=dict(required=True, type='str'),
