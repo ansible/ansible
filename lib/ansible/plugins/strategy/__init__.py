@@ -156,7 +156,7 @@ def debug_closure(func):
                     self._tqm._stats.decrement('ok', host.name)
 
                     # redo
-                    self._queue_task(host, task, task_vars, play_context)
+                    results += self._queue_task(host, task, task_vars, play_context, iterator)
 
                     _processed_results.extend(debug_closure(func)(self, iterator, one_pass))
                     break
@@ -321,11 +321,12 @@ class StrategyBase:
         vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
         vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
 
-    def _queue_task(self, host, task, task_vars, play_context):
+    def _queue_task(self, host, task, task_vars, play_context, iterator):
         ''' handles queueing the task up to be sent to a worker '''
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
+        results = []
         # Add a write lock for tasks.
         # Maybe this should be added somewhere further up the call stack but
         # this is the earliest in the code where we have task (1) extracted
@@ -395,6 +396,7 @@ class StrategyBase:
                 if queued:
                     break
                 elif self._cur_worker == starting_worker:
+                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers))))
                     time.sleep(0.0001)
 
             if isinstance(task, Handler):
@@ -406,6 +408,7 @@ class StrategyBase:
             display.debug("got an error while queuing: %s" % e)
             return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
+        return results
 
     def get_task_hosts(self, iterator, task_host, task):
         if task.run_once:
@@ -1033,13 +1036,13 @@ class StrategyBase:
                     handler.name = templar.template(handler.name)
                     handler.cached_name = True
 
-                self._queue_task(host, handler, task_vars, play_context)
+                host_results += self._queue_task(host, handler, task_vars, play_context, iterator)
 
                 if templar.template(handler.run_once) or bypass_host_loop:
                     break
 
         # collect the results from the handler run
-        host_results = self._wait_on_handler_results(iterator, handler, notified_hosts)
+        host_results += self._wait_on_handler_results(iterator, handler, notified_hosts)
 
         included_files = IncludedFile.process_include_results(
             host_results,

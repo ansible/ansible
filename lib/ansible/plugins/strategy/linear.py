@@ -312,7 +312,7 @@ class StrategyModule(StrategyBase):
                             display.debug("sending task start callback")
 
                         self._blocked_hosts[host.get_name()] = True
-                        self._queue_task(host, task, task_vars, play_context)
+                        results += self._queue_task(host, task, task_vars, play_context, iterator)
                         del task_vars
 
                     # if we're bypassing the host loop, break out now
