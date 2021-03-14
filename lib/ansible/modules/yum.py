@@ -1657,6 +1657,8 @@ class YumModule(YumDnf):
         if self.list:
             if not repoquerybin:
                 self.module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
+            if self.security:
+                self.yum_basecmd.append('--security')
             results = {'results': self.list_stuff(repoquerybin, self.list)}
         else:
             # If rhn-plugin is installed and no rhn-certificate is available on
