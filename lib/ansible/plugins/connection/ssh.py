@@ -322,6 +322,15 @@ DOCUMENTATION = '''
         cli:
           - name: timeout
         type: integer
+      pkcs11_provider:
+        version_added: '2.7'
+        default: ""
+        description:
+          - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
+          - Requires sshpass version 1.06+, sshpass must support the -P option
+        env: [{name: ANSIBLE_PKCS11_PROVIDER}]
+        ini:
+          - {key: pkcs11_provider, section: ssh_connection}
 '''
 
 import errno
@@ -622,11 +631,18 @@ class Connection(ConnectionBase):
 
         # If we want to use password authentication, we have to set up a pipe to
         # write the password to sshpass.
-
-        if conn_password:
+        pkcs11_provider = self.get_option("pkcs11_provider")
+        if conn_password or len(pkcs11_provider) >= 1:
             if not self._sshpass_available():
-                raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
+                raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
 
+        if conn_password and len(pkcs11_provider) >= 1:
+            self.sshpass_pipe = os.pipe()
+            b_command += [b'sshpass',
+                          b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict'),
+                          b'-P',
+                          b'Enter PIN for ']
+        elif conn_password:
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
@@ -639,6 +655,15 @@ class Connection(ConnectionBase):
         #
         # Next, additional arguments based on the configuration.
         #
+
+        # pkcs11 mode allows the use of Smartcards or Ubikey devices
+        if self._play_context.password and len(pkcs11_provider) >= 1:
+            self._add_args(b_command,
+                           (b"-o", b"KbdInteractiveAuthentication=no",
+                            b"-o", b"PreferredAuthentications=publickey",
+                            b"-o", b"PasswordAuthentication=no",
+                            b'-o', to_bytes(u'PKCS11Provider=%s' % pkcs11_provider)),
+                           u'Enable pkcs11')
 
         # sftp batch mode allows us to correctly catch failed transfers, but can
         # be disabled if the client side doesn't support the option. However,
