@@ -579,7 +579,7 @@ class ArgumentSpec(object):
                 )
             ),
             nameservers=dict(type='list'),
-            tsig_server_key=dict(),
+            tsig_server_key=dict(no_log=True),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])

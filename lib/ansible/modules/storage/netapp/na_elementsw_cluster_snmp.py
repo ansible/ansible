@@ -177,8 +177,8 @@ class ElementSWClusterSnmp(object):
                 options=dict(
                     access=dict(type='str', choices=['rouser', 'rwuser', 'rosys']),
                     name=dict(type='str', default=None),
-                    password=dict(type='str', default=None),
-                    passphrase=dict(type='str', default=None),
+                    password=dict(type='str', default=None, no_log=True),
+                    passphrase=dict(type='str', default=None, no_log=True),
                     secLevel=dict(type='str', choices=['auth', 'noauth', 'priv'])
                 )
             ),

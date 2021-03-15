@@ -911,7 +911,7 @@ def main():
                                                          "host": {"required": False, "type": "str"},
                                                          "listening-port": {"required": False, "type": "int"},
                                                          "load-balancing-info": {"required": False, "type": "str"},
-                                                         "logon-password": {"required": False, "type": "str"},
+                                                         "logon-password": {"required": False, "type": "str", "no_log": True},
                                                          "logon-user": {"required": False, "type": "str"},
                                                          "name": {"required": True, "type": "str"},
                                                          "port": {"required": False, "type": "int"},
@@ -935,7 +935,7 @@ def main():
                                                          "sso-credential-sent-once": {"required": False, "type": "str",
                                                                                       "choices": ["enable", "disable"]},
                                                          "sso-password": {"required": False, "type": "str"},
-                                                         "sso-username": {"required": False, "type": "str"},
+                                                         "sso-username": {"required": False, "type": "str", "no_log": True},
                                                          "url": {"required": False, "type": "str"}
                                                      }},
                                        "name": {"required": True, "type": "str"}

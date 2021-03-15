@@ -433,7 +433,7 @@ class ArgumentSpec(object):
             address=dict(),
             service_port=dict(),
             route_domain=dict(),
-            tsig_key=dict(),
+            tsig_key=dict(no_log=True),
             state=dict(
                 default='present',
                 choices=['present', 'absent']

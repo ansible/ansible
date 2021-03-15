@@ -841,7 +841,7 @@ def main():
                                               "options": {
                                                   "authentication": {"required": False, "type": "str",
                                                                      "choices": ["none", "text", "md5"]},
-                                                  "authentication-key": {"required": False, "type": "str"},
+                                                  "authentication-key": {"required": False, "type": "str", "no_log": True},
                                                   "dead-interval": {"required": False, "type": "int"},
                                                   "hello-interval": {"required": False, "type": "int"},
                                                   "md5-key": {"required": False, "type": "str"},
@@ -898,7 +898,7 @@ def main():
                                    "options": {
                                        "authentication": {"required": False, "type": "str",
                                                           "choices": ["none", "text", "md5"]},
-                                       "authentication-key": {"required": False, "type": "str"},
+                                       "authentication-key": {"required": False, "type": "str", "no_log": True},
                                        "bfd": {"required": False, "type": "str",
                                                "choices": ["global", "enable", "disable"]},
                                        "cost": {"required": False, "type": "int"},
@@ -909,7 +909,7 @@ def main():
                                        "hello-multiplier": {"required": False, "type": "int"},
                                        "interface": {"required": False, "type": "str"},
                                        "ip": {"required": False, "type": "str"},
-                                       "md5-key": {"required": False, "type": "str"},
+                                       "md5-key": {"required": False, "type": "str", "no_log": True},
                                        "mtu": {"required": False, "type": "int"},
                                        "mtu-ignore": {"required": False, "type": "str",
                                                       "choices": ["enable", "disable"]},

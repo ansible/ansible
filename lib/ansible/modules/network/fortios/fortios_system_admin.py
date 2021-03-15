@@ -763,7 +763,7 @@ def main():
                 "email-to": {"required": False, "type": "str"},
                 "force-password-change": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "fortitoken": {"required": False, "type": "str"},
+                "fortitoken": {"required": False, "type": "str", "no_log": True},
                 "guest-auth": {"required": False, "type": "str",
                                "choices": ["disable", "enable"]},
                 "guest-lang": {"required": False, "type": "str"},
@@ -855,7 +855,7 @@ def main():
                                    "usr-name": {"required": True, "type": "str"}
                                }},
                 "name": {"required": True, "type": "str"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "password-expire": {"required": False, "type": "str"},
                 "peer-auth": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},

@@ -1735,7 +1735,7 @@ def main():
                         required=False,
                         choices=['agent', 'server', 'proxy']
                     ),
-                    password=dict(type='str', required=False),
+                    password=dict(type='str', required=False, no_log=True),
                     port=dict(type='int', required=False),
                     run_on_groups=dict(type='list', required=False),
                     run_on_hosts=dict(type='list', required=False),
@@ -1827,7 +1827,7 @@ def main():
                         required=False,
                         choices=['agent', 'server', 'proxy']
                     ),
-                    password=dict(type='str', required=False),
+                    password=dict(type='str', required=False, no_log=True),
                     port=dict(type='int', required=False),
                     run_on_groups=dict(type='list', required=False),
                     run_on_hosts=dict(type='list', required=False),
@@ -1911,7 +1911,7 @@ def main():
                         required=False,
                         choices=['agent', 'server', 'proxy']
                     ),
-                    password=dict(type='str', required=False),
+                    password=dict(type='str', required=False, no_log=True),
                     port=dict(type='int', required=False),
                     run_on_groups=dict(type='list', required=False),
                     run_on_hosts=dict(type='list', required=False),

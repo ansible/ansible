@@ -1794,7 +1794,7 @@ def main():
                                                          "choices": ["enable", "disable"]},
                                  "passive": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                                 "password": {"required": False, "type": "str"},
+                                 "password": {"required": False, "type": "str", "no_log": True},
                                  "prefix-list-in": {"required": False, "type": "str"},
                                  "prefix-list-in6": {"required": False, "type": "str"},
                                  "prefix-list-out": {"required": False, "type": "str"},

@@ -873,7 +873,7 @@ def main():
                 "led-state": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},
                 "location": {"required": False, "type": "str"},
-                "login-passwd": {"required": False, "type": "str"},
+                "login-passwd": {"required": False, "type": "str", "no_log": True},
                 "login-passwd-change": {"required": False, "type": "str",
                                         "choices": ["yes", "default", "no"]},
                 "mesh-bridge-enable": {"required": False, "type": "str",
