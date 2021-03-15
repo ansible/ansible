@@ -2441,6 +2441,17 @@ releases:
     - v2.10.6rc1_summary.yaml
     - validate-modules_found_try_except_import_fails_module_attribute.yaml
     release_date: '2021-02-08'
+  2.10.7:
+    changes:
+      release_summary: '| Release Date: 2021-03-15
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.7_summary.yaml
+    release_date: '2021-03-15'
   2.10.7rc1:
     changes:
       bugfixes:
