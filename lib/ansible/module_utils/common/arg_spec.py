@@ -19,6 +19,7 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.warnings import deprecate, warn
 
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
@@ -179,6 +180,7 @@ class ArgumentSpecValidator:
 
         for deprecation in alias_deprecations:
             result.deprecations.append({
+                'name': deprecation['name'],
                 'version': deprecation.get('version'),
                 'date': deprecation.get('date'),
                 'collection_name': deprecation.get('collection_name'),
@@ -246,5 +248,23 @@ class ArgumentSpecValidator:
             supported_string = ", ".join(self.valid_parameter_names)
             result.errors.append(
                 UnsupportedError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
+
+        return result
+
+
+class ModuleArgumentSpecValidator(ArgumentSpecValidator):
+    def __init__(self, *args, **kwargs):
+        super(ModuleArgumentSpecValidator, self).__init__(*args, **kwargs)
+
+    def validate(self, parameters):
+        result = super(ModuleArgumentSpecValidator, self).validate(parameters)
+
+        for d in result.deprecations:
+            deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
+                      version=d.get('version'), date=d.get('date'),
+                      collection_name=d.get('collection_name'))
+
+        for w in result.warnings:
+            warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))
 
         return result

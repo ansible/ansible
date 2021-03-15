@@ -90,7 +90,7 @@ from ansible.module_utils.common.text.converters import (
     container_to_text as json_dict_bytes_to_unicode,
 )
 
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
 
 from ansible.module_utils.common.text.formatters import (
     lenient_lowercase,
@@ -488,13 +488,13 @@ class AnsibleModule(object):
         self._load_params()
         self._set_internal_properties()
 
-        self.validator = ArgumentSpecValidator(self.argument_spec,
-                                               self.mutually_exclusive,
-                                               self.required_together,
-                                               self.required_one_of,
-                                               self.required_if,
-                                               self.required_by,
-                                               )
+        self.validator = ModuleArgumentSpecValidator(self.argument_spec,
+                                                     self.mutually_exclusive,
+                                                     self.required_together,
+                                                     self.required_one_of,
+                                                     self.required_if,
+                                                     self.required_by,
+                                                     )
 
         self.validation_result = self.validator.validate(self.params)
         self.params.update(self.validation_result.validated_parameters)

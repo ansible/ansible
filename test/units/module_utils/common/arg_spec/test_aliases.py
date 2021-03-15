@@ -57,7 +57,7 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
             'not_yo_path': '/tmp',
         },
-        {'version': '1.7', 'date': None, 'collection_name': None},
+        {'version': '1.7', 'date': None, 'collection_name': None, 'name': 'not_yo_path'},
         "",
     )
 ]
