@@ -5,6 +5,42 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2021-03-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - The generated ``resource_prefix`` variable now meets the host name syntax requirements specified in RFC 1123 and RFC 952. The value used for local tests now places the random number before the hostname component, rather than after. If the resulting value is too long, it will be truncated.
+- ansible-test validate-modules - option names that seem to indicate they contain secret information that should be marked ``no_log=True`` are now flagged in the validate-modules sanity test. False positives can be marked by explicitly setting ``no_log=False`` for these options in the argument spec. Please note that many false positives are expected; the assumption is that it is by far better to have false positives than false negatives (https://github.com/ansible/ansible/pull/73508).
+- distribution - add facts about Amazon Linux Distribution facts (https://github.com/ansible/ansible/issues/73742).
+- module payload builder - module_utils imports in any nested block (eg, ``try``, ``if``) are treated as optional during module payload builds; this allows modules to implement runtime fallback behavior for module_utils that do not exist in older versions of Ansible.
+
+Bugfixes
+--------
+
+- A handler defined within a role will now search handlers subdir for included tasks (issue https://github.com/ansible/ansible/issues/71222).
+- ALLOW_WORLD_READABLE_TMP, switched to 'moved' message as 'deprecation' is misleading since config settings still work w/o needing change.
+- Automatically remove async cache files for polled async tasks that have completed (issue https://github.com/ansible/ansible/issues/73206).
+- Deal with failures when sorting JSON and you have incompatible key types.
+- Setup virtualization_facts - add RHV and oVirt type. This change will fully work for VMs in clusters at cluster level 4.4 or newer (https://github.com/ansible/ansible/pull/72876).
+- [set_fact] Corrected and expanded documentation as well as now raise errors that were previously ignored.
+- ansible-test - ensure unit test paths for connection and inventory plugins are correctly identified for collections (https://github.com/ansible/ansible/issues/73876).
+- connection/ssh, ensure parameters come from correct source get_option, so functionality matches docs.
+- connection/ssh, fix reset to use same parameters to check if socket exists as actually used, was hardcoded to default string construction previouslly.
+- j2 plugin loader clarified comments, made note with better fqcn detection.
+- notify keyword is not ignored anymore on import_tasks, also able to apply to blocks now.
+- restrict module valid JSON parsed output to objects as lists are not valid responses.
+- setup, don't give up on all local facts gathering if one script file fails.
+- su become plugin, ensure correct type for localization option.
+
 v2.11.0b1
 =========
 
