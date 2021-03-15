@@ -523,22 +523,6 @@ class StrategyBase:
             task_result._host = original_host
             task_result._task = original_task
 
-            # send callbacks for 'non final' results
-            if '_ansible_retry' in task_result._result:
-                self._tqm.send_callback('v2_runner_retry', task_result)
-                continue
-            elif '_ansible_item_result' in task_result._result:
-                if task_result.is_failed() or task_result.is_unreachable():
-                    self._tqm.send_callback('v2_runner_item_on_failed', task_result)
-                elif task_result.is_skipped():
-                    self._tqm.send_callback('v2_runner_item_on_skipped', task_result)
-                else:
-                    if 'diff' in task_result._result:
-                        if self._diff or getattr(original_task, 'diff', False):
-                            self._tqm.send_callback('v2_on_file_diff', task_result)
-                    self._tqm.send_callback('v2_runner_item_on_ok', task_result)
-                continue
-
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
             if task_result.is_failed():

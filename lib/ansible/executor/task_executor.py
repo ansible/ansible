@@ -16,6 +16,7 @@ import termios
 import traceback
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
@@ -382,12 +383,24 @@ class TaskExecutor:
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
 
-            self._final_q.send_task_result(
-                self._host.name,
-                self._task._uuid,
+            tr = TaskResult(
+                self._host,
+                self._task,
                 res,
                 task_fields=task_fields,
             )
+            callbacks = []
+            if tr.is_failed() or tr.is_unreachable():
+                callbacks.append('v2_runner_item_on_failed')
+            elif tr.is_skipped():
+                callbacks.append('v2_runner_item_on_skipped')
+            else:
+                if context.CLIARGS.get('diff', False) or getattr(self._task, 'diff', False):
+                    callbacks.append('v2_on_file_diff')
+                callbacks.append('v2_runner_item_on_ok')
+            for callback in callbacks:
+                self._final_q.send_callback(callback, tr)
+
             results.append(res)
             del task_vars[loop_var]
 
@@ -673,7 +686,15 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._final_q.send_task_result(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs())
+                        self._final_q.send_callback(
+                            'v2_runner_retry',
+                            TaskResult(
+                                self._host,
+                                self._task,
+                                result,
+                                task_fields=self._task.dump_attrs()
+                            )
+                        )
                         time.sleep(delay)
                         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
         else:
