@@ -476,6 +476,11 @@ class PluginLoader:
             if redirect:
                 # FIXME: remove once this is covered in debug or whatever
                 display.vv("redirecting (type: {0}) {1} to {2}".format(plugin_type, fq_name, redirect))
+                # The name doing the redirection is added at the beginning of _resolve_plugin_step,
+                # but if the unqualified name is used in conjunction with the collections keyword, only
+                # the unqualified name is in the redirect list.
+                if fq_name not in plugin_load_context.redirect_list:
+                    plugin_load_context.redirect_list.append(fq_name)
                 return plugin_load_context.redirect(redirect)
                 # TODO: non-FQCN case, do we support `.` prefix for current collection, assume it with no dots, require it for subdirs in current, or ?
 
