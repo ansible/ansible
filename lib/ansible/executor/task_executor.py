@@ -16,7 +16,6 @@ import termios
 import traceback
 
 from ansible import constants as C
-from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
@@ -394,7 +393,7 @@ class TaskExecutor:
             elif tr.is_skipped():
                 self._final_q.send_callback('v2_runner_item_on_skipped', tr)
             else:
-                if context.CLIARGS.get('diff', False) or getattr(self._task, 'diff', False):
+                if getattr(self._task, 'diff', False):
                     self._final_q.send_callback('v2_on_file_diff', tr)
                 self._final_q.send_callback('v2_runner_item_on_ok', tr)
 
