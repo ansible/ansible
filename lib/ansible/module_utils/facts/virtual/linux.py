@@ -133,8 +133,6 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
-        sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
-
         KVM_SYS_VENDORS = ('QEMU', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway', 'Nutanix')
         if sys_vendor in KVM_SYS_VENDORS:
             virtual_facts['virtualization_type'] = 'kvm'
