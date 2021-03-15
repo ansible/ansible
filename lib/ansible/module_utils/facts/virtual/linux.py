@@ -84,14 +84,24 @@ class LinuxVirtual(Virtual):
         virtual_facts['virtualization_role'] = 'guest'
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
+        sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
+        product_family = get_file_content('/sys/devices/virtual/dmi/id/product_family')
 
         if product_name in ('KVM', 'Bochs'):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
-        if product_name == 'RHEV Hypervisor':
-            virtual_facts['virtualization_type'] = 'RHEV'
+        if sys_vendor == 'oVirt':
+            virtual_facts['virtualization_type'] = 'oVirt'
             return virtual_facts
+
+        if sys_vendor == 'Red Hat':
+            if product_family == 'RHV':
+                virtual_facts['virtualization_type'] = 'RHV'
+                return virtual_facts
+            elif product_family == 'RHEV Hypervisor':
+                virtual_facts['virtualization_type'] = 'RHEV'
+                return virtual_facts
 
         if product_name in ('VMware Virtual Platform', 'VMware7,1'):
             virtual_facts['virtualization_type'] = 'VMware'
@@ -117,7 +127,7 @@ class LinuxVirtual(Virtual):
 
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
 
-        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'Google', 'Scaleway')
+        KVM_SYS_VENDORS = ('QEMU', 'Amazon EC2', 'Google', 'Scaleway')
         if sys_vendor in KVM_SYS_VENDORS:
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
