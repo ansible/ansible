@@ -389,17 +389,14 @@ class TaskExecutor:
                 res,
                 task_fields=task_fields,
             )
-            callbacks = []
             if tr.is_failed() or tr.is_unreachable():
-                callbacks.append('v2_runner_item_on_failed')
+                self._final_q.send_callback('v2_runner_item_on_failed', tr)
             elif tr.is_skipped():
-                callbacks.append('v2_runner_item_on_skipped')
+                self._final_q.send_callback('v2_runner_item_on_skipped', tr)
             else:
                 if context.CLIARGS.get('diff', False) or getattr(self._task, 'diff', False):
-                    callbacks.append('v2_on_file_diff')
-                callbacks.append('v2_runner_item_on_ok')
-            for callback in callbacks:
-                self._final_q.send_callback(callback, tr)
+                    self._final_q.send_callback('v2_on_file_diff', tr)
+                self._final_q.send_callback('v2_runner_item_on_ok', tr)
 
             results.append(res)
             del task_vars[loop_var]
