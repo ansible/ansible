@@ -201,7 +201,7 @@ For changes that are not really scoped (for example, which affect a whole collec
 
 .. code-block:: yaml
 
-  - Description starting with a lowercase letter and ending with a dot (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
+  - Description starting with an uppercase letter and ending with a dot (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
 
 
 Here are some examples:
