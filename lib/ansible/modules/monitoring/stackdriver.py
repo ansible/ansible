@@ -144,7 +144,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            key=dict(required=True),
+            key=dict(required=True, no_log=True),
             event=dict(required=True, choices=['deploy', 'annotation']),
             msg=dict(),
             revision_id=dict(),

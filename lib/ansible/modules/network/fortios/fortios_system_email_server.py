@@ -326,7 +326,7 @@ def main():
             "options": {
                 "authenticate": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "port": {"required": False, "type": "int"},
                 "reply_to": {"required": False, "type": "str"},
                 "security": {"required": False, "type": "str",

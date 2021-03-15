@@ -525,7 +525,7 @@ def main():
                               "expiration": {"required": False, "type": "str"},
                               "mobile_phone": {"required": False, "type": "str"},
                               "name": {"required": False, "type": "str"},
-                              "password": {"required": False, "type": "str"},
+                              "password": {"required": False, "type": "str", "no_log": True},
                               "sponsor": {"required": False, "type": "str"},
                               "user_id": {"required": False, "type": "str"}
                           }},

@@ -341,7 +341,7 @@ def main():
                 "forticlient_offline_grace": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
                 "forticlient_offline_grace_interval": {"required": False, "type": "int"},
-                "forticlient_reg_key": {"required": False, "type": "str"},
+                "forticlient_reg_key": {"required": False, "type": "str", "no_log": True},
                 "forticlient_reg_key_enforce": {"required": False, "type": "str",
                                                 "choices": ["enable", "disable"]},
                 "forticlient_reg_timeout": {"required": False, "type": "int"},

@@ -1162,9 +1162,7 @@ lib/ansible/modules/cloud/azure/azure_rm_resourcegroup.py validate-modules:param
 lib/ansible/modules/cloud/azure/azure_rm_resourcegroup_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/azure/azure_rm_roleassignment.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/azure/azure_rm_roleassignment_info.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/azure/azure_rm_roledefinition.py validate-modules:invalid-argument-spec
 lib/ansible/modules/cloud/azure/azure_rm_roledefinition.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/azure/azure_rm_roledefinition.py validate-modules:missing-suboption-docs
 lib/ansible/modules/cloud/azure/azure_rm_roledefinition_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/azure/azure_rm_route.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/azure/azure_rm_routetable.py validate-modules:parameter-type-not-in-doc

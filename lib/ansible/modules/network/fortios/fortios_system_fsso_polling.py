@@ -267,7 +267,7 @@ def main():
         "system_fsso_polling": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "auth_password": {"required": False, "type": "str"},
+                "auth_password": {"required": False, "type": "str", "no_log": True},
                 "authentication": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
                 "listening_port": {"required": False, "type": "int"},

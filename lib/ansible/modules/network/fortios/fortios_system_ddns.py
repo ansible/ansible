@@ -391,7 +391,7 @@ def main():
                 "ddns_domain": {"required": False, "type": "str"},
                 "ddns_key": {"required": False, "type": "str"},
                 "ddns_keyname": {"required": False, "type": "str"},
-                "ddns_password": {"required": False, "type": "str"},
+                "ddns_password": {"required": False, "type": "str", "no_log": True},
                 "ddns_server": {"required": False, "type": "str",
                                 "choices": ["dyndns.org", "dyns.net", "tzo.com",
                                             "vavic.com", "dipdns.net", "now.net.cn",

@@ -279,7 +279,7 @@ def main():
         "switch_controller_switch_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "login_passwd": {"required": False, "type": "str"},
+                "login_passwd": {"required": False, "type": "str", "no_log": True},
                 "login_passwd_override": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
                 "name": {"required": True, "type": "str"}

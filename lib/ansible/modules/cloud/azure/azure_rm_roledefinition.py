@@ -116,19 +116,19 @@ except ImportError:
 permission_spec = dict(
     actions=dict(
         type='list',
-        options=dict(type='str')
+        elements='str',
     ),
     not_actions=dict(
         type='list',
-        options=dict(type='str')
+        elements='str',
     ),
     data_actions=dict(
         type='list',
-        options=dict(type='str')
+        elements='str',
     ),
     not_data_actions=dict(
         type='list',
-        options=dict(type='str')
+        elements='str',
     ),
 )
 

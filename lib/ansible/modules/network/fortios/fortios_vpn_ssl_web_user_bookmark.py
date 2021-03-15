@@ -469,7 +469,7 @@ def main():
                                   "host": {"required": False, "type": "str"},
                                   "listening_port": {"required": False, "type": "int"},
                                   "load_balancing_info": {"required": False, "type": "str"},
-                                  "logon_password": {"required": False, "type": "str"},
+                                  "logon_password": {"required": False, "type": "str", "no_log": True},
                                   "logon_user": {"required": False, "type": "str"},
                                   "name": {"required": True, "type": "str"},
                                   "port": {"required": False, "type": "int"},
@@ -492,7 +492,7 @@ def main():
                                                      "choices": ["sslvpn-login", "alternative"]},
                                   "sso_credential_sent_once": {"required": False, "type": "str",
                                                                "choices": ["enable", "disable"]},
-                                  "sso_password": {"required": False, "type": "str"},
+                                  "sso_password": {"required": False, "type": "str", "no_log": True},
                                   "sso_username": {"required": False, "type": "str"},
                                   "url": {"required": False, "type": "str"}
                               }},

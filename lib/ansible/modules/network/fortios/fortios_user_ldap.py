@@ -430,7 +430,7 @@ def main():
                 "group_search_base": {"required": False, "type": "str"},
                 "member_attr": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "password_expiry_warning": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
                 "password_renewal": {"required": False, "type": "str",

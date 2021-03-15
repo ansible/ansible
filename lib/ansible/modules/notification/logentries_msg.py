@@ -73,7 +73,7 @@ def send_msg(module, token, msg, api, port):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            token=dict(type='str', required=True),
+            token=dict(type='str', required=True, no_log=True),
             msg=dict(type='str', required=True),
             api=dict(type='str', default="data.logentries.com"),
             port=dict(type='int', default=80)),

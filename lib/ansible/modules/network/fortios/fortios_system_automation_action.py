@@ -402,7 +402,7 @@ def main():
                                             "disable-ssid", "quarantine", "quarantine-forticlient",
                                             "ban-ip", "aws-lambda", "webhook"]},
                 "aws_api_id": {"required": False, "type": "str"},
-                "aws_api_key": {"required": False, "type": "str"},
+                "aws_api_key": {"required": False, "type": "str", "no_log": True},
                 "aws_api_path": {"required": False, "type": "str"},
                 "aws_api_stage": {"required": False, "type": "str"},
                 "aws_domain": {"required": False, "type": "str"},

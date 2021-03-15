@@ -376,7 +376,7 @@ def main():
                 "lcp_max_echo_fails": {"required": False, "type": "int"},
                 "name": {"required": True, "type": "str"},
                 "padt_retry_timeout": {"required": False, "type": "int"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "pppoe_unnumbered_negotiate": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
                 "service_name": {"required": False, "type": "str"},

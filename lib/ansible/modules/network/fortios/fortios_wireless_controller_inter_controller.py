@@ -306,7 +306,7 @@ def main():
             "options": {
                 "fast_failover_max": {"required": False, "type": "int"},
                 "fast_failover_wait": {"required": False, "type": "int"},
-                "inter_controller_key": {"required": False, "type": "str"},
+                "inter_controller_key": {"required": False, "type": "str", "no_log": True},
                 "inter_controller_mode": {"required": False, "type": "str",
                                           "choices": ["disable", "l2-roaming", "1+1"]},
                 "inter_controller_peer": {"required": False, "type": "list",

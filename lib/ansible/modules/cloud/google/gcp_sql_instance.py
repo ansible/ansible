@@ -692,7 +692,7 @@ def main():
                             connect_retry_interval=dict(type='int'),
                             dump_file_path=dict(type='str'),
                             master_heartbeat_period=dict(type='int'),
-                            password=dict(type='str'),
+                            password=dict(type='str', no_log=True),
                             ssl_cipher=dict(type='str'),
                             username=dict(type='str'),
                             verify_server_certificate=dict(type='bool'),
