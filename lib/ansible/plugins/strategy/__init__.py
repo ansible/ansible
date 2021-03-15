@@ -94,8 +94,13 @@ def results_thread_main(strategy):
             if isinstance(result, StrategySentinel):
                 break
             elif isinstance(result, CallbackSend):
+                for arg in result.args:
+                    if isinstance(arg, TaskResult):
+                        strategy.normalize_task_result(arg)
+                        break
                 strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
             elif isinstance(result, TaskResult):
+                strategy.normalize_task_result(result)
                 with strategy._results_lock:
                     # only handlers have the listen attr, so this must be a handler
                     # we split up the results into two queues here to make sure
@@ -446,6 +451,33 @@ class StrategyBase:
             for target_host in host_list:
                 _set_host_facts(target_host, always_facts)
 
+    def normalize_task_result(self, task_result):
+        """Normalize a TaskResult to reference actual Host and Task objects
+        when only given the ``Host.name``, or the ``Task._uuid``
+
+        Mutates the original object
+        """
+
+        original_host = self._get_original_host(task_result._host)
+        queue_cache_entry = (original_host.name, task_result._task)
+        found_task = self._queued_task_cache.get(queue_cache_entry)['task']
+        original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
+        original_task._parent = found_task._parent
+        original_task.from_attrs(task_result._task_fields)
+
+        task_result._host = original_host
+        task_result._task = original_task
+
+        return task_result
+
+    def _get_original_host(self, host_name):
+        # FIXME: this should not need x2 _inventory
+        host_name = to_text(host_name)
+        if host_name in self._inventory.hosts:
+            return self._inventory.hosts[host_name]
+        else:
+            return self._inventory.get_host(host_name)
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None, do_handlers=False):
         '''
@@ -455,14 +487,6 @@ class StrategyBase:
 
         ret_results = []
         handler_templar = Templar(self._loader)
-
-        def get_original_host(host_name):
-            # FIXME: this should not need x2 _inventory
-            host_name = to_text(host_name)
-            if host_name in self._inventory.hosts:
-                return self._inventory.hosts[host_name]
-            else:
-                return self._inventory.get_host(host_name)
 
         def search_handler_blocks_by_name(handler_name, handler_blocks):
             # iterate in reversed order since last handler loaded with the same name wins
@@ -512,16 +536,8 @@ class StrategyBase:
             finally:
                 self._results_lock.release()
 
-            # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
-            original_host = get_original_host(task_result._host)
-            queue_cache_entry = (original_host.name, task_result._task)
-            found_task = self._queued_task_cache.get(queue_cache_entry)['task']
-            original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-            original_task._parent = found_task._parent
-            original_task.from_attrs(task_result._task_fields)
-
-            task_result._host = original_host
-            task_result._task = original_task
+            original_host = task_result._host
+            original_task = task_result._task
 
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False

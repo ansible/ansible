@@ -384,8 +384,8 @@ class TaskExecutor:
                 })
 
             tr = TaskResult(
-                self._host,
-                self._task,
+                self._host.name,
+                self._task._uuid,
                 res,
                 task_fields=task_fields,
             )
@@ -689,8 +689,8 @@ class TaskExecutor:
                         self._final_q.send_callback(
                             'v2_runner_retry',
                             TaskResult(
-                                self._host,
-                                self._task,
+                                self._host.name,
+                                self._task._uuid,
                                 result,
                                 task_fields=self._task.dump_attrs()
                             )
@@ -803,8 +803,8 @@ class TaskExecutor:
                 self._final_q.send_callback(
                     'v2_runner_on_async_poll',
                     TaskResult(
-                        self._host,
-                        async_task,
+                        self._host.name,
+                        async_task._uuid,
                         async_result,
                         task_fields=self._task.dump_attrs(),
                     ),
