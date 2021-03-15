@@ -1748,6 +1748,11 @@ releases:
     - snmp_facts.yml
     - v2.9.18rc1_summary.yaml
     release_date: '2021-02-08'
+  2.9.19:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.19_summary.yaml
+    release_date: '2021-03-15'
   2.9.19rc1:
     codename: Immigrant Song
     fragments:
