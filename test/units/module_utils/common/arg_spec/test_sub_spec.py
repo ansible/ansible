@@ -44,7 +44,7 @@ def test_sub_spec():
 
     assert isinstance(result, ValidationResult)
     assert result.validated_parameters == expected
-    assert v.error_messages == []
+    assert result.error_messages == []
 
 
 def test_nested_sub_spec():
@@ -103,4 +103,4 @@ def test_nested_sub_spec():
 
     assert isinstance(result, ValidationResult)
     assert result.validated_parameters == expected
-    assert v.error_messages == []
+    assert result.error_messages == []

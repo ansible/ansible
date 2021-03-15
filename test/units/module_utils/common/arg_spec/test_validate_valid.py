@@ -293,4 +293,4 @@ def test_valid_spec(arg_spec, parameters, expected, mocker):
 
     assert isinstance(result, ValidationResult)
     assert result.validated_parameters == expected
-    assert v.error_messages == []
+    assert result.error_messages == []

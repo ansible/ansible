@@ -101,15 +101,17 @@ INVALID_SPECS = [
 )
 def test_invalid_spec(arg_spec, parameters, expected, error):
     v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
 
     with pytest.raises(AnsibleValidationErrorMultiple) as exc_info:
-        v.validate(parameters)
+        raise result.errors
 
     if PY2:
         error = error.replace('class', 'type')
 
+    assert isinstance(result, ValidationResult)
     assert error in exc_info.value.msg
-    assert error in v.error_messages[0]
+    assert error in result.error_messages[0]
 
     # FIXME: There is no way to get the partially validated params if validation
     #        fail since no result object is returned.
