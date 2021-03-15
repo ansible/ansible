@@ -458,7 +458,7 @@ class StrategyBase:
         Mutates the original object
         """
 
-        original_host = self._get_original_host(task_result._host)
+        original_host = self._inventory.get_host(to_text(task_result._host))
         queue_cache_entry = (original_host.name, task_result._task)
         found_task = self._queued_task_cache.get(queue_cache_entry)['task']
         original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
@@ -469,14 +469,6 @@ class StrategyBase:
         task_result._task = original_task
 
         return task_result
-
-    def _get_original_host(self, host_name):
-        # FIXME: this should not need x2 _inventory
-        host_name = to_text(host_name)
-        if host_name in self._inventory.hosts:
-            return self._inventory.hosts[host_name]
-        else:
-            return self._inventory.get_host(host_name)
 
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None, do_handlers=False):
