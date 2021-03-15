@@ -29,6 +29,15 @@ class AnsibleValidationErrorMultiple(AnsibleValidationError):
     def __init__(self, errors=None):
         self.errors = errors[:] if errors else []
 
+    def __getitem__(self, key):
+        return self.errors[key]
+
+    def __setitem__(self, key, value):
+        self.errors[key] = value
+
+    def __delitem__(self, key):
+        del self.errors[key]
+
     @property
     def msg(self):
         return self.errors[0].args[0]
