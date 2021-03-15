@@ -110,7 +110,7 @@ def main():
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         azure_serviceprincipal=dict(type='dict',),
-        azure_userpass=dict(type='dict',),
+        azure_userpass=dict(type='dict', no_log=True),
         name=dict(type='str', required=True),
         private_key=dict(type='str', no_log=True,),
         public_key=dict(type='str',),

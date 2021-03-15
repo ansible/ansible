@@ -1,0 +1,4 @@
+security_fixes:
+- "avi_webhook - mark the ``verification_token`` parameter as ``no_log`` to prevent potential leaking of secret values (https://github.com/ansible-collections/community.network/pull/223)."
+- "avi_sslkeyandcertificate - mark the ``enckey_base64`` parameter as ``no_log`` to prevent potential leaking of secret values (https://github.com/ansible-collections/community.network/pull/223)."
+- "avi_cloudconnectoruser - mark the ``azure_userpass`` parameter as ``no_log`` to prevent leaking of secret values (https://github.com/ansible-collections/community.network/pull/223)."
