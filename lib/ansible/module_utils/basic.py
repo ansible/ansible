@@ -165,7 +165,7 @@ from ansible.module_utils.common.parameters import (
     PASS_BOOLS,
 )
 
-from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple
+from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
 from ansible.module_utils.six import (
     PY2,
     PY3,
@@ -496,20 +496,23 @@ class AnsibleModule(object):
                                                self.required_by,
                                                )
 
-        try:
-            validation_result = self.validator.validate(self.params)
-        except AnsibleValidationErrorMultiple as exc:
-            self.no_log_values.update(self.validator._no_log_values)
+        self.validation_result = self.validator.validate(self.params)
+        self.params.update(self.validation_result.validated_parameters)
+        self.no_log_values.update(self.validation_result._no_log_values)
 
-            # Fail for validation errors, even in check mode
-            msg = exc.msg
-            if exc.errors[0].error_type == "unsupported_parameters":
-                msg = "Unsupported parameters for ({name}) {kind}: {msg}".format(name=self._name, kind='module', msg=exc.errors[0].error_message)
+        try:
+            error = self.validation_result.errors[0]
+        except IndexError:
+            error = None
+
+        # Fail for validation errors, even in check mode
+        if error:
+            msg = self.validation_result.errors.msg
+            if isinstance(error, UnsupportedError):
+                msg = "Unsupported parameters for ({name}) {kind}: {msg}".format(name=self._name, kind='module', msg=msg)
 
             self.fail_json(msg=msg)
 
-        self.no_log_values.update(self.validator._no_log_values)
-        self.params.update(validation_result.validated_parameters)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 

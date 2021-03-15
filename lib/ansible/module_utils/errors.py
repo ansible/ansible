@@ -13,10 +13,9 @@ class AnsibleFallbackNotFound(Exception):
 class AnsibleValidationError(Exception):
     """Single argument spec validation error"""
 
-    def __init__(self, message, error_type=None):
+    def __init__(self, message):
         super(AnsibleValidationError, self).__init__(message)
         self.error_message = message
-        self.error_type = error_type
 
     @property
     def msg(self):
@@ -51,3 +50,59 @@ class AnsibleValidationErrorMultiple(AnsibleValidationError):
 
     def extend(self, errors):
         self.errors.extend(errors)
+
+
+class AliasError(AnsibleValidationError):
+    """Error handling aliases"""
+
+
+class ArgumentTypeError(AnsibleValidationError):
+    """Error with parameter type"""
+
+
+class ArgumentValueError(AnsibleValidationError):
+    """Error with parameter value"""
+
+
+class ElementError(AnsibleValidationError):
+    """Error when validating elements"""
+
+
+class MutuallyExclusiveError(AnsibleValidationError):
+    """Mutually exclusive parameters were supplied"""
+
+
+class NoLogError(AnsibleValidationError):
+    """Error converting no_log values"""
+
+
+class RequiredByError(AnsibleValidationError):
+    """Error with parameters that are required by other parameters"""
+
+
+class RequiredDefaultError(AnsibleValidationError):
+    """A required parameter was assigned a default value"""
+
+
+class RequiredError(AnsibleValidationError):
+    """Missing a required parameter"""
+
+
+class RequiredIfError(AnsibleValidationError):
+    """Error with conditionally required parameters"""
+
+
+class RequiredOneOfError(AnsibleValidationError):
+    """Error with parameters where at least one is required"""
+
+
+class RequiredTogetherError(AnsibleValidationError):
+    """Error with parameters that are required together"""
+
+
+class SubParameterTypeError(AnsibleValidationError):
+    """Incorrect type for subparameter"""
+
+
+class UnsupportedError(AnsibleValidationError):
+    """Unsupported parameters were supplied"""

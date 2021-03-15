@@ -7,10 +7,6 @@ __metaclass__ = type
 
 from copy import deepcopy
 
-from ansible.module_utils.common._collections_compat import (
-    Sequence,
-)
-
 from ansible.module_utils.common.parameters import (
     _validate_argument_types,
     _validate_argument_values,
@@ -18,14 +14,13 @@ from ansible.module_utils.common.parameters import (
     get_unsupported_parameters,
     handle_aliases,
     list_no_log_values,
-    remove_values,
     set_defaults,
     set_fallbacks,
 )
 
-from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.warnings import deprecate, warn
+
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
     check_required_arguments,
@@ -35,7 +30,19 @@ from ansible.module_utils.common.validation import (
     check_required_together,
 )
 
-from ansible.module_utils.six import string_types
+from ansible.module_utils.errors import (
+    AliasError,
+    AnsibleValidationErrorMultiple,
+    MutuallyExclusiveError,
+    NoLogError,
+    RequiredByError,
+    RequiredDefaultError,
+    RequiredError,
+    RequiredIfError,
+    RequiredOneOfError,
+    RequiredTogetherError,
+    UnsupportedError,
+)
 
 
 class ValidationResult:
@@ -50,6 +57,7 @@ class ValidationResult:
         self._no_log_values = set()
         self._unsupported_parameters = set()
         self._validated_parameters = deepcopy(parameters)
+        self.errors = AnsibleValidationErrorMultiple()
 
     @property
     def validated_parameters(self):
@@ -58,6 +66,10 @@ class ValidationResult:
     @property
     def unsupported_parameters(self):
         return self._unsupported_parameters
+
+    @property
+    def error_messages(self):
+        return self.errors.messages
 
 
 class ArgumentSpecValidator:
@@ -90,7 +102,6 @@ class ArgumentSpecValidator:
     :type: dict, optional
     """
 
-    # TODO: Move parameters to the `validate()` method.
     def __init__(self, argument_spec,
                  mutually_exclusive=None,
                  required_together=None,
@@ -99,9 +110,7 @@ class ArgumentSpecValidator:
                  required_by=None,
                  ):
 
-        self._errors = AnsibleValidationErrorMultiple()
-        self._no_log_values = set()
-        self._valid_parameter_names = []
+        self._valid_parameter_names = set()
         self._mutually_exclusive = mutually_exclusive
         self._required_together = required_together
         self._required_one_of = required_one_of
@@ -110,48 +119,34 @@ class ArgumentSpecValidator:
         self.argument_spec = argument_spec
 
     @property
-    def error_messages(self):
-        return remove_values(self._errors.messages, self._no_log_values)
-
-    @property
     def valid_parameter_names(self):
         if self._valid_parameter_names:
             return self._validated_parameter_names
-        valid_parameter_names = []
+        valid_parameter_names = set()
         for key in sorted(self.argument_spec.keys()):
             aliases = self.argument_spec[key].get('aliases')
             if aliases:
-                valid_parameter_names.append("{key} ({aliases})".format(key=key, aliases=", ".join(sorted(aliases))))
+                valid_parameter_names.update(["{key} ({aliases})".format(key=key, aliases=", ".join(sorted(aliases)))])
             else:
-                valid_parameter_names.append(key)
+                valid_parameter_names.update([key])
 
         self._valid_parameter_names = valid_parameter_names
         return valid_parameter_names
 
-    def _add_error(self, error, error_type=None):
-        if isinstance(error, AnsibleValidationError):
-            self._errors.append(error)
-        elif isinstance(error, string_types):
-            self._errors.append(AnsibleValidationError(error, error_type))
-        elif isinstance(error, Sequence):
-            self._errors.extend(error)
-        else:
-            raise ValueError('Error messages must be a string or sequence not a %s' % type(error))
-
     def validate(self, parameters, *args, **kwargs):
-        """Validate module parameters against argument spec. Returns a validation
-        object if successful or raises AnsibleValidationErrorMultiple exception.
+        """Validate module parameters against argument spec. Returns a
+        ValidationResult object.
 
-        Error messages in the AnsibleValidationErrorMultiple exception may contain
+        Error messages in the ValidationResult may contain
         no_log values and should be sanitized before logging or displaying.
 
         :Example:
 
         validator = ArgumentSpecValidator(argument_spec)
-        try:
-            result = validator.validate(parameters)
-        except AnsibleValidationErrorMultiple as exc:
-            sys.exit("Validation failed: {0}".format(", ".join(validator.error_messages))
+        result = validator.validate(parameters)
+
+        if result.error_messages:
+            sys.exit("Validation failed: {0}".format(", ".join(result.error_messages))
 
         valid_params = result.validated_parameters
 
@@ -176,7 +171,7 @@ class ArgumentSpecValidator:
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
-            self._add_error(AnsibleValidationError(to_native(e), "alias"))
+            result.errors.append(AliasError(to_native(e)))
 
         for option, alias in alias_warnings:
             warn('Both option %s and its alias %s are set.' % (option, alias))
@@ -187,39 +182,39 @@ class ArgumentSpecValidator:
                       collection_name=deprecation.get('collection_name'))
 
         try:
-            self._no_log_values.update(list_no_log_values(self.argument_spec, result._validated_parameters))
+            result._no_log_values.update(list_no_log_values(self.argument_spec, result._validated_parameters))
         except TypeError as te:
-            self._add_error(AnsibleValidationError(to_native(te), "no_log"))
+            result.errors.append(NoLogError(to_native(te)))
 
         if legal_inputs is None:
             legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
         try:
             result._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
         except TypeError as te:
-            self._add_error(AnsibleValidationError(to_native(te)), "required_and_default")
+            result.errors.append(RequiredDefaultError(to_native(te)))
         except ValueError as ve:
-            self._add_error(AnsibleValidationError(to_native(ve), "aliases"))
+            result.errors.append(AliasError(to_native(ve)))
 
         try:
             check_mutually_exclusive(self._mutually_exclusive, result._validated_parameters)
         except TypeError as te:
-            self._add_error(AnsibleValidationError(to_native(te), "mutually_exclusive"))
+            result.errors.append(MutuallyExclusiveError(to_native(te)))
 
-        self._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters, False))
+        result._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters, False))
 
         try:
             check_required_arguments(self.argument_spec, result._validated_parameters)
         except TypeError as e:
-            self._add_error(AnsibleValidationError(to_native(e), "required_arguments"))
+            result.errors.append(RequiredError(to_native(e)))
 
-        _validate_argument_types(self.argument_spec, result._validated_parameters, errors=self._errors)
-        _validate_argument_values(self.argument_spec, result._validated_parameters, errors=self._errors)
+        _validate_argument_types(self.argument_spec, result._validated_parameters, errors=result.errors)
+        _validate_argument_values(self.argument_spec, result._validated_parameters, errors=result.errors)
 
         checks = (
-            {'func': check_required_together, 'attr': '_required_together'},
-            {'func': check_required_one_of, 'attr': '_required_one_of'},
-            {'func': check_required_if, 'attr': '_required_if'},
-            {'func': check_required_by, 'attr': '_required_by'},
+            {'func': check_required_together, 'attr': '_required_together', 'err': RequiredTogetherError},
+            {'func': check_required_one_of, 'attr': '_required_one_of', 'err': RequiredOneOfError},
+            {'func': check_required_if, 'attr': '_required_if', 'err': RequiredIfError},
+            {'func': check_required_by, 'attr': '_required_by', 'err': RequiredByError},
         )
 
         for check in checks:
@@ -227,13 +222,13 @@ class ArgumentSpecValidator:
                 try:
                     check['func'](getattr(self, check['attr']), result._validated_parameters)
                 except TypeError as te:
-                    self._add_error(AnsibleValidationError(to_native(te), check['attr'].lstrip('_')))
+                    result.errors.append(check['err'](to_native(te)))
 
-        self._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters))
+        result._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters))
 
         _validate_sub_spec(self.argument_spec, result._validated_parameters,
-                           errors=self._errors,
-                           no_log_values=self._no_log_values,
+                           errors=result.errors,
+                           no_log_values=result._no_log_values,
                            unsupported_parameters=result._unsupported_parameters)
 
         if result._unsupported_parameters:
@@ -246,10 +241,7 @@ class ArgumentSpecValidator:
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
             supported_string = ", ".join(self.valid_parameter_names)
-            self._add_error(
-                AnsibleValidationError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string), 'unsupported_parameters'))
+            result.errors.append(
+                UnsupportedError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
 
-        if self.error_messages:
-            raise(self._errors)
-        else:
-            return result
+        return result
