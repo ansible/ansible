@@ -139,6 +139,8 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
+        sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
+        product_family = get_file_content('/sys/devices/virtual/dmi/id/product_family')
 
         if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
             guest_tech.add('kvm')
@@ -146,11 +148,23 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'kvm'
                 found_virt = True
 
-        if product_name == 'RHEV Hypervisor':
-            guest_tech.add('RHEV')
+        if sys_vendor == 'oVirt':
+            guest_tech.add('oVirt')
             if not found_virt:
-                virtual_facts['virtualization_type'] = 'RHEV'
+                virtual_facts['virtualization_type'] = 'oVirt'
                 found_virt = True
+
+        if sys_vendor == 'Red Hat':
+            if product_family == 'RHV':
+                guest_tech.add('RHV')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'RHV'
+                    found_virt = True
+            elif product_family == 'RHEV Hypervisor':
+                guest_tech.add('RHEV')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'RHEV'
+                    found_virt = True
 
         if product_name in ('VMware Virtual Platform', 'VMware7,1'):
             guest_tech.add('VMware')
@@ -184,9 +198,7 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'kvm'
                 found_virt = True
 
-        sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
-
-        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway', 'Nutanix')
+        KVM_SYS_VENDORS = ('QEMU', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway', 'Nutanix')
         if sys_vendor in KVM_SYS_VENDORS:
             guest_tech.add('kvm')
             if not found_virt:
