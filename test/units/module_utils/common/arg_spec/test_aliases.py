@@ -37,7 +37,7 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
         },
         "",
-        "Both option path and its alias directory are set",
+        {'alias': 'directory', 'option': 'path'},
     ),
     (
         "deprecated-alias",
@@ -57,7 +57,7 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
             'not_yo_path': '/tmp',
         },
-        "Alias 'not_yo_path' is deprecated.",
+        {'version': '1.7', 'date': None, 'collection_name': None},
         "",
     )
 ]
@@ -96,17 +96,15 @@ def test_aliases(arg_spec, parameters, expected, deprecation, warning):
     assert result.validated_parameters == expected
     assert result.error_messages == []
 
-    deprecations = get_deprecation_messages()
-    if not deprecations:
-        assert deprecations == ()
+    if deprecation:
+        assert deprecation == result.deprecations[0]
     else:
-        assert deprecation in get_deprecation_messages()[0]['msg']
+        assert result.deprecations == []
 
-    warnings = get_warning_messages()
-    if not warning:
-        assert warnings == ()
+    if warning:
+        assert warning == result.warnings[0]
     else:
-        assert warning in warnings[0]
+        assert result.warnings == []
 
 
 @pytest.mark.parametrize(

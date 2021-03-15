@@ -19,7 +19,6 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.common.warnings import deprecate, warn
 
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
@@ -57,7 +56,9 @@ class ValidationResult:
         self._no_log_values = set()
         self._unsupported_parameters = set()
         self._validated_parameters = deepcopy(parameters)
+        self.deprecations = []
         self.errors = AnsibleValidationErrorMultiple()
+        self.warnings = []
 
     @property
     def validated_parameters(self):
@@ -174,12 +175,14 @@ class ArgumentSpecValidator:
             result.errors.append(AliasError(to_native(e)))
 
         for option, alias in alias_warnings:
-            warn('Both option %s and its alias %s are set.' % (option, alias))
+            result.warnings.append({'option': option, 'alias': alias})
 
         for deprecation in alias_deprecations:
-            deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                      version=deprecation.get('version'), date=deprecation.get('date'),
-                      collection_name=deprecation.get('collection_name'))
+            result.deprecations.append({
+                'version': deprecation.get('version'),
+                'date': deprecation.get('date'),
+                'collection_name': deprecation.get('collection_name'),
+            })
 
         try:
             result._no_log_values.update(_list_no_log_values(self.argument_spec, result._validated_parameters))
