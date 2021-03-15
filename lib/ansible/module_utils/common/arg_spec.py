@@ -8,13 +8,13 @@ __metaclass__ = type
 from copy import deepcopy
 
 from ansible.module_utils.common.parameters import (
+    _get_unsupported_parameters,
+    _handle_aliases,
+    _list_no_log_values,
+    _set_defaults,
     _validate_argument_types,
     _validate_argument_values,
     _validate_sub_spec,
-    get_unsupported_parameters,
-    handle_aliases,
-    list_no_log_values,
-    set_defaults,
     set_fallbacks,
 )
 
@@ -137,8 +137,8 @@ class ArgumentSpecValidator:
         """Validate module parameters against argument spec. Returns a
         ValidationResult object.
 
-        Error messages in the ValidationResult may contain
-        no_log values and should be sanitized before logging or displaying.
+        Error messages in the ValidationResult may contain no_log values and should be
+        sanitized before logging or displaying.
 
         :Example:
 
@@ -167,7 +167,7 @@ class ArgumentSpecValidator:
         alias_warnings = []
         alias_deprecations = []
         try:
-            alias_results, legal_inputs = handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations)
+            alias_results, legal_inputs = _handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations)
         except (TypeError, ValueError) as e:
             alias_results = {}
             legal_inputs = None
@@ -182,14 +182,14 @@ class ArgumentSpecValidator:
                       collection_name=deprecation.get('collection_name'))
 
         try:
-            result._no_log_values.update(list_no_log_values(self.argument_spec, result._validated_parameters))
+            result._no_log_values.update(_list_no_log_values(self.argument_spec, result._validated_parameters))
         except TypeError as te:
             result.errors.append(NoLogError(to_native(te)))
 
         if legal_inputs is None:
             legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
         try:
-            result._unsupported_parameters.update(get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
+            result._unsupported_parameters.update(_get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
         except TypeError as te:
             result.errors.append(RequiredDefaultError(to_native(te)))
         except ValueError as ve:
@@ -200,7 +200,7 @@ class ArgumentSpecValidator:
         except TypeError as te:
             result.errors.append(MutuallyExclusiveError(to_native(te)))
 
-        result._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters, False))
+        result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters, False))
 
         try:
             check_required_arguments(self.argument_spec, result._validated_parameters)
@@ -224,7 +224,7 @@ class ArgumentSpecValidator:
                 except TypeError as te:
                     result.errors.append(check['err'](to_native(te)))
 
-        result._no_log_values.update(set_defaults(self.argument_spec, result._validated_parameters))
+        result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters))
 
         _validate_sub_spec(self.argument_spec, result._validated_parameters,
                            errors=result.errors,

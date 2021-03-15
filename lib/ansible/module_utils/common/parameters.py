@@ -113,6 +113,207 @@ DEFAULT_TYPE_VALIDATORS = {
 }
 
 
+def _get_type_validator(wanted):
+    """Returns the callable used to validate a wanted type and the type name.
+
+    :arg wanted: String or callable. If a string, get the corresponding
+        validation function from DEFAULT_TYPE_VALIDATORS. If callable,
+        get the name of the custom callable and return that for the type_checker.
+
+    :returns: Tuple of callable function or None, and a string that is the name
+        of the wanted type.
+    """
+
+    # Use one our our builtin validators.
+    if not callable(wanted):
+        if wanted is None:
+            # Default type for parameters
+            wanted = 'str'
+
+        type_checker = DEFAULT_TYPE_VALIDATORS.get(wanted)
+
+    # Use the custom callable for validation.
+    else:
+        type_checker = wanted
+        wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
+    return type_checker, wanted
+
+
+def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None):
+    """Check keys in parameters against those provided in legal_inputs
+    to ensure they contain legal values. If legal_inputs are not supplied,
+    they will be generated using the argument_spec.
+
+    :arg argument_spec: Dictionary of parameters, their type, and valid values.
+    :arg parameters: Dictionary of parameters.
+    :arg legal_inputs: List of valid key names property names. Overrides values
+        in argument_spec.
+    :arg options_context: List of parent keys for tracking the context of where
+        a parameter is defined.
+
+    :returns: Set of unsupported parameters. Empty set if no unsupported parameters
+        are found.
+    """
+
+    if legal_inputs is None:
+        aliases, legal_inputs = _handle_aliases(argument_spec, parameters)
+
+    unsupported_parameters = set()
+    for k in parameters.keys():
+        if k not in legal_inputs:
+            context = k
+            if options_context:
+                context = tuple(options_context + [k])
+
+            unsupported_parameters.add(context)
+
+    return unsupported_parameters
+
+
+def _handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprecations=None):
+    """Return a two item tuple. The first is a dictionary of aliases, the second is
+    a list of legal inputs.
+
+    Modify supplied parameters by adding a new key for each alias.
+
+    If a list is provided to the alias_warnings parameter, it will be filled with tuples
+    (option, alias) in every case where both an option and its alias are specified.
+
+    If a list is provided to alias_deprecations, it will be populated with dictionaries,
+    each containing deprecation information for each alias found in argument_spec.
+    """
+
+    legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
+    aliases_results = {}  # alias:canon
+
+    for (k, v) in argument_spec.items():
+        legal_inputs.append(k)
+        aliases = v.get('aliases', None)
+        default = v.get('default', None)
+        required = v.get('required', False)
+
+        if alias_deprecations is not None:
+            for alias in argument_spec[k].get('deprecated_aliases', []):
+                if alias.get('name') in parameters:
+                    alias_deprecations.append(alias)
+
+        if default is not None and required:
+            # not alias specific but this is a good place to check this
+            raise ValueError("internal error: required and default are mutually exclusive for %s" % k)
+
+        if aliases is None:
+            continue
+
+        if not is_iterable(aliases) or isinstance(aliases, (binary_type, text_type)):
+            raise TypeError('internal error: aliases must be a list or tuple')
+
+        for alias in aliases:
+            legal_inputs.append(alias)
+            aliases_results[alias] = k
+            if alias in parameters:
+                if k in parameters and alias_warnings is not None:
+                    alias_warnings.append((k, alias))
+                parameters[k] = parameters[alias]
+
+    return aliases_results, legal_inputs
+
+
+def _list_deprecations(argument_spec, parameters, prefix=''):
+    """Return a list of deprecations
+
+    :arg argument_spec: An argument spec dictionary
+    :arg parameters: Dictionary of parameters
+
+    :returns: List of dictionaries containing a message and version in which
+        the deprecated parameter will be removed, or an empty list::
+
+            [{'msg': "Param 'deptest' is deprecated. See the module docs for more information", 'version': '2.9'}]
+    """
+
+    deprecations = []
+    for arg_name, arg_opts in argument_spec.items():
+        if arg_name in parameters:
+            if prefix:
+                sub_prefix = '%s["%s"]' % (prefix, arg_name)
+            else:
+                sub_prefix = arg_name
+            if arg_opts.get('removed_at_date') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'date': arg_opts.get('removed_at_date'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
+                })
+            elif arg_opts.get('removed_in_version') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'version': arg_opts.get('removed_in_version'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
+                })
+            # Check sub-argument spec
+            sub_argument_spec = arg_opts.get('options')
+            if sub_argument_spec is not None:
+                sub_arguments = parameters[arg_name]
+                if isinstance(sub_arguments, Mapping):
+                    sub_arguments = [sub_arguments]
+                if isinstance(sub_arguments, list):
+                    for sub_params in sub_arguments:
+                        if isinstance(sub_params, Mapping):
+                            deprecations.extend(_list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
+
+    return deprecations
+
+
+def _list_no_log_values(argument_spec, params):
+    """Return set of no log values
+
+    :arg argument_spec: An argument spec dictionary
+    :arg params: Dictionary of all parameters
+
+    :returns: Set of strings that should be hidden from output::
+
+        {'secret_dict_value', 'secret_list_item_one', 'secret_list_item_two', 'secret_string'}
+    """
+
+    no_log_values = set()
+    for arg_name, arg_opts in argument_spec.items():
+        if arg_opts.get('no_log', False):
+            # Find the value for the no_log'd param
+            no_log_object = params.get(arg_name, None)
+
+            if no_log_object:
+                try:
+                    no_log_values.update(_return_datastructure_name(no_log_object))
+                except TypeError as e:
+                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
+
+        # Get no_log values from suboptions
+        sub_argument_spec = arg_opts.get('options')
+        if sub_argument_spec is not None:
+            wanted_type = arg_opts.get('type')
+            sub_parameters = params.get(arg_name)
+
+            if sub_parameters is not None:
+                if wanted_type == 'dict' or (wanted_type == 'list' and arg_opts.get('elements', '') == 'dict'):
+                    # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
+                    if not isinstance(sub_parameters, list):
+                        sub_parameters = [sub_parameters]
+
+                    for sub_param in sub_parameters:
+                        # Validate dict fields in case they came in as strings
+
+                        if isinstance(sub_param, string_types):
+                            sub_param = check_type_dict(sub_param)
+
+                        if not isinstance(sub_param, Mapping):
+                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                                            "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
+
+                        no_log_values.update(_list_no_log_values(sub_argument_spec, sub_param))
+
+    return no_log_values
+
+
 def _return_datastructure_name(obj):
     """ Return native stringified values from datastructures.
 
@@ -229,6 +430,43 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
     return value
 
 
+def _set_defaults(argument_spec, parameters, set_default=True):
+    """Set default values for parameters when no value is supplied.
+
+    Modifies parameters directly.
+
+    :param argument_spec: Argument spec
+    :type argument_spec: dict
+
+    :param parameters: Parameters to evaluate
+    :type parameters: dict
+
+    :param set_default: Whether or not to set the default values
+    :type set_default: bool
+
+    :returns: Set of strings that should not be logged.
+    :rtype: set
+    """
+
+    no_log_values = set()
+    for param, value in argument_spec.items():
+
+        # TODO: Change the default value from None to Sentinel to differentiate between
+        #       user supplied None and a default value set by this function.
+        default = value.get('default', None)
+
+        # This prevents setting defaults on required items on the 1st run,
+        # otherwise will set things without a default to None on the 2nd.
+        if param not in parameters and (default is not None or set_default):
+            # Make sure any default value for no_log fields are masked.
+            if value.get('no_log', False) and default:
+                no_log_values.add(default)
+
+            parameters[param] = default
+
+    return no_log_values
+
+
 def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
     """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
     if isinstance(value, (text_type, binary_type)):
@@ -272,7 +510,7 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
     if errors is None:
         errors = AnsibleValidationErrorMultiple()
 
-    type_checker, wanted_element_type = get_type_validator(wanted_type)
+    type_checker, wanted_element_type = _get_type_validator(wanted_type)
     validated_parameters = []
     # Get param name for strings so we can later display this value in a useful error message if needed
     # Only pass 'kwargs' to our checkers and ignore custom callable checkers
@@ -306,7 +544,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
     :param argument_spec: Argument spec
     :type argument_spec: dict
 
-    :param parameters: Parameters passed to module
+    :param parameters: Parameters
     :type parameters: dict
 
     :param prefix: Name of the parent key that contains the spec. Used in the error message
@@ -333,7 +571,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         wanted_type = spec.get('type')
-        type_checker, wanted_name = get_type_validator(wanted_type)
+        type_checker, wanted_name = _get_type_validator(wanted_type)
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
         kwargs = {}
@@ -469,7 +707,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
 
                 alias_warnings = []
                 try:
-                    options_aliases, legal_inputs = handle_aliases(sub_spec, sub_parameters, alias_warnings)
+                    options_aliases, legal_inputs = _handle_aliases(sub_spec, sub_parameters, alias_warnings)
                 except (TypeError, ValueError) as e:
                     options_aliases = {}
                     legal_inputs = None
@@ -479,20 +717,20 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                     warn('Both option %s and its alias %s are set.' % (option, alias))
 
                 try:
-                    no_log_values.update(list_no_log_values(sub_spec, sub_parameters))
+                    no_log_values.update(_list_no_log_values(sub_spec, sub_parameters))
                 except TypeError as te:
                     errors.append(NoLogError(to_native(te)))
 
                 if legal_inputs is None:
                     legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
-                unsupported_parameters.update(get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
+                unsupported_parameters.update(_get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
 
                 try:
                     check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
                 except TypeError as e:
                     errors.append(MutuallyExclusiveError(to_native(e)))
 
-                no_log_values.update(set_defaults(sub_spec, sub_parameters, False))
+                no_log_values.update(_set_defaults(sub_spec, sub_parameters, False))
 
                 try:
                     check_required_arguments(sub_spec, sub_parameters, options_context)
@@ -515,7 +753,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                     except TypeError as e:
                         errors.append(check['err'](to_native(e)))
 
-                no_log_values.update(set_defaults(sub_spec, sub_parameters))
+                no_log_values.update(_set_defaults(sub_spec, sub_parameters))
 
                 # Handle nested specs
                 _validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
@@ -555,138 +793,6 @@ def set_fallbacks(argument_spec, parameters):
                 parameters[param] = fallback_value
 
     return no_log_values
-
-
-def set_defaults(argument_spec, parameters, set_default=True):
-    """Set default values for parameters when no value is supplied.
-
-    Modifies parameters directly.
-
-    :param argument_spec: Argument spec
-    :type argument_spec: dict
-
-    :param parameters: Parameters to evaluate
-    :type parameters: dict
-
-    :param set_default: Whether or not to set the default values
-    :type set_default: bool
-
-    :returns: Set of strings that should not be logged.
-    :rtype: set
-    """
-
-    no_log_values = set()
-    for param, value in argument_spec.items():
-
-        # TODO: Change the default value from None to Sentinel to differentiate between
-        #       user supplied None and a default value set by this function.
-        default = value.get('default', None)
-
-        # This prevents setting defaults on required items on the 1st run,
-        # otherwise will set things without a default to None on the 2nd.
-        if param not in parameters and (default is not None or set_default):
-            # Make sure any default value for no_log fields are masked.
-            if value.get('no_log', False) and default:
-                no_log_values.add(default)
-
-            parameters[param] = default
-
-    return no_log_values
-
-
-def list_no_log_values(argument_spec, params):
-    """Return set of no log values
-
-    :arg argument_spec: An argument spec dictionary from a module
-    :arg params: Dictionary of all parameters
-
-    :returns: Set of strings that should be hidden from output::
-
-        {'secret_dict_value', 'secret_list_item_one', 'secret_list_item_two', 'secret_string'}
-    """
-
-    no_log_values = set()
-    for arg_name, arg_opts in argument_spec.items():
-        if arg_opts.get('no_log', False):
-            # Find the value for the no_log'd param
-            no_log_object = params.get(arg_name, None)
-
-            if no_log_object:
-                try:
-                    no_log_values.update(_return_datastructure_name(no_log_object))
-                except TypeError as e:
-                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
-
-        # Get no_log values from suboptions
-        sub_argument_spec = arg_opts.get('options')
-        if sub_argument_spec is not None:
-            wanted_type = arg_opts.get('type')
-            sub_parameters = params.get(arg_name)
-
-            if sub_parameters is not None:
-                if wanted_type == 'dict' or (wanted_type == 'list' and arg_opts.get('elements', '') == 'dict'):
-                    # Sub parameters can be a dict or list of dicts. Ensure parameters are always a list.
-                    if not isinstance(sub_parameters, list):
-                        sub_parameters = [sub_parameters]
-
-                    for sub_param in sub_parameters:
-                        # Validate dict fields in case they came in as strings
-
-                        if isinstance(sub_param, string_types):
-                            sub_param = check_type_dict(sub_param)
-
-                        if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
-                                            "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
-
-                        no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
-
-    return no_log_values
-
-
-def list_deprecations(argument_spec, parameters, prefix=''):
-    """Return a list of deprecations
-
-    :arg argument_spec: An argument spec dictionary from a module
-    :arg parameters: Dictionary of parameters
-
-    :returns: List of dictionaries containing a message and version in which
-        the deprecated parameter will be removed, or an empty list::
-
-            [{'msg': "Param 'deptest' is deprecated. See the module docs for more information", 'version': '2.9'}]
-    """
-
-    deprecations = []
-    for arg_name, arg_opts in argument_spec.items():
-        if arg_name in parameters:
-            if prefix:
-                sub_prefix = '%s["%s"]' % (prefix, arg_name)
-            else:
-                sub_prefix = arg_name
-            if arg_opts.get('removed_at_date') is not None:
-                deprecations.append({
-                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
-                    'date': arg_opts.get('removed_at_date'),
-                    'collection_name': arg_opts.get('removed_from_collection'),
-                })
-            elif arg_opts.get('removed_in_version') is not None:
-                deprecations.append({
-                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
-                    'version': arg_opts.get('removed_in_version'),
-                    'collection_name': arg_opts.get('removed_from_collection'),
-                })
-            # Check sub-argument spec
-            sub_argument_spec = arg_opts.get('options')
-            if sub_argument_spec is not None:
-                sub_arguments = parameters[arg_name]
-                if isinstance(sub_arguments, Mapping):
-                    sub_arguments = [sub_arguments]
-                if isinstance(sub_arguments, list):
-                    for sub_params in sub_arguments:
-                        if isinstance(sub_params, Mapping):
-                            deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
-
-    return deprecations
 
 
 def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
@@ -764,109 +870,3 @@ def remove_values(value, no_log_strings):
                     raise TypeError('Unknown container type encountered when removing private values from output')
 
     return new_value
-
-
-def handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprecations=None):
-    """Return a two item tuple. The first is a dictionary of aliases, the second is
-    a list of legal inputs.
-
-    Modify supplied parameters by adding a new key for each alias.
-
-    If a list is provided to the alias_warnings parameter, it will be filled with tuples
-    (option, alias) in every case where both an option and its alias are specified.
-
-    If a list is provided to alias_deprecations, it will be populated with dictionaries,
-    each containing deprecation information for each alias found in argument_spec.
-    """
-
-    legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
-    aliases_results = {}  # alias:canon
-
-    for (k, v) in argument_spec.items():
-        legal_inputs.append(k)
-        aliases = v.get('aliases', None)
-        default = v.get('default', None)
-        required = v.get('required', False)
-
-        if alias_deprecations is not None:
-            for alias in argument_spec[k].get('deprecated_aliases', []):
-                if alias.get('name') in parameters:
-                    alias_deprecations.append(alias)
-
-        if default is not None and required:
-            # not alias specific but this is a good place to check this
-            raise ValueError("internal error: required and default are mutually exclusive for %s" % k)
-
-        if aliases is None:
-            continue
-
-        if not is_iterable(aliases) or isinstance(aliases, (binary_type, text_type)):
-            raise TypeError('internal error: aliases must be a list or tuple')
-
-        for alias in aliases:
-            legal_inputs.append(alias)
-            aliases_results[alias] = k
-            if alias in parameters:
-                if k in parameters and alias_warnings is not None:
-                    alias_warnings.append((k, alias))
-                parameters[k] = parameters[alias]
-
-    return aliases_results, legal_inputs
-
-
-def get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None):
-    """Check keys in parameters against those provided in legal_inputs
-    to ensure they contain legal values. If legal_inputs are not supplied,
-    they will be generated using the argument_spec.
-
-    :arg argument_spec: Dictionary of parameters, their type, and valid values.
-    :arg parameters: Dictionary of parameters.
-    :arg legal_inputs: List of valid key names property names. Overrides values
-        in argument_spec.
-    :arg options_context: List of parent keys for tracking the context of where
-        a parameter is defined.
-
-    :returns: Set of unsupported parameters. Empty set if no unsupported parameters
-        are found.
-    """
-
-    if legal_inputs is None:
-        aliases, legal_inputs = handle_aliases(argument_spec, parameters)
-
-    unsupported_parameters = set()
-    for k in parameters.keys():
-        if k not in legal_inputs:
-            context = k
-            if options_context:
-                context = tuple(options_context + [k])
-
-            unsupported_parameters.add(context)
-
-    return unsupported_parameters
-
-
-def get_type_validator(wanted):
-    """Returns the callable used to validate a wanted type and the type name.
-
-    :arg wanted: String or callable. If a string, get the corresponding
-        validation function from DEFAULT_TYPE_VALIDATORS. If callable,
-        get the name of the custom callable and return that for the type_checker.
-
-    :returns: Tuple of callable function or None, and a string that is the name
-        of the wanted type.
-    """
-
-    # Use one our our builtin validators.
-    if not callable(wanted):
-        if wanted is None:
-            # Default type for parameters
-            wanted = 'str'
-
-        type_checker = DEFAULT_TYPE_VALIDATORS.get(wanted)
-
-    # Use the custom callable for validation.
-    else:
-        type_checker = wanted
-        wanted = getattr(wanted, '__name__', to_native(type(wanted)))
-
-    return type_checker, wanted

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.parameters import get_unsupported_parameters
+from ansible.module_utils.common.parameters import _get_unsupported_parameters
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def mock_handle_aliases(*args):
     )
 )
 def test_check_arguments(argument_spec, module_parameters, legal_inputs, expected, mocker):
-    mocker.patch('ansible.module_utils.common.parameters.handle_aliases', side_effect=mock_handle_aliases)
-    result = get_unsupported_parameters(argument_spec, module_parameters, legal_inputs)
+    mocker.patch('ansible.module_utils.common.parameters._handle_aliases', side_effect=mock_handle_aliases)
+    result = _get_unsupported_parameters(argument_spec, module_parameters, legal_inputs)
 
     assert result == expected
