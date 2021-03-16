@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2021, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -10,7 +10,7 @@ DOCUMENTATION = """
     description:
         - This become plugins allows your remote/login user to execute commands as another user via the sudo and su utility combined.
     author: ansible (@core)
-    version_added: "2.11"
+    version_added: "2.12"
     options:
         become_user:
             description: User you 'become' to execute the task
