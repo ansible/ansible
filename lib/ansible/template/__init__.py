@@ -101,7 +101,12 @@ RANGE_TYPE = type(range(0))
 
 
 def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
-    b_path = to_bytes(path)
+
+    if fullpath is None:
+        b_path = to_bytes(path)
+    else:
+        b_path = to_bytes(fullpath)
+
     try:
         template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
     except (KeyError, TypeError):
