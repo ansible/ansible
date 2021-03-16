@@ -43,9 +43,18 @@
     ignore_errors: True
     register: result
 
-  - debug: var=result
   - name: Make sure we failed in AnsiBallZ
     assert:
       that:
         - result is failed
         - result['msg'] == "Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py"
+
+
+  - name: Test that optional imports behave properly
+    test_optional:
+    register: optionaltest
+
+  - assert:
+      that:
+      - optionaltest is success
+      - optionaltest.msg == 'all missing optional imports behaved as expected'

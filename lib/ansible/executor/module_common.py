@@ -29,6 +29,7 @@ import shlex
 import zipfile
 import re
 import pkgutil
+from ast import AST, Import, ImportFrom
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -437,7 +438,7 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 class ModuleDepFinder(ast.NodeVisitor):
 
-    def __init__(self, module_fqn, *args, **kwargs):
+    def __init__(self, module_fqn, tree, *args, **kwargs):
         """
         Walk the ast tree for the python module.
         :arg module_fqn: The fully qualified name to reach this module in dotted notation.
@@ -462,6 +463,27 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.submodules = set()
         self.module_fqn = module_fqn
 
+        self._tree = tree  # squirrel this away so we can compare node parents to it
+        self.submodules = set()
+        self.required_imports = set()
+
+        self._visit_map = {
+            Import: self.visit_Import,
+            ImportFrom: self.visit_ImportFrom,
+        }
+
+        self.generic_visit(tree)
+
+    def generic_visit(self, node):
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, (Import, ImportFrom)):
+                        item.parent = node
+                        self._visit_map[item.__class__](item)
+                    elif isinstance(item, AST):
+                        self.generic_visit(item)
+
     def visit_Import(self, node):
         """
         Handle import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
@@ -474,6 +496,8 @@ class ModuleDepFinder(ast.NodeVisitor):
                     alias.name.startswith('ansible_collections.')):
                 py_mod = tuple(alias.name.split('.'))
                 self.submodules.add(py_mod)
+                if node.parent == self._tree:
+                    self.required_imports.add(py_mod)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -533,6 +557,8 @@ class ModuleDepFinder(ast.NodeVisitor):
         if py_mod:
             for alias in node.names:
                 self.submodules.add(py_mod + (alias.name,))
+                if node.parent == self._tree:
+                    self.required_imports.add(py_mod + (alias.name,))
 
         self.generic_visit(node)
 
@@ -683,8 +709,7 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
-    finder = ModuleDepFinder(module_fqn)
-    finder.visit(tree)
+    finder = ModuleDepFinder(module_fqn, tree)
 
     #
     # Determine what imports that we've found are modules (vs class, function.
@@ -751,6 +776,11 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
 
         # Could not find the module.  Construct a helpful error message.
         if module_info is None:
+            # is this import optional? if so, just skip it for this module
+            if py_module_name not in finder.required_imports:
+                continue
+
+            # not an optional import, so it's a fatal error...
             msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
             if idx == 2:
                 msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
