@@ -94,7 +94,10 @@ class TaskInclude(Task):
 
     def _validate_attributes(self, ds):
 
-        ds = super(TaskInclude, self)._validate_attributes(ds)
+        if ds is None:
+            ds = {}
+
+        super(TaskInclude, self)._validate_attributes(ds)
 
         diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
@@ -104,8 +107,6 @@ class TaskInclude(Task):
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
-
-        return ds
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
