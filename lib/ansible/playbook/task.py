@@ -290,11 +290,13 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
     def _validate_attributes(self, ds):
         try:
-            super(Task, self)._validate_attributes(ds)
+            ds = super(Task, self)._validate_attributes(ds)
         except AnsibleParserError as e:
             if 'is not a valid attribute' in e.message:
                 e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e
+
+        return ds
 
     def post_validate(self, templar):
         '''
