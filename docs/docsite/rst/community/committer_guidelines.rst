@@ -47,6 +47,7 @@ Roles on Core
 =============
 * Core committers: Fine to do pull requests for most things, but we should have a timebox. Hanging pull requests may merge on the judgement of these developers.
 * :ref:`Module maintainers <maintainers>`: Module maintainers own specific modules and have indirect commit access through the current module pull request mechanisms.
+* :ref:`Collection maintainers <maintainers>`: Collection maintainers own specific collections and have commit access to them. Each collection can set its own rules for contributions.
 
 General rules
 =============
