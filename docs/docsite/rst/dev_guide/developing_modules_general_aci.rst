@@ -396,6 +396,18 @@ You can run from your fork something like:
 .. code-block:: bash
 
     $ ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
+    
+For collections you need to build & install first and then run the sanity inside the installed directory:
+ 
+.. code-block:: bash
+
+    (your-dev-dir)$ ansible-galaxy collection build --force
+    (your-dev-dir)$ ansible-galaxy collection install <your-collection.tar.gz> --force
+    ...
+    Installing '<your-collection>' to '~/.ansible/collections/ansible_collections/<namespace>/<collection>'
+    <your-collection> was installed successfully
+    (your-dev-dir)$ cd '~/.ansible/collections/ansible_collections/<namespace>/<collection>'
+    $ ansible-test sanity 
 
 .. seealso::
 
