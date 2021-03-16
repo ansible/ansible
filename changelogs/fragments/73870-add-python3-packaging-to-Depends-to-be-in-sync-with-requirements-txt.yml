@@ -1,0 +1,2 @@
+bugfixes:
+  - add python3-packaging to Depends, to be in sync with requirements.txt (https://github.com/ansible/ansible/issues/72117)
