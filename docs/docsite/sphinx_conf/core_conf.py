@@ -37,7 +37,7 @@ sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 # the repository version needs to be the one that is loaded:
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
 
-VERSION = 'devel'
+VERSION = '2.10'
 AUTHOR = 'Ansible, Inc'
 
 
