@@ -46,7 +46,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
-from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
@@ -459,11 +458,11 @@ class StrategyBase:
         Mutates the original object
         """
 
-        original_host = self._inventory.get_host(to_text(task_result._host))
-        task_result._host = original_host
+        if isinstance(task_result._host, string_types):
+            task_result._host = self._inventory.get_host(to_text(task_result._host))
 
-        if not isinstance(task_result._task, Task):
-            queue_cache_entry = (original_host.name, task_result._task)
+        if isinstance(task_result._task, string_types):
+            queue_cache_entry = (task_result._host.name, task_result._task)
             found_task = self._queued_task_cache.get(queue_cache_entry)['task']
             original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
             original_task._parent = found_task._parent
