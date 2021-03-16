@@ -334,7 +334,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         new_me = self.__class__()
 
         for name in self._valid_attrs.keys():
-            if name in self._alias_attrs or not private and self._attributes[name].private:
+            if name in self._alias_attrs or not private and self._valid_attrs[name].private:
                 continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
             new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
