@@ -455,13 +455,18 @@ class StrategyBase:
         """Normalize a TaskResult to reference actual Host and Task objects
         when only given the ``Host.name``, or the ``Task._uuid``
 
+        Only the ``Host.name`` and ``Task._uuid`` are commonly sent back from
+        the ``TaskExecutor`` or ``WorkerProcess`` due to performance concerns
+
         Mutates the original object
         """
 
         if isinstance(task_result._host, string_types):
+            # If the value is a string, it is ``Host.name``
             task_result._host = self._inventory.get_host(to_text(task_result._host))
 
         if isinstance(task_result._task, string_types):
+            # If the value is a string, it is ``Task._uuid``
             queue_cache_entry = (task_result._host.name, task_result._task)
             found_task = self._queued_task_cache.get(queue_cache_entry)['task']
             original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
