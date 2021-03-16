@@ -107,7 +107,7 @@ class LinuxVirtual(Virtual):
             if product_family == 'RHV':
                 virtual_facts['virtualization_type'] = 'RHV'
                 return virtual_facts
-            elif product_family == 'RHEV Hypervisor':
+            elif product_name == 'RHEV Hypervisor':
                 virtual_facts['virtualization_type'] = 'RHEV'
                 return virtual_facts
 
