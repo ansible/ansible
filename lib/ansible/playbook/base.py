@@ -545,6 +545,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 else:
                     setattr(self, attr, value)
 
+        # from_attrs is only used to create a finalized task
+        # from attrs from the Worker/TaskExecutor
+        # Those attrs are finalized and squashed in the TE
+        # and controller side use needs to reflect that
+        self._finalized = True
+        self._squashed = True
+
     def serialize(self):
         '''
         Serializes the object derived from the base object into

@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+        - include_role:
+            name: '{{ item }}'
+          loop:
+            - fail
+      rescue:
+        - debug:
+            msg: "{{ ansible_failed_task.name }}"
+
+        - assert:
+            that:
+              - ansible_failed_task.name == "Fail"
+              - ansible_failed_task.action == "fail"
+              - ansible_failed_task.parent is not defined
