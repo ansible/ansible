@@ -526,11 +526,11 @@ You can also use "sudo make install".
 Finding tarballs of tagged releases
 ===================================
 
-Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available from ``pypi`` as https://pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz. You can make VERSION a variable in your package managing system that you update in one place whenever you package a new version. Alternately, you can download https://pypi.python.org/project/ansible  to get the latest stable release.
+If you are packaging Ansible or wanting to build a local package yourself, and you want to avoid a git checkout, you can use a tarball of a tagged release. You can download the latest stable release from PyPI's `ansible package page <https://pypi.org/project/ansible/>`_. If you need a specific older version, beta version, or release candidate, you can use the pattern ``pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz``. VERSION must be the full version number, for example 3.1.0 or 4.0.0b2. You can make VERSION a variable in your package managing system that you update in one place whenever you package a new version.
 
 .. note::
 
-	If you are creating your own Ansible package, you must also download or package ``ansible-base`` as part of your Ansible package. You can download it as https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{VERSION}}.tar.gz.
+	If you are creating your own Ansible package, you must also download or package ``ansible-core`` (or ``ansible-base`` for packages based on 2.10.x) from PyPI as part of your Ansible package. You must specify a particular version. Visit the PyPI project pages to download files for `ansible-core <https://pypi.org/project/ansible-core/>`_ or `ansible-base <https://pypi.org/project/ansible-base/>`_.
 
 These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
 

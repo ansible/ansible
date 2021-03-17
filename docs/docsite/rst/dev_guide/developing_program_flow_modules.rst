@@ -5,7 +5,7 @@
 Ansible module architecture
 ***************************
 
-If you are working on the ``ansible-base`` code, writing an Ansible module, or developing an action plugin, you may need to understand how Ansible's program flow executes. If you are just using Ansible Modules in playbooks, you can skip this section.
+If you are working on the ``ansible-core`` code, writing an Ansible module, or developing an action plugin, you may need to understand how Ansible's program flow executes. If you are just using Ansible Modules in playbooks, you can skip this section.
 
 .. contents::
    :local:
@@ -631,7 +631,7 @@ This section will discuss the behavioral attributes for arguments:
 
 :removed_in_version:
 
-  ``removed_in_version`` indicates which version of ansible-base or a collection a deprecated argument will be removed in. Mutually exclusive with ``removed_at_date``, and must be used with ``removed_from_collection``.
+  ``removed_in_version`` indicates which version of ansible-core or a collection a deprecated argument will be removed in. Mutually exclusive with ``removed_at_date``, and must be used with ``removed_from_collection``.
 
   Example:
 
@@ -645,7 +645,7 @@ This section will discuss the behavioral attributes for arguments:
 
 :removed_at_date:
 
-  ``removed_at_date`` indicates that a deprecated argument will be removed in a minor ansible-base release or major collection release after this date. Mutually exclusive with ``removed_in_version``, and must be used with ``removed_from_collection``.
+  ``removed_at_date`` indicates that a deprecated argument will be removed in a minor ansible-core release or major collection release after this date. Mutually exclusive with ``removed_in_version``, and must be used with ``removed_from_collection``.
 
   Example:
 
@@ -659,7 +659,7 @@ This section will discuss the behavioral attributes for arguments:
 
 :removed_from_collection:
 
-  Specifies which collection (or ansible-base) deprecates this deprecated argument. Specify ``ansible.builtin`` for ansible-base, or the collection's name (format ``foo.bar``). Must be used with ``removed_in_version`` or ``removed_at_date``.
+  Specifies which collection (or ansible-core) deprecates this deprecated argument. Specify ``ansible.builtin`` for ansible-core, or the collection's name (format ``foo.bar``). Must be used with ``removed_in_version`` or ``removed_at_date``.
 
 :deprecated_aliases:
 
@@ -671,15 +671,15 @@ This section will discuss the behavioral attributes for arguments:
 
   :version:
 
-    The version of ansible-base or the collection this alias will be removed in. Either ``version`` or ``date`` must be specified.
+    The version of ansible-core or the collection this alias will be removed in. Either ``version`` or ``date`` must be specified.
 
   :date:
 
-    The a date after which a minor release of ansible-base or a major collection release will no longer contain this alias.. Either ``version`` or ``date`` must be specified.
+    The a date after which a minor release of ansible-core or a major collection release will no longer contain this alias.. Either ``version`` or ``date`` must be specified.
 
   :collection_name:
 
-    Specifies which collection (or ansible-base) deprecates this deprecated alias. Specify ``ansible.builtin`` for ansible-base, or the collection's name (format ``foo.bar``). Must be used with ``version`` or ``date``.
+    Specifies which collection (or ansible-core) deprecates this deprecated alias. Specify ``ansible.builtin`` for ansible-core, or the collection's name (format ``foo.bar``). Must be used with ``version`` or ``date``.
 
   Examples:
 
