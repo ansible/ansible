@@ -12,7 +12,7 @@ Ansible 3 Porting Guide
   :depth: 2
 
 
-Ansible 3 is based on Ansible-Base 2.10, which is the same major release as Ansible 2.10.  Therefore, there is no section on ansible-core in this porting guide.  If you are upgrading from Ansible 2.9, please first consult the Ansible 2.10 porting guide before continuing with the Ansible 3 porting guide.
+Ansible 3 is based on Ansible-Base 2.10, which is the same major release as Ansible 2.10.  Therefore, there is no section on ansible-base in this porting guide.  If you are upgrading from Ansible 2.9, please first consult the Ansible 2.10 porting guide before continuing with the Ansible 3 porting guide.
 
 We suggest you read this page along with the `Ansible Changelog for 3.0 <https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst>`_ to understand what updates you may need to make.
 
@@ -110,38 +110,38 @@ community.general
 - If you use Ansible 2.9 and the Google cloud plugins or modules from this collection, community.general 2.0.0 results in errors when trying to use the Google cloud content by FQCN, like ``community.general.gce_img``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.google.gce_img`` for the previous example) and to make sure that you have ``community.google`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install the ``community.google`` or ``google.cloud`` collections if you are using any of the Google cloud plugins or modules.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (such as community.google) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install the ``community.google`` or ``google.cloud`` collections if you are using any of the Google cloud plugins or modules.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (such as community.google) must be installed for them to work.
 - If you use Ansible 2.9 and the Kubevirt plugins or modules from this collection, community.general 2.0.0 results in errors when trying to use the Kubevirt content by FQCN, like ``community.general.kubevirt_vm``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.kubevirt.kubevirt_vm`` for the previous example) and to make sure that you have ``community.kubevirt`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install the ``community.kubevirt`` collection if you are using any of the Kubevirt plugins or modules.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (such as community.google) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install the ``community.kubevirt`` collection if you are using any of the Kubevirt plugins or modules.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (such as community.google) must be installed for them to work.
 - If you use Ansible 2.9 and the ``docker`` plugins or modules from this collections, community.general 2.0.0 results in errors when trying to use the docker content by FQCN, like ``community.general.docker_container``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.docker.docker_container`` for the previous example) and to make sure that you have ``community.docker`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.docker`` if you are using any of the ``docker`` plugins or modules.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.docker) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.docker`` if you are using any of the ``docker`` plugins or modules.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.docker) must be installed for them to work.
 - If you use Ansible 2.9 and the ``hashi_vault`` lookup plugin from this collections, community.general 2.0.0 results in errors when trying to use the Hashi Vault content by FQCN, like ``community.general.hashi_vault``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your inventories, variable files, playbooks and roles manually to use the new FQCN (``community.hashi_vault.hashi_vault``) and to make sure that you have ``community.hashi_vault`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.hashi_vault`` if you are using the ``hashi_vault`` plugin.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.hashi_vault) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.hashi_vault`` if you are using the ``hashi_vault`` plugin.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.hashi_vault) must be installed for them to work.
 - If you use Ansible 2.9 and the ``hetzner`` modules from this collections, community.general 2.0.0 results in errors when trying to use the hetzner content by FQCN, like ``community.general.hetzner_firewall``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.hrobot.firewall`` for the previous example) and to make sure that you have ``community.hrobot`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.hrobot`` if you are using any of the ``hetzner`` modules.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.hrobot) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.hrobot`` if you are using any of the ``hetzner`` modules.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.hrobot) must be installed for them to work.
 - If you use Ansible 2.9 and the ``oc`` connection plugin from this collections, community.general 2.0.0 results in errors when trying to use the oc content by FQCN, like ``community.general.oc``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your inventories, variable files, playbooks and roles manually to use the new FQCN (``community.okd.oc``) and to make sure that you have ``community.okd`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.okd`` if you are using the ``oc`` plugin.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.okd) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.okd`` if you are using the ``oc`` plugin.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.okd) must be installed for them to work.
 - If you use Ansible 2.9 and the ``postgresql`` modules from this collections, community.general 2.0.0 results in errors when trying to use the postgresql content by FQCN, like ``community.general.postgresql_info``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.postgresql.postgresql_info`` for the previous example) and to make sure that you have ``community.postgresql`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.postgresql`` if you are using any of the ``postgresql`` modules.
-  While ansible-core 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.postgresql) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install ``community.postgresql`` if you are using any of the ``postgresql`` modules.
+  While ansible-base 2.10 or newer can use the redirects that community.general 2.0.0 adds, the collection they point to (community.postgresql) must be installed for them to work.
 - The Google cloud inventory script ``gce.py`` has been migrated to the ``community.google`` collection. Install the ``community.google`` collection in order to continue using it.
 - archive - remove path folder itself when ``remove`` parameter is true (https://github.com/ansible-collections/community.general/issues/1041).
 - log_plays callback - add missing information to the logs generated by the callback plugin. This changes the log message format (https://github.com/ansible-collections/community.general/pull/442).
@@ -167,25 +167,25 @@ community.network
 - If you use Ansible 2.9 and the FortiOS modules from this collection, community.network 2.0.0 results in errors when trying to use the FortiOS content by FQCN, like ``community.network.fmgr_device``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.fortios.fmgr_device`` for the previous example) and to make sure that you have ``community.fortios`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``community.fortios`` if you are using any of the FortiOS modules.
-  While ansible-core 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (community.fortios) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``community.fortios`` if you are using any of the FortiOS modules.
+  While ansible-base 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (community.fortios) must be installed for them to work.
 - If you use Ansible 2.9 and the ``cp_publish`` module from this collection, community.network 2.0.0 results in errors when trying to use the module by FQCN, i.e. ``community.network.cp_publish``. Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``check_point.mgmt.cp_mgmt_publish``) and to make sure that you have ``check_point.mgmt`` installed.
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``check_point.mgmt`` if you are using the ``cp_publish`` module. While ansible-core 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (check_point.mgmt) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``check_point.mgmt`` if you are using the ``cp_publish`` module. While ansible-base 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (check_point.mgmt) must be installed for them to work.
 - If you use Ansible 2.9 and the ``fortimanager`` httpapi plugin from this collection, community.network 2.0.0 results in errors when trying to use it by FQCN (``community.network.fortimanager``).
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCN ``fortinet.fortimanager.fortimanager`` and to make sure that you have ``fortinet.fortimanager`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``fortinet.fortimanager`` if you are using the ``fortimanager`` httpapi plugin.
-  While ansible-core 2.10 or newer can use the redirect that community.network 2.0.0 adds, the collection they point to (fortinet.fortimanager) must be installed for it to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``fortinet.fortimanager`` if you are using the ``fortimanager`` httpapi plugin.
+  While ansible-base 2.10 or newer can use the redirect that community.network 2.0.0 adds, the collection they point to (fortinet.fortimanager) must be installed for it to work.
 - If you use Ansible 2.9 and the ``nso`` modules from this collection, community.network 2.0.0 results in errors when trying to use the nso content by FQCN, like ``community.network.nso_config``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``cisco.nso.nso_config`` for the previous example) and to make sure that you have ``cisco.nso`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``cisco.nso`` if you are using any of the ``nso`` modules.
-  While ansible-core 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (cisco.nso) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``cisco.nso`` if you are using any of the ``nso`` modules.
+  While ansible-base 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (cisco.nso) must be installed for them to work.
 - If you use Ansible 2.9 and the ``routeros`` plugins or modules from this collections, community.network 2.0.0 results in errors when trying to use the routeros content by FQCN, like ``community.network.routeros_command``.
   Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``community.routeros.command`` for the previous example) and to make sure that you have ``community.routeros`` installed.
 
-  If you use ansible-core 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``community.routeros`` if you are using any of the ``routeros`` plugins or modules.
-  While ansible-core 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (community.routeros) must be installed for them to work.
+  If you use ansible-base 2.10 or newer and did not install Ansible 3.0.0, but installed (and/or upgraded) community.network manually, you need to make sure to also install ``community.routeros`` if you are using any of the ``routeros`` plugins or modules.
+  While ansible-base 2.10 or newer can use the redirects that community.network 2.0.0 adds, the collection they point to (community.routeros) must be installed for them to work.
 - cnos_static_route - move ipaddress import from ansible.netcommon to builtin or package before ipaddress is removed from ansible.netcommon. You need to make sure to have the ipaddress package installed if you are using this module on Python 2.7 (https://github.com/ansible-collections/community.network/pull/129).
 
 dellemc.os10
@@ -212,12 +212,12 @@ community.general
 ~~~~~~~~~~~~~~~~~
 
 - For community.general 3.0.0, the ``ome_device_info``, ``idrac_firmware`` and ``idrac_server_config_profile`` modules will be moved to the `dellemc.openmanage <https://galaxy.ansible.com/dellemc/openmanage>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use the DellEMC modules mentioned above from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``dellemc.openmanage.`` instead of ``community.general.``,
   for example replace ``community.general.ome_device_info`` in a task by ``dellemc.openmanage.ome_device_info``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the DellEMC modules mentioned above, you have to make sure to install the ``dellemc.openmanage`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the DellEMC modules mentioned above, you have to make sure to install the ``dellemc.openmanage`` collection as well.
   If you are using FQCNs, for example ``community.general.ome_device_info`` instead of ``ome_device_info``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - The community.general collection no longer depends on the ansible.netcommon collection (https://github.com/ansible-collections/community.general/pull/1561).
 - The community.general collection no longer depends on the ansible.posix collection (https://github.com/ansible-collections/community.general/pull/1157).
@@ -344,37 +344,37 @@ community.general
 
 - All Google cloud modules and plugins have now been migrated away from this collection.
   They can be found in either the `community.google <https://galaxy.ansible.com/community/google>`_ or `google.cloud <https://galaxy.ansible.com/google/cloud>`_ collections.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.gce_img`` → ``community.google.gce_img``) and make sure to install the community.google or google.cloud collections as appropriate.
 - All Kubevirt modules and plugins have now been migrated from community.general to the `community.kubevirt <https://galaxy.ansible.com/community/kubevirt>`_ Ansible collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.kubevirt_vm`` → ``community.kubevirt.kubevirt_vm``) and make sure to install the community.kubevirt collection.
 - All ``docker`` modules and plugins have been removed from this collection.
   They have been migrated to the `community.docker <https://galaxy.ansible.com/community/docker>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.docker_container`` → ``community.docker.docker_container``) and make sure to install the community.docker collection.
 - All ``hetzner`` modules have been removed from this collection.
   They have been migrated to the `community.hrobot <https://galaxy.ansible.com/community/hrobot>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.hetzner_firewall`` → ``community.hrobot.firewall``) and make sure to install the community.hrobot collection.
 - All ``postgresql`` modules have been removed from this collection.
   They have been migrated to the `community.postgresql <https://galaxy.ansible.com/community/postgresql>`_ collection.
 
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.postgresql_info`` → ``community.postgresql.postgresql_info``) and make sure to install the community.postgresql collection.
 - The Google cloud inventory script ``gce.py`` has been migrated to the ``community.google`` collection. Install the ``community.google`` collection in order to continue using it.
 - The ``hashi_vault`` lookup plugin has been removed from this collection.
   It has been migrated to the `community.hashi_vault <https://galaxy.ansible.com/community/hashi_vault>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.hashi_vault`` → ``community.hashi_vault.hashi_vault``) and make sure to install the community.hashi_vault collection.
 - The ``oc`` connection plugin has been removed from this collection.
   It has been migrated to the `community.okd <https://galaxy.ansible.com/community/okd>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.oc`` → ``community.okd.oc``) and make sure to install the community.okd collection.
 - The deprecated ``actionable`` callback plugin has been removed. Use the ``ansible.builtin.default`` callback plugin with ``display_skipped_hosts = no`` and ``display_ok_hosts = no`` options instead (https://github.com/ansible-collections/community.general/pull/1347).
@@ -428,24 +428,24 @@ community.network
 
 - All FortiOS modules and plugins have been removed from this collection.
   They have been migrated to the `community.fortios <https://galaxy.ansible.com/community/fortios>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.network.fmgr_device`` → ``community.fortios.fmgr_device``) and make sure to install the `community.fortios` collection.
 - All ``nso`` modules have been removed from this collection.
   They have been migrated to the `cisco.nso <https://galaxy.ansible.com/cisco/nso>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.network.nso_config`` → ``cisco.nso.nso_config``) and make sure to install the `cisco.nso` collection.
 - All ``routeros`` modules and plugins have been removed from this collection.
   They have been migrated to the `community.routeros <https://galaxy.ansible.com/community/routeros>`_ collection.
-  If you use ansible-core 2.10 or newer, redirections have been provided.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.network.routeros_command`` → ``community.routeros.command``) and make sure to install the community.routeros collection.
-- The ``cp_publish`` module has been removed from this collection. It was a duplicate of ``check_point.mgmt.cp_mgmt_publish`` in the `check_point.mgmt <https://galaxy.ansible.com/check_point/mgmt>`_ collection. If you use ansible-core 2.10 or newer, redirections have been provided.
+- The ``cp_publish`` module has been removed from this collection. It was a duplicate of ``check_point.mgmt.cp_mgmt_publish`` in the `check_point.mgmt <https://galaxy.ansible.com/check_point/mgmt>`_ collection. If you use ansible-base 2.10 or newer, redirections have been provided.
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.network.cp_publish`` → ``check_point.mgmt.cp_mgmt_publish``) and make sure to install the check_point.mgmt collection.
 - The ``fortimanager`` httpapi plugin has been removed from this collection.
   It was a duplicate of the one in the `fortinet.fortimanager <https://galaxy.ansible.com/fortinet/fortimanager>`_ collection.
-  If you use ansible-core 2.10 or newer, a redirection has been provided.
+  If you use ansible-base 2.10 or newer, a redirection has been provided.
 
   If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.network.fortimanager`` → ``fortinet.fortimanager.fortimanager``) and make sure to install the `fortinet.fortimanager` collection.
 - The dependency on the ``check_point.mgmt`` collection has been removed. If you depend on that installing ``community.network`` also installs ``check_point.mgmt``, you have to make sure to install ``check_point.mgmt`` explicitly.

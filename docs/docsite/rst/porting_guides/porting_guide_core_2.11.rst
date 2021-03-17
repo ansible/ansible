@@ -5,7 +5,7 @@
 Ansible-core 2.11 Porting Guide
 *******************************
 
-This section discusses the behavioral changes between ``ansible-core`` 2.10 and ``ansible-core`` 2.11.
+This section discusses the behavioral changes between ``ansible-base`` 2.10 and ``ansible-core`` 2.11.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of ``ansible-core``.
 
@@ -35,7 +35,7 @@ Other:
 ======
 
 * **Upgrading**: If upgrading from ``ansible < 2.10`` or from ``ansible-core`` and using pip, you will need to ``pip uninstall ansible`` or ``pip uninstall ansible-core`` before installing ``ansible-core`` to avoid conflicts.
-* Python 3.8 on the controller node is a soft requirement for this release. ``ansible-core`` 2.11 will continue to work with the same versions of Python that ``ansible-core`` 2.10 worked with, however it will emit a warning when running on a controller node with a Python version less than 3.8. This warning can be disabled by setting ``ANSIBLE_CONTROLLER_PYTHON_WARNING=False`` in your environment. ``ansible-core`` 2.12 will require Python 3.8 or greater.
+* Python 3.8 on the controller node is a soft requirement for this release. ``ansible-core`` 2.11 will continue to work with the same versions of Python that ``ansible-base`` 2.10 worked with, however it will emit a warning when running on a controller node with a Python version less than 3.8. This warning can be disabled by setting ``ANSIBLE_CONTROLLER_PYTHON_WARNING=False`` in your environment. ``ansible-core`` 2.12 will require Python 3.8 or greater.
 * The configuration system now validates the ``choices`` field, so any settings that currently violate it and are currently ignored will now cause an error.
   For example, `ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0` will now cause an error (valid choices are 'ignore', 'warn' or 'error').
 * The ``ansible-galaxy`` command now uses ``resolvelib`` for resolving dependencies. In most cases this should not make a user-facing difference beyond being more performant, but we note it here for posterity and completeness.

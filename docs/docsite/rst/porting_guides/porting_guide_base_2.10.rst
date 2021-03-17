@@ -53,7 +53,7 @@ Modules
 
 	Links on this page may not point to the most recent versions of modules. We will update them when we can.
 
-* Version 2.10.0 of ansible-core changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the mode change has been reverted in 2.10.1, and mode will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* Version 2.10.0 of ansible-base changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the mode change has been reverted in 2.10.1, and mode will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
 * If you changed any tasks to specify less restrictive permissions while using 2.10.0, those changes will be unnecessary (but will do no harm) in 2.10.1.
 * To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
 

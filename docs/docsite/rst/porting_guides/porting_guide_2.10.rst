@@ -19,7 +19,7 @@ We suggest you read this page along with the `Ansible Changelog for 2.10 <https:
 
 Since 2.10, Ansible consists of two parts:
 
-* ansible-core, which includes the command line tools with a small selection of plugins and modules, and
+* ansible-base, which includes the command line tools with a small selection of plugins and modules, and
 * a `set of collections <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_.
 
 The :ref:`porting_2.10_guide_base` is included in this porting guide. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
@@ -60,7 +60,7 @@ Modules
 
 	Links on this page may not point to the most recent versions of modules. We will update them when we can.
 
-* Version 2.10.0 of ansible-core changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the mode change has been reverted in 2.10.1, and mode will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* Version 2.10.0 of ansible-base changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the mode change has been reverted in 2.10.1, and mode will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
 * If you changed any tasks to specify less restrictive permissions while using 2.10.0, those changes will be unnecessary (but will do no harm) in 2.10.1.
 * To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
 
@@ -150,32 +150,32 @@ community.general
 ~~~~~~~~~~~~~~~~~
 
 - For community.general 2.0.0, the kubevirt modules will be moved to the `community.kubevirt <https://galaxy.ansible.com/community/kubevirt>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use kubevirt modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.kubevirt.`` instead of ``community.general.``,
   for example replace ``community.general.kubevirt_vm`` in a task by ``community.kubevirt.kubevirt_vm``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the kubevirt modules, you have to make sure to install the ``community.kubevirt`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the kubevirt modules, you have to make sure to install the ``community.kubevirt`` collection as well.
   If you are using FQCNs, for example ``community.general.kubevirt_vm`` instead of ``kubevirt_vm``, it will continue working, but we still recommend to adjust the FQCNs as well.
 
 community.network
 ~~~~~~~~~~~~~~~~~
 
 - For community.network 2.0.0, the Cisco NSO modules will be moved to the `cisco.nso <https://galaxy.ansible.com/cisco/nso>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use Cisco NSO modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``cisco.nso.`` instead of ``community.network.``,
   for example replace ``community.network.nso_config`` in a task by ``cisco.nso.nso_config``.
 
-  If you use ansible-core and installed ``community.network`` manually and rely on the Cisco NSO modules, you have to make sure to install the ``cisco.nso`` collection as well.
+  If you use ansible-base and installed ``community.network`` manually and rely on the Cisco NSO modules, you have to make sure to install the ``cisco.nso`` collection as well.
   If you are using FQCNs, for example ``community.network.nso_config`` instead of ``nso_config``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - For community.network 2.0.0, the FortiOS modules will be moved to the `community.fortios <https://galaxy.ansible.com/ansible-collections/community.fortios>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use FortiOS modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.fortios.`` instead of ``community.network.``,
   for example replace ``community.network.fmgr_device`` in a task by ``community.fortios.fmgr_device``.
 
-  If you use ansible-core and installed ``community.network`` manually and rely on the FortiOS modules, you have to make sure to install the ``community.fortios`` collection as well.
+  If you use ansible-base and installed ``community.network`` manually and rely on the FortiOS modules, you have to make sure to install the ``community.fortios`` collection as well.
   If you are using FQCNs, for example ``community.network.fmgr_device`` instead of ``fmgr_device``, it will continue working, but we still recommend to adjust the FQCNs as well.
 
 f5networks.f5_modules
@@ -202,26 +202,26 @@ community.general
 ~~~~~~~~~~~~~~~~~
 
 - For community.general 2.0.0, the Google modules will be moved to the `community.google <https://galaxy.ansible.com/community/google>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use Google modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.google.`` instead of ``community.general.``,
   for example replace ``community.general.gcpubsub`` in a task by ``community.google.gcpubsub``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the Google modules, you have to make sure to install the ``community.google`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the Google modules, you have to make sure to install the ``community.google`` collection as well.
   If you are using FQCNs, for example ``community.general.gcpubsub`` instead of ``gcpubsub``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - For community.general 2.0.0, the OC connection plugin will be moved to the `community.okd <https://galaxy.ansible.com/community/okd>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use OC connection plugin from this collection, you will need to adjust your playbooks and roles to use FQCNs ``community.okd.oc`` instead of ``community.general.oc``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the OC connection plugin, you have to make sure to install the ``community.okd`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the OC connection plugin, you have to make sure to install the ``community.okd`` collection as well.
   If you are using FQCNs, in other words ``community.general.oc`` instead of ``oc``, it will continue working, but we still recommend to adjust this FQCN as well.
 - For community.general 2.0.0, the hashi_vault lookup plugin will be moved to the `community.hashi_vault <https://galaxy.ansible.com/community/hashi_vault>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use hashi_vault lookup plugin from this collection, you will need to adjust your playbooks and roles to use FQCNs ``community.hashi_vault.hashi_vault`` instead of ``community.general.hashi_vault``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the hashi_vault lookup plugin, you have to make sure to install the ``community.hashi_vault`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the hashi_vault lookup plugin, you have to make sure to install the ``community.hashi_vault`` collection as well.
   If you are using FQCNs, in other words ``community.general.hashi_vault`` instead of ``hashi_vault``, it will continue working, but we still recommend to adjust this FQCN as well.
 
 netbox.netbox
@@ -275,28 +275,28 @@ community.general
 ~~~~~~~~~~~~~~~~~
 
 - For community.general 2.0.0, the Hetzner Robot modules will be moved to the `community.hrobot <https://galaxy.ansible.com/community/hrobot>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use Hetzner Robot modules from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.hrobot.`` instead of ``community.general.hetzner_``,
   for example replace ``community.general.hetzner_firewall_info`` in a task by ``community.hrobot.firewall_info``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the Hetzner Robot modules, you have to make sure to install the ``community.hrobot`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the Hetzner Robot modules, you have to make sure to install the ``community.hrobot`` collection as well.
   If you are using FQCNs, i.e. ``community.general.hetzner_failover_ip`` instead of ``hetzner_failover_ip``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - For community.general 2.0.0, the ``docker`` modules and plugins will be moved to the `community.docker <https://galaxy.ansible.com/community/docker>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use ``docker`` content from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.docker.`` instead of ``community.general.``,
   for example replace ``community.general.docker_container`` in a task by ``community.docker.docker_container``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the ``docker`` content, you have to make sure to install the ``community.docker`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the ``docker`` content, you have to make sure to install the ``community.docker`` collection as well.
   If you are using FQCNs, i.e. ``community.general.docker_container`` instead of ``docker_container``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - For community.general 2.0.0, the ``postgresql`` modules and plugins will be moved to the `community.postgresql <https://galaxy.ansible.com/community/postgresql>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use ``postgresql`` content from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.postgresql.`` instead of ``community.general.``,
   for example replace ``community.general.postgresql_info`` in a task by ``community.postgresql.postgresql_info``.
 
-  If you use ansible-core and installed ``community.general`` manually and rely on the ``postgresql`` content, you have to make sure to install the ``community.postgresql`` collection as well.
+  If you use ansible-base and installed ``community.general`` manually and rely on the ``postgresql`` content, you have to make sure to install the ``community.postgresql`` collection as well.
   If you are using FQCNs, i.e. ``community.general.postgresql_info`` instead of ``postgresql_info``, it will continue working, but we still recommend to adjust the FQCNs as well.
 - The community.general collection no longer depends on the ansible.posix collection (https://github.com/ansible-collections/community.general/pull/1157).
 
@@ -304,14 +304,14 @@ community.network
 ~~~~~~~~~~~~~~~~~
 
 - For community.network 2.0.0, the ``routeros`` modules and plugins will be moved to the `community.routeros <https://galaxy.ansible.com/community/routeros>`_ collection.
-  A redirection will be inserted so that users using ansible-core 2.10 or newer do not have to change anything.
+  A redirection will be inserted so that users using ansible-base 2.10 or newer do not have to change anything.
 
   If you use Ansible 2.9 and explicitly use ``routeros`` content from this collection, you will need to adjust your playbooks and roles to use FQCNs starting with ``community.routeros.`` instead of ``community.network.routeros_``,
   for example replace ``community.network.routeros_api`` in a task by ``community.routeros.api``.
 
-  If you use ansible-core and installed ``community.network`` manually and rely on the ``routeros`` content, you have to make sure to install the ``community.routeros`` collection as well.
+  If you use ansible-base and installed ``community.network`` manually and rely on the ``routeros`` content, you have to make sure to install the ``community.routeros`` collection as well.
   If you are using FQCNs, i.e. ``community.network.routeros_command`` instead of ``routeros_command``, it will continue working, but we still recommend to adjust the FQCNs as well.
-- In community.network 2.0.0, the ``fortimanager`` httpapi plugin will be removed and replaced by a redirect to the corresponding plugin in the fortios.fortimanager collection. For Ansible 2.10 and ansible-core 2.10 users, this means that it will continue to work assuming that collection is installed. For Ansible 2.9 users, this means that they have to adjust the FQCN from ``community.network.fortimanager`` to ``fortios.fortimanager.fortimanager`` (https://github.com/ansible-collections/community.network/pull/151).
+- In community.network 2.0.0, the ``fortimanager`` httpapi plugin will be removed and replaced by a redirect to the corresponding plugin in the fortios.fortimanager collection. For Ansible 2.10 and ansible-base 2.10 users, this means that it will continue to work assuming that collection is installed. For Ansible 2.9 users, this means that they have to adjust the FQCN from ``community.network.fortimanager`` to ``fortios.fortimanager.fortimanager`` (https://github.com/ansible-collections/community.network/pull/151).
 
 community.okd
 ~~~~~~~~~~~~~
@@ -620,7 +620,7 @@ Ansible-base
 - Plugin routing allows collections to declare deprecation, redirection targets, and removals for all plugin types.
 - Plugins that import module_utils and other ansible namespaces that have moved to collections should continue to work unmodified.
 - Routing data built into Ansible 2.10 ensures that 2.9 content should work unmodified on 2.10. Formerly included modules and plugins that were moved to collections are still accessible by their original unqualified names, so long as their destination collections are installed.
-- When deprecations are done in code, they to specify a ``collection_name`` so that deprecation warnings can mention which collection - or ansible-core - is deprecating a feature. This affects all ``Display.deprecated()`` or ``AnsibleModule.deprecate()`` or ``Ansible.Basic.Deprecate()`` calls, and ``removed_in_version``/``removed_at_date`` or ``deprecated_aliases`` in module argument specs.
+- When deprecations are done in code, they to specify a ``collection_name`` so that deprecation warnings can mention which collection - or ansible-base - is deprecating a feature. This affects all ``Display.deprecated()`` or ``AnsibleModule.deprecate()`` or ``Ansible.Basic.Deprecate()`` calls, and ``removed_in_version``/``removed_at_date`` or ``deprecated_aliases`` in module argument specs.
 - ansible-test now uses a different ``default`` test container for Ansible Collections
 
 amazon.aws
