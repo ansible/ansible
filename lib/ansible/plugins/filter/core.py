@@ -38,6 +38,7 @@ from ansible.utils.encrypt import passlib_or_crypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
+from ansible.utils.version import SemanticVersion
 
 display = Display()
 
@@ -365,6 +366,15 @@ def combine(*terms, **kwargs):
 
     return result
 
+def parse_semver(
+        a,
+        keys=['major','minor','patch']
+        ):
+    ''' Parse a semantic version and get the value for each key in keys'''
+
+    semver=SemanticVersion(a)
+
+    return  { k: semver.__getattribute__(k) for k in keys }
 
 def comment(text, style='plain', **kw):
     # Predefined comment types
@@ -689,4 +699,7 @@ class FilterModule(object):
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
             'split': partial(unicode_wrap, text_type.split),
+
+            # SemanticVersion
+            'parse_semver': parse_semver,
         }
