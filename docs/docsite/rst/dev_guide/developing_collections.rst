@@ -5,8 +5,9 @@
 Developing collections
 **********************
 
-Collections are a distribution format for Ansible content. You can use collections to package and distribute playbooks, roles, modules, and plugins.
-You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
+Collections are a distribution format for Ansible content. You can package and distribute playbooks, roles, modules, and plugins using collections.
+
+You can publish any collection to `Ansible Galaxy <https://galaxy.ansible.com>`_ or to a private Automation Hub instance. You can publish certified collections to the Red Hat Automation Hub, part of the Red Hat Ansible Automation Platform.
 
 * For details on how to *use* collections see :ref:`collections`.
 * For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
@@ -419,35 +420,48 @@ You can also test a version of your collection in development by installing it f
 
 .. _publishing_collections:
 
-Publishing collections
-----------------------
+Distributing collections
+========================
 
-You can publish collections to Galaxy using the ``ansible-galaxy collection publish`` command or the Galaxy UI itself. You need a namespace on Galaxy to upload your collection. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
+You can distribute your collections by publishing them on a distribution server. Distribution servers include Ansible Galaxy, Red Hat Automation Hub, and privately hosted Automation Hub instances. You can publish any collection to Ansible Galaxy and/or to a privately hosted Automation Hub instance. If your collection is certified by Red Hat, you can publish it to the Red Hat Automation Hub.
 
-.. note:: Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before you upload it.
+Prerequisites
+-------------
+
+1. Get a namespace on each distribution server you want to use (Galaxy, private Automation Hub, Red Hat Automation Hub).
+2. Get an API token for each distribution server you want to use.
+3. Specify your API token(s).
+
+Getting a namespace
+^^^^^^^^^^^^^^^^^^^
+
+You need a namespace on Galaxy and/or Automation Hub to upload your collection. To get a namespace:
+
+* For Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
+* For Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_.
 
 .. _galaxy_get_token:
 
 Getting your API token
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To upload your collection to Galaxy, you must first obtain an API token (``--token`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy_server`` section). The API token is a secret token used to protect your content.
+You need an API token for Galaxy and/or Automation Hub to upload your collection. Use the API token(s) to authenticate your connection to the distribution server(s) and protect your content.
 
 To get your API token:
 
 * For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`.
-* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Load token` from the version dropdown.
+* For Automation Hub, go to `the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ and click :guilabel:`Load token`.
 
-Storing or using your API token
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Specifying your API token
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once you have retrieved your API token, you can store or use the token for collections in two ways:
+Once you have retrieved your API token, you can specify the correct token for each distribution server in two ways:
 
 * Pass the token to  the ``ansible-galaxy`` command using the ``--token``.
-* Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
+* Configure the token within a Galaxy server list in your :file:`ansible.cfg` file.
 
-Using the ``token`` argument
-............................
+Specifying your API token with the ``--token`` argument
+.......................................................
 
 You can use the ``--token`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key`` with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
 
@@ -455,11 +469,10 @@ You can use the ``--token`` argument with the ``ansible-galaxy`` command (in con
 
     ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz --token=<key goes here>
 
+Specifying your API token with a Galaxy server list
+...................................................
 
-Specify the token within a Galaxy server list
-.............................................
-
-With this option, you configure one or more servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token.
+You can configure one or more distribution servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token.
 
 
 .. code-block:: ini
@@ -473,10 +486,17 @@ With this option, you configure one or more servers for Galaxy in your :file:`an
 
 See :ref:`galaxy_server_config` for complete details.
 
+Publishing a collection
+-----------------------
+
+Once you have a namespace and an API token for each distribution server you want to use, you can distribute your collection by publishing it to Ansible Galaxy, Red Hat Automation Hub, or a privately hosted Automation Hub instance. You can use either the ``ansible-galaxy collection publish`` command or the distribution server (Galaxy, Automation Hub) itself.
+
+Each time you add features or make changes to your collection, you must publish a new version of the collection. For details on versioning, see :ref:`collection_versions`.
+
 .. _upload_collection_ansible_galaxy:
 
-Upload using ansible-galaxy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Publish a collection using ``ansible-galaxy``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
   By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). If you are only publishing your collection to Ansible Galaxy, you do not need any further configuration. If you are using Red Hat Automation Hub or any other Galaxy server, see :ref:`Configuring the ansible-galaxy client <galaxy_server_config>`.
@@ -491,37 +511,29 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 
 	The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
 
-The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
-The command waits until the import process completes before reporting the status back. If you want to continue
-without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
-`My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
+The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website. The command waits until the import process completes before reporting the status back. If you want to continue without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
 
 .. _upload_collection_galaxy:
 
-Upload a collection from the Galaxy website
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Publishing a collection using the Galaxy website
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To upload your collection artifact directly on Galaxy:
+To publish your collection directly on the Galaxy website:
 
 #. Go to the `My Content <https://galaxy.ansible.com/my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces.
 #. From the **Add Content** dialogue, click **Upload New Collection**, and select the collection archive file from your local filesystem.
 
-When uploading collections it doesn't matter which namespace you select. The collection will be uploaded to the
-namespace specified in the collection metadata in the ``galaxy.yml`` file. If you're not an owner of the
-namespace, the upload request will fail.
+When you upload a collection, it always uploads to the namespace specified in the collection metadata in the ``galaxy.yml`` file, no matter which namespace you select on the website. If you are not an owner of the namespace specified in your collection metadata, the upload request will fail.
 
-Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
-import process, including any errors or warnings about the metadata and content contained in the collection.
+Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the import process, including any errors or warnings about the metadata and content contained in the collection.
 
 .. _collection_versions:
 
 Collection versions
--------------------
+^^^^^^^^^^^^^^^^^^^
 
-Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before
-uploading. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number)
-will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
+Each time you publish your collection, you create a new version. Once you publish a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before publishing. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) will be the version displayed everywhere in Galaxy or Automation Hub; however, users will still be able to download older versions.
 
 Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
 
