@@ -347,7 +347,7 @@ Ansible merges different variables set in inventory so that more specific settin
 .. [4] When created with set_facts's cacheable option, variables have the high precedence in the play, but are the same as a host facts precedence when they come from the cache.
 .. [5] Tasks in each role see their own role's vars if specified, or those from the role's dependencies. Tasks defined outside of a role see the last role's vars.
 .. [6] Tasks in each role see their own role's params if specified, or those from the role's dependencies. Role params are not exposed outside of the role.
-.. [7] Role params are nto specified within ``vars:`` they are top level params specified as part of the role definition
+.. [7] Role params are not specified within ``vars:`` they are top level params specified as part of the role definition
 .. [8] Roles loaded using ``include_role`` do not have their defaults or vars available in the play scope until they are encountered during the playbook execution, and when ``public: true`` is defined. Use of ``roles:`` or ``import_role`` makes the defaults and vars available to the play scope at playbook parsing time.
 .. [9] Roles do not share a parent relationship, and as such, all roles have their parent set to the play. There is no special handling of a role that includes or imports another role from a variable precedence perspective. A role that is included or imported from another role exists in the play scope, and does not use special handling of the vars/defaults of the role that included it. In the specific case described here, the role that includes another, is not considered a dependency.
 
