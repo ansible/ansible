@@ -196,7 +196,7 @@ config: ../templates/config.rst.j2
 plugins:
 	$(PLUGIN_FORMATTER) full -o rst $(ANSIBLE_VERSION_ARGS) $(PLUGIN_ARGS);\
 
-# This only builds the plugin docs included with ansible-base
+# This only builds the plugin docs included with ansible-core
 base_plugins:
 	$(PLUGIN_FORMATTER) base -o rst $(PLUGIN_ARGS);\
 
