@@ -6,9 +6,7 @@ Committers Guidelines
 
 These are the guidelines for people with commit privileges on the repositories in the ansible and ansible-collections GitHub organizations.
 
-These guidelines apply to everyone. At the same time, this is NOT a process document. So just use good judgment. You have been given commit access because the community trust your judgment.
-
-Committers of `Ansible-core <https://github.com/ansible/ansible>`_ are necessarily Red Hat employees acting as members of the Ansible Core team. Committers of `Ansible collections <https://github.com/ansible-collections/>`_ can be Ansible Core team members as well as independent community members (collection maintainers). Please read the guidelines before you commit.
+Committers of `Ansible-core <https://github.com/ansible/ansible>`_ are necessarily Red Hat employees acting as members of the Ansible Core team. Committers of `Ansible collections <https://github.com/ansible-collections/>`_ are members of the community or Ansible Engineering. Please read the guidelines before you commit.
 
 These guidelines apply to everyone. At the same time, this is NOT a process document. So just use good judgment. You have been given commit access because we trust your judgment.
 
