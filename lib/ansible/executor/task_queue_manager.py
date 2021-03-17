@@ -258,6 +258,7 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
         new_play.handlers = new_play.compile_roles_handlers() + new_play.handlers
+        new_play.squash()
 
         self.hostvars = HostVars(
             inventory=self._inventory,

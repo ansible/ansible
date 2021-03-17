@@ -159,6 +159,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._variable_manager = None
 
         # other internal params
+        self._squash_attrs = tuple()
         self._validated = False
         self._squashed = False
         self._finalized = False
@@ -305,8 +306,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         so that all future accesses of attributes do not need to evaluate
         parent attributes.
         '''
+        attrs = self._squash_attrs if self._squash_attrs else self._valid_attrs.keys()
+
         if not self._squashed:
-            for name in self._valid_attrs.keys():
+            for name in attrs:
                 self._attributes[name] = getattr(self, name)
             self._squashed = True
 

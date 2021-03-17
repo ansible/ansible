@@ -86,6 +86,8 @@ class Play(Base, Taggable, CollectionSearch):
     def __init__(self):
         super(Play, self).__init__()
 
+        self._squash_attrs = ('hosts',)
+
         self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
