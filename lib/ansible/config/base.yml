@@ -1352,9 +1352,6 @@ CONNECTION_FACTS_MODULES:
     ironware: ansible.legacy.ironware_facts
     community.network.ironware: community.network.ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
-  env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
-  ini:
-    - {key: connection_facts_modules, section: defaults}
   type: dict
 FACTS_MODULES:
   name: Gather Facts Modules
