@@ -1030,7 +1030,7 @@ class TaskExecutor:
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
-                         host=self._connection.get_option('remote_addr'))
+                         host=connection.get_option('remote_addr'))
         else:
             # use ansible.legacy.normal to allow (historic) local action_plugins/ override without collections search
             handler_name = 'ansible.legacy.normal'
