@@ -287,6 +287,8 @@ class ConfigManager(object):
 
     def __init__(self, conf_file=None, defs_file=None):
 
+        self._defs_file = defs_file or '%s/base.yml' % os.path.dirname(__file__)
+
         self._base_defs = {}
         self._plugins = {}
         self._parsers = {}
@@ -294,8 +296,7 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-        self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
-        _add_base_defs_deprecations(self._base_defs)
+        self.initialize_base_defs()
 
         if self._config_file is None:
             # set config using ini
@@ -308,6 +309,10 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
+
+    def initialize_base_defs(self):
+        self._base_defs = self._read_config_yaml_file(self._defs_file)
+        _add_base_defs_deprecations(self._base_defs)
 
     def _read_config_yaml_file(self, yml_file):
         # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
