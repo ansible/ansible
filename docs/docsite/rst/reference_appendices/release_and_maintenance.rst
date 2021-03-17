@@ -116,7 +116,9 @@ devel                                         In development (ansible-core 2.11 
 `2.5 Release Notes`_                          Unmaintained (end of life)
 <2.5                                          Unmaintained (end of life)
 ============================================= ======================================================
-.. _2.10-base: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
+
+.. _2.10 ansible-base Release Notes:
+.. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
 .. _2.9 Release Notes:
 .. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
 .. _2.8 Release Notes:
