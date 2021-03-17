@@ -86,22 +86,22 @@ class ArgumentSpecValidator:
 
     :param mutually_exclusive: List or list of lists of terms that should not
         be provided together.
-    :type: list, optional
+    :type mutually_exclusive: list, optional
 
     :param required_together: List of lists of terms that are required together.
-    :type: list, optional
+    :type required_together: list, optional
 
     :param required_one_of: List of lists of terms, one of which in each list
         is required.
-    :type: list, optional
+    :type required_one_of: list, optional
 
     :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
         one of [parameters] is required if ``parameter`` == ``value``.
-    :type: list, optional
+    :type required_if: list, optional
 
     :param required_by: Dictionary of parameter names that contain a list of
         parameters required by each key in the dictionary.
-    :type: dict, optional
+    :type required_by: dict, optional
     """
 
     def __init__(self, argument_spec,
