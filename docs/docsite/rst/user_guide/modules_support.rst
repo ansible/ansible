@@ -32,7 +32,7 @@ Maintenance
 Issue Reporting
 ===============
 
-If you find a bug that affects a plugin in the main Ansible repo, also known as ``ansible-base``:
+If you find a bug that affects a plugin in the main Ansible repo, also known as ``ansible-core``:
 
   #. Confirm that you are running the latest stable version of Ansible or the devel branch.
   #. Look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed.
@@ -56,7 +56,7 @@ If you find a bug that affects a module in an Automation Hub collection:
 Support
 =======
 
-All plugins that remain in ``ansible-base`` and all collections hosted in Automation Hub are supported by Red Hat. No other plugins or collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
+All plugins that remain in ``ansible-core`` and all collections hosted in Automation Hub are supported by Red Hat. No other plugins or collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
 
 .. seealso::
 

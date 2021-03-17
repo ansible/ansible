@@ -19,7 +19,7 @@ You can populate variables using lookups. Ansible evaluates the value each time 
       - debug:
           msg: "motd value is {{ motd_value }}"
 
-For more details and a list of lookup plugins in ansible-base, see :ref:`plugins_lookup`. You may also find lookup plugins in collections. You can review a list of lookup plugins installed on your control machine with the command ``ansible-doc -l -t lookup``.
+For more details and a list of lookup plugins in ansible-core, see :ref:`plugins_lookup`. You may also find lookup plugins in collections. You can review a list of lookup plugins installed on your control machine with the command ``ansible-doc -l -t lookup``.
 
 .. seealso::
 

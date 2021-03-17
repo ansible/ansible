@@ -14,7 +14,7 @@ Starting with Ansible 2.10, related modules should be developed in a collection.
 Before you start coding
 =======================
 
-This list of prerequisites is designed to help ensure that you develop high-quality modules that work well with ansible-base and provide a seamless user experience.
+This list of prerequisites is designed to help ensure that you develop high-quality modules that work well with ansible-core and provide a seamless user experience.
 
 * Read though all the pages linked off :ref:`developing_modules_general`; paying particular focus to the :ref:`developing_modules_checklist`.
 * We encourage PEP 8 compliance. See :ref:`testing_pep8` for more information.

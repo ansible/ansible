@@ -4,19 +4,19 @@
 The Ansible Development Cycle
 *****************************
 
-Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections.
+Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections.
 
-Development on ``ansible-base`` occurs on two levels. At the macro level, the ``ansible-base`` developers and maintainers plan releases and track progress with roadmaps and projects. At the micro level, each PR has its own lifecycle.
+Development on ``ansible-core`` occurs on two levels. At the macro level, the ``ansible-core`` developers and maintainers plan releases and track progress with roadmaps and projects. At the micro level, each PR has its own lifecycle.
 
-Development on collections also occurs at the macro and micro levels. Each collection has its own macro development cycle. For more information on the collections development cycle, see :ref:`contributing_maintained_collections`. The micro-level lifecycle of a PR is similar in collections and in ``ansible-base``.
+Development on collections also occurs at the macro and micro levels. Each collection has its own macro development cycle. For more information on the collections development cycle, see :ref:`contributing_maintained_collections`. The micro-level lifecycle of a PR is similar in collections and in ``ansible-core``.
 
 .. contents::
    :local:
 
-Macro development: ``ansible-base`` roadmaps, releases, and projects
+Macro development: ``ansible-core`` roadmaps, releases, and projects
 =====================================================================
 
-If you want to follow the conversation about what features will be added to ``ansible-base`` for upcoming releases and what bugs are being fixed, you can watch these resources:
+If you want to follow the conversation about what features will be added to ``ansible-core`` for upcoming releases and what bugs are being fixed, you can watch these resources:
 
 * the :ref:`roadmaps`
 * the :ref:`Ansible Release Schedule <release_and_maintenance>`
@@ -31,7 +31,7 @@ If you want to follow the conversation about what features will be added to ``an
 Micro development: the lifecycle of a PR
 ========================================
 
-If you want to contribute a feature or fix a bug in ``ansible-base`` or in a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-base``.
+If you want to contribute a feature or fix a bug in ``ansible-core`` or in a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-core``.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
@@ -143,7 +143,7 @@ We do not merge every PR. Here are some tips for making your PR useful, attracti
 Changelogs
 ----------
 
-Changelogs help users and developers keep up with changes to Ansible. Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base. You do not have to add a changelog fragment for PRs that add new modules and plugins, because our tooling does that for you automatically.
+Changelogs help users and developers keep up with changes to Ansible. Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-core. You do not have to add a changelog fragment for PRs that add new modules and plugins, because our tooling does that for you automatically.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
@@ -212,10 +212,10 @@ After you have written the changelog fragment for your PR, commit the file and i
 
 .. _backport_process:
 
-Backporting merged PRs in ``ansible-base``
+Backporting merged PRs in ``ansible-core``
 ===========================================
 
-All ``ansible-base`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
+All ``ansible-core`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
 
 We do **not** backport features.
 

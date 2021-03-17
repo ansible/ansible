@@ -278,7 +278,7 @@ Note that the ``CALLBACK_VERSION`` and ``CALLBACK_NAME`` definitions are require
 
 For example callback plugins, see the source code for the `callback plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_
 
-New in ansible-base 2.11, callback plugins are notified (via ``v2_playbook_on_task_start``) of :ref:`meta<meta_module>` tasks. By default, only explicit ``meta`` tasks that users list in their plays are sent to callbacks.
+New in ansible-core 2.11, callback plugins are notified (via ``v2_playbook_on_task_start``) of :ref:`meta<meta_module>` tasks. By default, only explicit ``meta`` tasks that users list in their plays are sent to callbacks.
 
 There are also some tasks which are generated internally and implicitly at various points in execution. Callback plugins can opt-in to receiving these implicit tasks as well, by setting ``self.wants_implicit_tasks = True``. Any ``Task`` object received by a callback hook will have an ``.implicit`` attribute, which can be consulted to determine whether the ``Task`` originated from within Ansible, or explicitly by the user.
 

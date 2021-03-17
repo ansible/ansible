@@ -52,7 +52,7 @@ Going deeper
 Working with the Ansible repo
 =============================
 
-* I want to make my first code changes to a collection or to ``ansible-base``. How do I :ref:`set up my Python development environment <environment_setup>`?
+* I want to make my first code changes to a collection or to ``ansible-core``. How do I :ref:`set up my Python development environment <environment_setup>`?
 * I would like to get more efficient as a developer. How can I find :ref:`editors, linters, and other tools <other_tools_and_programs>` that will support my Ansible development efforts?
 * I want my code to meet Ansible's guidelines. Where can I find  guidance on :ref:`coding in Ansible <developer_guide>`?
 * I want to learn more about Ansible roadmaps, releases, and projects. How do I find information on :ref:`the development cycle <community_development_process>`?
