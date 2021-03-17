@@ -90,7 +90,7 @@ class ActionModule(ActionBase):
             # now we execute script, always assume changed.
             result['changed'] = True
 
-            if not self._taskcheck_mode:
+            if not self._task.check_mode:
                 # transfer the file to a remote tmp location
                 tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
                                                             os.path.basename(source))
