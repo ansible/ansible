@@ -308,25 +308,30 @@ Understanding variable precedence
 Ansible does apply variable precedence, and you might have a use for it. Here is the order of precedence from least to greatest (the last listed variables override all other variables):
 
   #. command line values (for example, ``-u my_user``, these are not variables)
-  #. role defaults (defined in role/defaults/main.yml) [1]_
+  #. role defaults from all roles (defined in ``roles/*/defaults/main.yml``)
+  #. role dependency defaults for tasks from a role (defined in ``roles/{dependent_roles}/defaults/main.yml``)
+  #. role defaults for tasks from a role (defined in ``role/defaults/main.yml``) [1]_ [8]_ [9]_
   #. inventory file or script group vars [2]_
-  #. inventory group_vars/all [3]_
-  #. playbook group_vars/all [3]_
-  #. inventory group_vars/* [3]_
-  #. playbook group_vars/* [3]_
+  #. inventory ``group_vars/all`` [3]_
+  #. playbook ``group_vars/all`` [3]_
+  #. inventory ``group_vars/*`` [3]_
+  #. playbook ``group_vars/*`` [3]_
   #. inventory file or script host vars [2]_
-  #. inventory host_vars/* [3]_
-  #. playbook host_vars/* [3]_
-  #. host facts / cached set_facts [4]_
-  #. play vars
-  #. play vars_prompt
-  #. play vars_files
-  #. role vars (defined in role/vars/main.yml)
-  #. block vars (only for tasks in block)
-  #. task vars (only for the task)
-  #. include_vars
-  #. set_facts / registered vars
-  #. role (and include_role) params
+  #. inventory ``host_vars/*`` [3]_
+  #. playbook ``host_vars/*`` [3]_
+  #. host facts / cached ``set_facts`` [4]_
+  #. play ``vars``
+  #. play ``vars_prompt``
+  #. play ``vars_files``
+  #. role vars from all roles (defined in ``roles/*/vars/main.yml`` or ``vars:``)
+  #. role dependency vars for tasks from a role (defined in ``roles/{dependent_roles}/vars/main.yml``)
+  #. role vars for tasks from a role (defined in ``role/vars/main.yml``) [5]_ [8]_ [9]_
+  #. block ``vars`` (only for tasks in block)
+  #. task ``vars`` (only for the task)
+  #. ``include_vars``
+  #. ``set_facts`` / registered vars
+  #. role dependency params for tasks from a role
+  #. role params for tasks from a role [6]_ [7]_
   #. include params
   #. extra vars (for example, ``-e "user=my_user"``)(always win precedence)
 
@@ -336,11 +341,15 @@ Ansible merges different variables set in inventory so that more specific settin
 
 .. rubric:: Footnotes
 
-.. [1] Tasks in each role see their own role's defaults. Tasks defined outside of a role see the last role's defaults.
+.. [1] Tasks in each role see their own role's defaults if specified, or those from the role's dependencies. Tasks defined outside of a role see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
 .. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
-.. [4] When created with set_facts's cacheable option, variables have the high precedence in the play,
-       but are the same as a host facts precedence when they come from the cache.
+.. [4] When created with set_facts's cacheable option, variables have the high precedence in the play, but are the same as a host facts precedence when they come from the cache.
+.. [5] Tasks in each role see their own role's vars if specified, or those from the role's dependencies. Tasks defined outside of a role see the last role's vars.
+.. [6] Tasks in each role see their own role's params if specified, or those from the role's dependencies. Role params are not exposed outside of the role.
+.. [7] Role params are nto specified within ``vars:`` they are top level params specified as part of the role definition
+.. [8] Roles loaded using ``include_role`` do not have their defaults or vars available in the play scope until they are encountered during the playbook execution, and when ``public: true`` is defined. Use of ``roles:`` or ``import_role`` makes the defaults and vars available to the play scope at playbook parsing time.
+.. [9] Roles do not share a parent relationship, and as such, all roles have their parent set to the play. There is no special handling of a role that includes or imports another role from a variable precedence perspective. A role that is included or imported from another role exists in the play scope, and does not use special handling of the vars/defaults of the role that included it. In the specific case described here, the role that includes another, is not considered a dependency.
 
 .. note:: Within any section, redefining a var overrides the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
