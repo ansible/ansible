@@ -140,6 +140,13 @@ def _get_type_validator(wanted):
     return type_checker, wanted
 
 
+def _get_legal_inputs(argument_spec, parameters, aliases=None):
+    if aliases is None:
+        aliases = _handle_aliases(argument_spec, parameters)
+
+    return list(aliases.keys()) + list(argument_spec.keys())
+
+
 def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None):
     """Check keys in parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
@@ -157,7 +164,7 @@ def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, op
     """
 
     if legal_inputs is None:
-        aliases, legal_inputs = _handle_aliases(argument_spec, parameters)
+        legal_inputs = _get_legal_inputs(argument_spec, parameters)
 
     unsupported_parameters = set()
     for k in parameters.keys():
@@ -172,23 +179,33 @@ def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, op
 
 
 def _handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprecations=None):
-    """Return a two item tuple. The first is a dictionary of aliases, the second is
-    a list of legal inputs.
+    """Process aliases from an argument_spec including warnings and deprecations.
 
-    Modify supplied parameters by adding a new key for each alias.
+    Modify ``parameters`` by adding a new key for each alias with the supplied
+    value from ``parameters``.
 
     If a list is provided to the alias_warnings parameter, it will be filled with tuples
     (option, alias) in every case where both an option and its alias are specified.
 
     If a list is provided to alias_deprecations, it will be populated with dictionaries,
     each containing deprecation information for each alias found in argument_spec.
+
+    :param argument_spec: Dictionary of parameters, their type, and valid values.
+    :type argument_spec: dict
+
+    :param parameters: Dictionary of parameters.
+    :type parameters: dict
+
+    :param alias_warnings:
+    :type alias_warnings: list
+
+    :param alias_deprecations:
+    :type alias_deprecations: list
     """
 
-    legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
     aliases_results = {}  # alias:canon
 
     for (k, v) in argument_spec.items():
-        legal_inputs.append(k)
         aliases = v.get('aliases', None)
         default = v.get('default', None)
         required = v.get('required', False)
@@ -209,14 +226,13 @@ def _handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprec
             raise TypeError('internal error: aliases must be a list or tuple')
 
         for alias in aliases:
-            legal_inputs.append(alias)
             aliases_results[alias] = k
             if alias in parameters:
                 if k in parameters and alias_warnings is not None:
                     alias_warnings.append((k, alias))
                 parameters[k] = parameters[alias]
 
-    return aliases_results, legal_inputs
+    return aliases_results
 
 
 def _list_deprecations(argument_spec, parameters, prefix=''):
@@ -706,11 +722,11 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
 
                 alias_warnings = []
+                alias_deprecations = []
                 try:
-                    options_aliases, legal_inputs = _handle_aliases(sub_spec, sub_parameters, alias_warnings)
+                    options_aliases = _handle_aliases(sub_spec, sub_parameters, alias_warnings, alias_deprecations)
                 except (TypeError, ValueError) as e:
                     options_aliases = {}
-                    legal_inputs = None
                     errors.append(AliasError(to_native(e)))
 
                 for option, alias in alias_warnings:
@@ -721,8 +737,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 except TypeError as te:
                     errors.append(NoLogError(to_native(te)))
 
-                if legal_inputs is None:
-                    legal_inputs = list(options_aliases.keys()) + list(sub_spec.keys())
+                legal_inputs = _get_legal_inputs(sub_spec, sub_parameters, options_aliases)
                 unsupported_parameters.update(_get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
 
                 try:

@@ -11,24 +11,6 @@ import pytest
 from ansible.module_utils.common.parameters import _handle_aliases
 from ansible.module_utils._text import to_native
 
-DEFAULT_LEGAL_INPUTS = [
-    '_ansible_check_mode',
-    '_ansible_debug',
-    '_ansible_diff',
-    '_ansible_keep_remote_files',
-    '_ansible_module_name',
-    '_ansible_no_log',
-    '_ansible_remote_tmp',
-    '_ansible_selinux_special_fs',
-    '_ansible_shell_executable',
-    '_ansible_socket',
-    '_ansible_string_conversion_action',
-    '_ansible_syslog_facility',
-    '_ansible_tmpdir',
-    '_ansible_verbosity',
-    '_ansible_version',
-]
-
 
 def test_handle_aliases_no_aliases():
     argument_spec = {
@@ -40,14 +22,9 @@ def test_handle_aliases_no_aliases():
         'path': 'bar'
     }
 
-    expected = (
-        {},
-        DEFAULT_LEGAL_INPUTS + ['name'],
-    )
-    expected[1].sort()
-
+    expected = {}
     result = _handle_aliases(argument_spec, params)
-    result[1].sort()
+
     assert expected == result
 
 
@@ -63,14 +40,9 @@ def test_handle_aliases_basic():
         'nick': 'foo',
     }
 
-    expected = (
-        {'surname': 'name', 'nick': 'name'},
-        DEFAULT_LEGAL_INPUTS + ['name', 'surname', 'nick'],
-    )
-    expected[1].sort()
-
+    expected = {'surname': 'name', 'nick': 'name'}
     result = _handle_aliases(argument_spec, params)
-    result[1].sort()
+
     assert expected == result
 
 

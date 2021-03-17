@@ -8,6 +8,7 @@ __metaclass__ = type
 from copy import deepcopy
 
 from ansible.module_utils.common.parameters import (
+    _get_legal_inputs,
     _get_unsupported_parameters,
     _handle_aliases,
     _list_no_log_values,
@@ -169,11 +170,12 @@ class ArgumentSpecValidator:
         alias_warnings = []
         alias_deprecations = []
         try:
-            alias_results, legal_inputs = _handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations)
+            aliases = _handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations)
         except (TypeError, ValueError) as e:
-            alias_results = {}
-            legal_inputs = None
+            aliases = {}
             result.errors.append(AliasError(to_native(e)))
+
+        legal_inputs = _get_legal_inputs(self.argument_spec, result._validated_parameters, aliases)
 
         for option, alias in alias_warnings:
             result.warnings.append({'option': option, 'alias': alias})
@@ -191,8 +193,6 @@ class ArgumentSpecValidator:
         except TypeError as te:
             result.errors.append(NoLogError(to_native(te)))
 
-        if legal_inputs is None:
-            legal_inputs = list(alias_results.keys()) + list(self.argument_spec.keys())
         try:
             result._unsupported_parameters.update(_get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
         except TypeError as te:

@@ -19,32 +19,6 @@ def argument_spec():
     }
 
 
-def mock_handle_aliases(*args):
-    aliases = {}
-    legal_inputs = [
-        '_ansible_check_mode',
-        '_ansible_debug',
-        '_ansible_diff',
-        '_ansible_keep_remote_files',
-        '_ansible_module_name',
-        '_ansible_no_log',
-        '_ansible_remote_tmp',
-        '_ansible_selinux_special_fs',
-        '_ansible_shell_executable',
-        '_ansible_socket',
-        '_ansible_string_conversion_action',
-        '_ansible_syslog_facility',
-        '_ansible_tmpdir',
-        '_ansible_verbosity',
-        '_ansible_version',
-        'state',
-        'status',
-        'enabled',
-    ]
-
-    return aliases, legal_inputs
-
-
 @pytest.mark.parametrize(
     ('module_parameters', 'legal_inputs', 'expected'),
     (
@@ -59,7 +33,6 @@ def mock_handle_aliases(*args):
     )
 )
 def test_check_arguments(argument_spec, module_parameters, legal_inputs, expected, mocker):
-    mocker.patch('ansible.module_utils.common.parameters._handle_aliases', side_effect=mock_handle_aliases)
     result = _get_unsupported_parameters(argument_spec, module_parameters, legal_inputs)
 
     assert result == expected
