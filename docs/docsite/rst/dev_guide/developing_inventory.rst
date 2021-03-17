@@ -327,7 +327,7 @@ When the script is called with the single argument ``--list``, the script must o
 
 If any of the elements of a group are empty, they may be omitted from the output.
 
-When called with the argument ``--host <hostname>`` (where <hostname> is a host from above), the script must print either an empty JSON object, or an object containing variables to make them available to templates and playbooks. For example::
+When called with the argument ``--host <hostname>`` (where <hostname> is a host from above), the script must print a JSON object, either empty or containing variables to make them available to templates and playbooks. For example::
 
 
     {
