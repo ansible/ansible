@@ -49,6 +49,20 @@ function pass_tests {
 	fi
 }
 
+function pass_tests_multi {
+	# test for https://github.com/ansible/ansible/issues/72708
+	if ! grep 'test multi_play_1' "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Did not run multiple playbooks"
+		exit 1
+	fi
+	if ! grep 'test multi_play_2' "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Did not run multiple playbooks"
+		exit 1
+	fi
+}
+
 export ANSIBLE_INVENTORY
 export ANSIBLE_HOST_PATTERN_MISMATCH
 
@@ -67,3 +81,7 @@ JSON_EXTRA_ARGS='{"docker_registries_login": [{ "docker_password": "'"${PASSWORD
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" -e "${JSON_EXTRA_ARGS}" "$@" --tags untagged,test_ev | tee "${temp_log}"
 
 pass_tests
+
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" multi_play_1.yml multi_play_2.yml | tee "${temp_log}"
+
+pass_tests_multi
