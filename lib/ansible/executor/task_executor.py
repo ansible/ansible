@@ -505,6 +505,7 @@ class TaskExecutor:
         self.update_play_context(cvars, templar)
 
         # Now we do final validation on the task, which sets all fields to their final values.
+        templar.available_variables = orig_vars
         try:
             self._task.post_validate(templar=templar)
         except AnsibleError:
