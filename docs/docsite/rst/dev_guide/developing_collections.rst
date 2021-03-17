@@ -426,9 +426,9 @@ You can distribute your collections by publishing them on a distribution server.
 Prerequisites
 -------------
 
-1. Get a namespace on each distribution server you want to use (Galaxy, private Automation Hub, Red Hat Automation Hub)
-2. Get an API token for each distribution server you want to use
-3. Specify your API token(s)
+1. Get a namespace on each distribution server you want to use (Galaxy, private Automation Hub, Red Hat Automation Hub).
+2. Get an API token for each distribution server you want to use.
+3. Specify your API token(s).
 
 Getting a namespace
 ^^^^^^^^^^^^^^^^^^^
@@ -448,7 +448,7 @@ You need an API token for Galaxy and/or Automation Hub to upload your collection
 To get your API token:
 
 * For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`.
-* For Automation Hub, go to `the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ and click :guilabel:`Load token` from the version dropdown.
+* For Automation Hub, go to `the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ and click :guilabel:`Load token`.
 
 Specifying your API token
 ^^^^^^^^^^^^^^^^^^^^^^^^^
