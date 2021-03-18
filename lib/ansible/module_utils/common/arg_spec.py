@@ -124,7 +124,7 @@ class ArgumentSpecValidator:
     @property
     def valid_parameter_names(self):
         if self._valid_parameter_names:
-            return self._validated_parameter_names
+            return self._valid_parameter_names
         valid_parameter_names = set()
         for key in sorted(self.argument_spec.keys()):
             aliases = self.argument_spec[key].get('aliases')
