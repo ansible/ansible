@@ -14,37 +14,14 @@ def _raise_timeout(signum, frame):
     raise TimeoutError
 
 
-class Timeout:
-    def __init__(self, timeout, raising=False):
-        self._timeout = timeout
-        self._raising = raising
-        self.timed_out = False
-
-    def __call__(self, func):
-        @wraps(func)
-        def inner(*args, **kwargs):
-            func_name = getattr(func, '__qualname__', func.__name__)
-            signal.signal(signal.SIGALRM, _raise_timeout)
-            signal.alarm(self._timeout)
-            try:
-                return func(*args, **kwargs)
-            except TimeoutError:
-                if self._raising:
-                    raise
-                warn('Function call to %s timed out after %d seconds.' % (func_name, self._timeout))
-                return None
-            finally:
-                signal.signal(signal.SIGALRM, signal.SIG_IGN)
-        return inner
-
-    def __enter__(self):
-        signal.signal(signal.SIGALRM, _raise_timeout)
-        signal.alarm(self._timeout)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
+@contextlib.contextmanager
+def timeout(timeout, raising=False):
+    signal.signal(signal.SIGALRM, _raise_timeout)
+    signal.alarm(timeout)
+    try:
+        yield
+    except TimeoutError:
+        if raising:
+            raise
+    finally:
         signal.signal(signal.SIGALRM, signal.SIG_IGN)
-        if exc_type is TimeoutError:
-            self.timed_out = True
-            if not self._raising:
-                return True
