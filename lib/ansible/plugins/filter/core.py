@@ -372,8 +372,8 @@ SEMVER_VALID_KEYS = ['major', 'minor', 'patch', 'prerelease', 'buildmetadata']
 
 def parse_semver(
         vstring,
-        keys=SEMVER_VALID_KEYS
-        ):
+        keys=None
+):
     ''' Parse a semantic version as a string.
         Returns the value for each requested key.
         If no keys are requested, returns all keys that are valid '''
@@ -381,6 +381,8 @@ def parse_semver(
     if not isinstance(vstring, string_types):
         raise AnsibleFilterError("Invalid type for '%s' for 'vstring'." % (to_native(vstring)))
 
+    if keys is None:
+        keys = SEMVER_VALID_KEYS
 
     extra_keys=set(keys)-set(SEMVER_VALID_KEYS)
     if len(extra_keys) > 0:
