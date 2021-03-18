@@ -36,9 +36,9 @@ options:
       not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-    - If C(file), without any other options this works mostly as a 'stat' and will return the current state of C(path).
-      Even with other options (i.e C(mode)), the file will be modified but will NOT be created if it does not exist;
-      see the C(touch) value or the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want that behavior.
+    - If C(file), with no other options, returns the current state of C(path).
+    - If C(file), even with other options (such as C(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
+      Set to C(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
     - If C(hard), the hard link will be created or changed.
     - If C(link), the symbolic link will be created or changed.
     - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
