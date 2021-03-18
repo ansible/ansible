@@ -366,15 +366,28 @@ def combine(*terms, **kwargs):
 
     return result
 
+SEMVER_VALID_KEYS = ['major', 'minor', 'patch', 'prerelease', 'buildmetadata']
+# This list can be generated from the SEMVER_RE expression by
+# `SEMVER_VALID_KEYS=list(SEMVER_RE.groupindex.keys())` but is expected to stay static
+
 def parse_semver(
-        a,
-        keys=['major','minor','patch']
+        vstring,
+        keys=SEMVER_VALID_KEYS
         ):
-    ''' Parse a semantic version and get the value for each key in keys'''
+    ''' Parse a semantic version as a string.
+        Returns the value for each requested key.
+        If no keys are requested, returns all keys that are valid '''
 
-    semver=SemanticVersion(a)
+    extra_keys=set(keys)-set(SEMVER_VALID_KEYS)
+    if len(extra_keys) > 0:
+        raise AnsibleFilterError("Invalid key(s) '%s' for 'keys'. Valid keys are: %s " % (to_native(extra_keys), to_native(SEMVER_VALID_KEYS)))
 
-    return  { k: semver.__getattribute__(k) for k in keys }
+    try:
+        semver = SemanticVersion(vstring=vstring)
+    except (ValueError) as e:
+        raise AnsibleFilterError("Invalid value '%s' for 'vstring': %s" % (to_native(vstring), to_native(e)))
+
+    return { k: semver.__getattribute__(k) for k in keys }
 
 def comment(text, style='plain', **kw):
     # Predefined comment types
