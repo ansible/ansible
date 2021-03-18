@@ -1131,7 +1131,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='Module deprecation/removed must agree in documentaiton, by prepending filename with'
+                    msg='Module deprecation/removed must agree in documentation, by prepending filename with'
                         ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
                         ' documentation for removed'
                 )
