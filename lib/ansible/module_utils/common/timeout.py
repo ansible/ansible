@@ -10,6 +10,13 @@ from functools import wraps
 from ansible.module_utils.common.warnings import warn
 
 
+try:
+    TimeoutError
+except NameError:
+    class TimeoutError(OSError):
+        """TimeoutError shim for Python 2."""
+
+
 def _raise_timeout(signum, frame):
     raise TimeoutError
 
