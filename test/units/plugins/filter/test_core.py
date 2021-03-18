@@ -8,7 +8,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.filter.core import to_uuid,parse_semver,SEMVER_VALID_KEYS
+from ansible.plugins.filter.core import to_uuid, parse_semver, SEMVER_VALID_KEYS
 from ansible.errors import AnsibleFilterError
 
 
@@ -75,194 +75,195 @@ SEMVER_VALID_VSTRINGS = (
     ('1.0.0-0A.is.legal')
 )
 
-SEMVER_VALID_TEST_CASES=(
-    (   '0.0.4',
-        {   'buildmetadata': (),
+SEMVER_VALID_TEST_CASES = (
+    ('0.0.4',
+        {'buildmetadata': (),
             'major': 0,
             'minor': 0,
             'patch': 4,
             'prerelease': ()}),
-    (   '1.2.3',
-        {   'buildmetadata': (),
+    ('1.2.3',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 2,
             'patch': 3,
             'prerelease': ()}),
-    (   '10.20.30',
-        {   'buildmetadata': (),
+    ('10.20.30',
+        {'buildmetadata': (),
             'major': 10,
             'minor': 20,
             'patch': 30,
             'prerelease': ()}),
-    (   '1.1.2-prerelease+meta',
-        {   'buildmetadata': ('meta',),
+    ('1.1.2-prerelease+meta',
+        {'buildmetadata': ('meta',),
             'major': 1,
             'minor': 1,
             'patch': 2,
             'prerelease': ('prerelease',)}),
-    (   '1.1.2+meta',
-        {   'buildmetadata': ('meta',),
+    ('1.1.2+meta',
+        {'buildmetadata': ('meta',),
             'major': 1,
             'minor': 1,
             'patch': 2,
             'prerelease': ()}),
-    (   '1.1.2+meta-valid',
-        {   'buildmetadata': ('meta-valid',),
+    ('1.1.2+meta-valid',
+        {'buildmetadata': ('meta-valid',),
             'major': 1,
             'minor': 1,
             'patch': 2,
             'prerelease': ()}),
-    (   '1.0.0-alpha',
-        {   'buildmetadata': (),
+    ('1.0.0-alpha',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha',)}),
-    (   '1.0.0-beta',
-        {   'buildmetadata': (),
+    ('1.0.0-beta',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('beta',)}),
-    (   '1.0.0-alpha.beta',
-        {   'buildmetadata': (),
+    ('1.0.0-alpha.beta',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha', 'beta')}),
-    (   '1.0.0-alpha.beta.1',
-        {   'buildmetadata': (),
+    ('1.0.0-alpha.beta.1',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha', 'beta', 1)}),
-    (   '1.0.0-alpha.1',
-        {   'buildmetadata': (),
+    ('1.0.0-alpha.1',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha', 1)}),
-    (   '1.0.0-alpha0.valid',
-        {   'buildmetadata': (),
+    ('1.0.0-alpha0.valid',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha0', 'valid')}),
-    (   '1.0.0-alpha.0valid',
-        {   'buildmetadata': (),
+    ('1.0.0-alpha.0valid',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha', '0valid')}),
-    (   '1.0.0-alpha-a.b-c-somethinglong+build.1-aef.1-its-okay',
-        {   'buildmetadata': ('build', '1-aef', '1-its-okay'),
+    ('1.0.0-alpha-a.b-c-somethinglong+build.1-aef.1-its-okay',
+        {'buildmetadata': ('build', '1-aef', '1-its-okay'),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha-a', 'b-c-somethinglong')}),
-    (   '1.0.0-rc.1+build.1',
-        {   'buildmetadata': ('build', 1),
+    ('1.0.0-rc.1+build.1',
+        {'buildmetadata': ('build', 1),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('rc', 1)}),
-    (   '2.0.0-rc.1+build.123',
-        {   'buildmetadata': ('build', 123),
+    ('2.0.0-rc.1+build.123',
+        {'buildmetadata': ('build', 123),
             'major': 2,
             'minor': 0,
             'patch': 0,
             'prerelease': ('rc', 1)}),
-    (   '1.2.3-beta',
-        {   'buildmetadata': (),
+    ('1.2.3-beta',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 2,
             'patch': 3,
             'prerelease': ('beta',)}),
-    (   '10.2.3-DEV-SNAPSHOT',
-        {   'buildmetadata': (),
+    ('10.2.3-DEV-SNAPSHOT',
+        {'buildmetadata': (),
             'major': 10,
             'minor': 2,
             'patch': 3,
             'prerelease': ('DEV-SNAPSHOT',)}),
-    (   '1.2.3-SNAPSHOT-123',
-        {   'buildmetadata': (),
+    ('1.2.3-SNAPSHOT-123',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 2,
             'patch': 3,
             'prerelease': ('SNAPSHOT-123',)}),
-    (   '1.0.0',
-        {   'buildmetadata': (),
+    ('1.0.0',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ()}),
-    (   '2.0.0',
-        {   'buildmetadata': (),
+    ('2.0.0',
+        {'buildmetadata': (),
             'major': 2,
             'minor': 0,
             'patch': 0,
             'prerelease': ()}),
-    (   '1.1.7',
-        {   'buildmetadata': (),
+    ('1.1.7',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 1,
             'patch': 7,
             'prerelease': ()}),
-    (   '2.0.0+build.1848',
-        {   'buildmetadata': ('build', 1848),
+    ('2.0.0+build.1848',
+        {'buildmetadata': ('build', 1848),
             'major': 2,
             'minor': 0,
             'patch': 0,
             'prerelease': ()}),
-    (   '2.0.1-alpha.1227',
-        {   'buildmetadata': (),
+    ('2.0.1-alpha.1227',
+        {'buildmetadata': (),
             'major': 2,
             'minor': 0,
             'patch': 1,
             'prerelease': ('alpha', 1227)}),
-    (   '1.0.0-alpha+beta',
-        {   'buildmetadata': ('beta',),
+    ('1.0.0-alpha+beta',
+        {'buildmetadata': ('beta',),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('alpha',)}),
-    (   '1.2.3----RC-SNAPSHOT.12.9.1--.12+788',
-        {   'buildmetadata': (788,),
+    ('1.2.3----RC-SNAPSHOT.12.9.1--.12+788',
+        {'buildmetadata': (788,),
             'major': 1,
             'minor': 2,
             'patch': 3,
             'prerelease': ('---RC-SNAPSHOT', 12, 9, '1--', 12)}),
-    (   '1.2.3----R-S.12.9.1--.12+meta',
-        {   'buildmetadata': ('meta',),
+    ('1.2.3----R-S.12.9.1--.12+meta',
+        {'buildmetadata': ('meta',),
             'major': 1,
             'minor': 2,
             'patch': 3,
             'prerelease': ('---R-S', 12, 9, '1--', 12)}),
-    (   '1.2.3----RC-SNAPSHOT.12.9.1--.12',
-        {   'buildmetadata': (),
+    ('1.2.3----RC-SNAPSHOT.12.9.1--.12',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 2,
             'patch': 3,
             'prerelease': ('---RC-SNAPSHOT', 12, 9, '1--', 12)}),
-    (   '1.0.0+0.build.1-rc.10000aaa-kk-0.1',
-        {   'buildmetadata': (0, 'build', '1-rc', '10000aaa-kk-0', 1),
+    ('1.0.0+0.build.1-rc.10000aaa-kk-0.1',
+        {'buildmetadata': (0, 'build', '1-rc', '10000aaa-kk-0', 1),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ()}),
-    (   '99999999999999999999999.999999999999999999.99999999999999999',
-        {   'buildmetadata': (),
+    ('99999999999999999999999.999999999999999999.99999999999999999',
+        {'buildmetadata': (),
             'major': 99999999999999999999999,
             'minor': 999999999999999999,
             'patch': 99999999999999999,
             'prerelease': ()}),
-    (   '1.0.0-0A.is.legal',
-        {   'buildmetadata': (),
+    ('1.0.0-0A.is.legal',
+        {'buildmetadata': (),
             'major': 1,
             'minor': 0,
             'patch': 0,
             'prerelease': ('0A', 'is', 'legal')})
-        )
+)
+
 
 @pytest.mark.parametrize('vstring, expected', SEMVER_VALID_TEST_CASES)
 def test_parse_semver_valid_vstring(vstring, expected):
@@ -314,16 +315,19 @@ SEMVER_INVALID_VSTRINGS = (
     ('99999999999999999999999.999999999999999999.99999999999999999----RC-SNAPSHOT.12.09.1--------------------------------..12')
 )
 
+
 @pytest.mark.parametrize('vstring', SEMVER_INVALID_VSTRINGS)
 def test_parse_semver_invalid_vstring(vstring):
     with pytest.raises(AnsibleFilterError) as e:
         parse_semver(vstring)
     assert 'Invalid value' in to_native(e.value)
 
-SEMVER_INVALID_TYPE_VSTRINGS=(
+
+SEMVER_INVALID_TYPE_VSTRINGS = (
     (1),
     (3123123313212)
 )
+
 
 @pytest.mark.parametrize('vstring', SEMVER_INVALID_TYPE_VSTRINGS)
 def test_parse_semver_invalid_vstring_type(vstring):
@@ -331,20 +335,22 @@ def test_parse_semver_invalid_vstring_type(vstring):
         parse_semver(vstring)
     assert 'Invalid type' in to_native(e.value)
 
-SEMVER_INVALID_KEYS=(
+
+SEMVER_INVALID_KEYS = (
     ['stuff'],
     ['another'],
     ['keys']
 )
+
 
 @pytest.mark.parametrize(
     'vstring, keys', (
         (vstring, keys)
         for vstring in SEMVER_VALID_VSTRINGS
         for keys in SEMVER_INVALID_KEYS
-        )
+    )
 )
-def test_parse_semver_valid_vstring_invalid_key(vstring,keys):
+def test_parse_semver_valid_vstring_invalid_key(vstring, keys):
     with pytest.raises(AnsibleFilterError) as e:
-        parse_semver(vstring,keys=keys)
+        parse_semver(vstring, keys=keys)
     assert 'Invalid key' in to_native(e.value)
