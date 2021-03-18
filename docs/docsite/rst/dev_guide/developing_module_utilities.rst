@@ -55,7 +55,6 @@ Ansible ships with an extensive library of ``module_utils`` files. You can find 
 - ``facts/`` - Directory of utilities for modules that return facts. See `PR 23012 <https://github.com/ansible/ansible/pull/23012>`_ for more information
 - ``json_utils.py`` - Utilities for filtering unrelated output around module JSON output, like leading and trailing lines
 - ``powershell/`` - Directory of definitions and helper functions for Windows PowerShell modules
-- ``pycompat24.py`` - Exception workaround for Python 2.4
 - ``service.py`` - Utilities to enable modules to work with Linux services (placeholder, not in use)
 - ``six/__init__.py`` - Bundled copy of the `Six Python library <https://pypi.org/project/six/>`_ to aid in writing code compatible with both Python 2 and Python 3
 - ``splitter.py`` - String splitting and manipulation utilities for working with Jinja2 templates

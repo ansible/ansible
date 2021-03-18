@@ -82,32 +82,6 @@ class TestImports(ModuleTestCase):
     #     from ansible.module_utils import basic
 
     @patch.object(builtins, '__import__')
-    @unittest.skipIf(sys.version_info[0] >= 3, "literal_eval is available in every version of Python3")
-    def test_module_utils_basic_import_literal_eval(self, mock_import):
-        def _mock_import(name, *args, **kwargs):
-            try:
-                fromlist = kwargs.get('fromlist', args[2])
-            except IndexError:
-                fromlist = []
-            if name == 'ast' and 'literal_eval' in fromlist:
-                raise ImportError
-            return realimport(name, *args, **kwargs)
-
-        mock_import.side_effect = _mock_import
-        self.clear_modules(['ast', 'ansible.module_utils.basic'])
-        mod = builtins.__import__('ansible.module_utils.basic')
-        self.assertEqual(mod.module_utils.basic.literal_eval("'1'"), "1")
-        self.assertEqual(mod.module_utils.basic.literal_eval("1"), 1)
-        self.assertEqual(mod.module_utils.basic.literal_eval("-1"), -1)
-        self.assertEqual(mod.module_utils.basic.literal_eval("(1,2,3)"), (1, 2, 3))
-        self.assertEqual(mod.module_utils.basic.literal_eval("[1]"), [1])
-        self.assertEqual(mod.module_utils.basic.literal_eval("True"), True)
-        self.assertEqual(mod.module_utils.basic.literal_eval("False"), False)
-        self.assertEqual(mod.module_utils.basic.literal_eval("None"), None)
-        # self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
-        self.assertRaises(ValueError, mod.module_utils.basic.literal_eval, "asdfasdfasdf")
-
-    @patch.object(builtins, '__import__')
     def test_module_utils_basic_import_systemd_journal(self, mock_import):
         def _mock_import(name, *args, **kwargs):
             try:

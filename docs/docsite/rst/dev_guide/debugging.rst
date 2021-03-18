@@ -70,7 +70,6 @@ The following steps use ``localhost`` as the target host, but you can use the sa
           │   │   ├── compat
           │   │   ├── distro
           │   │   ├── parsing
-          │   │   ├── pycompat24.py
           │   │   └── six
           │   └── modules
           │       ├── __init__.py

@@ -71,7 +71,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSP
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
-lib/ansible/module_utils/pycompat24.py no-get-exception
 lib/ansible/module_utils/six/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/six/__init__.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/six/__init__.py metaclass-boilerplate # ignore bundled

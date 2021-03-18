@@ -153,7 +153,6 @@ from ansible.module_utils.common.sys_info import (
     get_distribution_version,
     get_platform_subclass,
 )
-from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     _remove_values_conditions,
     _sanitize_keys_conditions,
@@ -237,8 +236,6 @@ try:
 except NameError:
     # Python 3
     basestring = string_types
-
-_literal_eval = literal_eval
 
 # End of deprecated names
 
