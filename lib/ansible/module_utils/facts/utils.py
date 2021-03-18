@@ -35,7 +35,7 @@ def get_file_content(path, default=None, strip=True):
         try:
             datafile = open(path)
             try:
-                # try to aviod blocking
+                # try to not enter kernel 'block' mode, which prevents timeouts
                 fd = datafile.fileno()
                 flag = fcntl.fcntl(fd, fcntl.F_GETFD)
                 fcntl.fcntl(fd, fcntl.F_SETFD, flag | os.O_NONBLOCK)
@@ -52,7 +52,7 @@ def get_file_content(path, default=None, strip=True):
                 data = default
 
         except Exception:
-            # ignore errors as some jails/containers might have readable permissions but not allow reads to proc
+            # ignore errors as some jails/containers might have readable permissions but not allow reads
             pass
         finally:
             datafile.close()
