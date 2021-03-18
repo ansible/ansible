@@ -175,7 +175,7 @@ Combining positive and negative filters from examples above, you can get a 'valu
           wait_for:
             host: "{{ item }}"
             port: 22
-          loop: '{{ has_ah + no_ah}}'
+          loop: '{{ has_ah + no_ah }}'
           vars:
             has_ah: '{{ hostvars|dictsort|selectattr("1.ansible_host", "defined")|map(attribute="1.ansible_host")|list }}'
             no_ah: '{{ hostvars|dictsort|rejectattr("1.ansible_host", "defined")|map(attribute="0")|list }}'
