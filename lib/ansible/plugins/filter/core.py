@@ -384,7 +384,7 @@ def parse_semver(
     if keys is None:
         keys = SEMVER_VALID_KEYS
 
-    extra_keys=set(keys)-set(SEMVER_VALID_KEYS)
+    extra_keys = set(keys) - set(SEMVER_VALID_KEYS)
     if len(extra_keys) > 0:
         raise AnsibleFilterError("Invalid key(s) '%s' for 'keys'. Valid keys are: %s " % (to_native(extra_keys), to_native(SEMVER_VALID_KEYS)))
 
