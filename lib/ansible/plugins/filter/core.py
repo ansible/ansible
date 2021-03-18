@@ -395,7 +395,7 @@ def parse_semver(
     except (ValueError) as e:
         raise AnsibleFilterError("Invalid value '%s' for 'vstring': %s" % (to_native(vstring), to_native(e)))
 
-    return {k: semver.__getattribute__(k) for k in keys}
+    return {k: getattr(semver, k) for k in keys}
 
 
 def comment(text, style='plain', **kw):
