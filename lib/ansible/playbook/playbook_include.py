@@ -24,6 +24,7 @@ import os
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import Mapping,
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -147,7 +148,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 if k == 'vars':
                     if 'vars' in new_ds:
                         raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
-                    elif not isinstance(v, dict):
+                    elif not isinstance(v, Mapping):
                         raise AnsibleParserError("vars for import_playbook statements must be specified as a dictionary", obj=ds)
                 new_ds[k] = v
 

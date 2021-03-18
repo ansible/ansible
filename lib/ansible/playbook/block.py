@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
@@ -102,14 +103,17 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         return bool(isinstance(ds, dict) and 'block' in ds)
 
     def preprocess_data(self, ds, allow_private=False):
+
         # you might get a task or task list instead, which will get implicit block later on
         if Block.is_block(ds):
             ds = super(Block, self).preprocess_data(ds, allow_private=allow_private)
-        else:
+        elif not isinstance(ds, Sequence):
             # no need to preprocess data as each entry will go through that as load_data is triggered for each list item
-            if not isinstance(ds, list):
-                # If a simple task is given, ensure its a list for the implicit block
-                ds = [ds]
+            # If a simple task is given, ensure its a list for the implicit block
+            ds = [ds]
+        elif ds is None:
+            # TODO: really need to fix so this is not the case
+            ds = {}
 
         return ds
 
