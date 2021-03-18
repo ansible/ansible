@@ -101,6 +101,9 @@ fi
 # test collection inventories
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
+# test plugin loader redirect_list
+ansible-playbook test_redirect_list.yml -v "$@"
+
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATH=''
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory --list --export --playbook-dir=. -v "$@"

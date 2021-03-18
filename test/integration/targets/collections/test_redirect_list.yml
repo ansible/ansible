@@ -1,0 +1,86 @@
+---
+- hosts: localhost
+  gather_facts: no
+  module_defaults:
+    testns.testcoll.plugin_lookup:
+      type: module
+  tasks:
+  - name: test builtin
+    testns.testcoll.plugin_lookup:
+      name: dnf
+    register: result
+    failed_when:
+    - result['redirect_list'] != ['dnf'] or result['plugin_path'].endswith('library/dnf.py')
+
+  - name: test builtin with collections kw
+    testns.testcoll.plugin_lookup:
+      name: dnf
+    register: result
+    failed_when:
+    - result['redirect_list'] != ['dnf'] or result['plugin_path'].endswith('library/dnf.py')
+    collections:
+      - testns.unrelatedcoll
+
+  - name: test redirected builtin
+    testns.testcoll.plugin_lookup:
+      name: formerly_core_ping
+    register: result
+    failed_when: result['redirect_list'] != expected_redirect_list
+    vars:
+      expected_redirect_list:
+        - formerly_core_ping
+        - ansible.builtin.formerly_core_ping
+        - testns.testcoll.ping
+
+  - name: test redirected builtin with collections kw
+    testns.testcoll.plugin_lookup:
+      name: formerly_core_ping
+    register: result
+    failed_when: result['redirect_list'] != expected_redirect_list
+    vars:
+      expected_redirect_list:
+        - formerly_core_ping
+        - ansible.builtin.formerly_core_ping
+        - testns.testcoll.ping
+    collections:
+      - testns.unrelatedcoll
+      - testns.testcoll
+
+  - name: test collection module with collections kw
+    testns.testcoll.plugin_lookup:
+      name: ping
+    register: result
+    failed_when: result['redirect_list'] != expected_redirect_list
+    vars:
+      expected_redirect_list:
+        - ping
+        - testns.testcoll.ping
+    collections:
+      - testns.unrelatedcoll
+      - testns.testcoll
+
+  - name: test redirected collection module with collections kw
+    testns.testcoll.plugin_lookup:
+      name: ping
+    register: result
+    failed_when: result['redirect_list'] != expected_redirect_list
+    vars:
+      expected_redirect_list:
+        - ping
+        - testns.testredirect.ping
+        - testns.testcoll.ping
+    collections:
+      - testns.unrelatedcoll
+      - testns.testredirect
+
+  - name: test legacy module with collections kw
+    testns.testcoll.plugin_lookup:
+      name: ping
+    register: result
+    failed_when:
+    - result['redirect_list'] != expected_redirect_list or not result['plugin_path'].endswith('library/ping.py')
+    vars:
+      expected_redirect_list:
+        - ping
+    collections:
+      - testns.unrelatedcoll
