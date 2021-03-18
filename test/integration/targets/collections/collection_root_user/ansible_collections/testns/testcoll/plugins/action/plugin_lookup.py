@@ -15,19 +15,26 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(None, task_vars)
 
-        type = self._task.args.get('type')
+        plugin_type = self._task.args.get('type')
         name = self._task.args.get('name')
 
         result = dict(changed=False, collection_list=self._task.collections)
 
-        if all([type, name]):
-            attr_name = '{0}_loader'.format(type)
+        if all([plugin_type, name]):
+            attr_name = '{0}_loader'.format(plugin_type)
 
             typed_loader = getattr(loader, attr_name, None)
 
             if not typed_loader:
-                return (dict(failed=True, msg='invalid plugin type {0}'.format(type)))
+                return (dict(failed=True, msg='invalid plugin type {0}'.format(plugin_type)))
 
-            result['plugin_path'] = typed_loader.find_plugin(name, collection_list=self._task.collections)
+            context = typed_loader.find_plugin_with_context(name, collection_list=self._task.collections)
+
+            if not context.resolved:
+                result['plugin_path'] = None
+                result['redirect_list'] = []
+            else:
+                result['plugin_path'] = context.plugin_resolved_path
+                result['redirect_list'] = context.redirect_list
 
         return result
