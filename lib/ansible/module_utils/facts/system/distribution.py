@@ -226,9 +226,16 @@ class DistributionFiles:
         if path == '/etc/os-release':
             version = re.search(r"VERSION_ID=\"(.*)\"", data)
             if version:
-                amazon_facts['distribution_version'] = version.group(1)
-                amazon_facts['distribution_major_version'] = version.group(1).split('.')[0]
-                amazon_facts['distribution_minor_version'] = version.group(1).split('.')[1]
+                distribution_version = version.group(1)
+                amazon_facts['distribution_version'] = distribution_version
+                version_data = distribution_version.split(".")
+                if len(version_data) > 1:
+                    major, minor = version_data
+                else:
+                    major, minor = version_data[0], 'NA'
+
+                amazon_facts['distribution_major_version'] = major
+                amazon_facts['distribution_minor_version'] = minor
         else:
             version = [n for n in data.split() if n.isdigit()]
             version = version[0] if version else 'NA'
