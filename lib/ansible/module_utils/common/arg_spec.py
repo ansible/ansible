@@ -223,11 +223,10 @@ class ArgumentSpecValidator:
         )
 
         for check in checks:
-            if check['attr'] is not None:
-                try:
-                    check['func'](getattr(self, check['attr']), result._validated_parameters)
-                except TypeError as te:
-                    result.errors.append(check['err'](to_native(te)))
+            try:
+                check['func'](getattr(self, check['attr']), result._validated_parameters)
+            except TypeError as te:
+                result.errors.append(check['err'](to_native(te)))
 
         result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters))
 
