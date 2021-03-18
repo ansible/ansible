@@ -272,7 +272,6 @@ def test_parse_semver_valid_vstring(vstring, expected):
 
 
 SEMVER_INVALID_VSTRINGS = (
-    (1),  # Deliberatly a numeric 1 as this is not supported
     ('1'),
     ('1.2'),
     ('1.2.3-0123'),
@@ -321,8 +320,31 @@ def test_parse_semver_invalid_vstring(vstring):
         parse_semver(vstring)
     assert 'Invalid value' in to_native(e.value)
 
-@pytest.mark.parametrize('vstring', SEMVER_VALID_VSTRINGS)
-def test_parse_semver_valid_vstring_invalid_key(vstring,keys=['stuff']):
+SEMVER_INVALID_TYPE_VSTRINGS=(
+    (1),
+    (3123123313212)
+)
+
+@pytest.mark.parametrize('vstring', SEMVER_INVALID_TYPE_VSTRINGS)
+def test_parse_semver_invalid_vstring_type(vstring):
+    with pytest.raises(AnsibleFilterError) as e:
+        parse_semver(vstring)
+    assert 'Invalid type' in to_native(e.value)
+
+SEMVER_INVALID_KEYS=(
+    ['stuff'],
+    ['another'],
+    ['keys']
+)
+
+@pytest.mark.parametrize(
+    'vstring, keys', (
+        (vstring, keys)
+        for vstring in SEMVER_VALID_VSTRINGS
+        for keys in SEMVER_INVALID_KEYS
+        )
+)
+def test_parse_semver_valid_vstring_invalid_key(vstring,keys):
     with pytest.raises(AnsibleFilterError) as e:
         parse_semver(vstring,keys=keys)
     assert 'Invalid key' in to_native(e.value)
