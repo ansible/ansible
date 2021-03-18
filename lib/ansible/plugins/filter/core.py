@@ -378,6 +378,10 @@ def parse_semver(
         Returns the value for each requested key.
         If no keys are requested, returns all keys that are valid '''
 
+    if not isinstance(vstring, string_types):
+        raise AnsibleFilterError("Invalid type for '%s' for 'vstring'." % (to_native(vstring)))
+
+
     extra_keys=set(keys)-set(SEMVER_VALID_KEYS)
     if len(extra_keys) > 0:
         raise AnsibleFilterError("Invalid key(s) '%s' for 'keys'. Valid keys are: %s " % (to_native(extra_keys), to_native(SEMVER_VALID_KEYS)))
