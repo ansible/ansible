@@ -96,6 +96,8 @@ class TaskExecutor:
 
         self._task.squash()
 
+        self.no_log = C.DEFAULT_NO_LOG
+
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
@@ -106,6 +108,7 @@ class TaskExecutor:
 
         display.debug("in run() - task %s" % self._task._uuid)
 
+        no_log = self.no_log
         try:
             try:
                 items = self._get_loop_items()
@@ -117,6 +120,9 @@ class TaskExecutor:
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
+
+                    # update no_log now that we have results
+                    nolog = self._task.no_log
 
                     # create the overall result item
                     res = dict(results=item_results)
@@ -153,6 +159,9 @@ class TaskExecutor:
                         res['msg'] = 'All items skipped'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
+
+                    # update no_log now that we have results
+                    nolog = self._task.no_log
             else:
                 display.debug("calling self._execute()")
                 res = self._execute()
@@ -188,10 +197,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._task.no_log)
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=no_log)
         except Exception as e:
             return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
-                        stdout='', _ansible_no_log=self._task.no_log)
+                        stdout='', _ansible_no_log=no_log)
         finally:
             try:
                 self._connection.close()
@@ -356,7 +365,7 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
-            # update 'general no_log' based on specific no_log
+            # update 'general no_log' based on specific no_log, keeping true if any was true
             no_log = no_log or tmp_task.no_log
 
             # now update the result with the item info, and append the result
