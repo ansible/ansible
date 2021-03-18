@@ -270,6 +270,62 @@ You have three other cache methods available:
   - ``update_cache_if_changed`` sets the cache plugin only if ``self._cache`` has been modified, before the ``parse`` method completes
   - ``clear_cache`` flushes the cache, ultimately by calling the cache plugin's ``flush()`` method, whose implementation is dependent upon the particular cache plugin in use. Note that if the user is using the same cache backend for facts and inventory, both will get flushed. To avoid this, the user can specify a distinct cache backend in their inventory plugin configuration.
 
+constructed features
+^^^^^^^^^^^^^^^^^^^^
+
+Inventory plugins can create host variables and groups from Jinja2 expressions and variables by using features from the ``constructed`` inventory plugin. To do this, use the ``Constructable`` base class and extend the inventory plugin's documentation with the ``constructed`` documentation fragment.
+
+.. code-block:: yaml
+
+    extends_documentation_fragment:
+      - constructed
+
+.. code-block:: python
+
+    class InventoryModule(BaseInventoryPlugin, Constructable):
+
+        NAME = 'ns.coll.myplugin'
+
+The three main options from the ``constructed`` documentation fragment are ``compose``, ``keyed_groups``, and ``groups``. See the ``constructed`` inventory plugin for examples on using these. ``compose`` is a dictionary of variable names and Jinja2 expressions. Once a host is added to inventory and any initial variables have been set, call the method ``_set_composite_vars`` to add composed host variables. If this is done before adding ``keyed_groups`` and ``groups``, the group generation will be able to use the composed variables.
+
+.. code-block:: python
+
+   def add_host(self, hostname, host_vars):
+       self.inventory.add_host(hostname, group='all')
+
+       for var_name, var_value in host_vars.items():
+           self.inventory.set_variable(hostname, var_name, var_value)
+
+       # Determines if composed variables or groups using nonexistent variables is an error
+       strict = self.get_option('strict')
+
+       # Add variables created by the user's Jinja2 expressions to the host
+       self._set_composite_vars(self.get_option('compose'), host_vars, hostname, strict=True)
+
+       # The following two methods combine the provided variables dictionary with the latest host variables
+       # Using these methods after _set_composite_vars() allows groups to be created with the composed variables
+       self._add_host_to_composed_groups(self.get_option('groups'), host_vars, hostname, strict=strict)
+       self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host_vars, hostname, strict=strict)
+
+By default, group names created with ``_add_host_to_composed_groups()`` and ``_add_host_to_keyed_groups()`` are valid Python identifiers. Invalid characters are replaced with an underscore ``_``. A plugin can change the sanitization used for the constructed features by setting ``self._sanitize_group_name`` to a new function. The core engine also does sanitization, so if the custom function is less strict it should be used in conjunction with the configuration setting ``TRANSFORM_INVALID_GROUP_CHARS``.
+
+.. code-block:: python
+
+   from ansible.inventory.group import to_safe_group_name
+
+   class InventoryModule(BaseInventoryPlugin, Constructable):
+
+       NAME = 'ns.coll.myplugin'
+
+       @staticmethod
+       def custom_sanitizer(name):
+           return to_safe_group_name(name, replacer='')
+
+       def parse(self, inventory, loader, path, cache=True):
+           super(InventoryModule, self).parse(inventory, loader, path)
+
+           self._sanitize_group_name = custom_sanitizer
+
 .. _inventory_source_common_format:
 
 Common format for inventory sources

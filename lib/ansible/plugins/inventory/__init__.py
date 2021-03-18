@@ -150,6 +150,11 @@ class BaseInventoryPlugin(AnsiblePlugin):
     """ Parses an Inventory Source"""
 
     TYPE = 'generator'
+
+    # 3rd party plugins redefine this to
+    # use custom group name sanitization
+    # since constructed features enforce
+    # it by default.
     _sanitize_group_name = staticmethod(to_safe_group_name)
 
     def __init__(self):
