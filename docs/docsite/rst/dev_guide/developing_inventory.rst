@@ -360,8 +360,7 @@ Inventory script conventions
 Inventory scripts must accept the ``--list`` and ``--host <hostname>`` arguments. Although other arguments are allowed, Ansible will not use them.
 Such arguments might still be useful for executing the scripts directly.
 
-When the script is called with the single argument ``--list``, the script must output to stdout a JSON-encoded hash or
-dictionary that contains all the groups to be managed. Each group's value should be either a hash or dictionary containing a list of each host, any child groups, and potential group variables, or simply a list of hosts::
+When the script is called with the single argument ``--list``, the script must output to stdout a JSON object that contains all the groups to be managed. Each group's value should be either an object containing a list of each host, any child groups, and potential group variables, or simply a list of hosts::
 
 
     {
@@ -384,7 +383,7 @@ dictionary that contains all the groups to be managed. Each group's value should
 
 If any of the elements of a group are empty, they may be omitted from the output.
 
-When called with the argument ``--host <hostname>`` (where <hostname> is a host from above), the script must print either an empty JSON hash/dictionary, or a hash/dictionary of variables to make them available to templates and playbooks. For example::
+When called with the argument ``--host <hostname>`` (where <hostname> is a host from above), the script must print a JSON object, either empty or containing variables to make them available to templates and playbooks. For example::
 
 
     {
@@ -392,7 +391,7 @@ When called with the argument ``--host <hostname>`` (where <hostname> is a host 
         "VAR002": "VALUE",
     }
 
-Printing variables is optional. If the script does not print variables, it should print an empty hash or dictionary.
+Printing variables is optional. If the script does not print variables, it should print an empty JSON object.
 
 .. _inventory_script_tuning:
 
@@ -405,7 +404,7 @@ The stock inventory script system mentioned above works for all versions of Ansi
 
 To avoid this inefficiency, if the inventory script returns a top-level element called "_meta", it is possible to return all the host variables in a single script execution. When this meta element contains a value for "hostvars", the inventory script will not be invoked with ``--host`` for each host. This behavior results in a significant performance increase for large numbers of hosts.
 
-The data to be added to the top-level JSON dictionary looks like this::
+The data to be added to the top-level JSON object looks like this::
 
     {
 
@@ -424,7 +423,7 @@ The data to be added to the top-level JSON dictionary looks like this::
         }
     }
 
-To satisfy the requirements of using ``_meta``, to prevent ansible from calling your inventory with ``--host`` you must at least populate ``_meta`` with an empty ``hostvars`` dictionary.
+To satisfy the requirements of using ``_meta``, to prevent ansible from calling your inventory with ``--host`` you must at least populate ``_meta`` with an empty ``hostvars`` object.
 For example::
 
     {
