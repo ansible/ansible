@@ -382,12 +382,21 @@ class TaskExecutor:
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
 
-            self._final_q.send_task_result(
+            tr = TaskResult(
                 self._host.name,
                 self._task._uuid,
                 res,
                 task_fields=task_fields,
             )
+            if tr.is_failed() or tr.is_unreachable():
+                self._final_q.send_callback('v2_runner_item_on_failed', tr)
+            elif tr.is_skipped():
+                self._final_q.send_callback('v2_runner_item_on_skipped', tr)
+            else:
+                if getattr(self._task, 'diff', False):
+                    self._final_q.send_callback('v2_on_file_diff', tr)
+                self._final_q.send_callback('v2_runner_item_on_ok', tr)
+
             results.append(res)
             del task_vars[loop_var]
 
@@ -673,7 +682,15 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._final_q.send_task_result(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs())
+                        self._final_q.send_callback(
+                            'v2_runner_retry',
+                            TaskResult(
+                                self._host.name,
+                                self._task._uuid,
+                                result,
+                                task_fields=self._task.dump_attrs()
+                            )
+                        )
                         time.sleep(delay)
                         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
         else:
@@ -782,8 +799,8 @@ class TaskExecutor:
                 self._final_q.send_callback(
                     'v2_runner_on_async_poll',
                     TaskResult(
-                        self._host,
-                        async_task,
+                        self._host.name,
+                        async_task,  # We send the full task here, because the controller knows nothing about it, the TE created it
                         async_result,
                         task_fields=self._task.dump_attrs(),
                     ),
