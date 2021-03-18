@@ -162,7 +162,7 @@ class PlaybookExecutor:
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
                     play.post_validate(templar)
-                    play.squash()
+                    #play.squash()
 
                     if context.CLIARGS['syntax']:
                         continue

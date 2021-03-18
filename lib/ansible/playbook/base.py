@@ -159,7 +159,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._variable_manager = None
 
         # other internal params
-        self._squash_attrs = tuple()
         self._validated = False
         self._squashed = False
         self._finalized = False
@@ -179,6 +178,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
+
+    @property
+    def finalized(self):
+        return self._finalized
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -306,10 +309,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         so that all future accesses of attributes do not need to evaluate
         parent attributes.
         '''
-        attrs = self._squash_attrs if self._squash_attrs else self._valid_attrs.keys()
-
         if not self._squashed:
-            for name in attrs:
+            for name in self._valid_attrs.keys():
                 self._attributes[name] = getattr(self, name)
             self._squashed = True
 
