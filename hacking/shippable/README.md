@@ -1,13 +1,14 @@
-# Shippable Scripts
+# CI Scripts
 
 ## Scripts
 
 This directory contains the following scripts:
 
-- download.py - Download results from Shippable.
-- get_recent_coverage_runs.py - Retrieve Shippable URLs of recent coverage test runs.
-- incidental.py - Report on incidental code coverage using data from Shippable.
 - run.py - Start new runs on Shippable.
+- recent_coverage.py - Retrieve URLs of recent coverage test runs.
+- download.py - Download results.
+- incidental.py - Report on incidental code coverage using data.
+- rebalance.py - Re-balance Shippable group(s) from a downloaded results directory.
 
 ## Incidental Code Coverage
 

@@ -17,180 +17,126 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""CLI tool for reporting on incidental test coverage."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
-# noinspection PyCompatibility
+"""CLI tool for reporting on incidental test coverage."""
+
 import argparse
-import glob
 import json
-import os
 import re
 import subprocess
 import sys
 import hashlib
+import pathlib
+import typing
+import re
+import dataclasses
+import argcomplete
 
-try:
-    # noinspection PyPackageRequirements
-    import argcomplete
-except ImportError:
-    argcomplete = None
+parser = argparse.ArgumentParser(description='Report on incidental test coverage downloaded from CI.')
 
+parser.add_argument('download', type=pathlib.Path, help='directory that was downloaded with the download script')
+parser.add_argument('--output', type=pathlib.Path, default=pathlib.Path(".")/"incidental",
+                    help='path to directory where reports should be written')
+parser.add_argument('--repo', type=pathlib.Path, default=pathlib.Path("./../.."),
+                    help='path to git repository containing Ansible source')
+target_arg = parser.add_mutually_exclusive_group()
+target_arg.add_argument('--target', type=re.compile, default=re.compile(r'^incidental_'),
+                    help='regex for targets to analyze, default: %(default)s')
+target_arg.add_argument('--plugin-path', type=pathlib.Path, help='path to plugin to report incidental coverage on')
+argcomplete.autocomplete(parser)
 
-def main():
-    """Main program body."""
-    args = parse_args()
+ANALYSE_COMMAND = ('ansible-test', 'coverage', 'analyze', 'targets')
 
-    try:
-        incidental_report(args)
-    except ApplicationError as ex:
-        sys.exit(ex)
+class Error(Exception):
+    pass
 
+def get_target_name_from_plugin_path(path: pathlib.Path):
+    plugin_name = path.stem
 
-def parse_args():
-    """Parse and return args."""
-    source = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if path.is_relative_to('lib/ansible/modules/'):
+        return plugin_name
+    elif path.is_relative_to('lib/ansible/plugins/'):
+        return f"{path.parts[3]}_{plugin_name}"
+    elif path.is_relative_to('lib/ansible/module_utils/'):
+        return f"module_utils_{plugin_name}"
+    elif path.is_relative_to('plugins/'):
+        return f"{path.parts[1]}_{plugin_name}"
+    raise Error(f"Cannot determine plugin type from plugin path: {path}")
 
-    parser = argparse.ArgumentParser(description='Report on incidental test coverage downloaded from Shippable.')
+@dataclasses.dataclass
+class Target:
+    pattern: str
+    missing: bool = False
+    name: str = None
+    include_path: pathlib.Path = None
+    cache_path_format: str = "{}"
 
-    parser.add_argument('result',
-                        type=directory,
-                        help='path to directory containing test results downloaded from Shippable')
+@dataclasses.dataclass
+class Paths:
+    repo: pathlib.Path 
+    data: pathlib.Path
+    reports: pathlib.Path
+    combined: pathlib.Path
+    coverage_paths: tuple[pathlib.Path]
 
-    parser.add_argument('--output',
-                        type=optional_directory,
-                        default=os.path.join(source, 'test', 'results', '.tmp', 'incidental'),
-                        help='path to directory where reports should be written')
+    def git_show(self, *args):
+        return subprocess.check_output(("git", "show")+args, cwd=self.repo)
 
-    parser.add_argument('--source',
-                        type=optional_directory,
-                        default=source,
-                        help='path to git repository containing Ansible source')
-
-    parser.add_argument('--skip-checks',
-                        action='store_true',
-                        help='skip integrity checks, use only for debugging')
-
-    parser.add_argument('--ignore-cache',
-                        dest='use_cache',
-                        action='store_false',
-                        help='ignore cached files')
-
-    parser.add_argument('-v', '--verbose',
-                        action='store_true',
-                        help='increase verbosity')
-
-    targets = parser.add_mutually_exclusive_group()
-
-    targets.add_argument('--targets',
-                         type=regex,
-                         default='^incidental_',
-                         help='regex for targets to analyze, default: %(default)s')
-
-    targets.add_argument('--plugin-path',
-                         help='path to plugin to report incidental coverage on')
-
-    if argcomplete:
-        argcomplete.autocomplete(parser)
-
-    args = parser.parse_args()
-
-    return args
-
-
-def optional_directory(value):
-    if not os.path.exists(value):
-        return value
-
-    return directory(value)
-
-
-def directory(value):
-    if not os.path.isdir(value):
-        raise argparse.ArgumentTypeError('"%s" is not a directory' % value)
-
-    return value
-
-
-def regex(value):
-    try:
-        return re.compile(value)
-    except Exception as ex:
-        raise argparse.ArgumentTypeError('"%s" is not a valid regex: %s' % (value, ex))
-
-
-def incidental_report(args):
-    """Generate incidental coverage report."""
-    ct = CoverageTool()
-    git = Git(os.path.abspath(args.source))
-    coverage_data = CoverageData(os.path.abspath(args.result))
-
-    try:
-        git.show([coverage_data.result_sha, '--'])
-    except subprocess.CalledProcessError:
-        raise ApplicationError('%s: commit not found: %s\n'
-                               'make sure your source repository is up-to-date' % (git.path, coverage_data.result_sha))
-
-    if coverage_data.status_code != 30:
-        check_failed(args, 'results from Shippable indicate tests did not pass (status code: %d)\n'
-                           're-run until passing, then download the latest results and re-run the report using those results' % coverage_data.status_code)
-
-    if coverage_data.missing_jobs or coverage_data.extra_jobs:
-        check_failed(args, 'unexpected results from Shippable -- missing jobs: %s, extra jobs: %s\n'
-                           'make sure the tests were successful and the all results were downloaded\n' % (
-                               sorted(coverage_data.missing_jobs), sorted(coverage_data.extra_jobs)))
-
-    if not coverage_data.paths:
-        raise ApplicationError('no coverage data found\n'
-                               'make sure the downloaded results are from a code coverage run on Shippable')
-
-    # generate a unique subdirectory in the output directory based on the input files being used
-    path_hash = hashlib.sha256(b'\n'.join(p.encode() for p in coverage_data.paths)).hexdigest()
-    output_path = os.path.abspath(os.path.join(args.output, path_hash))
-
-    data_path = os.path.join(output_path, 'data')
-    reports_path = os.path.join(output_path, 'reports')
-
-    for path in [data_path, reports_path]:
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-    # combine coverage results into a single file
-    combined_path = os.path.join(output_path, 'combined.json')
-    cached(combined_path, args.use_cache, args.verbose,
-           lambda: ct.combine(coverage_data.paths, combined_path))
-
-    with open(combined_path) as combined_file:
-        combined = json.load(combined_file)
-
+def inc(args: argparse.Namespace):
+    meta = json.load((args.download/"meta.json").open())
+    p = paths(meta, args.repo, args.download, args.output)
+    target = Target(pattern=args.target)
     if args.plugin_path:
-        # reporting on coverage missing from the test target for the specified plugin
-        # the report will be on a single target
-        cache_path_format = '%s' + '-for-%s' % os.path.splitext(os.path.basename(args.plugin_path))[0]
-        target_pattern = '^%s$' % get_target_name_from_plugin_path(args.plugin_path)
-        include_path = args.plugin_path
-        missing = True
-        target_name = get_target_name_from_plugin_path(args.plugin_path)
-    else:
-        # reporting on coverage exclusive to the matched targets
-        # the report can contain multiple targets
-        cache_path_format = '%s'
-        target_pattern = args.targets
-        include_path = None
-        missing = False
-        target_name = None
+        target.cache_path_format = f"{{}}-for-{args.plugin_path.stem}"
+        target.target_name = get_target_name_from_plugin_path(args.plugin_path)
+        target.pattern = f'^{target.name}$'
+        target.include_path = args.plugin_path
+        target.missing = True
+    incidental_report(meta, p, target)
 
+def paths(meta: dict[str, str], repo: pathlib.Path, download: pathlib.Path, output: pathlib.Path):
+    # TODO files need to be absolute for ansible-test
+    download = download.resolve()
+    output = output.resolve()
+    repo = repo.resolve()
+
+    coverage_paths = list(download.glob("*/coverage-analyze-targets.json"))
+    coverage_paths.sort()
+
+    path_hash = hashlib.sha256(b'\n'.join(str(p).encode() for p in coverage_paths)).hexdigest()
+    output = output/path_hash
+    paths = Paths(repo=repo, data=output/'data', reports=output/'reports', combined=output/'combined.json', coverage_paths=coverage_paths)
+    paths.data.mkdir(parents=True, exist_ok=True)    
+    paths.reports.mkdir(parents=True, exist_ok=True)
+
+    try:
+        paths.git_show(meta['git_object'], '--')
+    except subprocess.CalledProcessError:
+        raise Error(f"{repo}: commit {meta['git_object']} not found. Make sure your source repository is up-to-date")
+
+    if not coverage_paths:
+        raise Error("no coverage data found. make sure the downloaded results are from a code coverage run on Shippable")
+
+    
+
+    subprocess.check_call((ANALYSE_COMMAND+('combine',)+tuple(coverage_paths[0:1])+(paths.combined,)))
+
+    return paths
+
+def incidental_report(meta: dict[str, str], paths: Paths, target: Target):
     # identify integration test targets to analyze
+    combined = json.load(paths.combined.open())
     target_names = sorted(combined['targets'])
-    incidental_target_names = [target for target in target_names if re.search(target_pattern, target)]
+    #print(target.pattern)
+    #print([tn for tn in target_names])
+    incidental_target_names = [tn for tn in target_names ] # if re.search(target.pattern, tn)
 
     if not incidental_target_names:
-        if target_name:
+        if target.name:
             # if the plugin has no tests we still want to know what coverage is missing
-            incidental_target_names = [target_name]
+            incidental_target_names = [target.name]
         else:
-            raise ApplicationError('no targets to analyze')
+            raise Error('no targets to analyze')
 
     # exclude test support plugins from analysis
     # also exclude six, which for an unknown reason reports bogus coverage lines (indicating coverage of comments)
@@ -202,215 +148,104 @@ def incidental_report(args):
     report_paths = {}
 
     for target_name in incidental_target_names:
-        cache_name = cache_path_format % target_name
+        cache_name = target.cache_path_format.format(target_name)
 
-        only_target_path = os.path.join(data_path, 'only-%s.json' % cache_name)
-        cached(only_target_path, args.use_cache, args.verbose,
-               lambda: ct.filter(combined_path, only_target_path, include_targets=[target_name], include_path=include_path, exclude_path=exclude_path))
 
-        without_target_path = os.path.join(data_path, 'without-%s.json' % cache_name)
-        cached(without_target_path, args.use_cache, args.verbose,
-               lambda: ct.filter(combined_path, without_target_path, exclude_targets=[target_name], include_path=include_path, exclude_path=exclude_path))
+        filter_args = []
+        if target.include_path:
+            filter_args.extend(['--include-path', target.include_path])
+        if exclude_path:
+            filter_args.extend(['--exclude-path', exclude_path])
 
-        if missing:
-            source_target_path = missing_target_path = os.path.join(data_path, 'missing-%s.json' % cache_name)
-            cached(missing_target_path, args.use_cache, args.verbose,
-                   lambda: ct.missing(without_target_path, only_target_path, missing_target_path, only_gaps=True))
+        only_target_path = paths.data/f"only-{cache_name}.json"
+        without_target_path = paths.data/f"without-{cache_name}.json"
+        
+        extra_args = ('--include-target', target_name) if target_name else ()
+        subprocess.check_call(ANALYSE_COMMAND + ('filter', paths.combined, only_target_path) + extra_args + tuple(filter_args))
+
+        extra_args = ('--exclude-target', target_name) if target_name else ()
+        subprocess.check_call(ANALYSE_COMMAND + ('filter', paths.combined, without_target_path) + extra_args + tuple(filter_args))
+
+        if target.missing:
+            source_target_path = missing_target_path = paths.data/f"missing-{cache_name}.json"
+            coverage_missing(without_target_path, only_target_path, missing_target_path, only_gaps=True)
         else:
-            source_target_path = exclusive_target_path = os.path.join(data_path, 'exclusive-%s.json' % cache_name)
-            cached(exclusive_target_path, args.use_cache, args.verbose,
-                   lambda: ct.missing(only_target_path, without_target_path, exclusive_target_path, only_gaps=True))
+            source_target_path = exclusive_target_path = paths.data/f"exclusive-cache_name.json"
+            coverage_missing(only_target_path, without_target_path, exclusive_target_path, only_gaps=True)
 
-        source_expanded_target_path = os.path.join(os.path.dirname(source_target_path), 'expanded-%s' % os.path.basename(source_target_path))
-        cached(source_expanded_target_path, args.use_cache, args.verbose,
-               lambda: ct.expand(source_target_path, source_expanded_target_path))
+        source_expanded_target_path = source_target_path.parent/f"expanded-{source_target_path.name}"
 
-        summary[target_name] = sources = collect_sources(source_expanded_target_path, git, coverage_data)
+        subprocess.check_call(ANALYSE_COMMAND + ('expand', source_target_path, source_expanded_target_path))
 
-        txt_report_path = os.path.join(reports_path, '%s.txt' % cache_name)
-        cached(txt_report_path, args.use_cache, args.verbose,
-               lambda: generate_report(sources, txt_report_path, coverage_data, target_name, missing=missing))
+        sources = []
+        data = json.load(source_expanded_target_path.open())
+        for path_coverage in data.values():
+            for path, path_data in path_coverage.items():
+                sources.append(SourceFile(path, paths.git_show(f"{meta['git_object']}:{path}"), path_data))
+
+        summary[target_name] = sources 
+
+        txt_report_path = paths.reports/f"{cache_name}.txt"
+        generate_report(meta, sources, txt_report_path, target.name, missing=target.missing)
 
         report_paths[target_name] = txt_report_path
 
     # provide a summary report of results
     for target_name in incidental_target_names:
         sources = summary[target_name]
-        report_path = os.path.relpath(report_paths[target_name])
 
-        print('%s: %d arcs, %d lines, %d files - %s' % (
-            target_name,
-            sum(len(s.covered_arcs) for s in sources),
-            sum(len(s.covered_lines) for s in sources),
-            len(sources),
-            report_path,
-        ))
+        print(f"{target_name}: {sum(len(s.covered_arcs) for s in sources)} arcs, "
+              f"{sum(len(s.covered_lines) for s in sources)} lines, {len(sources)} files - {report_paths[target_name]}")
 
-    if not missing:
+    if not target.missing:
         sys.stderr.write('NOTE: This report shows only coverage exclusive to the reported targets. '
                          'As targets are removed, exclusive coverage on the remaining targets will increase.\n')
 
 
-def get_target_name_from_plugin_path(path):  # type: (str) -> str
-    """Return the integration test target name for the given plugin path."""
-    parts = os.path.splitext(path)[0].split(os.path.sep)
-    plugin_name = parts[-1]
+def coverage_missing(from_path: pathlib.Path, to_path: pathlib.Path, output: pathlib.Path, only_gaps: bool =False):
+    args = ['missing', from_path, to_path, output]
 
-    if path.startswith('lib/ansible/modules/'):
-        plugin_type = None
-    elif path.startswith('lib/ansible/plugins/'):
-        plugin_type = parts[3]
-    elif path.startswith('lib/ansible/module_utils/'):
-        plugin_type = parts[2]
-    elif path.startswith('plugins/'):
-        plugin_type = parts[1]
-    else:
-        raise ApplicationError('Cannot determine plugin type from plugin path: %s' % path)
+    if only_gaps:
+        args.append('--only-gaps')
 
-    if plugin_type is None:
-        target_name = plugin_name
-    else:
-        target_name = '%s_%s' % (plugin_type, plugin_name)
+    subprocess.check_call(ANALYSE_COMMAND + tuple(args))
 
-    return target_name
-
-
-class CoverageData:
-    def __init__(self, result_path):
-        with open(os.path.join(result_path, 'run.json')) as run_file:
-            run = json.load(run_file)
-
-        self.org_name = run['subscriptionOrgName']
-        self.project_name = run['projectName']
-        self.result_sha = run['commitSha']
-        self.status_code = run['statusCode']
-
-        self.github_base_url = 'https://github.com/%s/%s/blob/%s/' % (self.org_name, self.project_name, self.result_sha)
-
-        # locate available results
-        self.paths = sorted(glob.glob(os.path.join(result_path, '*', 'test', 'testresults', 'coverage-analyze-targets.json')))
-
-        # make sure the test matrix is complete
-        matrix_include = run['cleanRunYml']['matrix']['include']
-        matrix_jobs = list((idx, dict(tuple(item.split('=', 1)) for item in value['env'])) for idx, value in enumerate(matrix_include, start=1))
-        sanity_job_numbers = set(idx for idx, env in matrix_jobs if env['T'].startswith('sanity/'))
-        units_job_numbers = set(idx for idx, env in matrix_jobs if env['T'].startswith('units/'))
-        expected_job_numbers = set(idx for idx, env in matrix_jobs)
-        actual_job_numbers = set(int(os.path.relpath(path, result_path).split(os.path.sep)[0]) for path in self.paths)
-
-        self.missing_jobs = expected_job_numbers - actual_job_numbers - sanity_job_numbers - units_job_numbers
-        self.extra_jobs = actual_job_numbers - expected_job_numbers - sanity_job_numbers - units_job_numbers
-
-
-class Git:
-    def __init__(self, path):
-        self.git = 'git'
-        self.path = path
-
-        try:
-            self.show()
-        except subprocess.CalledProcessError:
-            raise ApplicationError('%s: not a git repository' % path)
-
-    def show(self, args=None):
-        return self.run(['show'] + (args or []))
-
-    def run(self, command):
-        return subprocess.check_output([self.git] + command, cwd=self.path)
-
-
-class CoverageTool:
-    def __init__(self):
-        self.analyze_cmd = ['ansible-test', 'coverage', 'analyze', 'targets']
-
-    def combine(self, input_paths, output_path):
-        subprocess.check_call(self.analyze_cmd + ['combine'] + input_paths + [output_path])
-
-    def filter(self, input_path, output_path, include_targets=None, exclude_targets=None, include_path=None, exclude_path=None):
-        args = []
-
-        if include_targets:
-            for target in include_targets:
-                args.extend(['--include-target', target])
-
-        if exclude_targets:
-            for target in exclude_targets:
-                args.extend(['--exclude-target', target])
-
-        if include_path:
-            args.extend(['--include-path', include_path])
-
-        if exclude_path:
-            args.extend(['--exclude-path', exclude_path])
-
-        subprocess.check_call(self.analyze_cmd + ['filter', input_path, output_path] + args)
-
-    def missing(self, from_path, to_path, output_path, only_gaps=False):
-        args = []
-
-        if only_gaps:
-            args.append('--only-gaps')
-
-        subprocess.check_call(self.analyze_cmd + ['missing', from_path, to_path, output_path] + args)
-
-    def expand(self, input_path, output_path):
-        subprocess.check_call(self.analyze_cmd + ['expand', input_path, output_path])
-
-
+@dataclasses.dataclass
 class SourceFile:
-    def __init__(self, path, source, coverage_data, coverage_points):
+    path: pathlib.Path
+    lines: tuple[str]
+    coverage_points: str
+    covered_points: set
+    covered_arcs: set
+    covered_lines: set
+
+    def __init__(self, path: pathlib.Path, source: str, coverage_points: str):
         self.path = path
-        self.lines = source.decode().splitlines()
-        self.coverage_data = coverage_data
         self.coverage_points = coverage_points
-        self.github_url = coverage_data.github_base_url + path
+        self.lines = source.splitlines()
 
+        parse = int
         is_arcs = ':' in dict(coverage_points).popitem()[0]
-
         if is_arcs:
-            parse = parse_arc
-        else:
-            parse = int
-
+            parse = lambda v: tuple(int(v) for v in v.split(':'))
         self.covered_points = set(parse(v) for v in coverage_points)
         self.covered_arcs = self.covered_points if is_arcs else None
+
         self.covered_lines = set(abs(p[0]) for p in self.covered_points) | set(abs(p[1]) for p in self.covered_points)
 
 
-def collect_sources(data_path, git, coverage_data):
-    with open(data_path) as data_file:
-        data = json.load(data_file)
-
-    sources = []
-
-    for path_coverage in data.values():
-        for path, path_data in path_coverage.items():
-            sources.append(SourceFile(path, git.show(['%s:%s' % (coverage_data.result_sha, path)]), coverage_data, path_data))
-
-    return sources
-
-
-def generate_report(sources, report_path, coverage_data, target_name, missing):
-    output = [
-        'Target: %s (%s coverage)' % (target_name, 'missing' if missing else 'exclusive'),
-        'GitHub: %stest/integration/targets/%s' % (coverage_data.github_base_url, target_name),
-    ]
+def generate_report(meta: dict[str, str], sources: list[SourceFile], report_path:pathlib.Path, target_name: str, missing: bool):
+    ro = report_path.open('tw')
+    ro.write(f"Target: {target_name} ({'missing' if missing else 'exclusive'} coverage)\n")
+    ro.write(f"CI: https://dev.azure.com/ansible/ansible/_build/results?buildId={meta['build_id']}\n\n")
 
     for source in sources:
         if source.covered_arcs:
-            output.extend([
-                '',
-                'Source: %s (%d arcs, %d/%d lines):' % (source.path, len(source.covered_arcs), len(source.covered_lines), len(source.lines)),
-                'GitHub: %s' % source.github_url,
-                '',
-            ])
+            ro.write(f"Source: {source.path} ({len(source.covered_arcs)} arcs, {len(source.covered_lines)}/{len(source.lines)} lines):\n")
+            ro.write(f"GitHub: https://github.com/ansible/ansible/blob/{meta['git_object']}/{source.path}\n\n")
         else:
-            output.extend([
-                '',
-                'Source: %s (%d/%d lines):' % (source.path, len(source.covered_lines), len(source.lines)),
-                'GitHub: %s' % source.github_url,
-                '',
-            ])
+            ro.write(f"Source: {source.path} ({len(source.covered_lines)}/{len(source.lines)} lines)\n"),
+            ro.write(f"GitHub: {source.github_url}\n\n")
 
         last_line_no = 0
 
@@ -419,7 +254,7 @@ def generate_report(sources, report_path, coverage_data, target_name, missing):
                 continue
 
             if last_line_no and last_line_no != line_no - 1:
-                output.append('')
+                ro.write("\n")
 
             notes = ''
 
@@ -428,51 +263,24 @@ def generate_report(sources, report_path, coverage_data, target_name, missing):
                 to_lines = sorted(p[1] for p in source.covered_points if abs(p[0]) == line_no)
 
                 if from_lines:
-                    notes += '  ### %s -> (here)' % ', '.join(str(from_line) for from_line in from_lines)
+                    notes += f"  ### {', '.join(str(from_line) for from_line in from_lines)} -> (here)"
 
                 if to_lines:
-                    notes += '  ### (here) -> %s' % ', '.join(str(to_line) for to_line in to_lines)
+                    notes += f"  ### (here) -> {', '.join(str(to_line) for to_line in to_lines)}"
 
-            output.append('%4d  %s%s' % (line_no, line, notes))
+            ro.write(f"{line_no}  {line}{notes}")
             last_line_no = line_no
 
-    with open(report_path, 'w') as report_file:
-        report_file.write('\n'.join(output) + '\n')
 
-
-def parse_arc(value):
-    return tuple(int(v) for v in value.split(':'))
-
-
-def cached(path, use_cache, show_messages, func):
-    if os.path.exists(path) and use_cache:
-        if show_messages:
-            sys.stderr.write('%s: cached\n' % path)
-            sys.stderr.flush()
-        return
-
-    if show_messages:
-        sys.stderr.write('%s: generating ... ' % path)
+def main():
+    args = parser.parse_args()
+    try:
+        inc(args)
+    except Error as e:
+        sys.stderr.write(str(e))
+        sys.stderr.write('\n')
         sys.stderr.flush()
-
-    func()
-
-    if show_messages:
-        sys.stderr.write('done\n')
-        sys.stderr.flush()
-
-
-def check_failed(args, message):
-    if args.skip_checks:
-        sys.stderr.write('WARNING: %s\n' % message)
-        return
-
-    raise ApplicationError(message)
-
-
-class ApplicationError(Exception):
-    pass
-
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

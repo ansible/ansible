@@ -19,76 +19,43 @@ Or to get all job results from a run:
 Set the dir <team>/<repo>/<run_num> as the value of '-p/--test-path' for this script.
 """
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 import argparse
 import json
 import operator
-import os
 import re
+import argcomplete
+import pathlib
 
-from glob import glob
-
-try:
-    import argcomplete
-except ImportError:
-    argcomplete = None
-
+parser = argparse.ArgumentParser(description='Re-balance CI group(s) from a downloaded results directory.')
+parser.add_argument('group_count', help='The number of groups to re-balance the tests to.')
+parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
+                    help='Display more detailed info about files being read and edited.')
+parser.add_argument('-p', '--test-results-path', dest='test_results_path', type=pathlib.Path, required=True,
+                    help='The directory where the downloaded Shippable job test results are.')
+parser.add_argument('-t', '--target-path', dest='target_path', type=pathlib.Path, required=False,
+                    help='The directory where the test targets are located. If set the aliases will automatically '
+                         'by rewritten with the new proposed group.')
+argcomplete.autocomplete(parser)
 
 def main():
-    """Main program body."""
-    args = parse_args()
+    args = parser.parse_args()
     rebalance(args)
 
-
-def parse_args():
-    """Parse and return args."""
-    parser = argparse.ArgumentParser(description='Re-balance Shippable group(s) from a downloaded results directory.')
-
-    parser.add_argument('group_count',
-                        metavar='group_count',
-                        help='The number of groups to re-balance the tests to.')
-
-    parser.add_argument('-v', '--verbose',
-                        dest='verbose',
-                        action='store_true',
-                        help='Display more detailed info about files being read and edited.')
-
-    parser.add_argument('-p', '--test-results-path',
-                        dest='test_results_path',
-                        required=True,
-                        help='The directory where the downloaded Shippable job test results are.')
-
-    parser.add_argument('-t', '--target-path',
-                        dest='target_path',
-                        required=False,
-                        help='The directory where the test targets are located. If set the aliases will automatically '
-                             'by rewritten with the new proposed group.')
-
-    if argcomplete:
-        argcomplete.autocomplete(parser)
-
-    args = parser.parse_args()
-
-    return args
-
-
-def get_raw_test_targets(args, test_path):
+def get_raw_test_targets(args: argparse.Namespace, test_path:pathlib.Path):
     """Scans the test directory for all the test targets that was run and get's the max runtime for each target."""
     target_times = {}
 
-    for job_id in os.listdir(test_path):
-        json_path = os.path.join(test_path, job_id, 'test', 'testresults', 'data')
+    for job_id in test_path.iterdir():
+        json_path = test_path/job_id/'test'/'testresults'/'data'
 
         # Some tests to do not have a data directory
-        if not os.path.exists(json_path):
+        if not json_path.exists:
             continue
 
-        json_file = glob(os.path.join(json_path, '*integration-*.json'))[0]
-        if not os.path.isfile(json_file):
+        json_file = json_path.glob('*integration-*.json')[0]
+        if not json_file or not json_file.is_file():
             if args.verbose:
-                print("The test json file '%s' does not exist or is not a file, skipping test job run" % json_file)
+                print(f"The test json file '{json_file}' does not exist or is not a file, skipping test job run")
             continue
 
         with open(json_file, mode='rb') as fd:
@@ -114,15 +81,15 @@ def print_test_runtime(target_times):
     for target_name in target_times.keys():
         target_name_max_len = max(target_name_max_len, len(target_name))
 
-    print("%s | Seconds |" % ("Target Name".ljust(target_name_max_len),))
-    print("%s | ------- |" % ("-" * target_name_max_len,))
+    print(f"{'Target Name'.ljust(target_name_max_len)} | Seconds |")
+    print(f"{'-' * target_name_max_len} | ------- |")
     for target_name, target_time in target_times.items():
-        print("%s | %s |" % (target_name.ljust(target_name_max_len), str(target_time).ljust(7)))
+        print(f"{target_name.ljust(target_name_max_len)} | {str(target_time).ljust(7)} |")
 
 
 def rebalance(args):
     """Prints a nice summary of a proposed rebalanced configuration based on the downloaded Shippable result."""
-    test_path = os.path.expanduser(os.path.expandvars(args.test_results_path))
+    test_path = args.test_results_path.expanduser()
     target_times = get_raw_test_targets(args, test_path)
 
     group_info = dict([(i, {'targets': [], 'total_time': 0}) for i in range(1, int(args.group_count) + 1)])
@@ -135,31 +102,31 @@ def rebalance(args):
 
     # Print a summary of the proposed test split.
     for group_number, test_info in group_info.items():
-        print("Group %d - Total Runtime (s): %d" % (group_number, test_info['total_time']))
+        print(f"Group {group_number} - Total Runtime (s): {test_info['total_time']}")
         print_test_runtime(dict([(n, target_times[n]) for n in test_info['targets']]))
         print()
 
     if args.target_path:
-        target_path = os.path.expanduser(os.path.expandvars(args.target_path))
+        target_path = args.target_path.expanduser()
 
         for test_root in ['test', 'tests']:  # ansible/ansible uses 'test' but collections use 'tests'.
-            integration_root = os.path.join(target_path, test_root, 'integration', 'targets')
-            if os.path.isdir(integration_root):
+            integration_root = target_path/test_root/'integration'/'targets'
+            if integration_root.is_dir():
                 if args.verbose:
-                    print("Found test integration target dir at '%s'" % integration_root)
+                    print(f"Found test integration target dir at '{integration_root}'")
                 break
 
         else:
             # Failed to find test integration target folder
             raise ValueError("Failed to find the test target folder on test/integration/targets or "
-                             "tests/integration/targets under '%s'." % target_path)
+                             f"tests/integration/targets under '{target_path}'.")
 
         for group_number, test_info in group_info.items():
             for test_target in test_info['targets']:
-                test_target_aliases = os.path.join(integration_root, test_target, 'aliases')
-                if not os.path.isfile(test_target_aliases):
+                test_target_aliases = integration_root/test_target/'aliases'
+                if not test_target_aliases.is_file():
                     if args.verbose:
-                        print("Cannot find test target alias file at '%s', skipping." % test_target_aliases)
+                        print(f"Cannot find test target alias file at '{test_target_aliases}', skipping.")
                     continue
 
                 with open(test_target_aliases, mode='r') as fd:
@@ -170,16 +137,15 @@ def rebalance(args):
                     group_match = re.match(r'shippable/(.*)/group(\d+)', line)
                     if group_match:
                         if int(group_match.group(2)) != group_number:
-                            new_group = 'shippable/%s/group%d\n' % (group_match.group(1), group_number)
+                            new_group = f"shippable/{group_match.group(1)}/group{group_number}\n"
                             if args.verbose:
-                                print("Changing %s group from '%s' to '%s'" % (test_target, group_match.group(0),
-                                                                               new_group.rstrip()))
+                                print(f"Changing {test_target} group from '{group_match.group(0)}' to '{new_group.rstrip()}'")
                             test_aliases[idx] = new_group
                             changed = True
                             break
                 else:
                     if args.verbose:
-                        print("Test target %s matches proposed group number, no changed required" % test_target)
+                        print(f"Test target {test_target} matches proposed group number, no changed required")
 
                 if changed:
                     with open(test_target_aliases, mode='w') as fd:
