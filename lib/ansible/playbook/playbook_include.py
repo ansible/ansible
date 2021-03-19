@@ -24,7 +24,7 @@ import os
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.common._collections_compat import Mapping,
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
