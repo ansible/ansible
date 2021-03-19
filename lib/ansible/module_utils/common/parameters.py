@@ -75,6 +75,13 @@ from ansible.module_utils.common.validation import (
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
+_ADDITIONAL_CHECKS = (
+    {'func': check_required_together, 'attr': 'required_together', 'err': RequiredTogetherError},
+    {'func': check_required_one_of, 'attr': 'required_one_of', 'err': RequiredOneOfError},
+    {'func': check_required_if, 'attr': 'required_if', 'err': RequiredIfError},
+    {'func': check_required_by, 'attr': 'required_by', 'err': RequiredByError},
+)
+
 # if adding boolean attribute, also add to PASS_BOOL
 # some of this dupes defaults from controller config
 PASS_VARS = {
@@ -755,14 +762,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 _validate_argument_types(sub_spec, sub_parameters, new_prefix, options_context, errors=errors)
                 _validate_argument_values(sub_spec, sub_parameters, options_context, errors=errors)
 
-                checks = (
-                    {'func': check_required_together, 'attr': 'required_together', 'err': RequiredTogetherError},
-                    {'func': check_required_one_of, 'attr': 'required_one_of', 'err': RequiredOneOfError},
-                    {'func': check_required_if, 'attr': 'required_if', 'err': RequiredIfError},
-                    {'func': check_required_by, 'attr': 'required_by', 'err': RequiredByError},
-                )
-
-                for check in checks:
+                for check in _ADDITIONAL_CHECKS:
                     try:
                         check['func'](value.get(check['attr']), sub_parameters, options_context)
                     except TypeError as e:

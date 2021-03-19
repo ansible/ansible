@@ -8,6 +8,7 @@ __metaclass__ = type
 from copy import deepcopy
 
 from ansible.module_utils.common.parameters import (
+    _ADDITIONAL_CHECKS,
     _get_legal_inputs,
     _get_unsupported_parameters,
     _handle_aliases,
@@ -207,16 +208,9 @@ class ArgumentSpecValidator:
         _validate_argument_types(self.argument_spec, result._validated_parameters, errors=result.errors)
         _validate_argument_values(self.argument_spec, result._validated_parameters, errors=result.errors)
 
-        checks = (
-            {'func': check_required_together, 'attr': '_required_together', 'err': RequiredTogetherError},
-            {'func': check_required_one_of, 'attr': '_required_one_of', 'err': RequiredOneOfError},
-            {'func': check_required_if, 'attr': '_required_if', 'err': RequiredIfError},
-            {'func': check_required_by, 'attr': '_required_by', 'err': RequiredByError},
-        )
-
-        for check in checks:
+        for check in _ADDITIONAL_CHECKS:
             try:
-                check['func'](getattr(self, check['attr']), result._validated_parameters)
+                check['func'](getattr(self, "_{attr}".format(attr=check['attr'])), result._validated_parameters)
             except TypeError as te:
                 result.errors.append(check['err'](to_native(te)))
 
