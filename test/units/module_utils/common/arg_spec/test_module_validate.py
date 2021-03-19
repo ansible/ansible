@@ -20,8 +20,8 @@ def test_module_validate():
 
     assert isinstance(result, ValidationResult)
     assert result.error_messages == []
-    assert result.deprecations == []
-    assert result.warnings == []
+    assert result._deprecations == []
+    assert result._warnings == []
     assert result.validated_parameters == expected
 
 
@@ -43,7 +43,7 @@ def test_module_alias_deprecations_warnings():
     result = v.validate(parameters)
 
     assert result.validated_parameters == expected
-    assert result.deprecations == [
+    assert result._deprecations == [
         {
             'collection_name': None,
             'date': '2020-03-04',
@@ -52,5 +52,5 @@ def test_module_alias_deprecations_warnings():
         }
     ]
     assert "Alias 'flamethrower' is deprecated" in warnings._global_deprecations[0]['msg']
-    assert result.warnings == [{'alias': 'flamethrower', 'option': 'path'}]
+    assert result._warnings == [{'alias': 'flamethrower', 'option': 'path'}]
     assert "Both option path and its alias flamethrower are set" in warnings._global_warnings[0]

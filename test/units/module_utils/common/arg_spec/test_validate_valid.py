@@ -331,7 +331,7 @@ def test_valid_spec(arg_spec, parameters, expected, valid_params, mocker):
     assert result.validated_parameters == expected
     assert result.unsupported_parameters == set()
     assert result.error_messages == []
-    assert v.valid_parameter_names == valid_params
+    assert v._valid_parameter_names == valid_params
 
     # Again to check caching
-    assert v.valid_parameter_names == valid_params
+    assert v._valid_parameter_names == valid_params

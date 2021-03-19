@@ -97,14 +97,14 @@ def test_aliases(arg_spec, parameters, expected, deprecation, warning):
     assert result.error_messages == []
 
     if deprecation:
-        assert deprecation == result.deprecations[0]
+        assert deprecation == result._deprecations[0]
     else:
-        assert result.deprecations == []
+        assert result._deprecations == []
 
     if warning:
-        assert warning == result.warnings[0]
+        assert warning == result._warnings[0]
     else:
-        assert result.warnings == []
+        assert result._warnings == []
 
 
 @pytest.mark.parametrize(

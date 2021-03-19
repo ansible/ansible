@@ -58,9 +58,9 @@ class ValidationResult:
         self._no_log_values = set()
         self._unsupported_parameters = set()
         self._validated_parameters = deepcopy(parameters)
-        self.deprecations = []
+        self._deprecations = []
+        self._warnings = []
         self.errors = AnsibleValidationErrorMultiple()
-        self.warnings = []
 
     @property
     def validated_parameters(self):
@@ -178,10 +178,10 @@ class ArgumentSpecValidator:
         legal_inputs = _get_legal_inputs(self.argument_spec, result._validated_parameters, aliases)
 
         for option, alias in alias_warnings:
-            result.warnings.append({'option': option, 'alias': alias})
+            result._warnings.append({'option': option, 'alias': alias})
 
         for deprecation in alias_deprecations:
-            result.deprecations.append({
+            result._deprecations.append({
                 'name': deprecation['name'],
                 'version': deprecation.get('version'),
                 'date': deprecation.get('date'),
@@ -258,12 +258,12 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
     def validate(self, parameters):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
-        for d in result.deprecations:
+        for d in result._deprecations:
             deprecate("Alias '{name}' is deprecated. See the module docs for more information".format(name=d['name']),
                       version=d.get('version'), date=d.get('date'),
                       collection_name=d.get('collection_name'))
 
-        for w in result.warnings:
+        for w in result._warnings:
             warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))
 
         return result
