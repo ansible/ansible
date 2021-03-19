@@ -84,9 +84,9 @@ INVALID_SPECS = (
     ({'arg': {'type': 'list', 'elements': MOCK_VALIDATOR_FAIL}}, {'arg': [1, "bad"]}, "bad conversion"),
     # unknown parameter
     ({'arg': {'type': 'int'}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
-     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg'),
+     'Unsupported parameters for (ansible_unittest) module: other. Supported parameters include: arg.'),
     ({'arg': {'type': 'int', 'aliases': ['argument']}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
-     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg (argument)'),
+     'Unsupported parameters for (ansible_unittest) module: other. Supported parameters include: arg (argument).'),
     # parameter is required
     ({'arg': {'required': True}}, {}, 'missing required arguments: arg'),
 )
@@ -496,7 +496,7 @@ class TestComplexOptions:
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
-        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: invalid found in foobar. Supported parameters include'),
+        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: foobar.invalid. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]},
          'parameters are mutually exclusive: bam|bam1 found in foobar'),
@@ -520,7 +520,7 @@ class TestComplexOptions:
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option
         ({'foobar': {"foo": "hello", "bam": "good", "invalid": "bad"}},
-         'module: invalid found in foobar. Supported parameters include'),
+         'module: foobar.invalid. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': {"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}},
          'parameters are mutually exclusive: bam|bam1 found in foobar'),

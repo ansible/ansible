@@ -7,10 +7,11 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 
-# id, argument spec, parameters, expected parameters, expected pass/fail, error, deprecation, warning
+# id, argument spec, parameters, expected parameters, deprecation, warning
 ALIAS_TEST_CASES = [
     (
         "alias",
@@ -20,29 +21,6 @@ ALIAS_TEST_CASES = [
             'dir': '/tmp',
             'path': '/tmp',
         },
-        True,
-        "",
-        "",
-        "",
-    ),
-    (
-        "alias-invalid",
-        {'path': {'aliases': 'bad'}},
-        {},
-        {'path': None},
-        False,
-        "internal error: aliases must be a list or tuple",
-        "",
-        "",
-    ),
-    (
-        # This isn't related to aliases, but it exists in the alias handling code
-        "default-and-required",
-        {'name': {'default': 'ray', 'required': True}},
-        {},
-        {'name': 'ray'},
-        False,
-        "internal error: required and default are mutually exclusive for name",
         "",
         "",
     ),
@@ -58,10 +36,8 @@ ALIAS_TEST_CASES = [
             'directory': '/tmp',
             'path': '/tmp',
         },
-        True,
         "",
-        "",
-        "Both option path and its alias directory are set",
+        {'alias': 'directory', 'option': 'path'},
     ),
     (
         "deprecated-alias",
@@ -81,39 +57,66 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
             'not_yo_path': '/tmp',
         },
-        True,
-        "",
-        "Alias 'not_yo_path' is deprecated.",
+        {'version': '1.7', 'date': None, 'collection_name': None, 'name': 'not_yo_path'},
         "",
     )
 ]
 
 
+# id, argument spec, parameters, expected parameters, error
+ALIAS_TEST_CASES_INVALID = [
+    (
+        "alias-invalid",
+        {'path': {'aliases': 'bad'}},
+        {},
+        {'path': None},
+        "internal error: aliases must be a list or tuple",
+    ),
+    (
+        # This isn't related to aliases, but it exists in the alias handling code
+        "default-and-required",
+        {'name': {'default': 'ray', 'required': True}},
+        {},
+        {'name': 'ray'},
+        "internal error: required and default are mutually exclusive for name",
+    ),
+]
+
+
 @pytest.mark.parametrize(
-    ('arg_spec', 'parameters', 'expected', 'passfail', 'error', 'deprecation', 'warning'),
-    ((i[1], i[2], i[3], i[4], i[5], i[6], i[7]) for i in ALIAS_TEST_CASES),
+    ('arg_spec', 'parameters', 'expected', 'deprecation', 'warning'),
+    ((i[1:]) for i in ALIAS_TEST_CASES),
     ids=[i[0] for i in ALIAS_TEST_CASES]
 )
-def test_aliases(arg_spec, parameters, expected, passfail, error, deprecation, warning):
-    v = ArgumentSpecValidator(arg_spec, parameters)
-    passed = v.validate()
+def test_aliases(arg_spec, parameters, expected, deprecation, warning):
+    v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
 
-    assert passed is passfail
-    assert v.validated_parameters == expected
+    assert isinstance(result, ValidationResult)
+    assert result.validated_parameters == expected
+    assert result.error_messages == []
 
-    if not error:
-        assert v.error_messages == []
+    if deprecation:
+        assert deprecation == result._deprecations[0]
     else:
-        assert error in v.error_messages[0]
+        assert result._deprecations == []
 
-    deprecations = get_deprecation_messages()
-    if not deprecations:
-        assert deprecations == ()
+    if warning:
+        assert warning == result._warnings[0]
     else:
-        assert deprecation in get_deprecation_messages()[0]['msg']
+        assert result._warnings == []
 
-    warnings = get_warning_messages()
-    if not warning:
-        assert warnings == ()
-    else:
-        assert warning in warnings[0]
+
+@pytest.mark.parametrize(
+    ('arg_spec', 'parameters', 'expected', 'error'),
+    ((i[1:]) for i in ALIAS_TEST_CASES_INVALID),
+    ids=[i[0] for i in ALIAS_TEST_CASES_INVALID]
+)
+def test_aliases_invalid(arg_spec, parameters, expected, error):
+    v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
+
+    assert isinstance(result, ValidationResult)
+    assert error in result.error_messages
+    assert isinstance(result.errors.errors[0], AnsibleValidationError)
+    assert isinstance(result.errors, AnsibleValidationErrorMultiple)

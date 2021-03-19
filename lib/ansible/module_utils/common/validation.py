@@ -39,7 +39,35 @@ def count_terms(terms, parameters):
     return len(set(terms).intersection(parameters))
 
 
-def check_mutually_exclusive(terms, parameters):
+def safe_eval(value, locals=None, include_exceptions=False):
+    # do not allow method calls to modules
+    if not isinstance(value, string_types):
+        # already templated to a datavaluestructure, perhaps?
+        if include_exceptions:
+            return (value, None)
+        return value
+    if re.search(r'\w\.\w+\(', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    # do not allow imports
+    if re.search(r'import \w+', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    try:
+        result = literal_eval(value)
+        if include_exceptions:
+            return (result, None)
+        else:
+            return result
+    except Exception as e:
+        if include_exceptions:
+            return (value, e)
+        return value
+
+
+def check_mutually_exclusive(terms, parameters, options_context=None):
     """Check mutually exclusive terms against argument parameters
 
     Accepts a single list or list of lists that are groups of terms that should be
@@ -63,12 +91,14 @@ def check_mutually_exclusive(terms, parameters):
     if results:
         full_list = ['|'.join(check) for check in results]
         msg = "parameters are mutually exclusive: %s" % ', '.join(full_list)
+        if options_context:
+            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
         raise TypeError(to_native(msg))
 
     return results
 
 
-def check_required_one_of(terms, parameters):
+def check_required_one_of(terms, parameters, options_context=None):
     """Check each list of terms to ensure at least one exists in the given module
     parameters
 
@@ -93,12 +123,14 @@ def check_required_one_of(terms, parameters):
     if results:
         for term in results:
             msg = "one of the following is required: %s" % ', '.join(term)
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
 
     return results
 
 
-def check_required_together(terms, parameters):
+def check_required_together(terms, parameters, options_context=None):
     """Check each list of terms to ensure every parameter in each list exists
     in the given parameters
 
@@ -125,12 +157,14 @@ def check_required_together(terms, parameters):
     if results:
         for term in results:
             msg = "parameters are required together: %s" % ', '.join(term)
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
 
     return results
 
 
-def check_required_by(requirements, parameters):
+def check_required_by(requirements, parameters, options_context=None):
     """For each key in requirements, check the corresponding list to see if they
     exist in parameters
 
@@ -161,12 +195,14 @@ def check_required_by(requirements, parameters):
         for key, missing in result.items():
             if len(missing) > 0:
                 msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
+                if options_context:
+                    msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                 raise TypeError(to_native(msg))
 
     return result
 
 
-def check_required_arguments(argument_spec, parameters):
+def check_required_arguments(argument_spec, parameters, options_context=None):
     """Check all paramaters in argument_spec and return a list of parameters
     that are required but not present in parameters
 
@@ -190,12 +226,14 @@ def check_required_arguments(argument_spec, parameters):
 
     if missing:
         msg = "missing required arguments: %s" % ", ".join(sorted(missing))
+        if options_context:
+            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
         raise TypeError(to_native(msg))
 
     return missing
 
 
-def check_required_if(requirements, parameters):
+def check_required_if(requirements, parameters, options_context=None):
     """Check parameters that are conditionally required
 
     Raises TypeError if the check fails
@@ -272,6 +310,8 @@ def check_required_if(requirements, parameters):
         for missing in results:
             msg = "%s is %s but %s of the following are missing: %s" % (
                 missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
 
     return results
@@ -302,34 +342,6 @@ def check_missing_parameters(parameters, required_parameters=None):
         raise TypeError(to_native(msg))
 
     return missing_params
-
-
-def safe_eval(value, locals=None, include_exceptions=False):
-    # do not allow method calls to modules
-    if not isinstance(value, string_types):
-        # already templated to a datavaluestructure, perhaps?
-        if include_exceptions:
-            return (value, None)
-        return value
-    if re.search(r'\w\.\w+\(', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    # do not allow imports
-    if re.search(r'import \w+', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    try:
-        result = literal_eval(value)
-        if include_exceptions:
-            return (result, None)
-        else:
-            return result
-    except Exception as e:
-        if include_exceptions:
-            return (value, e)
-        return value
 
 
 # FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
