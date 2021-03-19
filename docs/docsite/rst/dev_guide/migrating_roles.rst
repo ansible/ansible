@@ -413,9 +413,9 @@ The following is an example RPM spec file that accomplishes this using this exam
 Using ``ansible.legacy`` to access local custom modules from collections-based roles
 =====================================================================================
 
-Some roles depend on :ref:`local custom modules <developing_locally>` that are not part of the role itself. When you move these roles into collections, they can no longer find those custom plugins. The ``ansible.legacy`` collection allows your role to search the pre-collections default paths for local custom modules and plugins.
+Some roles depend on :ref:`local custom modules <developing_locally>` that are not part of the role itself. When you move these roles into collections, they can no longer find those custom plugins. Adding the ``ansible.legacy`` collection enables legacy behavior, configuring your role to search the pre-collections default paths for local custom modules and plugins.
 
-To enable a role in a collection to find legacy custom modules and other plugins stored locally:
+To enable a role hosted in a collection to find legacy custom modules and other plugins hosted locally:
 
 Edit the role's ``meta/main.yml`` and add the ``ansible.legacy`` collection to your collection-hosted role to enable the use of legacy custom modules and plugins for all tasks:
 
@@ -424,4 +424,8 @@ Edit the role's ``meta/main.yml`` and add the ``ansible.legacy`` collection to y
    collections:
      - ansible.legacy
 
-Alternatively, you can update the tasks directly by changing ``module_name`` to ``ansible.legacy.module_name``.
+Alternatively, you can update the tasks directly by changing ``local_module_name`` to ``ansible.legacy.local_module_name``.
+
+.. note::
+
+   Using ``ansible.legacy`` provides access to custom modules. To access modules that are still contained in the `ansible/ansible repo <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_, use ``ansible.builtin.module_name``.
