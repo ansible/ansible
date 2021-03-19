@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    if the roles requirements are in the new requirements format, warn the user
+    instead of throwing a type error.
