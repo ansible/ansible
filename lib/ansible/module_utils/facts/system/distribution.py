@@ -360,10 +360,9 @@ class DistributionFiles:
             debian_facts['distribution'] = 'Cumulus Linux'
             version = re.search(r"VERSION_ID=(.*)", data)
             if version:
-                major, _minor, _dummy_ver = version.group(1).split(".")
                 debian_facts['distribution_version'] = version.group(1)
-                debian_facts['distribution_major_version'] = major
-
+                for val, name in zip(version.group(1).split("."), ['major', 'minor', 'maintenance', 'special']):
+                    debian_facts['distribution_{}_version'.format(name)] = val
             release = re.search(r'VERSION="(.*)"', data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
