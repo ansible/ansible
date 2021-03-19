@@ -113,28 +113,20 @@ class ArgumentSpecValidator:
                  required_by=None,
                  ):
 
-        self._valid_parameter_names = set()
         self._mutually_exclusive = mutually_exclusive
         self._required_together = required_together
         self._required_one_of = required_one_of
         self._required_if = required_if
         self._required_by = required_by
+        self._valid_parameter_names = set()
         self.argument_spec = argument_spec
 
-    @property
-    def valid_parameter_names(self):
-        if self._valid_parameter_names:
-            return self._valid_parameter_names
-        valid_parameter_names = set()
         for key in sorted(self.argument_spec.keys()):
             aliases = self.argument_spec[key].get('aliases')
             if aliases:
-                valid_parameter_names.update(["{key} ({aliases})".format(key=key, aliases=", ".join(sorted(aliases)))])
+                self._valid_parameter_names.update(["{key} ({aliases})".format(key=key, aliases=", ".join(sorted(aliases)))])
             else:
-                valid_parameter_names.update([key])
-
-        self._valid_parameter_names = valid_parameter_names
-        return valid_parameter_names
+                self._valid_parameter_names.update([key])
 
     def validate(self, parameters, *args, **kwargs):
         """Validate module parameters against argument spec. Returns a
@@ -244,7 +236,7 @@ class ArgumentSpecValidator:
                     flattened_names.append(item)
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
-            supported_string = ", ".join(self.valid_parameter_names)
+            supported_string = ", ".join(self._valid_parameter_names)
             result.errors.append(
                 UnsupportedError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
 
