@@ -1,0 +1,5 @@
+major_changes:
+  - >-
+    AnsibleModule - use ``ArgumentSpecValidator`` class for validating argument spec and remove
+    private methods related to argument spec validation. Any modules using private methods
+    should now use the ``ArgumentSpecValidator`` class or the appropriate validation function.

@@ -29,7 +29,6 @@ from io import BytesIO
 import ansible.errors
 
 from ansible.executor.module_common import recursive_finder
-from ansible.module_utils.six import PY2
 
 
 # These are the modules that are brought in by module_utils/basic.py  This may need to be updated
@@ -58,12 +57,14 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/common/text/formatters.py',
                                       'ansible/module_utils/common/validation.py',
                                       'ansible/module_utils/common/_utils.py',
+                                      'ansible/module_utils/common/arg_spec.py',
                                       'ansible/module_utils/compat/__init__.py',
                                       'ansible/module_utils/compat/_selectors2.py',
                                       'ansible/module_utils/compat/selectors.py',
                                       'ansible/module_utils/compat/selinux.py',
                                       'ansible/module_utils/distro/__init__.py',
                                       'ansible/module_utils/distro/_distro.py',
+                                      'ansible/module_utils/errors.py',
                                       'ansible/module_utils/parsing/__init__.py',
                                       'ansible/module_utils/parsing/convert_bool.py',
                                       'ansible/module_utils/pycompat24.py',

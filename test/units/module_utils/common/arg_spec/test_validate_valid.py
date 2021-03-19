@@ -7,45 +7,53 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+import ansible.module_utils.common.warnings as warnings
 
-# Each item is id, argument_spec, parameters, expected
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
+
+# Each item is id, argument_spec, parameters, expected, valid parameter names
 VALID_SPECS = [
     (
         'str-no-type-specified',
         {'name': {}},
         {'name': 'rey'},
         {'name': 'rey'},
+        set(('name',)),
     ),
     (
         'str',
         {'name': {'type': 'str'}},
         {'name': 'rey'},
         {'name': 'rey'},
+        set(('name',)),
     ),
     (
         'str-convert',
         {'name': {'type': 'str'}},
         {'name': 5},
         {'name': '5'},
+        set(('name',)),
     ),
     (
         'list',
         {'packages': {'type': 'list'}},
         {'packages': ['vim', 'python']},
         {'packages': ['vim', 'python']},
+        set(('packages',)),
     ),
     (
         'list-comma-string',
         {'packages': {'type': 'list'}},
         {'packages': 'vim,python'},
         {'packages': ['vim', 'python']},
+        set(('packages',)),
     ),
     (
         'list-comma-string-space',
         {'packages': {'type': 'list'}},
         {'packages': 'vim, python'},
         {'packages': ['vim', ' python']},
+        set(('packages',)),
     ),
     (
         'dict',
@@ -64,6 +72,7 @@ VALID_SPECS = [
                 'last': 'skywalker',
             }
         },
+        set(('user',)),
     ),
     (
         'dict-k=v',
@@ -76,6 +85,7 @@ VALID_SPECS = [
                 'last': 'skywalker',
             }
         },
+        set(('user',)),
     ),
     (
         'dict-k=v-spaces',
@@ -88,6 +98,7 @@ VALID_SPECS = [
                 'last': 'skywalker',
             }
         },
+        set(('user',)),
     ),
     (
         'bool',
@@ -103,6 +114,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-ints',
@@ -118,6 +130,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-true-false',
@@ -133,6 +146,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-yes-no',
@@ -148,6 +162,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-y-n',
@@ -163,6 +178,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-on-off',
@@ -178,6 +194,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-1-0',
@@ -193,6 +210,7 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'bool-float',
@@ -208,89 +226,112 @@ VALID_SPECS = [
             'enabled': True,
             'disabled': False,
         },
+        set(('enabled', 'disabled')),
     ),
     (
         'float',
         {'digit': {'type': 'float'}},
         {'digit': 3.14159},
         {'digit': 3.14159},
+        set(('digit',)),
     ),
     (
         'float-str',
         {'digit': {'type': 'float'}},
         {'digit': '3.14159'},
         {'digit': 3.14159},
+        set(('digit',)),
     ),
     (
         'path',
         {'path': {'type': 'path'}},
         {'path': '~/bin'},
         {'path': '/home/ansible/bin'},
+        set(('path',)),
     ),
     (
         'raw',
         {'raw': {'type': 'raw'}},
         {'raw': 0x644},
         {'raw': 0x644},
+        set(('raw',)),
     ),
     (
         'bytes',
         {'bytes': {'type': 'bytes'}},
         {'bytes': '2K'},
         {'bytes': 2048},
+        set(('bytes',)),
     ),
     (
         'bits',
         {'bits': {'type': 'bits'}},
         {'bits': '1Mb'},
         {'bits': 1048576},
+        set(('bits',)),
     ),
     (
         'jsonarg',
         {'some_json': {'type': 'jsonarg'}},
         {'some_json': '{"users": {"bob": {"role": "accountant"}}}'},
         {'some_json': '{"users": {"bob": {"role": "accountant"}}}'},
+        set(('some_json',)),
     ),
     (
         'jsonarg-list',
         {'some_json': {'type': 'jsonarg'}},
         {'some_json': ['one', 'two']},
         {'some_json': '["one", "two"]'},
+        set(('some_json',)),
     ),
     (
         'jsonarg-dict',
         {'some_json': {'type': 'jsonarg'}},
         {'some_json': {"users": {"bob": {"role": "accountant"}}}},
         {'some_json': '{"users": {"bob": {"role": "accountant"}}}'},
+        set(('some_json',)),
     ),
     (
         'defaults',
         {'param': {'default': 'DEFAULT'}},
         {},
         {'param': 'DEFAULT'},
+        set(('param',)),
     ),
     (
         'elements',
         {'numbers': {'type': 'list', 'elements': 'int'}},
         {'numbers': [55, 33, 34, '22']},
         {'numbers': [55, 33, 34, 22]},
+        set(('numbers',)),
     ),
+    (
+        'aliases',
+        {'src': {'aliases': ['path', 'source']}},
+        {'src': '/tmp'},
+        {'src': '/tmp'},
+        set(('src (path, source)',)),
+    )
 ]
 
 
 @pytest.mark.parametrize(
-    ('arg_spec', 'parameters', 'expected'),
-    ((i[1], i[2], i[3]) for i in VALID_SPECS),
+    ('arg_spec', 'parameters', 'expected', 'valid_params'),
+    (i[1:] for i in VALID_SPECS),
     ids=[i[0] for i in VALID_SPECS]
 )
-def test_valid_spec(arg_spec, parameters, expected, mocker):
-
+def test_valid_spec(arg_spec, parameters, expected, valid_params, mocker):
     mocker.patch('ansible.module_utils.common.validation.os.path.expanduser', return_value='/home/ansible/bin')
     mocker.patch('ansible.module_utils.common.validation.os.path.expandvars', return_value='/home/ansible/bin')
 
-    v = ArgumentSpecValidator(arg_spec, parameters)
-    passed = v.validate()
+    v = ArgumentSpecValidator(arg_spec)
+    result = v.validate(parameters)
 
-    assert v.validated_parameters == expected
-    assert v.error_messages == []
-    assert passed is True
+    assert isinstance(result, ValidationResult)
+    assert result.validated_parameters == expected
+    assert result.unsupported_parameters == set()
+    assert result.error_messages == []
+    assert v._valid_parameter_names == valid_params
+
+    # Again to check caching
+    assert v._valid_parameter_names == valid_params

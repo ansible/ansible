@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.parameters import list_deprecations
+from ansible.module_utils.common.parameters import _list_deprecations
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_list_deprecations():
         'foo': {'old': 'value'},
         'bar': [{'old': 'value'}, {}],
     }
-    result = list_deprecations(argument_spec, params)
+    result = _list_deprecations(argument_spec, params)
     assert len(result) == 3
     result.sort(key=lambda entry: entry['msg'])
     assert result[0]['msg'] == """Param 'bar["old"]' is deprecated. See the module docs for more information"""

@@ -90,6 +90,8 @@ from ansible.module_utils.common.text.converters import (
     container_to_text as json_dict_bytes_to_unicode,
 )
 
+from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
+
 from ansible.module_utils.common.text.formatters import (
     lenient_lowercase,
     bytes_to_human,
@@ -155,25 +157,15 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
-    _remove_values_conditions,
-    _sanitize_keys_conditions,
-    sanitize_keys,
     env_fallback,
-    get_unsupported_parameters,
-    get_type_validator,
-    handle_aliases,
-    list_deprecations,
-    list_no_log_values,
     remove_values,
-    set_defaults,
-    set_fallbacks,
-    validate_argument_types,
-    AnsibleFallbackNotFound,
+    sanitize_keys,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
 )
 
+from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
 from ansible.module_utils.six import (
     PY2,
     PY3,
@@ -187,24 +179,6 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
-    check_mutually_exclusive,
-    check_required_arguments,
-    check_required_by,
-    check_required_if,
-    check_required_one_of,
-    check_required_together,
-    count_terms,
-    check_type_bool,
-    check_type_bits,
-    check_type_bytes,
-    check_type_float,
-    check_type_int,
-    check_type_jsonarg,
-    check_type_list,
-    check_type_dict,
-    check_type_path,
-    check_type_raw,
-    check_type_str,
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -507,48 +481,43 @@ class AnsibleModule(object):
         # Save parameter values that should never be logged
         self.no_log_values = set()
 
-        self._load_params()
-        self._set_fallbacks()
-
-        # append to legal_inputs and then possibly check against them
-        try:
-            self.aliases = self._handle_aliases()
-        except (ValueError, TypeError) as e:
-            # Use exceptions here because it isn't safe to call fail_json until no_log is processed
-            print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
-            sys.exit(1)
-
-        self._handle_no_log_values()
-
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
+        self._load_params()
         self._set_internal_properties()
-        self._check_arguments()
 
-        # check exclusive early
-        if not bypass_checks:
-            self._check_mutually_exclusive(mutually_exclusive)
+        self.validator = ModuleArgumentSpecValidator(self.argument_spec,
+                                                     self.mutually_exclusive,
+                                                     self.required_together,
+                                                     self.required_one_of,
+                                                     self.required_if,
+                                                     self.required_by,
+                                                     )
 
-        self._set_defaults(pre=True)
+        self.validation_result = self.validator.validate(self.params)
+        self.params.update(self.validation_result.validated_parameters)
+        self.no_log_values.update(self.validation_result._no_log_values)
+
+        try:
+            error = self.validation_result.errors[0]
+        except IndexError:
+            error = None
+
+        # Fail for validation errors, even in check mode
+        if error:
+            msg = self.validation_result.errors.msg
+            if isinstance(error, UnsupportedError):
+                msg = "Unsupported parameters for ({name}) {kind}: {msg}".format(name=self._name, kind='module', msg=msg)
+
+            self.fail_json(msg=msg)
+
+        if self.check_mode and not self.supports_check_mode:
+            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
         # This is for backwards compatibility only.
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
-
-        if not bypass_checks:
-            self._check_required_arguments()
-            self._check_argument_types()
-            self._check_argument_values()
-            self._check_required_together(required_together)
-            self._check_required_one_of(required_one_of)
-            self._check_required_if(required_if)
-            self._check_required_by(required_by)
-
-        self._set_defaults(pre=False)
-
-        # deal with options sub-spec
-        self._handle_options()
 
         if not self.no_log:
             self._log_invocation()
@@ -1274,42 +1243,6 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
                            to_native(e), exception=traceback.format_exc())
 
-    def _handle_aliases(self, spec=None, param=None, option_prefix=''):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        # this uses exceptions as it happens before we can safely call fail_json
-        alias_warnings = []
-        alias_deprecations = []
-        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings, alias_deprecations)
-        for option, alias in alias_warnings:
-            warn('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
-
-        for deprecation in alias_deprecations:
-            deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                      version=deprecation.get('version'), date=deprecation.get('date'),
-                      collection_name=deprecation.get('collection_name'))
-
-        return alias_results
-
-    def _handle_no_log_values(self, spec=None, param=None):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        try:
-            self.no_log_values.update(list_no_log_values(spec, param))
-        except TypeError as te:
-            self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
-                               "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
-
-        for message in list_deprecations(spec, param):
-            deprecate(message['msg'], version=message.get('version'), date=message.get('date'),
-                      collection_name=message.get('collection_name'))
-
     def _set_internal_properties(self, argument_spec=None, module_parameters=None):
         if argument_spec is None:
             argument_spec = self.argument_spec
@@ -1333,343 +1266,8 @@ class AnsibleModule(object):
                 if not hasattr(self, PASS_VARS[k][0]):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
-    def _check_arguments(self, spec=None, param=None, legal_inputs=None):
-        unsupported_parameters = set()
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-        if legal_inputs is None:
-            legal_inputs = self._legal_inputs
-
-        unsupported_parameters = get_unsupported_parameters(spec, param, legal_inputs)
-
-        if unsupported_parameters:
-            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
-            if self._options_context:
-                msg += " found in %s." % " -> ".join(self._options_context)
-            supported_parameters = list()
-            for key in sorted(spec.keys()):
-                if 'aliases' in spec[key] and spec[key]['aliases']:
-                    supported_parameters.append("%s (%s)" % (key, ', '.join(sorted(spec[key]['aliases']))))
-                else:
-                    supported_parameters.append(key)
-            msg += " Supported parameters include: %s" % (', '.join(supported_parameters))
-            self.fail_json(msg=msg)
-
-        if self.check_mode and not self.supports_check_mode:
-            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
-
-    def _count_terms(self, check, param=None):
-        if param is None:
-            param = self.params
-        return count_terms(check, param)
-
-    def _check_mutually_exclusive(self, spec, param=None):
-        if param is None:
-            param = self.params
-
-        try:
-            check_mutually_exclusive(spec, param)
-        except TypeError as e:
-            msg = to_native(e)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
-
-    def _check_required_one_of(self, spec, param=None):
-        if spec is None:
-            return
-
-        if param is None:
-            param = self.params
-
-        try:
-            check_required_one_of(spec, param)
-        except TypeError as e:
-            msg = to_native(e)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
-
-    def _check_required_together(self, spec, param=None):
-        if spec is None:
-            return
-        if param is None:
-            param = self.params
-
-        try:
-            check_required_together(spec, param)
-        except TypeError as e:
-            msg = to_native(e)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
-
-    def _check_required_by(self, spec, param=None):
-        if spec is None:
-            return
-        if param is None:
-            param = self.params
-
-        try:
-            check_required_by(spec, param)
-        except TypeError as e:
-            self.fail_json(msg=to_native(e))
-
-    def _check_required_arguments(self, spec=None, param=None):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        try:
-            check_required_arguments(spec, param)
-        except TypeError as e:
-            msg = to_native(e)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
-
-    def _check_required_if(self, spec, param=None):
-        ''' ensure that parameters which conditionally required are present '''
-        if spec is None:
-            return
-        if param is None:
-            param = self.params
-
-        try:
-            check_required_if(spec, param)
-        except TypeError as e:
-            msg = to_native(e)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
-
-    def _check_argument_values(self, spec=None, param=None):
-        ''' ensure all arguments have the requested values, and there are no stray arguments '''
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-        for (k, v) in spec.items():
-            choices = v.get('choices', None)
-            if choices is None:
-                continue
-            if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
-                if k in param:
-                    # Allow one or more when type='list' param with choices
-                    if isinstance(param[k], list):
-                        diff_list = ", ".join([item for item in param[k] if item not in choices])
-                        if diff_list:
-                            choices_str = ", ".join([to_native(c) for c in choices])
-                            msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
-                            if self._options_context:
-                                msg += " found in %s" % " -> ".join(self._options_context)
-                            self.fail_json(msg=msg)
-                    elif param[k] not in choices:
-                        # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
-                        # the value.  If we can't figure this out, module author is responsible.
-                        lowered_choices = None
-                        if param[k] == 'False':
-                            lowered_choices = lenient_lowercase(choices)
-                            overlap = BOOLEANS_FALSE.intersection(choices)
-                            if len(overlap) == 1:
-                                # Extract from a set
-                                (param[k],) = overlap
-
-                        if param[k] == 'True':
-                            if lowered_choices is None:
-                                lowered_choices = lenient_lowercase(choices)
-                            overlap = BOOLEANS_TRUE.intersection(choices)
-                            if len(overlap) == 1:
-                                (param[k],) = overlap
-
-                        if param[k] not in choices:
-                            choices_str = ", ".join([to_native(c) for c in choices])
-                            msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
-                            if self._options_context:
-                                msg += " found in %s" % " -> ".join(self._options_context)
-                            self.fail_json(msg=msg)
-            else:
-                msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
-
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
-
-    def _check_type_str(self, value, param=None, prefix=''):
-        opts = {
-            'error': False,
-            'warn': False,
-            'ignore': True
-        }
-
-        # Ignore, warn, or error when converting to a string.
-        allow_conversion = opts.get(self._string_conversion_action, True)
-        try:
-            return check_type_str(value, allow_conversion)
-        except TypeError:
-            common_msg = 'quote the entire value to ensure it does not change.'
-            from_msg = '{0!r}'.format(value)
-            to_msg = '{0!r}'.format(to_text(value))
-
-            if param is not None:
-                if prefix:
-                    param = '{0}{1}'.format(prefix, param)
-
-                from_msg = '{0}: {1!r}'.format(param, value)
-                to_msg = '{0}: {1!r}'.format(param, to_text(value))
-
-            if self._string_conversion_action == 'error':
-                msg = common_msg.capitalize()
-                raise TypeError(to_native(msg))
-            elif self._string_conversion_action == 'warn':
-                msg = ('The value "{0}" (type {1.__class__.__name__}) was converted to "{2}" (type string). '
-                       'If this does not look like what you expect, {3}').format(from_msg, value, to_msg, common_msg)
-                self.warn(to_native(msg))
-                return to_native(value, errors='surrogate_or_strict')
-
-    def _check_type_list(self, value):
-        return check_type_list(value)
-
-    def _check_type_dict(self, value):
-        return check_type_dict(value)
-
-    def _check_type_bool(self, value):
-        return check_type_bool(value)
-
-    def _check_type_int(self, value):
-        return check_type_int(value)
-
-    def _check_type_float(self, value):
-        return check_type_float(value)
-
-    def _check_type_path(self, value):
-        return check_type_path(value)
-
-    def _check_type_jsonarg(self, value):
-        return check_type_jsonarg(value)
-
-    def _check_type_raw(self, value):
-        return check_type_raw(value)
-
-    def _check_type_bytes(self, value):
-        return check_type_bytes(value)
-
-    def _check_type_bits(self, value):
-        return check_type_bits(value)
-
-    def _handle_options(self, argument_spec=None, params=None, prefix=''):
-        ''' deal with options to create sub spec '''
-        if argument_spec is None:
-            argument_spec = self.argument_spec
-        if params is None:
-            params = self.params
-
-        for (k, v) in argument_spec.items():
-            wanted = v.get('type', None)
-            if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
-                spec = v.get('options', None)
-                if v.get('apply_defaults', False):
-                    if spec is not None:
-                        if params.get(k) is None:
-                            params[k] = {}
-                    else:
-                        continue
-                elif spec is None or k not in params or params[k] is None:
-                    continue
-
-                self._options_context.append(k)
-
-                if isinstance(params[k], dict):
-                    elements = [params[k]]
-                else:
-                    elements = params[k]
-
-                for idx, param in enumerate(elements):
-                    if not isinstance(param, dict):
-                        self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
-
-                    new_prefix = prefix + k
-                    if wanted == 'list':
-                        new_prefix += '[%d]' % idx
-                    new_prefix += '.'
-
-                    self._set_fallbacks(spec, param)
-                    options_aliases = self._handle_aliases(spec, param, option_prefix=new_prefix)
-
-                    options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
-
-                    self._check_arguments(spec, param, options_legal_inputs)
-
-                    # check exclusive early
-                    if not self.bypass_checks:
-                        self._check_mutually_exclusive(v.get('mutually_exclusive', None), param)
-
-                    self._set_defaults(pre=True, spec=spec, param=param)
-
-                    if not self.bypass_checks:
-                        self._check_required_arguments(spec, param)
-                        self._check_argument_types(spec, param, new_prefix)
-                        self._check_argument_values(spec, param)
-
-                        self._check_required_together(v.get('required_together', None), param)
-                        self._check_required_one_of(v.get('required_one_of', None), param)
-                        self._check_required_if(v.get('required_if', None), param)
-                        self._check_required_by(v.get('required_by', None), param)
-
-                    self._set_defaults(pre=False, spec=spec, param=param)
-
-                    # handle multi level options (sub argspec)
-                    self._handle_options(spec, param, new_prefix)
-                self._options_context.pop()
-
-    def _get_wanted_type(self, wanted, k):
-        # Use the private method for 'str' type to handle the string conversion warning.
-        if wanted == 'str':
-            type_checker, wanted = self._check_type_str, 'str'
-        else:
-            type_checker, wanted = get_type_validator(wanted)
-        if type_checker is None:
-            self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-
-        return type_checker, wanted
-
-    def _check_argument_types(self, spec=None, param=None, prefix=''):
-        ''' ensure all arguments have the requested type '''
-
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        errors = []
-        validate_argument_types(spec, param, errors=errors)
-
-        if errors:
-            self.fail_json(msg=errors[0])
-
-    def _set_defaults(self, pre=True, spec=None, param=None):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        # The interface for set_defaults is different than _set_defaults()
-        # The third parameter controls whether or not defaults are actually set.
-        set_default = not pre
-        self.no_log_values.update(set_defaults(spec, param, set_default))
-
-    def _set_fallbacks(self, spec=None, param=None):
-        if spec is None:
-            spec = self.argument_spec
-        if param is None:
-            param = self.params
-
-        self.no_log_values.update(set_fallbacks(spec, param))
 
     def _load_params(self):
         ''' read the input and set the params attribute.
