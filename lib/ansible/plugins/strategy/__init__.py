@@ -632,9 +632,7 @@ class StrategyBase:
                                         if not listeners:
                                             continue
 
-                                        listeners = listening_handler.get_validated_value(
-                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
-                                        )
+                                        listeners = listening_handler.get_validated_value('listen', handler_templar)
                                         if handler_name not in listeners:
                                             continue
                                         else:

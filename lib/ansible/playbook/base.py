@@ -335,7 +335,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return new_me
 
-    def get_validated_value(self, name, attribute, value, templar):
+    def get_validated_value(self, name, templar):
+
+        attribute = self._valid_attrs[name]
+        value = self._attributes[name]
+
         if attribute.isa == 'string':
             value = to_text(value)
         elif attribute.isa == 'int':
@@ -441,7 +445,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
                 # and make sure the attribute is of the type it should be
                 if value is not None:
-                    value = self.get_validated_value(name, attribute, value, templar)
+                    value = self.get_validated_value(name, templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)

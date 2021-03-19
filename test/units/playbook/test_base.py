@@ -625,6 +625,6 @@ class TestBaseSubClass(TestBase):
         value = AnsibleUnsafeText(u'bar')
         templar = Templar(None)
         bsc = self.ClassUnderTest()
-        result = bsc.get_validated_value('foo', attribute, value, templar)
+        result = bsc.get_validated_value('foo', templar)
         self.assertIsInstance(result, AnsibleUnsafeText)
         self.assertEqual(result, AnsibleUnsafeText(u'bar'))

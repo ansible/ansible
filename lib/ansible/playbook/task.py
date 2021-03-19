@@ -197,7 +197,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             # Validate this untemplated field early on to guarantee we are dealing with a list.
             # This is also done in CollectionSearch._load_collections() but this runs before that call.
-            collections_list = self.get_validated_value('collections', self._collections, collections_list, None)
+            collections_list = self.get_validated_value('collections', None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
