@@ -41,7 +41,7 @@ options:
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
-            - Defaults to '*', or '.*' when use_regex enabled
+            - Defaults to '*' when C(use_regex=False), or '.*' when C(use_regex=True).
         type: list
         aliases: [ pattern ]
         elements: str
