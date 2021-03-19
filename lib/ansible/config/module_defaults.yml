@@ -500,6 +500,22 @@ groupings:
   - aws
   sts_session_token:
   - aws
+  wafv2_ip_set:
+  - aws
+  wafv2_ip_set_info:
+  - aws
+  wafv2_resources:
+  - aws
+  wafv2_resources_info:
+  - aws
+  wafv2_rule_group:
+  - aws
+  wafv2_rule_group_info:
+  - aws
+  wafv2_web_acl:
+  - aws
+  wafv2_web_acl_info:
+  - aws
   gcp_compute_address:
   - gcp
   gcp_compute_address_facts:
