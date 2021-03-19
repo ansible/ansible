@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.module_utils.common.parameters import list_no_log_values
+from ansible.module_utils.common.parameters import _list_no_log_values
 
 
 @pytest.fixture
@@ -55,12 +55,12 @@ def test_list_no_log_values_no_secrets(module_parameters):
         'value': {'type': 'int'},
     }
     expected = set()
-    assert expected == list_no_log_values(argument_spec, module_parameters)
+    assert expected == _list_no_log_values(argument_spec, module_parameters)
 
 
 def test_list_no_log_values(argument_spec, module_parameters):
     expected = set(('under', 'makeshift'))
-    assert expected == list_no_log_values(argument_spec(), module_parameters())
+    assert expected == _list_no_log_values(argument_spec(), module_parameters())
 
 
 @pytest.mark.parametrize('extra_params', [
@@ -81,7 +81,7 @@ def test_list_no_log_values_invalid_suboptions(argument_spec, module_parameters,
 
     with pytest.raises(TypeError, match=r"(Value '.*?' in the sub parameter field '.*?' must by a dict, not '.*?')"
                                         r"|(dictionary requested, could not parse JSON or key=value)"):
-        list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+        _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
 def test_list_no_log_values_suboptions(argument_spec, module_parameters):
@@ -103,7 +103,7 @@ def test_list_no_log_values_suboptions(argument_spec, module_parameters):
     }
 
     expected = set(('under', 'makeshift', 'bagel'))
-    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+    assert expected == _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
 def test_list_no_log_values_sub_suboptions(argument_spec, module_parameters):
@@ -136,7 +136,7 @@ def test_list_no_log_values_sub_suboptions(argument_spec, module_parameters):
     }
 
     expected = set(('under', 'makeshift', 'saucy', 'corporate'))
-    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+    assert expected == _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
 def test_list_no_log_values_suboptions_list(argument_spec, module_parameters):
@@ -164,7 +164,7 @@ def test_list_no_log_values_suboptions_list(argument_spec, module_parameters):
     }
 
     expected = set(('under', 'makeshift', 'playroom', 'luxury'))
-    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+    assert expected == _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
 def test_list_no_log_values_sub_suboptions_list(argument_spec, module_parameters):
@@ -204,7 +204,7 @@ def test_list_no_log_values_sub_suboptions_list(argument_spec, module_parameters
     }
 
     expected = set(('under', 'makeshift', 'playroom', 'luxury', 'basis', 'gave', 'composure', 'thumping'))
-    assert expected == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+    assert expected == _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 
 
 @pytest.mark.parametrize('extra_params, expected', (
@@ -225,4 +225,4 @@ def test_string_suboptions_as_string(argument_spec, module_parameters, extra_par
 
     result = set(('under', 'makeshift'))
     result.update(expected)
-    assert result == list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
+    assert result == _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
