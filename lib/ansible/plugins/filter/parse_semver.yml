@@ -1,0 +1,30 @@
+DOCUMENTATION:
+  name: parse_semver
+  version_added: "2.15"
+  short_description: Parse semantic versions
+  description:
+    - Parse a semantic version as a string.
+  positional: _input, keys
+  options:
+    _input:
+      description: Semantic version string.
+      type: str
+      required: true
+    keys:
+      description: Parts of the semantic version to be returned
+      type: list
+      elements: str
+
+
+EXAMPLES: |
+
+  # To get a dictionary of the semantic versions parts from a version_string
+  semver: "{{ version_string | parse_semver }}"
+
+  # To get only the `major` version from the version_string::
+  major:  {{ version_string | parse_semver(keys=['major']) }}
+
+RETURN:
+  _value:
+    description: Dictionary containing the requested parts of the semantic version.
+    type: dict
