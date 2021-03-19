@@ -251,3 +251,24 @@
           # dir contents are considered until the depth exceeds the requested depth
           # there are 8 files/directories in the requested depth and 4 that exceed it by 1
           - files_with_depth.examined == 12
+- name: exclude with regex
+  find:
+    paths: "{{ output_dir_test }}"
+    recurse: yes
+    use_regex: true
+    exclude: .*\.ogg
+  register: find_test3
+# Note that currently sane ways of doing this with map() or
+# selectattr() aren't available in centos6 era jinja2 ...
+- set_fact:
+    find_test3_list: >-
+      [ {% for f in find_test3.files %}
+      {{ f.path }}
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+      ]
+- debug: var=find_test3_list
+- name: assert we skipped the ogg file
+  assert:
+    that:
+      - '"{{ output_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
