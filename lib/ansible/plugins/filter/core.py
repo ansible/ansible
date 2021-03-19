@@ -367,7 +367,7 @@ def combine(*terms, **kwargs):
     return result
 
 
-SEMVER_VALID_KEYS = ['major', 'minor', 'patch', 'prerelease', 'buildmetadata']
+SEMVER_VALID_KEYS = frozenset(['major', 'minor', 'patch', 'prerelease', 'buildmetadata'])
 # This list can be generated from the SEMVER_RE expression by
 # `SEMVER_VALID_KEYS=list(SEMVER_RE.groupindex.keys())` but is expected to stay static
 
