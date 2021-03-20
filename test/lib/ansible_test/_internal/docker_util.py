@@ -45,6 +45,7 @@ DOCKER_COMMANDS = [
 
 
 class DockerCommand:
+    """Details about the available docker command."""
     def __init__(self, command, executable, version):  # type: (str, str, str) -> None
         self.command = command
         self.executable = executable
@@ -52,6 +53,7 @@ class DockerCommand:
 
     @staticmethod
     def detect():  # type: () -> t.Optional[DockerCommand]
+        """Detect and return the available docker command, or None."""
         for command in DOCKER_COMMANDS:
             executable = find_executable(command)
 
