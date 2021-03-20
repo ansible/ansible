@@ -20,6 +20,8 @@ minor_changes:
                    Previously containers which were used with the ``--link`` option did not require changes to the ``/etc/hosts`` file.
   - ansible-test - Changes made to the ``hosts`` file on test systems are now done using an Ansible playbook for both POSIX and Windows systems.
                    Changes are applied before a test target runs and are reverted after the test target finishes.
+  - ansible-test - Environment variables exposed by "cloud" plugins are now available to the controller for role based tests.
+                   Previously only script based tests had access to the exposed environment variables.
 breaking_changes:
   - ansible-test - The ``--httptester`` option is no longer available.
                    To override the container used for HTTP Tester tests, set the ``ANSIBLE_HTTP_TEST_CONTAINER`` environment variable instead.

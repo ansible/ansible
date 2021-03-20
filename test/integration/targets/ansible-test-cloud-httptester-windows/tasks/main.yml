@@ -1,3 +1,8 @@
+- name: Verify HTTPTESTER environment variable
+  assert:
+    that:
+      - "lookup('env', 'HTTPTESTER') == '1'"
+
 - name: Verify endpoints respond
   ansible.windows.win_uri:
     url: "{{ item }}"

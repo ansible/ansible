@@ -1427,6 +1427,9 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
                 ANSIBLE_PLAYBOOK_DIR=cwd,
             ))
 
+            if env_config and env_config.env_vars:
+                env.update(env_config.env_vars)
+
             env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
             module_coverage = 'non_local/' not in target.aliases

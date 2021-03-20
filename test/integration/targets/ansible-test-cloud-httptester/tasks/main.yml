@@ -1,3 +1,8 @@
+- name: Verify HTTPTESTER environment variable
+  assert:
+    that:
+      - "lookup('env', 'HTTPTESTER') == '1'"
+
 - name: Verify endpoints respond
   uri:
     url: "{{ item }}"
