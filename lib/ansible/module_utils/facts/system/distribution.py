@@ -362,7 +362,7 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 for val, name in zip(version.group(1).split("."), ['major', 'minor', 'maintenance', 'special']):
-                    debian_facts['distribution_{}_version'.format(name)] = val
+                    debian_facts['distribution_%s_version' % name] = val
             release = re.search(r'VERSION="(.*)"', data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
