@@ -102,7 +102,7 @@ def run_support_container(
     # Initializing the SSH key here makes sure it is available for use after delegation.
     SshKey(args)
 
-    aliases = [sanitize_host_name(name)] + aliases if aliases else [sanitize_host_name(name)]
+    aliases = aliases or [sanitize_host_name(name)]
 
     current_container_id = get_docker_container_id()
 
