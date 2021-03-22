@@ -36,8 +36,7 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo yum check-update
     sudo yum update
     sudo yum group install "Development Tools"
-    sudo yum install python-devel / sudo yum install python3-devel
-    sudo yum install openssl-devel libffi libffi-devel 
+    sudo yum install python3-devel openssl-devel libffi libffi-devel 
 
 Creating a development environment (platform-agnostic steps)
 ------------------------------------------------------------
