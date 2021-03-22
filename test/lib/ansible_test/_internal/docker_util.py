@@ -55,7 +55,7 @@ class DockerCommand:
     def detect():  # type: () -> t.Optional[DockerCommand]
         """Detect and return the available docker command, or None."""
         for command in DOCKER_COMMANDS:
-            executable = find_executable(command)
+            executable = find_executable(command, required=False)
 
             if executable:
                 version = raw_command([command, '-v'], capture=True)[0].strip()
