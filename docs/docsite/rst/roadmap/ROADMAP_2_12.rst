@@ -1,4 +1,4 @@
-.. _base_roadmap_2_12:
+.. _core_roadmap_2_12:
 
 =================
 Ansible-core 2.12
