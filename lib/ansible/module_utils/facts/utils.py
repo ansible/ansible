@@ -38,7 +38,7 @@ def get_file_content(path, default=None, strip=True):
                 # try to not enter kernel 'block' mode, which prevents timeouts
                 fd = datafile.fileno()
                 flag = fcntl.fcntl(fd, fcntl.F_GETFD)
-                fcntl.fcntl(fd, fcntl.F_SETFD, flag | os.O_NONBLOCK)
+                fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
             except Exception:
                 pass  # not required to operate, but would have been nice!
 
