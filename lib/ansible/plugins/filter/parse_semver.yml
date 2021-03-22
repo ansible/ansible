@@ -7,7 +7,7 @@ DOCUMENTATION:
   positional: _input, keys
   options:
     _input:
-      description: Semantic version string.
+      description: semantic version string.
       type: str
       required: true
     keys:
@@ -19,10 +19,12 @@ DOCUMENTATION:
 EXAMPLES: |
 
   # To get a dictionary of the semantic versions parts from a version_string
-  semver: "{{ version_string | parse_semver }}"
+  {{ '2.0.0-rc.1+build.123' | parse_semver(keys=['major']) }}
+  # => '2'
 
   # To get only the `major` version from the version_string::
-  major:  {{ version_string | parse_semver(keys=['major']) }}
+  {{ '1.25.8' | parse_semver }}
+  # => { "buildmetadata": [], "major": 1, "minor": 25, "patch": 8, "prerelease": [] }
 
 RETURN:
   _value:
