@@ -12,6 +12,7 @@ import pkgutil
 import random
 import re
 import shutil
+import socket
 import stat
 import string
 import subprocess
@@ -886,6 +887,22 @@ def get_hash(path):
     file_hash.update(read_binary_file(path))
 
     return file_hash.hexdigest()
+
+
+def get_host_ip():
+    """Return the host's IP address."""
+    try:
+        return get_host_ip.ip
+    except AttributeError:
+        pass
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.connect(('10.255.255.255', 22))
+        host_ip = get_host_ip.ip = sock.getsockname()[0]
+
+    display.info('Detected host IP: %s' % host_ip, verbosity=1)
+
+    return host_ip
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

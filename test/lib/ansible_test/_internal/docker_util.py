@@ -92,6 +92,8 @@ def get_docker_host_ip():  # type: () -> str
 
     docker_host_ip = get_docker_host_ip.ip = socket.gethostbyname(get_docker_hostname())
 
+    display.info('Detected docker host IP: %s' % docker_host_ip, verbosity=1)
+
     return docker_host_ip
 
 

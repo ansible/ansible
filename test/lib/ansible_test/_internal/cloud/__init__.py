@@ -315,7 +315,7 @@ class CloudProvider(CloudBase):
         if not self.uses_docker and not self.uses_config:
             return
 
-        if self.uses_docker and (not self.args.docker or get_docker_command().command == 'docker'):
+        if self.uses_docker and get_docker_command():
             return
 
         if self.uses_config and os.path.exists(self.config_static_path):

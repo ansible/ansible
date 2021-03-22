@@ -19,6 +19,7 @@ from .util import (
     ApplicationError,
     SubprocessError,
     display,
+    get_host_ip,
     sanitize_host_name,
 )
 
@@ -298,7 +299,7 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
     for name, container in support_containers.items():
         if container.details.published_ports:
             published_access = ContainerAccess(
-                host_ip=container.details.docker_host_ip,
+                host_ip=get_docker_host_ip(),
                 names=container.aliases,
                 ports=None,
                 forwards=dict((port, published_port) for port, published_port in container.details.published_ports.items()),
@@ -307,14 +308,23 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
             published_access = None  # no published access without published ports (ports are only published if needed)
 
         if container.details.container_ip:
+            # docker containers, and rootfull podman containers should have a container IP address
             container_access = ContainerAccess(
                 host_ip=container.details.container_ip,
                 names=container.aliases,
                 ports=container.ports,
                 forwards=None,
             )
+        elif get_docker_command().command == 'podman':
+            # published ports for rootless podman containers should be accessible from the host's IP
+            container_access = ContainerAccess(
+                host_ip=get_host_ip(),
+                names=container.aliases,
+                ports=None,
+                forwards=dict((port, published_port) for port, published_port in container.details.published_ports.items()),
+            )
         else:
-            container_access = None  # no container access without an IP address (most likely podman)
+            container_access = None  # no container access without an IP address
 
         if get_docker_container_id():
             if not container_access:
@@ -335,7 +345,7 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
                 control_context = control.setdefault(container.context, {})
                 control_context[name] = container_access
             else:
-                pass  # SSH port forwarding required
+                raise Exception('Missing IP address for container: %s' % name)
         else:
             if not published_access:
                 raise Exception('Missing published ports for container: %s' % name)
@@ -512,7 +522,6 @@ class ContainerDescriptor:
 
         if self.publish_ports:
             # inspect the support container to locate the published ports
-            docker_host_ip = get_docker_host_ip()
             tcp_ports = dict((port, container.get_tcp_port(port)) for port in self.ports)
 
             if any(not config or len(config) != 1 for config in tcp_ports.values()):
@@ -520,13 +529,11 @@ class ContainerDescriptor:
 
             published_ports = dict((port, int(config[0]['HostPort'])) for port, config in tcp_ports.items())
         else:
-            docker_host_ip = None
             published_ports = {}
 
         self.details = SupportContainer(
             container,
             support_container_ip,
-            docker_host_ip,
             published_ports,
         )
 
@@ -538,12 +545,10 @@ class SupportContainer:
     def __init__(self,
                  container,  # type: DockerInspect
                  container_ip,  # type: str
-                 docker_host_ip,  # type: t.Optional[str]
                  published_ports,  # type: t.Dict[int, int]
                  ):  # type: (...) -> None
         self.container = container
         self.container_ip = container_ip
-        self.docker_host_ip = docker_host_ip
         self.published_ports = published_ports
 
 
