@@ -331,10 +331,10 @@ class CloudProvider(CloudBase):
                 display.warning('Excluding tests marked "%s" which require config (see "%s"): %s'
                                 % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
             elif self.uses_docker and not self.uses_config:
-                display.warning('Excluding tests marked "%s" which requires Docker container support: %s'
+                display.warning('Excluding tests marked "%s" which requires container support: %s'
                                 % (skip.rstrip('/'), ', '.join(skipped)))
             elif self.uses_docker and self.uses_config:
-                display.warning('Excluding tests marked "%s" which requires Docker container support or config (see "%s"): %s'
+                display.warning('Excluding tests marked "%s" which requires container support or config (see "%s"): %s'
                                 % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
     def setup(self):
