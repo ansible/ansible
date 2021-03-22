@@ -537,6 +537,8 @@ class StrategyBase:
             original_host = task_result._host
             original_task = task_result._task
 
+            tr_clean = task_result.clean_copy()
+
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
             if task_result.is_failed():
