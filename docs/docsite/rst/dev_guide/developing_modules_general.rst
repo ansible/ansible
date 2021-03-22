@@ -33,6 +33,7 @@ Installing prerequisites via yum (CentOS)
 Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
 
 .. code:: bash
+
     sudo yum check-update
     sudo yum update
     sudo yum group install "Development Tools"
