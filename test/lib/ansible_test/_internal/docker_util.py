@@ -54,7 +54,12 @@ class DockerCommand:
     @staticmethod
     def detect():  # type: () -> t.Optional[DockerCommand]
         """Detect and return the available docker command, or None."""
-        for command in DOCKER_COMMANDS:
+        if os.environ.get('ANSIBLE_TEST_PREFER_PODMAN'):
+            commands = list(reversed(DOCKER_COMMANDS))
+        else:
+            commands = DOCKER_COMMANDS
+
+        for command in commands:
             executable = find_executable(command, required=False)
 
             if executable:
