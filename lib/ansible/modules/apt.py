@@ -428,7 +428,7 @@ class PolicyRcD(object):
             try:
                 shutil.move(os.path.join(self.backup_dir, 'policy-rc.d'),
                             '/usr/sbin/policy-rc.d')
-                os.rmdir(self.tmpdir_name)
+                os.rmdir(self.backup_dir)
             except Exception:
                 self.m.fail_json(msg="Fail to move back %s to /usr/sbin/policy-rc.d"
                                      % os.path.join(self.backup_dir, 'policy-rc.d'))

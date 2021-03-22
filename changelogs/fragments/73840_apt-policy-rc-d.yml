@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    apt - fix policy_rc_d parameter throwing an exception when restoring
+    original file (https://github.com/ansible/ansible/issues/66211)
