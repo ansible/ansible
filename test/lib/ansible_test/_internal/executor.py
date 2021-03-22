@@ -764,6 +764,18 @@ def command_windows_integration(args):
             ssh_con = core_ci.connection
             ssh = SshConnectionDetail(core_ci.name, ssh_con.hostname, 22, ssh_con.username, core_ci.ssh_key.key, shell_type='powershell')
             managed_connections.append(ssh)
+    elif args.explain:
+        identity_file = SshKey(args).key
+
+        # mock connection details to prevent tracebacks in explain mode
+        managed_connections = [SshConnectionDetail(
+            name='windows',
+            host='windows',
+            port=22,
+            user='administrator',
+            identity_file=identity_file,
+            shell_type='powershell',
+        )]
     else:
         inventory = parse_inventory(args, inventory_path)
         hosts = get_hosts(inventory, 'windows')
