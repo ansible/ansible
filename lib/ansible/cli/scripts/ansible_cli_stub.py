@@ -29,11 +29,6 @@ import shutil
 import sys
 import traceback
 
-from ansible import context
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
-from ansible.module_utils._text import to_text
-
-
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY38_MIN = sys.version_info[:2] >= (3, 8)
@@ -43,6 +38,12 @@ if not _PY38_MIN:
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
+
+# These lines appear after the PY38 check, to ensure the "friendly" error happens before
+# any invalid syntax appears in other files that may get imported
+from ansible import context
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.module_utils._text import to_text
 
 from pathlib import Path
 
