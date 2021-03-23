@@ -104,7 +104,7 @@ class Conditional:
                 if result:
                     result = res
 
-                display.debug("Evaluated conditional (%s): %s " % (conditional, res))
+                display.debug("Evaluated conditional (%s): %s" % (conditional, res))
                 if not result:
                     break
 
