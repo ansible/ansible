@@ -112,6 +112,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             # If a simple task is given, ensure its a list for the implicit block
             ds = [ds]
         elif ds is None:
+            raise AnsibleError('Invalid block ds supplied')
             # TODO: really need to fix so this is not the case
             ds = {}
 
