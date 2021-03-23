@@ -1367,6 +1367,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
         hosts = 'testhost'
         gather_facts = True
 
+    if not isinstance(args, NetworkIntegrationConfig):
         cloud_environment = get_cloud_environment(args, target)
 
         if cloud_environment:
