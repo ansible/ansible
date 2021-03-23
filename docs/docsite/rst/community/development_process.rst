@@ -197,7 +197,7 @@ When writing a changelog entry, use the following format:
 
 The scope is usually a module or plugin name or group of modules or plugins, for example, ``lookup plugins``. While module names can (and should) be mentioned directly (``foo_module``), plugin names should always be followed by the type (``foo inventory plugin``).
 
-For changes that are not really scoped (for example, which affect a whole collection), follow the format:
+For changes that are not really scoped (for example, which affect a whole collection), use the following format:
 
 .. code-block:: yaml
 
