@@ -195,7 +195,7 @@ When writing a changelog entry, follow the format:
 
   - scope - description starting with a lowercase letter and ending with a dot at the very end. Multiple sentences are allowed (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
 
-The scope is usually a module or plugin name or group of modules or plugins, for example, ``lookup plugins``.
+The scope is usually a module or plugin name or group of modules or plugins, for example, ``lookup plugins``. While module names can (and should) be mentioned directly (``foo_module``), plugin names should always be followed by the type (``foo inventory plugin``).
 
 For changes that are not really scoped (for example, which affect a whole collection), follow the format:
 
