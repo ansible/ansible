@@ -444,7 +444,7 @@ class Constructable(object):
                                 new_raw_group_names.append(name)
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
-                                name = '%s%s%s' % (gname, sep, gval)
+                                name = gname if gval == '' else '%s%s%s' % (gname, sep, gval)
                                 new_raw_group_names.append(name)
                         else:
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
