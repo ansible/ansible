@@ -104,17 +104,17 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     def preprocess_data(self, ds, allow_private=False):
 
-        # you might get a task or task list instead, which will get implicit block later on
-        if not Block.is_block(ds):
-            # implicit block, really a task/task list
+        # you might get a task or task list instead of block
+        if ds is not None and not Block.is_block(ds):
 
-            # TODO: check for None and error?
+            # If a simple task is given, convert to a list
             if not isinstance(ds, Sequence):
-                # If a simple task is given, ensure its a list
                 ds = [ds]
 
+            # create the implicit block of tasks
             ds = {'block': ds}
 
+        # do normal pre
         ds = super(Block, self).preprocess_data(ds, allow_private=allow_private)
 
         return ds
