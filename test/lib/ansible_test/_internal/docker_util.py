@@ -182,7 +182,7 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
         if current_container_id:
             # Make sure any additional containers we launch use the same network as the current container we're running in.
             # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
-            container = docker_inspect(args, current_container_id)
+            container = docker_inspect(args, current_container_id, always=True)
             network = container.get_network_name()
 
     get_docker_preferred_network_name.network = network
@@ -434,17 +434,17 @@ class DockerInspect:
         return ipaddress
 
 
-def docker_inspect(args, identifier):  # type: (EnvironmentConfig, str) -> DockerInspect
+def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig, str, bool) -> DockerInspect
     """
     Return the results of `docker inspect` for the specified container.
     Raises a ContainerNotFoundError if the container was not found.
     """
     try:
-        stdout = docker_command(args, ['inspect', identifier], capture=True)[0]
+        stdout = docker_command(args, ['inspect', identifier], capture=True, always=always)[0]
     except SubprocessError as ex:
         stdout = ex.stdout
 
-    if args.explain:
+    if args.explain and not always:
         items = []
     else:
         items = json.loads(stdout)
