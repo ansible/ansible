@@ -105,16 +105,17 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     def preprocess_data(self, ds, allow_private=False):
 
         # you might get a task or task list instead, which will get implicit block later on
-        if Block.is_block(ds):
-            ds = super(Block, self).preprocess_data(ds, allow_private=allow_private)
-        elif not isinstance(ds, Sequence):
-            # no need to preprocess data as each entry will go through that as load_data is triggered for each list item
-            # If a simple task is given, ensure its a list for the implicit block
-            ds = [ds]
-        elif ds is None:
-            raise AnsibleError('Invalid block ds supplied')
-            # TODO: really need to fix so this is not the case
-            ds = {}
+        if not Block.is_block(ds):
+            # implicit block, really a task/task list
+
+            # TODO: check for None and error?
+            if not isinstance(ds, Sequence):
+                # If a simple task is given, ensure its a list
+                ds = [ds]
+
+            ds = {'block': ds}
+
+        ds = super(Block, self).preprocess_data(ds, allow_private=allow_private)
 
         return ds
 
