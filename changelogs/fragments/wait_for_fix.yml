@@ -1,0 +1,2 @@
+bugfixes:
+  - wait_for module, move missing socket into function to get proper comparrison in time.
