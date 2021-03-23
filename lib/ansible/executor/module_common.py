@@ -602,7 +602,11 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
     # check for first-class interpreter config
     interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
 
-    if C.config.get_configuration_definitions().get(interpreter_config_key):
+    if task_vars.get('ansible_network_os'):
+        # skip detection for network os execution
+        interpreter_out = task_vars.get('ansible_playbook_interpreter', '/usr/bin/python')
+
+    elif C.config.get_configuration_definitions().get(interpreter_config_key):
         # a config def exists for this interpreter type; consult config for the value
         interpreter_out = C.config.get_config_value(interpreter_config_key, variables=task_vars)
         discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
