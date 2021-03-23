@@ -11,12 +11,14 @@ import subprocess
 from . import types as t
 
 from .encoding import (
+    to_bytes,
     to_text,
 )
 
 from .util import (
     ApplicationError,
     cmd_quote,
+    common_environment,
     devnull,
     display,
     exclude_none_values,
@@ -179,13 +181,18 @@ def run_ssh_command(
 ):  # type: (...) -> SshProcess
     """Run the specified SSH command, returning the created SshProcess instance created."""
     cmd = create_ssh_command(ssh, options, cli_args, command)
+    env = common_environment()
+
     cmd_show = ' '.join([cmd_quote(c) for c in cmd])
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
+
+    cmd_bytes = [to_bytes(c) for c in cmd]
+    env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
 
     if args.explain:
         process = SshProcess(None)
     else:
-        process = SshProcess(subprocess.Popen(cmd, bufsize=-1, stdin=devnull(), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1, stdin=devnull(), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     return process
 
