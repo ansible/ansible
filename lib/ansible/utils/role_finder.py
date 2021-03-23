@@ -19,6 +19,8 @@ class AnsibleRoleFinderResult(object):
     Class used as the result of all AnsibleRoleFinder API calls.
     """
     def __init__(self, role_name, role_path, collection_name=None, masked=False):
+        if AnsibleCollectionRef.is_valid_fqcr(role_name):
+            raise Exception("Role name should not contain FQCN")
         self.role_name = role_name
         self.role_path = role_path
         self.collection_name = collection_name
@@ -100,7 +102,7 @@ class AnsibleRoleFinder(object):
             (e.g. community.general.myrole).
         :param list collection_names: A list of fully qualified collection names to search.
 
-        :returns: Expanded path to the role, or None if not found.
+        :returns: An AnsibleRoleFinderResult object, or None if not found.
         """
 
         # Search collection-based roles first if a collection context is given.
@@ -126,9 +128,11 @@ class AnsibleRoleFinder(object):
 
         :param list role_names: List of role names to use as a filter.
         :param list collection_names: List of collection names to use as a filter.
+            This filter will take precedence over the role name filter.
         :param bool include_masked: Whether or not to include roles of the same name
             that would otherwise be masked by the first-found algorithm.
 
-        :returns: A list of tuples consisting of (role name, collection name, role path)
+        :returns: A list of AnsibleRoleFinderResult objects.
         """
-        pass
+        results = []
+        return results
