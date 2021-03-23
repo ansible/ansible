@@ -37,11 +37,14 @@ from ansible.module_utils._text import to_text
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY38_MIN = sys.version_info[:2] >= (3, 8)
-_PY3_MIN = sys.version_info[:2] >= (3, 5)
-_PY2_MIN = (2, 6) <= sys.version_info[:2] < (3,)
-_PY_MIN = _PY3_MIN or _PY2_MIN
-if not _PY_MIN:
-    raise SystemExit('ERROR: Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s' % ''.join(sys.version.splitlines()))
+if not _PY38_MIN:
+    raise SystemExit(
+        'ERROR: Ansible requires Python 3.8 or newer on the controller. '
+        'Current version: %s' % ''.join(sys.version.splitlines())
+    )
+
+
+from pathlib import Path
 
 
 class LastResort(object):
@@ -67,19 +70,10 @@ if __name__ == '__main__':
     initialize_locale()
 
     cli = None
-    me = os.path.basename(sys.argv[0])
+    me = Path(sys.argv[0]).name
 
     try:
         display = Display()
-        if C.CONTROLLER_PYTHON_WARNING and not _PY38_MIN:
-            display.deprecated(
-                (
-                    'Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12. '
-                    'Current version: %s' % ''.join(sys.version.splitlines())
-                ),
-                version='2.12',
-                collection_name='ansible.builtin',
-            )
         display.debug("starting run")
 
         sub = None
@@ -111,14 +105,14 @@ if __name__ == '__main__':
             else:
                 raise
 
-        b_ansible_dir = os.path.expanduser(os.path.expandvars(b"~/.ansible"))
+        ansible_dir = Path("~/.ansible").expanduser()
         try:
-            os.mkdir(b_ansible_dir, 0o700)
+            ansible_dir.mkdir(mode=0o700)
         except OSError as exc:
             if exc.errno != errno.EEXIST:
-                display.warning("Failed to create the directory '%s': %s"
-                                % (to_text(b_ansible_dir, errors='surrogate_or_replace'),
-                                   to_text(exc, errors='surrogate_or_replace')))
+                display.warning(
+                    "Failed to create the directory '%s': %s" % (ansible_dir, to_text(exc, errors='surrogate_or_replace'))
+                )
         else:
             display.debug("Created the '%s' directory" % to_text(b_ansible_dir, errors='surrogate_or_replace'))
 

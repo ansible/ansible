@@ -1,13 +1,13 @@
 
-.. _porting_2.12_guide:
+.. _porting_2.12_guide_core:
 
-**************************
-Ansible 2.12 Porting Guide
-**************************
+*******************************
+Ansible-core 2.12 Porting Guide
+*******************************
 
-This section discusses the behavioral changes between Ansible 2.11 and Ansible 2.12.
+This section discusses the behavioral changes between ``ansible-core`` 2.11 and ``ansible-core`` 2.12.
 
-It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of ``ansible-core``.
 
 We suggest you read this page along with `Ansible Changelog for 2.12 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.12.rst>`_ to understand what updates you may need to make.
 
@@ -45,8 +45,8 @@ See :ref:`interpreter discovery documentation <interpreter_discovery>` for more 
 Command Line
 ============
 
+* Python 3.8 on the controller node is a hard requirement for this release. The command line scripts will not function with a lower Python version.
 * ``ansible-vault`` no longer supports ``PyCrypto`` and requires ``cryptography``.
-
 
 Deprecated
 ==========
@@ -103,7 +103,6 @@ Plugins
 
 * ``unique`` filter with Jinja2 < 2.10 is case-sensitive and now raise coherently an error if ``case_sensitive=False`` instead of when ``case_sensitive=True``.
 * Set theory filters (``intersect``, ``difference``, ``symmetric_difference`` and ``union``) are now case-sensitive. Explicitly use ``case_sensitive=False`` to keep previous behavior. Note: with Jinja2 < 2.10, the filters were already case-sensitive by default.
-
 
 Porting custom scripts
 ======================
