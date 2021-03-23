@@ -90,6 +90,7 @@ images can be used:
 - `jborean93/WindowsServer2012 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2012>`_
 - `jborean93/WindowsServer2012R2 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2012R2>`_
 - `jborean93/WindowsServer2016 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2016>`_
+- `jborean93/WindowsServer2019 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2019>`_
 
 When the host is online, it can accessible by RDP on ``127.0.0.1:3389`` but the
 port may differ depending if there was a conflict. To get rid of the host, run
