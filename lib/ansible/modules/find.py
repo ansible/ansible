@@ -43,6 +43,7 @@ options:
               in undesirable ways.
             - Defaults to '*' when C(use_regex=False), or '.*' when C(use_regex=True).
         type: list
+        elements: str
         aliases: [ pattern ]
         elements: str
     excludes:
@@ -51,6 +52,7 @@ options:
             - Items whose basenames match an C(excludes) pattern are culled from C(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
+        elements: str
         aliases: [ exclude ]
         version_added: "2.5"
         elements: str
@@ -63,6 +65,7 @@ options:
             - List of paths of directories to search. All paths must be fully qualified.
         type: list
         required: true
+        elements: str
         aliases: [ name, path ]
         elements: str
     file_type:
