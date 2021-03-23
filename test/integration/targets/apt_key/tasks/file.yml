@@ -1,11 +1,11 @@
 - name: Get Fedora GPG Key
   get_url:
-    url: https://getfedora.org/static/fedora.gpg
+    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/fedora.gpg
     dest: /tmp/fedora.gpg
 
 - name: Ensure clean slate
   apt_key:
-    id: 49FD77499570FF31
+    id: 1161AE6945719A39
     state: absent
 
 - name: Run apt_key with both file and keyserver
@@ -36,13 +36,13 @@
 
 - name: remove fedora.gpg
   apt_key:
-    id: 49FD77499570FF31
+    id: 1161AE6945719A39
     state: absent
   register: remove_fedora
 
 - name: add key from url
   apt_key:
-    url: https://getfedora.org/static/fedora.gpg
+    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/fedora.gpg
   register: apt_key_url
 
 - name: verify key from url
