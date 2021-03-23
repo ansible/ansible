@@ -34,7 +34,7 @@ from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsiblePluginRemovedError
+from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.json import AnsibleJSONEncoder
@@ -595,28 +595,31 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_name = os.path.basename(interpreter).strip()
-
     # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
-    # check for first-class interpreter config
+    interpreter_name = os.path.basename(interpreter).strip()
+
+    # name for interpreter var
+    interpreter_config = u'ansible_%s_interpreter' % interpreter_name
+    # key for config
     interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
 
-    if task_vars.get('ansible_network_os'):
-        # skip detection for network os execution
-        interpreter_out = task_vars.get('ansible_playbook_interpreter', '/usr/bin/python')
+    # skip detection for network os execution, use playbook supplied one if possible
+    if task_vars.get('ansible_network_os') and task_vars.get('ansible_playbook_%s' % interpreter_name):
+        interpreter_out = task_vars.get('ansible_playbook_%s' % interpreter_name)
 
+    # a config def exists for this interpreter type; consult config for the value
     elif C.config.get_configuration_definitions().get(interpreter_config_key):
-        # a config def exists for this interpreter type; consult config for the value
-        interpreter_out = C.config.get_config_value(interpreter_config_key, variables=task_vars)
-        discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
 
-        interpreter_out = templar.template(interpreter_out.strip())
-
-        facts_from_task_vars = task_vars.get('ansible_facts', {})
+        interpreter_from_config = C.config.get_config_value(interpreter_config_key, variables=task_vars)
+        interpreter_out = templar.template(interpreter_from_config.strip())
 
         # handle interpreter discovery if requested
         if interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
+
+            discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+            facts_from_task_vars = task_vars.get('ansible_facts', {})
+
             if discovered_interpreter_config not in facts_from_task_vars:
                 # interpreter discovery is desired, but has not been run for this host
                 raise InterpreterDiscoveryRequiredError("interpreter discovery needed",
@@ -624,14 +627,13 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
                                                         discovery_mode=interpreter_out)
             else:
                 interpreter_out = facts_from_task_vars[discovered_interpreter_config]
+
+    # lacking config (which should include vars) consult vars for a possible direct override
+    elif task_vars.get(interpreter_config):
+        interpreter_out = templar.template(task_vars.get(interpreter_config).strip())
+
     else:
-        # a config def does not exist for this interpreter type; consult vars for a possible direct override
-        interpreter_config = u'ansible_%s_interpreter' % interpreter_name
-
-        if interpreter_config not in task_vars:
-            return None, interpreter
-
-        interpreter_out = templar.template(task_vars[interpreter_config].strip())
+        raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
 
     shebang = u'#!' + interpreter_out
 
