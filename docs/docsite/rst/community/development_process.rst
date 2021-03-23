@@ -193,7 +193,7 @@ When writing a changelog entry, follow the format:
 
 .. code-block:: yaml
 
-  - scope - description starting with a lowercase letter and ending with a dot (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
+  - scope - description starting with a lowercase letter and ending with a dot at the very end. Multiple sentences are allowed (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
 
 The scope is usually a module or plugin name or group of modules or plugins, for example, ``lookup plugins``.
 
