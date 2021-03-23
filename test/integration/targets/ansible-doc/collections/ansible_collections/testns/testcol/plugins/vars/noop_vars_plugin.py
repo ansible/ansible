@@ -15,6 +15,8 @@ DOCUMENTATION = '''
             section: testns.testcol.noop_vars_plugin
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
+    extends_documentation_fragment:
+        - testns.testcol2.deprecation
 '''
 
 from ansible.plugins.vars import BaseVarsPlugin

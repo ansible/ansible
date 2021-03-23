@@ -1,0 +1,30 @@
+{
+ "collection_info": {
+  "description": null, 
+  "repository": "",
+  "tags": [], 
+  "dependencies": {}, 
+  "authors": [
+   "Ansible (https://ansible.com)"
+  ], 
+  "issues": "",
+  "name": "testcol2", 
+  "license": [
+   "GPL-3.0-or-later"
+  ], 
+  "documentation": "",
+  "namespace": "testns", 
+  "version": "1.2.0", 
+  "readme": "README.md", 
+  "license_file": "COPYING", 
+  "homepage": "",
+ }, 
+ "file_manifest_file": {
+  "format": 1, 
+  "ftype": "file", 
+  "chksum_sha256": "4c15a867ceba8ba1eaf2f4a58844bb5dbb82fec00645fc7eb74a3d31964900f6", 
+  "name": "FILES.json", 
+  "chksum_type": "sha256"
+ }, 
+ "format": 1
+}

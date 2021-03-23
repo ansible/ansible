@@ -11,6 +11,7 @@ DOCUMENTATION = '''
     description:
         - This cache uses JSON formatted, per host, files saved to the filesystem.
     author: Ansible Core (@ansible-core)
+    version_added: 0.7.0
     options:
       _uri:
         required: True
@@ -18,16 +19,26 @@ DOCUMENTATION = '''
           - Path in which the cache plugin will save the JSON files
         env:
           - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
+            version_added: 1.2.0
         ini:
           - key: fact_caching_connection
             section: defaults
+            deprecated:
+              alternative: none
+              why: Test deprecation
+              version: '2.0.0'
       _prefix:
         description: User defined prefix to use when creating the JSON files
         env:
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
+            version_added: 1.1.0
         ini:
           - key: fact_caching_prefix
             section: defaults
+        deprecated:
+          alternative: none
+          why: Another test deprecation
+          removed_at_date: '2050-01-01'
       _timeout:
         default: 86400
         description: Expiration timeout for the cache plugin data
@@ -36,7 +47,16 @@ DOCUMENTATION = '''
         ini:
           - key: fact_caching_timeout
             section: defaults
+        vars:
+          - name: notsjonfile_fact_caching_timeout
+            version_added: 1.5.0
+            deprecated:
+              alternative: do not use a variable
+              why: Test deprecation
+              version: '3.0.0'
         type: integer
+    extends_documentation_fragment:
+        - testns.testcol2.plugin
 '''
 
 from ansible.plugins.cache import BaseFileCacheModule

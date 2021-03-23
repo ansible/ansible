@@ -8,6 +8,7 @@ DOCUMENTATION = """
     short_desciption: fake module
     description:
         - this is a fake module
+    version_added: 1.0.0
     options:
         _notreal:
             description:  really not a real option

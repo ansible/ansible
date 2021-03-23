@@ -12,3 +12,5 @@ OPTIONS (= is mandatory):
 AUTHOR: me
 
 SHORT_DESCIPTION: fake module
+
+VERSION_ADDED_COLLECTION: testns.testcol
