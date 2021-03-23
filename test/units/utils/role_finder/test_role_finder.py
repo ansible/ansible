@@ -7,7 +7,7 @@ import sys
 
 from ansible.constants import config
 from ansible.template import Templar
-from ansible.utils.role_finder import AnsibleRoleFinder
+from ansible.utils.role_finder import AnsibleRoleFinder, AnsibleRoleFinderResult
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _AnsibleCollectionLoader
 from ansible.utils.collection_loader._collection_config import _EventSource
@@ -16,49 +16,71 @@ from ansible.utils.collection_loader._collection_config import _EventSource
 ROLEFINDER_PLAYBOOK_DIR = os.path.dirname(__file__)
 
 
+def test_result():
+    role_name = "abc"
+    role_path = "/path/to/abc"
+    collection_name = "foo.bar"
+
+    r = AnsibleRoleFinderResult(role_name, role_path)
+    assert r.role_name == role_name
+    assert r.role_path == role_path
+    assert r.collection_name is None
+    assert r.masked == False
+
+    r = AnsibleRoleFinderResult(role_name, role_path, collection_name, True)
+    assert r.role_name == role_name
+    assert r.role_path == role_path
+    assert r.collection_name == collection_name
+    assert r.masked == True
+
+
 def test_standard_role_search_paths():
     ''' Test that the path order is what we expect at initialization. '''
     relative_role_dir = os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
-    iterator = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR, relative_role_dir)
+    finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR, relative_role_dir)
     expected = []
     expected.append(os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles'))
     expected.extend(config.get_config_value('DEFAULT_ROLES_PATH'))
     expected.append(relative_role_dir)
     expected.append(ROLEFINDER_PLAYBOOK_DIR)
-    assert iterator.standard_role_search_paths == expected
+    assert finder.standard_role_search_paths == expected
 
 
 def test_set_templar():
     ''' Test setting the templating object. '''
-    iterator = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
+    finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
 
     # Should allow None
-    iterator.set_templar(None)
+    finder.set_templar(None)
 
     # Test with correct type
-    iterator.set_templar(Templar(None))
+    finder.set_templar(Templar(None))
 
     # Test with wrong type
     with pytest.raises(TypeError, match="templar must be of type Templar"):
-        iterator.set_templar("invalid")
+        finder.set_templar("invalid")
 
 
 def test_find_first():
     ''' Test find first role that matches a role name. '''
 
     # Set search path for collections
-    finder = get_default_finder()
-    reset_collections_loader_state(finder)
+    collection_finder = get_default_finder()
+    reset_collections_loader_state(collection_finder)
 
-    iterator = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
+    finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
 
     # No match should return None
-    result = iterator.find_first('does-not-exist')
+    result = finder.find_first('does-not-exist')
     assert result is None
 
-    # Match should return a single full path (no collection context given)
-    result = iterator.find_first('role1')
-    assert result == os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
+    # Match should return a result object (no collection context given)
+    result = finder.find_first('role1')
+    assert isinstance(result, AnsibleRoleFinderResult)
+    assert result.role_name == 'role1'
+    assert result.role_path == os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
+    assert result.collection_name is None
+    assert not result.masked
 
     expected_collection_path = os.path.join(
         default_test_collection_paths[0],
@@ -66,11 +88,18 @@ def test_find_first():
         'role1')
 
     # Test matching when a collection context is supplied.
-    result = iterator.find_first('role1', ['namespace1.collection1'])
-    assert result == expected_collection_path
+    result = finder.find_first('role1', ['namespace1.collection1'])
+    assert result.role_name == 'role1'
+    assert result.role_path == expected_collection_path
+    assert result.collection_name == 'namespace1.collection1'
+    assert not result.masked
 
-    result = iterator.find_first('namespace1.collection1.role1')
-    assert result == expected_collection_path
+    # A FQCN role should return collection context and simple role name in result
+    result = finder.find_first('namespace1.collection1.role1')
+    assert result.role_name == 'role1'
+    assert result.role_path == expected_collection_path
+    assert result.collection_name == 'namespace1.collection1'
+    assert not result.masked
 
 
 ############################################################

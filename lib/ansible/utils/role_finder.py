@@ -14,6 +14,20 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_r
 from ansible.utils.path import unfrackpath
 
 
+class AnsibleRoleFinderResult(object):
+    """
+    Class used as the result of all AnsibleRoleFinder API calls.
+    """
+    def __init__(self, role_name, role_path, collection_name=None, masked=False):
+        self.role_name = role_name
+        self.role_path = role_path
+        self.collection_name = collection_name
+        self.masked = masked
+
+    def __repr__(self):
+        return f"{self.role_path}, masked: {self.masked}"
+
+
 class AnsibleRoleFinder(object):
     """
     Class used to locate the path to any available roles.
@@ -95,16 +109,26 @@ class AnsibleRoleFinder(object):
             (simple_role_name, path, collection_name) = _get_collection_role_path(role_name, collection_names)
 
         if path:
-            return path
+            return AnsibleRoleFinderResult(simple_role_name, path, collection_name)
 
         for path in self.standard_role_search_paths:
             if self._templar:
                 path = self._templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
             if path_exists(role_path):
-                return role_path
+                return AnsibleRoleFinderResult(role_name, role_path)
 
         return None
 
-    def find_all(self):
+    def find_all(self, role_names=None, collection_names=None, include_masked=False):
+        """
+        Find all roles.
+
+        :param list role_names: List of role names to use as a filter.
+        :param list collection_names: List of collection names to use as a filter.
+        :param bool include_masked: Whether or not to include roles of the same name
+            that would otherwise be masked by the first-found algorithm.
+
+        :returns: A list of tuples consisting of (role name, collection name, role path)
+        """
         pass
