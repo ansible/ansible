@@ -355,7 +355,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 value = value.replace('%', '')
             value = float(value)
         elif attribute.isa == 'list':
-            if value is None:
+            if value in (None, Sentinel):
                 value = []
             elif not isinstance(value, list):
                 value = [value]
@@ -368,7 +368,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                         if item is None or item.strip() == "":
                             raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
         elif attribute.isa == 'set':
-            if value is None:
+            if value in (None, Sentinel):
                 value = set()
             elif not isinstance(value, (list, set)):
                 if isinstance(value, string_types):
@@ -380,7 +380,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if not isinstance(value, set):
                 value = set(value)
         elif attribute.isa == 'dict':
-            if value is None:
+            if value in (None, Sentinel):
                 value = dict()
             elif not isinstance(value, dict):
                 raise TypeError("%s is not a dictionary" % value)
