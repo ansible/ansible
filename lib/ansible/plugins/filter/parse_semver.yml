@@ -24,7 +24,14 @@ EXAMPLES: |
 
   # To get only the `major` version from the version_string::
   {{ '1.25.8' | parse_semver }}
-  # => { "buildmetadata": [], "major": 1, "minor": 25, "patch": 8, "prerelease": [] }
+  # =>
+  #   {
+  #       "buildmetadata": [],
+  #       "major": 1,
+  #       "minor": 25,
+  #       "patch": 8,
+  #       "prerelease": []
+  #   }
 
 RETURN:
   _value:
