@@ -189,7 +189,7 @@ Most changelog entries are ``bugfixes`` or ``minor_changes``.
 Changelog fragment entry format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When writing a changelog entry, follow the format:
+When writing a changelog entry, use the following format:
 
 .. code-block:: yaml
 
