@@ -1,0 +1,115 @@
+{
+    "testns.testcol.randommodule": {
+        "doc": {
+            "author": [
+                "Ansible Core Team"
+            ],
+            "collection": "testns.testcol",
+            "deprecated": {
+                "alternative": "Use some other module",
+                "removed_from_collection": "testns.testcol",
+                "removed_in": "3.0.0",
+                "why": "Test deprecation"
+            },
+            "description": [
+                "A random module."
+            ],
+            "filename": "./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py",
+            "has_action": false,
+            "module": "randommodule",
+            "options": {
+                "sub": {
+                    "description": "Suboptions.",
+                    "env": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "removed_in": "2.0.0",
+                                "version": "2.0.0",
+                                "why": "Test deprecation"
+                            },
+                            "name": "TEST_ENV",
+                            "version_added": "1.0.0"
+                        }
+                    ],
+                    "options": {
+                        "subtest2": {
+                            "description": "Another suboption.",
+                            "type": "float",
+                            "version_added": "1.1.0"
+                        }
+                    },
+                    "suboptions": {
+                        "subtest": {
+                            "description": "A suboption.",
+                            "type": "int",
+                            "version_added": "1.1.0",
+                            "version_added_collection": "testns.testcol"
+                        }
+                    },
+                    "type": "dict"
+                },
+                "test": {
+                    "description": "Some text.",
+                    "type": "str",
+                    "version_added": "1.2.0",
+                    "version_added_collection": "testns.testcol"
+                },
+                "testcol2option": {
+                    "description": [
+                        "An option taken from testcol2"
+                    ],
+                    "type": "str",
+                    "version_added": "1.0.0",
+                    "version_added_collection": "testns.testcol2"
+                },
+                "testcol2option2": {
+                    "description": [
+                        "Another option taken from testcol2"
+                    ],
+                    "type": "str"
+                }
+            },
+            "short_description": "A random module",
+            "version_added": "1.0.0",
+            "version_added_collection": "testns.testcol"
+        },
+        "examples": "\n",
+        "metadata": null,
+        "return": {
+            "a_first": {
+                "description": "A first result.",
+                "returned": "success",
+                "type": "str"
+            },
+            "m_middle": {
+                "contains": {
+                    "suboption": {
+                        "choices": [
+                            "ARF",
+                            "BARN",
+                            "c_without_capital_first_letter"
+                        ],
+                        "description": "A suboption.",
+                        "type": "str",
+                        "version_added": "1.4.0",
+                        "version_added_collection": "testns.testcol"
+                    }
+                },
+                "description": [
+                    "This should be in the middle.",
+                    "Has some more data"
+                ],
+                "returned": "success and 1st of month",
+                "type": "dict"
+            },
+            "z_last": {
+                "description": "A last result.",
+                "returned": "success",
+                "type": "str",
+                "version_added": "1.3.0",
+                "version_added_collection": "testns.testcol"
+            }
+        }
+    }
+}
