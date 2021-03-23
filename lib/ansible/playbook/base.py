@@ -318,7 +318,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         try:
             new_me = self.__class__()
-        except RuntimeError:
+        except RuntimeError as e:
             raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion", orig_exc=e)
 
         for name in self._valid_attrs.keys():
