@@ -157,9 +157,12 @@ from ansible.module_utils.common.sys_info import (
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
+    _get_type_validator,
+    _validate_argument_types,
     env_fallback,
     remove_values,
     sanitize_keys,
+    set_fallbacks,
     DEFAULT_TYPE_VALIDATORS,
     PASS_VARS,
     PASS_BOOLS,
@@ -179,6 +182,24 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
+    check_mutually_exclusive,
+    check_required_arguments,
+    check_required_by,
+    check_required_if,
+    check_required_one_of,
+    check_required_together,
+    check_type_bits,
+    check_type_bool,
+    check_type_bytes,
+    check_type_dict,
+    check_type_float,
+    check_type_int,
+    check_type_jsonarg,
+    check_type_list,
+    check_type_path,
+    check_type_raw,
+    check_type_str,
+    count_terms,
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -568,6 +589,182 @@ class AnsibleModule(object):
             self._tmpdir = tmpdir
 
         return self._tmpdir
+
+    # Begin Backwards compatibility only methods
+    # The follow methods should not be used directly. Use the public function
+    # or ArgumentSpecValidator class instead.
+    def _get_wanted_type(self, wanted, k):
+        # Use the private method for 'str' type to handle the string conversion warning.
+        if wanted == 'str':
+            type_checker, wanted = self._check_type_str, 'str'
+        else:
+            type_checker, wanted = _get_type_validator(wanted)
+        if type_checker is None:
+            self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+
+        return type_checker, wanted
+
+    def _check_type_str(self, value, param=None, prefix=''):
+        opts = {
+            'error': False,
+            'warn': False,
+            'ignore': True
+        }
+
+        # Ignore, warn, or error when converting to a string.
+        allow_conversion = opts.get(self._string_conversion_action, True)
+        try:
+            return check_type_str(value, allow_conversion)
+        except TypeError:
+            common_msg = 'quote the entire value to ensure it does not change.'
+            from_msg = '{0!r}'.format(value)
+            to_msg = '{0!r}'.format(to_text(value))
+
+            if param is not None:
+                if prefix:
+                    param = '{0}{1}'.format(prefix, param)
+
+                from_msg = '{0}: {1!r}'.format(param, value)
+                to_msg = '{0}: {1!r}'.format(param, to_text(value))
+
+            if self._string_conversion_action == 'error':
+                msg = common_msg.capitalize()
+                raise TypeError(to_native(msg))
+            elif self._string_conversion_action == 'warn':
+                msg = ('The value "{0}" (type {1.__class__.__name__}) was converted to "{2}" (type string). '
+                       'If this does not look like what you expect, {3}').format(from_msg, value, to_msg, common_msg)
+                self.warn(to_native(msg))
+                return to_native(value, errors='surrogate_or_strict')
+
+    def _check_type_list(self, value):
+        return check_type_list(value)
+
+    def _check_type_dict(self, value):
+        return check_type_dict(value)
+
+    def _check_type_bool(self, value):
+        return check_type_bool(value)
+
+    def _check_type_int(self, value):
+        return check_type_int(value)
+
+    def _check_type_float(self, value):
+        return check_type_float(value)
+
+    def _check_type_path(self, value):
+        return check_type_path(value)
+
+    def _check_type_jsonarg(self, value):
+        return check_type_jsonarg(value)
+
+    def _check_type_raw(self, value):
+        return check_type_raw(value)
+
+    def _check_type_bytes(self, value):
+        return check_type_bytes(value)
+
+    def _check_type_bits(self, value):
+        return check_type_bits(value)
+
+    def _check_mutually_exclusive(self, spec, param=None):
+        if param is None:
+            param = self.params
+
+        try:
+            check_mutually_exclusive(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
+
+    def _check_required_one_of(self, spec, param=None):
+        if spec is None:
+            return
+
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_one_of(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
+
+    def _check_required_together(self, spec, param=None):
+        if spec is None:
+            return
+
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_together(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
+
+    def _check_required_by(self, spec, param=None):
+        if spec is None:
+            return
+
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_by(spec, param)
+        except TypeError as e:
+            self.fail_json(msg=to_native(e))
+
+    def _check_required_arguments(self, spec=None, param=None):
+        if spec is None:
+            spec = self.argument_spec
+
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_arguments(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
+
+    def _check_required_if(self, spec, param=None):
+        ''' ensure that parameters which conditionally required are present '''
+        if spec is None:
+            return
+
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_if(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
+
+    def _check_argument_types(self, spec=None, param=None, prefix=''):
+        ''' ensure all arguments have the requested type '''
+        if spec is None:
+            spec = self.argument_spec
+
+        if param is None:
+            param = self.params
+
+        errors = []
+        _validate_argument_types(spec, param, errors=errors)
+
+        if errors:
+            self.fail_json(msg=errors[0])
+    # End backwards compatibility only methods
 
     def warn(self, warning):
         warn(warning)

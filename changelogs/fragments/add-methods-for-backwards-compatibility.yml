@@ -1,0 +1,2 @@
+minor_changes:
+  - AnsibleModule - add back several private methods removed in #73703 to maintain backwards compatibility
