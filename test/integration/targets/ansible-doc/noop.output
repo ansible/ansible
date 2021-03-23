@@ -1,0 +1,32 @@
+{
+    "testns.testcol.noop": {
+        "doc": {
+            "author": "Ansible core team",
+            "collection": "testns.testcol",
+            "deprecated": {
+                "alternative": "Use some other lookup",
+                "removed_from_collection": "testns.testcol",
+                "removed_in": "3.0.0",
+                "why": "Test deprecation"
+            },
+            "description": [
+                "this is a noop"
+            ],
+            "filename": "./collections/ansible_collections/testns/testcol/plugins/lookup/noop.py",
+            "lookup": "noop",
+            "options": {},
+            "short_description": "returns input",
+            "version_added": "1.0.0",
+            "version_added_collection": "testns.testcol2"
+        },
+        "examples": "\n- name: do nothing\n  debug: msg=\"{{ lookup('testns.testcol.noop', [1,2,3,4] }}\"\n",
+        "metadata": null,
+        "return": {
+            "_list": {
+                "description": "input given",
+                "version_added": "1.0.0",
+                "version_added_collection": "testns.testcol"
+            }
+        }
+    }
+}
