@@ -6,6 +6,7 @@
     name:
       - python3-dnf
       - python3-libdnf  # https://bugzilla.redhat.com/show_bug.cgi?id=1887502
+      - libmodulemd     # https://bugzilla.redhat.com/show_bug.cgi?id=1942236
     state: latest
   register: dnf_result
 
