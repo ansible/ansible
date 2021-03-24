@@ -146,6 +146,7 @@ from ..module_utils.basic import AnsibleModule
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.facts import ansible_collector, default_collectors
+from ansible.module_utils.facts.collector import CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 
 
@@ -186,8 +187,8 @@ def main():
                                                                  gather_subset=gather_subset,
                                                                  gather_timeout=gather_timeout,
                                                                  minimal_gather_subset=minimal_gather_subset)
-    except TypeError as e:
-        # bad subset given
+    except (TypeError, CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep) as e:
+        # bad subset given, collector, idk, deps declared but not found
         module.fail_json(msg=to_text(e))
 
     facts_dict = fact_collector.collect(module=module)
