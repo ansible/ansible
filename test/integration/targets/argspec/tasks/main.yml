@@ -342,6 +342,30 @@
   register: argspec_int_invalid
   ignore_errors: true
 
+- argspec:
+    required: value
+    required_one_of_one: value
+  register: argspec_apply_defaults_not_specified
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults: ~
+  register: argspec_apply_defaults_none
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults: {}
+  register: argspec_apply_defaults_empty
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults:
+      foo: bar
+  register: argspec_apply_defaults_one
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -417,3 +441,8 @@
       - argspec_password_no_log.stdout|regex_findall('VALUE_SPECIFIED_IN_NO_LOG_PARAMETER')|length == 1
 
       - argspec_int_invalid is failed
+
+      - "argspec_apply_defaults_not_specified.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_none.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_empty.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_one.apply_defaults == {'foo': 'bar', 'bar': 'baz'}"
