@@ -68,7 +68,7 @@ class TestAnsibleRoleFinder:
             finder.templar = "invalid"
 
     def test_find_first(self):
-        ''' Test find first role that matches a role name. '''
+        ''' Test finding first role that matches a role name. '''
 
         # Set search path for collections
         collection_finder = get_default_finder()

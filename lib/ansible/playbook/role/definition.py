@@ -152,58 +152,8 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             all_vars = dict()
 
         templar = Templar(loader=self._loader, variables=all_vars)
-        # role_name = templar.template(role_name)
-
-        # role_tuple = None
-
-        # try to load as a collection-based role first
-        # if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
-            # role_tuple = _get_collection_role_path(role_name, self._collection_list)
-
-        # if role_tuple:
-            # we found it, stash collection data and return the name/path tuple
-            # self._role_collection = role_tuple[2]
-            # return role_tuple[0:2]
-
-        # We didn't find a collection role, look in defined role paths
-        # FUTURE: refactor this to be callable from internal so we can properly order
-        # ansible.legacy searches with the collections keyword
-
-        # we always start the search for roles in the base directory of the playbook
-        # role_search_paths = [
-            # os.path.join(self._loader.get_basedir(), u'roles'),
-        # ]
-
-        # also search in the configured roles path
-        # if C.DEFAULT_ROLES_PATH:
-            # role_search_paths.extend(C.DEFAULT_ROLES_PATH)
-
-        # next, append the roles basedir, if it was set, so we can
-        # search relative to that directory for dependent roles
-        # if self._role_basedir:
-            # role_search_paths.append(self._role_basedir)
-
-        # finally as a last resort we look in the current basedir as set
-        # in the loader (which should be the playbook dir itself) but without
-        # the roles/ dir appended
-        # role_search_paths.append(self._loader.get_basedir())
-
-        # now iterate through the possible paths and return the first one we find
-        # for path in role_search_paths:
-            # path = templar.template(path)
-            # role_path = unfrackpath(os.path.join(path, role_name))
-            # if self._loader.path_exists(role_path):
-                # return (role_name, role_path)
-
-        # if not found elsewhere try to extract path from name
-        # role_path = unfrackpath(role_name)
-        # if self._loader.path_exists(role_path):
-            # role_name = os.path.basename(role_name)
-            # return (role_name, role_path)
-
-        # searches = (self._collection_list or []) + role_search_paths
-
         finder = AnsibleRoleFinder(self._loader.get_basedir(), self._role_basedir, templar)
+
         result = finder.find_first(role_name, self._collection_list)
         if result:
             return (result.role_name, result.role_path)

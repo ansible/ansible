@@ -31,7 +31,7 @@ display = Display()
 RE_TASKS = re.compile(u'(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
 
 
-def path_dwim(given):
+def path_dwim(basedir, given):
     '''
     make relative paths work like folks expect.
     '''
@@ -42,14 +42,14 @@ def path_dwim(given):
     if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
         path = given
     else:
-        basedir = to_text(self._basedir, errors='surrogate_or_strict')
+        basedir = to_text(basedir, errors='surrogate_or_strict')
         path = os.path.join(basedir, given)
 
     return unfrackpath(path, follow=False)
 
 
-def path_exists(path):
-    path = path_dwim(path)
+def path_exists(basedir, path):
+    path = path_dwim(basedir, path)
     return os.path.exists(to_bytes(path, errors='surrogate_or_strict'))
 
 
@@ -104,7 +104,7 @@ class DataLoader:
     def load_from_file(self, file_name, cache=True, unsafe=False, json_only=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
-        file_name = self.path_dwim(file_name)
+        file_name = self.path_dwim(self.get_basedir(), file_name)
         display.debug("Loading data from %s" % file_name)
 
         # if the file has already been read in and cached, we'll
@@ -128,8 +128,7 @@ class DataLoader:
             return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
-        path = self.path_dwim(path)
-        return os.path.exists(to_bytes(path, errors='surrogate_or_strict'))
+        return path_exists(self.get_basedir(), path)
 
     def is_file(self, path):
         path = self.path_dwim(path)

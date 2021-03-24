@@ -38,11 +38,11 @@ class AnsibleRoleFinder(object):
       - API to show only first match
     """
 
-    def __init__(self, playbook_basedir, role_basedir=None, templar=None):
+    def __init__(self, basedir, role_basedir=None, templar=None):
         """
         Initialize a new RoleFinder object.
 
-        :param str playbook_basedir: Path to the playbook base directory.
+        :param str basedir: Base directory for searching.
         :param str role_basedir: Path to a relative role base directory.
         :param Templar templar: A Templar object used for expanding templated paths.
 
@@ -53,12 +53,13 @@ class AnsibleRoleFinder(object):
            - relative role base directory (if any) to find dependent roles
            - playbook base directory itself
         """
+        self.__basedir = basedir
         self.__standard_search_paths = []
-        self.__standard_search_paths.append(os.path.join(playbook_basedir, u'roles'))
+        self.__standard_search_paths.append(os.path.join(basedir, u'roles'))
         self.__standard_search_paths.extend(config.get_config_value('DEFAULT_ROLES_PATH'))
         if role_basedir:
             self.__standard_search_paths.append(role_basedir)
-        self.__standard_search_paths.append(playbook_basedir)
+        self.__standard_search_paths.append(basedir)
 
         self.__templar = templar
 
@@ -115,7 +116,7 @@ class AnsibleRoleFinder(object):
             if self.__templar:
                 path = self.__templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
-            if path_exists(role_path):
+            if path_exists(self.__basedir, role_path):
                 return self.Result(role_name, role_path)
 
         return None
