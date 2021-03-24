@@ -702,8 +702,8 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 if sub_spec is not None:
                     if parameters.get(param) is None:
                         parameters[param] = {}
-                    else:
-                        continue
+                else:
+                    continue
             elif sub_spec is None or param not in parameters or parameters[param] is None:
                 continue
 

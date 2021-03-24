@@ -126,6 +126,19 @@ def main():
             'int': {
                 'type': 'int',
             },
+            'apply_defaults': {
+                'type': 'dict',
+                'apply_defaults': True,
+                'options': {
+                    'foo': {
+                        'type': 'str',
+                    },
+                    'bar': {
+                        'type': 'str',
+                        'default': 'baz',
+                    },
+                },
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
