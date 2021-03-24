@@ -41,6 +41,9 @@ attributes:
     facts:
       description: Action returns an ``ansible_facts`` dictionary that will update existing host facts
       support: no
+    loops:
+      description: both ``loop`` and ``with_`` looping keywords will be honored.
+      support: yes
     proprietary:
       description: Can only be run against specific proprietary OS, normally a network appliance or similar
       support: no

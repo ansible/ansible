@@ -57,6 +57,27 @@ options:
     type: bool
     default: yes
     version_added: '2.11'
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    async:
+        support: no
+    become:
+        support: no
+    bypass_host_loop:
+        support: yes
+    conditional:
+        support: no
+    connection:
+        support: no
+    delegation:
+        support: no
+    loops:
+        support: no
+    tags:
+        support: no
+    until:
+        support: no
 notes:
   - Handlers are made available to the whole play.
   - Since Ansible 2.7 variables defined in C(vars) and C(defaults) for the role are exposed to the play at playbook parsing time.
