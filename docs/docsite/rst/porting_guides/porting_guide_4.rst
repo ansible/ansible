@@ -36,6 +36,8 @@ Other:
 * The configuration system now validates the ``choices`` field, so any settings that currently violate it and are currently ignored will now cause an error.
   For example, `ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0` will now cause an error (valid choices are 'ignore', 'warn' or 'error').
 * The ``ansible-galaxy`` command now uses ``resolvelib`` for resolving dependencies. In most cases this should not make a user-facing difference beyond being more performant, but we note it here for posterity and completeness.
+* Python ``module_utils`` imports may now be marked as optional during the module payload build by wrapping the ``import`` statement in a ``try`` or ``if`` block. This allows modules to use ``module_utils`` that may not be present in all versions of Ansible or a collection, and to perform arbitrary recovery or fallback actions during module runtime.
+
 
 Deprecated
 ==========
@@ -83,6 +85,25 @@ Porting custom scripts
 ======================
 
 No notable changes
+
+Porting Guide for v4.0.0a2
+==========================
+
+Major Changes
+-------------
+
+Ansible-core
+~~~~~~~~~~~~
+
+- AnsibleModule - use ``ArgumentSpecValidator`` class for validating argument spec and remove private methods related to argument spec validation. Any modules using private methods should now use the ``ArgumentSpecValidator`` class or the appropriate validation function.
+
+Deprecated Features
+-------------------
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- acme module_utils - the ``acme`` module_utils (``ansible_collections.community.crypto.plugins.module_utils.acme``) is deprecated and will be removed in community.crypto 2.0.0. Use the new Python modules in the ``acme`` package instead (``ansible_collections.community.crypto.plugins.module_utils.acme.xxx``) (https://github.com/ansible-collections/community.crypto/pull/184).
 
 Porting Guide for v4.0.0a1
 ==========================
