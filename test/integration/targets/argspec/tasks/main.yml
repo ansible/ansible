@@ -359,6 +359,13 @@
     apply_defaults: {}
   register: argspec_apply_defaults_empty
 
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults:
+      foo: bar
+  register: argspec_apply_defaults_one
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -438,3 +445,4 @@
       - "argspec_apply_defaults_not_specified.apply_defaults == {'foo': none, 'bar': 'baz'}"
       - "argspec_apply_defaults_none.apply_defaults == {'foo': none, 'bar': 'baz'}"
       - "argspec_apply_defaults_empty.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_one.apply_defaults == {'foo': 'bar', 'bar': 'baz'}"
