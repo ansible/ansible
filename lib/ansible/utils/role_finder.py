@@ -14,22 +14,6 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_r
 from ansible.utils.path import unfrackpath
 
 
-class AnsibleRoleFinderResult(object):
-    """
-    Class used as the result of all AnsibleRoleFinder API calls.
-    """
-    def __init__(self, role_name, role_path, collection_name=None, masked=False):
-        if AnsibleCollectionRef.is_valid_fqcr(role_name):
-            raise Exception("Role name should not contain FQCN")
-        self.role_name = role_name
-        self.role_path = role_path
-        self.collection_name = collection_name
-        self.masked = masked
-
-    def __repr__(self):
-        return f"{self.role_path}, masked: {self.masked}"
-
-
 class AnsibleRoleFinder(object):
     """
     Class used to locate the path to any available roles.
@@ -79,13 +63,6 @@ class AnsibleRoleFinder(object):
         self.__templar = templar
 
     # ========================================================================
-    # Private API
-    #
-    # WARNING: Do not access any part of the private API from outside of this
-    #    class. Seriously. I'm not kidding. No, really, just don't.
-    # ========================================================================
-
-    # ========================================================================
     # Public API
     # ========================================================================
 
@@ -131,14 +108,14 @@ class AnsibleRoleFinder(object):
             (simple_role_name, path, collection_name) = _get_collection_role_path(role_name, collection_names)
 
         if path:
-            return AnsibleRoleFinderResult(simple_role_name, path, collection_name)
+            return self.Result(simple_role_name, path, collection_name)
 
         for path in self.standard_role_search_paths:
             if self.__templar:
                 path = self.__templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
             if path_exists(role_path):
-                return AnsibleRoleFinderResult(role_name, role_path)
+                return self.Result(role_name, role_path)
 
         return None
 
@@ -156,3 +133,26 @@ class AnsibleRoleFinder(object):
         """
         results = []
         return results
+
+    # ========================================================================
+    # Private API
+    # ========================================================================
+
+    class Result(object):
+        """
+        Class used as the result of all AnsibleRoleFinder API calls.
+
+        This is a nested class because it is useless outside the context of an
+        AnsibleRoleFinder object.
+        """
+
+        def __init__(self, role_name, role_path, collection_name=None, masked=False):
+            if AnsibleCollectionRef.is_valid_fqcr(role_name):
+                raise Exception("Role name should not contain FQCN")
+            self.role_name = role_name
+            self.role_path = role_path
+            self.collection_name = collection_name
+            self.masked = masked
+
+        def __repr__(self):
+            return f"{self.role_path}, masked: {self.masked}"

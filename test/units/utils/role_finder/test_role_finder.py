@@ -7,7 +7,7 @@ import sys
 
 from ansible.constants import config
 from ansible.template import Templar
-from ansible.utils.role_finder import AnsibleRoleFinder, AnsibleRoleFinderResult
+from ansible.utils.role_finder import AnsibleRoleFinder
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _AnsibleCollectionLoader
 from ansible.utils.collection_loader._collection_config import _EventSource
@@ -17,30 +17,29 @@ from units.mock.loader import DictDataLoader
 ROLEFINDER_PLAYBOOK_DIR = os.path.dirname(__file__)
 
 
-class TestAnsibleRoleFinderResult:
+class TestAnsibleRoleFinder:
 
     def test_result(self):
         role_name = "abc"
         role_path = "/path/to/foo/bar/roles/abc"
         collection_name = "foo.bar"
 
-        r = AnsibleRoleFinderResult(role_name, role_path)
+        finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
+
+        r = finder.Result(role_name, role_path)
         assert r.role_name == role_name
         assert r.role_path == role_path
         assert r.collection_name is None
         assert not r.masked
 
-        r = AnsibleRoleFinderResult(role_name, role_path, collection_name, True)
+        r = finder.Result(role_name, role_path, collection_name, True)
         assert r.role_name == role_name
         assert r.role_path == role_path
         assert r.collection_name == collection_name
         assert r.masked
 
         with pytest.raises(Exception, match="Role name should not contain FQCN"):
-            r = AnsibleRoleFinderResult("foo.bar.abc", role_path)
-
-
-class TestAnsibleRoleFinder:
+            r = finder.Result("foo.bar.abc", role_path)
 
     def test_standard_role_search_paths(self):
         ''' Test that the path order is what we expect at initialization. '''
@@ -83,7 +82,7 @@ class TestAnsibleRoleFinder:
 
         # Match should return a result object (no collection context given)
         result = finder.find_first('role1')
-        assert isinstance(result, AnsibleRoleFinderResult)
+        assert isinstance(result, finder.Result)
         assert result.role_name == 'role1'
         assert result.role_path == os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
         assert result.collection_name is None
