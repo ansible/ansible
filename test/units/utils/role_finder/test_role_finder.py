@@ -107,6 +107,14 @@ class TestAnsibleRoleFinder:
         assert result.collection_name == 'namespace1.collection1'
         assert not result.masked
 
+        # Test a role name including path info
+        role = os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
+        result = finder.find_first(role)
+        assert result.role_name == 'role1'
+        assert result.role_path == role
+        assert result.collection_name is None
+        assert not result.masked
+
     def test_find_first_with_templar(self):
         ''' Test find_first() using templated values. '''
 

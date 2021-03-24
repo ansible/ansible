@@ -95,20 +95,21 @@ class AnsibleRoleFinder(object):
         :param str role_name: Name of the role to find. This may be either a
             simple role name (e.g. myrole), or qualified with a collection name
             (e.g. community.general.myrole).
+
         :param list collection_names: A list of fully qualified collection names to search.
 
-        :returns: An AnsibleRoleFinderResult object, or None if not found.
+        :returns: A Result object, or None if not found.
         """
         if self.__templar:
             role_name = self.__templar.template(role_name)
 
         # Search collection-based roles first if a collection context is given.
-        path = None
+        role_path = None
         if collection_names or AnsibleCollectionRef.is_valid_fqcr(role_name):
-            (simple_role_name, path, collection_name) = _get_collection_role_path(role_name, collection_names)
+            (simple_role_name, role_path, collection_name) = _get_collection_role_path(role_name, collection_names)
 
-        if path:
-            return self.Result(simple_role_name, path, collection_name)
+        if role_path:
+            return self.Result(simple_role_name, role_path, collection_name)
 
         for path in self.standard_role_search_paths:
             if self.__templar:
@@ -123,16 +124,34 @@ class AnsibleRoleFinder(object):
         """
         Find all roles.
 
-        :param list role_names: List of role names to use as a filter.
+        :param list role_names: List of role names to use as a filter. These values
+            should be the simple role name and NOT qualified with a collection name.
+
         :param list collection_names: List of collection names to use as a filter.
             This filter will take precedence over the role name filter.
-        :param bool include_masked: Whether or not to include roles of the same name
-            that would otherwise be masked by the first-found algorithm.
 
-        :returns: A list of AnsibleRoleFinderResult objects.
+        :param bool include_masked: Whether or not to include roles of the same name
+            that would otherwise be masked by the first-found algorithm. This has no
+            effect if a value for collection_names is supplied.
+
+        :returns: A list of Result objects.
         """
         results = []
         return results
+
+    def filter_by_file(self, results, relative_file_names):
+        """
+        Filter a list of results by existence of one or more supplied files.
+
+        :param list results: A list of Result objects to filter.
+
+        :param list relative_file_names: A list of file names used to filter
+            the results. E.g. ['meta/main.yml', 'meta/main.yaml']
+
+        :returns: A filtered list of Result objects.
+        """
+        filtered_results = []
+        return filtered_results
 
     # ========================================================================
     # Private API
@@ -143,13 +162,17 @@ class AnsibleRoleFinder(object):
         Class used as the result of all AnsibleRoleFinder API calls.
 
         This is a nested class because it is useless outside the context of an
-        AnsibleRoleFinder object.
+        AnsibleRoleFinder object and makes the association between the classes
+        clear.
         """
 
         def __init__(self, role_name, role_path, collection_name=None, masked=False):
             if AnsibleCollectionRef.is_valid_fqcr(role_name):
                 raise Exception("Role name should not contain FQCN")
-            self.role_name = role_name
+
+            # Remove any path information that may have been given with the role name.
+            self.role_name = os.path.basename(role_name)
+
             self.role_path = role_path
             self.collection_name = collection_name
             self.masked = masked
