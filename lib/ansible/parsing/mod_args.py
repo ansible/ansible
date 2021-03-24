@@ -313,10 +313,14 @@ class ModuleArgsParser:
                 context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
                 if not context.resolved:
                     context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                    if context.resolved and context.redirect_list:
-                        self.internal_redirect_list = context.redirect_list
-                elif context.redirect_list:
+                if context.resolved and context.redirect_list:
                     self.internal_redirect_list = context.redirect_list
+                    # FIXME: Hack to add the final fully qualified name to the task...
+                    # really just need the FQCN associated with the task, don't tack this onto the redir list
+                    if '.' not in context.plugin_resolved_name:
+                        fqcn = context.plugin_resolved_collection + '.' + context.plugin_resolved_name
+                        if fqcn not in context.redirect_list:
+                            self.internal_redirect_list.append(fqcn)
 
                 is_action_candidate = context.resolved and bool(context.redirect_list)
 

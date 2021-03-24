@@ -62,6 +62,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         super(Block, self).__init__()
 
+    def _get_action_group_cache(self):
+        if self._play:
+            return self._play._action_groups
+
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 

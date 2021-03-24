@@ -1,5 +1,6 @@
 action_groups:
   testgroup:
+    - ping
     - testns.testcoll.echo1
     - testns.testcoll.echo2
 # note we can define defaults for an action

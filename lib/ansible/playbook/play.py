@@ -95,6 +95,8 @@ class Play(Base, Taggable, CollectionSearch):
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
+        self._action_groups = {}
+
     def __repr__(self):
         return self.get_name()
 
@@ -339,6 +341,7 @@ class Play(Base, Taggable, CollectionSearch):
             roles.append(role.serialize())
         data['roles'] = roles
         data['included_path'] = self._included_path
+        data['action_groups'] = self._action_groups
 
         return data
 
@@ -346,6 +349,7 @@ class Play(Base, Taggable, CollectionSearch):
         super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
+        self._action_groups = data.get('action_groups', {})
         if 'roles' in data:
             role_data = data.get('roles', [])
             roles = []
@@ -362,4 +366,5 @@ class Play(Base, Taggable, CollectionSearch):
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
+        new_me._action_groups = self._action_groups
         return new_me

@@ -20,8 +20,10 @@ from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.plugins.loader import module_loader, action_loader
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -303,6 +305,114 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                             )
 
         self._validated = True
+
+    def _validate_module_defaults(self, attribute, name, value):
+        if value is None:
+            return
+
+        if not isinstance(value, list):
+            value = [value]
+
+        validated_module_defaults = []
+        for defaults_dict in value:
+            validated_defaults_dict = {}
+            for defaults_entry, defaults in defaults_dict.items():
+                # module_defaults do not use the 'collections' keyword, so actions and
+                # action_groups that are not fully qualified are part of the 'ansible.builtin'
+                # collection. Update those entries here, so module_defaults contains
+                # fully qualified entries.
+                if defaults_entry.startswith('group/'):
+                    group_name = defaults_entry.split('group/')[-1]
+                    if len(group_name.split('.')) < 3:
+                        group_name = 'ansible.builtin.' + group_name
+
+                    # If we have the actions_group cache (i.e. using a class that inherits
+                    # from Task or Block), we need to also resolve and cache the actions in the group
+                    if self._action_group_cache is not None:
+                        collection_name = '.'.join(group_name.split('.')[0:2])
+                        self._resolve_group(group_name, collection_name)
+
+                    defaults_entry = 'group/' + group_name
+                    validated_defaults_dict[defaults_entry] = defaults
+
+                else:
+                    if len(defaults_entry.split('.')) < 3:
+                        defaults_entry = 'ansible.builtin.' + defaults_entry
+
+                    # Replace the module_defaults action entry with the canonical name,
+                    # so regardless of how the action is called, the defaults will apply
+                    resolved_action = self._resolve_action(defaults_entry)
+                    if resolved_action:
+                        validated_defaults_dict[resolved_action] = defaults
+
+            validated_module_defaults.append(validated_defaults_dict)
+
+        setattr(self, name, validated_module_defaults)
+
+    @property
+    def _action_group_cache(self):
+        if hasattr(self, '_get_action_group_cache'):
+            return self._get_action_group_cache()
+
+    def _resolve_group(self, group, collection_name):
+        # The group should be part of the current collection
+        if not group.startswith(collection_name + '.'):
+            fq_group_name = collection_name + '.' + group
+        else:
+            fq_group_name = group
+
+        # Check if the group has already been resolved and cached
+        if fq_group_name in self._action_group_cache:
+            return fq_group_name, self._action_group_cache[fq_group_name]
+
+        try:
+            action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
+        except ValueError:
+            # Don't fail if the collection isn't installed
+            return fq_group_name, []
+
+        # The collection may or may not use the fully qualified name
+        # Don't fail if the group doesn't exist in the collection
+        short_name = fq_group_name.split(collection_name + '.')[-1]
+        action_group = action_groups.get(
+            fq_group_name,
+            action_groups.get(short_name, [])
+        )
+
+        resolved_actions = []
+        for action in action_group:
+            # Check if this is a special 'metadata' entry
+            if isinstance(action, dict) and len(action) == 1 and 'metadata' in action:
+                for extend_group in action['metadata'].get('extend_group', []):
+                    if len(extend_group.split('.')) == 3:
+                        extend_group_collection = '.'.join(extend_group.split('.')[0:2])
+                    else:
+                        extend_group_collection = collection_name
+                    _, group_actions = self._resolve_group(extend_group, extend_group_collection)
+                    resolved_actions.extend(group_actions)
+                continue
+
+            # The collection may or may not use the fully qualified name.
+            # If not, it's part of the current collection.
+            if len(action.split('.')) == 3:
+                action_name = action
+            else:
+                action_name = collection_name + '.' + action
+
+            resolved_action = self._resolve_action(action_name)
+            if resolved_action:
+                resolved_actions.append(resolved_action)
+
+        self._action_group_cache[fq_group_name] = resolved_actions
+        return fq_group_name, resolved_actions
+
+    def _resolve_action(self, action_name):
+        context = action_loader.find_plugin_with_context(action_name)
+        if not context.resolved:
+            context = module_loader.find_plugin_with_context(action_name)
+
+        if context.resolved:
+            return context.redirect_list[-1]
 
     def squash(self):
         '''

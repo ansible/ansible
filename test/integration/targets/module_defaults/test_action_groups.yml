@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: test ansible.builtin short group name
+      module_defaults:
+        group/testgroup:
+          data: test
+      block:
+        - ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.builtin.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.builtin.formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+    - name: test ansible.builtin fully qualified group name
+      module_defaults:
+        group/ansible.builtin.testgroup:
+          data: test
+      block:
+        - ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.builtin.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.builtin.formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+    - name: test collection group name
+      module_defaults:
+        group/testns.testcoll.testgroup:
+          data: test
+      block:
+        - formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.builtin.formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - testns.testcoll.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
