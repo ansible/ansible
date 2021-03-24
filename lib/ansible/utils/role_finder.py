@@ -178,4 +178,4 @@ class AnsibleRoleFinder(object):
             self.masked = masked
 
         def __repr__(self):
-            return f"{self.role_path}, masked: {self.masked}"
+            return "%s, masked: %s" % (self.role_path, self.masked)
