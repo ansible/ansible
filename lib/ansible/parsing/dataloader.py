@@ -104,7 +104,7 @@ class DataLoader:
     def load_from_file(self, file_name, cache=True, unsafe=False, json_only=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
-        file_name = self.path_dwim(self.get_basedir(), file_name)
+        file_name = self.path_dwim(file_name)
         display.debug("Loading data from %s" % file_name)
 
         # if the file has already been read in and cached, we'll
@@ -200,7 +200,7 @@ class DataLoader:
             self._basedir = to_text(basedir)
 
     def path_dwim(self, given):
-        return path_dwim(given)
+        return path_dwim(self.get_basedir(), given)
 
     def _is_role(self, path):
         ''' imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc '''
