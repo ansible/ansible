@@ -173,6 +173,7 @@ To test with Python 3 use the following images:
   - fedora32
   - opensuse15
   - ubuntu1804
+  - ubuntu2004
 
 
 Legacy Cloud Tests
