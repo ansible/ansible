@@ -1,0 +1,2 @@
+bugfixes:
+  - setup module, fix error handling on bad subset given
