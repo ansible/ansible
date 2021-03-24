@@ -184,7 +184,25 @@ A single changelog fragment may contain multiple sections but most will only con
 
 Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
-Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and the following sentence with a lowercase letter.
+Most changelog entries are ``bugfixes`` or ``minor_changes``.
+
+Changelog fragment entry format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When writing a changelog entry, use the following format:
+
+.. code-block:: yaml
+
+  - scope - description starting with a lowercase letter and ending with a period at the very end. Multiple sentences are allowed (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
+
+The scope is usually a module or plugin name or group of modules or plugins, for example, ``lookup plugins``. While module names can (and should) be mentioned directly (``foo_module``), plugin names should always be followed by the type (``foo inventory plugin``).
+
+For changes that are not really scoped (for example, which affect a whole collection), use the following format:
+
+.. code-block:: yaml
+
+  - Description starting with an uppercase letter and ending with a dot at the very end. Multiple sentences are allowed (https://github.com/reference/to/an/issue or, if there is no issue, reference to a pull request itself).
+
 
 Here are some examples:
 
