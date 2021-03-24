@@ -11,15 +11,17 @@ from ansible.utils.role_finder import AnsibleRoleFinder, AnsibleRoleFinderResult
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _AnsibleCollectionLoader
 from ansible.utils.collection_loader._collection_config import _EventSource
+from units.mock.loader import DictDataLoader
 
 
 ROLEFINDER_PLAYBOOK_DIR = os.path.dirname(__file__)
 
 
 class TestAnsibleRoleFinderResult:
+
     def test_result(self):
         role_name = "abc"
-        role_path = "/path/to/abc"
+        role_path = "/path/to/foo/bar/roles/abc"
         collection_name = "foo.bar"
 
         r = AnsibleRoleFinderResult(role_name, role_path)
@@ -39,6 +41,7 @@ class TestAnsibleRoleFinderResult:
 
 
 class TestAnsibleRoleFinder:
+
     def test_standard_role_search_paths(self):
         ''' Test that the path order is what we expect at initialization. '''
         relative_role_dir = os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
@@ -50,21 +53,20 @@ class TestAnsibleRoleFinder:
         expected.append(ROLEFINDER_PLAYBOOK_DIR)
         assert finder.standard_role_search_paths == expected
 
-
     def test_set_templar(self):
         ''' Test setting the templating object. '''
+
         finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
 
         # Should allow None
-        finder.set_templar(None)
+        finder.templar = None
 
         # Test with correct type
-        finder.set_templar(Templar(None))
+        finder.templar = Templar(None)
 
         # Test with wrong type
         with pytest.raises(TypeError, match="templar must be of type Templar"):
-            finder.set_templar("invalid")
-
+            finder.templar = "invalid"
 
     def test_find_first(self):
         ''' Test find first role that matches a role name. '''
@@ -104,6 +106,24 @@ class TestAnsibleRoleFinder:
         assert result.role_name == 'role1'
         assert result.role_path == expected_collection_path
         assert result.collection_name == 'namespace1.collection1'
+        assert not result.masked
+
+    def test_find_first_with_templar(self):
+        ''' Test find_first() using templated values. '''
+
+        test_vars = dict(
+            rname="role1",
+            pb_base=ROLEFINDER_PLAYBOOK_DIR,
+        )
+
+        templar = Templar(DictDataLoader({}), variables=test_vars)
+        finder = AnsibleRoleFinder("{{ pb_base }}", templar=templar)
+
+        result = finder.find_first("{{ rname }}")
+        assert result is not None
+        assert result.role_name == 'role1'
+        assert result.role_path == os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
+        assert result.collection_name is None
         assert not result.masked
 
 

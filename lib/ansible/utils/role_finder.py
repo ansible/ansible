@@ -34,6 +34,19 @@ class AnsibleRoleFinder(object):
     """
     Class used to locate the path to any available roles.
 
+    Example usage:
+
+        finder = AnsibleRoleFinder(pb_basedir)
+
+        # Find 'myrole' standard role
+        result = finder.find_first('myrole')
+
+        # Find 'myrole' in ansible.example collection
+        result = finder.find_first('ansible.example.myrole')
+
+        # Find 'myrole' in any of the listed collections or as standard role.
+        result = finder.find_first('myrole', ['ansible.example', 'community.general'])
+
     TODO:
       - This would replace code in `ansible-doc` and `ansible-galaxy`. Maybe plugins?
       - API to filter based on file existence (e.g. meta/main.yml for a-g).
@@ -56,14 +69,14 @@ class AnsibleRoleFinder(object):
            - relative role base directory (if any) to find dependent roles
            - playbook base directory itself
         """
-        self._standard_search_paths = []
-        self._standard_search_paths.append(os.path.join(playbook_basedir, u'roles'))
-        self._standard_search_paths.extend(config.get_config_value('DEFAULT_ROLES_PATH'))
+        self.__standard_search_paths = []
+        self.__standard_search_paths.append(os.path.join(playbook_basedir, u'roles'))
+        self.__standard_search_paths.extend(config.get_config_value('DEFAULT_ROLES_PATH'))
         if role_basedir:
-            self._standard_search_paths.append(role_basedir)
-        self._standard_search_paths.append(playbook_basedir)
+            self.__standard_search_paths.append(role_basedir)
+        self.__standard_search_paths.append(playbook_basedir)
 
-        self._templar = self.set_templar(templar)
+        self.__templar = templar
 
     # ========================================================================
     # Private API
@@ -78,20 +91,25 @@ class AnsibleRoleFinder(object):
 
     @property
     def standard_role_search_paths(self):
-        return self._standard_search_paths
+        return self.__standard_search_paths
 
-    def set_templar(self, templar):
+    @property
+    def templar(self):
+        return self.__templar
+
+    @templar.setter
+    def templar(self, value):
         """
         Set a new Templar object to use when expanding templated paths.
 
         Set the value to None to remove any existing templating object and
         avoid templating operations.
 
-        :param Templar templar: A configured templating object.
+        :param Templar value: A configured templating object.
         """
-        if templar and not isinstance(templar, Templar):
+        if value and not isinstance(value, Templar):
             raise TypeError("templar must be of type Templar")
-        self._templar = templar
+        self.__templar = value
 
     def find_first(self, role_name, collection_names=None):
         """
@@ -104,6 +122,8 @@ class AnsibleRoleFinder(object):
 
         :returns: An AnsibleRoleFinderResult object, or None if not found.
         """
+        if self.__templar:
+            role_name = self.__templar.template(role_name)
 
         # Search collection-based roles first if a collection context is given.
         path = None
@@ -114,8 +134,8 @@ class AnsibleRoleFinder(object):
             return AnsibleRoleFinderResult(simple_role_name, path, collection_name)
 
         for path in self.standard_role_search_paths:
-            if self._templar:
-                path = self._templar.template(path)
+            if self.__templar:
+                path = self.__templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
             if path_exists(role_path):
                 return AnsibleRoleFinderResult(role_name, role_path)
