@@ -105,11 +105,12 @@ class AnsibleRoleFinder(object):
             role_name = self.__templar.template(role_name)
 
         # Search collection-based roles first if a collection context is given.
-        role_path = None
+        role_tuple = None
         if collection_names or AnsibleCollectionRef.is_valid_fqcr(role_name):
-            (simple_role_name, role_path, collection_name) = _get_collection_role_path(role_name, collection_names)
+            role_tuple = _get_collection_role_path(role_name, collection_names)
 
-        if role_path:
+        if role_tuple:
+            (simple_role_name, role_path, collection_name) = role_tuple
             return self.Result(simple_role_name, role_path, collection_name)
 
         for path in self.standard_role_search_paths:
