@@ -94,6 +94,56 @@ You should see output for each host in your inventory, similar to this:
     aserver.example.org | CHANGED | rc=0 >>
     hello
 
+Action: Run your first playbook
+-------------------------------
+
+Playbooks are used to pull together tasks into reusable units.
+
+Ansible does not store playbooks for you; they are simply YAML documents that you store and manage, passing them to Ansible to run as needed.
+
+In a directory of your choice you can create your first playbook in a file called mytask.yml:
+
+.. code-block:: yaml
+
+    ---
+    - name: My task
+      hosts: all
+      tasks:
+         - name: Leaving a mark
+           command: "touch /tmp/ansible_was_here"
+
+You can run this command as follows:
+
+.. code-block:: bash
+
+    $ ansible-playbook mytask.yaml
+
+and may see output like this:
+
+.. code-block:: ansible-output
+
+
+   PLAY [My task] **************************************************************************************************************************
+   
+   TASK [Gathering Facts] ******************************************************************************************************************
+   ok: [aserver.example.org]
+   ok: [aserver.example.org]
+   ok: [192.0.2.50]
+   fatal: [192.0.2.50]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.0.2.50 port 22: No route to host", "unreachable": true}
+   
+   TASK [Leaving a mark] *******************************************************************************************************************
+   [WARNING]: Consider using the file module with state=touch rather than running 'touch'.  If you need to use command because file is
+   insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this message.
+   changed: [aserver.example.org]
+   changed: [bserver.example.org]
+   
+   PLAY RECAP ******************************************************************************************************************************
+   aserver.example.org        : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+   bserver.example.org        : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+   192.0.2.50                 : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+
+Read on to learn more about controlling which nodes your playbooks execute on, more sophisticated tasks, and the meaning of the output.
+
 Beyond the basics
 -----------------
 By default Ansible uses SFTP to transfer files. If the machine or device you want to manage does not support SFTP, you can switch to SCP mode in :ref:`intro_configuration`. The files are placed in a temporary directory and executed from there.
