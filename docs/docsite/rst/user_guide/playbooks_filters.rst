@@ -1405,6 +1405,14 @@ which produces this output:
     # host: myhost
     #
 
+URLEncode Variables
+-------------------
+
+The ``urlencode`` filter quotes data for use in a URL path or query using UTF-8::
+
+    {{ 'Trollhättan' | urlencode }}
+    # => 'Trollh%C3%A4ttan'
+
 Splitting URLs
 --------------
 
