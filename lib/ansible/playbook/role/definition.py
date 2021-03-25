@@ -156,6 +156,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         result = finder.find_first(role_name, self._collection_list)
         if result:
+            self._role_collection = result.collection_name
             return (result.role_name, result.role_path)
 
         searches = (self._collection_list or []) + finder.standard_role_search_paths
