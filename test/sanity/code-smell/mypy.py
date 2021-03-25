@@ -31,7 +31,9 @@ def run_mypy() -> int:
     )
 
     try:
-        mypy_out = subprocess.check_output(mypy_cmd, text=True)  # noqa: S603
+        mypy_out = subprocess.check_output(  # noqa: S603
+            mypy_cmd, universal_newlines=True,
+        )
     except subprocess.CalledProcessError as proc_err:
         mypy_out = proc_err.output
         return_code = proc_err.returncode
