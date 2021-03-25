@@ -27,6 +27,18 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo apt update
     sudo apt install build-essential libssl-dev libffi-dev python-dev
 
+Installing prerequisites via yum (CentOS)
+-----------------------------------------
+
+Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
+
+.. code:: bash
+
+    sudo yum check-update
+    sudo yum update
+    sudo yum group install "Development Tools"
+    sudo yum install python3-devel openssl-devel libffi libffi-devel 
+
 Creating a development environment (platform-agnostic steps)
 ------------------------------------------------------------
 
