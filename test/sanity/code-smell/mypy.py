@@ -4,15 +4,15 @@
 """Making sure the type annotations are correct across packages."""
 
 import pathlib
-import subprocess
+import subprocess  # noqa: S404
 import sys
 
 
 THIS_PKG_DIR = pathlib.Path(__file__).parent
 
 
-def run_mypy(python_version: str = None) -> int:
-    """Execute mypy against a given Python version.
+def run_mypy() -> int:
+    """Validate type annotations with mypy.
 
     This function proxies mypy's return code and filters out
     the output so that `ansible-test` wouldn't get confused.
@@ -22,21 +22,16 @@ def run_mypy(python_version: str = None) -> int:
         '--config-file', str(THIS_PKG_DIR / 'mypy.ini'),
         '--install-types',
         '--show-error-codes',
-        *(
-            () if python_version is None
-            else ('--python-version', python_version)
-        ),
         # 'hacking/shippable/incidental.py',
         'lib/ansible/galaxy/collection/',
         'lib/ansible/galaxy/dependency_resolution',
         # 'test/lib/ansible_test/_internal',
+        'test/sanity/code-smell/mypy.py',  # self-test
         # 'test/utils/shippable/check_matrix.py',
     )
-    if python_version and python_version[0] > '2':
-        mypy_cmd += 'test/sanity/code-smell/mypy.py',  # self-test
 
     try:
-        mypy_out = subprocess.check_output(mypy_cmd, universal_newlines=True)
+        mypy_out = subprocess.check_output(mypy_cmd, text=True)  # noqa: S603
     except subprocess.CalledProcessError as proc_err:
         mypy_out = proc_err.output
         return_code = proc_err.returncode
@@ -49,8 +44,7 @@ def run_mypy(python_version: str = None) -> int:
         return return_code
 
     print(
-        f'{__file__!s}:Results of type checking with mypy against '
-        f'{python_version or "unspecified"!s} Python '
+        f'{__file__!s}:Results of type checking with mypy '
         f'(return code {return_code!s})',
         file=sys.stderr,
     )
@@ -65,12 +59,5 @@ def run_mypy(python_version: str = None) -> int:
     return return_code
 
 
-def main() -> int:
-    """Validate type annotations with mypy against Python 2 and 3."""
-    target_pythons = '3.9', '3.6', '2.7'
-    return_code = sum(run_mypy(py_ver) for py_ver in target_pythons)
-    return return_code
-
-
 if __name__ == '__main__':
-    main()
+    run_mypy()
