@@ -49,6 +49,8 @@ import yaml
 
 display = Display()
 
+MANIFEST_FILENAME = 'MANIFEST.json'
+
 
 class ConcreteArtifactsManager:
     """Manager for on-disk collection artifacts.
@@ -539,26 +541,26 @@ def _get_meta_from_src_dir(
     return _normalize_galaxy_yml_manifest(manifest, galaxy_yml)
 
 
-def _get_meta_from_installed_dir(
+def _get_json_from_installed_dir(
         b_path,  # type: bytes
-):  # type: (...) -> Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]
-    n_manifest_json = 'MANIFEST.json'
-    b_manifest_json = to_bytes(n_manifest_json)
-    b_manifest_json_path = os.path.join(b_path, b_manifest_json)
+        filename,  # type: str
+):  # type: (...) -> Dict
+
+    b_json_filepath = os.path.join(b_path, to_bytes(filename, errors='surrogate_or_strict'))
 
     try:
-        with open(b_manifest_json_path, 'rb') as manifest_fd:
-            b_manifest_txt = manifest_fd.read()
+        with open(b_json_filepath, 'rb') as manifest_fd:
+            b_json_text = manifest_fd.read()
     except (IOError, OSError):
         raise LookupError(
             "The collection {manifest!s} path '{path!s}' does not exist.".
             format(
-                manifest=n_manifest_json,
-                path=to_native(b_manifest_json_path),
+                manifest=filename,
+                path=to_native(b_json_filepath),
             )
         )
 
-    manifest_txt = to_text(b_manifest_txt, errors='surrogate_or_strict')
+    manifest_txt = to_text(b_json_text, errors='surrogate_or_strict')
 
     try:
         manifest = json.loads(manifest_txt)
@@ -566,18 +568,26 @@ def _get_meta_from_installed_dir(
         raise AnsibleError(
             'Collection tar file member {member!s} does not '
             'contain a valid json string.'.
-            format(member=n_manifest_json),
+            format(member=filename),
         )
-    else:
-        collection_info = manifest['collection_info']
+
+    return manifest
+
+
+def _get_meta_from_installed_dir(
+        b_path,  # type: bytes
+):  # type: (...) -> Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]
+    manifest = _get_json_from_installed_dir(b_path, MANIFEST_FILENAME)
+    collection_info = manifest['collection_info']
 
     version = collection_info.get('version')
     if not version:
         raise AnsibleError(
-            u'Collection metadata file at `{meta_file!s}` is expected '
+            u'Collection metadata file `{manifest_filename!s}` at `{meta_file!s}` is expected '
             u'to have a valid SemVer version value but got {version!s}'.
             format(
-                meta_file=to_text(b_manifest_json_path),
+                manifest_filename=MANIFEST_FILENAME,
+                meta_file=to_text(b_path),
                 version=to_text(repr(version)),
             ),
         )
@@ -594,18 +604,16 @@ def _get_meta_from_tar(
             format(path=to_native(b_path)),
         )
 
-    n_manifest_json = 'MANIFEST.json'
-
     with tarfile.open(b_path, mode='r') as collection_tar:  # type: tarfile.TarFile
         try:
-            member = collection_tar.getmember(n_manifest_json)
+            member = collection_tar.getmember(MANIFEST_FILENAME)
         except KeyError:
             raise AnsibleError(
                 "Collection at '{path!s}' does not contain the "
                 'required file {manifest_file!s}.'.
                 format(
                     path=to_native(b_path),
-                    manifest_file=n_manifest_json,
+                    manifest_file=MANIFEST_FILENAME,
                 ),
             )
 
@@ -613,7 +621,7 @@ def _get_meta_from_tar(
             if member_obj is None:
                 raise AnsibleError(
                     'Collection tar file does not contain '
-                    'member {member!s}'.format(member=n_manifest_json),
+                    'member {member!s}'.format(member=MANIFEST_FILENAME),
                 )
 
             text_content = to_text(
@@ -627,7 +635,7 @@ def _get_meta_from_tar(
                 raise AnsibleError(
                     'Collection tar file member {member!s} does not '
                     'contain a valid json string.'.
-                    format(member=n_manifest_json),
+                    format(member=MANIFEST_FILENAME),
                 )
             return manifest['collection_info']
 

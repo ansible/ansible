@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import errno
 import fnmatch
+import functools
 import json
 import os
 import shutil
@@ -99,6 +100,7 @@ from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.collection.concrete_artifact_manager import (
     _consume_file,
     _download_file,
+    _get_json_from_installed_dir,
     _get_meta_from_src_dir,
     _tarfile_extract,
 )
@@ -124,6 +126,7 @@ from ansible.utils.version import SemanticVersion
 display = Display()
 
 MANIFEST_FORMAT = 1
+MANIFEST_FILENAME = 'MANIFEST.json'
 
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
@@ -131,52 +134,69 @@ ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'instal
 def verify_local_collection(
         local_collection, remote_collection,
         artifacts_manager,
-):  # type: (Candidate, Candidate, ConcreteArtifactsManager) -> None
+):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager) -> None
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
-    :param remote_collection: Correct collection.
+    :param remote_collection: Upstream collection (optional, if None, only verify local artifact)
     :param artifacts_manager: Artifacts manager.
     """
-    b_temp_tar_path = (  # NOTE: AnsibleError is raised on URLError
-        artifacts_manager.get_artifact_path
-        if remote_collection.is_concrete_artifact
-        else artifacts_manager.get_galaxy_artifact_path
-    )(remote_collection)
-
     b_collection_path = to_bytes(
         local_collection.src, errors='surrogate_or_strict',
     )
 
-    display.vvv("Verifying '{coll!s}'.".format(coll=local_collection))
-    display.vvv(
+    display.display("Verifying '{coll!s}'.".format(coll=local_collection))
+    display.display(
         u"Installed collection found at '{path!s}'".
         format(path=to_text(local_collection.src)),
     )
-    display.vvv(
-        u"Remote collection cached as '{path!s}'".
-        format(path=to_text(b_temp_tar_path)),
-    )
-
-    # Compare installed version versus requirement version
-    if local_collection.ver != remote_collection.ver:
-        err = (
-            "{local_fqcn!s} has the version '{local_ver!s}' but "
-            "is being compared to '{remote_ver!s}'".format(
-                local_fqcn=local_collection.fqcn,
-                local_ver=local_collection.ver,
-                remote_ver=remote_collection.ver,
-            )
-        )
-        display.display(err)
-        return
 
     modified_content = []  # type: List[ModifiedContent]
 
-    # Verify the manifest hash matches before verifying the file manifest
-    expected_hash = _get_tar_file_hash(b_temp_tar_path, 'MANIFEST.json')
-    _verify_file_hash(b_collection_path, 'MANIFEST.json', expected_hash, modified_content)
-    manifest = _get_json_from_tar_file(b_temp_tar_path, 'MANIFEST.json')
+    verify_local_only = remote_collection is None
+    if verify_local_only:
+        # partial away the local FS detail so we can just ask generically during validation
+        get_json_from_validation_source = functools.partial(_get_json_from_installed_dir, b_collection_path)
+        get_hash_from_validation_source = functools.partial(_get_file_hash, b_collection_path)
+
+        # since we're not downloading this, just seed it with the value from disk
+        manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
+    else:
+        # fetch remote
+        b_temp_tar_path = (  # NOTE: AnsibleError is raised on URLError
+            artifacts_manager.get_artifact_path
+            if remote_collection.is_concrete_artifact
+            else artifacts_manager.get_galaxy_artifact_path
+        )(remote_collection)
+
+        display.vvv(
+            u"Remote collection cached as '{path!s}'".format(path=to_text(b_temp_tar_path))
+        )
+
+        # partial away the tarball details so we can just ask generically during validation
+        get_json_from_validation_source = functools.partial(_get_json_from_tar_file, b_temp_tar_path)
+        get_hash_from_validation_source = functools.partial(_get_tar_file_hash, b_temp_tar_path)
+
+        # Compare installed version versus requirement version
+        if local_collection.ver != remote_collection.ver:
+            err = (
+                "{local_fqcn!s} has the version '{local_ver!s}' but "
+                "is being compared to '{remote_ver!s}'".format(
+                    local_fqcn=local_collection.fqcn,
+                    local_ver=local_collection.ver,
+                    remote_ver=remote_collection.ver,
+                )
+            )
+            display.display(err)
+            return
+
+        # Verify the downloaded manifest hash matches the installed copy before verifying the file manifest
+        manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
+        _verify_file_hash(b_collection_path, MANIFEST_FILENAME, manifest_hash, modified_content)
+
+    display.display('MANIFEST.json hash: {manifest_hash}'.format(manifest_hash=manifest_hash))
+
+    manifest = get_json_from_validation_source(MANIFEST_FILENAME)
 
     # Use the manifest to verify the file manifest checksum
     file_manifest_data = manifest['file_manifest_file']
@@ -185,7 +205,7 @@ def verify_local_collection(
 
     # Verify the file manifest before using it to verify individual files
     _verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
-    file_manifest = _get_json_from_tar_file(b_temp_tar_path, file_manifest_filename)
+    file_manifest = get_json_from_validation_source(file_manifest_filename)
 
     # Use the file manifest to verify individual file checksums
     for manifest_data in file_manifest['files']:
@@ -199,17 +219,14 @@ def verify_local_collection(
             'in the following files:'.
             format(fqcn=to_text(local_collection.fqcn)),
         )
-        display.display(to_text(local_collection.fqcn))
-        display.vvv(to_text(local_collection.src))
         for content_change in modified_content:
             display.display('    %s' % content_change.filename)
-            display.vvv("    Expected: %s\n    Found: %s" % (content_change.expected, content_change.installed))
-        # FIXME: Why doesn't this raise a failed return code?
+            display.v("    Expected: %s\n    Found: %s" % (content_change.expected, content_change.installed))
     else:
-        display.vvv(
-            "Successfully verified that checksums for '{coll!s}' "
-            'match the remote collection'.
-            format(coll=local_collection),
+        what = "are internally consistent with its manifest" if verify_local_only else "match the remote collection"
+        display.display(
+            "Successfully verified that checksums for '{coll!s}' {what!s}.".
+            format(coll=local_collection, what=what),
         )
 
 
@@ -297,7 +314,7 @@ def download_collections(
     ):
         for fqcn, concrete_coll_pin in dep_map.copy().items():  # FIXME: move into the provider
             if concrete_coll_pin.is_virtual:
-                display.v(
+                display.display(
                     'Virtual collection {coll!s} is not downloadable'.
                     format(coll=to_text(concrete_coll_pin)),
                 )
@@ -555,6 +572,7 @@ def verify_collections(
         search_paths,  # type: Iterable[str]
         apis,  # type: Iterable[GalaxyAPI]
         ignore_errors,  # type: bool
+        local_verify_only,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
 ):  # type: (...) -> None
     r"""Verify the integrity of locally installed collections.
@@ -563,6 +581,7 @@ def verify_collections(
     :param search_paths: Locations for the local collection lookup.
     :param apis: A list of GalaxyAPIs to query when searching for a collection.
     :param ignore_errors: Whether to ignore any errors when verifying the collection.
+    :param local_verify_only: When True, skip downloads and only verify local manifests.
     :param artifacts_manager: Artifacts manager.
     """
     api_proxy = MultiGalaxyAPIProxy(apis, artifacts_manager)
@@ -606,33 +625,36 @@ def verify_collections(
                 else:
                     raise AnsibleError(message=default_err)
 
-                remote_collection = Candidate(
-                    collection.fqcn,
-                    collection.ver if collection.ver != '*'
-                    else local_collection.ver,
-                    None, 'galaxy',
-                )
+                if local_verify_only:
+                    remote_collection = None
+                else:
+                    remote_collection = Candidate(
+                        collection.fqcn,
+                        collection.ver if collection.ver != '*'
+                        else local_collection.ver,
+                        None, 'galaxy',
+                    )
 
-                # Download collection on a galaxy server for comparison
-                try:
-                    # NOTE: Trigger the lookup. If found, it'll cache
-                    # NOTE: download URL and token in artifact manager.
-                    api_proxy.get_collection_version_metadata(
-                        remote_collection,
-                    )
-                except AnsibleError as e:  # FIXME: does this actually emit any errors?
-                    # FIXME: extract the actual message and adjust this:
-                    expected_error_msg = (
-                        'Failed to find collection {coll.fqcn!s}:{coll.ver!s}'.
-                        format(coll=collection)
-                    )
-                    if e.message == expected_error_msg:
-                        raise AnsibleError(
-                            'Failed to find remote collection '
-                            "'{coll!s}' on any of the galaxy servers".
+                    # Download collection on a galaxy server for comparison
+                    try:
+                        # NOTE: Trigger the lookup. If found, it'll cache
+                        # NOTE: download URL and token in artifact manager.
+                        api_proxy.get_collection_version_metadata(
+                            remote_collection,
+                        )
+                    except AnsibleError as e:  # FIXME: does this actually emit any errors?
+                        # FIXME: extract the actual message and adjust this:
+                        expected_error_msg = (
+                            'Failed to find collection {coll.fqcn!s}:{coll.ver!s}'.
                             format(coll=collection)
                         )
-                    raise
+                        if e.message == expected_error_msg:
+                            raise AnsibleError(
+                                'Failed to find remote collection '
+                                "'{coll!s}' on any of the galaxy servers".
+                                format(coll=collection)
+                            )
+                        raise
 
                 verify_local_collection(
                     local_collection, remote_collection,
@@ -875,7 +897,7 @@ def _build_collection_tar(
 
         with tarfile.open(b_tar_filepath, mode='w:gz') as tar_file:
             # Add the MANIFEST.json and FILES.json file to the archive
-            for name, b in [('MANIFEST.json', collection_manifest_json), ('FILES.json', files_manifest_json)]:
+            for name, b in [(MANIFEST_FILENAME, collection_manifest_json), ('FILES.json', files_manifest_json)]:
                 b_io = BytesIO(b)
                 tar_info = tarfile.TarInfo(name)
                 tar_info.size = len(b)
@@ -941,7 +963,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
     # Write contents to the files
-    for name, b in [('MANIFEST.json', collection_manifest_json), ('FILES.json', files_manifest_json)]:
+    for name, b in [(MANIFEST_FILENAME, collection_manifest_json), ('FILES.json', files_manifest_json)]:
         b_path = os.path.join(b_collection_output, to_bytes(name, errors='surrogate_or_strict'))
         with open(b_path, 'wb') as file_obj, BytesIO(b) as b_io:
             shutil.copyfileobj(b_io, file_obj)
@@ -1056,7 +1078,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path):
             with _tarfile_extract(collection_tar, files_member_obj) as (dummy, files_obj):
                 files = json.loads(to_text(files_obj.read(), errors='surrogate_or_strict'))
 
-            _extract_tar_file(collection_tar, 'MANIFEST.json', b_collection_path, b_temp_path)
+            _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
             _extract_tar_file(collection_tar, 'FILES.json', b_collection_path, b_temp_path)
 
             for file_info in files['files']:
@@ -1241,6 +1263,12 @@ def _get_tar_file_hash(b_path, filename):
     with tarfile.open(b_path, mode='r') as collection_tar:
         with _get_tar_file_member(collection_tar, filename) as (dummy, tar_obj):
             return _consume_file(tar_obj)
+
+
+def _get_file_hash(b_path, filename):  # type: (bytes, str) -> str
+    filepath = os.path.join(b_path, to_bytes(filename, errors='surrogate_or_strict'))
+    with open(filepath, 'rb') as fp:
+        return _consume_file(fp)
 
 
 def _is_child_path(path, parent_path, link_name=None):

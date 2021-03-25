@@ -243,7 +243,7 @@ def test_build_artifact_from_path_no_version(collection_artifact, monkeypatch):
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
 
     expected = (
-        '^Collection metadata file at `.*` is expected to have a valid SemVer '
+        '^Collection metadata file `.*` at `.*` is expected to have a valid SemVer '
         'version value but got {empty_unicode_string!r}$'.
         format(empty_unicode_string=u'')
     )
