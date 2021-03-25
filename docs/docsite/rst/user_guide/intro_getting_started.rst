@@ -99,9 +99,9 @@ Action: Run your first playbook
 
 Playbooks are used to pull together tasks into reusable units.
 
-Ansible does not store playbooks for you; they are simply yaml documents that you store and manage, passing them to Ansible to run as needed.
+Ansible does not store playbooks for you; they are simply YAML documents that you store and manage, passing them to Ansible to run as needed.
 
-In a directory of your choice you can create your first playbook by creating a file called mytask.yml (the extension is optional but may help ediors assist you with formatting). Enter:
+In a directory of your choice you can create your first playbook in a file called mytask.yml:
 
 .. code-block:: yaml
 
@@ -112,7 +112,7 @@ In a directory of your choice you can create your first playbook by creating a f
          - name: Leaving a mark
            command: "touch /tmp/ansible_was_here"
 
-You would run this like so:
+You can run this command as follows:
 
 .. code-block:: bash
 
@@ -142,7 +142,7 @@ and may see output like this:
    bserver.example.org        : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
    192.0.2.50                 : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
 
-Read on to learn more about controlling which nodes playbooks are executed on, more sophisticated tasks and the meaning of the output.
+Read on to learn more about controlling which nodes your playbooks execute on, more sophisticated tasks, and the meaning of the output.
 
 Beyond the basics
 -----------------
