@@ -120,6 +120,12 @@ class AnsibleRoleFinder(object):
             if path_exists(self.__basedir, role_path):
                 return self.Result(role_name, role_path)
 
+        # if not found elsewhere try to extract path from name
+        role_path = unfrackpath(role_name)
+        if path_exists(self.__basedir, role_path):
+            role_name = os.path.basename(role_name)
+            return self.Result(role_name, role_path)
+
         return None
 
     def find_all(self, role_names=None, collection_names=None, include_masked=False):
