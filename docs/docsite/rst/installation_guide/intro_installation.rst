@@ -333,7 +333,7 @@ or:
 
 .. code-block:: bash
 
-    $ sudo pkg install py36-ansible
+    $ sudo pkg install py37-ansible
 
 
 You may also wish to install from ports, run:
