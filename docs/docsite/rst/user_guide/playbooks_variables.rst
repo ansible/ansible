@@ -206,16 +206,16 @@ You can define different variables for each individual host, or set shared varia
 
 .. _playbook_variables:
 
-Defining variables in a playbook
---------------------------------
+Defining variables in a play
+----------------------------
 
-You can define variables directly in a playbook::
+You can define variables directly in a playbook play::
 
    - hosts: webservers
      vars:
        http_port: 80
 
-When you define variables in a playbook, they are visible to anyone who runs that playbook. This is especially useful if you share playbooks widely.
+When you define variables in a play, they are only visible to tasks executed in that play.
 
 .. _included_variables:
 .. _variable_file_separation_details:
