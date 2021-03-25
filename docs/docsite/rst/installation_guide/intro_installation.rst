@@ -115,6 +115,10 @@ You may need to perform some additional configuration before you are able to run
 Installing Ansible with ``pip``
 -------------------------------
 
+.. note::
+
+	If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`.
+
 Once ``pip`` is installed, you can install Ansible [1]_::
 
     $ python -m pip install --user ansible
@@ -145,7 +149,7 @@ Installing Ansible in a virtual environment with ``pip``
 
 .. note::
 
-	If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+  If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`.
 
 Ansible can also be installed inside a new or existing ``virtualenv``::
 
@@ -182,6 +186,28 @@ As explained by the message, to upgrade you must first remove the version of Ans
 
     $ pip uninstall ansible
     $ pip install ansible
+
+
+Upgrading from Ansible 3 or ansible-core 2.10 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ansible-base`` only exists for version 2.10 and in Ansible 3. In 2.11 and later, the package is called ``ansible-core``.  Before installing ``ansible-core`` or Ansible 4, you must uninstall ``ansible-base`` if you have installed Ansible 3 or ``ansible-base`` 2.10.
+
+
+To upgrade to ``ansible-core``:
+
+.. code-block:: bash
+
+    pip uninstall ansible-base
+    pip install ansible-core
+
+To upgrade to Ansible 4:
+
+.. code-block:: bash
+
+    pip uninstall ansible-base
+    pip install ansible
+
 
 .. _installing_the_control_node:
 .. _from_yum:
@@ -335,7 +361,10 @@ The instructions can be found in :ref:`from_pip`. If you are running macOS versi
 
 .. note::
 
-	To upgrade from Ansible 2.9 or older to Ansible 3 or later, you must ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+  .. note::
+
+    If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`.
+
 
 .. note::
 
@@ -433,7 +462,9 @@ You can install the ``devel`` branch of ``ansible-core`` directly from GitHub wi
 
 .. note::
 
-    If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it. See :ref:`pip_upgrade` for more details.
+  If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`.
+
+
 
 You can replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install older versions of Ansible (prior to ``ansible-base`` 2.10.), tagged alpha or beta versions, and release candidates. This installs all of Ansible.
 
