@@ -114,7 +114,7 @@ class TestIncludeRole(unittest.TestCase):
             yield (role.get_name(),
                    self.var_manager.get_vars(play=play, task=task))
 
-    @patch('ansible.playbook.role.definition.unfrackpath',
+    @patch('ansible.utils.role_finder.unfrackpath',
            mock_unfrackpath_noop)
     def test_simple(self):
 
@@ -137,7 +137,7 @@ class TestIncludeRole(unittest.TestCase):
             self.assertEqual(task_vars.get('test_variable'), 'l3-main')
         self.assertTrue(tested)
 
-    @patch('ansible.playbook.role.definition.unfrackpath',
+    @patch('ansible.utils.role_finder.unfrackpath',
            mock_unfrackpath_noop)
     def test_simple_alt_files(self):
 
@@ -158,7 +158,7 @@ class TestIncludeRole(unittest.TestCase):
             self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
         self.assertTrue(tested)
 
-    @patch('ansible.playbook.role.definition.unfrackpath',
+    @patch('ansible.utils.role_finder.unfrackpath',
            mock_unfrackpath_noop)
     def test_nested(self):
 
@@ -204,7 +204,7 @@ class TestIncludeRole(unittest.TestCase):
                 self.fail()
         self.assertFalse(expected_roles)
 
-    @patch('ansible.playbook.role.definition.unfrackpath',
+    @patch('ansible.utils.role_finder.unfrackpath',
            mock_unfrackpath_noop)
     def test_nested_alt_files(self):
 

@@ -33,7 +33,6 @@ from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
-from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 from ansible.utils.role_finder import AnsibleRoleFinder
 
@@ -152,7 +151,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             all_vars = dict()
 
         templar = Templar(loader=self._loader, variables=all_vars)
-        finder = AnsibleRoleFinder(self._loader.get_basedir(), self._role_basedir, templar)
+        finder = AnsibleRoleFinder(self._loader, self._role_basedir, templar)
 
         result = finder.find_first(role_name, self._collection_list)
         if result:

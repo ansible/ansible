@@ -49,7 +49,7 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
-    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_play_iterator(self):
         # import epdb; epdb.st()
         fake_loader = DictDataLoader({

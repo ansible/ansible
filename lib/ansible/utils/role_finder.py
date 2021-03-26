@@ -7,7 +7,6 @@ __metaclass__ = type
 import os
 
 from ansible.constants import config
-from ansible.parsing.dataloader import path_exists
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
@@ -38,11 +37,12 @@ class AnsibleRoleFinder(object):
       - API to show only first match
     """
 
-    def __init__(self, basedir, role_basedir=None, templar=None):
+    def __init__(self, data_loader, role_basedir=None, templar=None):
         """
         Initialize a new RoleFinder object.
 
-        :param str basedir: Base directory for searching.
+        :param DataLoader data_loader: A DataLoader object to use for identifying
+            base directory and path existence.
         :param str role_basedir: Path to a relative role base directory.
         :param Templar templar: A Templar object used for expanding templated paths.
 
@@ -53,15 +53,14 @@ class AnsibleRoleFinder(object):
            - relative role base directory (if any) to find dependent roles
            - playbook base directory itself
         """
-        self.__basedir = basedir
+        self.__loader = data_loader
+        self.__templar = templar
         self.__standard_search_paths = []
-        self.__standard_search_paths.append(os.path.join(basedir, u'roles'))
+        self.__standard_search_paths.append(os.path.join(self.__loader.get_basedir(), u'roles'))
         self.__standard_search_paths.extend(config.get_config_value('DEFAULT_ROLES_PATH'))
         if role_basedir:
             self.__standard_search_paths.append(role_basedir)
-        self.__standard_search_paths.append(basedir)
-
-        self.__templar = templar
+        self.__standard_search_paths.append(self.__loader.get_basedir())
 
     # ========================================================================
     # Public API
@@ -117,12 +116,12 @@ class AnsibleRoleFinder(object):
             if self.__templar:
                 path = self.__templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
-            if path_exists(self.__basedir, role_path):
+            if self.__loader.path_exists(role_path):
                 return self.Result(role_name, role_path)
 
         # if not found elsewhere try to extract path from name
         role_path = unfrackpath(role_name)
-        if path_exists(self.__basedir, role_path):
+        if self.__loader.path_exists(role_path):
             role_name = os.path.basename(role_name)
             return self.Result(role_name, role_path)
 

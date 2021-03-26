@@ -135,7 +135,7 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
         self.assertEqual(v.get_vars(task=mock_task, use_cache=False).get("foo"), "bar")
 
-    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_precedence(self):
         # FIXME: this needs to be redone as dataloader is not the automatic source of data anymore
         return
@@ -252,7 +252,7 @@ class TestVariableManager(unittest.TestCase):
         res = v.get_vars(play=play1, host=h1)
         self.assertEqual(res['fact_cache_var'], 'fact_cache_var_from_fact_cache')
 
-    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_role_vars_dependencies(self):
         '''
         Tests vars from role dependencies with duplicate dependencies.

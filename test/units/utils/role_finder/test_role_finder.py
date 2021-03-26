@@ -24,7 +24,7 @@ class TestAnsibleRoleFinder:
         role_path = "/path/to/foo/bar/roles/abc"
         collection_name = "foo.bar"
 
-        finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
+        finder = AnsibleRoleFinder(get_fake_loader())
 
         r = finder.Result(role_name, role_path)
         assert r.role_name == role_name
@@ -44,7 +44,7 @@ class TestAnsibleRoleFinder:
     def test_standard_role_search_paths(self):
         ''' Test that the path order is what we expect at initialization. '''
         relative_role_dir = os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
-        finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR, relative_role_dir)
+        finder = AnsibleRoleFinder(get_fake_loader(), relative_role_dir)
         expected = []
         expected.append(os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles'))
         expected.extend(config.get_config_value('DEFAULT_ROLES_PATH'))
@@ -55,7 +55,7 @@ class TestAnsibleRoleFinder:
     def test_set_templar(self):
         ''' Test setting the templating object. '''
 
-        finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
+        finder = AnsibleRoleFinder(get_fake_loader())
 
         # Should allow None
         finder.templar = None
@@ -67,18 +67,19 @@ class TestAnsibleRoleFinder:
         with pytest.raises(TypeError, match="templar must be of type Templar"):
             finder.templar = "invalid"
 
+    def test_find_first_not_found(self):
+        ''' Test find_first() returns None on not found. '''
+        finder = AnsibleRoleFinder(get_fake_loader())
+        result = finder.find_first('does-not-exist')
+        assert result is None
+
     def test_find_first(self):
         ''' Test finding first role that matches a role name. '''
 
         # Set search path for collections
         collection_finder = get_default_finder()
         reset_collections_loader_state(collection_finder)
-
-        finder = AnsibleRoleFinder(ROLEFINDER_PLAYBOOK_DIR)
-
-        # No match should return None
-        result = finder.find_first('does-not-exist')
-        assert result is None
+        finder = AnsibleRoleFinder(get_fake_loader())
 
         # Match should return a result object (no collection context given)
         result = finder.find_first('role1')
@@ -120,11 +121,11 @@ class TestAnsibleRoleFinder:
 
         test_vars = dict(
             rname="role1",
-            pb_base=ROLEFINDER_PLAYBOOK_DIR,
         )
 
-        templar = Templar(DictDataLoader({}), variables=test_vars)
-        finder = AnsibleRoleFinder("{{ pb_base }}", templar=templar)
+        fake_loader = get_fake_loader()
+        templar = Templar(fake_loader, variables=test_vars)
+        finder = AnsibleRoleFinder(fake_loader, templar=templar)
 
         result = finder.find_first("{{ rname }}")
         assert result is not None
@@ -142,6 +143,12 @@ class TestAnsibleRoleFinder:
 default_test_collection_paths = [
     os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'collections'),
 ]
+
+
+def get_fake_loader():
+    fake_loader = DictDataLoader({})
+    fake_loader.get_basedir = lambda: ROLEFINDER_PLAYBOOK_DIR
+    return fake_loader
 
 
 def get_default_finder():
