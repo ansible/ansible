@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: bad subset used
+      setup: gather_subset=nonsense
+      register: bad_sub
+      ignore_errors: true
+
+    - name: verify we fail the right way
+      assert:
+        that:
+          - bad_sub is failed
+          - "'MODULE FAILURE' not in bad_sub['msg']"
