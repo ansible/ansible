@@ -190,7 +190,7 @@ class DataLoader:
             path = given
         else:
             basedir = to_text(self._basedir, errors='surrogate_or_strict')
-        path = os.path.join(self._basedir, given)
+            path = os.path.join(basedir, given)
 
         return unfrackpath(path, follow=False)
 
