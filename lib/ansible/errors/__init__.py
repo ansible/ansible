@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import traceback
 
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
@@ -331,7 +332,7 @@ class AnsibleActionFail(AnsibleAction):
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
         super(AnsibleActionFail, self).__init__(message=message, obj=obj, show_content=show_content,
                                                 suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
-        self.result.update({'failed': True, 'msg': message})
+        self.result.update({'failed': True, 'msg': message, 'exception': traceback.format_exc()})
 
 
 class _AnsibleActionDone(AnsibleAction):
