@@ -129,7 +129,7 @@ class ActionModule(ActionBase):
 
                 # add ansible 'template' vars
                 temp_vars = task_vars.copy()
-                temp_vars.update(generate_ansible_template_vars(source, dest))
+                temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
 
                 with self._templar.set_temporary_context(searchpath=searchpath, newline_sequence=newline_sequence,
                                                          block_start_string=block_start_string, block_end_string=block_end_string,

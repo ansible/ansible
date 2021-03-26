@@ -97,7 +97,7 @@ class LookupModule(LookupBase):
                 # plus anything passed to the lookup with the template_vars=
                 # argument.
                 vars = deepcopy(variables)
-                vars.update(generate_ansible_template_vars(lookupfile))
+                vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
                 # do the templating
