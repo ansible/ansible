@@ -16,3 +16,6 @@ ansible-playbook verify_merge_facts.yml -v "$@" -e 'ansible_facts_parallel: Fals
 
 # ensure we dont clobber facts in loop
 ansible-playbook prevent_clobbering.yml -v "$@"
+
+# ensure we dont fail module on bad subset
+ansible-playbook verify_subset.yml "$@"
