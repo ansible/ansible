@@ -144,10 +144,10 @@ EXAMPLES = """
 # import module snippets
 from ..module_utils.basic import AnsibleModule
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.facts import ansible_collector, default_collectors
+from ansible.module_utils.facts.collector import CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
-from ansible.module_utils.facts import ansible_collector
-
-from ansible.module_utils.facts import default_collectors
 
 
 def main():
@@ -180,13 +180,16 @@ def main():
     namespace = PrefixFactNamespace(namespace_name='ansible',
                                     prefix='ansible_')
 
-    fact_collector = \
-        ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
-                                                namespace=namespace,
-                                                filter_spec=filter_spec,
-                                                gather_subset=gather_subset,
-                                                gather_timeout=gather_timeout,
-                                                minimal_gather_subset=minimal_gather_subset)
+    try:
+        fact_collector = ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
+                                                                 namespace=namespace,
+                                                                 filter_spec=filter_spec,
+                                                                 gather_subset=gather_subset,
+                                                                 gather_timeout=gather_timeout,
+                                                                 minimal_gather_subset=minimal_gather_subset)
+    except (TypeError, CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep) as e:
+        # bad subset given, collector, idk, deps declared but not found
+        module.fail_json(msg=to_text(e))
 
     facts_dict = fact_collector.collect(module=module)
 
