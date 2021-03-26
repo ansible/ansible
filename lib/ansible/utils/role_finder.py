@@ -19,7 +19,7 @@ class AnsibleRoleFinder(object):
 
     Example usage:
 
-        finder = AnsibleRoleFinder(pb_basedir)
+        finder = AnsibleRoleFinder(data_loader)
 
         # Find 'myrole' standard role
         result = finder.find_first('myrole')
