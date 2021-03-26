@@ -4,7 +4,7 @@
 Roles
 *****
 
-Roles let you automatically load related vars, files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily reuse them and share them with other users.
+Roles let you automatically load related vars, files, tasks, handlers, and other Ansible artifacts based on a known file structure. After you group your content in roles, you can easily reuse them and share them with other users.
 
 .. contents::
    :local:
@@ -256,7 +256,7 @@ You can pass other keywords, including variables and tags, when importing roles:
 
 When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
-Role Argument Validation
+Role argument validation
 ========================
 
 Beginning with version 2.11, you may choose to enable role argument validation based on an argument
@@ -270,7 +270,7 @@ for the role against the specification. If the parameters fail validation, the r
     then validation on those dependencies will run before the dependent role, even if argument validation fails
     for the dependent role.
 
-Specification Format
+Specification format
 --------------------
 
 The role argument specification must be defined in a top-level ``argument_specs`` block within the
@@ -341,7 +341,7 @@ role ``meta/main.yml`` file. All fields are lower-case.
 
            * If this option takes a dict or list of dicts, you can define the structure here.
 
-Sample Specification
+Sample specification
 --------------------
 
 .. code-block:: yaml
@@ -402,8 +402,8 @@ You can pass different parameters in each role definition as:
     ---
     - hosts: webservers
       roles:
-        - { role: foo, vars: { message: "first" } }
-        - { role: foo, vars: { message: "second" } }
+        - { role: foo, message: "first" }
+        - { role: foo, message: "second" }
 
 or
 
@@ -413,11 +413,9 @@ or
     - hosts: webservers
       roles:
         - role: foo
-          vars:
-            message: "first"
+          message: "first"
         - role: foo
-          vars:
-            message: "second"
+          message: "second"
 
 In this example, because each role definition has different parameters, Ansible runs ``foo`` twice.
 
