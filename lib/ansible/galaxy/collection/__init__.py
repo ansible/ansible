@@ -131,16 +131,26 @@ MANIFEST_FILENAME = 'MANIFEST.json'
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
 
+# FUTURE: expose actual verify result details for a collection on this object, maybe reimplement as dataclass on py3.8+
+class CollectionVerifyResult:
+    def __init__(self, collection_name):  # type: (str) -> None
+        self.collection_name = collection_name  # type: str
+        self.success = True  # type: bool
+
+
 def verify_local_collection(
         local_collection, remote_collection,
         artifacts_manager,
-):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager) -> None
+):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager) -> CollectionVerifyResult
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
     :param remote_collection: Upstream collection (optional, if None, only verify local artifact)
     :param artifacts_manager: Artifacts manager.
+    :return: a collection verify result object.
     """
+    result = CollectionVerifyResult(local_collection.fqcn)
+
     b_collection_path = to_bytes(
         local_collection.src, errors='surrogate_or_strict',
     )
@@ -188,7 +198,8 @@ def verify_local_collection(
                 )
             )
             display.display(err)
-            return
+            result.success = False
+            return result
 
         # Verify the downloaded manifest hash matches the installed copy before verifying the file manifest
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
@@ -214,6 +225,7 @@ def verify_local_collection(
             _verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, modified_content)
 
     if modified_content:
+        result.success = False
         display.display(
             'Collection {fqcn!s} contains modified content '
             'in the following files:'.
@@ -228,6 +240,8 @@ def verify_local_collection(
             "Successfully verified that checksums for '{coll!s}' {what!s}.".
             format(coll=local_collection, what=what),
         )
+
+    return result
 
 
 def build_collection(u_collection_path, u_output_path, force):
@@ -574,7 +588,7 @@ def verify_collections(
         ignore_errors,  # type: bool
         local_verify_only,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
-):  # type: (...) -> None
+):  # type: (...) -> List[CollectionVerifyResult]
     r"""Verify the integrity of locally installed collections.
 
     :param collections: The collections to check.
@@ -583,7 +597,10 @@ def verify_collections(
     :param ignore_errors: Whether to ignore any errors when verifying the collection.
     :param local_verify_only: When True, skip downloads and only verify local manifests.
     :param artifacts_manager: Artifacts manager.
+    :return: list of CollectionVerifyResult objects describing the results of each collection verification
     """
+    results = []  # type: List[CollectionVerifyResult]
+
     api_proxy = MultiGalaxyAPIProxy(apis, artifacts_manager)
 
     with _display_progress():
@@ -656,10 +673,12 @@ def verify_collections(
                             )
                         raise
 
-                verify_local_collection(
+                result = verify_local_collection(
                     local_collection, remote_collection,
                     artifacts_manager,
                 )
+
+                results.append(result)
 
             except AnsibleError as err:
                 if ignore_errors:
@@ -671,6 +690,8 @@ def verify_collections(
                     )
                 else:
                     raise
+
+    return results
 
 
 @contextmanager
