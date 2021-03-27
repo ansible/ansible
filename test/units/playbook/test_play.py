@@ -23,6 +23,7 @@ from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleParserError
+from ansible.parsing.yaml import objects
 from ansible.playbook.play import Play
 
 from units.mock.loader import DictDataLoader
@@ -64,6 +65,23 @@ class TestPlay(unittest.TestCase):
         )
         self.assertRaises(AnsibleParserError, Play.load, play_data)
 
+    def test_play_with_invalid_hosts(self):
+        play_data = dict(
+            hosts=["test_host", objects.AnsibleMapping(test='data')],
+            user="testing",
+            gather_facts=False,
+        )
+        self.assertRaises(AnsibleParserError, Play.load, play_data)
+
+    def test_play_with_named_play_and_invalid_hosts(self):
+        play_data = dict(
+            name="test play",
+            hosts=["test_host", objects.AnsibleMapping(test='data')],
+            user="testing",
+            gather_facts=False,
+        )
+        self.assertRaises(AnsibleParserError, Play.load, play_data)
+
     def test_play_with_tasks(self):
         p = Play.load(dict(
             name="test play",
@@ -82,7 +100,6 @@ class TestPlay(unittest.TestCase):
 
     def test_play_with_pre_tasks(self):
         p = Play.load(dict(
-            name="test play",
             hosts=['foo'],
             gather_facts=False,
             pre_tasks=[dict(action='shell echo "hello world"')],

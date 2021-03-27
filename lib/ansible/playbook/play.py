@@ -24,6 +24,7 @@ from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
+from ansible.parsing.yaml.objects import AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -103,17 +104,25 @@ class Play(Base, Taggable, CollectionSearch):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
-        if ('name' not in data or data['name'] is None) and 'hosts' in data:
-            if data['hosts'] is None or all(host is None for host in data['hosts']):
-                raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
-            if isinstance(data['hosts'], list):
-                data['name'] = ','.join(data['hosts'])
-            else:
-                data['name'] = data['hosts']
+        if 'hosts' in data:
+            Play.verify_hosts_field(data['hosts'])
+            if 'name' not in data or data['name'] is None:
+                if isinstance(data['hosts'], list):
+                    data['name'] = ','.join(data['hosts'])
+                else:
+                    data['name'] = data['hosts']
         p = Play()
         if vars:
             p.vars = vars.copy()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    @staticmethod
+    def verify_hosts_field(hosts_field):
+        if hosts_field is None or all(host is None for host in hosts_field):
+            raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
+        if isinstance(hosts_field, list):
+            if any(isinstance(host, AnsibleMapping) for host in hosts_field):
+                raise AnsibleParserError("Hosts can not contain sequence - please check your playbook")
 
     def preprocess_data(self, ds):
         '''

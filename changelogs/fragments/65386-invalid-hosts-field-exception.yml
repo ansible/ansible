@@ -1,0 +1,2 @@
+bugfixes:
+  - Raise AnsibleParserError when invalid hosts field is given (https://github.com/ansible/ansible/issues/65386).
