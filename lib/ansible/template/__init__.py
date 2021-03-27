@@ -978,7 +978,7 @@ class Templar:
         if instance is None:
             context = lookup_loader.find_plugin_with_context(name)
             if not context.resolved and context.redirect_list and len(context.redirect_list) > 1:
-                raise AnsibleError("lookup plugin '%s' was redirected to '%s', which could not be loaded" % (name, context.redirect_list[0]))
+                raise AnsibleError("lookup plugin '%s' was redirected to '%s', which could not be loaded" % (name, context.redirect_list[-1]))
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
         wantlist = kwargs.pop('wantlist', False)
