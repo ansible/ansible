@@ -180,11 +180,3 @@ class TestRekeyOnMember():
         list_original = ({'proto': 'eigrp', 'id': 1}, {'proto': 'ospf', 'id': 2}, {'proto': 'eigrp', 'id': 3})
         expected = {'eigrp': {'proto': 'eigrp', 'id': 3}, 'ospf': {'proto': 'ospf', 'id': 2}}
         assert ms.rekey_on_member(list_original, 'proto', duplicates='overwrite') == expected
-
-
-class TestDuplicated:
-    def test_empty(self):
-        assert ms.duplicated(env, []) == []
-
-    def test_numbers(self):
-        assert ms.duplicated(env, [1, 3, 5, 5]) == [5]

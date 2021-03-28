@@ -1,3 +1,0 @@
-minor_changes:
-  - add filter duplicated that will return duplicate items from a list.
-    (https://github.com/ansible/ansible/pull/72729/)
