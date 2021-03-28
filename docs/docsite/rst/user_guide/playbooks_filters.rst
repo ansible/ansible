@@ -978,14 +978,6 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
     {{ list1 | symmetric_difference(list2) }}
     # => [10, 11, 99]
 
-To get the duplicate values from a list (the resulting list contains unique duplicates)::
-
-.. versionadded:: 2.11
-
-    # list1: [1, 2, 5, 1, 3, 4, 10, 'a', 'z', 'a']
-    {{ list1 | duplicated }}
-    # => [1, 'a']
-
 .. _math_stuff:
 
 Calculating numbers (math)
