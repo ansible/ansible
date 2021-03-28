@@ -26,7 +26,6 @@ __metaclass__ = type
 import itertools
 import math
 
-from collections import Counter
 from jinja2.filters import environmentfilter
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
@@ -85,11 +84,6 @@ def unique(environment, a, case_sensitive=False, attribute=None):
                 c.append(x)
 
     return c
-
-
-@environmentfilter
-def duplicated(environment, a):
-    return [k for k, v in Counter(a).items() if v > 1]
 
 
 @environmentfilter
@@ -263,7 +257,6 @@ class FilterModule(object):
 
             # set theory
             'unique': unique,
-            'duplicated': duplicated,
             'intersect': intersect,
             'difference': difference,
             'symmetric_difference': symmetric_difference,
