@@ -270,7 +270,7 @@ class OpenBSDScanService(BaseService):
             return []
 
         for svc in stdout.split('\n'):
-            if svc is '':
+            if svc == '':
                 continue
             else:
                 svcs.append(svc)
