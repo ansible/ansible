@@ -336,8 +336,8 @@ class ModuleArgsParser:
                     bad_action, redirects = bad_attempts[0]
                     raise AnsibleParserError("module/action '{0}' was redirected to {1}, which could "
                                              "not be loaded.".format(
-                                                bad_action,
-                                                ' -> '.join(["'{0}'".format(redirect) for redirect in redirects])),
+                                                 bad_action,
+                                                 ' -> '.join(["'{0}'".format(redirect) for redirect in redirects])),
                                              obj=self._task_ds)
                 bad_action = list(non_task_ds.keys())[0]
                 raise AnsibleParserError("couldn't resolve module/action '{0}'. This often indicates a "
