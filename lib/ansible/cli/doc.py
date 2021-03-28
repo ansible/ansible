@@ -732,7 +732,7 @@ class DocCLI(CLI, RoleMixin):
         result = loader.find_plugin_with_context(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if not result.resolved:
             if result.redirect_list and len(result.redirect_list) > 1:
-                # take the last one in the redirect list, we may have successfully jumped through N other redirects
+                # show all redirects that took place
                 target_redirection_list = ' -> '.join(result.redirect_list[1:])
                 raise PluginNotFound('%s %s was redirected to %s, which was not found in: %s' % (
                     plugin_type, plugin, target_redirection_list, search_paths))
