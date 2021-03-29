@@ -1388,13 +1388,16 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
     # module_defaults keys are static, but the values may be templated
     module_defaults = templar.template(module_defaults)
 
+    if action_groups is None:
+        # 3rd party called this without providing cached action_groups... add a warning, or just ignore?
+        group_names = []
+    else:
+        group_names = action_groups.get(resolved_action_name, [])
+
     for default in module_defaults:
         if default.startswith('group/'):
             group_name = default.split('group/')[-1]
-            if action_groups is None:
-                # 3rd party called this without providing cached action_groups... add a warning, or just ignore?
-                continue
-            elif resolved_action_name in action_groups.get(group_name, []):
+            if group_name in group_names:
                 tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
     # handle specific action defaults

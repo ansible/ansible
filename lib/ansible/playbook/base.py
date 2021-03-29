@@ -359,6 +359,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if hasattr(self, '_get_action_group_cache'):
             return self._get_action_group_cache()
 
+    @property
+    def _group_action_cache(self):
+        if hasattr(self, '_get_group_action_cache'):
+            return self._get_group_action_cache()
+
     def _resolve_group(self, group, collection_name):
         # The group should be part of the current collection
         if not group.startswith(collection_name + '.'):
@@ -367,8 +372,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             fq_group_name = group
 
         # Check if the group has already been resolved and cached
-        if fq_group_name in self._action_group_cache:
-            return fq_group_name, self._action_group_cache[fq_group_name]
+        if fq_group_name in self._group_action_cache:
+            return fq_group_name, self._group_action_cache[fq_group_name]
 
         try:
             if collection_name == 'ansible.legacy':
@@ -416,7 +421,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 if resolved_action:
                     resolved_actions.append(resolved_action)
 
-        self._action_group_cache[fq_group_name] = resolved_actions
+        for action in resolved_actions:
+            if action in self._action_group_cache:
+                self._action_group_cache[action].append(fq_group_name)
+            else:
+                self._action_group_cache[action] = [fq_group_name]
+
+        self._group_action_cache[fq_group_name] = resolved_actions
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name):
@@ -424,6 +435,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not context.resolved:
             context = module_loader.find_plugin_with_context(action_name)
 
+        # TODO: use the canonical name on the context once it's available?
         if context.resolved:
             return context.redirect_list[-1]
 

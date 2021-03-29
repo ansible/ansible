@@ -2,12 +2,32 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-    - name: test ansible.builtin short group name
+    - name: test ansible.legacy short group name
       module_defaults:
         group/testgroup:
           data: test
       block:
+        - legacy_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.legacy.legacy_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
         - ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.legacy.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.builtin.ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
@@ -17,7 +37,42 @@
         - assert:
             that: "result.ping == 'test'"
 
+        - ansible.builtin.formerly_core_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+    - name: test ansible.legacy fully qualified name
+      module_defaults:
+        group/ansible.legacy.testgroup:
+          data: test
+      block:
+        - legacy_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.legacy.legacy_ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - ansible.legacy.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
         - ansible.builtin.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - formerly_core_ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
@@ -32,17 +87,35 @@
         group/ansible.builtin.testgroup:
           data: test
       block:
+        # ansible.builtin does not contain ansible.legacy
+        - legacy_ping:
+          register: result
+        - assert:
+            that: "result.ping != 'test'"
+
+        # ansible.builtin does not contain ansible.legacy
+        - ansible.legacy.legacy_ping:
+          register: result
+        - assert:
+            that: "result.ping != 'test'"
+
         - ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
 
-        - formerly_core_ping:
+        # Resolves to ansible.builtin.ping
+        - ansible.legacy.ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
 
         - ansible.builtin.ping:
+          register: result
+        - assert:
+            that: "result.ping == 'test'"
+
+        - formerly_core_ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
@@ -57,6 +130,12 @@
         group/testns.testcoll.testgroup:
           data: test
       block:
+        # Plugin resolving to a different collection does not get the default
+        - ping:
+          register: result
+        - assert:
+            that: "result.ping != 'test'"
+
         - formerly_core_ping:
           register: result
         - assert:

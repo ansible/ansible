@@ -9689,6 +9689,7 @@ action_groups:
           - testns.testcoll.anothergroup
           - testns.boguscoll.testgroup
     - ping
+    - legacy_ping
     - formerly_core_ping
   aws:
     - metadata:
