@@ -274,3 +274,19 @@ pause_test.send('supersecretpancakes')
 pause_test.send('\r')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
+
+
+# Test that enter presses may not continue the play when a timeout is set.
+
+pause_test = pexpect.spawn(
+    'ansible-playbook',
+    args=["pause-3.yml"] + args,
+    timeout=10,
+    env=os.environ
+)
+
+pause_test.logfile = log_buffer
+pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
+pause_test.send('\r')
+pause_test.expect(pexpect.EOF)
+pause_test.close()
