@@ -363,6 +363,9 @@ class GalaxyCLI(CLI):
                                    'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
         verify_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                    help='Ignore errors during verification and continue with the next specified collection.')
+        verify_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
+                                   help='Validate collection integrity locally without contacting server for '
+                                        'canonical manifest hash.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                    help='A file containing a list of collections to be verified.')
 
@@ -1078,6 +1081,7 @@ class GalaxyCLI(CLI):
         collections = context.CLIARGS['args']
         search_paths = context.CLIARGS['collections_path']
         ignore_errors = context.CLIARGS['ignore_errors']
+        local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
 
         requirements = self._require_one_of_collections_requirements(
@@ -1090,6 +1094,7 @@ class GalaxyCLI(CLI):
         verify_collections(
             requirements, resolved_paths,
             self.api_servers, ignore_errors,
+            local_verify_only=local_verify_only,
             artifacts_manager=artifacts_manager,
         )
 
