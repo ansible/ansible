@@ -58,6 +58,7 @@ options:
   recurse:
     description:
     - Recursively set the specified file attributes on directory contents.
+    - Given file permissions will apply to subdirectories only. 
     - This applies only when C(state) is set to C(directory).
     type: bool
     default: no
