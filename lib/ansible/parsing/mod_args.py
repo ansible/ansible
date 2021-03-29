@@ -318,7 +318,7 @@ class ModuleArgsParser:
                     # FIXME: Hack to add the final fully qualified name to the task...
                     # really just need the FQCN associated with the task, don't tack this onto the redir list
                     if '.' not in context.plugin_resolved_name:
-                        fqcn = context.plugin_resolved_collection + '.' + context.plugin_resolved_name
+                        fqcn = (context.plugin_resolved_collection or 'ansible.legacy') + '.' + context.plugin_resolved_name
                         if fqcn not in context.redirect_list:
                             self.internal_redirect_list.append(fqcn)
 

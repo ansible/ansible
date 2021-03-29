@@ -318,13 +318,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             validated_defaults_dict = {}
             for defaults_entry, defaults in defaults_dict.items():
                 # module_defaults do not use the 'collections' keyword, so actions and
-                # action_groups that are not fully qualified are part of the 'ansible.builtin'
+                # action_groups that are not fully qualified are part of the 'ansible.legacy'
                 # collection. Update those entries here, so module_defaults contains
                 # fully qualified entries.
                 if defaults_entry.startswith('group/'):
                     group_name = defaults_entry.split('group/')[-1]
                     if len(group_name.split('.')) < 3:
-                        group_name = 'ansible.builtin.' + group_name
+                        group_name = 'ansible.legacy.' + group_name
 
                     # If we have the actions_group cache (i.e. using a class that inherits
                     # from Task or Block), we need to also resolve and cache the actions in the group
@@ -336,14 +336,19 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     validated_defaults_dict[defaults_entry] = defaults
 
                 else:
+                    action_names = []
                     if len(defaults_entry.split('.')) < 3:
-                        defaults_entry = 'ansible.builtin.' + defaults_entry
+                        defaults_entry = 'ansible.legacy.' + defaults_entry
+                    action_names.append(defaults_entry)
+                    if defaults_entry.startswith('ansible.legacy.'):
+                        action_names.append(defaults_entry.replace('ansible.legacy.', 'ansible.builtin.'))
 
                     # Replace the module_defaults action entry with the canonical name,
                     # so regardless of how the action is called, the defaults will apply
-                    resolved_action = self._resolve_action(defaults_entry)
-                    if resolved_action:
-                        validated_defaults_dict[resolved_action] = defaults
+                    for action_name in action_names:
+                        resolved_action = self._resolve_action(action_name)
+                        if resolved_action:
+                            validated_defaults_dict[resolved_action] = defaults
 
             validated_module_defaults.append(validated_defaults_dict)
 
@@ -366,7 +371,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             return fq_group_name, self._action_group_cache[fq_group_name]
 
         try:
-            action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
+            if collection_name == 'ansible.legacy':
+                action_groups = _get_collection_metadata('ansible.builtin').get('action_groups', {})
+            else:
+                action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
         except ValueError:
             # Don't fail if the collection isn't installed
             return fq_group_name, []
@@ -394,14 +402,19 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
             # The collection may or may not use the fully qualified name.
             # If not, it's part of the current collection.
+            action_names = []
             if len(action.split('.')) == 3:
-                action_name = action
+                action_names.append(action)
             else:
-                action_name = collection_name + '.' + action
+                action_names.append(collection_name + '.' + action)
+                if collection_name == 'ansible.legacy':
+                    # ansible.legacy is a superset of ansible.builtin
+                    action_names.append('ansible.builtin.' + action)
 
-            resolved_action = self._resolve_action(action_name)
-            if resolved_action:
-                resolved_actions.append(resolved_action)
+            for action_name in action_names:
+                resolved_action = self._resolve_action(action_name)
+                if resolved_action:
+                    resolved_actions.append(resolved_action)
 
         self._action_group_cache[fq_group_name] = resolved_actions
         return fq_group_name, resolved_actions
