@@ -150,7 +150,7 @@
 
 - assert:
     that:
-      - "'Collection ansible_test.verify contains modified content in the following files:\nansible_test.verify\n    plugins/modules/test_module.py' in verify.stdout"
+      - "'Collection ansible_test.verify contains modified content in the following files:\n    plugins/modules/test_module.py' in verify.stdout"
 
 - name: modify the FILES.json to match the new checksum
   lineinfile:
@@ -168,7 +168,7 @@
 
 - assert:
     that:
-      - "'Collection ansible_test.verify contains modified content in the following files:\nansible_test.verify\n    FILES.json' in verify.stdout"
+      - "'Collection ansible_test.verify contains modified content in the following files:\n    FILES.json' in verify.stdout"
 
 - name: get the checksum of the FILES.json
   stat:
@@ -190,7 +190,7 @@
 
 - assert:
     that:
-      - "'Collection ansible_test.verify contains modified content in the following files:\nansible_test.verify\n    MANIFEST.json' in verify.stdout"
+      - "'Collection ansible_test.verify contains modified content in the following files:\n    MANIFEST.json' in verify.stdout"
 
 - name: remove the artifact metadata to test verifying a collection without it
   file:
@@ -221,3 +221,48 @@
     that:
       - verify.failed
       - "'Collection ansible_test.verify does not have a MANIFEST.json' in verify.stderr"
+
+- name: update the collection version to something not present on the server
+  lineinfile:
+    regexp: "version: .*"
+    line: "version: '3.0.0'"
+    path: '{{ galaxy_dir }}/scratch/ansible_test/verify/galaxy.yml'
+
+- name: build the new version
+  command: ansible-galaxy collection build scratch/ansible_test/verify
+  args:
+    chdir: '{{ galaxy_dir }}'
+
+- name: force-install from local artifact
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/ansible_test-verify-3.0.0.tar.gz' --force
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+
+- name: verify locally only, no download or server manifest hash check
+  command: ansible-galaxy collection verify --offline ansible_test.verify
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+  register: verify
+
+- assert:
+    that:
+    - >-
+      "Verifying 'ansible_test.verify:3.0.0'." in verify.stdout
+    - '"MANIFEST.json hash: " in verify.stdout'
+    - >-
+      "Successfully verified that checksums for 'ansible_test.verify:3.0.0' are internally consistent with its manifest." in verify.stdout
+
+- name: append a newline to a module to modify the checksum
+  shell: "echo '' >> {{ module_path }}"
+
+- name: verify modified collection locally-only (should fail)
+  command: ansible-galaxy collection verify --offline ansible_test.verify
+  register: verify
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "'Collection ansible_test.verify contains modified content in the following files:' in verify.stdout"
+      - "'plugins/modules/test_module.py' in verify.stdout"
