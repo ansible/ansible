@@ -174,9 +174,6 @@ class AnsibleRoleFinder(object):
         """
 
         def __init__(self, role_name, role_path, collection_name=None, masked=False):
-            if AnsibleCollectionRef.is_valid_fqcr(role_name):
-                raise Exception("Role name should not contain FQCN")
-
             # Remove any path information that may have been given with the role name.
             self.role_name = os.path.basename(role_name)
 
