@@ -549,7 +549,7 @@ class GalaxyCLI(CLI):
                 **galaxy_options
             ))
 
-        context.CLIARGS['func']()
+        return context.CLIARGS['func']()
 
     @property
     def api(self):
@@ -1091,12 +1091,15 @@ class GalaxyCLI(CLI):
 
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
-        verify_collections(
+        results = verify_collections(
             requirements, resolved_paths,
             self.api_servers, ignore_errors,
             local_verify_only=local_verify_only,
             artifacts_manager=artifacts_manager,
         )
+
+        if any(result for result in results if not result.success):
+            return 1
 
         return 0
 
