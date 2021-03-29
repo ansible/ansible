@@ -38,9 +38,6 @@ class TestAnsibleRoleFinder:
         assert r.collection_name == collection_name
         assert r.masked
 
-        with pytest.raises(Exception, match="Role name should not contain FQCN"):
-            r = finder.Result("foo.bar.abc", role_path)
-
     def test_standard_role_search_paths(self):
         ''' Test that the path order is what we expect at initialization. '''
         relative_role_dir = os.path.join(ROLEFINDER_PLAYBOOK_DIR, 'roles', 'role1')
