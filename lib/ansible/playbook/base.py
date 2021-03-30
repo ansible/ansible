@@ -315,6 +315,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         validated_module_defaults = []
         for defaults_dict in value:
+            if not isinstance(defaults_dict, dict):
+                raise AnsibleParserError(
+                    "The field 'module_defaults' is supposed to be a dictionary or list of dictionaries, "
+                    "the keys of which must be static action, module, or group names. Only the values may contain "
+                    "templates. For example: {'ping': \"{{ ping_defaults }}\"}"
+                )
+
             validated_defaults_dict = {}
             for defaults_entry, defaults in defaults_dict.items():
                 # module_defaults do not use the 'collections' keyword, so actions and
