@@ -1,3 +1,0 @@
----
-minor_changes:
-  - iptables - fix iptables unit test comment (https://github.com/ansible/ansible/pull/74061).
