@@ -64,7 +64,7 @@ The flags in this command set seven values:
   - the module (-m, the Ansible module to run, using the fully qualified collection name (FQCN))
   - an extra variable ( -e, in this case, setting the network OS value)
 
-NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag.
+NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag. You can also use ``-e "ansible_ssh_pass=ansible"`` to include the password in the command without prompting the user.
 
 .. note::
 
