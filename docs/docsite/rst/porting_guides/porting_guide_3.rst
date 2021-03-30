@@ -14,11 +14,49 @@ Ansible 3 Porting Guide
 
 Ansible 3 is based on Ansible-Base 2.10, which is the same major release as Ansible 2.10.  Therefore, there is no section on ansible-base in this porting guide.  If you are upgrading from Ansible 2.9, please first consult the Ansible 2.10 porting guide before continuing with the Ansible 3 porting guide.
 
-We suggest you read this page along with the `Ansible Changelog for 3.0 <https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with the `Ansible 3 Changelog <https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst>`_ to understand what updates you may need to make.
 
+Porting Guide for v3.2.0
+========================
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_user - Issue(192043) Module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_configuration_compliance_info - Issue(195592) Module may error out with the message ``unable to process the request because an error occurred``. If the issue persists, report it to the system administrator.
+- ome_smart_fabric - Issue(185322) Only three design types are supported by OpenManage Enterprise Modular but the module successfully creates a fabric when the design type is not supported.
+- ome_smart_fabric_uplink - Issue(186024) ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though this is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+
+Breaking Changes
+----------------
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- docker_swarm - if ``join_token`` is specified, a returned join token with the same value will be replaced by ``VALUE_SPECIFIED_IN_NO_LOG_PARAMETER``. Make sure that you do not blindly use the join tokens from the return value of this module when the module is invoked with ``join_token`` specified! This breaking change appears in a minor release since it is necessary to fix a security issue (https://github.com/ansible-collections/community.docker/pull/103).
+
+Deprecated Features
+-------------------
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- acme module_utils - the ``acme`` module_utils (``ansible_collections.community.crypto.plugins.module_utils.acme``) is deprecated and will be removed in community.crypto 2.0.0. Use the new Python modules in the ``acme`` package instead (``ansible_collections.community.crypto.plugins.module_utils.acme.xxx``) (https://github.com/ansible-collections/community.crypto/pull/184).
 
 Porting Guide for v3.1.0
 ========================
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- ome_smart_fabric - Issue(185322) Only three design types are supported by OpenManage Enterprise Modular but the module successfully creates a fabric when the design type is not supported.
+- ome_smart_fabric_uplink - Issue(186024) ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though this is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
 
 Major Changes
 -------------
@@ -83,6 +121,16 @@ community.general
 
 Porting Guide for v3.0.0
 ========================
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- Issue 1(186024): ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though this is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+- Issue 2(187956): If an invalid job_id is provided, idrac_lifecycle_controller_job_status_info returns an error message. This error message does not contain information about the exact issue with the invalid job_id.
+- Issue 3(188267): While updating the iDRAC firmware, the idrac_firmware module completes execution before the firmware update job is completed. An incorrect message is displayed in the task output as 'DRAC WSMAN endpoint returned HTTP code '400' Reason 'Bad Request''. This issue may occur if the target iDRAC firmware version is less than 3.30.30.30
 
 Breaking Changes
 ----------------
@@ -238,6 +286,13 @@ community.okd
 - Add openshift_route module for creating routes from services (https://github.com/ansible-collections/community.okd/pull/40).
 - Initial content migration from community.kubernetes (https://github.com/ansible-collections/community.okd/pull/3).
 - openshift_auth - new module (migrated from k8s_auth in community.kubernetes) (https://github.com/ansible-collections/community.okd/pull/33).
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- Removed the existing deprecated modules.
+- Standardization of ten iDRAC ansible modules based on ansible guidelines.
+- Support for OpenManage Enterprise Modular.
 
 dellemc.os10
 ~~~~~~~~~~~~
@@ -510,3 +565,20 @@ community.vmware
 ~~~~~~~~~~~~~~~~
 
 - vmware_host_firewall_manager - the creation of new rule with no ``allowed_ip`` entry in the ``allowed_hosts`` dictionary won't be allowed after 2.0.0 release.
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- The ``dellemc_get_firmware_inventory`` module is deprecated and replaced with ``idrac_firmware_info``.
+- The ``dellemc_get_system_inventory`` module is deprecated and replaced with ``idrac_system_info``.
+- The dellemc_change_power_state module is deprecated and replaced with the redfish_powerstate module.
+- The dellemc_configure_bios module is deprecated and replaced with the idrac_bios module.
+- The dellemc_configure_idrac_network module is deprecated and replaced with the idrac_network module.
+- The dellemc_configure_idrac_timezone module is deprecated and replaced with the idrac_timezone_ntp module.
+- The dellemc_configure_idrac_users module is deprecated and replaced with the idrac_user module.
+- The dellemc_delete_lc_job and dellemc_delete_lc_job_queue modules are deprecated and replaced with the idrac_lifecycle_controller_jobs module.
+- The dellemc_export_lc_logs module is deprecated and replaced with the idrac_lifecycle_controller_logs module.
+- The dellemc_get_lc_job_status module is deprecated and replaced with the idrac_lifecycle_controller_job_status_info module.
+- The dellemc_get_lcstatus module is deprecated and replaced with the idrac_lifecycle_controller_status_info module.
+- The dellemc_idrac_reset module is deprecated and replaced with the idrac_reset module.
+- The dellemc_setup_idrac_syslog module is deprecated and replaced  with the idrac_syslog module.
