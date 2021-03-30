@@ -17,4 +17,4 @@ for i in 1 2 3; do
 done
 
 # ensure debug does not set top level vars when looking at ansible_facts
-ansible-playbook nosetfacts.yml "@$"
+ansible-playbook nosetfacts.yml "$@"
