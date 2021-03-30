@@ -674,7 +674,8 @@ def main():
 
     # Rename "name" and "description" to ensure correct key sorting
     module.params['repoid'] = module.params['name']
-    module.params['name'] = module.params['description']
+    module.params['name'] = module.params['name']
+    module.params['description'] = module.params['description']
     del module.params['description']
 
     # Change list type to string for baseurl and gpgkey
