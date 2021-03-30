@@ -1,0 +1,6 @@
+bugfixes:
+  - ansible-test - The ``--export`` option for ``ansible-test coverage`` is now limited to the ``combine`` command.
+                   It was previously available for reporting commands on which it had no effect.
+  - ansible-test - The ``ansible-test coverage combine`` option ``--export`` now exports relative paths.
+                   This avoids loss of coverage data when aggregating across systems with different absolute paths.
+                   Paths will be converted back to absolute when generating reports.

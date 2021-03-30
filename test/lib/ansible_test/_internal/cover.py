@@ -138,6 +138,9 @@ def _command_coverage_combine_python(args):
             if not filename:
                 continue
 
+            if args.export:
+                filename = os.path.relpath(filename)  # exported paths must be relative since absolute paths may differ between systems
+
             if group not in groups:
                 groups[group] = {}
 
@@ -312,6 +315,8 @@ def _sanitise_filename(filename, modules=None, collection_search_re=None, collec
         new_name = re.sub(r'^.*' + re.escape(integration_temp_path) + '[^/]+/', root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
+
+    filename = os.path.abspath(filename)  # make sure path is absolute (will be relative if previously exported)
 
     return filename
 
@@ -509,6 +514,9 @@ def _command_coverage_combine_powershell(args):
             filename = _sanitise_filename(filename)
             if not filename:
                 continue
+
+            if args.export:
+                filename = os.path.relpath(filename)  # exported paths must be relative since absolute paths may differ between systems
 
             if isinstance(hit_info, dict) and not hit_info.get('Line'):
                 # Input data was previously aggregated and thus uses the standard ansible-test output format for PowerShell coverage.
