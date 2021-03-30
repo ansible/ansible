@@ -79,6 +79,9 @@ def _command_coverage_combine_python(args):
             continue
 
         for filename, arcs in enumerate_python_arcs(coverage_file, coverage, modules, collection_search_re, collection_sub_re):
+            if args.export:
+                filename = os.path.relpath(filename)  # exported paths must be relative since absolute paths may differ between systems
+
             if group not in groups:
                 groups[group] = {}
 
@@ -157,6 +160,9 @@ def _command_coverage_combine_powershell(args):
             continue
 
         for filename, hits in enumerate_powershell_lines(coverage_file, collection_search_re, collection_sub_re):
+            if args.export:
+                filename = os.path.relpath(filename)  # exported paths must be relative since absolute paths may differ between systems
+
             if group not in groups:
                 groups[group] = {}
 

@@ -576,6 +576,9 @@ def parse_args():
     coverage_combine.set_defaults(func=command_coverage_combine,
                                   config=CoverageConfig)
 
+    coverage_combine.add_argument('--export',
+                                  help='directory to export combined coverage files to')
+
     add_extra_coverage_options(coverage_combine)
 
     coverage_erase = coverage_subparsers.add_parser('erase',
@@ -985,9 +988,6 @@ def add_extra_coverage_options(parser):
     parser.add_argument('--stub',
                         action='store_true',
                         help='generate empty report of all python/powershell source files')
-
-    parser.add_argument('--export',
-                        help='directory to export combined coverage files to')
 
 
 def add_httptester_options(parser, argparse):
