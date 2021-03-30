@@ -288,6 +288,8 @@ def sanitize_filename(
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
 
+    filename = os.path.abspath(filename)  # make sure path is absolute (will be relative if previously exported)
+
     return filename
 
 
