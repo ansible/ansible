@@ -5,6 +5,33 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.0b4
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2021-03-29
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-galaxy CLI - ``collection verify`` command now exits with a non-zero exit code on verification failure
+- ansible-galaxy CLI - ``collection verify`` command now supports a ``--offline`` option for local-only verification
+
+Bugfixes
+--------
+
+- Correctly set template_path and template_fullpath for usage in template lookup and action plugins.
+- Try to avoid kernel 'blocking' state on reading files while fact gathering.
+- apt - fix policy_rc_d parameter throwing an exception when restoring original file (https://github.com/ansible/ansible/issues/66211)
+- argument spec validation - fix behavior of ``apply_defaults=True`` when an empty dictionary is specified for such an option (https://github.com/ansible/ansible/pull/74029).
+- pause - do not accept enter to continue when a timeout is set (https://github.com/ansible/ansible/issues/73948)
+- setup module, fix error handling on bad subset given
+- wait_for module, move missing socket into function to get proper comparrison in time.
+
 v2.11.0b3
 =========
 

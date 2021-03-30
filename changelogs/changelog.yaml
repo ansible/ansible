@@ -1549,3 +1549,40 @@ releases:
     - use-validator-in-ansiblemodule.yml
     - v2.11.0b3_summary.yaml
     release_date: '2021-03-19'
+  2.11.0b4:
+    changes:
+      bugfixes:
+      - Correctly set template_path and template_fullpath for usage in template lookup
+        and action plugins.
+      - Try to avoid kernel 'blocking' state on reading files while fact gathering.
+      - apt - fix policy_rc_d parameter throwing an exception when restoring original
+        file (https://github.com/ansible/ansible/issues/66211)
+      - argument spec validation - fix behavior of ``apply_defaults=True`` when an
+        empty dictionary is specified for such an option (https://github.com/ansible/ansible/pull/74029).
+      - pause - do not accept enter to continue when a timeout is set (https://github.com/ansible/ansible/issues/73948)
+      - setup module, fix error handling on bad subset given
+      - wait_for module, move missing socket into function to get proper comparrison
+        in time.
+      minor_changes:
+      - ansible-galaxy CLI - ``collection verify`` command now exits with a non-zero
+        exit code on verification failure
+      - ansible-galaxy CLI - ``collection verify`` command now supports a ``--offline``
+        option for local-only verification
+      release_summary: '| Release Date: 2021-03-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 73840_apt-policy-rc-d.yml
+    - 73948-pause-no-enter-with-timeout.yml
+    - 74029-argspec-apply_defaults.yml
+    - fix_setup_bad_subset.yml
+    - galaxy_verify_exitcode.yml
+    - galaxy_verify_local.yml
+    - less_blocks_on_facts.yml
+    - template_temp_vars_fix.yml
+    - v2.11.0b4_summary.yaml
+    - wait_for_fix.yml
+    release_date: '2021-03-29'
