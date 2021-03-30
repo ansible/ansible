@@ -2,18 +2,20 @@
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: create namespaced non fact
-      set_fact:
+  - name: create namespaced non fact
+    set_fact:
         ansible_facts:
             nonfact: 1
 
-    - name: ensure nonfact does not exist
-      assert:
-        - nsfact is not defined
+  - name: ensure nonfact does not exist
+    assert:
+      that:
+        - nonfact is not defined
 
-    - name: debug ansible_facts to create issue
-      debug: var=ansible_facts
+  - name: debug ansible_facts to create issue
+    debug: var=ansible_facts
 
-    - name: ensure nonfact STILL does not exist
-      assert:
-        - nsfact is not defined
+  - name: ensure nonfact STILL does not exist
+    assert:
+      that:
+        - nonfact is not defined
