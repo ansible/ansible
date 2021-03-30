@@ -878,7 +878,7 @@ class TestIptables(ModuleTestCase):
         ])
 
     def test_comment_position_at_end(self):
-        """Test flush without parameters"""
+        """Test comment position to make sure it is at the end of command"""
         set_module_args({
             'chain': 'INPUT',
             'jump': 'ACCEPT',
