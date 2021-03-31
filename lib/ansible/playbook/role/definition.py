@@ -151,7 +151,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             all_vars = dict()
 
         templar = Templar(loader=self._loader, variables=all_vars)
-        finder = AnsibleRoleFinder(self._loader, self._role_basedir, templar)
+        finder = AnsibleRoleFinder(self._loader.get_basedir(), self._role_basedir, templar)
 
         result = finder.find_first(role_name, self._collection_list)
         if result:

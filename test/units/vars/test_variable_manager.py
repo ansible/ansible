@@ -26,14 +26,13 @@ from units.compat.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import iteritems
 from ansible.playbook.play import Play
-
-
-from units.mock.loader import DictDataLoader
-from units.mock.path import mock_unfrackpath_noop
-
+from ansible.utils.role_finder import AnsibleRoleFinder
 from ansible.vars.manager import VariableManager
 
+from units.mock.loader import DictDataLoader
 
+
+@patch.object(AnsibleRoleFinder, 'find_first', lambda s, r, c: AnsibleRoleFinder.Result(r, '/etc/ansible/roles/%s' % r))
 class TestVariableManager(unittest.TestCase):
 
     def test_basic_manager(self):
@@ -135,7 +134,6 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
         self.assertEqual(v.get_vars(task=mock_task, use_cache=False).get("foo"), "bar")
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_precedence(self):
         # FIXME: this needs to be redone as dataloader is not the automatic source of data anymore
         return
@@ -252,7 +250,6 @@ class TestVariableManager(unittest.TestCase):
         res = v.get_vars(play=play1, host=h1)
         self.assertEqual(res['fact_cache_var'], 'fact_cache_var_from_fact_cache')
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_role_vars_dependencies(self):
         '''
         Tests vars from role dependencies with duplicate dependencies.

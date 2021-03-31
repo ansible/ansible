@@ -56,7 +56,7 @@ class DictDataLoader(DataLoader):
 
     def path_exists(self, path):
         path = to_text(path)
-        return path in self._file_mapping or path in self._known_directories or super(DictDataLoader, self).path_exists(path)
+        return path in self._file_mapping or path in self._known_directories
 
     def is_file(self, path):
         path = to_text(path)

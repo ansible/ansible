@@ -31,6 +31,28 @@ display = Display()
 RE_TASKS = re.compile(u'(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
 
 
+def path_dwim(basedir, given):
+    '''
+    make relative paths work like folks expect.
+    '''
+
+    given = unquote(given)
+    given = to_text(given, errors='surrogate_or_strict')
+
+    if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
+        path = given
+    else:
+        n_basedir = to_text(basedir, errors='surrogate_or_strict')
+        path = os.path.join(n_basedir, given)
+
+    return unfrackpath(path, follow=False)
+
+
+def path_exists(basedir, path):
+    path = path_dwim(basedir, path)
+    return os.path.exists(to_bytes(path, errors='surrogate_or_strict'))
+
+
 class DataLoader:
 
     '''
@@ -106,8 +128,7 @@ class DataLoader:
             return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
-        path = self.path_dwim(path)
-        return os.path.exists(to_bytes(path, errors='surrogate_or_strict'))
+        return path_exists(self.get_basedir(), path)
 
     def is_file(self, path):
         path = self.path_dwim(path)
@@ -179,20 +200,7 @@ class DataLoader:
             self._basedir = to_text(basedir)
 
     def path_dwim(self, given):
-        '''
-        make relative paths work like folks expect.
-        '''
-
-        given = unquote(given)
-        given = to_text(given, errors='surrogate_or_strict')
-
-        if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
-            path = given
-        else:
-            basedir = to_text(self._basedir, errors='surrogate_or_strict')
-            path = os.path.join(basedir, given)
-
-        return unfrackpath(path, follow=False)
+        return path_dwim(self.get_basedir(), given)
 
     def _is_role(self, path):
         ''' imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc '''

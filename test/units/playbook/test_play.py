@@ -24,9 +24,9 @@ from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.play import Play
+from ansible.utils.role_finder import AnsibleRoleFinder
 
 from units.mock.loader import DictDataLoader
-from units.mock.path import mock_unfrackpath_noop
 
 
 class TestPlay(unittest.TestCase):
@@ -96,7 +96,7 @@ class TestPlay(unittest.TestCase):
             post_tasks=[dict(action='shell echo "hello world"')],
         ))
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
+    @patch.object(AnsibleRoleFinder, 'find_first', lambda s, r, c: AnsibleRoleFinder.Result(r, '/etc/ansible/roles/%s' % r))
     def test_play_with_roles(self):
         fake_loader = DictDataLoader({
             '/etc/ansible/roles/foo/tasks.yml': """

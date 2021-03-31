@@ -25,9 +25,9 @@ from units.compat.mock import patch, MagicMock
 from ansible.executor.play_iterator import HostState, PlayIterator
 from ansible.playbook import Playbook
 from ansible.playbook.play_context import PlayContext
+from ansible.utils.role_finder import AnsibleRoleFinder
 
 from units.mock.loader import DictDataLoader
-from units.mock.path import mock_unfrackpath_noop
 
 
 class TestPlayIterator(unittest.TestCase):
@@ -49,7 +49,7 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
+    @patch.object(AnsibleRoleFinder, 'find_first', lambda s, r, c: AnsibleRoleFinder.Result(r, '/etc/ansible/roles/%s' % r))
     def test_play_iterator(self):
         # import epdb; epdb.st()
         fake_loader = DictDataLoader({

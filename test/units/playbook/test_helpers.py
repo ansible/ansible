@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from units.compat.mock import MagicMock
+from units.compat.mock import MagicMock, patch
 from units.mock.loader import DictDataLoader
 
 from ansible import errors
@@ -31,6 +31,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role.include import RoleInclude
+from ansible.utils.role_finder import AnsibleRoleFinder
 
 from ansible.playbook import helpers
 
@@ -333,6 +334,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self._assert_is_task_list_or_blocks(res)
 
 
+@patch.object(AnsibleRoleFinder, 'find_first', lambda s, r, c: AnsibleRoleFinder.Result(r, '/etc/ansible/roles/%s' % r))
 class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
     def setUp(self):
         self._setup()

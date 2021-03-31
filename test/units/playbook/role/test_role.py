@@ -27,11 +27,11 @@ from ansible.module_utils.common._collections_compat import Container
 from ansible.playbook.block import Block
 
 from units.mock.loader import DictDataLoader
-from units.mock.path import mock_unfrackpath_noop
 
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role import hash_params
+from ansible.utils.role_finder import AnsibleRoleFinder
 
 
 class TestHashParams(unittest.TestCase):
@@ -164,9 +164,9 @@ class TestHashParams(unittest.TestCase):
             self.assertIn(key, foo)
 
 
+@patch.object(AnsibleRoleFinder, 'find_first', lambda s, r, c: AnsibleRoleFinder.Result(r, '/etc/ansible/roles/%s' % r))
 class TestRole(unittest.TestCase):
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_tasks(self):
 
         fake_loader = DictDataLoader({
@@ -185,7 +185,6 @@ class TestRole(unittest.TestCase):
         self.assertEqual(len(r._task_blocks), 1)
         assert isinstance(r._task_blocks[0], Block)
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_tasks_dir_vs_file(self):
 
         fake_loader = DictDataLoader({
@@ -205,7 +204,6 @@ class TestRole(unittest.TestCase):
 
         self.assertEqual(r._task_blocks[0]._ds[0]['command'], 'baz')
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_handlers(self):
 
         fake_loader = DictDataLoader({
@@ -224,7 +222,6 @@ class TestRole(unittest.TestCase):
         self.assertEqual(len(r._handler_blocks), 1)
         assert isinstance(r._handler_blocks[0], Block)
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars(self):
 
         fake_loader = DictDataLoader({
@@ -245,7 +242,6 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r._default_vars, dict(foo='bar'))
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars_dirs(self):
 
         fake_loader = DictDataLoader({
@@ -266,7 +262,6 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r._default_vars, dict(foo='bar'))
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars_nested_dirs(self):
 
         fake_loader = DictDataLoader({
@@ -287,7 +282,6 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r._default_vars, dict(foo='bar'))
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars_nested_dirs_combined(self):
 
         fake_loader = DictDataLoader({
@@ -309,7 +303,6 @@ class TestRole(unittest.TestCase):
 
         self.assertEqual(r._default_vars, dict(foo='bar', a=1, b=2))
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_vars_dir_vs_file(self):
 
         fake_loader = DictDataLoader({
@@ -329,7 +322,6 @@ class TestRole(unittest.TestCase):
 
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_metadata(self):
 
         fake_loader = DictDataLoader({
@@ -401,7 +393,6 @@ class TestRole(unittest.TestCase):
         # i = RoleInclude.load('recursive1_metadata', play=mock_play, loader=fake_loader)
         # self.assertRaises(AnsibleError, Role.load, i, play=mock_play)
 
-    @patch('ansible.utils.role_finder.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_complex(self):
 
         # FIXME: add tests for the more complex uses of

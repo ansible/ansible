@@ -26,11 +26,12 @@ from ansible.playbook import Play
 from ansible.playbook.role_include import IncludeRole
 from ansible.playbook.task import Task
 from ansible.vars.manager import VariableManager
+from ansible.utils.role_finder import AnsibleRoleFinder
 
 from units.mock.loader import DictDataLoader
-from units.mock.path import mock_unfrackpath_noop
 
 
+@patch.object(AnsibleRoleFinder, 'find_first', lambda s, r, c: AnsibleRoleFinder.Result(r, '/etc/ansible/roles/%s' % r))
 class TestIncludeRole(unittest.TestCase):
 
     def setUp(self):
@@ -114,8 +115,6 @@ class TestIncludeRole(unittest.TestCase):
             yield (role.get_name(),
                    self.var_manager.get_vars(play=play, task=task))
 
-    @patch('ansible.utils.role_finder.unfrackpath',
-           mock_unfrackpath_noop)
     def test_simple(self):
 
         """Test one-level include with default tasks and variables"""
@@ -137,8 +136,6 @@ class TestIncludeRole(unittest.TestCase):
             self.assertEqual(task_vars.get('test_variable'), 'l3-main')
         self.assertTrue(tested)
 
-    @patch('ansible.utils.role_finder.unfrackpath',
-           mock_unfrackpath_noop)
     def test_simple_alt_files(self):
 
         """Test one-level include with alternative tasks and variables"""
@@ -158,8 +155,6 @@ class TestIncludeRole(unittest.TestCase):
             self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
         self.assertTrue(tested)
 
-    @patch('ansible.utils.role_finder.unfrackpath',
-           mock_unfrackpath_noop)
     def test_nested(self):
 
         """
@@ -204,8 +199,6 @@ class TestIncludeRole(unittest.TestCase):
                 self.fail()
         self.assertFalse(expected_roles)
 
-    @patch('ansible.utils.role_finder.unfrackpath',
-           mock_unfrackpath_noop)
     def test_nested_alt_files(self):
 
         """
