@@ -1,0 +1,2 @@
+bugfixes:
+  - encrypt - switch bcrypt to modern version 2b
