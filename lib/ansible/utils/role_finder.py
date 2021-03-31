@@ -63,12 +63,22 @@ class AnsibleRoleFinder(object):
         self.__standard_search_paths.append(self.__basedir)
 
     # ========================================================================
+    # Private API
+    # ========================================================================
+
+    # ========================================================================
     # Public API
     # ========================================================================
 
     @property
     def standard_role_search_paths(self):
-        return self.__standard_search_paths
+        paths = []
+        for path in self.__standard_search_paths:
+            if self.__templar:
+                paths.append(self.__templar.template(path))
+            else:
+                paths.append(path)
+        return paths
 
     @property
     def templar(self):
@@ -113,8 +123,6 @@ class AnsibleRoleFinder(object):
             return self.Result(simple_role_name, role_path, collection_name)
 
         for path in self.standard_role_search_paths:
-            if self.__templar:
-                path = self.__templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
             if path_exists(self.__basedir, role_path):
                 return self.Result(role_name, role_path)
@@ -159,10 +167,6 @@ class AnsibleRoleFinder(object):
         """
         filtered_results = []
         return filtered_results
-
-    # ========================================================================
-    # Private API
-    # ========================================================================
 
     class Result(object):
         """
