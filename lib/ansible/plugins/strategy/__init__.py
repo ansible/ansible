@@ -663,7 +663,7 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
                         post_process_whens(result_item, original_task, handler_templar)
 
-                    if 'ansible_facts' in result_item:
+                    if 'ansible_facts' in result_item and original_task.action not in C._ACTION_DEBUG:
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
                             host_list = self.get_delegated_hosts(result_item, original_task)
