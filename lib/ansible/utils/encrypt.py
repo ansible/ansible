@@ -68,7 +68,7 @@ class BaseHash(object):
     algo = namedtuple('algo', ['crypt_id', 'salt_size', 'implicit_rounds', 'salt_exact'])
     algorithms = {
         'md5_crypt': algo(crypt_id='1', salt_size=8, implicit_rounds=None, salt_exact=False),
-        'bcrypt': algo(crypt_id='2a', salt_size=22, implicit_rounds=None, salt_exact=True),
+        'bcrypt': algo(crypt_id='2b', salt_size=22, implicit_rounds=None, salt_exact=True),
         'sha256_crypt': algo(crypt_id='5', salt_size=16, implicit_rounds=5000, salt_exact=False),
         'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000, salt_exact=False),
     }
