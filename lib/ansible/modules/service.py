@@ -20,7 +20,8 @@ description:
 options:
     name:
         description:
-        - Name of the service.
+        - Name of the service. This parameter takes the name of exactly
+          one service to work with.
         type: str
         required: true
     state:
