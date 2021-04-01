@@ -17,7 +17,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""CLI tool for starting new Shippable CI runs."""
+
+"""CLI tool for starting new CI runs."""
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -25,45 +27,42 @@ __metaclass__ = type
 import argparse
 import json
 import os
-
+import sys
 import requests
+import requests.auth
 
 try:
     import argcomplete
 except ImportError:
     argcomplete = None
 
+# TODO: Dev does not have a token for AZP, somebody please test this.
+
+# Following changes should be made to improve the overall style:
+# TODO use new style formatting method.
+# TODO type hints.
+
 
 def main():
     """Main program body."""
+
     args = parse_args()
-    start_run(args)
+
+    key = os.environ.get('AZP_TOKEN', None)
+    if not key:
+        sys.stderr.write("please set you AZP token in AZP_TOKEN")
+        sys.exit(1)
+
+    start_run(args, key)
 
 
 def parse_args():
     """Parse and return args."""
-    api_key = get_api_key()
 
-    parser = argparse.ArgumentParser(description='Start a new Shippable run.')
+    parser = argparse.ArgumentParser(description='Start a new CI run.')
 
-    parser.add_argument('project',
-                        metavar='account/project',
-                        help='Shippable account/project')
-
-    target = parser.add_mutually_exclusive_group()
-
-    target.add_argument('--branch',
-                        help='branch name')
-
-    target.add_argument('--run',
-                        metavar='ID',
-                        help='Shippable run ID')
-
-    parser.add_argument('--key',
-                        metavar='KEY',
-                        default=api_key,
-                        required=not api_key,
-                        help='Shippable API key')
+    parser.add_argument('-p', '--pipeline-id', type=int, default=20, help='pipeline to download the job from')
+    parser.add_argument('--ref', help='git ref name to run on')
 
     parser.add_argument('--env',
                         nargs=2,
@@ -79,71 +78,16 @@ def parse_args():
     return args
 
 
-def start_run(args):
-    """Start a new Shippable run."""
-    headers = dict(
-        Authorization='apiToken %s' % args.key,
-    )
+def start_run(args, key):
+    """Start a new CI run."""
 
-    # get project ID
+    url = "https://dev.azure.com/ansible/ansible/_apis/pipelines/%s/runs?api-version=6.0-preview.1" % args.pipeline_id
+    payload = {"resources": {"repositories": {"self": {"refName": args.ref}}}}
 
-    data = dict(
-        projectFullNames=args.project,
-    )
+    resp = requests.post(url, auth=requests.auth.HTTPBasicAuth('user', key), data=payload)
+    resp.raise_for_status()
 
-    url = 'https://api.shippable.com/projects'
-    response = requests.get(url, data, headers=headers)
-
-    if response.status_code != 200:
-        raise Exception(response.content)
-
-    result = response.json()
-
-    if len(result) != 1:
-        raise Exception(
-            'Received %d items instead of 1 looking for %s in:\n%s' % (
-                len(result),
-                args.project,
-                json.dumps(result, indent=4, sort_keys=True)))
-
-    project_id = response.json()[0]['id']
-
-    # new build
-
-    data = dict(
-        globalEnv=dict((kp[0], kp[1]) for kp in args.env or [])
-    )
-
-    if args.branch:
-        data['branchName'] = args.branch
-    elif args.run:
-        data['runId'] = args.run
-
-    url = 'https://api.shippable.com/projects/%s/newBuild' % project_id
-    response = requests.post(url, json=data, headers=headers)
-
-    if response.status_code != 200:
-        raise Exception("HTTP %s: %s\n%s" % (response.status_code, response.reason, response.content))
-
-    print(json.dumps(response.json(), indent=4, sort_keys=True))
-
-
-def get_api_key():
-    """
-    rtype: str
-    """
-    key = os.environ.get('SHIPPABLE_KEY', None)
-
-    if key:
-        return key
-
-    path = os.path.join(os.environ['HOME'], '.shippable.key')
-
-    try:
-        with open(path, 'r') as key_fd:
-            return key_fd.read().strip()
-    except IOError:
-        return None
+    print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
 
 if __name__ == '__main__':
