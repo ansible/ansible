@@ -49,6 +49,12 @@ options:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
     type: path
     version_added: "1.6"
+  io_buffer_size:
+    description:
+      - Size of the volatile memory buffer that is used for extracting files from the archive in bytes.
+    type: int
+    default: 64 KiB
+    version_added: "2.12"
   list_files:
     description:
       - If set to True, return the list of files that are contained in the tarball.
@@ -226,6 +232,7 @@ import re
 import stat
 import time
 import traceback
+from functools import partial
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
@@ -251,11 +258,14 @@ INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
 
 
-def crc32(path):
+def crc32(path, buffer_size):
     ''' Return a CRC32 checksum of a file '''
+
+    crc = binascii.crc32(b'')
     with open(path, 'rb') as f:
-        file_content = f.read()
-    return binascii.crc32(file_content) & 0xffffffff
+        for b_block in iter(partial(f.read, buffer_size), b''):
+            crc = binascii.crc32(b_block, crc)
+    return crc & 0xffffffff
 
 
 def shell_escape(string):
@@ -275,6 +285,7 @@ class ZipArchive(object):
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
+        self.io_buffer_size = module.params.get("io_buffer_size", 64 * 1024)
         self.excludes = module.params['exclude']
         self.includes = []
         self.include_files = self.module.params['include']
@@ -588,7 +599,7 @@ class ZipArchive(object):
 
             # Compare file checksums
             if stat.S_ISREG(st.st_mode):
-                crc = crc32(b_dest)
+                crc = crc32(b_dest, self.io_buffer_size)
                 if crc != self._crc32(path):
                     change = True
                     err += 'File %s differs in CRC32 checksum (0x%08x vs 0x%08x)\n' % (path, self._crc32(path), crc)
