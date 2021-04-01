@@ -46,8 +46,9 @@ options:
         description:
             - Which hostname to set
         choices: ['current', 'permanent', 'all']
+        default: all
         type: str
-        version_added: '999'
+        version_added: '9.9'
 '''
 
 EXAMPLES = '''
@@ -1025,7 +1026,7 @@ def main():
 
     hostname = Hostname(module)
     name = module.params['name']
-    state = module.params['state'];
+    state = module.params['state']
 
     current_hostname = hostname.get_current_hostname()
     permanent_hostname = hostname.get_permanent_hostname()
