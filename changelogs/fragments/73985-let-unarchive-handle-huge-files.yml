@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - allow extracting archives that contain files which size exceeds free system memory (https://github.com/ansible/ansible/issues/73985).
