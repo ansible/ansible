@@ -458,6 +458,10 @@ groupings:
   - aws
   rds_subnet_group:
   - aws
+  rds_option_group:
+  - aws
+  rds_option_group_info:
+  - aws
   redshift:
   - aws
   redshift_cross_region_snapshots:
