@@ -319,12 +319,11 @@ import datetime
 import fnmatch
 import itertools
 import os
-import shutil
+import random
 import re
+import shutil
 import sys
 import tempfile
-import time
-import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -1174,12 +1173,16 @@ def main():
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
 
-    # Get the cache object, this has 3 retries built in, why its left out of lock timeout.
-    cache = get_cache(module)
 
     # max times we'll retry
     deadline = time.time() + p['lock_timeout']
+
+    # keep running on lock issues unless timeout or resolution is hit.
     while True:
+
+        # Get the cache object, this has 3 retries built in
+        cache = get_cache(module)
+
         try:
             if p['default_release']:
                 try:
