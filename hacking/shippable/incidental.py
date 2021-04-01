@@ -37,6 +37,11 @@ try:
 except ImportError:
     argcomplete = None
 
+# Following changes should be made to improve the overall style:
+# TODO use new style formatting method.
+# TODO type hints.
+# TODO pathlib.
+
 
 def main():
     """Main program body."""
@@ -132,14 +137,9 @@ def incidental_report(args):
         raise ApplicationError('%s: commit not found: %s\n'
                                'make sure your source repository is up-to-date' % (git.path, coverage_data.result_sha))
 
-    if coverage_data.status_code != 30:
-        check_failed(args, 'results from Shippable indicate tests did not pass (status code: %d)\n'
-                           're-run until passing, then download the latest results and re-run the report using those results' % coverage_data.status_code)
-
-    if coverage_data.missing_jobs or coverage_data.extra_jobs:
-        check_failed(args, 'unexpected results from Shippable -- missing jobs: %s, extra jobs: %s\n'
-                           'make sure the tests were successful and the all results were downloaded\n' % (
-                               sorted(coverage_data.missing_jobs), sorted(coverage_data.extra_jobs)))
+    if coverage_data.result != "succeeded":
+        check_failed(args, 'results indicate tests did not pass (result: %s)\n'
+                           're-run until passing, then download the latest results and re-run the report using those results' % coverage_data.result)
 
     if not coverage_data.paths:
         raise ApplicationError('no coverage data found\n'
@@ -280,26 +280,13 @@ class CoverageData:
         with open(os.path.join(result_path, 'run.json')) as run_file:
             run = json.load(run_file)
 
-        self.org_name = run['subscriptionOrgName']
-        self.project_name = run['projectName']
-        self.result_sha = run['commitSha']
-        self.status_code = run['statusCode']
+        self.result_sha = run["resources"]["repositories"]["self"]["version"]
+        self.result = run['result']
 
-        self.github_base_url = 'https://github.com/%s/%s/blob/%s/' % (self.org_name, self.project_name, self.result_sha)
+        self.github_base_url = 'https://github.com/ansible/ansible/blob/%s/' % self.result_sha
 
         # locate available results
-        self.paths = sorted(glob.glob(os.path.join(result_path, '*', 'test', 'testresults', 'coverage-analyze-targets.json')))
-
-        # make sure the test matrix is complete
-        matrix_include = run['cleanRunYml']['matrix']['include']
-        matrix_jobs = list((idx, dict(tuple(item.split('=', 1)) for item in value['env'])) for idx, value in enumerate(matrix_include, start=1))
-        sanity_job_numbers = set(idx for idx, env in matrix_jobs if env['T'].startswith('sanity/'))
-        units_job_numbers = set(idx for idx, env in matrix_jobs if env['T'].startswith('units/'))
-        expected_job_numbers = set(idx for idx, env in matrix_jobs)
-        actual_job_numbers = set(int(os.path.relpath(path, result_path).split(os.path.sep)[0]) for path in self.paths)
-
-        self.missing_jobs = expected_job_numbers - actual_job_numbers - sanity_job_numbers - units_job_numbers
-        self.extra_jobs = actual_job_numbers - expected_job_numbers - sanity_job_numbers - units_job_numbers
+        self.paths = sorted(glob.glob(os.path.join(result_path, '*', 'coverage-analyze-targets.json')))
 
 
 class Git:
