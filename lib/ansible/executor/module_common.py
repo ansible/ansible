@@ -633,7 +633,11 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
         interpreter_out = templar.template(task_vars.get(interpreter_config).strip())
 
     else:
-        raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
+        # TODO: fix in future for non python interpreters
+        if 'python' in interpreter_name:
+            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
+        else:
+            return None, interpreter
 
     shebang = u'#!' + interpreter_out
 
