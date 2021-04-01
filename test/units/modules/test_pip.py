@@ -70,3 +70,21 @@ def test_new_mod_global_fail(run_ansible_module):
 )
 def test_new_mod_param(run_ansible_module):
     assert run_ansible_module(name='bottle', executable='pip3.9') == {}
+
+
+def test_new_mod_yaml_fail(run_ansible_task_yaml):
+    failed_response = run_ansible_task_yaml("""
+      ansible.modules.pip:
+        name: bottle
+        executable: pip3.9
+    """)
+    assert failed_response['failed']
+
+
+def test_new_mod_yaml_list_fail(run_ansible_task_yaml):
+    failed_response = run_ansible_task_yaml("""
+    - ansible.modules.pip:
+        name: bottle
+        executable: pip3.9
+    """)
+    assert failed_response['failed']
