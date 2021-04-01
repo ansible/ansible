@@ -24,7 +24,7 @@ description:
     - This module acts as a proxy to the underlying package manager module. While all arguments will be passed to the
       underlying module, not all modules support the same arguments. This documentation only covers the minimum intersection
       of module arguments that all packaging modules support.
-    - For Windows targets, use the M(ansile.windows.win_package) module instead.
+    - For Windows targets, use the M(ansible.windows.win_package) module instead.
 options:
   name:
     description:
