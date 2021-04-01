@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Add a ``six < 1.14.0`` constraint for Python 2.6.
