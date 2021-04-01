@@ -42,6 +42,12 @@ options:
         choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'macosx', 'darwin', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
         type: str
         version_added: '2.9'
+    state:
+        description:
+            - Which hostname to set
+        choices: ['current', 'permanent', 'all']
+        type: str
+        version_added: '999'
 '''
 
 EXAMPLES = '''
@@ -156,6 +162,12 @@ class Hostname(object):
 
     def update_current_and_permanent_hostname(self):
         return self.strategy.update_current_and_permanent_hostname()
+
+    def update_current_hostname(self):
+        return self.strategy.update_current_hostname()
+
+    def update_permanent_hostname(self):
+        return self.strategy.update_permanent_hostname()
 
     def get_current_hostname(self):
         return self.strategy.get_current_hostname()
@@ -1005,24 +1017,30 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            use=dict(type='str', choices=STRATS.keys())
+            use=dict(type='str', choices=STRATS.keys()),
+            state=dict(type='str', choices=['current', 'permanent', 'all'], default='all'),
         ),
         supports_check_mode=True,
     )
 
     hostname = Hostname(module)
     name = module.params['name']
+    state = module.params['state'];
 
     current_hostname = hostname.get_current_hostname()
     permanent_hostname = hostname.get_permanent_hostname()
 
-    changed = hostname.update_current_and_permanent_hostname()
-
-    if name != current_hostname:
+    if state == 'all':
+        changed = hostname.update_current_and_permanent_hostname()
+        if name != current_hostname:
+            name_before = current_hostname
+        else:
+            name_before = permanent_hostname
+    elif state == 'current':
+        changed = hostname.update_current_hostname()
         name_before = current_hostname
-    elif name != permanent_hostname:
-        name_before = permanent_hostname
-    else:
+    elif state == 'permanent':
+        changed = hostname.update_permanent_hostname()
         name_before = permanent_hostname
 
     # NOTE: socket.getfqdn() calls gethostbyaddr(socket.gethostname()), which can be
