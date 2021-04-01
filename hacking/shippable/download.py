@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """CLI tool for downloading results from Shippable CI runs."""
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -27,6 +28,8 @@ import json
 import os
 import re
 import sys
+import io
+import zipfile
 
 import requests
 
@@ -35,22 +38,33 @@ try:
 except ImportError:
     argcomplete = None
 
+# Following changes should be made to improve the overall style:
+# TODO use new style formatting method.
+# TODO use requests session.
+# TODO type hints.
+# TODO pathlib.
+
 
 def main():
     """Main program body."""
+
     args = parse_args()
     download_run(args)
 
 
+def run_id_arg(arg):
+    m = re.fullmatch(r"(?:https:\/\/dev\.azure\.com\/ansible\/ansible\/_build\/results\?buildId=)?(\d+)", arg)
+    if not m:
+        raise ValueError("run does not seems to be a URI or an ID")
+    return m.group(1)
+
+
 def parse_args():
     """Parse and return args."""
-    api_key = get_api_key()
 
-    parser = argparse.ArgumentParser(description='Download results from a Shippable run.')
+    parser = argparse.ArgumentParser(description='Download results from a CI run.')
 
-    parser.add_argument('run_id',
-                        metavar='RUN',
-                        help='shippable run id, run url or run name formatted as: account/project/run_number')
+    parser.add_argument('run', metavar='RUN', type=run_id_arg, help='AZP run id or URI')
 
     parser.add_argument('-v', '--verbose',
                         dest='verbose',
@@ -62,27 +76,15 @@ def parse_args():
                         action='store_true',
                         help='show what would be downloaded without downloading')
 
-    parser.add_argument('--key',
-                        dest='api_key',
-                        default=api_key,
-                        required=api_key is None,
-                        help='api key for accessing Shippable')
+    parser.add_argument('-p', '--pipeline-id', type=int, default=20, help='pipeline to download the job from')
+
+    parser.add_argument('--artifacts',
+                        action='store_true',
+                        help='download artifacts')
 
     parser.add_argument('--console-logs',
                         action='store_true',
                         help='download console logs')
-
-    parser.add_argument('--test-results',
-                        action='store_true',
-                        help='download test results')
-
-    parser.add_argument('--coverage-results',
-                        action='store_true',
-                        help='download code coverage results')
-
-    parser.add_argument('--job-metadata',
-                        action='store_true',
-                        help='download job metadata')
 
     parser.add_argument('--run-metadata',
                         action='store_true',
@@ -92,35 +94,30 @@ def parse_args():
                         action='store_true',
                         help='download everything')
 
-    parser.add_argument('--job-number',
-                        metavar='N',
-                        action='append',
-                        type=int,
-                        help='limit downloads to the given job number')
+    parser.add_argument('--match-artifact-name',
+                        default=re.compile('.*'),
+                        type=re.compile,
+                        help='only download artifacts which names match this regex')
+
+    parser.add_argument('--match-job-name',
+                        default=re.compile('.*'),
+                        type=re.compile,
+                        help='only download artifacts from jobs which names match this regex')
 
     if argcomplete:
         argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
 
-    old_runs_prefix = 'https://app.shippable.com/runs/'
-
-    if args.run_id.startswith(old_runs_prefix):
-        args.run_id = args.run_id[len(old_runs_prefix):]
-
     if args.all:
-        args.console_logs = True
-        args.test_results = True
-        args.coverage_results = True
-        args.job_metadata = True
+        args.artifacts = True
         args.run_metadata = True
+        args.console_logs = True
 
     selections = (
-        args.console_logs,
-        args.test_results,
-        args.coverage_results,
-        args.job_metadata,
+        args.artifacts,
         args.run_metadata,
+        args.console_logs
     )
 
     if not any(selections):
@@ -130,256 +127,100 @@ def parse_args():
 
 
 def download_run(args):
-    """Download a Shippable run."""
-    headers = dict(
-        Authorization='apiToken %s' % args.api_key,
-    )
+    """Download a run."""
 
-    match = re.search(
-        r'^https://app.shippable.com/github/(?P<account>[^/]+)/(?P<project>[^/]+)/runs/(?P<run_number>[0-9]+)(?:/summary|(/(?P<job_number>[0-9]+)))?$',
-        args.run_id)
+    output_dir = '%s' % args.run
 
-    if not match:
-        match = re.search(r'^(?P<account>[^/]+)/(?P<project>[^/]+)/(?P<run_number>[0-9]+)$', args.run_id)
-
-    if match:
-        account = match.group('account')
-        project = match.group('project')
-        run_number = int(match.group('run_number'))
-        job_number = int(match.group('job_number')) if match.group('job_number') else None
-
-        if job_number:
-            if args.job_number:
-                sys.exit('ERROR: job number found in url and specified with --job-number')
-
-            args.job_number = [job_number]
-
-        url = 'https://api.shippable.com/projects'
-        response = requests.get(url, dict(projectFullNames='%s/%s' % (account, project)), headers=headers)
-
-        if response.status_code != 200:
-            raise Exception(response.content)
-
-        project_id = response.json()[0]['id']
-
-        url = 'https://api.shippable.com/runs?projectIds=%s&runNumbers=%s' % (project_id, run_number)
-
-        response = requests.get(url, headers=headers)
-
-        if response.status_code != 200:
-            raise Exception(response.content)
-
-        run = [run for run in response.json() if run['runNumber'] == run_number][0]
-
-        args.run_id = run['id']
-    elif re.search('^[a-f0-9]+$', args.run_id):
-        url = 'https://api.shippable.com/runs/%s' % args.run_id
-
-        response = requests.get(url, headers=headers)
-
-        if response.status_code != 200:
-            raise Exception(response.content)
-
-        run = response.json()
-
-        account = run['subscriptionOrgName']
-        project = run['projectName']
-        run_number = run['runNumber']
-    else:
-        sys.exit('ERROR: invalid run: %s' % args.run_id)
-
-    output_dir = '%s/%s/%s' % (account, project, run_number)
-
-    if not args.test:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+    if not args.test and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     if args.run_metadata:
+        run_url = 'https://dev.azure.com/ansible/ansible/_apis/pipelines/%s/runs/%s?api-version=6.0-preview.1' % (args.pipeline_id, args.run)
+        run_info_response = requests.get(run_url)
+        run_info_response.raise_for_status()
+        run = run_info_response.json()
+
         path = os.path.join(output_dir, 'run.json')
         contents = json.dumps(run, sort_keys=True, indent=4)
 
-        if args.verbose or args.test:
+        if args.verbose:
             print(path)
 
         if not args.test:
             with open(path, 'w') as metadata_fd:
                 metadata_fd.write(contents)
 
-    download_run_recursive(args, headers, output_dir, run, True)
+    timeline_response = requests.get('https://dev.azure.com/ansible/ansible/_apis/build/builds/%s/timeline?api-version=6.0' % args.run)
+    timeline_response.raise_for_status()
+    timeline = timeline_response.json()
+    roots = set()
+    by_id = {}
+    children_of = {}
+    parent_of = {}
+    for r in timeline['records']:
+        thisId = r['id']
+        parentId = r['parentId']
 
+        by_id[thisId] = r
 
-def download_run_recursive(args, headers, output_dir, run, is_given=False):
-    # Notes:
-    # - The /runs response tells us if we need to eventually go up another layer
-    #   or not (if we are a re-run attempt or not).
-    # - Given a run id, /jobs will tell us all the jobs in that run, and whether
-    #   or not we can pull results from them.
-    #
-    # When we initially run (i.e., in download_run), we'll have a /runs output
-    # which we can use to get a /jobs output. Using the /jobs output, we filter
-    # on the jobs we need to fetch (usually only successful ones unless we are
-    # processing the initial/given run and not one of its parent runs) and
-    # download them accordingly.
-    #
-    # Lastly, we check if the run we are currently processing has another
-    # parent (reRunBatchId). If it does, we pull that /runs result and
-    # recurse using it to start the process over again.
-    response = requests.get('https://api.shippable.com/jobs?runIds=%s' % run['id'], headers=headers)
-
-    if response.status_code != 200:
-        raise Exception(response.content)
-
-    jobs = sorted(response.json(), key=lambda job: int(job['jobNumber']))
-
-    if is_given:
-        needed_jobs = [j for j in jobs if j['isConsoleArchived']]
-    else:
-        needed_jobs = [j for j in jobs if j['isConsoleArchived'] and j['statusCode'] == 30]
-
-    if not args.test:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-    download_jobs(args, needed_jobs, headers, output_dir)
-
-    rerun_batch_id = run.get('reRunBatchId')
-    if rerun_batch_id:
-        print('Downloading previous run: %s' % rerun_batch_id)
-        response = requests.get('https://api.shippable.com/runs/%s' % rerun_batch_id, headers=headers)
-
-        if response.status_code != 200:
-            raise Exception(response.content)
-
-        run = response.json()
-        download_run_recursive(args, headers, output_dir, run)
-
-
-def download_jobs(args, jobs, headers, output_dir):
-    """Download Shippable jobs."""
-    for j in jobs:
-        job_id = j['id']
-        job_number = j['jobNumber']
-
-        if args.job_number and job_number not in args.job_number:
-            continue
-
-        if args.job_metadata:
-            path = os.path.join(output_dir, '%s/job.json' % job_number)
-            contents = json.dumps(j, sort_keys=True, indent=4).encode('utf-8')
-
-            if args.verbose or args.test:
-                print(path)
-
-            if not args.test:
-                directory = os.path.dirname(path)
-
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-
-                with open(path, 'wb') as metadata_fd:
-                    metadata_fd.write(contents)
-
-        if args.console_logs:
-            path = os.path.join(output_dir, '%s/console.log' % job_number)
-            url = 'https://api.shippable.com/jobs/%s/consoles?download=true' % job_id
-            download(args, headers, path, url, is_json=False)
-
-        if args.test_results:
-            path = os.path.join(output_dir, '%s/test.json' % job_number)
-            url = 'https://api.shippable.com/jobs/%s/jobTestReports' % job_id
-            download(args, headers, path, url)
-            extract_contents(args, path, os.path.join(output_dir, '%s/test' % job_number))
-
-        if args.coverage_results:
-            path = os.path.join(output_dir, '%s/coverage.json' % job_number)
-            url = 'https://api.shippable.com/jobs/%s/jobCoverageReports' % job_id
-            download(args, headers, path, url)
-            extract_contents(args, path, os.path.join(output_dir, '%s/coverage' % job_number))
-
-
-def extract_contents(args, path, output_dir):
-    """
-    :type args: any
-    :type path: str
-    :type output_dir: str
-    """
-    if not args.test:
-        if not os.path.exists(path):
-            return
-
-        with open(path, 'r') as json_fd:
-            items = json.load(json_fd)
-
-            for item in items:
-                contents = item['contents'].encode('utf-8')
-                path = output_dir + '/' + re.sub('^/*', '', item['path'])
-
-                directory = os.path.dirname(path)
-
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-
-                if args.verbose:
-                    print(path)
-
-                if path.endswith('.json'):
-                    contents = json.dumps(json.loads(contents), sort_keys=True, indent=4).encode('utf-8')
-
-                if not os.path.exists(path):
-                    with open(path, 'wb') as output_fd:
-                        output_fd.write(contents)
-
-
-def download(args, headers, path, url, is_json=True):
-    """
-    :type args: any
-    :type headers: dict[str, str]
-    :type path: str
-    :type url: str
-    :type is_json: bool
-    """
-    if args.verbose or args.test:
-        print(path)
-
-    if os.path.exists(path):
-        return
-
-    if not args.test:
-        response = requests.get(url, headers=headers)
-
-        if response.status_code != 200:
-            path += '.error'
-
-        if is_json:
-            content = json.dumps(response.json(), sort_keys=True, indent=4).encode(response.encoding)
+        if parentId is None:
+            roots.add(thisId)
         else:
-            content = response.content
+            parent_of[thisId] = parentId
+            children_of[parentId] = children_of.get(parentId, []) + [thisId]
 
-        directory = os.path.dirname(path)
+    allowed = set()
 
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+    def allow_recursive(ei):
+        allowed.add(ei)
+        for ci in children_of.get(ei, []):
+            allow_recursive(ci)
 
-        with open(path, 'wb') as content_fd:
-            content_fd.write(content)
+    for ri in roots:
+        r = by_id[ri]
+        allowed.add(ri)
+        for ci in children_of.get(r['id'], []):
+            c = by_id[ci]
+            if not args.match_job_name.match("%s %s" % (r['name'], c['name'])):
+                continue
+            allow_recursive(c['id'])
 
+    if args.artifacts:
+        artifact_list_url = 'https://dev.azure.com/ansible/ansible/_apis/build/builds/%s/artifacts?api-version=6.0' % args.run
+        artifact_list_response = requests.get(artifact_list_url)
+        artifact_list_response.raise_for_status()
+        for artifact in artifact_list_response.json()['value']:
+            if artifact['source'] not in allowed or not args.match_artifact_name.match(artifact['name']):
+                continue
+            if args.verbose:
+                print('%s/%s' % (output_dir, artifact['name']))
+            if not args.test:
+                response = requests.get(artifact['resource']['downloadUrl'])
+                response.raise_for_status()
+                archive = zipfile.ZipFile(io.BytesIO(response.content))
+                archive.extractall(path=output_dir)
 
-def get_api_key():
-    """
-    rtype: str
-    """
-    key = os.environ.get('SHIPPABLE_KEY', None)
+    if args.console_logs:
+        for r in timeline['records']:
+            if not r['log'] or r['id'] not in allowed or not args.match_artifact_name.match(r['name']):
+                continue
+            names = []
+            parent_id = r['id']
+            while parent_id is not None:
+                p = by_id[parent_id]
+                name = p['name']
+                if name not in names:
+                    names = [name] + names
+                parent_id = parent_of.get(p['id'], None)
 
-    if key:
-        return key
-
-    path = os.path.join(os.environ['HOME'], '.shippable.key')
-
-    try:
-        with open(path, 'r') as key_fd:
-            return key_fd.read().strip()
-    except IOError:
-        return None
+            path = " ".join(names)
+            log_path = os.path.join(output_dir, '%s.log' % path)
+            if args.verbose:
+                print(log_path)
+            if not args.test:
+                log = requests.get(r['log']['url'])
+                log.raise_for_status()
+                open(log_path, 'wb').write(log.content)
 
 
 if __name__ == '__main__':
