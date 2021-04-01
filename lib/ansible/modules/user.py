@@ -255,7 +255,6 @@ options:
             - Sets the umask of the user.
             - Does nothing when used with other platforms.
             - Currently supported on Linux.
-            - Does not work on Fedora versions >= 32.
         type: str
         version_added: "2.12"
 
