@@ -48,7 +48,7 @@ options:
         choices: ['current', 'permanent', 'all']
         default: all
         type: str
-        version_added: '9.9'
+        version_added: '2.11'
 '''
 
 EXAMPLES = '''
