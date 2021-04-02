@@ -1,8 +1,6 @@
 ---
 name: 📝 Documentation Report
 description: Ask us about docs
-# NOTE: issue body is enabled to allow screenshots
-issue_body: true  # default: true, adds a classic WSYWIG textarea, if on
 
 body:
 - type: markdown
@@ -87,6 +85,20 @@ body:
     required: true
 
 
+- type: textarea
+  attributes:
+    label: Additional Information
+    description: |
+      Describe how this improves the documentation, e.g. before/after situation or screenshots.
+
+      **HINT:** You can paste https://gist.github.com links for larger files.
+    placeholder: >-
+      When the improvement is applied, it makes it more straightforward
+      to understand X.
+  validations:
+    required: true
+
+
 - type: checkboxes
   attributes:
     label: Code of Conduct
@@ -97,19 +109,4 @@ body:
     options:
     - label: I agree to follow the Ansible Code of Conduct
       required: true
-
-
-- type: markdown
-  attributes:
-    value: |
-      **Additional Information**
-
-      Describe how this improves the documentation, e.g. before/after situation or screenshots.
-
-      **HINT:** You can paste https://gist.github.com links for larger files.
-    placeholder: >-
-      When the improvement is applied, it makes it more straightforward
-      to understand X.
-  validations:
-    required: true
 ...
