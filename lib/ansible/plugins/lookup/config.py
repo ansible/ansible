@@ -132,6 +132,7 @@ class LookupModule(LookupBase):
             raise AnsibleOptionsError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
 
         ret = []
+
         for term in terms:
             if not isinstance(term, string_types):
                 raise AnsibleOptionsError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
