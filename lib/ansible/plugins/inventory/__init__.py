@@ -428,6 +428,10 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
+                        default_value_name = keyed.get('default_value', None)
+                        skip_if_empty = keyed.get('skip_if_empty')
+                        if skip_if_empty is not None and default_value_name is not None:
+                            raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|skip_if_empty")
                         if raw_parent_name:
                             try:
                                 raw_parent_name = self.templar.template(raw_parent_name)
@@ -444,8 +448,14 @@ class Constructable(object):
                                 new_raw_group_names.append(name)
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
-                                name = gname if gval == '' else '%s%s%s' % (gname, sep, gval)
-                                new_raw_group_names.append(name)
+                                bare_name = '%s%s%s' % (gname, sep, gval)
+                                if gval is None or gval == '':
+                                    # key's value is empty or undefined
+                                    if default_value_name is not None:
+                                        bare_name = '%s%s%s' % (gname, sep, default_value_name)
+                                    elif skip_if_empty:
+                                        bare_name = gname
+                                new_raw_group_names.append(bare_name)
                         else:
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 

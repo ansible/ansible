@@ -205,3 +205,76 @@ def test_parent_group_templating_error(inventory_module):
     )
     # assert group was never added with invalid parent
     assert 'betsy' not in inventory_module.inventory.groups
+
+
+def test_keyed_group_exclusive_argument(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'nickname', 'betsy')
+    host = inventory_module.inventory.get_host('cow')
+    keyed_groups = [
+        {
+            'key': 'tag',
+            'separator': '_',
+            'default_value': 'default_value_name',
+            'skip_if_empty': True
+        }
+    ]
+    with pytest.raises(AnsibleParserError) as err_message:
+        inventory_module._add_host_to_keyed_groups(
+            keyed_groups, host.vars, host.name, strict=True
+        )
+        assert 'parameters are mutually exclusive' in err_message
+
+
+def test_keyed_group_empy_value(inventory_module):
+    inventory_module.inventory.add_host('server0')
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
+    host = inventory_module.inventory.get_host('server0')
+    keyed_groups = [
+        {
+            'prefix': 'tag',
+            'separator': '_',
+            'key': 'tags'
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=False
+    )
+    for group_name in ('tag_environment_prod', 'tag_status_'):
+        assert group_name in inventory_module.inventory.groups
+
+def test_keyed_group_empy_value_with_default_value(inventory_module):
+    inventory_module.inventory.add_host('server0')
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
+    host = inventory_module.inventory.get_host('server0')
+    keyed_groups = [
+        {
+            'prefix': 'tag',
+            'separator': '_',
+            'key': 'tags',
+            'default_value' : 'running'
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=False
+    )
+    for group_name in ('tag_environment_prod', 'tag_status_running'):
+        assert group_name in inventory_module.inventory.groups
+
+def test_keyed_group_with_skip_if_empty_value(inventory_module):
+    inventory_module.inventory.add_host('server0')
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'context' : None})
+    host = inventory_module.inventory.get_host('server0')
+    keyed_groups = [
+        {
+            'prefix': 'tag',
+            'separator': '_',
+            'key': 'tags',
+            'skip_if_empty' : True
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=False
+    )
+    for group_name in ('tag_environment_prod', 'tag_status', 'tag_context'):
+        assert group_name in inventory_module.inventory.groups
