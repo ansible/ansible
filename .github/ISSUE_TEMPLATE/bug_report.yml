@@ -1,7 +1,6 @@
 ---
 name: 🐛 Bug report
 description: Create a report to help us improve
-issue_body: false  # default: true, adds a classic WSYWIG textarea, if on
 
 body:
 - type: markdown

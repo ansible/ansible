@@ -1,7 +1,6 @@
 ---
 name: ✨ Feature request
 description: Suggest an idea for this project
-issue_body: false  # default: true, adds a classic WSYWIG textarea, if on
 
 body:
 - type: markdown
