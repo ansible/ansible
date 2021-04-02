@@ -243,6 +243,7 @@ def test_keyed_group_empy_value(inventory_module):
     for group_name in ('tag_environment_prod', 'tag_status_'):
         assert group_name in inventory_module.inventory.groups
 
+
 def test_keyed_group_empy_value_with_default_value(inventory_module):
     inventory_module.inventory.add_host('server0')
     inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
@@ -252,7 +253,7 @@ def test_keyed_group_empy_value_with_default_value(inventory_module):
             'prefix': 'tag',
             'separator': '_',
             'key': 'tags',
-            'default_value' : 'running'
+            'default_value': 'running'
         }
     ]
     inventory_module._add_host_to_keyed_groups(
@@ -261,16 +262,17 @@ def test_keyed_group_empy_value_with_default_value(inventory_module):
     for group_name in ('tag_environment_prod', 'tag_status_running'):
         assert group_name in inventory_module.inventory.groups
 
+
 def test_keyed_group_with_skip_if_empty_value(inventory_module):
     inventory_module.inventory.add_host('server0')
-    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'context' : None})
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'context': None})
     host = inventory_module.inventory.get_host('server0')
     keyed_groups = [
         {
             'prefix': 'tag',
             'separator': '_',
             'key': 'tags',
-            'skip_if_empty' : True
+            'skip_if_empty': True
         }
     ]
     inventory_module._add_host_to_keyed_groups(
