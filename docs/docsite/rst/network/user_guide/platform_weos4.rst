@@ -63,7 +63,7 @@ Example CLI task
 .. code-block:: yaml
 
    - name: Get version information (WeOS 4)
-     ansible.netcommon.cli_command::
+     ansible.netcommon.cli_command:
        commands: "show version"
      register: show_ver
      when: ansible_network_os == 'community.network.weos4'
@@ -75,7 +75,7 @@ Example Configuration task
 
    - name: Replace configuration with file on ansible host (WeOS 4)
      ansible.netcommon.cli_config:
-       config: "{{lookup('file', 'westermo.conf')}}
+       config: "{{ lookup('file', 'westermo.conf') }}"
        replace: "yes"
        diff_match: exact
        diff_replace: config
