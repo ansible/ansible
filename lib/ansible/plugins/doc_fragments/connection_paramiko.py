@@ -15,7 +15,6 @@ options:
             - Address of the remote target
         default: '{{inventory_hostname}}'
         vars:
-            - name: inventory_hostname
             - name: ansible_host
             - name: ansible_ssh_host
             - name: ansible_paramiko_host
