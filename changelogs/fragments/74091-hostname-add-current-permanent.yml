@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible.builtin.hostname - add current/permanent option for more granularity in setting hostname
