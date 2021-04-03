@@ -475,19 +475,12 @@ class StrategyBase:
         cur_pass = 0
 
         while not self._tqm._terminated and not self._tqm.has_dead_workers():
-            if not do_handlers and self._pending_results == 0:
-                display.debug("No more pending results")
-                break
-
-            if do_handlers and self._pending_handler_results == 0:
-                display.debug("No more pending handler results")
-                break
-
             try:
                 display.debug("Waiting for results (do_handers=%s)" % do_handlers)
-                result = self._final_q.get(timeout=1.0)
+                result = self._final_q.get(timeout=C.DEFAULT_INTERNAL_POLL_INTERVAL)
             except Queue.Empty:
-                continue
+                # Yield
+                break
             except (IOError, EOFError):
                 # Will be dealt with by caller.
                 break
@@ -756,8 +749,6 @@ class StrategyBase:
             handler_results += len([
                 r._host for r in results if r._host in notified_hosts and
                 r.task_name == handler.name])
-            if self._pending_handler_results > 0:
-                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         display.debug("no more pending handlers, returning what we have")
 
@@ -779,8 +770,6 @@ class StrategyBase:
 
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
-            if self._pending_results > 0:
-                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         display.debug("no more pending results, returning what we have")
 
