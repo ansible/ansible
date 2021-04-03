@@ -147,7 +147,7 @@ def main():
         certificate_management_profile_ref=dict(type='str',),
         created_by=dict(type='str',),
         dynamic_params=dict(type='list',),
-        enckey_base64=dict(type='str',),
+        enckey_base64=dict(type='str', no_log=True),
         enckey_name=dict(type='str',),
         hardwaresecuritymodulegroup_ref=dict(type='str',),
         key=dict(type='str', no_log=True,),
