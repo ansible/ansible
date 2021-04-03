@@ -162,7 +162,7 @@ def main():
             external_id=dict(required=False, default=None),
             policy=dict(required=False, default=None),
             mfa_serial_number=dict(required=False, default=None),
-            mfa_token=dict(required=False, default=None)
+            mfa_token=dict(required=False, default=None, no_log=True)
         )
     )
 

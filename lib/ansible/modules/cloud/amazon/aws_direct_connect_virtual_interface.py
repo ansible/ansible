@@ -451,7 +451,7 @@ def main():
         name=dict(),
         vlan=dict(type='int', default=100),
         bgp_asn=dict(type='int', default=65000),
-        authentication_key=dict(),
+        authentication_key=dict(no_log=True),
         amazon_address=dict(),
         customer_address=dict(),
         address_type=dict(),
