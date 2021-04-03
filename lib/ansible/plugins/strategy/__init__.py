@@ -24,7 +24,6 @@ import functools
 import os
 import pprint
 import sys
-import threading
 import time
 
 from collections import deque
@@ -64,13 +63,6 @@ ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
 ))
 
 
-class StrategySentinel:
-    pass
-
-
-_sentinel = StrategySentinel()
-
-
 def post_process_whens(result, task, templar):
 
     cond = None
@@ -85,36 +77,6 @@ def post_process_whens(result, task, templar):
         cond.when = task.failed_when
         failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
         result['failed_when_result'] = result['failed'] = failed_when_result
-
-
-def results_thread_main(strategy):
-    while True:
-        try:
-            result = strategy._final_q.get()
-            if isinstance(result, StrategySentinel):
-                break
-            elif isinstance(result, CallbackSend):
-                for arg in result.args:
-                    if isinstance(arg, TaskResult):
-                        strategy.normalize_task_result(arg)
-                        break
-                strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
-            elif isinstance(result, TaskResult):
-                strategy.normalize_task_result(result)
-                with strategy._results_lock:
-                    # only handlers have the listen attr, so this must be a handler
-                    # we split up the results into two queues here to make sure
-                    # handler and regular result processing don't cross wires
-                    if 'listen' in result._task_fields:
-                        strategy._handler_results.append(result)
-                    else:
-                        strategy._results.append(result)
-            else:
-                display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
-        except (IOError, EOFError):
-            break
-        except Queue.Empty:
-            pass
 
 
 def debug_closure(func):
@@ -221,15 +183,6 @@ class StrategyBase:
         # flushed handlers
         self._flushed_hosts = dict()
 
-        self._results = deque()
-        self._handler_results = deque()
-        self._results_lock = threading.Condition(threading.Lock())
-
-        # create the result processing thread for reading results in the background
-        self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
-        self._results_thread.daemon = True
-        self._results_thread.start()
-
         # holds the list of active (persistent) connections to be shutdown at
         # play completion
         self._active_connections = dict()
@@ -266,8 +219,6 @@ class StrategyBase:
             except ConnectionError as e:
                 # most likely socket is already closed
                 display.debug("got an error while closing persistent connection: %s" % e)
-        self._final_q.put(_sentinel)
-        self._results_thread.join()
 
     def run(self, iterator, play_context, result=0):
         # execute one more pass through the iterator without peeking, to
@@ -522,17 +473,43 @@ class StrategyBase:
             return None
 
         cur_pass = 0
-        while True:
-            try:
-                self._results_lock.acquire()
-                if do_handlers:
-                    task_result = self._handler_results.popleft()
-                else:
-                    task_result = self._results.popleft()
-            except IndexError:
+
+        while not self._tqm._terminated and not self._tqm.has_dead_workers():
+            if not do_handlers and self._pending_results == 0:
+                display.debug("No more pending results")
                 break
-            finally:
-                self._results_lock.release()
+
+            if do_handlers and self._pending_handler_results == 0:
+                display.debug("No more pending handler results")
+                break
+
+            try:
+                display.debug("Waiting for results (do_handers=%s)" % do_handlers)
+                result = self._final_q.get(timeout=1.0)
+            except Queue.Empty:
+                continue
+            except (IOError, EOFError):
+                # Will be dealt with by caller.
+                break
+
+            if isinstance(result, CallbackSend):
+                for arg in result.args:
+                    if isinstance(arg, TaskResult):
+                        self.normalize_task_result(arg)
+                        break
+
+                self._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
+                continue
+
+            elif not isinstance(result, TaskResult):
+                display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
+                continue
+
+            task_result = result
+            self.normalize_task_result(task_result)
+
+            if do_handlers and "listen" not in task_result._task_fields:
+                display.warning("Expected 'listen' in task_fields: %s" % (task_result._task_fields))
 
             original_host = task_result._host
             original_task = task_result._task
