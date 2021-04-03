@@ -452,6 +452,8 @@ groupings:
   - aws
   rds_param_group:
   - aws
+  rds_snapshot:
+  - aws
   rds_snapshot_facts:
   - aws
   rds_snapshot_info:
