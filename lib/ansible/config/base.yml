@@ -1881,14 +1881,13 @@ TASK_TIMEOUT:
   - {key: task_timeout, section: defaults}
   type: integer
   version_added: '2.10'
-WORKER_SHUTDOWN_POLL_COUNT:
-  name: Worker Shutdown Poll Count
-  default: 0
+WORKER_SHUTDOWN_TIMEOUT:
+  name: Worker Shutdown Timeout
+  default: 60
   description:
-    - The maximum number of times to check Task Queue Manager worker processes to verify they have exited cleanly.
+    - Timeout in seconds to wait for worker processes to exit gracefully.
     - After this limit is reached any worker processes still running will be terminated.
-    - This is for internal use only.
-  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT}]
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_TIMEOUT}]
   type: integer
   version_added: '2.10'
 WORKER_SHUTDOWN_POLL_DELAY:

@@ -83,11 +83,6 @@ def ansible_environment(args, color=True, ansible_config=None):
         PYTHONPATH=get_ansible_python_path(args),
         PAGER='/bin/cat',
         PATH=path,
-        # give TQM worker processes time to report code coverage results
-        # without this the last task in a play may write no coverage file, an empty file, or an incomplete file
-        # enabled even when not using code coverage to surface warnings when worker processes do not exit cleanly
-        ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT='100',
-        ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY='0.1',
     )
 
     if isinstance(args, IntegrationConfig) and args.coverage:

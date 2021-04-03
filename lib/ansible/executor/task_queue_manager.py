@@ -347,21 +347,39 @@ class TaskQueueManager:
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-            for attempts_remaining in range(C.WORKER_SHUTDOWN_POLL_COUNT - 1, -1, -1):
-                if not any(worker_prc and worker_prc.is_alive() for worker_prc in self._workers):
-                    break
+            alive_workers = [w for w in self._workers if w]
 
-                if attempts_remaining:
-                    time.sleep(C.WORKER_SHUTDOWN_POLL_DELAY)
-                else:
-                    display.warning('One or more worker processes are still running and will be terminated.')
+            waited_for = 0.0
+            while alive_workers and waited_for < C.WORKER_SHUTDOWN_TIMEOUT:
+                start = time.time()
+                alive_workers[0].join(timeout=C.WORKER_SHUTDOWN_POLL_DELAY)
+                end = time.time()
+                waited_for += max(0, end - start)
+                alive_workers = [w for w in alive_workers if w.is_alive()]
 
-            for worker_prc in self._workers:
-                if worker_prc and worker_prc.is_alive():
+            #
+            # If there are any workers alive after the grace period,
+            # forcefully terminate() them and raise an AnsibleError().
+            #
+            # Note, bad things can happen if we continue after we had to
+            # forcefully terminate a worker process. It may have kept
+            # locks/semaphores from the _final_q held. This is warned
+            # about in the docs:
+            #
+            # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Process.terminate
+            #
+            # Rather then trying to continue,, raise AnsibleError and stop
+            # the world when we run into this.
+            #
+            if alive_workers:
+                for w in alive_workers:
+                    display.error("worker process did not terminate in time: %s" % w)
                     try:
-                        worker_prc.terminate()
+                        w.terminate()
                     except AttributeError:
                         pass
+
+                raise AnsibleError("%s worker processes did not exit after %s grace period seconds" % (len(alive_workers), C.WORKER_SHUTDOWN_TIMEOUT))
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
