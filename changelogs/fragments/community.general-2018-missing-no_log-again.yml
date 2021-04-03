@@ -1,0 +1,2 @@
+security_fixes:
+- "na_cdot_user - mark the ``set_password`` parameter as ``no_log`` to avoid leakage of secrets (https://github.com/ansible-collections/community.general/pull/2018)."
