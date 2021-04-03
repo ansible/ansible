@@ -240,10 +240,10 @@ After you have written the changelog fragment for your PR, commit the file and i
 
 .. _changelogs_how_to_format_j2_roles_playbooks:
 
-Changelog fragment entry format for new jinja2 plugins, roles and playbooks
+Changelog fragment entry format for new jinja2 plugins, roles, and playbooks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-While new modules and plugins that are not jinja2 filter or test plugins are mentioned automatically in the generated changelog, jinja2 filter and test plugins, roles and playbooks are not. To make sure they are mentioned, a changelog fragment in a specific format is needed:
+While new modules and plugins that are not jinja2 filter or test plugins are mentioned automatically in the generated changelog, jinja2 filter and test plugins, roles, and playbooks are not. To make sure they are mentioned, a changelog fragment in a specific format is needed:
 
 .. code-block:: yaml
 
