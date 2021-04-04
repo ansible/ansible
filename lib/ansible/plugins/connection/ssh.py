@@ -5,7 +5,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
+
+import io
 
 DOCUMENTATION = '''
     name: ssh
@@ -749,9 +752,10 @@ class Connection(ConnectionBase):
         it. (The handle must be closed; otherwise, for example, "sftp -b -" will
         just hang forever waiting for more commands.)
         '''
+        if isinstance(in_data, io.IOBase):
+            return self._send_initial_file_data(fh, in_data, ssh_process)
 
         display.debug(u'Sending initial data')
-
         try:
             fh.write(to_bytes(in_data))
             fh.close()
@@ -767,6 +771,44 @@ class Connection(ConnectionBase):
                 )
 
         display.debug(u'Sent initial data (%d bytes)' % len(in_data))
+
+    def _send_initial_file_data(self, fh, in_fh, ssh_process):
+        '''
+        Writes initial file data to the stdin file-handle of the subprocess and closes
+        it. (The handle must be closed; otherwise, for example, "sftp -b -" will
+        just hang forever waiting for more commands.)
+
+        :type fh: io.RawIOBase
+        :type in_fh: io.IOBase
+        '''
+
+        display.debug(u'Sending initial file data')
+        bytes_written = 0
+        try:
+            while True:
+                bytes_read = in_fh.read(io.DEFAULT_BUFFER_SIZE)
+                if not (bytes_read and len(bytes_read) > 0):
+                    # Nothing more to write
+                    break
+
+                fh.write(bytes_read)
+                bytes_written += len(bytes_read)
+
+                if not in_fh.readable():
+                    break
+            fh.close()
+        except (OSError, IOError) as e:
+            # The ssh connection may have already terminated at this point, with a more useful error
+            # Only raise AnsibleConnectionFailure if the ssh process is still alive
+            time.sleep(0.001)
+            ssh_process.poll()
+            if getattr(ssh_process, 'returncode', None) is None:
+                raise AnsibleConnectionFailure(
+                    'Data could not be sent to remote host "%s". Make sure this host can be reached '
+                    'over ssh: %s' % (self.host, to_native(e)), orig_exc=e
+                )
+
+        display.debug(u'Sent initial file data (%d bytes)' % bytes_written)
 
     # Used by _run() to kill processes on failures
     @staticmethod
