@@ -1,2 +1,2 @@
 bugfixes:
-  - su become plugin, ensure correct type for localization option.
+  - su become plugin - ensure correct type for localization option (https://github.com/ansible/ansible/issues/73837).
