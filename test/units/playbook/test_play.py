@@ -168,3 +168,29 @@ def test_play_compile():
     # implicit meta flush_handler blocks inserted
     assert len(blocks) == 4
 
+
+@pytest.mark.parametrize(
+    'data, error',
+    (
+        ({'name': '', 'hosts': ''}, 'Hosts list cannot be empty'),
+        ({'hosts': ''}, 'Hosts list cannot be empty'),
+        ({'hosts': []}, 'Hosts list cannot be empty'),
+        ({'hosts': [None]}, 'Hosts list cannot be empty'),
+        ({'hosts': ['one', None, 'three']}, 'Hosts list cannot be empty'),
+        ({'hosts': [{'one': None}]}, 'Hosts list cannot be empty'),
+    ),
+    ids=[
+        'empty_name_hosts',
+        'no_name_empty_hosts_str',
+        'no_name_empt_hosts_list',
+        'no_name_hosts_list_all_none',
+        'no_name_hosts_list_some_none',
+        'no_name_host_dict_none',
+    ]
+)
+def test_play_with_invalid_hosts(data, error):
+    with pytest.raises(AnsibleParserError) as exc:
+        play = Play.load(data)
+        assert play.name == 'foo'
+
+    assert error in exc.value.message
