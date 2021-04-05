@@ -354,14 +354,14 @@ def main():
                                             "ascii", "auto"]},
                 "authorization": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
-                "key": {"required": False, "type": "str"},
+                "key": {"required": False, "type": "str", "no_log": True},
                 "name": {"required": True, "type": "str"},
                 "port": {"required": False, "type": "int"},
-                "secondary_key": {"required": False, "type": "str"},
+                "secondary_key": {"required": False, "type": "str", "no_log": True},
                 "secondary_server": {"required": False, "type": "str"},
                 "server": {"required": False, "type": "str"},
                 "source_ip": {"required": False, "type": "str"},
-                "tertiary_key": {"required": False, "type": "str"},
+                "tertiary_key": {"required": False, "type": "str", "no_log": True},
                 "tertiary_server": {"required": False, "type": "str"}
 
             }

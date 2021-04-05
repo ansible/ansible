@@ -432,7 +432,7 @@ def main():
                 "forward_method": {"required": False, "type": "str",
                                    "choices": ["GRE", "L2", "any"]},
                 "group_address": {"required": False, "type": "str"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "ports": {"required": False, "type": "str"},
                 "ports_defined": {"required": False, "type": "str",
                                   "choices": ["source", "destination"]},

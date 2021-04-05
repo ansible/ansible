@@ -1061,9 +1061,9 @@ class ArgumentSpec(object):
                 type='list',
                 options=dict(
                     cert=dict(required=True),
-                    key=dict(required=True),
+                    key=dict(required=True, no_log=True),
                     chain=dict(),
-                    passphrase=dict()
+                    passphrase=dict(no_log=True)
                 )
             ),
             state=dict(

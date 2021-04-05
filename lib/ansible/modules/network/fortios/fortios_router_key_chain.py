@@ -297,7 +297,7 @@ def main():
                         "options": {
                             "accept_lifetime": {"required": False, "type": "str"},
                             "id": {"required": True, "type": "str"},
-                            "key_string": {"required": False, "type": "str"},
+                            "key_string": {"required": False, "type": "str", "no_log": True},
                             "send_lifetime": {"required": False, "type": "str"}
                         }},
                 "name": {"required": True, "type": "str"}

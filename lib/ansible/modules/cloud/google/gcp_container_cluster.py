@@ -1195,7 +1195,7 @@ def main():
                 type='dict',
                 options=dict(
                     username=dict(type='str'),
-                    password=dict(type='str'),
+                    password=dict(type='str', no_log=True),
                     client_certificate_config=dict(type='dict', options=dict(issue_client_certificate=dict(type='bool'))),
                 ),
             ),

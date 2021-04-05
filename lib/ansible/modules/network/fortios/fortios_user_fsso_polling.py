@@ -337,7 +337,7 @@ def main():
                 "id": {"required": True, "type": "int"},
                 "ldap_server": {"required": False, "type": "str"},
                 "logon_history": {"required": False, "type": "int"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "polling_frequency": {"required": False, "type": "int"},
                 "port": {"required": False, "type": "int"},
                 "server": {"required": False, "type": "str"},

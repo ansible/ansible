@@ -342,7 +342,7 @@ def main():
                 "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "address": {"required": False, "type": "str"},
-                "admin_password": {"required": False, "type": "str"},
+                "admin_password": {"required": False, "type": "str", "no_log": True},
                 "admin_type": {"required": False, "type": "str",
                                "choices": ["Windows", "LDAP"]},
                 "admin_username": {"required": False, "type": "str"},

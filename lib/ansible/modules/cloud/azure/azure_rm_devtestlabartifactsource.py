@@ -164,7 +164,8 @@ class AzureRMDevTestLabArtifactsSource(AzureRMModuleBase):
                 type='str'
             ),
             security_token=dict(
-                type='str'
+                type='str',
+                no_log=True
             ),
             is_enabled=dict(
                 type='bool'

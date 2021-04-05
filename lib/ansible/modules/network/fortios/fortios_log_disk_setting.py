@@ -476,7 +476,7 @@ def main():
                                                 "disable"]},
                 "uploaddir": {"required": False, "type": "str"},
                 "uploadip": {"required": False, "type": "str"},
-                "uploadpass": {"required": False, "type": "str"},
+                "uploadpass": {"required": False, "type": "str", "no_log": True},
                 "uploadport": {"required": False, "type": "int"},
                 "uploadsched": {"required": False, "type": "str",
                                 "choices": ["disable", "enable"]},

@@ -557,19 +557,19 @@ def main():
             "options": {
                 "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "access_key": {"required": False, "type": "str"},
+                "access_key": {"required": False, "type": "str", "no_log": True},
                 "azure_region": {"required": False, "type": "str",
                                  "choices": ["global", "china", "germany",
                                              "usgov", "local"]},
                 "client_id": {"required": False, "type": "str"},
-                "client_secret": {"required": False, "type": "str"},
+                "client_secret": {"required": False, "type": "str", "no_log": True},
                 "compartment_id": {"required": False, "type": "str"},
                 "external_ip": {"required": False, "type": "list",
                                 "options": {
                                     "name": {"required": True, "type": "str"}
                                 }},
                 "gcp_project": {"required": False, "type": "str"},
-                "key_passwd": {"required": False, "type": "str"},
+                "key_passwd": {"required": False, "type": "str", "no_log": True},
                 "login_endpoint": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
                 "nic": {"required": False, "type": "list",
@@ -586,8 +586,8 @@ def main():
                 "oci_region": {"required": False, "type": "str",
                                "choices": ["phoenix", "ashburn", "frankfurt",
                                            "london"]},
-                "password": {"required": False, "type": "str"},
-                "private_key": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
+                "private_key": {"required": False, "type": "str", "no_log": True},
                 "region": {"required": False, "type": "str"},
                 "resource_group": {"required": False, "type": "str"},
                 "resource_url": {"required": False, "type": "str"},
@@ -604,7 +604,7 @@ def main():
                                                   "next_hop": {"required": False, "type": "str"}
                                               }}
                                 }},
-                "secret_key": {"required": False, "type": "str"},
+                "secret_key": {"required": False, "type": "str", "no_log": True},
                 "server": {"required": False, "type": "str"},
                 "server_port": {"required": False, "type": "int"},
                 "service_account": {"required": False, "type": "str"},

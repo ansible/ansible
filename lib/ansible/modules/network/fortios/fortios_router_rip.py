@@ -586,7 +586,7 @@ def main():
                                   "auth_keychain": {"required": False, "type": "str"},
                                   "auth_mode": {"required": False, "type": "str",
                                                 "choices": ["none", "text", "md5"]},
-                                  "auth_string": {"required": False, "type": "str"},
+                                  "auth_string": {"required": False, "type": "str", "no_log": True},
                                   "flags": {"required": False, "type": "int"},
                                   "name": {"required": True, "type": "str"},
                                   "receive_version": {"required": False, "type": "str",

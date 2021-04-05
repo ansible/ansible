@@ -270,7 +270,7 @@ def main():
             "required": False, "type": "dict", "default": None,
             "options": {
                 "address": {"required": False, "type": "str"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "port": {"required": False, "type": "int"},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},

@@ -373,7 +373,7 @@ def main():
                 "home_address": {"required": False, "type": "str"},
                 "home_agent": {"required": False, "type": "str"},
                 "lifetime": {"required": False, "type": "int"},
-                "n_mhae_key": {"required": False, "type": "str"},
+                "n_mhae_key": {"required": False, "type": "str", "no_log": True},
                 "n_mhae_key_type": {"required": False, "type": "str",
                                     "choices": ["ascii", "base64"]},
                 "n_mhae_spi": {"required": False, "type": "int"},

@@ -281,7 +281,7 @@ def main():
         "user_krb_keytab": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "keytab": {"required": False, "type": "str"},
+                "keytab": {"required": False, "type": "str", "no_log": True},
                 "ldap_server": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
                 "principal": {"required": False, "type": "str"}

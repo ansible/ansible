@@ -291,7 +291,7 @@ def main():
                 "http_probe_value": {"required": False, "type": "str"},
                 "mode": {"required": False, "type": "str",
                          "choices": ["none", "http-probe", "twamp"]},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "port": {"required": False, "type": "int"},
                 "security_mode": {"required": False, "type": "str",
                                   "choices": ["none", "authentication"]},

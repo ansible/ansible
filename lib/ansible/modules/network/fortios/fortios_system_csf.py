@@ -372,11 +372,11 @@ def main():
                                                       "choices": ["fortimail"]},
                                       "login": {"required": False, "type": "str"},
                                       "name": {"required": True, "type": "str"},
-                                      "password": {"required": False, "type": "str"}
+                                      "password": {"required": False, "type": "str", "no_log": True}
                                   }},
                 "fixed_key": {"required": False, "type": "str"},
                 "group_name": {"required": False, "type": "str"},
-                "group_password": {"required": False, "type": "str"},
+                "group_password": {"required": False, "type": "str", "no_log": True},
                 "management_ip": {"required": False, "type": "str"},
                 "management_port": {"required": False, "type": "int"},
                 "status": {"required": False, "type": "str",

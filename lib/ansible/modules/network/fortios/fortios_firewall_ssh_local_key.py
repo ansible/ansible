@@ -312,8 +312,8 @@ def main():
                 "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "name": {"required": True, "type": "str"},
-                "password": {"required": False, "type": "str"},
-                "private_key": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
+                "private_key": {"required": False, "type": "str", "no_log": True},
                 "public_key": {"required": False, "type": "str"},
                 "source": {"required": False, "type": "str",
                            "choices": ["built-in", "user"]}

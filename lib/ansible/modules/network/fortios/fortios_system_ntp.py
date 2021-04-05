@@ -347,7 +347,7 @@ def main():
                                   "authentication": {"required": False, "type": "str",
                                                      "choices": ["enable", "disable"]},
                                   "id": {"required": True, "type": "int"},
-                                  "key": {"required": False, "type": "str"},
+                                  "key": {"required": False, "type": "str", "no_log": True},
                                   "key_id": {"required": False, "type": "int"},
                                   "ntpv3": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},

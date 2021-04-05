@@ -800,7 +800,7 @@ def main():
                 "override": {"required": False, "type": "str",
                              "choices": ["enable", "disable"]},
                 "override_wait_time": {"required": False, "type": "int"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "pingserver_failover_threshold": {"required": False, "type": "int"},
                 "pingserver_flip_timeout": {"required": False, "type": "int"},
                 "pingserver_monitor_interface": {"required": False, "type": "str"},

@@ -344,7 +344,7 @@ def main():
                 "crl": {"required": False, "type": "str"},
                 "http_url": {"required": False, "type": "str"},
                 "last_updated": {"required": False, "type": "int"},
-                "ldap_password": {"required": False, "type": "str"},
+                "ldap_password": {"required": False, "type": "str", "no_log": True},
                 "ldap_server": {"required": False, "type": "str"},
                 "ldap_username": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},

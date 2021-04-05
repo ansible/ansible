@@ -309,14 +309,14 @@ def main():
         "user_fortitoken": {
             "required": False, "type": "dict", "default": None,
             "options": {
-                "activation_code": {"required": False, "type": "str"},
+                "activation_code": {"required": False, "type": "str", "no_log": True},
                 "activation_expire": {"required": False, "type": "int"},
                 "comments": {"required": False, "type": "str"},
-                "license": {"required": False, "type": "str"},
+                "license": {"required": False, "type": "str", "no_log": True},
                 "os_ver": {"required": False, "type": "str"},
                 "reg_id": {"required": False, "type": "str"},
-                "seed": {"required": False, "type": "str"},
-                "serial_number": {"required": False, "type": "str"},
+                "seed": {"required": False, "type": "str", "no_log": True},
+                "serial_number": {"required": False, "type": "str", "no_log": True},
                 "status": {"required": False, "type": "str",
                            "choices": ["active", "lock"]}
 
