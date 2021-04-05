@@ -13,6 +13,7 @@ LOGGING_MESSAGE_FILTER = re.compile("^("
                                     ".*Running pip install with root privileges is generally not a good idea.*|"  # custom Fedora patch [1]
                                     "DEPRECATION: Python 2.7 will reach the end of its life .*|"  # pip 19.2.3
                                     "Ignoring .*: markers .* don't match your environment|"
+                                    "Looking in indexes: .*|"  # pypi-test-container
                                     "Requirement already satisfied.*"
                                     ")$")
 

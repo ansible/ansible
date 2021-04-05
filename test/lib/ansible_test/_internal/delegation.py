@@ -19,6 +19,7 @@ from .executor import (
     HTTPTESTER_HOSTS,
     create_shell_command,
     run_httptester,
+    run_pypi_proxy,
     start_httptester,
     get_python_interpreter,
     get_python_version,
@@ -285,6 +286,11 @@ def delegate_docker(args, exclude, require, integration_targets):
     if isinstance(args, ShellConfig) or (isinstance(args, IntegrationConfig) and args.debug_strategy):
         cmd_options.append('-it')
 
+    pypi_proxy_id, pypi_proxy_endpoint = run_pypi_proxy(args)
+
+    if pypi_proxy_endpoint:
+        cmd += ['--pypi-endpoint', pypi_proxy_endpoint]
+
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
         try:
             create_payload(args, local_source_fd.name)
@@ -405,6 +411,9 @@ def delegate_docker(args, exclude, require, integration_targets):
         finally:
             if httptester_id:
                 docker_rm(args, httptester_id)
+
+            if pypi_proxy_id:
+                docker_rm(args, pypi_proxy_id)
 
             if test_id:
                 if args.docker_terminate == 'always' or (args.docker_terminate == 'success' and success):

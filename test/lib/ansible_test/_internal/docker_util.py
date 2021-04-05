@@ -112,7 +112,7 @@ def get_docker_container_ip(args, container_id):
     networks = network_settings.get('Networks')
 
     if networks:
-        network_name = get_docker_preferred_network_name(args)
+        network_name = get_docker_preferred_network_name(args) or 'bridge'
         ipaddress = networks[network_name]['IPAddress']
     else:
         # podman doesn't provide Networks, fall back to using IPAddress

@@ -2,6 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import atexit
 import json
 import os
 import datetime
@@ -81,6 +82,7 @@ from .util_common import (
     write_json_test_results,
     ResultType,
     handle_layout_messages,
+    CommonConfig,
 )
 
 from .docker_util import (
@@ -126,6 +128,8 @@ from .config import (
     ShellConfig,
     WindowsIntegrationConfig,
     TIntegrationConfig,
+    UnitsConfig,
+    SanityConfig,
 )
 
 from .metadata import (
@@ -143,6 +147,10 @@ from .integration import (
 
 from .data import (
     data_context,
+)
+
+from .http import (
+    urlparse,
 )
 
 HTTPTESTER_HOSTS = (
@@ -1402,6 +1410,138 @@ rdr pass inet proto tcp from any to any port 749 -> 127.0.0.1 port 8749
                 run_command(args, cmd, capture=True)
     else:
         raise ApplicationError('No supported port forwarding mechanism detected.')
+
+
+def run_pypi_proxy(args):  # type: (EnvironmentConfig) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    """Run a PyPI proxy container, returning the container ID and proxy endpoint."""
+    use_proxy = False
+
+    if args.docker_raw == 'centos6':
+        use_proxy = True  # python 2.6 is the only version available
+
+    if args.docker_raw == 'default':
+        if args.python == '2.6':
+            use_proxy = True  # python 2.6 requested
+        elif not args.python and isinstance(args, (SanityConfig, UnitsConfig, ShellConfig)):
+            use_proxy = True  # multiple versions (including python 2.6) can be used
+
+    if args.docker_raw and args.pypi_proxy:
+        use_proxy = True  # manual override to force proxy usage
+
+    if not use_proxy:
+        return None, None
+
+    proxy_image = 'quay.io/ansible/pypi-test-container:1.0.0'
+    port = 3141
+
+    options = [
+        '--detach',
+        '-p', '%d:%d' % (port, port),
+    ]
+
+    docker_pull(args, proxy_image)
+
+    container_id = docker_run(args, proxy_image, options=options)[0]
+
+    if args.explain:
+        container_id = 'pypi_id'
+        container_ip = '127.0.0.1'
+    else:
+        container_id = container_id.strip()
+        container_ip = get_docker_container_ip(args, container_id)
+
+    endpoint = 'http://%s:%d/root/pypi/+simple/' % (container_ip, port)
+
+    return container_id, endpoint
+
+
+def configure_pypi_proxy(args):  # type: (CommonConfig) -> None
+    """Configure the environment to use a PyPI proxy, if present."""
+    if not isinstance(args, EnvironmentConfig):
+        return
+
+    if args.pypi_endpoint:
+        configure_pypi_block_access()
+        configure_pypi_proxy_pip(args)
+        configure_pypi_proxy_easy_install(args)
+
+
+def configure_pypi_block_access():  # type: () -> None
+    """Block direct access to PyPI to ensure proxy configurations are always used."""
+    if os.getuid() != 0:
+        display.warning('Skipping custom hosts block for PyPI for non-root user.')
+        return
+
+    hosts_path = '/etc/hosts'
+    hosts_block = '''
+127.0.0.1 pypi.org pypi.python.org files.pythonhosted.org
+'''
+
+    def hosts_cleanup():
+        display.info('Removing custom PyPI hosts entries: %s' % hosts_path, verbosity=1)
+
+        with open(hosts_path) as hosts_file_read:
+            content = hosts_file_read.read()
+
+        content = content.replace(hosts_block, '')
+
+        with open(hosts_path, 'w') as hosts_file_write:
+            hosts_file_write.write(content)
+
+    display.info('Injecting custom PyPI hosts entries: %s' % hosts_path, verbosity=1)
+    display.info('Config: %s\n%s' % (hosts_path, hosts_block), verbosity=3)
+
+    with open(hosts_path, 'a') as hosts_file:
+        hosts_file.write(hosts_block)
+
+    atexit.register(hosts_cleanup)
+
+
+def configure_pypi_proxy_pip(args):  # type: (EnvironmentConfig) -> None
+    """Configure a custom index for pip based installs."""
+    pypi_hostname = urlparse(args.pypi_endpoint)[1].split(':')[0]
+
+    pip_conf_path = os.path.expanduser('~/.pip/pip.conf')
+    pip_conf = '''
+[global]
+index-url = {0}
+trusted-host = {1}
+'''.format(args.pypi_endpoint, pypi_hostname).strip()
+
+    def pip_conf_cleanup():
+        display.info('Removing custom PyPI config: %s' % pip_conf_path, verbosity=1)
+        os.remove(pip_conf_path)
+
+    if os.path.exists(pip_conf_path):
+        raise ApplicationError('Refusing to overwrite existing file: %s' % pip_conf_path)
+
+    display.info('Injecting custom PyPI config: %s' % pip_conf_path, verbosity=1)
+    display.info('Config: %s\n%s' % (pip_conf_path, pip_conf), verbosity=3)
+
+    write_text_file(pip_conf_path, pip_conf, True)
+    atexit.register(pip_conf_cleanup)
+
+
+def configure_pypi_proxy_easy_install(args):  # type: (EnvironmentConfig) -> None
+    """Configure a custom index for easy_install based installs."""
+    pydistutils_cfg_path = os.path.expanduser('~/.pydistutils.cfg')
+    pydistutils_cfg = '''
+[easy_install]
+index_url = {0}
+'''.format(args.pypi_endpoint).strip()
+
+    if os.path.exists(pydistutils_cfg_path):
+        raise ApplicationError('Refusing to overwrite existing file: %s' % pydistutils_cfg_path)
+
+    def pydistutils_cfg_cleanup():
+        display.info('Removing custom PyPI config: %s' % pydistutils_cfg_path, verbosity=1)
+        os.remove(pydistutils_cfg_path)
+
+    display.info('Injecting custom PyPI config: %s' % pydistutils_cfg_path, verbosity=1)
+    display.info('Config: %s\n%s' % (pydistutils_cfg_path, pydistutils_cfg), verbosity=3)
+
+    write_text_file(pydistutils_cfg_path, pydistutils_cfg, True)
+    atexit.register(pydistutils_cfg_cleanup)
 
 
 def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, inventory_path, temp_path, always):
