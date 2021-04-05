@@ -275,14 +275,14 @@ when a term comes up on the mailing list.
         servers to one particular server.
 
     Local Action
-        The local_action keyword is an alias for ``delegate_to: localhost``.
-        Used when you want to redirect an action from the remote machines to
+        This keyword is an alias for ``delegate_to: localhost``.
+        Used when you want to redirect an action from the remote to
         execute on the controller itself.
 
     Local Connection
         By using ``connection: local`` in a :term:`playbook <playbooks>`, or
         passing ``-c local`` to :command:`/usr/bin/ansible`, this indicates
-        that we are executing a local fork instaed of executing on the remote machine.
+        that we are executing a local fork instead of executing on the remote machine.
         You probably want ``local_action`` or ``delegate_to: localhost`` instead
         as this ONLY changes the connection and no other context for execution.
 
