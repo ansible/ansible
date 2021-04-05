@@ -1,2 +1,0 @@
-minor_changes:
-  - linux facts - Add additional check to ensure 'container' virtual fact gets added to guest_tech when appropriate (https://github.com/ansible/ansible/pull/71385)

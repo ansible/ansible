@@ -1,3 +1,0 @@
-bugfixes:
-- strftime filter - Input epoch is allowed to be a float
-  (https://github.com/ansible/ansible/issues/71257)

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed unused provisioning code and cleaned up remote provider management logic.

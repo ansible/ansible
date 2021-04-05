@@ -1,4 +1,0 @@
-minor_changes:
-- ansible-test - Remove em dash from the Pytest configuration file in order to
-  be readable on systems where preferred encoding is ASCII.
-  (https://github.com/ansible/ansible/issues/71739)

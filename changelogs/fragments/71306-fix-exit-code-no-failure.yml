@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix an exit code for a non-failing playbook (https://github.com/ansible/ansible/issues/71306)

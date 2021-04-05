@@ -1,6 +1,0 @@
-minor_changes:
-- "ansible-test validate-modules - validate removal version numbers (https://github.com/ansible/ansible/pull/71679)."
-- "ansible-test validate-modules - ensure that removal collection version numbers and version_added collection version numbers conform to the semantic versioning specification at https://semver.org/ (https://github.com/ansible/ansible/pull/71679)."
-- "ansible-test pylint - ensure that removal collection version numbers conform to the semantic versioning specification at https://semver.org/ (https://github.com/ansible/ansible/pull/71679)."
-- "ansible-test runtime-metadata - validate removal version numbers, and check removal dates more strictly (https://github.com/ansible/ansible/pull/71679)."
-- "ansible-test runtime-metadata - ensure that removal collection version numbers conform to the semantic versioning specification at https://semver.org/ (https://github.com/ansible/ansible/pull/71679)."

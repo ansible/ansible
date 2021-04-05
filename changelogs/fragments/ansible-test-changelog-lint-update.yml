@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - The ``changelog`` sanity test has been updated to ensure ``rstcheck`` does not load the ``sphinx`` module.

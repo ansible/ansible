@@ -1,2 +1,0 @@
-bugfixes:
-  - facts - fix incorrect UTC timestamp in ``iso8601_micro`` and ``iso8601``

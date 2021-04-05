@@ -1,2 +1,0 @@
-bugfixes:
-  - Updated docs and added warning on max_fail_percentage and free strategy usage. fixes issue 16666.

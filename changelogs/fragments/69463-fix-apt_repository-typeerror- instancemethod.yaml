@@ -1,2 +1,0 @@
-bugfixes:
-- Fixed TypeError instancemethod expecting at least 2 arguments for apt_repository(issue https://github.com/ansible/ansible/issues/69308, PR https://github.com/ansible/ansible/pull/69463)

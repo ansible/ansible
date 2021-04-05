@@ -1,3 +1,0 @@
-bugfixes:
-  - systemd - fixed chroot usage on new versions of systemd, that broke because of upstream changes in systemctl output
-  - systemd - made the systemd module work correctly when the SYSTEMD_OFFLINE environment variable is set

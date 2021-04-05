@@ -1,8 +1,0 @@
-bugfixes:
-  - ansible-console - add more documentation, specifically on various commands[1] (https://github.com/ansible/ansible/issues/72195)
-  - ansible-console - Ctrl+C (on prompt) used to exit the shell, unlike most shells, it should just reset the current line
-    (ie. abort it and spawn a new prompt) (https://github.com/ansible/ansible/issues/68529)
-  - ansible-console - Ctrl+C (in a task) abort current task, and put you back on prompt (this behavior doesn't change) (ditto)
-  - ansible-console - Ctrl+D (on prompt) now exit the shell, this is the expected behavior in a shell (cf bash, sh, zsh, ipython, ...) (ditto)
-  - ansible-console - fixes few strings' typos
-  - ansible-console - remove useless and poorly formatted comment section (replaced with [1])

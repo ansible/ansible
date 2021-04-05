@@ -1,2 +1,0 @@
-bugfixes:
-  - Restore the ability for changed_when/failed_when to function with group_by (#70844).

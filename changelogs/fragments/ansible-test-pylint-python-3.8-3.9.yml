@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - The ``pylint`` sanity test is now supported on Python 3.8.
-  - ansible-test - The ``pylint`` sanity test is now skipped with a warning on Python 3.9 due to unresolved upstream regressions.

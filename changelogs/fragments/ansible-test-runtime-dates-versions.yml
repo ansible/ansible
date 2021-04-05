@@ -1,3 +1,0 @@
-minor_changes:
-- "ansible-test runtime-metadata - compare deprecation and tombstone versions to the current version to ensure that they are correct (https://github.com/ansible/ansible/pull/72625)."
-- "ansible-test runtime-metadata - ensure that the tombstone removal date is not in the future (https://github.com/ansible/ansible/pull/72625)."

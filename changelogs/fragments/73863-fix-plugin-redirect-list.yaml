@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix adding unrelated candidate names to the plugin loader redirect list.

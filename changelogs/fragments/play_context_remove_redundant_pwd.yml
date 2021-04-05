@@ -1,2 +1,0 @@
-bugfixes:
-  - remove redundant remote_user setting in play_context for local as plugin already does it, also removes fork/thread issue from use of pwd library.

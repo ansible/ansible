@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - default container now uses default-test-container 2.7.0 and ansible-base-test-container 1.6.0. This brings in Python 3.9.0rc1 for testing.

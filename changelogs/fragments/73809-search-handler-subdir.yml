@@ -1,2 +1,0 @@
-bugfixes:
-  - A handler defined within a role will now search handlers subdir for included tasks (issue https://github.com/ansible/ansible/issues/71222).

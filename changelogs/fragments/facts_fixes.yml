@@ -1,2 +1,0 @@
-bugfixes:
-  - get_sysctl now handles multiline values and does not die silently anymore.

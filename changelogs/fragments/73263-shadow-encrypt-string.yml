@@ -1,2 +1,0 @@
-minor_changes:
-- "Shadow prompt input to ansible-vault encrypt-string unless the ``--show-input`` flag is set"

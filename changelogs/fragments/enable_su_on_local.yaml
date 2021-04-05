@@ -1,2 +1,0 @@
-bugfixes:
-    - allow become method 'su' to work on 'local' connection by allocating a fake tty.

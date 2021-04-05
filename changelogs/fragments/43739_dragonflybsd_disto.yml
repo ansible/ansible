@@ -1,2 +1,0 @@
-minor_changes:
-- distribution - add support for DragonFly distribution (https://github.com/ansible/ansible/issues/43739).

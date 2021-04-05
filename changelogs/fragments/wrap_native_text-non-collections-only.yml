@@ -1,2 +1,0 @@
-bugfixes:
-  - Apply ``_wrap_native_text`` only for builtin filters specified in STRING_TYPE_FILTERS.

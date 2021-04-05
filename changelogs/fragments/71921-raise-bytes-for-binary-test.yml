@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Raise the number of bytes scanned by ansible-test to determine if a file is binary to 4096. 

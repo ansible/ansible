@@ -1,2 +1,0 @@
-minor_changes:
-- ansible-galaxy CLI - ``collection verify`` command now supports a ``--offline`` option for local-only verification

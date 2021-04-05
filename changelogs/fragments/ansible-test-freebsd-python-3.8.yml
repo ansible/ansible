@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - FreeBSD 11.4 and 12.2 provisioning can now be used with the ``--python 3.8`` option.

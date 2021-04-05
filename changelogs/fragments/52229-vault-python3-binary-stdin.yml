@@ -1,2 +1,0 @@
-bugfixes:
-  - vault - Support reading raw binary data from stdin under python3

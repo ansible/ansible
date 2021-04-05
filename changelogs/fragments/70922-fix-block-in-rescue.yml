@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix statistics reporting when rescue block contains another block (issue https://github.com/ansible/ansible/issues/61253).

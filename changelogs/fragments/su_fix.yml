@@ -1,2 +1,0 @@
-bugfixes:
-  - su become plugin, ensure correct type for localization option.

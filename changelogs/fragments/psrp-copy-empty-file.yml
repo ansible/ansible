@@ -1,2 +1,0 @@
-bugfixes:
-- psrp - Fix hang when copying an empty file to the remote target

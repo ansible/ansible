@@ -1,2 +1,0 @@
-minor_changes:
-- Add an example for using var in with_sequence (https://github.com/ansible/ansible/issues/68836).

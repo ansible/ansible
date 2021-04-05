@@ -1,2 +1,0 @@
-minor_changes:
-- get_url - handle same SHA sum for checksum file (https://github.com/ansible/ansible/issues/71420).

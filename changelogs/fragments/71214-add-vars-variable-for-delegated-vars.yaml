@@ -1,2 +1,0 @@
-bugfixes:
-  - VariableManager - Add the 'vars' key before getting delegated variables (https://github.com/ansible/ansible/issues/71092).

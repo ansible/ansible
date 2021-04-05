@@ -1,2 +1,0 @@
-bugfixes:
-  - debug action, prevent setting facts when displaying ansible_facts.

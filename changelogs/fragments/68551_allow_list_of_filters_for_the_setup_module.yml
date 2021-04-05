@@ -1,2 +1,0 @@
-minor_changes:
-  - setup - allow list of filters (https://github.com/ansible/ansible/pull/68551).

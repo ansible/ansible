@@ -1,2 +1,0 @@
-bugfixes:
-  - cron - encode and decode crontab files in UTF-8 explicitly to allow non-ascii chars in cron filepath and job (https://github.com/ansible/ansible/issues/69492)

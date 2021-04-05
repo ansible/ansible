@@ -1,4 +1,0 @@
-bugfixes:
-  - ensure delegated vars can resolve hostvars object and access vars from hostvars[inventory_hostname].
-  - fix issue with inventory_hostname and delegated host vars mixing on connection settings.
-  - add magic/connection vars updates from delegated host info.

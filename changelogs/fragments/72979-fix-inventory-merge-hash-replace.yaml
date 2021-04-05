@@ -1,2 +1,0 @@
-bugfixes:
-  - inventory - pass the vars dictionary to combine_vars instead of an individual key's value (https://github.com/ansible/ansible/issues/72975).

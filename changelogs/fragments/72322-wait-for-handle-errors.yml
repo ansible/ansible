@@ -1,2 +1,0 @@
-bugfixes:
-  - wait_for - catch and ignore errors when getting active connections with psutil (https://github.com/ansible/ansible/issues/72322)

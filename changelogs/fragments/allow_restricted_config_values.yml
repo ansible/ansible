@@ -1,3 +1,0 @@
-minor_changes:
-  - Now 'choices' keyword in config definitions also restricts valid values for the entry.
-  - Internal config entries will not be documented, to mark an entry as internal it must start with `_`.

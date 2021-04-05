@@ -1,3 +1,0 @@
-bugfixes:
-- Display - Use wcswidth to calculate printable width of a text string
-  (https://github.com/ansible/ansible/issues/63105)

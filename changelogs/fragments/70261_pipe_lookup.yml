@@ -1,2 +1,0 @@
-minor_changes:
-- pipe lookup - update docs for Popen with shell=True usages (https://github.com/ansible/ansible/issues/70159).

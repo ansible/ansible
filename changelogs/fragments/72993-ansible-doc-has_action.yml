@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-doc - In Windows setup steps, ``ExecutionPolicy`` should be restored to default value ``RemoteSigned`` (https://github.com/ansible/ansible/pull/72993)."

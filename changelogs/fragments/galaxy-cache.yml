@@ -1,2 +1,0 @@
-minor_changes:
-- ansible-galaxy - Added caching mechanisms when retrieving collection info to speed up installs and downloads

@@ -1,2 +1,0 @@
-minor_changes:
-  - Force the template module to use non-native Jinja2 (https://github.com/ansible/ansible/issues/46169)

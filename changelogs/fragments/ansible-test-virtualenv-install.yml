@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - The ``--remote`` option no longer pre-installs the ``virtualenv`` module on Python 3.x instances. The Python built-in ``venv`` module should be used instead.
-  - ansible-test - Pin the ``virtualenv`` version used for ``--remote`` pip installs to the latest version supported by Python 2.x, which is version 16.7.10.

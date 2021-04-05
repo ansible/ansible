@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    blockinfile - properly insert a block at the end of a file that does not
-    have a trailing newline character (https://github.com/ansible/ansible/issues/72055)

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - dnf - Add nobest option (https://github.com/ansible/ansible/issues/69983)

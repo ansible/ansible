@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Using the ``--remote`` option on Azure Pipelines now works from a job running in a container.

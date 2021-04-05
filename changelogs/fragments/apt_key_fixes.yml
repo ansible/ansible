@@ -1,2 +1,0 @@
-bugfixes:
-  - several fixes to make apt_key better at identifying needs for change and also to avoid changes in check_mode.

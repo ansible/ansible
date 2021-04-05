@@ -1,3 +1,0 @@
-minor_changes:
-- setup.py - Skip doing conflict checks for ``sdist`` and ``egg_info`` commands
-  (https://github.com/ansible/ansible/pull/71310)

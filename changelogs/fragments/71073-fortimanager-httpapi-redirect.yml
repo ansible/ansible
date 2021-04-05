@@ -1,2 +1,0 @@
-bugfixes:
-- "fortimanager httpapi plugin - fix redirect to point to the ``fortinet.fortimanager`` collection (https://github.com/ansible/ansible/pull/71073)."

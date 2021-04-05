@@ -1,3 +1,0 @@
-minor_changes:
-- Templar - reduce the complexity of ``Templar._lookup``
-  (https://github.com/ansible/ansible/pull/73277)

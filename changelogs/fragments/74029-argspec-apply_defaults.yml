@@ -1,2 +1,0 @@
-bugfixes:
-- "argument spec validation - fix behavior of ``apply_defaults=True`` when an empty dictionary is specified for such an option (https://github.com/ansible/ansible/pull/74029)."

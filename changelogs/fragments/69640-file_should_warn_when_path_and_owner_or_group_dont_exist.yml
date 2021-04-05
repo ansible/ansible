@@ -1,2 +1,0 @@
-bugfixes:
-- file - the module should warn in check_mode when path an owner/group don't exist (https://github.com/ansible/ansible/issues/67307).

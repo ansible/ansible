@@ -1,2 +1,0 @@
-bugfixes:
-  - SSH plugin - Improve error message when ssh client is not found on the host

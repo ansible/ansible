@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test validate-modules - option names that seem to indicate they contain secret information that should be marked ``no_log=True`` are now flagged in the validate-modules sanity test. False positives can be marked by explicitly setting ``no_log=False`` for these options in the argument spec. Please note that many false positives are expected; the assumption is that it is by far better to have false positives than false negatives (https://github.com/ansible/ansible/pull/73508)."

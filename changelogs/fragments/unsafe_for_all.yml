@@ -1,2 +1,0 @@
-minor_changes:
-  - now !unsafe works on all types of data, not just strings, even recursively for mappings and sequences.

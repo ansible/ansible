@@ -1,2 +1,0 @@
-breaking_changes:
-- ansible-galaxy login command has been removed (see https://github.com/ansible/ansible/issues/71560)

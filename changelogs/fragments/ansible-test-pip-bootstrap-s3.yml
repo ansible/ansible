@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - The ``--remote`` option has been updated to use a versioned ``get-pip.py`` bootstrapper to avoid issues with future releases.

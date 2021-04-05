@@ -1,2 +1,0 @@
-bugfixes:
-  - display correct error information when an error exists in the last line of the file (https://github.com/ansible/ansible/issues/16456)

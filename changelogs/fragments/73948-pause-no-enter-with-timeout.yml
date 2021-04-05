@@ -1,2 +1,0 @@
-bugfixes:
-  - pause - do not accept enter to continue when a timeout is set (https://github.com/ansible/ansible/issues/73948)

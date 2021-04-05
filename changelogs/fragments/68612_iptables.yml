@@ -1,2 +1,0 @@
-minor_changes:
-- iptables - fixed get_chain_policy API (https://github.com/ansible/ansible/issues/68612).

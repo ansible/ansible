@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    user - do the right thing when ``password_lock=True`` and ``password``
-    are used together (https://github.com/ansible/ansible/issues/72992)

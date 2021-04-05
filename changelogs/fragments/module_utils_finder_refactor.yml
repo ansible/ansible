@@ -1,2 +1,0 @@
-bugfixes:
-  - Python module_utils finder - refactor logic to eliminate many corner cases, remove recursion, fix base module_utils redirections

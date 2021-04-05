@@ -1,2 +1,0 @@
-minor_changes:
-  - get_url - allow checksum urls to point to file:// resources, moving scheme test to function

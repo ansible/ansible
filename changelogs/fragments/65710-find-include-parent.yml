@@ -1,3 +1,0 @@
-bugfixes:
-- Includes - Explicitly get the include task, and not assume it is the parent
-  (https://github.com/ansible/ansible/issues/65710)

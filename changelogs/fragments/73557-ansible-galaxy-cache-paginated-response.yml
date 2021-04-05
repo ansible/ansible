@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-galaxy - Cache the responses for available collection versions
-    after getting all pages. (https://github.com/ansible/ansible/issues/73071)

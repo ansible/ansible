@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Now supports freebsd/12.2 remote (https://github.com/ansible/ansible/issues/72366).

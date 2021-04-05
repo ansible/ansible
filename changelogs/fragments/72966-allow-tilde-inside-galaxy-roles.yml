@@ -1,2 +1,0 @@
-bugfixes:
-  - Allow `~` to be present in file names in galaxy roles (https://github.com/ansible/ansible/issues/72966)

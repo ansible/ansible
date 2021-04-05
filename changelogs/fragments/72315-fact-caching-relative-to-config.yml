@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix jsonfile cache plugin option '_uri' to be a type path instead of a string. (https://github.com/ansible/ansible/issues/38002)

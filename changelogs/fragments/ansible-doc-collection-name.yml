@@ -1,2 +1,0 @@
-bugfixes:
-- "ansible-doc - include the collection name in the text output (https://github.com/ansible/ansible/pull/70401)."

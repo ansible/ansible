@@ -1,4 +1,0 @@
-minor_changes:
-- >
-  ansible-galaxy - find any collection dependencies in the globally configured Galaxy servers and not just the server
-  the parent collection is from.
