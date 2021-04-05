@@ -1103,8 +1103,9 @@ class Nmcli(object):
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
 
+        if self.master is not None:
+            cmd.extend(['master', self.master])
         options = {
-            'master': self.master,
             'bridge-port.path-cost': self.path_cost,
             'bridge-port.hairpin': self.bool_to_string(self.hairpin),
             'bridge-port.priority': self.slavepriority,
@@ -1119,8 +1120,9 @@ class Nmcli(object):
     def modify_connection_bridge_slave(self):
         # format for modifying bond-slave interface
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
+        if self.master is not None:
+            cmd.extend(['master', self.master])
         options = {
-            'master': self.master,
             'bridge-port.path-cost': self.path_cost,
             'bridge-port.hairpin': self.bool_to_string(self.hairpin),
             'bridge-port.priority': self.slavepriority,
