@@ -49,7 +49,7 @@ To learn more about the ``ansible-galaxy`` command-line tool, see the :ref:`ansi
 
    :ref:`collections`
        Learn how to install and use collections.
-   :ref:`collections_structure`
+   :ref:`collection_structure`
        Directories and files included in the collection skeleton
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
