@@ -39,6 +39,7 @@ from .executor import (
     Delegate,
     generate_pip_install,
     check_startup,
+    configure_pypi_proxy,
 )
 
 from .config import (
@@ -170,6 +171,7 @@ def main():
         display.info('MAXFD: %d' % MAXFD, verbosity=2)
 
         try:
+            configure_pypi_proxy(config)
             args.func(config)
             delegate_args = None
         except Delegate as ex:
@@ -235,6 +237,15 @@ def parse_args():
                         action='count',
                         default=0,
                         help='display more output')
+
+    common.add_argument('--pypi-proxy',
+                        action='store_true',
+                        help=argparse.SUPPRESS)  # internal use only
+
+    common.add_argument('--pypi-endpoint',
+                        metavar='URI',
+                        default=None,
+                        help=argparse.SUPPRESS)  # internal use only
 
     common.add_argument('--color',
                         metavar='COLOR',
