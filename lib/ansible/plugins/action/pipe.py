@@ -50,9 +50,9 @@ class ActionModule(ActionBase):
         local_proc.wait(timeout=5)
         return {
             'src': {
-                'return_code': local_proc.returncode,
+                'rc': local_proc.returncode,
             },
             'dest': {
-                'return_code': dest_return_code,
+                'rc': dest_return_code,
             }
         }
