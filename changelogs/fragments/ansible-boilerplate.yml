@@ -1,2 +1,0 @@
-minor_changes:
-  - Add standard Python 2/3 compatibility boilerplate to setup script, module_utils and docs_fragments which were missing them.

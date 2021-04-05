@@ -1,4 +1,0 @@
-minor_changes:
-  - >
-    reboot - add ``reboot_command`` parameter to allow specifying the command
-    used to reboot the system (https://github.com/ansible/ansible/issues/51359)

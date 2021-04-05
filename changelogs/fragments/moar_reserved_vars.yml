@@ -1,2 +1,0 @@
-bugfixes:
-  - Handle more varnames that can create conflicts, expand a function in general, handle jinja2 globals in particular (https://github.com/ansible/ansible/issues/41955).

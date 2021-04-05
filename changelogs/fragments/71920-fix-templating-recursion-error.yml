@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix ``RecursionError`` when templating large vars structures (https://github.com/ansible/ansible/issues/71920)

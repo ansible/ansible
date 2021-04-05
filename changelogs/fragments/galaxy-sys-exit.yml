@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - Use ``sys.exit`` instead of ``exit`` when reporting an error for the removed login command.

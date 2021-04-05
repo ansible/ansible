@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    systemd - preserve the full unit name when using a templated service and
-    ``systemd`` failed to parse dbus due to a known bug in ``systemd`` (https://github.com/ansible/ansible/pull/72985)

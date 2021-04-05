@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test - integration and unit test change detection now works for filter, lookup and test plugins

@@ -1,3 +1,0 @@
-bugfixes:
-- Ensure if a traceback halts ``strategy.run`` that we still attempt to clean up
-  (https://github.com/ansible/ansible/issues/23958)

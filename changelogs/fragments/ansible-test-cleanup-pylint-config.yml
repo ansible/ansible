@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Reorganize internal ``pylint`` configuration files for easier comparison and maintenance.

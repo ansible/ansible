@@ -1,2 +1,0 @@
-bugfixes:
-  - splunk httpapi plugin - switch from splunk.enterprise_security to splunk.es in runtime.yml to reflect upstream change of Collection Name

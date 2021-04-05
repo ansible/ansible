@@ -1,2 +1,0 @@
-minor_changes:
-  - Allow unsafe_writes to be set on target via env var, for those targets that need a blanket setting.

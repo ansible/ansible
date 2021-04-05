@@ -1,5 +1,0 @@
-minor_changes:
-  - ansible-test - Update ``pylint`` and its dependencies to the latest available versions to support Python 3.9.
-known_issues:
-  - ansible-test - The ``pylint`` sanity test no longer correctly detects "bad" variable names for non-constants.
-                   See https://github.com/PyCQA/pylint/issues/3701 for additional details.

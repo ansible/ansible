@@ -1,2 +1,0 @@
-bugfixes:
-   - ALLOW_WORLD_READABLE_TMP, switched to 'moved' message as 'deprecation' is misleading since config settings still work w/o needing change.

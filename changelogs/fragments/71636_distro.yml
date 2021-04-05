@@ -1,2 +1,0 @@
-bugfixes:
-- distribution - add support for Pardus Linux distribution (https://github.com/ansible/ansible/issues/71636).

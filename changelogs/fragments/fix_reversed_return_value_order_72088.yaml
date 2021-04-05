@@ -1,6 +1,0 @@
-bugfixes:
-  - >
-      user - AnsibleModule.run_command returns a tuple of return code, stdout
-      and stderr. The module main function of the user module expects
-      user.create_user to return a tuple of return code, stdout and stderr.
-      Fix the locations where stdout and stderr got reversed.

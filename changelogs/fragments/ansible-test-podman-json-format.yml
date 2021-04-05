@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - now makes a better attempt to support podman when calling ``docker images`` and asking for JSON format.

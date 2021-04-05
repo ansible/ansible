@@ -1,2 +1,0 @@
-bugfixes:
-  - hostname - Fixed an issue where the hostname on the alinux could not be set.

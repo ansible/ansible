@@ -1,2 +1,0 @@
-minor_changes:
-  - create ``get_unsupported_parameters`` validation function (https://github.com/ansible/ansible/pull/72447/files)

@@ -1,2 +1,0 @@
-bugfixes:
-- windows async - use full path when calling PowerShell to reduce reliance on environment vars being correct - https://github.com/ansible/ansible/issues/70655

@@ -1,2 +1,0 @@
-minor_changes:
-  - service_facts - return service state information on OpenBSD.

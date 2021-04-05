@@ -1,2 +1,0 @@
-minor_changes:
-- "The plugin loader now keeps track of the collection where a plugin was resolved to, in particular whether the plugin was loaded from ansible-core's internal paths (``ansible.builtin``) or from user-supplied paths (no collection name)."

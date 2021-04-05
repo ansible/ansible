@@ -1,2 +1,0 @@
-bugfixes:
-  - account for bug in Python 2.6 that occurs during interpreter shutdown to avoid stack trace

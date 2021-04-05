@@ -1,2 +1,0 @@
-bugfixes:
-  - Correct the inventory source error parse handling, specifically make the config INVENTORY_ANY_UNPARSED_IS_FAILED work as expected.

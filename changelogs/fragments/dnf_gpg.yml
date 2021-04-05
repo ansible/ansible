@@ -1,2 +1,0 @@
-security_fixes:
-  - dnf - Previously, regardless of the ``disable_gpg_check`` option, packages were not GPG validated. They are now. (CVE-2020-14365)

@@ -1,2 +1,0 @@
-minor_changes:
-  - New virtualization facts, ``virtualization_tech_guest`` and ``virtualization_tech_host`` now allow for conveying when a system is a host or guest of multiple virtualization technologies.

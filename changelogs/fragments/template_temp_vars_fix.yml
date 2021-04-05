@@ -1,2 +1,0 @@
-bugfixes:
-  - Correctly set template_path and template_fullpath for usage in template lookup and action plugins.

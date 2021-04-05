@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Add ``macos/10.15`` as a supported value for the ``--remote`` option.

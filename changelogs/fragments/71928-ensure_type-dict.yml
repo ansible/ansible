@@ -1,2 +1,0 @@
-minor_changes:
-- "plugin option validation - now the option type ``dict``/``dictionary`` is also validated by the config manager (https://github.com/ansible/ansible/pull/71928)."

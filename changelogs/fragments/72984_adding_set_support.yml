@@ -1,2 +1,0 @@
-minor_changes:
-- Module iptables set/ipset support added (https://github.com/ansible/ansible/pull/72984)

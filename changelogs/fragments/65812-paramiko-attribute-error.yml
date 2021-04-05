@@ -1,3 +1,0 @@
-bugfixes:
-- paramiko connection plugin - Ensure we only reset the connection when one has been
-  previously established (https://github.com/ansible/ansible/issues/65812)

@@ -1,2 +1,0 @@
-minor_changes:
-  - facts - ``/dev/kvm`` is now consulted in Linux virtualization facts, and the host is considered a KVM host if this file exists and none of the pre-existing checks matched.

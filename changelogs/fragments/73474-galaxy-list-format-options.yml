@@ -1,2 +1,0 @@
-minor_changes:
-  - Add ``--format`` CLI option to ``ansible-galaxy collection list`` which allows for ``human`` (default), ``yaml``, or ``json``. (https://github.com/ansible/ansible/pull/73474)

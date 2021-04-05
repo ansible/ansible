@@ -1,2 +1,0 @@
-bugfixes:
-- "gluster modules - fix redirect to point to the ``gluster.gluster`` collection (https://github.com/ansible/ansible/pull/71240)."

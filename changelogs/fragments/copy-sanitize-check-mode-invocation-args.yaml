@@ -1,7 +1,0 @@
-security_fixes:
-- >
-  **security issue** - copy - Redact the value of the no_log 'content'
-  parameter in the result's invocation.module_args in check mode.
-  Previously when used with check mode and with '-vvv', the module
-  would not censor the content if a change would be made to the
-  destination path. (CVE-2020-14332)
