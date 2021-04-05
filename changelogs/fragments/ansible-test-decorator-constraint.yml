@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Add constraint for ``decorator`` for Python versions prior to 3.5.

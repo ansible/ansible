@@ -2,6 +2,7 @@ resolvelib >= 0.5.3, < 0.6.0  # keep in sync with `requirements.txt`
 coverage >= 4.5.1, < 5.0.0 ; python_version <  '3.7' # coverage 4.4 required for "disable_warnings" support but 4.5.1 needed for bug fixes, coverage 5.0+ incompatible
 coverage >= 4.5.2, < 5.0.0 ; python_version == '3.7' # coverage 4.5.2 fixes bugs in support for python 3.7, coverage 5.0+ incompatible
 coverage >= 4.5.4, < 5.0.0 ; python_version >  '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
+decorator < 5.0.0 ; python_version < '3.5' # decorator 5.0.5 and later require python 3.5 or later
 six < 1.14.0 ; python_version < '2.7' # six 1.14.0 drops support for python 2.6
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
 # do not add a cryptography constraint here unless it is for python version incompatibility, see the get_cryptography_requirement function in executor.py for details
