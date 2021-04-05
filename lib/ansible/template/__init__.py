@@ -430,8 +430,11 @@ class JinjaPluginIntercept(MutableMapping):
             return
 
         for plugin in self._pluginloader.all():
-            method_map = getattr(plugin, self._method_map_name)
-            self._delegatee.update(method_map())
+            try:
+                method_map = getattr(plugin, self._method_map_name)
+                self._delegatee.update(method_map())
+            except Exception as e:
+                raise TemplateSyntaxError('Could not load %s plugin %s due to: %r' % (self._dirname, plugin._original_path, e), 0)
 
         if self._pluginloader.class_name == 'FilterModule':
             for plugin_name, plugin in self._delegatee.items():
