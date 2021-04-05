@@ -11,7 +11,6 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: pipe
-version_added: devel
 short_description: Pipe local command to a remote command
 description:
     - The C(pipe) action executes a command locally and pipes the output thereof to a remote host.
@@ -23,19 +22,13 @@ options:
     required: yes
   remote:
     description:
-    - The command to execute on the remote machine. 
-    - Its input will be the stdoutput of the local command 
+    - The command to execute on the remote machine.
+    - Its input will be the stdoutput of the local command
     type: str
     required: yes
-extends_documentation_fragment:
-- command
-- execute
-- local
-notes:
-- Your remote connection should probably support pipelining
 seealso:
-- ansible.modules.command
-- ansible.modules.script
+- module: ansible.builtin.command
+- module: ansible.builtin.script
 author:
 - LoveIsGrief
 '''
@@ -43,7 +36,7 @@ author:
 EXAMPLES = r'''
 - name: Copy file with owner and permissions
   ansible.builtin.pipe:
-    local: docker save {{ image }} 
+    local: docker save {{ image }}
     remote: docker load
 '''
 
