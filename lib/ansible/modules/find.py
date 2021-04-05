@@ -29,7 +29,7 @@ options:
               first letter of any of those words (e.g., "1w").
         type: str
     patterns:
-        default: '*'
+        default: []
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
@@ -41,18 +41,19 @@ options:
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
+            - Defaults to '*' when C(use_regex=False), or '.*' when C(use_regex=True).
         type: list
-        aliases: [ pattern ]
         elements: str
+        aliases: [ pattern ]
     excludes:
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - Items whose basenames match an C(excludes) pattern are culled from C(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
+        elements: str
         aliases: [ exclude ]
         version_added: "2.5"
-        elements: str
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
@@ -62,8 +63,8 @@ options:
             - List of paths of directories to search. All paths must be fully qualified.
         type: list
         required: true
-        aliases: [ name, path ]
         elements: str
+        aliases: [ name, path ]
     file_type:
         description:
             - Type of file to select.
@@ -360,7 +361,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
-            patterns=dict(type='list', default=['*'], aliases=['pattern'], elements='str'),
+            patterns=dict(type='list', default=[], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
@@ -378,6 +379,16 @@ def main():
     )
 
     params = module.params
+
+    # Set the default match pattern to either a match-all glob or
+    # regex depending on use_regex being set.  This makes sure if you
+    # set excludes: without a pattern pfilter gets something it can
+    # handle.
+    if not params['patterns']:
+        if params['use_regex']:
+            params['patterns'] = ['.*']
+        else:
+            params['patterns'] = ['*']
 
     filelist = []
 
