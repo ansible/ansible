@@ -345,7 +345,7 @@ def main():
                 "keep-modified": {"required": False, "type": "str",
                                   "choices": ["enable", "disable"]},
                 "name": {"required": True, "type": "str"},
-                "password": {"required": False, "type": "str"},
+                "password": {"required": False, "type": "str", "no_log": True},
                 "period": {"required": False, "type": "str",
                            "choices": ["none", "daily", "weekly",
                                        "monthly"]},

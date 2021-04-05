@@ -812,7 +812,7 @@ def main():
                                                  }},
                                      "name": {"required": True, "type": "str"},
                                      "packet-size": {"required": False, "type": "int"},
-                                     "password": {"required": False, "type": "str"},
+                                     "password": {"required": False, "type": "str", "no_log": True},
                                      "port": {"required": False, "type": "int"},
                                      "protocol": {"required": False, "type": "str",
                                                   "choices": ["ping", "tcp-echo", "udp-echo",

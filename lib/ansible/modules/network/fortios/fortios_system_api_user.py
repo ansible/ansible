@@ -320,7 +320,7 @@ def main():
                 "state": {"required": True, "type": "str",
                           "choices": ["present", "absent"]},
                 "accprofile": {"required": False, "type": "str"},
-                "api-key": {"required": False, "type": "str"},
+                "api-key": {"required": False, "type": "str", "no_log": True},
                 "comments": {"required": False, "type": "str"},
                 "cors-allow-origin": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},

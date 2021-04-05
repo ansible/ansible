@@ -847,7 +847,7 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         argument_spec = dict(
-            license_key=dict(),
+            license_key=dict(no_log=True),
             license_server=dict(
                 default='activate.f5.com'
             ),
