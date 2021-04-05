@@ -11,6 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: pipe
+version_added: "2.11"
 short_description: Pipe local command to a remote command
 description:
     - The C(pipe) action executes a command locally and pipes the output thereof to a remote host.
@@ -30,7 +31,7 @@ seealso:
 - module: ansible.builtin.command
 - module: ansible.builtin.script
 author:
-- LoveIsGrief
+- LoveIsGrief (@LoveIsGrief)
 '''
 
 EXAMPLES = r'''
