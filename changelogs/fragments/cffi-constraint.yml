@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    ansible-test - add constraint for ``cffi`` to prevent failure on systems with
-    older versions of ``gcc`` (https://foss.heptapod.net/pypy/cffi/-/issues/480)

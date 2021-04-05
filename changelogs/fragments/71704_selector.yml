@@ -1,2 +1,0 @@
-bugfixes:
-- basic - handle exceptions for default selectors in Python 2.7 (https://github.com/ansible/ansible/issues/71704).

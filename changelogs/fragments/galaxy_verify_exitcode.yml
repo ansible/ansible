@@ -1,2 +1,0 @@
-minor_changes:
-- ansible-galaxy CLI - ``collection verify`` command now exits with a non-zero exit code on verification failure

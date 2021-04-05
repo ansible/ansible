@@ -1,2 +1,0 @@
-bugfixes:
-  - Try to avoid kernel 'blocking' state on reading files while fact gathering.

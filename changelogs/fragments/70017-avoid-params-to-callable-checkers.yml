@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    if the ``type`` for a module parameter in the argument spec is callable,
-    do not pass ``kwargs`` to avoid errors (https://github.com/ansible/ansible/issues/70017)

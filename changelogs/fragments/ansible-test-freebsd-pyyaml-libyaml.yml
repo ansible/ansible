@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - FreeBSD instances provisioned with ``--remote`` now make ``libyaml`` available for use with PyYAML installation.

@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy download - fix bug when downloading a collection in a SCM subdirectory

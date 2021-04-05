@@ -1,2 +1,0 @@
-bugfixes:
-- runas - create a new token when running as ``SYSTEM`` to ensure it has the full privileges assigned to that account

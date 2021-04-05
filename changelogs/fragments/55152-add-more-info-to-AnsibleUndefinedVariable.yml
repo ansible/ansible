@@ -1,2 +1,0 @@
-bugfixes:
-  - Provide more information in AnsibleUndefinedVariable (https://github.com/ansible/ansible/issues/55152)

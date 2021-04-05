@@ -1,2 +1,0 @@
-bugfixes:
-- collection loader - fix bogus code coverage entries for synthetic packages

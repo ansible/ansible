@@ -1,3 +1,0 @@
-bugfixes:
-- async - Fix Python 3 interpreter parsing from module by comparing with bytes
-  (https://github.com/ansible/ansible/issues/70690)

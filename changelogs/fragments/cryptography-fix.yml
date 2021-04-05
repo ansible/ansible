@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Temporarily limit ``cryptography`` to versions before 3.4 to enable tests to function.

@@ -1,2 +1,0 @@
-bugfixes:
-- "ansible-doc - improve man page formatting to avoid problems when YAML anchors are used (https://github.com/ansible/ansible/pull/70045)."

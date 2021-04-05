@@ -1,2 +1,0 @@
-bugfixes:
-- "Improve Ansible config deprecations to show the source of the deprecation (ansible-core). Also remove space before a comma in config deprecations (https://github.com/ansible/ansible/pull/72697)."

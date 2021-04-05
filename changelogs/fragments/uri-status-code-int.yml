@@ -1,2 +1,0 @@
-bugfixes:
-- uri - ``status_code`` elements are type ``int``

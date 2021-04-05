@@ -1,2 +1,0 @@
-minor_changes:
-- setup - fix distribution facts for Older Amazon Linux with ``/etc/os-release`` (https://github.com/ansible/ansible/issues/73946).

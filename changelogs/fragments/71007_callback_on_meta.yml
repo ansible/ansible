@@ -1,2 +1,0 @@
-minor_changes:
-  - callback plugins - ``meta`` tasks now get sent to ``v2_playbook_on_task_start``. Explicit tasks are always sent. Plugins can opt in to receiving implicit ones.

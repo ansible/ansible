@@ -1,2 +1,0 @@
-bugfixes:
-  - linux network facts - get the correct value for broadcast address (https://github.com/ansible/ansible/issues/64384)

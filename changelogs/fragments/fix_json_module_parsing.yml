@@ -1,2 +1,0 @@
-bugfixes:
-    - restrict module valid JSON parsed output to objects as lists are not valid responses.

@@ -1,2 +1,0 @@
-minor_changes:
-  - git - add ``single_branch`` parameter (https://github.com/ansible/ansible/pull/28465)

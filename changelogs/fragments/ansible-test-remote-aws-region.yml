@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Removed the obsolete ``--remote-aws-region`` provisioning option.
-  - ansible-test - Files used to track remote instances no longer have a region suffix.

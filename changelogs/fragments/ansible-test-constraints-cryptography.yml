@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - ``cryptography`` is now limited to versions prior to 3.2 only when an incompatible OpenSSL version (earlier than 1.1.0) is detected

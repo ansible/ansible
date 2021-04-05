@@ -1,2 +1,0 @@
-removed_features:
-  - The "user" parameter was previously deprecated and is now removed in favor of "scope"

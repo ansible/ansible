@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-doc - provide ``has_action`` field in JSON output for modules. That information is currently only available in the text view (https://github.com/ansible/ansible/pull/72359)."

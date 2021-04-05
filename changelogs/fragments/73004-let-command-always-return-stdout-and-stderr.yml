@@ -1,2 +1,0 @@
-bugfixes:
-- Command module now returns stdout & stderr if executable is missing or an unknown error occurs

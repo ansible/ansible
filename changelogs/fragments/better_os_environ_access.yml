@@ -1,2 +1,0 @@
-bugfixes:
-  - avoid possible errors accessing os.environ by not assuming existance of variables.

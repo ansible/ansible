@@ -1,2 +1,0 @@
-breaking_changes:
-  - The ``meta`` module now supports tags for user-defined tasks. Internal ``meta`` tasks continue to always run. (https://github.com/ansible/ansible/issues/64558)

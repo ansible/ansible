@@ -1,9 +1,9 @@
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/play.yml shebang
+examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/my_test.py shebang # example module but not in a normal module location
 examples/scripts/my_test_facts.py shebang # example module but not in a normal module location
 examples/scripts/my_test_info.py shebang # example module but not in a normal module location
-examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
@@ -31,8 +31,9 @@ hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compil
 hacking/build_library/build_ansible/commands.py compile-2.6!skip # release and docs process only, 3.6+ required
 hacking/build_library/build_ansible/commands.py compile-2.7!skip # release and docs process only, 3.6+ required
 hacking/build_library/build_ansible/commands.py compile-3.5!skip # release and docs process only, 3.6+ required
-lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/cli/console.py pylint:blacklisted-name
+lib/ansible/cli/galaxy.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
+lib/ansible/cli/scripts/ansible_cli_stub.py pylint:ansible-deprecated-version
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
@@ -41,11 +42,14 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
-lib/ansible/cli/galaxy.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/galaxy/collection/__init__.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/galaxy/collection/galaxy_api_proxy.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/galaxy/dependency_resolution/dataclasses.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/galaxy/dependency_resolution/providers.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
+lib/ansible/keyword_desc.yml no-unwanted-files
+lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
+lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
+lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
 lib/ansible/module_utils/compat/selinux.py import-2.6!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.5!skip # pass/fail depends on presence of libselinux.so
@@ -53,9 +57,6 @@ lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends o
 lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
-lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
-lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
-lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
@@ -102,6 +103,7 @@ lib/ansible/modules/copy.py pylint:blacklisted-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
+lib/ansible/modules/cron.py pylint:ansible-deprecated-version
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec
@@ -141,15 +143,28 @@ lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-matc
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
+lib/ansible/playbook/__init__.py pylint:ansible-deprecated-version
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
+lib/ansible/playbook/conditional.py pylint:ansible-deprecated-version
+lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
+lib/ansible/playbook/play_context.py pylint:ansible-deprecated-version
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
+lib/ansible/playbook/task.py pylint:ansible-deprecated-version
+lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
+lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
+lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/inventory/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/inventory/script.py pylint:ansible-deprecated-version
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
+lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
+lib/ansible/vars/fact_cache.py pylint:ansible-deprecated-version
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
@@ -167,7 +182,6 @@ test/integration/targets/collections_relative_imports/collection_root/ansible_co
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
-test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip
@@ -175,6 +189,7 @@ test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/DSCResources/AN
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1 pslint!skip
 test/integration/targets/incidental_win_ping/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
+test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
@@ -221,11 +236,10 @@ test/support/integration/plugins/module_utils/database.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
+test/support/integration/plugins/modules/docker_swarm.py pylint:ansible-deprecated-version
 test/support/integration/plugins/modules/lvg.py pylint:blacklisted-name
 test/support/integration/plugins/modules/timezone.py pylint:blacklisted-name
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py future-import-boilerplate
@@ -242,6 +256,7 @@ test/support/network-integration/collections/ansible_collections/ansible/netcomm
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/config.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py metaclass-boilerplate
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/netconf.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/netconf.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/network.py future-import-boilerplate
@@ -254,6 +269,7 @@ test/support/network-integration/collections/ansible_collections/ansible/netcomm
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/netconf/netconf.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/restconf/restconf.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/restconf/restconf.py metaclass-boilerplate
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/doc_fragments/ios.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/doc_fragments/ios.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/module_utils/network/ios/ios.py future-import-boilerplate

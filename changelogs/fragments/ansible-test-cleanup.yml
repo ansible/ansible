@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Refactor code to remove unused logic for obsolete support of multiple provisioning endpoints.

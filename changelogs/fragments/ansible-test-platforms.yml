@@ -1,5 +1,0 @@
-minor_changes:
-  - "ansible-test - Remove outdated ``--docker`` completion entries: fedora30, fedora31, ubuntu1604"
-  - "ansible-test - Remove outdated ``--remote`` completion entries: freebsd/11.1, freebsd/12.1, osx/10.11, macos/10.15, rhel/7.6, rhel/7.8, rhel/8.1, rhel/8.2"
-  - "ansible-test - Remove outdated ``--windows`` completion entries: 2008, 2008-R2"
-  - "ansible-test - Remove unused ``--remote`` completion entry: power/centos/7"

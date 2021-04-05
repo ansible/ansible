@@ -1,3 +1,0 @@
-bugfixes:
-- default callback - Ensure that the ``host_pinned`` strategy is not treated as lockstep
-  (https://github.com/ansible/ansible/issues/73364)

@@ -1,2 +1,0 @@
-minor_changes:
-  - Discourage the use of 'hexdigits' in password lookup, as it distorts expected entropy.

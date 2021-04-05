@@ -1,2 +1,0 @@
-minor_changes:
-  - allow tree callback plugin to be configurable, for use with playbooks.

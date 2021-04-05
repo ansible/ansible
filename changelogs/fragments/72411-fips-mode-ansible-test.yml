@@ -1,2 +1,0 @@
-minor_changes:
-  - Switch to hashlib.sha256() for ansible-test to allow for FIPs mode.

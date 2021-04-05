@@ -1,2 +1,0 @@
-bugfixes:
-  - shell - fix quoting of mkdir command in creation of remote_tmp in order to allow spaces and other special characters (https://github.com/ansible/ansible/issues/69577).

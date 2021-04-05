@@ -1,2 +1,0 @@
-minor_changes:
-- winrm - Added ``ansible_winrm_kinit_args`` that can be used to control the args that are sent to the ``kinit`` call for Kerberos authentication.

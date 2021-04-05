@@ -1,2 +1,0 @@
-bugfixes:
-  - find module, fix default pattern when use_regex is true.

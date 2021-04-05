@@ -1,2 +1,0 @@
-removed_features:
-  - Removed `SharedPluginLoaderObj` class from ansible.plugins.strategy. It was deprecated in favor of using the standard plugin loader.

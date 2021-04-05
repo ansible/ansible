@@ -1,7 +1,0 @@
-bugfixes:
-- >
-  Address the deprecation of the use of stdlib
-  distutils in packaging. It's a short-term hotfix for the problem
-  (https://github.com/ansible/ansible/issues/70456,
-  https://github.com/pypa/setuptools/issues/2230,
-  https://github.com/pypa/setuptools/commit/bd110264)

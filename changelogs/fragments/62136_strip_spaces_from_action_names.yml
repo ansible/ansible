@@ -1,2 +1,0 @@
-bugfixes:
-  - "task parsing - strip spaces from action name when using ``action: foo bar=baz`` form. (https://github.com/ansible/ansible/issues/62136)"

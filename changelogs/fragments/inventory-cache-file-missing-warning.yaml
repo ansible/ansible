@@ -1,2 +1,0 @@
-minor_changes:
-  - inventory cache - do not show a warning when the cache file does not (yet) exist.

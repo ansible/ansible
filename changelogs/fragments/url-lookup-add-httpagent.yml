@@ -1,2 +1,0 @@
-bugfixes:
-  - url lookup - set default user agent to ``ansible-httpget`` (https://github.com/ansible/ansible/pull/72324)

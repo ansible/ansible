@@ -1,2 +1,0 @@
-bugfixes:
-  - facts - properly report virtualization facts for Linux guests running on bhyve (https://github.com/ansible/ansible/issues/73167)

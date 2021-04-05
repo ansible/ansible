@@ -1,2 +1,0 @@
-minor_changes:
-  - meta - now include a ``skip_reason`` when skipped (https://github.com/ansible/ansible/pull/71355).

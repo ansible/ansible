@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - The ``rstcheck`` sanity test is no longer used for collections, but continues to be used for ansible-core.

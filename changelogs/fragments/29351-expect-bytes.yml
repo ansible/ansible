@@ -1,3 +1,0 @@
-bugfixes:
-- expect - Operate pexpect with bytes to avoid potential encoding issues
-  (https://github.com/ansible/ansible/issues/29351)

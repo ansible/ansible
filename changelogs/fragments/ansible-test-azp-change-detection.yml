@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test - Correctly detect changes in a GitHub pull request when running on Azure Pipelines.

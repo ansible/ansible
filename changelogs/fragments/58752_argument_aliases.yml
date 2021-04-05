@@ -1,2 +1,0 @@
-minor_changes:
-- Added name of aliases in user error (https://github.com/ansible/ansible/issues/58752).

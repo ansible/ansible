@@ -1,3 +1,0 @@
-bugfixes:
-- JSON Encoder - Ensure we treat single vault encrypted values as strings
-  (https://github.com/ansible/ansible/issues/70784)

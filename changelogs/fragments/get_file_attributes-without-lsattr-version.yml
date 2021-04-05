@@ -1,2 +1,0 @@
-minor_changes:
-  - module_utils - ``get_file_attributes()`` now takes an optional ``include_version`` boolean parameter. When ``True`` (default), the file's version/generation number is included in the result (but requires ``lsattr -v`` to work on the target platform).

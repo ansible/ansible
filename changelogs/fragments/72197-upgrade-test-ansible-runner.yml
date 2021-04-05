@@ -1,4 +1,0 @@
-minor_changes:
-- ansible-test - Upgrade ansible-runner version used in compatibility tests,
-  remove some tasks that were only needed with older versions, and
-  skip in python2 because ansible-runner is soon dropping it.

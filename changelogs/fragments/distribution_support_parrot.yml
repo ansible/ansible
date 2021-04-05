@@ -1,2 +1,0 @@
-minor_changes:
-- distribution - added distribution fact and hostname support for Parrot OS (https://github.com/ansible/ansible/pull/69158).

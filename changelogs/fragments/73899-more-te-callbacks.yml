@@ -1,5 +1,0 @@
-minor_changes:
-- Callbacks - Migrate more places in the ``TaskExecutor`` to sending callbacks directly
-  over the queue, instead of sending them as ``TaskResult`` and short circuiting in the
-  Strategy to send the callback. This enables closer to real time callbacks of retries
-  and loop results (https://github.com/ansible/ansible/issues/73899)

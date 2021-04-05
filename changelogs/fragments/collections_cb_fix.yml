@@ -1,2 +1,0 @@
-bugfixes:
-    - Collection callbacks were ignoring options and rules for stdout and adhoc cases.

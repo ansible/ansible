@@ -1,3 +1,0 @@
-bugfixes:
-- inventory_hostnames - Use ``InventoryManager`` instead of trying to replicate its behavior
-  (https://github.com/ansible/ansible/issues/17268)

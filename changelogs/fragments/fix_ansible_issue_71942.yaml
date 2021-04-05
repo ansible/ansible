@@ -1,5 +1,0 @@
-bugfixes:
-  - >
-     user - Local users with an expiry date cannot be created as the ``luseradd`` /
-     ``lusermod`` commands do not support the ``-e`` option. Set the expiry time in
-     this case via ``lchage`` after the user was created / modified. (https://github.com/ansible/ansible/issues/71942)

@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-pull - Run all playbooks that when multiple are supplied via the command line (https://github.com/ansible/ansible/issues/72708)

@@ -1,4 +1,0 @@
-minor_changes:
-- module payload builder - module_utils imports in any nested block (eg, ``try``, ``if``) are treated as optional during
-  module payload builds; this allows modules to implement runtime fallback behavior for module_utils that do not exist
-  in older versions of Ansible.

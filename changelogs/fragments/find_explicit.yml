@@ -1,2 +1,0 @@
-minor_changes:
-    - The find module is now more specific about the reasons it skips candidate files.

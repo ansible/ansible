@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Refactor code for installing ``cryptography`` to allow re-use in the future.
