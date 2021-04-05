@@ -1,0 +1,3 @@
+bugfixes:
+- WorkerProcess - Implement workaround for stdout deadlock in multiprocessing shutdown
+  to avoid process hangs.

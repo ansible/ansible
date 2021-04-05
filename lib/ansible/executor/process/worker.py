@@ -134,6 +134,19 @@ class WorkerProcess(multiprocessing_context.Process):
             return self._run()
         except BaseException as e:
             self._hard_exit(e)
+        finally:
+            # This is a hack, pure and simple, to work around a potential deadlock
+            # in ``multiprocessing.Process`` when flushing stdout/stderr during process
+            # shutdown. We have various ``Display`` calls that may fire from a fork
+            # so we cannot do this early. Instead, this happens at the very end
+            # to avoid that deadlock, by simply side stepping it. This should not be
+            # treated as a long term fix. Additionally this behavior only presents itself
+            # on Python3. Python2 does not exhibit the deadlock behavior.
+            # TODO: Evaluate overhauling ``Display`` to not write directly to stdout
+            # and evaluate migrating away from the ``fork`` multiprocessing start method.
+            if sys.version_info[0] >= 3:
+                sys.stdout = os.devnull
+                sys.stderr = os.devnull
 
     def _run(self):
         '''
