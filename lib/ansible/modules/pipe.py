@@ -49,28 +49,3 @@ EXAMPLES = r'''
 
 RETURN = r'''
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-
-# The AnsibleModule object
-module = None
-
-
-def main():
-    global module
-
-    module = AnsibleModule(
-        # not checking because of daisy chain to file module
-        argument_spec=dict(
-            src=dict(type='str', required=True),
-            dest=dict(type='str', required=True),
-        ),
-        supports_check_mode=False,
-    )
-    module.fail_json(
-        msg='Cannot be executed directly. All work is done in the pipe action',
-    )
-
-
-if __name__ == '__main__':
-    main()
