@@ -754,7 +754,6 @@ class Connection(ConnectionBase):
             return self._send_initial_file_data(fh, in_data, ssh_process)
 
         display.debug(u'Sending initial data')
-
         try:
             fh.write(to_bytes(in_data))
             fh.close()
