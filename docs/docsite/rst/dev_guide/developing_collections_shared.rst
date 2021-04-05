@@ -63,7 +63,7 @@ By wrapping the import statement in a ``try`` block, the payload builder will om
        else:
            module.fail_json('respawn is not available in Ansible < 2.11, ensure that foopkg is installed')
 
-The optional module_utils behavior also applies to module imports from collections.
+The optional import behavior also applies to module_utils imported from collections.
 
 .. seealso::
 
