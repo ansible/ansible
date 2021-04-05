@@ -172,12 +172,12 @@ def test_play_compile():
 @pytest.mark.parametrize(
     'data, error',
     (
-        ({'name': '', 'hosts': ''}, 'Hosts list cannot be empty'),
+        ({'name': '', 'hosts': ''}, 'Hosts list must be a sequence'),
         ({'hosts': ''}, 'Hosts list cannot be empty'),
         ({'hosts': []}, 'Hosts list cannot be empty'),
-        ({'hosts': [None]}, 'Hosts list cannot be empty'),
-        ({'hosts': ['one', None, 'three']}, 'Hosts list cannot be empty'),
-        ({'hosts': [{'one': None}]}, 'Hosts list cannot be empty'),
+        ({'hosts': [None]}, "Hosts list cannot contain values of 'None'"),
+        ({'hosts': ['one', None, 'three']}, "Hosts list cannot contain values of 'None'"),
+        ({'hosts': [{'one': None}]}, "Hosts list cannot contain values of 'None'"),
     ),
     ids=[
         'empty_name_hosts',
@@ -190,7 +190,6 @@ def test_play_compile():
 )
 def test_play_with_invalid_hosts(data, error):
     with pytest.raises(AnsibleParserError) as exc:
-        play = Play.load(data)
-        assert play.name == 'foo'
+        Play.load(data)
 
     assert error in exc.value.message
