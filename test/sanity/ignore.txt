@@ -309,3 +309,30 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
 test/utils/shippable/check_matrix.py replace-urlopen
 test/utils/shippable/timing.py shebang
+# --- 2.12 deprecations ---
+lib/ansible/cli/scripts/ansible_cli_stub.py pylint:ansible-deprecated-version
+lib/ansible/modules/cron.py pylint:ansible-deprecated-version
+lib/ansible/modules/cron.py pylint:ansible-deprecated-version
+lib/ansible/playbook/__init__.py pylint:ansible-deprecated-version
+lib/ansible/playbook/__init__.py pylint:ansible-deprecated-version
+lib/ansible/playbook/conditional.py pylint:ansible-deprecated-version
+lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
+lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
+lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
+lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
+lib/ansible/playbook/play_context.py pylint:ansible-deprecated-version
+lib/ansible/playbook/task.py pylint:ansible-deprecated-version
+lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
+lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/inventory/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/inventory/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/inventory/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/inventory/script.py pylint:ansible-deprecated-version
+lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
+lib/ansible/vars/fact_cache.py pylint:ansible-deprecated-version
+test/support/integration/plugins/modules/docker_swarm.py pylint:ansible-deprecated-version
