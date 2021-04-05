@@ -1,0 +1,2 @@
+minor_changes:
+  - aws module_defaults - add rds_option_group, rds_option_group_info
