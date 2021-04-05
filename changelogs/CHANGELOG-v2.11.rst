@@ -5,6 +5,32 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-04-05
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add constraint for ``decorator`` for Python versions prior to 3.5.
+- service_facts - return service state information on OpenBSD.
+
+Bugfixes
+--------
+
+- OpenBSD module_utils - update sysctl variable name
+- WorkerProcess - Implement workaround for stdout deadlock in multiprocessing shutdown to avoid process hangs.
+- ansible-test - Add a ``six < 1.14.0`` constraint for Python 2.6.
+- ansible-test - The ``--export`` option for ``ansible-test coverage`` is now limited to the ``combine`` command. It was previously available for reporting commands on which it had no effect.
+- ansible-test - The ``ansible-test coverage combine`` option ``--export`` now exports relative paths. This avoids loss of coverage data when aggregating across systems with different absolute paths. Paths will be converted back to absolute when generating reports.
+- debug action, prevent setting facts when displaying ansible_facts.
+
 v2.11.0b4
 =========
 
