@@ -45,7 +45,6 @@ options:
         type: list
         elements: str
         aliases: [ pattern ]
-        elements: str
     excludes:
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
@@ -55,7 +54,6 @@ options:
         elements: str
         aliases: [ exclude ]
         version_added: "2.5"
-        elements: str
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
@@ -67,7 +65,6 @@ options:
         required: true
         elements: str
         aliases: [ name, path ]
-        elements: str
     file_type:
         description:
             - Type of file to select.
