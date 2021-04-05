@@ -94,7 +94,7 @@ def get_bundled_metadata(filename):
 
             if line.strip().startswith('# CANT_UPDATE'):
                 print(
-                    '{0} marked as CANT_UPDATE, so skipping. Manual '
+                    '{0}: marked as CANT_UPDATE, so skipping. Manual '
                     'check for CVEs required.'.format(filename))
                 return None
 
