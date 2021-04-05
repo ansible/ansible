@@ -48,4 +48,14 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+local.rc:
+    description: Return code of the local command
+    returned: always
+    type: int
+    sample: 0
+remote.rc:
+    description: Return code of the remote command
+    returned: always
+    type: int
+    sample: 0
 '''
