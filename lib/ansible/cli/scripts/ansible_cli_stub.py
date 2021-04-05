@@ -115,7 +115,7 @@ if __name__ == '__main__':
                     "Failed to create the directory '%s': %s" % (ansible_dir, to_text(exc, errors='surrogate_or_replace'))
                 )
         else:
-            display.debug("Created the '%s' directory" % to_text(b_ansible_dir, errors='surrogate_or_replace'))
+            display.debug("Created the '%s' directory" % ansible_dir)
 
         try:
             args = [to_text(a, errors='surrogate_or_strict') for a in sys.argv]
