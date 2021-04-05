@@ -148,7 +148,7 @@ Changelogs help users and developers keep up with changes to ansible-core and An
 You do not need a changelog fragment for PRs that:
 
 * add new modules and plugins, because our tooling does that for you automatically;
-* contain only documentation changes;
+* contain only documentation changes.
 
 .. note::
   Some collections require a changelog fragment for every pull request. They use the ``trivial:`` section for entries mentioned above that will be skipped when building a release changelog.
