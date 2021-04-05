@@ -43,8 +43,8 @@ author:
 EXAMPLES = r'''
 - name: Copy file with owner and permissions
   ansible.builtin.pipe:
-    src: docker save {{ image }} 
-    dest: docker load
+    local: docker save {{ image }} 
+    remote: docker load
 '''
 
 RETURN = r'''
