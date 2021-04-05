@@ -1,3 +1,0 @@
-minor_changes:
-  - New 'timeout' feature added to adhoc and console CLIs, corresponding to the recent 'timeout' task keyword.
-  - Also added extra vars cli option to console CLI.

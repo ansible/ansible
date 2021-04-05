@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - centos6 end of life - container image updated to point to vault base repository (https://github.com/ansible/distro-test-containers/pull/54)

@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test pylint sanity test - stop ignoring ``used-before-assignment`` errors (https://github.com/ansible/ansible/pull/73639)."

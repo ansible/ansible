@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Attempt to detect the Docker hostname instead of assuming ``localhost``.

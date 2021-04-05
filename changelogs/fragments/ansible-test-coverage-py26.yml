@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Fix ``ansible-test coverage`` reporting sub-commands (``report``, ``html``, ``xml``) on Python 2.6.

@@ -1,2 +1,0 @@
-minor_changes:
-- selinux - return selinux_getpolicytype facts correctly.

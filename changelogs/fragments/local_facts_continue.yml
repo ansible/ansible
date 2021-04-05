@@ -1,2 +1,0 @@
-bugfixes:
-  - setup, don't give up on all local facts gathering if one script file fails.

@@ -1,2 +1,0 @@
-minor_changes:
-  - Allow for the skipped filter to be used on a registered looped task results. (https://github.com/ansible/ansible/issues/16949)

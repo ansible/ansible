@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - RHEL 8.2+ provisioning can now be used with the ``--python 3.8`` option, taking advantage of the Python 3.8 AppStream.

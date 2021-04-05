@@ -1,2 +1,0 @@
-bugfixes:
-  - pause - handle exception when there is no stdout (https://github.com/ansible/ansible/pull/47851)

@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    systemd - account for templated unit files using ``@`` when searching for
-    the unit file (https://github.com/ansible/ansible/pull/72347#issuecomment-730626228)

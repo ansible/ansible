@@ -1,2 +1,0 @@
-bugfixes:
-  - ensure 'local' connection always has the correct default user for actions to consume.

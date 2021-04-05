@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-test - The generated ``resource_prefix`` variable now meets the host name syntax requirements specified in RFC 1123 and RFC 952.
-                   The value used for local tests now places the random number before the hostname component, rather than after.
-                   If the resulting value is too long, it will be truncated.

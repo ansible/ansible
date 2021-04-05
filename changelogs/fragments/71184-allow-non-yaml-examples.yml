@@ -1,4 +1,0 @@
-minor_changes:
-- plugin examples - Allow non-YAML examples, so that examples for
-  plugins like the INI and TOML inventory plugins can be directly
-  represented (https://github.com/ansible/ansible/pull/71184)

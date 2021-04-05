@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed the obsolete ``tower`` test plugin for testing Tower modules.

@@ -1,2 +1,0 @@
-bugfixes:
-- galaxy - handle plus sign in user token appearing in role url (https://github.com/ansible/ansible/issues/45475).

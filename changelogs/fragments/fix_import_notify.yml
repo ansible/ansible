@@ -1,2 +1,0 @@
-bugfixes:
-  - notify keyword is not ignored anymore on import_tasks, also able to apply to blocks now.

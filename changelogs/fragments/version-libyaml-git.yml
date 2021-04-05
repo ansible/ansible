@@ -1,4 +1,0 @@
-minor_changes:
-- CLI - Specify whether PyYAML includes libyaml support in version output
-bugfixes:
-- CLI - Restore git information in version output when running from source

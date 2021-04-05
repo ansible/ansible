@@ -1,2 +1,0 @@
-bugfixes:
-  - "Fix ``delegate_facts: true`` when ``ansible_python_interpreter`` is not set. (https://github.com/ansible/ansible/issues/70168)"

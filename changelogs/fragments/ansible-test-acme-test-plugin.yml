@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Fix container hostname/IP discovery for the ``acme`` test plugin.

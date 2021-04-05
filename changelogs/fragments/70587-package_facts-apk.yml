@@ -1,2 +1,0 @@
-bugfixes:
-  - add support for alpine linux 'apk' package manager in package_facts

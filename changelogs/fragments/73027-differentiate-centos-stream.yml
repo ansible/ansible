@@ -1,2 +1,0 @@
-minor_changes:
-  - distribution facts - ``distribution_release`` is now ``"Stream"`` on CentOS Stream (https://github.com/ansible/ansible/issues/73027).

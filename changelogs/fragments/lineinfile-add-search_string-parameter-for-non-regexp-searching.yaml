@@ -1,2 +1,0 @@
-minor_changes:
-  - lineinfile - add search_string parameter for non-regexp searching (https://github.com/ansible/ansible/issues/70470)

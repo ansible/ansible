@@ -1,2 +1,0 @@
-bugfixes:
-  - Automatically remove async cache files for polled async tasks that have completed (issue https://github.com/ansible/ansible/issues/73206).

@@ -1,2 +1,0 @@
-bugfixes:
-  - apt_key - Specifying ``file`` as mutually exclusive with ``data``, ``keyserver``, ``url`` (https://github.com/ansible/ansible/pull/70492).

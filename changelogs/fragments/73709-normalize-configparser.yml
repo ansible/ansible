@@ -1,3 +1,0 @@
-bugfixes:
-- ConfigManager - Normalize ConfigParser between Python2 and Python3 to for handling comments
-  (https://github.com/ansible/ansible/issues/73709)

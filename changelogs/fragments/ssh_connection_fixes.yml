@@ -1,3 +1,0 @@
-bugfixes:
-  - connection/ssh, ensure parameters come from correct source get_option, so functionality matches docs.
-  - connection/ssh, fix reset to use same parameters to check if socket exists as actually used, was hardcoded to default string construction previouslly.

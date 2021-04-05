@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Change detection now properly resolves relative imports instead of treating them as absolute imports.

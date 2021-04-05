@@ -1,5 +1,0 @@
-bugfixes:
-- Strategy - When building the task in the Strategy from the Worker,
-  ensure it is properly marked as finalized and squashed. Addresses an
-  issue with ``ansible_failed_task``.
-  (https://github.com/ansible/ansible/issues/57399)

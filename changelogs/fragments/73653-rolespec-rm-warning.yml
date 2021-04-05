@@ -1,2 +1,0 @@
-bugfixes:
-  - Remove the warning displayed when validating the arg spec of a role with dependencies and add it to the documentation.
