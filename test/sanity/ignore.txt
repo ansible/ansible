@@ -309,7 +309,6 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
 test/utils/shippable/check_matrix.py replace-urlopen
 test/utils/shippable/timing.py shebang
-# --- 2.12 deprecations ---
 lib/ansible/cli/scripts/ansible_cli_stub.py pylint:ansible-deprecated-version
 lib/ansible/modules/cron.py pylint:ansible-deprecated-version
 lib/ansible/playbook/__init__.py pylint:ansible-deprecated-version
