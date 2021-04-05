@@ -143,7 +143,16 @@ We do not merge every PR. Here are some tips for making your PR useful, attracti
 Changelogs
 ----------
 
-Changelogs help users and developers keep up with changes to Ansible and Ansible collections. Ansible and many collections build changelogs for each release from fragments. For ansible-core and collections using this model, you **must** add a changelog fragment to any PR that changes functionality or fixes a bug. You do not have to add a changelog fragment for PRs that add new modules and plugins, because our tooling does that for you automatically.
+Changelogs help users and developers keep up with changes to ansible-core and Ansible collections. Ansible and many collections build changelogs for each release from fragments. For ansible-core and collections using this model, you **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
+
+You do not need a changelog fragment for PRs that:
+
+* add new modules and plugins, because our tooling does that for you automatically;
+* contain only documentation changes;
+
+.. note::
+  Some collections require a changelog fragment for every pull request. They use the ``trivial:`` section for entries mentioned above that will be skipped when building a release changelog.
+
 
 More precisely:
 * Every bugfix PR must have a changelog fragment. The only exception are fixes to a change that has not yet been included in a release.
