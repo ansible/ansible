@@ -1,0 +1,2 @@
+deprecated:
+  - connections, removed password check stubs that had been moved to become plugins.
