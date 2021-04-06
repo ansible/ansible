@@ -1,2 +1,2 @@
-deprecated:
+removed_features:
   - task, inline parameters being auto coerced into variables has been removed.
