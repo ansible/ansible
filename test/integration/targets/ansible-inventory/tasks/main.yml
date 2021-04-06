@@ -1,0 +1,83 @@
+- name: "No command supplied"
+  command: ansible-inventory
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! No action selected, at least one of --host, --graph or --list needs to be specified." in result.stderr'
+
+- name: "test option: --list --export"
+  command: ansible-inventory --list --export
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --list --yaml --export"
+  command: ansible-inventory --list --yaml --export
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --list --output"
+  command: ansible-inventory --list --output junk.txt
+  register: result
+
+- name: stat output file
+  stat:
+      path: junk.txt
+  register: st
+
+- assert:
+    that:
+        - result is succeeded
+        - st.stat.exists
+
+- name: "test option: --graph"
+  command: ansible-inventory --graph
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --graph --vars"
+  command: ansible-inventory --graph --vars
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --graph with bad pattern"
+  command: ansible-inventory --graph invalid
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! Pattern must be valid group name when using --graph" in result.stderr'
+
+- name: "test option: --host localhost"
+  command: ansible-inventory --host localhost
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --host with invalid host"
+  command: ansible-inventory --host invalid
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! Could not match supplied host pattern, ignoring: invalid" in result.stderr'
