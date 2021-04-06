@@ -51,13 +51,22 @@ body:
   attributes:
     label: Ansible Version
     description: >-
-      Paste verbatim output from `ansible --version` between
-      tripple backticks.
+      Paste verbatim output from `ansible --version` below, under
+      the prompt line. Please don't wrap it with tripple backticks.
+    render: console
     value: |
-      ```console (paste below)
       $ ansible --version
-
-      ```
+    placeholder: |
+      $ ansible --version
+      ansible [core 2.11.0b4.post0]  (detached HEAD ref: refs/) last updated 2021/04/02 00:33:35 (GMT +200)
+        config file = None
+        configured module search path = ['~/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+        ansible python module location = ~/src/github/ansible/ansible/lib/ansible
+        ansible collection location = ~/.ansible/collections:/usr/share/ansible/collections
+        executable location = bin/ansible
+        python version = 3.9.0 (default, Oct 26 2020, 13:08:59) [GCC 10.2.0]
+        jinja version = 2.11.3
+        libyaml = True
   validations:
     required: true
 
@@ -65,12 +74,17 @@ body:
   attributes:
     label: Configuration
     description: >-
-      Paste verbatim output from `ansible-config dump --only-changed` between quotes.
+      Paste verbatim output from `ansible-config dump --only-changed`
+      below, under the prompt line.
+      Please don't wrap it with tripple backticks.
+    render: console
     value: |
-      ```console (paste below)
       $ ansible-config dump --only-changed
-
-      ```
+    placeholder: |
+      $ ansible-config dump --only-changed
+      DEFAULT_GATHERING(~/src/github/ansible/ansible/ansible.cfg) = smart
+      DEFAULT_HOST_LIST(~/src/github/ansible/ansible/ansible.cfg) = ['~/src/github/ansible/ansible/hosts']
+      DEFAULT_VAULT_PASSWORD_FILE(~/src/github/ansible/ansible/ansible.cfg) = ~/src/github/ansible/ansible/vault/print-password.sh
   validations:
     required: true
 
