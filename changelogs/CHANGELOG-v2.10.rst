@@ -5,6 +5,37 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-04-05
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- module payload builder - module_utils imports in any nested block (eg, ``try``, ``if``) are treated as optional during module payload builds; this allows modules to implement runtime fallback behavior for module_utils that do not exist in older versions of Ansible.
+
+Bugfixes
+--------
+
+- Fix adding unrelated candidate names to the plugin loader redirect list.
+- Strategy - When building the task in the Strategy from the Worker, ensure it is properly marked as finalized and squashed. Addresses an issue with ``ansible_failed_task``. (https://github.com/ansible/ansible/issues/57399)
+- ansible-test - The ``--export`` option for ``ansible-test coverage`` is now limited to the ``combine`` command. It was previously available for reporting commands on which it had no effect.
+- ansible-test - The ``ansible-test coverage combine`` option ``--export`` now exports relative paths. This avoids loss of coverage data when aggregating across systems with different absolute paths. Paths will be converted back to absolute when generating reports.
+- ansible-test - ensure unit test paths for connection and inventory plugins are correctly identified for collections (https://github.com/ansible/ansible/issues/73876).
+- apt - fix policy_rc_d parameter throwing an exception when restoring original file (https://github.com/ansible/ansible/issues/66211)
+- debug action - prevent setting facts when displaying ansible_facts (https://github.com/ansible/ansible/issues/74060).
+- find - fix default pattern when use_regex is true (https://github.com/ansible/ansible/issues/50067).
+- restrict module valid JSON parsed output to objects as lists are not valid responses.
+- setup - fix error handling on bad subset given.
+- setup, don't give up on all local facts gathering if one script file fails.
+- su become plugin - ensure correct type for localization option (https://github.com/ansible/ansible/issues/73837).
+
 v2.10.7
 =======
 
