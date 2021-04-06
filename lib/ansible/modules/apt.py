@@ -1173,7 +1173,6 @@ def main():
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
 
-
     # max times we'll retry
     deadline = time.time() + p['lock_timeout']
 
