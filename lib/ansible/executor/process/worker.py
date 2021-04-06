@@ -145,8 +145,7 @@ class WorkerProcess(multiprocessing_context.Process):
             # TODO: Evaluate overhauling ``Display`` to not write directly to stdout
             # and evaluate migrating away from the ``fork`` multiprocessing start method.
             if sys.version_info[0] >= 3:
-                sys.stdout = os.devnull
-                sys.stderr = os.devnull
+                sys.stdout = sys.stderr = open(os.devnull, 'w')
 
     def _run(self):
         '''
