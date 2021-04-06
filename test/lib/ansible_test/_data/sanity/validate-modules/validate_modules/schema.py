@@ -59,6 +59,12 @@ def collection_name(v, error_code=None):
     return v
 
 
+def deprecation_versions():
+    ''' Create a list of valid version for deprecation entries, current+4 '''
+    current = float('.'.join(__version__.split('.')[0:2]))
+    return Any(float, [current + x/100 for x in range(0,5)])
+
+
 def version(for_collection=False):
     if for_collection:
         # We do not accept floats for versions in collections
@@ -441,17 +447,10 @@ def deprecation_schema(for_collection):
     date_schema.update(main_fields)
 
     if for_collection:
-        version_schema = {
-            Required('removed_in'): version(for_collection),
-        }
+        version_schema = {Required('removed_in'): version(for_collection)}
     else:
-        version_schema = {
-            # Only list branches that are deprecated or may have docs stubs in
-            # Deprecation cycle changed at 2.4 (though not retroactively)
-            # 2.3 -> removed_in: "2.5" + n for docs stub
-            # 2.4 -> removed_in: "2.8" + n for docs stub
-            Required('removed_in'): Any("2.12", "2.13", "2.14", "2.15", "2.16"),
-        }
+        version_schema = {Required('removed_in'): deprecation_versions()}
+
     version_schema.update(main_fields)
 
     result = Any(
