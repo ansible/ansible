@@ -1,0 +1,2 @@
+minor_changes:
+  - aws module_defaults - add wafv2_ip_set, wafv2_ip_set_info, wafv2_resources, wafv2_resources_info, wafv2_rule_group, wafv2_rule_group_info, wafv2_web_acl, wafv2_web_acl_info
