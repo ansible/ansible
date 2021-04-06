@@ -26,23 +26,23 @@ extends_documentation_fragment:
 - action_common_attributes
 attributes:
     async:
-        support: no
+        support: none
     become:
-        support: no
+        support: none
     bypass_host_loop:
-        support: yes
+        support: partial
     conditional:
-        support: no
+        support: none
     connection:
-        support: no
+        support: none
     delegation:
-        support: no
+        support: none
     loops:
-        support: no
+        support: none
     tags:
-        support: no
+        support: none
     until:
-        support: no
+        support: none
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 seealso:

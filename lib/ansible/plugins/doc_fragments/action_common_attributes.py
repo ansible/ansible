@@ -13,7 +13,7 @@ class ModuleDocFragment(object):
 attributes:
     action:
       description: Indicates this has a corresponding action plugin so some parts of the options can be executed on the controller
-      support: no
+      support: none
     async:
       description: Supports being used with the ``async`` keyword
       support: full
@@ -22,10 +22,10 @@ attributes:
       support: full
     bypass_host_loop:
       description: Forces a 'global' task that does not execute per host, cannot be used in non lockstep strategies
-      support: no
+      support: none
     check_mode:
       description: Can run in check_mode and return changed status prediction
-      support: no
+      support: none
     connection:
       description: Uses the target's configured connection information to execute code on it
       support: full
@@ -37,16 +37,16 @@ attributes:
       support: full
     diff:
       description: Will return details on what has changed when in diff is enabled
-      support: no
+      support: none
     facts:
       description: Action returns an ``ansible_facts`` dictionary that will update existing host facts
-      support: no
+      support: none
     loops:
       description: both ``loop`` and ``with_`` looping keywords will be honored.
-      support: yes
+      support: full
     proprietary:
       description: Can only be run against specific proprietary OS, normally a network appliance or similar
-      support: no
+      support: none
     posix:
       description: Can be run against most POSIX (and GNU/Linux) OS targets
       support: full
@@ -58,5 +58,5 @@ attributes:
       support: full
     windows:
       description: Can be run against Windows OS targets
-      support: no
+      support: none
 '''
