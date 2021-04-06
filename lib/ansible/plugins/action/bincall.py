@@ -20,8 +20,14 @@ class BinaryModule(ActionBase):
        |
        +-- <name>-<osname>-<arch>
 
+    If a 'binary' module is actually a script (e.g. Perl script),
+    it does not need to be explicitly verified for the platform and architecture,
+    therefore can be also called generic way:
+
+        <name>-any-noarch
     """
     NAME = ""
+    BINARY = True
 
     def __init__(self, *args, **kwargs):
         ActionBase.__init__(self, *args, **kwargs)
@@ -31,14 +37,17 @@ class BinaryModule(ActionBase):
             raise Exception("Module name was not yet set")
 
         # Determine what is the target platform and choose the binary module accordingly
-        platform = self._low_level_execute_command("uname -sm")
-        if platform["rc"]:
-            raise Exception(platform["stderr"])
-        sysarch = platform["stdout"].lower().strip().split(" ")
-        if len(sysarch) == 2:
-            system, arch = sysarch
+        if self.BINARY:
+            platform = self._low_level_execute_command("uname -sm")
+            if platform["rc"]:
+                raise Exception(platform["stderr"])
+            sysarch = platform["stdout"].lower().strip().split(" ")
+            if len(sysarch) == 2:
+                system, arch = sysarch
+            else:
+                raise Exception("Unknown platform: {}".format(platform["stdout"]))
         else:
-            raise Exception("Unknown platform: {}".format(platform["stdout"]))
+            system, arch = "any", "noarch"
 
         self.module_name = "{}-{}-{}".format(self.NAME, system, arch)
 
