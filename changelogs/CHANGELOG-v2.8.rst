@@ -5,6 +5,79 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.20rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-04-05
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Breaking Changes / Porting Guide
+--------------------------------
+
+- docker_swarm - if ``join_token`` is specified, a returned join token with the same value will be replaced by ``VALUE_SPECIFIED_IN_NO_LOG_PARAMETER``. Make sure that you do not blindly use the join tokens from the return value of this module when the module is invoked with ``join_token`` specified! This breaking change appears in a minor release since it is necessary to fix a security issue (https://github.com/ansible-collections/community.docker/pull/103). (CVE-2021-3447)
+
+Security Fixes
+--------------
+
+- avi_cloudconnectoruser - mark the ``azure_userpass`` parameter as ``no_log`` to prevent leaking of secret values (https://github.com/ansible-collections/community.network/pull/223). (CVE-2021-3447)
+- avi_sslkeyandcertificate - mark the ``enckey_base64`` parameter as ``no_log`` to prevent potential leaking of secret values (https://github.com/ansible-collections/community.network/pull/223). (CVE-2021-3447)
+- avi_webhook - mark the ``verification_token`` parameter as ``no_log`` to prevent potential leaking of secret values (https://github.com/ansible-collections/community.network/pull/223). (CVE-2021-3447)
+- aws_direct_connect_virtual_interface - mark the ``authentication_key`` parameter as ``no_log`` to avoid accidental leaking of secrets in logs (https://github.com/ansible-collections/community.aws/pull/475). (CVE-2021-3447)
+- aws_secret - flag the ``secret`` parameter as containing sensitive data which shouldn't be logged (https://github.com/ansible-collections/community.aws/pull/471) (CVE-2021-3447).
+- azure_rm_devtestlabartifactsource - ``security_token`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- bigip_device_license - ``license_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- bigip_dns_nameserver - ``tsig_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- bigip_dns_zone - ``tsig_server_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- bigip_profile_client_ssl - ``key`` and ``passphrase`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- docker_swarm - the ``join_token`` option is now marked as ``no_log`` so it is no longer written into logs (https://github.com/ansible-collections/community.docker/pull/103). (CVE-2021-3447)
+- fortios_dlp_fp_doc_source - ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_endpoint_control_forticlient_ems - ``admin_password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_endpoint_control_profile - ``preshared_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_endpoint_control_settings - ``forticlient_reg_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_extender_controller_extender - ``aaa_shared_secret``, ``ha_shared_secret``, ``modem_passwd``, and ``ppp_password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_firewall_ssh_local_ca - ``password`` and ``private_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_firewall_ssh_local_key - ``password`` and ``private_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_log_disk_setting - ``uploadpass`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_router_bgp - ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_router_ospf - ``authentication_key`` and `md5_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_router_rip - ``auth_string`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_system_admin - ``fortitoken`` and ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_system_api_user - ``api_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_system_interface - ``password`` and ``pptp_password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_system_sdn_connector - ``access_key``, ``client_secret``, ``key_passwd``, ``password``, ``private_key``, and ``secret_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_system_virtual_wan_link - ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_user_radius - ``secret``, ``rsso_secret``, ``secondary_secret``, and ``tertiary_secret`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_user_tacacsplus - ``key``, ``secondary_key``, and ``tertiary_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_vpn_ipsec_manualkey - ``authkey`` and ``enckey`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_vpn_ipsec_manualkey_interface - ``auth_key`` and ``enc_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_vpn_ipsec_phase1 - ``authpasswd``, ``group_authentication_secret``, ``ppk_secret``, ``psksecret``, and ``psksecret_remote`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_vpn_ipsec_phase1_interface - ``authpasswd``, ``group_authentication_secret``, ``ppk_secret``, ``psksecret``, and ``psksecret_remote`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_vpn_ssl_web_portal - ``logon_password`` and ``sso_password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_wireless_controller_vap - ``captive_portal_macauth_radius_secret``, ``captive_portal_radius_secret``, ``key``, and ``passphrase`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_wireless_controller_wtp - ``login_passwd`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- fortios_wireless_controller_wtp_profile - ``fortipresence_secret`` and ``login_passwd`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- gcp_compute_instance - ``raw_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- gcp_container_cluster - ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- gcp_sql_instance - ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- ios_ntp - ``auth_key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- logentries_msg - ``token`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- na_cdot_user - mark the ``set_password`` parameter as ``no_log`` to avoid leakage of secrets (https://github.com/ansible-collections/community.general/pull/2018). (CVE-2021-3447)
+- na_elementsw_cluster_snmp - ``password`` and ``passphrase`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- netscaler_lb_monitor - ``password`` and ``secondarypassword`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- nxos_aaa_server_host - ``key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- ovirt_auth - ``token`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- pingdom - ``key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- rollbar_deployment - ``token` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- stackdriver - ``key`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- sts_assume_role - mark the ``mfa_token`` parameter as ``no_log`` to avoid accidental leaking of secrets in logs (https://github.com/ansible-collections/community.aws/pull/475). (CVE-2021-3447)
+- sts_session_token - mark the ``mfa_token`` parameter as ``no_log`` to avoid accidental leaking of secrets in logs (https://github.com/ansible-collections/community.aws/pull/475). (CVE-2021-3447)
+- tower_credential - ``security_token`` and ``secret`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+- zabbix_action - ``password`` no longer appears in logs (``no_log``) (CVE-2021-3447)
+
 v2.8.19
 =======
 

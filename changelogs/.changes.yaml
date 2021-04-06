@@ -1863,6 +1863,17 @@ releases:
     - win_get_url-Fix-restricted-header-handling.yml
     - win_shell-arg-space.yaml
     release_date: '2019-07-03'
+  2.8.20rc1:
+    codename: How Many More Times
+    fragments:
+    - 471-no_log.yml
+    - community.aws-475-no_log-missing.yml
+    - community.docker-103-docker_swarm-no_log.yml
+    - community.general-2018-missing-no_log-again.yml
+    - community.network-223-no_log-missing.yml
+    - more-no_log-fixes.yml
+    - v2.8.20rc1_summary.yaml
+    release_date: '2021-04-05'
   2.8.3:
     codename: How Many More Times
     fragments:
