@@ -58,6 +58,7 @@ def collection_name(v, error_code=None):
             Invalid('Collection name must be of format `<namespace>.<name>`'), error_code or 'collection-invalid-name')
     return v
 
+
 def version(for_collection=False):
     if for_collection:
         # We do not accept floats for versions in collections
