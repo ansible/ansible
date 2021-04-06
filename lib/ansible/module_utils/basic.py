@@ -257,12 +257,14 @@ if not _PY_MIN:
         '"msg": "Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
+
 if _PY26:
     deprecate(
         'Ansible will require Python 2.7 or newer on the target starting with Ansible 2.13. '
         'Current version: %s' % ''.join(sys.version.splitlines()),
         version='2.13',
     )
+
 
 #
 # Deprecated functions
