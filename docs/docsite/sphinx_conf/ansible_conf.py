@@ -98,7 +98,7 @@ exclude_patterns = [
     'porting_guides/porting_guide_base_2.10.rst',
     'porting_guides/porting_guide_core_2.11.rst',
     'roadmap/index.rst',
-    'roadmap/ansible_base_roadmap_index.rst',
+    'roadmap/ansible_core_roadmap_index.rst',
     'roadmap/ROADMAP_2_10.rst',
     'roadmap/ROADMAP_2_11.rst'
 ]

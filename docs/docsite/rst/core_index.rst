@@ -87,4 +87,4 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
    :maxdepth: 2
    :caption: Roadmaps
 
-   roadmap/ansible_base_roadmap_index.rst
+   roadmap/ansible_core_roadmap_index.rst
