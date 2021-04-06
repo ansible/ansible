@@ -76,7 +76,7 @@ if __name__ == '__main__':
         if C.CONTROLLER_PYTHON_WARNING and not _PY38_MIN:
             display.deprecated(
                 (
-                    'Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12. '
+                    'Ansible will require Python 3.8 or newer on the control node starting with Ansible 2.12. '
                     'Current version: %s' % ''.join(sys.version.splitlines())
                 ),
                 version='2.12',

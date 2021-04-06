@@ -460,9 +460,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _transfer_file(self, local_path, remote_path):
         """
-        Copy a file from the controller to a remote path
+        Copy a file from the control node to a remote path
 
-        :arg local_path: Path on controller to transfer
+        :arg local_path: Path on control node to transfer
         :arg remote_path: Path on the remote system to transfer into
 
         .. warning::
@@ -812,7 +812,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         expand_path = split_path[0]
 
         if expand_path == '~':
-            # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
+            # Network connection plugins (network_cli, netconf, etc.) execute on the control node, rather than the remote host.
             # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
             # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
             become_user = self.get_become_option('become_user')
@@ -1106,7 +1106,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         remove_internal_keys(data)
 
         if wrap_async:
-            # async_wrapper will clean up its tmpdir on its own so we want the controller side to
+            # async_wrapper will clean up its tmpdir on its own so we want the control node side to
             # forget about it now
             self._connection._shell.tmpdir = None
 

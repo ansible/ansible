@@ -29,6 +29,12 @@ when a term comes up on the mailing list.
     ansible-base
         Used only for 2.10. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. See ``ansible-core``.
 
+    Ansible control node
+        FIXME. Also make it clear that "local" plugins (lookups, etc) run here.
+        .. seealso::
+
+            :term:`remote node`
+
     ansible-core
         Name used starting with 2.11. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. Contains the command-line tools and the code for basic features and functions, such as copying module code to managed nodes. The ``ansible-core`` package includes a few modules and plugins and allows you to add others by installing collections.
 
@@ -395,6 +401,13 @@ when a term comes up on the mailing list.
         its name from the idea of registers in assembly programming (though
         Ansible will never feel like assembly programming).  There are an
         infinite number of variable names you can use for registration.
+
+    Remote node
+        FIXME Details here.
+
+        .. seealso::
+
+            :term:`Ansible control node`
 
     Resource Model
         Ansible modules work in terms of resources.   For instance, the

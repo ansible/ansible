@@ -11,7 +11,7 @@ DOCUMENTATION = """
     short_description: Read the value of environment variables
     description:
       - Allows you to query the environment variables available on the
-        controller when you invoked Ansible.
+        control node when you invoked Ansible.
     options:
       _terms:
         description:

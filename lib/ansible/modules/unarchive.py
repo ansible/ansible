@@ -39,7 +39,8 @@ options:
     required: true
   copy:
     description:
-      - If true, the file is copied from local controller to the managed (remote) node, otherwise, the plugin will look for src archive on the managed machine.
+      - If true, the file is copied from local control node to the managed (remote) node, otherwise,
+        the plugin will look for src archive on the managed machine.
       - This option has been deprecated in favor of C(remote_src).
       - This option is mutually exclusive with C(remote_src).
     type: bool
@@ -89,7 +90,7 @@ options:
     version_added: "2.1"
   remote_src:
     description:
-      - Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller.
+      - Set to C(yes) to indicate the archived file is already on the remote system and not local to the control node.
       - This option is mutually exclusive with C(copy).
     type: bool
     default: no
@@ -198,7 +199,7 @@ size:
 src:
   description:
     - The source archive's path.
-    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+    - If I(src) was a remote web URL, or from the local control node, this shows the temporary location where the download was stored.
   returned: always
   type: str
   sample: "/home/paul/test.tar.gz"

@@ -66,7 +66,7 @@ options:
     type: list
     default: ['root', 'toor']
     description:
-      - list of users to be expected to have admin privileges. This is used by the controller to
+      - list of users to be expected to have admin privileges. This is used by the control node to
         determine how to share temporary files between the remote user and the become user.
     env:
       - name: ANSIBLE_ADMIN_USERS

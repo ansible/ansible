@@ -11,7 +11,7 @@ Kubernetes dynamic inventory plugin
 ===================================
 
 
-The best way to interact with your Pods is to use the Kubernetes dynamic inventory plugin, which dynamically queries Kubernetes APIs using ``kubectl`` command line available on controller node and tells Ansible what Pods can be managed.
+The best way to interact with your Pods is to use the Kubernetes dynamic inventory plugin, which dynamically queries Kubernetes APIs using ``kubectl`` command line available on control node and tells Ansible what Pods can be managed.
 
 Requirements
 ------------

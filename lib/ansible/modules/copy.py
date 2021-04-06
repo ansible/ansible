@@ -90,7 +90,7 @@ options:
   remote_src:
     description:
     - Influence whether C(src) needs to be transferred or already is present remotely.
-    - If C(no), it will search for C(src) on the controller node.
+    - If C(no), it will search for C(src) on the control node.
     - If C(yes) it will search for C(src) on the managed (remote) node.
     - C(remote_src) supports recursive copying as of version 2.8.
     - C(remote_src) only works with C(mode=preserve) as of version 2.6.
@@ -700,7 +700,7 @@ def main():
                     # that the extended attributes are copied only on Linux. Also, os.listxattr is only
                     # available on Linux.
 
-                    # If not remote_src, then the file was copied from the controller. In that
+                    # If not remote_src, then the file was copied from the control node. In that
                     # case, any filesystem ACLs are artifacts of the copy rather than preservation
                     # of existing attributes. Get rid of them:
 

@@ -83,7 +83,7 @@ _ADDITIONAL_CHECKS = (
 )
 
 # if adding boolean attribute, also add to PASS_BOOL
-# some of this dupes defaults from controller config
+# some of this dupes defaults from control node config
 PASS_VARS = {
     'check_mode': ('check_mode', False),
     'debug': ('_debug', False),

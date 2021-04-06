@@ -27,7 +27,7 @@ description:
 options:
   src:
     description:
-    - Path of a Jinja2 formatted template on the Ansible controller.
+    - Path of a Jinja2 formatted template on the Ansible control node.
     - This can be a relative or an absolute path.
     - The file must be encoded with C(utf-8) but I(output_encoding) can be used to control the encoding of the output
       template.

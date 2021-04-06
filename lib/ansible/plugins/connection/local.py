@@ -7,9 +7,9 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: local
-    short_description: execute on controller
+    short_description: execute on the Ansible control node
     description:
-        - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.
+        - This connection plugin allows ansible to execute tasks on the Ansible control node instead of on a remote node.
     author: ansible (@core)
     version_added: historical
     extends_documentation_fragment:

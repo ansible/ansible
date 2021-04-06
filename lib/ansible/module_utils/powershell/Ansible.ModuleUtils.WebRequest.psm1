@@ -78,7 +78,7 @@ Function Get-AnsibleWebRequest {
 
     .PARAMETER Module
     The AnsibleBasic module that can be used as a backup parameter source or a way to return warnings back to the
-    Ansible controller.
+    Ansible control node.
 
     .EXAMPLE
     $spec = @{

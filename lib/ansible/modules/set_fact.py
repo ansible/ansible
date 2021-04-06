@@ -47,7 +47,7 @@ notes:
       Using the setting will restrict k=v to strings, but will allow you to specify string or boolean in YAML.
     - "To create lists/arrays or dictionary/hashes use YAML notation C(var: [val1, val2])."
     - Since 'cacheable' is now a module param, 'cacheable' is no longer a valid fact name.
-    - This action does not use a connection and always executes on the controller.
+    - This action does not use a connection and always executes on the control node.
 seealso:
 - module: ansible.builtin.include_vars
 - ref: ansible_variable_precedence

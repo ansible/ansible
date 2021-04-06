@@ -359,7 +359,7 @@ COVERAGE_REMOTE_OUTPUT:
 COVERAGE_REMOTE_PATHS:
   name: Sets the list of paths to run coverage for.
   description:
-  - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
+  - A list of paths for files on the Ansible controll node to run coverage for when executing on the remote host.
   - Only files that match the path glob will have its coverage collected.
   - Multiple path globs can be specified and are separated by ``:``.
   - Currently only used for remote coverage on PowerShell modules.
@@ -549,7 +549,7 @@ CONTROLLER_PYTHON_WARNING:
   name: Running Older than Python 3.8 Warning
   default: True
   description: Toggle to control showing warnings related to running a Python version
-               older than Python 3.8 on the controller
+               older than Python 3.8 on the control node
   env: [{name: ANSIBLE_CONTROLLER_PYTHON_WARNING}]
   ini:
   - {key: controller_python_warning, section: defaults}
@@ -850,7 +850,7 @@ DEFAULT_LOAD_CALLBACK_PLUGINS:
 DEFAULT_LOCAL_TMP:
   name: Controller temporary directory
   default: ~/.ansible/tmp
-  description: Temporary directory for Ansible to use on the controller.
+  description: Temporary directory for Ansible to use on the control node.
   env: [{name: ANSIBLE_LOCAL_TEMP}]
   ini:
   - {key: local_tmp, section: defaults}
@@ -858,7 +858,7 @@ DEFAULT_LOCAL_TMP:
 DEFAULT_LOG_PATH:
   name: Ansible log file path
   default: ~
-  description: File to which Ansible will log on the controller. When empty logging is disabled.
+  description: File to which Ansible will log on the control node. When empty logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
   - {key: log_path, section: defaults}
@@ -1147,7 +1147,7 @@ DEFAULT_TRANSPORT:
   # note that ssh_utils refs this and needs to be updated if removed
   name: Connection plugin
   default: smart
-  description: "Default connection plugin to use, the 'smart' option will toggle between 'ssh' and 'paramiko' depending on controller OS and ssh versions"
+  description: "Default connection plugin to use, the 'smart' option will toggle between 'ssh' and 'paramiko' depending on control node OS and ssh versions"
   env: [{name: ANSIBLE_TRANSPORT}]
   ini:
   - {key: transport, section: defaults}

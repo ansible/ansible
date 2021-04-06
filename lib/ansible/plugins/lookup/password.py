@@ -20,7 +20,7 @@ DOCUMENTATION = """
       - 'Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host,
         which simplifies password management in C("host_vars") variables.'
       - A special case is using /dev/null as a path. The password lookup will generate a new random password each time,
-        but will not write it to /dev/null. This can be used when you need a password without storing it on the controller.
+        but will not write it to /dev/null. This can be used when you need a password without storing it on the control node.
     options:
       _terms:
          description:
@@ -294,9 +294,9 @@ def _get_lock(b_path):
     while os.path.exists(lockfile) and not first_process:
         time.sleep(2 ** counter)
         if counter >= 2:
-            raise AnsibleError("Password lookup cannot get the lock in 7 seconds, abort..."
+            raise AnsibleError("Password lookup could not get the lock in 7 seconds, abort..."
                                "This may caused by un-removed lockfile"
-                               "you can manually remove it from controller machine at %s and try again" % lockfile)
+                               "you can manually remove it from control node at %s and try again" % lockfile)
         counter += 1
     return first_process, lockfile
 

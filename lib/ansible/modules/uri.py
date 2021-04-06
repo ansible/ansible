@@ -154,7 +154,7 @@ options:
     version_added: '2.7'
   remote_src:
     description:
-      - If C(no), the module will search for the C(src) on the controller node.
+      - If C(no), the module will search for the C(src) on the control node.
       - If C(yes), the module will search for the C(src) on the managed (remote) node.
     type: bool
     default: no

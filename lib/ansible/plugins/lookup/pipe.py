@@ -16,7 +16,7 @@ DOCUMENTATION = r"""
         description: command(s) to run.
         required: True
     notes:
-      - Like all lookups this runs on the Ansible controller and is unaffected by other keywords, such as become,
+      - Like all lookups this runs on the Ansible control node and is unaffected by other keywords, such as become,
         so if you need to different permissions you must change the command or run Ansible as another user.
       - Alternatively you can use a shell/command task that runs against localhost and registers the result.
       - Pipe lookup internally invokes Popen with shell=True (this is required and intentional).

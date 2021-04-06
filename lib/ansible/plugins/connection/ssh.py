@@ -830,7 +830,7 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         '''
 
-        # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
+        # We don't use _shell.quote as this is run on the control node and independent from the shell plugin chosen
         display_cmd = u' '.join(shlex_quote(to_text(c)) for c in cmd)
         display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
 
@@ -873,7 +873,7 @@ class Connection(ConnectionBase):
                                          stderr=subprocess.PIPE)
                 stdin = p.stdin
             except (OSError, IOError) as e:
-                raise AnsibleError('Unable to execute ssh command line on a controller due to: %s' % to_native(e))
+                raise AnsibleError('Unable to execute ssh command line on a control node due to: %s' % to_native(e))
 
         # If we are using SSH password authentication, write the password into
         # the pipe we opened in _build_command.

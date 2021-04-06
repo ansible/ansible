@@ -10,7 +10,7 @@ DOCUMENTATION = """
     version_added: "0.9"
     short_description: read file contents
     description:
-        - This lookup returns the contents from a file on the Ansible controller's file system.
+        - This lookup returns the contents from a file on the Ansible control node's file system.
     options:
       _terms:
         description: path(s) of files to read
