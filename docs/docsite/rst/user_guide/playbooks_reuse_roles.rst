@@ -4,7 +4,7 @@
 Roles
 *****
 
-Roles let you automatically load related vars, files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily reuse them and share them with other users.
+Roles let you automatically load related vars, files, tasks, handlers, and other Ansible artifacts based on a known file structure. After you group your content in roles, you can easily reuse them and share them with other users.
 
 .. contents::
    :local:
@@ -256,7 +256,7 @@ You can pass other keywords, including variables and tags, when importing roles:
 
 When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
-Role Argument Validation
+Role argument validation
 ========================
 
 Beginning with version 2.11, you may choose to enable role argument validation based on an argument
@@ -270,7 +270,7 @@ for the role against the specification. If the parameters fail validation, the r
     then validation on those dependencies will run before the dependent role, even if argument validation fails
     for the dependent role.
 
-Specification Format
+Specification format
 --------------------
 
 The role argument specification must be defined in a top-level ``argument_specs`` block within the
@@ -341,7 +341,7 @@ role ``meta/main.yml`` file. All fields are lower-case.
 
            * If this option takes a dict or list of dicts, you can define the structure here.
 
-Sample Specification
+Sample specification
 --------------------
 
 .. code-block:: yaml
@@ -395,17 +395,19 @@ You have two options to force Ansible to run a role more than once.
 Passing different parameters
 ----------------------------
 
-You can pass different parameters in each role definition as:
+If you pass different parameters in each role definition, Ansible runs the role more than once. Providing different variable values is not the same as passing different role parameters. You must use the ``roles`` keyword for this behavior, since ``import_role`` and ``include_role`` do not accept role parameters. 
+
+This playbook runs the ``foo`` role twice:
 
 .. code-block:: yaml
 
     ---
     - hosts: webservers
       roles:
-        - { role: foo, vars: { message: "first" } }
-        - { role: foo, vars: { message: "second" } }
+        - { role: foo, message: "first" }
+        - { role: foo, message: "second" }
 
-or
+This syntax also runs the ``foo`` role twice;
 
 .. code-block:: yaml
 
@@ -413,13 +415,11 @@ or
     - hosts: webservers
       roles:
         - role: foo
-          vars:
-            message: "first"
+          message: "first"
         - role: foo
-          vars:
-            message: "second"
+          message: "second"
 
-In this example, because each role definition has different parameters, Ansible runs ``foo`` twice.
+In these examples, Ansible runs ``foo`` twice because each role definition has different parameters.
 
 Using ``allow_duplicates: true``
 --------------------------------
@@ -448,6 +448,8 @@ Using role dependencies
 
 Role dependencies let you automatically pull in other roles when using a role. Ansible does not execute role dependencies when you include or import a role. You must use the ``roles`` keyword if you want Ansible to execute role dependencies.
 
+Role dependencies are prerequisites, not true dependencies. The roles do not have a parent/child relationship. Ansible loads all listed roles, runs the roles listed under ``dependencies`` first, then runs the role that lists them. The play object is the parent of all roles, including roles called by a ``dependencies`` list.
+
 Role dependencies are stored in the ``meta/main.yml`` file within the role directory. This file should contain a list of roles and parameters to insert before the specified role. For example:
 
 .. code-block:: yaml
@@ -466,17 +468,16 @@ Role dependencies are stored in the ``meta/main.yml`` file within the role direc
           dbname: blarg
           other_parameter: 12
 
-Ansible always executes role dependencies before the role that includes them. Ansible executes recursive role dependencies as well. If one role depends on a second role, and the second role depends on a third role, Ansible executes the third role, then the second role, then the first role.
+Ansible always executes roles listed in ``dependencies`` before the role that lists them. Ansible executes this pattern recursively when you use the ``roles`` keyword. For example, if you list role ``foo`` under ``roles:``, role ``foo`` lists role ``bar`` under ``dependencies`` in its meta/main.yml file, and role ``bar`` lists role ``baz`` under ``dependencies`` in its meta/main.yml, Ansible executes ``baz``, then ``bar``, then ``foo``.
 
 Running role dependencies multiple times in one playbook
 --------------------------------------------------------
 
-Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
+Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the role you want to run multiple times. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 .. note::
 
-    Role deduplication does not consult the invocation signature of parent roles. Additionally, when using ``vars:`` instead of role params, there is a side effect of changing variable scoping. Using ``vars:`` results
-    in those variables being scoped at the play level. In the below example, using ``vars:`` would cause ``n`` to be defined as ``4`` through the entire play, including roles called before it.
+    Role deduplication does not consult the invocation signature of parent roles. Additionally, when using ``vars:`` instead of role params, there is a side effect of changing variable scoping. Using ``vars:`` results in those variables being scoped at the play level. In the below example, using ``vars:`` would cause ``n`` to be defined as ``4`` through the entire play, including roles called before it.
 
     In addition to the above, users should be aware that role de-duplication occurs before variable evaluation. This means that :term:`Lazy Evaluation` may make seemingly different role invocations equivalently the same, preventing the role from running more than once.
 
@@ -525,7 +526,7 @@ The resulting order of execution would be as follows:
     ...
     car
 
-To use ``allow_duplicates: true`` with role dependencies, you must specify it for the dependent role, not for the parent role. In the example above, ``allow_duplicates: true`` appears in the ``meta/main.yml`` of the ``tire`` and ``brake`` roles. The ``wheel`` role does not require ``allow_duplicates: true``, because each instance defined by ``car`` uses different parameter values.
+To use ``allow_duplicates: true`` with role dependencies, you must specify it for the role listed under ``dependencies``, not for the role that lists it. In the example above, ``allow_duplicates: true`` appears in the ``meta/main.yml`` of the ``tire`` and ``brake`` roles. The ``wheel`` role does not require ``allow_duplicates: true``, because each instance defined by ``car`` uses different parameter values.
 
 .. note::
    See :ref:`playbooks_variables` for details on how Ansible chooses among variable values defined in different places (variable inheritance and scope).
