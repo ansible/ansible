@@ -229,39 +229,6 @@ class ConnectionBase(AnsiblePlugin):
     def reset(self):
         display.warning("Reset is not implemented for this connection")
 
-    # NOTE: these password functions are all become specific, the name is
-    # confusing as it does not handle 'protocol passwords'
-    # DEPRECATED:
-    # These are kept for backwards compatibility
-    # Use the methods provided by the become plugins instead
-    def check_become_success(self, b_output):
-        display.deprecated(
-            "Connection.check_become_success is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_success(b_output)
-
-    def check_password_prompt(self, b_output):
-        display.deprecated(
-            "Connection.check_password_prompt is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_password_prompt(b_output)
-
-    def check_incorrect_password(self, b_output):
-        display.deprecated(
-            "Connection.check_incorrect_password is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_incorrect_password(b_output)
-
-    def check_missing_password(self, b_output):
-        display.deprecated(
-            "Connection.check_missing_password is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_missing_password(b_output)
-
 
 class NetworkConnectionBase(ConnectionBase):
     """

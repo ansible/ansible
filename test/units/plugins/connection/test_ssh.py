@@ -104,11 +104,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn = connection_loader.get('ssh', pc, new_stdin)
         conn.set_become_plugin(become_loader.get('sudo'))
 
-        conn.check_password_prompt = MagicMock()
-        conn.check_become_success = MagicMock()
-        conn.check_incorrect_password = MagicMock()
-        conn.check_missing_password = MagicMock()
-
         def _check_password_prompt(line):
             if b'foo' in line:
                 return True
@@ -128,11 +123,6 @@ class TestConnectionBaseClass(unittest.TestCase):
             if b'bad password' in line:
                 return True
             return False
-
-        conn.become.check_password_prompt = MagicMock(side_effect=_check_password_prompt)
-        conn.become.check_become_success = MagicMock(side_effect=_check_become_success)
-        conn.become.check_incorrect_password = MagicMock(side_effect=_check_incorrect_password)
-        conn.become.check_missing_password = MagicMock(side_effect=_check_missing_password)
 
         # test examining output for prompt
         conn._flags = dict(
