@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Update distribution test containers from version 2.0.1 to 2.0.2.
