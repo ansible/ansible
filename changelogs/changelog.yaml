@@ -1621,3 +1621,18 @@ releases:
     - v2.11.0rc1_summary.yaml
     - workerprocess-stdout-deadlock.yml
     release_date: '2021-04-05'
+  2.11.0rc2:
+    changes:
+      bugfixes:
+      - WorkerProcess - Python 3.5 fix for workaround for stdout deadlock in multiprocessing
+        shutdown to avoid process hangs. (https://github.com/ansible/ansible/issues/74149)
+      release_summary: '| Release Date: 2021-04-06
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - fix-for-workerprocess-stdout-deadlock-fix.yml
+    - v2.11.0rc2_summary.yaml
+    release_date: '2021-04-06'
