@@ -29,6 +29,59 @@
       - "result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
       - "result.state == 'file'"
 
+- name: "create a file that does not yet exist with `create: yes` and produce diff"
+  lineinfile:
+    dest: "{{ output_dir }}/a/a.txt"
+    state: present
+    line: "First line"
+    create: yes
+  diff: yes
+  register: result1
+
+- name: assert that a diff was returned
+  assert:
+    that:
+      - result1.diff | length > 0
+
+- name: stat the new file
+  stat:
+    path: "{{ output_dir }}/a/a.txt"
+  register: result
+
+- name: assert that the file exists
+  assert:
+    that:
+      - result.stat.exists
+
+- block:
+    - name: "EXPECTED FAILURE - test source file does not exist w/o `create: yes`"
+      lineinfile:
+        path: "/some/where/that/doesnotexist.txt"
+        state: present
+        line: "Doesn't matter"
+    - fail:
+        msg: "Should not get here"
+  rescue:
+    - name: Validate failure
+      assert:
+        that:
+          - "'Destination /some/where/that/doesnotexist.txt does not exist !' in ansible_failed_result.msg"
+
+- block:
+    - name: EXPECTED FAILURE - test invalid `validate` value
+      lineinfile:
+        path: "{{ output_dir }}/test.txt"
+        state: present
+        line: "Doesn't matter"
+        validate: '/some/path'
+    - fail:
+        msg: "Should not get here"
+  rescue:
+    - name: Validate failure
+      assert:
+        that:
+          - "'validate must contain %s: /some/path' in ansible_failed_result.msg"
+
 - name: insert a line at the beginning of the file, and back it up
   lineinfile:
     dest: "{{ output_dir }}/test.txt"
