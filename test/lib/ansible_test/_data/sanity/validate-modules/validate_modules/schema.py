@@ -61,7 +61,7 @@ def collection_name(v, error_code=None):
 
 def current_versions():
     current = float('.'.join(__version__.split('.')[0:2]))
-    return Any(float, [  current + x/100 for x in range(0,5)])
+    return Any(float, [current + x/100 for x in range(0,5)])
 
 def version(for_collection=False):
     if for_collection:
