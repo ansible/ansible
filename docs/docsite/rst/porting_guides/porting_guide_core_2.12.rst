@@ -31,6 +31,7 @@ No notable changes
 Deprecated
 ==========
 
+* Python 2.6 on the target node is deprecated in this release. ``ansible-core`` 2.13 will remove support for Python 2.6.
 * Bare variables in conditionals: ``when`` conditionals no longer automatically parse string booleans such as ``"true"`` and ``"false"`` into actual booleans. Any variable containing a non-empty string is considered true. This was previously configurable with the ``CONDITIONAL_BARE_VARS`` configuration option (and the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable). This setting no longer has any effect. Users can work around the issue by using the ``|bool`` filter:
 
 .. code-block:: yaml
