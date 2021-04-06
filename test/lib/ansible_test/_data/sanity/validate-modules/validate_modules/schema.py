@@ -51,7 +51,7 @@ COLLECTION_NAME_RE = re.compile(r'^([^.]+(\.[^.]+)+)$')
 def collection_name(v, error_code=None):
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(
-            invalid('Collection name must be a string'), error_code or 'collection-invalid-name')
+            Invalid('Collection name must be a string'), error_code or 'collection-invalid-name')
     m = COLLECTION_NAME_RE.match(v)
     if not m:
         raise _add_ansible_error_code(
