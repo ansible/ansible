@@ -25,6 +25,7 @@ def deprecation_messages():
         {'msg': 'Seventh deprecation', 'date': '2199-12-31', 'collection_name': 'ansible.builtin'},
     ]
 
+
 @pytest.fixture
 def reset(monkeypatch):
     monkeypatch.setattr(warnings, '_global_deprecations', [])
