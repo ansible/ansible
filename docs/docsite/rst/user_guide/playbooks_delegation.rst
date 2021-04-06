@@ -94,10 +94,12 @@ Most commonly users are affected by this when updating a single file on a single
 
 This can be handled in several ways::
 
-    # via a loop on the hosts with `run_once: true`:
-    - lineinfile: ...
+    ---
+    - name: handle concurrency via a loop on the hosts with `run_once: true`:
+      lineinfile: ...
       run_once: true
       loop: '{{ q("inventory_hostnames" ...}}'
+    ...
 
 By using an intermidate play with  `serial: 1` or using  `throttle: 1` at task level.
 >>>>>>> a8bb90be28 (added section about parallelism to delegation)
