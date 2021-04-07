@@ -74,7 +74,7 @@ _raw:
 import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleLookupError
+from ansible.errors import AnsibleError, AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
@@ -122,15 +122,15 @@ class LookupModule(LookupBase):
         pname = self.get_option('plugin_name')
 
         if (ptype or pname) and not (ptype and pname):
-            raise AnsibleLookupError('Both plugin_type and plugin_name are required, cannot use one without the other')
+            raise AnsibleOptionsError('Both plugin_type and plugin_name are required, cannot use one without the other')
 
         if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
-            raise AnsibleLookupError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+            raise AnsibleOptionsError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
 
         ret = []
         for term in terms:
             if not isinstance(term, string_types):
-                raise AnsibleLookupError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleOptionsError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
 
             result = Sentinel
             try:
@@ -143,6 +143,8 @@ class LookupModule(LookupBase):
                     raise AnsibleLookupError('Unable to find setting %s' % term, orig_exc=e)
                 elif missing == 'warn':
                     self._display.warning('Skipping, did not find setting %s' % term)
+                elif missing == 'skip':
+                    pass  # this is not needed, but added to have all 3 options stated
 
             if result is not Sentinel:
                 ret.append(result)
