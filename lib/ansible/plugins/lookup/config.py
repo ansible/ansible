@@ -115,9 +115,11 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        missing = kwargs.get('on_missing', 'error').lower()
-        ptype = kwargs.get('plugin_type')
-        pname = kwargs.get('plugin_name')
+        self.set_options(var_options=variables, direct=kwargs)
+
+        missing = self.get_option('on_missing')
+        ptype = self.get_option('plugin_type')
+        pname = self.get_option('plugin_name')
 
         if (ptype or pname) and not (ptype and pname):
             raise AnsibleLookupError('Both plugin_type and plugin_name are required, cannot use one without the other')
