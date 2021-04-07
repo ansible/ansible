@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    ansible-test - ensure the correct unit test target is given when the
+    ``__init__.py`` file is modified inside the connection plugins directory
