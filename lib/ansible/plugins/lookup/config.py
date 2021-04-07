@@ -74,7 +74,7 @@ _raw:
 import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleLookupError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleLookupError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
@@ -117,9 +117,12 @@ class LookupModule(LookupBase):
 
         self.set_options(var_options=variables, direct=kwargs)
 
-        missing = self.get_option('on_missing')
-        ptype = self.get_option('plugin_type')
-        pname = self.get_option('plugin_name')
+        try:
+            missing = self.get_option('on_missing')
+            ptype = self.get_option('plugin_type')
+            pname = self.get_option('plugin_name')
+        except AnsibleOptionsError as e:
+            raise AnsibleLookupError(to_native(e), orig_exc=e)
 
         if (ptype or pname) and not (ptype and pname):
             raise AnsibleLookupError('Both plugin_type and plugin_name are required, cannot use one without the other')

@@ -65,7 +65,7 @@
       - lookup_config_4 is success
       - 'lookup4|length == 0'
       - lookup_config_5 is failed
-      - '"must be a string and one of" in lookup_config_5.msg'
+      - '"valid values are" in lookup_config_5.msg'
       - lookup_config_6 is failed
       - '"Invalid setting identifier" in lookup_config_6.msg'
       - lookup_config_7 is failed
