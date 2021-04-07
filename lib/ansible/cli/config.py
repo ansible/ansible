@@ -15,7 +15,7 @@ import ansible.plugins.loader as plugin_loader
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
+from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -45,21 +45,18 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
+        common.add_argument("-t", "--type", action="store", default=None, dest='type', choices=C.CONFIGURABLE_PLUGINS,
+                            help='Show configuration for a plugin type, can also take additional plugin name to show just that plugin.')
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
         list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
-        list_parser.add_argument("-t", "--type", action="store", default=None, dest='type',
-                                 help='Indicate which plugin type when you are querying the configuration for a specific plugin'
-                                    'Available plugin types are : {0}\n'
-                                    'This also requires a plugin name as an argument'.format(C.CONFIGURABLE_PLUGINS),
-                                 choices=C.CONFIGURABLE_PLUGINS)
 
         dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
         dump_parser.set_defaults(func=self.execute_dump)
-        dump_parser.add_argument('--only-changed', dest='only_changed', action='store_true',
+        dump_parser.add_argument('--only-changed', '--changed-only', dest='only_changed', action='store_true',
                                  help="Only show configurations that have changed from the default")
 
         view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
@@ -185,17 +182,9 @@ class ConfigCLI(CLI):
 
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
-    def execute_dump(self):
-        '''
-        Shows the current settings, merges ansible.cfg if specified
-        '''
-        # FIXME: deal with plugins, not just base config
-        text = []
-        defaults = self.config.get_configuration_definitions(ignore_private=True).copy()
-        for setting in self.config.data.get_settings():
-            if setting.name in defaults:
-                defaults[setting.name] = setting
+    def _render_settings(self, defaults):
 
+        text = []
         for setting in sorted(defaults):
             if isinstance(defaults[setting], Setting):
                 if defaults[setting].origin == 'default':
@@ -208,5 +197,54 @@ class ConfigCLI(CLI):
                 msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
             if not context.CLIARGS['only_changed'] or color == 'yellow':
                 text.append(stringc(msg, color))
+
+        return text
+
+    def execute_dump(self):
+        '''
+        Shows the current settings, merges ansible.cfg if specified
+        '''
+        text = []
+        if context.CLIARGS['type'] is not None:
+            # deal with plugins
+            config_entries = {}
+            loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
+            for plugin in loader.all(class_only=True):
+                finalname = name = plugin._load_name
+                if name.startswith('_'):
+                    # alias or deprecated
+                    if os.path.islink(plugin._original_path):
+                        continue
+                    else:
+                        finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+                # default entries per plugin
+                config_entries[finalname] = self.config.get_configuration_definitions(context.CLIARGS['type'], name)
+
+                # get 'current' entries
+                try:
+                    p = loader.get(name)
+                except Exception as e:
+                    # TODO: figure how to mock other rquirements (play_contxt for connections?)
+                    display.display('cannot load plugin to check config due to : %s' % str(e))
+                    continue
+
+                for setting in config_entries[finalname].keys():
+                    v,o = C.config.get_config_value_and_origin(setting, plugin_type=context.CLIARGS['type'], plugin_name=name)
+                    config_entries[finalname][setting]['value'] = v
+                    config_entries[finalname][setting]['origin'] = o
+
+                results = self._render_settings(config_entries[finalname])
+                if results:
+                    # avoid header for empty lists (only changed!)
+                    text.append('\n%s:\n%s' % (finalname.upper(), '_' * len(finalname)))
+                    text.extend(results)
+        else:
+            # deal with base
+            defaults = self.config.get_configuration_definitions(ignore_private=True).copy()
+            for setting in self.config.data.get_settings():
+                if setting.name in defaults:
+                    defaults[setting.name] = setting
+
+            text = self._render_settings(defaults)
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
