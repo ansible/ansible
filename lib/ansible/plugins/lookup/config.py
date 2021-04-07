@@ -142,7 +142,7 @@ class LookupModule(LookupBase):
                 if missing == 'error':
                     raise AnsibleLookupError('Unable to find setting %s' % term, orig_exc=e)
                 elif missing == 'warn':
-                    self._display.warning('Skipping, did not find setting %s' % term, orig_exc=e)
+                    self._display.warning('Skipping, did not find setting %s' % term)
 
             if result is not Sentinel:
                 ret.append(result)
