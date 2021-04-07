@@ -48,14 +48,14 @@ class ConfigCLI(CLI):
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
-        self.parser.add_option("-t", "--type", action="store", default=None, dest='type', type='choice',
-                               help='Indicate which plugin type when you are querying the configuration for a specific plugin'
-                                    'Available plugin types are : {0}\n'
-                                    'This also requires a plugin name as an argument'.format(C.CONFIGURABLE_PLUGINS),
-                               choices=C.CONFIGURABLE_PLUGINS)
 
         list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
+        list_parser.add_argument("-t", "--type", action="store", default=None, dest='type',
+                                 help='Indicate which plugin type when you are querying the configuration for a specific plugin'
+                                    'Available plugin types are : {0}\n'
+                                    'This also requires a plugin name as an argument'.format(C.CONFIGURABLE_PLUGINS),
+                                 choices=C.CONFIGURABLE_PLUGINS)
 
         dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
         dump_parser.set_defaults(func=self.execute_dump)
@@ -168,8 +168,8 @@ class ConfigCLI(CLI):
         list all current configs reading lib/constants.py and shows env and config file setting names
         '''
         config_entries = {}
-        if self.options.type is not None:
-            loader = getattr(plugin_loader, '%s_loader' % self.options.type)
+        if context.CLIARGS['type'] is not None:
+            loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
             for plugin in loader.all(class_only=True):
                 finalname = name = plugin._load_name
                 if name.startswith('_'):
@@ -178,7 +178,7 @@ class ConfigCLI(CLI):
                         continue
                     else:
                         finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
-                config_entries[finalname] = self.config.get_configuration_definitions(self.options.type, name)
+                config_entries[finalname] = self.config.get_configuration_definitions(context.CLIARGS['type'], name)
         else:
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
