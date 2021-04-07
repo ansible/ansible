@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    ansible-test - make the ``a/`` and ``b/`` prefixes an optional match
+    since these can be turned off with the ``diff.noprefix`` setting in ``git``
