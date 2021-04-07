@@ -96,10 +96,6 @@ def _get_plugin_config(pname, ptype, config, variables):
         if 'was not defined' in msg:
             raise MissingSetting(msg, orig_exc=e)
         raise e
-    except Exception:
-        import traceback
-        print(traceback.format_exc())
-        raise
 
     return result
 
