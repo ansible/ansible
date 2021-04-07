@@ -98,7 +98,7 @@ This can be handled in several ways::
     - name: handle concurrency via a loop on the hosts with `run_once: true`:
       lineinfile: ...
       run_once: true
-      loop: '{{ q("inventory_hostnames" ...}}'
+      loop: '{{ q("inventory_hostnames", ...) }}'
     ...
 
 By using an intermidate play with  `serial: 1` or using  `throttle: 1` at task level.
