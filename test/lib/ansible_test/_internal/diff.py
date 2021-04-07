@@ -180,7 +180,7 @@ class DiffParser:
         """Process a diff start line."""
         self.complete_file()
 
-        match = re.search(r'^diff --git "?a/(?P<old_path>.*)"? "?b/(?P<new_path>.*)"?$', self.line)
+        match = re.search(r'^diff --git "?(?:a/)?(?P<old_path>.*)"? "?(?:b/)?(?P<new_path>.*)"?$', self.line)
 
         if not match:
             raise Exception('Unexpected diff start line.')
