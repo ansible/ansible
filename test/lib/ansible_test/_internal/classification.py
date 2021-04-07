@@ -527,7 +527,7 @@ class PathMapper:
                     'integration': self.integration_all_target,
                     'windows-integration': self.integration_all_target,
                     'network-integration': self.integration_all_target,
-                    'units': units_dir,
+                    'units': os.path.join(units_dir, ''),
                 }
 
             units_path = os.path.join(units_dir, 'test_%s.py' % name)
