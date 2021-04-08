@@ -93,8 +93,8 @@ table.documentation-table .value-required {
 }
 .DocSiteProduct-header--core {
     font-size: 25px;
-    background-color: #5bbdbf;
-    border: 2px solid #5bbdbf;
+    background-color: #161b1f;
+    border: 2px solid #161b1f;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     color: #fff;
@@ -122,11 +122,11 @@ table.documentation-table .value-required {
 } /*! Ansible color scheme */
 .wy-nav-top,
 .wy-side-nav-search {
-    background-color: #5bbdbf;
+    background-color: #161b1f;
 }
 .wy-menu-vertical header,
 .wy-menu-vertical p.caption {
-    color: #5bbdbf;
+    color: #161b1f;
 }
 .wy-menu-vertical a {
     padding: 0;
@@ -282,7 +282,7 @@ table {
     padding: 6px 0;
 }
 .ansibleNav ul li a:hover {
-    color: #5bbdbf;
+    color: #161b1f;
     background: 0 0;
 }
 h4 {
