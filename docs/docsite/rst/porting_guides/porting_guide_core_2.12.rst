@@ -37,7 +37,8 @@ No notable changes
 Modules
 =======
 
-No notable changes
+* ``cron`` now requires ``name`` to be specified in all cases.
+* ``cron`` no longer allows a ``reboot`` parameter. Use ``special_time: reboot`` instead.
 
 
 Modules removed
