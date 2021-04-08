@@ -197,7 +197,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # copy over all field attributes from the RoleInclude
         # update self._attributes directly, to avoid squashing
-        for (attr_name, _) in iteritems(self._valid_attrs):
+        for (attr_name, dump) in iteritems(self._valid_attrs):
             if attr_name in ('when', 'tags'):
                 self._attributes[attr_name] = self._extend_value(
                     self._attributes[attr_name],

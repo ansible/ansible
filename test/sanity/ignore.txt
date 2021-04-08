@@ -150,8 +150,6 @@ lib/ansible/playbook/conditional.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/play_context.py pylint:ansible-deprecated-version
-lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
-lib/ansible/playbook/task.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
