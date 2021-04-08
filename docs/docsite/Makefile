@@ -170,7 +170,7 @@ clean:
 		fi \
 	done
 	@echo "Cleanning up generated ansible_structure"
-	find -type l -delete
+	find . -type l -delete
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
 	rm -f rst/plugins/*/*.rst
