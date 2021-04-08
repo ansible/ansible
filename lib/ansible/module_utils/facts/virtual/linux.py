@@ -91,10 +91,6 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
-        if sys_vendor == 'oVirt':
-            virtual_facts['virtualization_type'] = 'oVirt'
-            return virtual_facts
-
         if sys_vendor == 'Red Hat':
             if product_family == 'RHV':
                 virtual_facts['virtualization_type'] = 'RHV'
@@ -125,7 +121,7 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
-        KVM_SYS_VENDORS = ('QEMU', 'Amazon EC2', 'Google', 'Scaleway')
+        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'Google', 'Scaleway')
         if sys_vendor in KVM_SYS_VENDORS:
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
