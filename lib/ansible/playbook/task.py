@@ -259,20 +259,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
+            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
+                new_ds[k] = v
             else:
-                # pre-2.0 syntax allowed variables for include statements at the top level of the task,
-                # so we move those into the 'vars' dictionary here, and show a deprecation message
-                # as we will remove this at some point in the future.
-                if action in C._ACTION_INCLUDE and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
-                    display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                                       " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables",
-                                       version="2.12", collection_name='ansible.builtin')
-                    new_ds['vars'][k] = v
-                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
-                    new_ds[k] = v
-                else:
-                    display.warning("Ignoring invalid attribute: %s" % k)
+                display.warning("Ignoring invalid attribute: %s" % k)
 
         return super(Task, self).preprocess_data(new_ds)
 
