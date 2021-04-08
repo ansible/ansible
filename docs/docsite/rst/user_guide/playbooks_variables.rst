@@ -312,13 +312,13 @@ Ansible does apply variable precedence, and you might have a use for it. Here is
   #. role dependency defaults for tasks from a role (defined in ``roles/{dependent_roles}/defaults/main.yml``)
   #. role defaults for tasks from a role (defined in ``role/defaults/main.yml``) [1]_ [8]_ [9]_
   #. inventory file or script group vars [2]_
-  #. inventory ``group_vars/all`` [3]_
-  #. playbook ``group_vars/all`` [3]_
-  #. inventory ``group_vars/*`` [3]_
-  #. playbook ``group_vars/*`` [3]_
+  #. inventory file relative ``group_vars/all`` [3]_
+  #. playbook file relative ``group_vars/all`` [3]_
+  #. inventory file relative ``group_vars/*`` [3]_
+  #. playbook file relative ``group_vars/*`` [3]_
   #. inventory file or script host vars [2]_
-  #. inventory ``host_vars/*`` [3]_
-  #. playbook ``host_vars/*`` [3]_
+  #. inventory file relative ``host_vars/*`` [3]_
+  #. playbook file relative ``host_vars/*`` [3]_
   #. host facts / cached ``set_facts`` [4]_
   #. play ``vars``
   #. play ``vars_prompt``
