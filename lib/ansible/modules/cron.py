@@ -33,11 +33,9 @@ options:
   name:
     description:
       - Description of a crontab entry or, if env is set, the name of environment variable.
-      - Required if I(state=absent).
-      - Note that if name is not set and I(state=present), then a
-        new crontab entry will always be created, regardless of existing ones.
-      - This parameter will always be required in future releases.
+      - This parameter is always required as of ansible-core 2.12.
     type: str
+    required: yes
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -98,12 +96,6 @@ options:
     type: str
     default: "*"
     aliases: [ dow ]
-  reboot:
-    description:
-      - If the job should be run at reboot. This option is deprecated. Users should use I(special_time).
-    version_added: "1.0"
-    type: bool
-    default: no
   special_time:
     description:
       - Special time specification nickname.
@@ -562,7 +554,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
+            name=dict(type='str', required=True),
             user=dict(type='str'),
             job=dict(type='str', aliases=['value']),
             cron_file=dict(type='str'),
@@ -573,7 +565,6 @@ def main():
             day=dict(type='str', default='*', aliases=['dom']),
             month=dict(type='str', default='*'),
             weekday=dict(type='str', default='*', aliases=['dow']),
-            reboot=dict(type='bool', default=False),
             special_time=dict(type='str', choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"]),
             disabled=dict(type='bool', default=False),
             env=dict(type='bool', default=False),
@@ -582,7 +573,6 @@ def main():
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['reboot', 'special_time'],
             ['insertafter', 'insertbefore'],
         ],
     )
@@ -598,7 +588,6 @@ def main():
     day = module.params['day']
     month = module.params['month']
     weekday = module.params['weekday']
-    reboot = module.params['reboot']
     special_time = module.params['special_time']
     disabled = module.params['disabled']
     env = module.params['env']
@@ -622,17 +611,6 @@ def main():
 
     module.debug('cron instantiated - name: "%s"' % name)
 
-    if not name:
-        module.deprecate(
-            msg="The 'name' parameter will be required in future releases.",
-            version='2.12', collection_name='ansible.builtin'
-        )
-    if reboot:
-        module.deprecate(
-            msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
-            version='2.12', collection_name='ansible.builtin'
-        )
-
     if module._diff:
         diff = dict()
         diff['before'] = crontab.n_existing
@@ -646,15 +624,12 @@ def main():
 
     # --- user input validation ---
 
-    if env and not name:
-        module.fail_json(msg="You must specify 'name' while working with environment variables (env=yes)")
-
-    if (special_time or reboot) and \
+    if special_time and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
 
     # cannot support special_time on solaris
-    if (special_time or reboot) and platform.system() == 'SunOS':
+    if special_time and platform.system() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if cron_file and do_install:
@@ -666,9 +641,6 @@ def main():
 
     if (insertafter or insertbefore) and not env and do_install:
         module.fail_json(msg="Insertafter and insertbefore parameters are valid only with env=yes")
-
-    if reboot:
-        special_time = "reboot"
 
     # if requested make a backup before making a change
     if backup and not module.check_mode:
