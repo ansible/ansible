@@ -21,10 +21,11 @@ __metaclass__ = type
 
 from units.compat import unittest, mock
 from ansible.errors import AnsibleError
-from ansible.plugins.cache import FactCache, CachePluginAdjudicator
+from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 from ansible.plugins.loader import cache_loader
+from ansible.vars.fact_cache import FactCache
 
 import pytest
 
