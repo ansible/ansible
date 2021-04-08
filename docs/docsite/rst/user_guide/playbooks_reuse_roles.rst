@@ -462,15 +462,12 @@ Role dependencies are stored in the ``meta/main.yml`` file within the role direc
     ---
     dependencies:
       - role: common
-        vars:
-          some_parameter: 3
+        some_parameter_var: 3
       - role: apache
-        vars:
-          apache_port: 80
+        apache_port: 80
       - role: postgres
-        vars:
-          dbname: blarg
-          other_parameter: 12
+        dbname: blarg
+        other_parameter_var: 12
 
 Ansible always executes roles listed in ``dependencies`` before the role that lists them. Ansible executes this pattern recursively when you use the ``roles`` keyword. For example, if you list role ``foo`` under ``roles:``, role ``foo`` lists role ``bar`` under ``dependencies`` in its meta/main.yml file, and role ``bar`` lists role ``baz`` under ``dependencies`` in its meta/main.yml, Ansible executes ``baz``, then ``bar``, then ``foo``.
 
