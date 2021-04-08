@@ -128,6 +128,10 @@ Setup the appropriate Sphinx configuration and structure based on the documentat
  - Ansible Core module and plugin docs: ``make core_structure``
  - i18n docs: ``make gettext_structure``
 
+ .. note::
+
+    If building on macOS with Python 3.8 or later, you must use Sphinx >= 2.2.2. See `#6803 <https://github.com/sphinx-doc/sphinx/pull/6879>`_ for details.
+
 
 
 Building a single rST page
