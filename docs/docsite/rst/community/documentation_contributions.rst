@@ -77,17 +77,17 @@ To build documentation locally, ensure you have a working :ref:`development envi
 To work with documentation on your local machine, you need to have python-3.5 or greater and the
 following packages installed:
 
-- gcc
-- jinja2
-- libyaml
-- Pygments >= 2.4.0
-- pyparsing
-- PyYAML
-- rstcheck
-- six
-- sphinx
-- sphinx-notfound-page
-- straight.plugin
+    - ``gcc``
+    - ``jinja2``
+    - ``libyaml``
+    - ``Pygments``
+    - ``pyparsing``
+    - ``PyYAML``
+    - ``rstcheck``
+    - ``six``
+    - ``sphinx``
+    - ``sphinx-notfound-page``
+    - ``straight.plugin``
 
 These required packages are listed in two :file:`requirements.txt` files to make installation easier:
 
@@ -121,6 +121,14 @@ Building the documentation locally
 ----------------------------------
 
 Building the documentation is the best way to check for errors and review your changes. Once `rstcheck` runs with no errors, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
+
+Setup the appropriate Sphinx configuration and structure based on the documentation you want to work on.
+
+ - All docs, including plugins and collections: ``make ansible_structure``. This takes the longest to build.
+ - Ansible Core module and plugin docs: ``make core_structure``
+ - i18n docs: ``make gettext_structure``
+
+
 
 Building a single rST page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
