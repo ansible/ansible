@@ -391,3 +391,65 @@
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: absent
+
+- name: test warning with command
+  command:
+    cmd: "rm -h"
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using the file module with state=absent rather than running \\'rm\\'' in warn_result.warnings[0]"
+
+- name: test warning with shell
+  shell: "sed -h"
+  args:
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using the replace, lineinfile or template module rather than running \\'sed\\'' in warn_result.warnings[0]"
+
+- name: test become warning
+  command:
+    cmd: "sudo true"
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using \\'become\\', \\'become_method\\', and \\'become_user\\' rather than running sudo' in warn_result.warnings[0]"
+
+- name: test check mode skip message
+  command:
+    cmd: "true"
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'skipped, running in check mode' in result.msg"
+
+- name: test check mode creates/removes message
+  command:
+    cmd: "true"
+    creates: yes
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.stdout"
