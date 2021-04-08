@@ -344,7 +344,7 @@ Ansible merges different variables set in inventory so that more specific settin
 .. [1] Tasks in each role see their own role's defaults if specified, or those from the role's dependencies. Tasks defined outside of a role see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
 .. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
-.. [4] When created with set_facts's cacheable option, variables have the high precedence in the play, but are the same as a host facts precedence when they come from the cache.
+.. [4] Variables created with set_facts where cacheable=yes have higher precedence in the play than host facts. Variables created with set_facts where cacheable=no (the default setting) are treated as host facts. If a variable created with set_facts where cacheable=no supplies a different value than a pre-existing host fact, the set_facts value will override the pre-existing host fact.
 .. [5] Tasks in each role see their own role's vars if specified, or those from the role's dependencies. Tasks defined outside of a role see the last role's vars.
 .. [6] Tasks in each role see their own role's params if specified, or those from the role's dependencies. Role params are not exposed outside of the role.
 .. [7] Role params are not specified within ``vars:`` they are top level params specified as part of the role definition
