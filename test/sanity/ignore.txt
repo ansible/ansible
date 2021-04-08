@@ -155,7 +155,6 @@ lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
-lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/inventory/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/inventory/script.py pylint:ansible-deprecated-version
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name

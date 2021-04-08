@@ -160,10 +160,10 @@ debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzm
         c.set_become_plugin(become_loader.get('sudo'))
         c.become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
 
-        self.assertTrue(c.check_password_prompt(local))
-        self.assertTrue(c.check_password_prompt(ssh_pipelining_vvvv))
-        self.assertTrue(c.check_password_prompt(ssh_nopipelining_vvvv))
-        self.assertTrue(c.check_password_prompt(ssh_novvvv))
-        self.assertTrue(c.check_password_prompt(dns_issue))
-        self.assertFalse(c.check_password_prompt(nothing))
-        self.assertFalse(c.check_password_prompt(in_front))
+        self.assertTrue(c.become.check_password_prompt(local))
+        self.assertTrue(c.become.check_password_prompt(ssh_pipelining_vvvv))
+        self.assertTrue(c.become.check_password_prompt(ssh_nopipelining_vvvv))
+        self.assertTrue(c.become.check_password_prompt(ssh_novvvv))
+        self.assertTrue(c.become.check_password_prompt(dns_issue))
+        self.assertFalse(c.become.check_password_prompt(nothing))
+        self.assertFalse(c.become.check_password_prompt(in_front))
