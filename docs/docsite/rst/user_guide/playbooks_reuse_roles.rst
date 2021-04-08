@@ -256,7 +256,7 @@ You can pass other keywords, including variables and tags, when importing roles:
             app_port: 5000
       ...
 
-Variables of the role (from section `vars:` and from `roles/x/vars/main.yml`) are available to all tasks and all roles of the play.
+Variables of the role (from `vars:` in task and from `roles/x/vars/main.yml`) are available to all tasks and all roles of the play.
 
 When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
