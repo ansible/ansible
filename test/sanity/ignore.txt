@@ -103,7 +103,6 @@ lib/ansible/modules/copy.py pylint:blacklisted-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
-lib/ansible/modules/cron.py pylint:ansible-deprecated-version
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec

@@ -91,8 +91,9 @@
 - assert:
     that: remove_task_idempotence is not changed
 
-- name: Check that removing a cron task with cron_file and without specifying an user is allowed (#58493)
+- name: Check that removing a cron task with cron_file and without specifying a user is allowed (#58493)
   cron:
+    name: test cron task
     cron_file: unexistent_cron_file
     state: absent
   register: remove_cron_file
