@@ -94,12 +94,10 @@ Most commonly users are affected by this when updating a single file on a single
 
 This can be handled in several ways::
 
-    ---
-    - name: handle concurrency via a loop on the hosts with `run_once: true`:
-      lineinfile: ...
+    - name: "handle concurrency via a loop on the hosts with `run_once: true`"
+      lineinfile: "<options here>"
       run_once: true
-      loop: '{{ q("inventory_hostnames", ...) }}'
-    ...
+      loop: '{{ ansible_play_hosts_all }}'
 
 By using an intermidate play with  `serial: 1` or using  `throttle: 1` at task level.
 >>>>>>> a8bb90be28 (added section about parallelism to delegation)
