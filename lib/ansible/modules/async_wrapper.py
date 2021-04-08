@@ -40,7 +40,7 @@ def notice(msg):
 
 def end(res, exit_msg=0):
     if res:
-        print(json.dumps({res}))
+        print(json.dumps(res))
     sys.exit(exit_msg)
 
 
