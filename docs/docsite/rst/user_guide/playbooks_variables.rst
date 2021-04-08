@@ -332,7 +332,7 @@ Ansible does apply variable precedence, and you might have a use for it. Here is
   #. ``set_facts`` / registered vars
   #. role dependency params for tasks from a role
   #. role params for tasks from a role [6]_ [7]_
-  #. include params
+  #. params from task ``include``
   #. extra vars (for example, ``-e "user=my_user"``)(always win precedence)
 
 In general, Ansible gives precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but explicit includes such as the vars directory or an ``include_vars`` task override inventory variables.
