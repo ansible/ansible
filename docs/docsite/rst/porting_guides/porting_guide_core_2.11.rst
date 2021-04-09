@@ -42,7 +42,46 @@ Other:
 Deprecated
 ==========
 
-No notable changes
+Changes to ``AnsibleModule``
+----------------------------
+
+With the move to ``ArgumentSpecValidator`` for performing argument spec validation, the following private methods in ``AnsibleModule`` are deprecated:
+
+.. code-block:: python
+
+    _check_argument_types()
+    _check_argument_values()
+    _check_arguments()
+    _check_mutually_exclusive()  # --> module_utils.common.validation.check_mutually_exclusive
+    _check_required_arguments()  # --> module_utils.common.validation.check_required_arguments
+    _check_required_by()  # --> module_utils.common.validation._check_required_by
+    _check_required_if()  # --> module_utils.common.validation.check_required_if
+    _check_required_one_of()  # --> module_utils.common.validation.check_required_one_of
+    _check_required_together()  # --> module_utils.common.validation.check_required_together
+    _check_type_bits()  # --> module_utils.common.validation.check_type_bits
+    _check_type_bool()  # --> module_utils.common.validation.check_type_bool
+    _check_type_bytes()  # --> module_utils.common.validation.check_type_bytes
+    _check_type_dict()  # --> module_utils.common.validation.check_type_dict
+    _check_type_float()  # --> module_utils.common.validation.check_type_float
+    _check_type_int()  # --> module_utils.common.validation.check_type_int
+    _check_type_jsonarg()  # --> module_utils.common.validation.check_type_jsonarg
+    _check_type_list()  # --> module_utils.common.validation.check_type_list
+    _check_type_path()  # --> module_utils.common.validation.check_type_path
+    _check_type_raw()  # --> module_utils.common.validation.check_type_raw
+    _check_type_str()  # --> module_utils.common.validation.check_type_str
+    _count_terms()  # --> module_utils.common.validation.count_terms
+    _get_wanted_type()
+    _handle_aliases()
+    _handle_no_log_values()
+    _handle_options()
+    _set_defaults()
+    _set_fallbacks()
+
+Modules or plugins using these private methods should use the public functions in ``lib/ansible/module_utils/common/validation.py`` or ``ArgumentSpecValidator.validate()``.
+
+
+    _CHECK_ARGUMENT_TYPES_DISPATCHER  # --> module_utils.parameters.DEFAULT_TYPE_VALIDATORS
+
 
 
 Modules
