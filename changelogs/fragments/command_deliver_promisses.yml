@@ -1,0 +1,5 @@
+bugfixes:
+  - command module, now always returns what we documented as 'returns always'.
+  - command module, now all options work in ad-hoc execution.
+  - command module, clarify order of remove/creates checks.
+  - command module, correctly handles chdir to symlinks.

@@ -440,7 +440,7 @@
 - name: assert check message exists
   assert:
     that:
-      - "'skipped, running in check mode' in result.msg"
+      - "'Command would have run if not in check mode' in result.msg"
 
 - name: test check mode creates/removes message
   command:
@@ -452,4 +452,4 @@
 - name: assert check message exists
   assert:
     that:
-      - "'Command would have run if not in check mode' in result.stdout"
+      - "'Command would have run if not in check mode' in result.msg"
