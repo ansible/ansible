@@ -122,16 +122,6 @@ class TestFactCache(unittest.TestCase):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
-    def test_update_legacy(self):
-        self.cache.update('cache_key', {'key2': 'updatedvalue'})
-        assert self.cache['cache_key']['key2'] == 'updatedvalue'
-
-    def test_update_legacy_key_exists(self):
-        self.cache['cache_key'] = {'key': 'value', 'key2': 'value2'}
-        self.cache.update('cache_key', {'key': 'updatedvalue'})
-        assert self.cache['cache_key']['key'] == 'updatedvalue'
-        assert self.cache['cache_key']['key2'] == 'value2'
-
 
 class TestAbstractClass(unittest.TestCase):
 
