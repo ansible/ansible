@@ -1,0 +1,24 @@
+- name: Get control host details
+  setup:
+  delegate_to: localhost
+  register: control_host
+- name: Get managed host details
+  setup:
+  register: managed_host
+- name: Check split state
+  stat:
+    path: "{{ output_dir }}"
+  register: split
+  ignore_errors: yes
+- name: Build non-split status message
+  set_fact:
+    message: "{{ control_host.ansible_facts.ansible_distribution }} {{ control_host.ansible_facts.ansible_distribution_version }}"
+  when: split is success and split.stat.exists
+- name: Build split status message
+  set_fact:
+    message: "{{ control_host.ansible_facts.ansible_distribution }} {{ control_host.ansible_facts.ansible_distribution_version }} -> {{ managed_host.ansible_facts.ansible_distribution }} {{ managed_host.ansible_facts.ansible_distribution_version }}"
+  when: split is not success or not split.stat.exists
+- name: Show host details
+  # FIXME: this is only accurate if we assume local connection for local/virtual -- if we use SSH for those then it's incomplete
+  debug:
+    msg: "{{ message }}"

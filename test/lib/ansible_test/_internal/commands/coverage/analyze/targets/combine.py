@@ -1,8 +1,14 @@
 """Combine integration test target code coverage reports."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+import typing as t
 
-from ..... import types as t
+from .....executor import (
+    Delegate,
+)
+
+from .....provisioning import (
+    prepare_profiles,
+)
 
 from . import (
     CoverageAnalyzeTargetsConfig,
@@ -24,7 +30,7 @@ if t.TYPE_CHECKING:
 class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets combine` command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsCombineConfig, self).__init__(args)
+        super().__init__(args)
 
         self.input_files = args.input_file  # type: t.List[str]
         self.output_file = args.output_file  # type: str
@@ -32,6 +38,11 @@ class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
 
 def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTargetsCombineConfig) -> None
     """Combine integration test target code coverage reports."""
+    host_state = prepare_profiles(args)  # coverage analyze targets combine
+
+    if args.delegate:
+        raise Delegate(host_state=host_state)
+
     combined_target_indexes = {}  # type: TargetIndexes
     combined_path_arcs = {}  # type: Arcs
     combined_path_lines = {}  # type: Lines

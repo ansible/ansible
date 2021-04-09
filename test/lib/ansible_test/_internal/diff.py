@@ -1,12 +1,10 @@
 """Diff parsing functions and classes."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import textwrap
 import traceback
-
-from . import types as t
+import typing as t
 
 from .util import (
     ApplicationError,

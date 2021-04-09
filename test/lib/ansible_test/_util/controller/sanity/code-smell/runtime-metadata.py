@@ -7,7 +7,6 @@ import datetime
 import os
 import re
 import sys
-import warnings
 
 from functools import partial
 

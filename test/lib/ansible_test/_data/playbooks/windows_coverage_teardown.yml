@@ -1,15 +1,8 @@
----
-- name: collect the coverage files from the Windows host
-  hosts: windows
+- name: Teardown Windows code coverage configuration
+  hosts: all
   gather_facts: no
   tasks:
-  - name: make sure all vars have been set
-    assert:
-      that:
-      - local_temp_path is defined
-      - remote_temp_path is defined
-
-  - name: zip up all coverage files in the
+  - name: Zip up all coverage files
     ansible.windows.win_shell: |
       $coverage_dir = '{{ remote_temp_path }}'
       $zip_file = Join-Path -Path $coverage_dir -ChildPath 'coverage.zip'
@@ -65,13 +58,13 @@
           }
       }
 
-  - name: fetch coverage zip file to localhost
+  - name: Fetch coverage zip
     fetch:
       src: '{{ remote_temp_path }}\coverage.zip'
-      dest: '{{ local_temp_path }}/coverage-{{ inventory_hostname }}.zip'
+      dest: '{{ local_temp_path }}/{{ inventory_hostname }}.zip'
       flat: yes
 
-  - name: remove the temporary coverage directory
+  - name: Remove temporary coverage directory
     ansible.windows.win_file:
       path: '{{ remote_temp_path }}'
       state: absent

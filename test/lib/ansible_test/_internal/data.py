@@ -1,10 +1,9 @@
 """Context information for the current invocation of ansible-test."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import dataclasses
 import os
-
-from . import types as t
+import typing as t
 
 from .util import (
     ApplicationError,
@@ -14,6 +13,7 @@ from .util import (
     ANSIBLE_TEST_ROOT,
     ANSIBLE_SOURCE_ROOT,
     display,
+    cache,
 )
 
 from .provider import (
@@ -53,7 +53,7 @@ class DataContext:
         self.__source_providers = source_providers
         self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
 
-        self.payload_callbacks = []  # type: t.List[t.Callable[t.List[t.Tuple[str, str]], None]]
+        self.payload_callbacks = []  # type: t.List[t.Callable[[t.List[t.Tuple[str, str]]], None]]
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
@@ -157,12 +157,13 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback):  # type: (t.Callable[t.List[t.Tuple[str, str]], None]) -> None
+    def register_payload_callback(self, callback):  # type: (t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
 
-def data_init():  # type: () -> DataContext
+@cache
+def data_context():  # type: () -> DataContext
     """Initialize provider plugins."""
     provider_types = (
         'layout',
@@ -191,10 +192,51 @@ Current working directory: %s''' % ('\n'.join(options), os.getcwd()))
     return context
 
 
-def data_context():  # type: () -> DataContext
-    """Return the current data context."""
-    try:
-        return data_context.instance
-    except AttributeError:
-        data_context.instance = data_init()
-        return data_context.instance
+@dataclasses.dataclass(frozen=True)
+class PluginInfo:
+    """Information about an Ansible plugin."""
+    plugin_type: str
+    name: str
+    paths: t.List[str]
+
+
+@cache
+def content_plugins():
+    """
+    Analyze content.
+    The primary purpose of this analysis is to facilitiate mapping of integration tests to the plugin(s) they are intended to test.
+    """
+    plugins = {}  # type: t.Dict[str, t.Dict[str, PluginInfo]]
+
+    for plugin_type, plugin_directory in data_context().content.plugin_paths.items():
+        plugin_paths = sorted(data_context().content.walk_files(plugin_directory))
+        plugin_directory_offset = len(plugin_directory.split(os.path.sep))
+
+        plugin_files = {}
+
+        for plugin_path in plugin_paths:
+            plugin_filename = os.path.basename(plugin_path)
+            plugin_parts = plugin_path.split(os.path.sep)[plugin_directory_offset:-1]
+
+            if plugin_filename == '__init__.py':
+                if plugin_type != 'module_utils':
+                    continue
+            else:
+                plugin_name = os.path.splitext(plugin_filename)[0]
+
+                if data_context().content.is_ansible and plugin_type == 'modules':
+                    plugin_name = plugin_name.lstrip('_')
+
+                plugin_parts.append(plugin_name)
+
+            plugin_name = '.'.join(plugin_parts)
+
+            plugin_files.setdefault(plugin_name, []).append(plugin_filename)
+
+        plugins[plugin_type] = {plugin_name: PluginInfo(
+            plugin_type=plugin_type,
+            name=plugin_name,
+            paths=paths,
+        ) for plugin_name, paths in plugin_files.items()}
+
+    return plugins

@@ -1,13 +1,11 @@
 """Classify changes in Ansible code."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import os
 import re
 import time
-
-from .. import types as t
+import typing as t
 
 from ..target import (
     walk_module_targets,
@@ -160,7 +158,7 @@ def categorize_changes(args, paths, verbose_command=None):
         targets.discard('none')
 
         if any(target == 'all' for target in targets):
-            commands[command] = set(['all'])
+            commands[command] = {'all'}
 
     commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
     focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())

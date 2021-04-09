@@ -1,6 +1,5 @@
 """Sanity test for documentation of sanity tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -9,7 +8,12 @@ from . import (
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
     sanity_get_tests,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...config import (
@@ -35,13 +39,7 @@ class SanityDocsTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    # noinspection PyUnusedLocal
-    def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
         sanity_dir = 'docs/docsite/rst/dev_guide/testing/sanity'
         sanity_docs = set(part[0] for part in (os.path.splitext(os.path.basename(path)) for path in data_context().content.get_files(sanity_dir))
                           if part[1] == '.rst')

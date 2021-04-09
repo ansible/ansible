@@ -1,0 +1,153 @@
+"""Inventory creation from host profiles."""
+from __future__ import annotations
+
+import shutil
+import typing as t
+
+from .config import (
+    EnvironmentConfig,
+)
+
+from .util import (
+    sanitize_host_name,
+)
+
+from .host_profiles import (
+    ControllerHostProfile,
+    ControllerProfile,
+    HostProfile,
+    Inventory,
+    NetworkInventoryProfile,
+    NetworkRemoteProfile,
+    SshTargetHostProfile,
+    WindowsInventoryProfile,
+    WindowsRemoteProfile,
+)
+
+
+def create_controller_inventory(args, path, controller_host):  # type: (EnvironmentConfig, str, ControllerHostProfile) -> None
+    """Create and return inventory for use in controller-only integration tests."""
+    inventory = Inventory(
+        host_groups=dict(
+            testgroup=dict(
+                testhost=dict(
+                    ansible_connection='local',
+                    ansible_pipelining='yes',
+                    ansible_python_interpreter=controller_host.python.path,
+                ),
+            ),
+        ),
+    )
+
+    inventory.write(args, path)
+
+
+def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+    """Create and return inventory for use in target Windows integration tests."""
+    first = target_hosts[0]
+
+    if isinstance(first, WindowsInventoryProfile):
+        try:
+            shutil.copyfile(first.config.path, path)
+        except shutil.SameFileError:
+            pass
+
+        return
+
+    target_hosts = t.cast(t.List[WindowsRemoteProfile], target_hosts)
+    hosts = [(target_host, target_host.wait_for_instance().connection) for target_host in target_hosts]
+    windows_hosts = {sanitize_host_name(host.config.name): host.get_inventory_variables() for host, connection in hosts}
+
+    inventory = Inventory(
+        host_groups=dict(
+            windows=windows_hosts,
+        ),
+        # The `testhost` group is needed to support the `binary_modules_winrm` integration test.
+        # The test should be updated to remove the need for this.
+        extra_groups={
+            'testhost:children': [
+                'windows',
+            ],
+        },
+    )
+
+    inventory.write(args, path)
+
+
+def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+    """Create and return inventory for use in target network integration tests."""
+    first = target_hosts[0]
+
+    if isinstance(first, NetworkInventoryProfile):
+        try:
+            shutil.copyfile(first.config.path, path)
+        except shutil.SameFileError:
+            pass
+
+        return
+
+    target_hosts = t.cast(t.List[NetworkRemoteProfile], target_hosts)
+    host_groups = {target_host.config.platform: {} for target_host in target_hosts}
+
+    for target_host in target_hosts:
+        host_groups[target_host.config.platform][target_host.config.name.replace('.', '-')] = target_host.get_inventory_variables()
+
+    inventory = Inventory(
+        host_groups=host_groups,
+        # The `net` group was added to support platform agnostic testing. It may not longer be needed.
+        # see: https://github.com/ansible/ansible/pull/34661
+        # see: https://github.com/ansible/ansible/pull/34707
+        extra_groups=dict(
+            net=sorted(host_groups),
+        ),
+    )
+
+    inventory.write(args, path)
+
+
+def create_posix_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+    """Create and return inventory for use in POSIX integration tests."""
+    target_hosts = t.cast(t.List[SshTargetHostProfile], target_hosts)
+
+    if len(target_hosts) != 1:
+        raise Exception()
+
+    target_host = target_hosts[0]
+
+    if isinstance(target_host, ControllerProfile):
+        inventory = Inventory(
+            host_groups=dict(
+                testgroup=dict(
+                    testhost=dict(
+                        ansible_connection='local',
+                        ansible_pipelining='yes',
+                        ansible_python_interpreter=target_host.config.python.path,
+                    ),
+                ),
+            ),
+        )
+    else:
+        connections = target_host.get_controller_target_connections()
+
+        if len(connections) != 1:
+            raise Exception()
+
+        ssh = connections[0]
+
+        inventory = Inventory(
+            host_groups=dict(
+                testgroup=dict(
+                    testhost=dict(
+                        ansible_connection='ssh',
+                        ansible_pipelining='yes',
+                        ansible_python_interpreter=ssh.settings.python_interpreter,
+                        ansible_host=ssh.settings.host,
+                        ansible_port=str(ssh.settings.port),
+                        ansible_user=ssh.settings.user,
+                        ansible_ssh_private_key=ssh.settings.identity_file,
+                    ),
+                ),
+            ),
+        )
+
+    inventory.write(args, path)

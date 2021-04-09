@@ -1,10 +1,16 @@
 """Filter an aggregated coverage file, keeping only the specified targets."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
+import typing as t
 
-from ..... import types as t
+from .....executor import (
+    Delegate,
+)
+
+from .....provisioning import (
+    prepare_profiles,
+)
 
 from . import (
     CoverageAnalyzeTargetsConfig,
@@ -25,7 +31,7 @@ if t.TYPE_CHECKING:
 class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets filter` command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsFilterConfig, self).__init__(args)
+        super().__init__(args)
 
         self.input_file = args.input_file  # type: str
         self.output_file = args.output_file  # type: str
@@ -37,6 +43,11 @@ class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
 
 def command_coverage_analyze_targets_filter(args):  # type: (CoverageAnalyzeTargetsFilterConfig) -> None
     """Filter target names in an aggregated coverage file."""
+    host_state = prepare_profiles(args)  # coverage analyze targets filter
+
+    if args.delegate:
+        raise Delegate(host_state=host_state)
+
     covered_targets, covered_path_arcs, covered_path_lines = read_report(args.input_file)
 
     filtered_path_arcs = expand_indexes(covered_path_arcs, covered_targets, lambda v: v)
@@ -49,6 +60,7 @@ def command_coverage_analyze_targets_filter(args):  # type: (CoverageAnalyzeTarg
     exclude_path = re.compile(args.exclude_path) if args.exclude_path else None
 
     def path_filter_func(path):
+        """Return True if the given path should be included, otherwise return False."""
         if include_path and not re.search(include_path, path):
             return False
 
@@ -58,6 +70,7 @@ def command_coverage_analyze_targets_filter(args):  # type: (CoverageAnalyzeTarg
         return True
 
     def target_filter_func(targets):
+        """Filter the given targets and return the result based on the defined includes and excludes."""
         if include_targets:
             targets &= include_targets
 

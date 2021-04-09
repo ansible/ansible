@@ -2,24 +2,11 @@
 Primitive replacement for requests to avoid extra dependency.
 Avoids use of urllib2 due to lack of SNI support.
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import time
-
-try:
-    from urllib import urlencode
-except ImportError:
-    # noinspection PyCompatibility, PyUnresolvedReferences
-    from urllib.parse import urlencode  # pylint: disable=locally-disabled, import-error, no-name-in-module
-
-try:
-    # noinspection PyCompatibility
-    from urlparse import urlparse, urlunparse, parse_qs
-except ImportError:
-    # noinspection PyCompatibility, PyUnresolvedReferences
-    from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
+import typing as t
 
 from .util import (
     ApplicationError,
@@ -35,12 +22,7 @@ from .util_common import (
 
 class HttpClient:
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False, insecure=False, proxy=None):
-        """
-        :type args: CommonConfig
-        :type always: bool
-        :type insecure: bool
-        """
+    def __init__(self, args, always=False, insecure=False, proxy=None):  # type: (CommonConfig, bool, bool, t.Optional[str]) -> None
         self.args = args
         self.always = always
         self.insecure = insecure
@@ -177,5 +159,5 @@ class HttpError(ApplicationError):
         :type status: int
         :type message: str
         """
-        super(HttpError, self).__init__('%s: %s' % (status, message))
+        super().__init__('%s: %s' % (status, message))
         self.status = status

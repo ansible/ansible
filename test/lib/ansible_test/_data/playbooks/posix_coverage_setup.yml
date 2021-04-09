@@ -1,0 +1,26 @@
+- name: Setup POSIX code coverage configuration
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Install coverage
+      # avoid the pip module so the correct interpreter is used
+      raw: "{{ pip_command }}"
+      when: pip_command
+
+    - name: Create coverage temporary directory
+      file:
+        path: "{{ common_temp_dir }}"
+        mode: "{{ mode_directory }}"
+        state: directory
+
+    - name: Create coverage configuration file
+      copy:
+        dest: "{{ coverage_config_path }}"
+        content: "{{ coverage_config }}"
+        mode: "{{ mode_file }}"
+
+    - name: Create coverage output directory
+      file:
+        path: "{{ coverage_output_path }}"
+        mode: "{{ mode_directory_write }}"
+        state: directory

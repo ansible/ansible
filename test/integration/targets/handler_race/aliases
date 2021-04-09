@@ -1,3 +1,2 @@
 shippable/posix/group5
-handler_race
-skip/aix
+context/controller

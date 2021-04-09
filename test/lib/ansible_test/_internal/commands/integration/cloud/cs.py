@@ -1,15 +1,14 @@
 """CloudStack plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
+import configparser
 import os
-
-from .... import types as t
+import urllib.parse
+import typing as t
 
 from ....util import (
     ApplicationError,
-    ConfigParser,
     display,
 )
 
@@ -17,15 +16,12 @@ from ....config import (
     IntegrationConfig,
 )
 
-from ....http import (
-    urlparse,
-)
-
 from ....docker_util import (
     docker_exec,
 )
 
 from ....containers import (
+    CleanupMode,
     run_support_container,
     wait_for_file,
 )
@@ -42,7 +38,7 @@ class CsCloudProvider(CloudProvider):
     DOCKER_SIMULATOR_NAME = 'cloudstack-sim'
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(CsCloudProvider, self).__init__(args)
+        super().__init__(args)
 
         self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
         self.host = ''
@@ -53,7 +49,7 @@ class CsCloudProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(CsCloudProvider, self).setup()
+        super().setup()
 
         if self._use_static_config():
             self._setup_static()
@@ -62,12 +58,12 @@ class CsCloudProvider(CloudProvider):
 
     def _setup_static(self):  # type: () -> None
         """Configure CloudStack tests for use with static configuration."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_static_path)
 
         endpoint = parser.get('cloudstack', 'endpoint')
 
-        parts = urlparse(endpoint)
+        parts = urllib.parse.urlparse(endpoint)
 
         self.host = parts.hostname
 
@@ -95,17 +91,15 @@ class CsCloudProvider(CloudProvider):
             self.port,
         ]
 
-        descriptor = run_support_container(
+        run_support_container(
             self.args,
             self.platform,
             self.image,
             self.DOCKER_SIMULATOR_NAME,
             ports,
             allow_existing=True,
-            cleanup=True,
+            cleanup=CleanupMode.YES,
         )
-
-        descriptor.register(self.args)
 
         # apply work-around for OverlayFS issue
         # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
@@ -135,6 +129,7 @@ class CsCloudProvider(CloudProvider):
     def _get_credentials(self, container_name):  # type: (str) -> t.Dict[str, t.Any]
         """Wait for the CloudStack simulator to return credentials."""
         def check(value):
+            """Return True if the given configuration is valid JSON, otherwise return False."""
             # noinspection PyBroadException
             try:
                 json.loads(value)
@@ -152,7 +147,7 @@ class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         config = dict(parser.items('default'))

@@ -1,10 +1,8 @@
 """Sanity test for proper import exception handling."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
     SanityMultipleVersion,
@@ -13,6 +11,15 @@ from . import (
     SanitySuccess,
     SanitySkipped,
     TARGET_SANITY_ROOT,
+    SanityTargets,
+)
+
+from ...constants import (
+    REMOTE_ONLY_PYTHON_VERSIONS,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -20,20 +27,14 @@ from ...target import (
 )
 
 from ...util import (
-    ANSIBLE_TEST_DATA_ROOT,
     SubprocessError,
     remove_tree,
     display,
     parse_to_list_of_dict,
     is_subdir,
-    generate_pip_command,
-    find_python,
-    get_hash,
-    REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
 from ...util_common import (
-    intercept_command,
     run_command,
     ResultType,
 )
@@ -42,9 +43,10 @@ from ...ansible_util import (
     ansible_environment,
 )
 
-from ...executor import (
+from ...python_requirements import (
+    generate_pip_command,
     generate_pip_install,
-    install_cryptography,
+    install_controller_requirements,
 )
 
 from ...config import (
@@ -52,7 +54,7 @@ from ...config import (
 )
 
 from ...coverage_util import (
-    coverage_context,
+    cover_python,
 )
 
 from ...venv import (
@@ -61,6 +63,11 @@ from ...venv import (
 
 from ...data import (
     data_context,
+)
+
+from ...host_configs import (
+    VirtualPythonConfig,
+    PythonConfig,
 )
 
 
@@ -80,25 +87,22 @@ class ImportTest(SanityMultipleVersion):
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and
                 any(is_subdir(target.path, path) for path in data_context().content.plugin_paths.values())]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
-        settings = self.load_processor(args, python_version)
+    @property
+    def needs_pypi(self):  # type: () -> bool
+        """True if the test requires PyPI, otherwise False."""
+        return True
+
+    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+        settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
 
         capture_pip = args.verbosity < 2
 
-        python = find_python(python_version)
-
-        if python_version.startswith('2.') and args.requirements:
+        if python.version.startswith('2.') and args.requirements:
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
-            pip = generate_pip_command(python)
+            pip = generate_pip_command(python.path)
             run_command(args, generate_pip_install(pip, '', packages=['virtualenv']), capture=capture_pip)
 
         env = ansible_environment(args, color=False)
@@ -107,32 +111,27 @@ class ImportTest(SanityMultipleVersion):
 
         messages = []
 
-        for import_type, test, add_ansible_requirements in (
+        for import_type, test, controller in (
                 ('module', _get_module_test(True), False),
                 ('plugin', _get_module_test(False), True),
         ):
-            if import_type == 'plugin' and python_version in REMOTE_ONLY_PYTHON_VERSIONS:
+            if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
                 continue
 
             data = '\n'.join([path for path in paths if test(path)])
             if not data:
                 continue
 
-            requirements_file = None
-
             # create a clean virtual environment to minimize the available imports beyond the python standard library
-            virtual_environment_dirname = 'minimal-py%s' % python_version.replace('.', '')
-            if add_ansible_requirements:
-                requirements_file = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.import-plugins.txt')
-                virtual_environment_dirname += '-requirements-%s' % get_hash(requirements_file)
+            virtual_environment_dirname = f'minimal-{import_type}-python{python.version}'
             virtual_environment_path = os.path.join(temp_root, virtual_environment_dirname)
             virtual_environment_bin = os.path.join(virtual_environment_path, 'bin')
 
             remove_tree(virtual_environment_path)
 
-            if not create_virtual_environment(args, python_version, virtual_environment_path):
-                display.warning("Skipping sanity test '%s' on Python %s due to missing virtual environment support." % (self.name, python_version))
-                return SanitySkipped(self.name, python_version)
+            if not create_virtual_environment(args, python, virtual_environment_path):
+                display.warning("Skipping sanity test '%s' on Python %s due to missing virtual environment support." % (self.name, python.version))
+                return SanitySkipped(self.name, python.version)
 
             # add the importer to our virtual environment so it can be accessed through the coverage injector
             importer_path = os.path.join(virtual_environment_bin, 'importer.py')
@@ -155,13 +154,16 @@ class ImportTest(SanityMultipleVersion):
                     SANITY_EXTERNAL_PYTHON=python,
                 )
 
-            virtualenv_python = os.path.join(virtual_environment_bin, 'python')
-            virtualenv_pip = generate_pip_command(virtualenv_python)
+            virtualenv_python = VirtualPythonConfig(
+                version=python.version,
+                path=os.path.join(virtual_environment_bin, 'python'),
+            )
+
+            virtualenv_pip = generate_pip_command(virtualenv_python.path)
 
             # make sure requirements are installed if needed
-            if requirements_file:
-                install_cryptography(args, virtualenv_python, python_version, virtualenv_pip)
-                run_command(args, generate_pip_install(virtualenv_pip, 'sanity', context='import-plugins'), env=env, capture=capture_pip)
+            if controller:
+                install_controller_requirements(args, virtualenv_python)  # sanity (import)
 
             # make sure coverage is available in the virtual environment if needed
             if args.coverage:
@@ -187,9 +189,7 @@ class ImportTest(SanityMultipleVersion):
             cmd = ['importer.py']
 
             try:
-                with coverage_context(args):
-                    stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
-                                                       virtualenv=virtualenv_python)
+                stdout, stderr = cover_python(args, virtualenv_python, cmd, self.name, env, capture=True, data=data)
 
                 if stdout or stderr:
                     raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
@@ -213,6 +213,6 @@ class ImportTest(SanityMultipleVersion):
         results = settings.process_errors(messages, paths)
 
         if results:
-            return SanityFailure(self.name, messages=results, python_version=python_version)
+            return SanityFailure(self.name, messages=results, python_version=python.version)
 
-        return SanitySuccess(self.name, python_version=python_version)
+        return SanitySuccess(self.name, python_version=python.version)

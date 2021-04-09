@@ -1,14 +1,13 @@
 """High level functions for working with SSH."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
 import random
 import re
 import subprocess
-
-from . import types as t
+import shlex
+import typing as t
 
 from .encoding import (
     to_bytes,
@@ -17,9 +16,7 @@ from .encoding import (
 
 from .util import (
     ApplicationError,
-    cmd_quote,
     common_environment,
-    devnull,
     display,
     exclude_none_values,
     sanitize_host_name,
@@ -183,7 +180,7 @@ def run_ssh_command(
     cmd = create_ssh_command(ssh, options, cli_args, command)
     env = common_environment()
 
-    cmd_show = ' '.join([cmd_quote(c) for c in cmd])
+    cmd_show = ' '.join([shlex.quote(c) for c in cmd])
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
     cmd_bytes = [to_bytes(c) for c in cmd]
@@ -193,7 +190,7 @@ def run_ssh_command(
         process = SshProcess(None)
     else:
         process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1,  # pylint: disable=consider-using-with
-                                              stdin=devnull(), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+                                              stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     return process
 

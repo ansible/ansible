@@ -12,11 +12,8 @@ def main():
     requirements = {}
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path == 'test/lib/ansible_test/_data/requirements/sanity.import-plugins.txt':
-            # This file is an exact copy of requirements.txt that is used in the import
-            # sanity test.  There is a code-smell test which ensures that the two files
-            # are identical, and it is only used inside an empty venv, so we can ignore
-            # it here.
+        if path == 'test/lib/ansible_test/_data/requirements/controller.txt':
+            # This file is an exact copy of the ansible requirements.txt and should not conflict with other constraints.
             continue
         with open(path, 'r') as path_fd:
             requirements[path] = parse_requirements(path_fd.read().splitlines())

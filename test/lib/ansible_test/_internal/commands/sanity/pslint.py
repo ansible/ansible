@@ -1,12 +1,10 @@
 """Sanity test using PSScriptAnalyzer."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
 import re
-
-from ... import types as t
+import typing as t
 
 from . import (
     SanityVersionNeutral,
@@ -14,7 +12,12 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+    SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -51,12 +54,7 @@ class PslintTest(SanityVersionNeutral):
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] in ('.ps1', '.psm1', '.psd1')]
 
-    def test(self, args, targets):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]

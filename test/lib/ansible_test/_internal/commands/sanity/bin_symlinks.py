@@ -1,16 +1,19 @@
 """Sanity test for symlinks in the bin directory."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...config import (
@@ -46,13 +49,7 @@ class BinSymlinksTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    # noinspection PyUnusedLocal
-    def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
         bin_root = ANSIBLE_BIN_PATH
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)

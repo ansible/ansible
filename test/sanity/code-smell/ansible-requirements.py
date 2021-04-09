@@ -17,7 +17,7 @@ def read_file(path):
 
 def main():
     ORIGINAL_FILE = 'requirements.txt'
-    VENDORED_COPY = 'test/lib/ansible_test/_data/requirements/sanity.import-plugins.txt'
+    VENDORED_COPY = 'test/lib/ansible_test/_data/requirements/controller.txt'
 
     original_requirements = read_file(ORIGINAL_FILE)
     vendored_requirements = read_file(VENDORED_COPY)

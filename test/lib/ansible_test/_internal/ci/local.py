@@ -1,13 +1,11 @@
 """Support code for working without a supported CI provider."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import platform
 import random
 import re
-
-from .. import types as t
+import typing as t
 
 from ..config import (
     CommonConfig,
@@ -30,7 +28,6 @@ from ..util import (
 )
 
 from . import (
-    AuthContext,
     CIProvider,
 )
 
@@ -119,12 +116,12 @@ class Local(CIProvider):
 
         return sorted(names)
 
-    def supports_core_ci_auth(self, context):  # type: (AuthContext) -> bool
+    def supports_core_ci_auth(self):  # type: () -> bool
         """Return True if Ansible Core CI is supported."""
         path = self._get_aci_key_path()
         return os.path.exists(path)
 
-    def prepare_core_ci_auth(self, context):  # type: (AuthContext) -> t.Dict[str, t.Any]
+    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
         """Return authentication details for Ansible Core CI."""
         path = self._get_aci_key_path()
         auth_key = read_text_file(path).strip()
@@ -144,7 +141,8 @@ class Local(CIProvider):
         """Return details about git in the current environment."""
         return None  # not yet implemented for local
 
-    def _get_aci_key_path(self):  # type: () -> str
+    @staticmethod
+    def _get_aci_key_path():  # type: () -> str
         path = os.path.expanduser('~/.ansible-core-ci.key')
         return path
 
@@ -154,7 +152,7 @@ class InvalidBranch(ApplicationError):
     def __init__(self, branch, reason):  # type: (str, str) -> None
         message = 'Invalid branch: %s\n%s' % (branch, reason)
 
-        super(InvalidBranch, self).__init__(message)
+        super().__init__(message)
 
         self.branch = branch
 
