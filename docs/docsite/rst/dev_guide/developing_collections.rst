@@ -4,7 +4,7 @@
 Developing collections
 **********************
 
-Collections are a distribution format for Ansible content. You can package and distribute playbooks, roles, modules, and plugins using collections. A typical collection addresses a set of related use cases. For example, the <need example here ???????> collection automates <complete example here ?????>.
+Collections are a distribution format for Ansible content. You can package and distribute playbooks, roles, modules, and plugins using collections. A typical collection addresses a set of related use cases. For example, the ``cisco.ios`` collection automates management of Cisco IOS devices.
 
 You can create a collection and publish it to `Ansible Galaxy <https://galaxy.ansible.com>`_ or to a private Automation Hub instance. You can publish certified collections to the Red Hat Automation Hub, part of the Red Hat Ansible Automation Platform.
 
