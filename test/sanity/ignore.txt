@@ -142,7 +142,6 @@ lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-matc
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
-lib/ansible/playbook/__init__.py pylint:ansible-deprecated-version
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/conditional.py pylint:ansible-deprecated-version
