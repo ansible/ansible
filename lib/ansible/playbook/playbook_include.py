@@ -140,7 +140,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             new_ds.ansible_pos = ds.ansible_pos
 
         for (k, v) in iteritems(ds):
-            if k in C._ACTION_ALL_IMPORT_PLAYBOOKS:
+            if k in C._ACTION_IMPORT_PLAYBOOK:
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
