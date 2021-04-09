@@ -98,7 +98,7 @@ class ArgumentSpecValidator:
     :type required_one_of: list, optional
 
     :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
-        one of [parameters] is required if ``parameter`` == ``value``.
+        one of ``[parameters]`` is required if ``parameter == value``.
     :type required_if: list, optional
 
     :param required_by: Dictionary of parameter names that contain a list of
@@ -130,30 +130,31 @@ class ArgumentSpecValidator:
                 self._valid_parameter_names.update([key])
 
     def validate(self, parameters, *args, **kwargs):
-        """Validate module parameters against argument spec. Returns a
-        ValidationResult object.
+        """Validate parameters against argument spec. Returns a ``ValidationResult`` object.
 
-        Error messages in the ValidationResult may contain no_log values and should be
+        Error messages in the ``ValidationResult`` may contain no_log values and should be
         sanitized before logging or displaying.
-
-        :Example:
-
-        validator = ArgumentSpecValidator(argument_spec)
-        result = validator.validate(parameters)
-
-        if result.error_messages:
-            sys.exit("Validation failed: {0}".format(", ".join(result.error_messages))
-
-        valid_params = result.validated_parameters
 
         :param argument_spec: Specification of parameters, type, and valid values
         :type argument_spec: dict
 
-        :param parameters: Parameters provided to the role
+        :param parameters: Parameters provided
         :type parameters: dict
 
         :return: Object containing validated parameters.
         :rtype: ValidationResult
+
+        :Simple Example:
+
+            .. code-block::
+
+                validator = ArgumentSpecValidator(argument_spec)
+                result = validator.validate(parameters)
+
+                if result.error_messages:
+                    sys.exit("Validation failed: {0}".format(", ".join(result.error_messages))
+
+                valid_params = result.validated_parameters
         """
 
         result = ValidationResult(parameters)
