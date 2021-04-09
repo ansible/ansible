@@ -25,3 +25,10 @@ To use this functionality, include ``import ansible.module_utils.basic`` in your
 
 .. automodule:: ansible.module_utils.basic
    :members:
+
+
+ArgumentSpecValidator
+---------------------
+
+.. automodule:: ansible.module_utils.common.arg_spec
+    :members:
