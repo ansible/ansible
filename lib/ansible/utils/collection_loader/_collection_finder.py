@@ -86,7 +86,7 @@ class _AnsibleCollectionFinder:
         # expand any placeholders in configured paths
         for p in paths:
 
-            # ensure we alway shave ansible_collections
+            # ensure we always have ansible_collections
             if os.path.basename(p) == 'ansible_collections':
                 p = os.path.dirname(p)
 
