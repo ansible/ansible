@@ -1257,12 +1257,20 @@ class YumModule(YumDnf):
 
             pkg, version, repo = line[0], line[1], line[2]
             name, dist = pkg.rsplit('.', 1)
-            updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
+
+            if name not in updates:
+                updates[name] = []
+
+            updates[name].append({'version': version, 'dist': dist, 'repo': repo})
 
             if len(line) == 6:
                 obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
                 obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
-                obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
+
+                if obsolete_name not in obsoletes:
+                    obsoletes[obsolete_name] = []
+
+                obsoletes[obsolete_name].append({'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo})
 
         return updates, obsoletes
 
@@ -1403,22 +1411,64 @@ class YumModule(YumDnf):
         to_update = []
         for w in will_update:
             if w.startswith('@'):
+                # yum groups
                 to_update.append((w, None))
             elif w not in updates:
+                # There are (at least, probably more) 2 ways we can get here:
+                #
+                # * A virtual provides (our user specifies "webserver", but
+                #   "httpd" is the key in 'updates').
+                #
+                # * A wildcard. emac* will get us here if there's a package
+                #   called 'emacs' in the pending updates list. 'updates' will
+                #   of course key on 'emacs' in that case.
+
                 other_pkg = will_update_from_other_package[w]
+
+                # We are guaranteed that: other_pkg in updates
+                # ...based on the logic above. But we only want to show one
+                # update in this case (given the wording of "at least") below.
+                # As an example, consider a package installed twice:
+                # foobar.x86_64, foobar.i686
+                # We want to avoid having both:
+                #   ('foo*', 'because of (at least) foobar-1.x86_64 from repo')
+                #   ('foo*', 'because of (at least) foobar-1.i686 from repo')
+                # We just pick the first one.
+                #
+                # TODO: This is something that might be nice to change, but it
+                #       would be a module UI change. But without it, we're
+                #       dropping potentially important information about what
+                #       was updated. Instead of (given_spec, random_matching_package)
+                #       it'd be nice if we appended (given_spec, [all_matching_packages])
+                #
+                #       ... But then, we also drop information if multiple
+                #       different (distinct) packages match the given spec and
+                #       we should probably fix that too.
+                pkg = updates[other_pkg][0]
                 to_update.append(
                     (
                         w,
                         'because of (at least) %s-%s.%s from %s' % (
                             other_pkg,
-                            updates[other_pkg]['version'],
-                            updates[other_pkg]['dist'],
-                            updates[other_pkg]['repo']
+                            pkg['version'],
+                            pkg['dist'],
+                            pkg['repo']
                         )
                     )
                 )
             else:
-                to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
+                # Otherwise the spec is an exact match
+                for pkg in updates[w]:
+                    to_update.append(
+                        (
+                            w,
+                            '%s.%s from %s' % (
+                                pkg['version'],
+                                pkg['dist'],
+                                pkg['repo']
+                            )
+                        )
+                    )
 
         if self.update_only:
             res['changes'] = dict(installed=[], updated=to_update)
