@@ -68,7 +68,7 @@ class TestPlay(unittest.TestCase):
         play_data = []
         self.assertRaisesRegexp(
             AnsibleAssertionError,
-            r"while preprocessing data \(\[\]\), ds should be a dict but was a <class 'list'>",
+            r"while preprocessing data \(\[\]\), ds should be a dict but was a <(?:class|type) 'list'>",
             Play.load,
             play_data)
 
