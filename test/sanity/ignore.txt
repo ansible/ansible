@@ -234,7 +234,6 @@ test/support/integration/plugins/module_utils/network/common/utils.py future-imp
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
-test/support/integration/plugins/modules/docker_swarm.py pylint:ansible-deprecated-version
 test/support/integration/plugins/modules/lvg.py pylint:blacklisted-name
 test/support/integration/plugins/modules/timezone.py pylint:blacklisted-name
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py future-import-boilerplate
