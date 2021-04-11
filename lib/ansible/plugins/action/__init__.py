@@ -1035,7 +1035,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            cmd = remote_async_module_path
+            cmd = self._connection._shell.build_module_command(
+                environment_string,
+                shebang,
+                remote_async_module_path).strip()
         else:
             if self._is_pipelining_enabled(module_style):
                 in_data = module_data
@@ -1043,11 +1046,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 cmd = remote_module_path
 
-        cmd = self._connection._shell.build_module_command(
-            environment_string,
-            shebang,
-            cmd,
-            arg_path=args_file_path).strip()
+            cmd = self._connection._shell.build_module_command(
+                environment_string,
+                shebang,
+                cmd,
+                arg_path=args_file_path).strip()
 
         # Fix permissions of the tmpdir path and tmpdir files. This should be called after all
         # files have been transferred.
