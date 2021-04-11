@@ -53,7 +53,7 @@ class InventoryModule(BaseInventoryPlugin):
                         (hostnames, port) = self._expand_hostpattern(h)
                     except AnsibleError as e:
                         self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
-                        host = [h]
+                        hostnames = [h]
                         port = None
 
                     for host in hostnames:
