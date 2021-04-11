@@ -42,7 +42,7 @@ echo "EXPECTED ERROR: Ensure we fail properly if tasks is malformed."
 set +e
 result="$(ansible-playbook -i ../../inventory malformed_tasks.yml -v "$@" 2>&1)"
 set -e
-grep -q "ERROR! A malformed block was encountered while loading tasks: 123 should be a list or None but is <class 'int'>" <<< "$result"
+grep -q "ERROR! A malformed block was encountered while loading tasks: 123 should be a list or None" <<< "$result"
 
 # test that play errors if pre_tasks is malformed
 echo "EXPECTED ERROR: Ensure we fail properly if pre_tasks is malformed."
