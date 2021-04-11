@@ -225,16 +225,6 @@ class TestActionBase(unittest.TestCase):
         env_string = action_base._compute_environment_string()
         self.assertEqual(env_string, "FOO=bar")
 
-        # test environment with multiple items (order)
-        mock_task.environment = [dict(FOO='foo'), dict(BAR='baz'), dict(WHAT='hi'), None]
-        env_string = action_base._compute_environment_string()
-        self.assertEqual(env_string, "FOO=foo BAR=baz WHAT=hi")
-
-        # test environment with duplicate items
-        mock_task.environment = [dict(FOO='foo'), dict(BAR='baz'), dict(FOO='hi'), None]
-        env_string = action_base._compute_environment_string()
-        self.assertEqual(env_string, "FOO=hi BAR=baz")
-
         # test with a bad environment set
         mock_task.environment = dict(FOO='foo')
         mock_task.environment = ['hi there']
