@@ -32,15 +32,25 @@ _BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.5.0"}
 
 
 import sys
+import types
 
 try:
     import distro as _system_distro
 except ImportError:
     _system_distro = None
+else:
+    # There could be a 'distro' package/module that isn't what we expect, on the
+    # PYTHONPATH. Rather than erroring out in this case, just fall back to ours.
+    # We require more functions than distro.id(), but this is probably a decent
+    # test that we have something we can reasonably use.
+    if not hasattr(_system_distro, 'id') or \
+       not isinstance(_system_distro.id, types.FunctionType):
+        _system_distro = None
 
 if _system_distro:
     distro = _system_distro
 else:
     # Our bundled copy
     from ansible.module_utils.distro import _distro as distro
+
 sys.modules['ansible.module_utils.distro'] = distro

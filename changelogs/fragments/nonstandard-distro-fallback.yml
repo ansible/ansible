@@ -1,0 +1,2 @@
+minor_changes:
+  - module_utils distro - when a 'distro' package/module is in PYTHONPATH but isn't the real 'distro' package/module that we expect, gracefully fall back to our own bundled distro.
