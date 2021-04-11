@@ -10,7 +10,7 @@ export ANSIBLE_STDOUT_CALLBACK=oneline
 
 adhoc="$(ansible -i 'local[0:10],' -m ping --connection=local -e ansible_python_interpreter="{{ ansible_playbook_python }}" all -v)"
 
-for i in `seq 0 10`; do
+for i in $(seq 0 10); do
     grep -qE "local${i} \| SUCCESS.*\"ping\": \"pong\"" <<< "$adhoc"
 done
 
@@ -22,7 +22,7 @@ grep -q "Failed to parse local\[1:j\], with advanced_host_list" <<< "$parse_fail
 
 # Intentionally missing comma, ensure we don't fatal.
 no_comma="$(ansible -i 'local[1:5]' -m ping --connection=local all -v 2>&1)"
-grep -q "No inventory was parsed" <<< "$parse_fail"
+grep -q "No inventory was parsed" <<< "$no_comma"
 
 # Intentionally botched range (missing end number), ensure we don't fatal.
 no_end="$(ansible -i 'local[1:],' -m ping --connection=local -e ansible_python_interpreter="{{ ansible_playbook_python }}" all -vvv 2>&1)"
