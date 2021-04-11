@@ -8,6 +8,51 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+DOCUMENTATION = r'''
+---
+module: async_wrapper
+short_description: Internal use only. Do not call directly. Execute modules asynchronously.
+description:
+  - Internal use only. Do not call directly.
+  - Executes modules asynchronously.
+version_added: historical
+options:
+  jid:
+    description:
+    - The job id, randomly assigned by the controller in ActionBase.
+    type: int
+    required: true
+  time_limit:
+    description:
+    - The number of seconds after which the job should time out.
+    type: int
+    required: true
+  module_script:
+    description:
+    - The path to the module we are running asynchronously.
+    type: path
+    required: true
+  module_args_file:
+    description:
+    - The path to the file containing the args to pass to the module.
+    type: path
+    required: false
+  preserve_tmp:
+    description:
+    - Whether or not to preserve the temporary directory upon completion.
+    type: bool
+    default: false
+  async_dir:
+    description:
+    - The directory in which to store job information/status.
+    type: path
+    required: true
+notes:
+  - This module is meant for internal use and not to be called directly.
+author:
+  - Ansible Core Team
+'''
+
 import errno
 import json
 import shlex
@@ -21,6 +66,8 @@ import time
 import syslog
 import multiprocessing
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils._text import to_text, to_bytes
 
 PY3 = sys.version_info[0] == 3
@@ -66,49 +113,6 @@ def daemonize_self():
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
 
-
-# NB: this function copied from module_utils/json_utils.py. Ensure any changes are propagated there.
-# FUTURE: AnsibleModule-ify this module so it's Ansiballz-compatible and can use the module_utils copy of this function.
-def _filter_non_json_lines(data):
-    '''
-    Used to filter unrelated output around module JSON output, like messages from
-    tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
-
-    Filters leading lines before first line-starting occurrence of '{', and filter all
-    trailing lines after matching close character (working from the bottom of output).
-    '''
-    warnings = []
-
-    # Filter initial junk
-    lines = data.splitlines()
-
-    for start, line in enumerate(lines):
-        line = line.strip()
-        if line.startswith(u'{'):
-            break
-    else:
-        raise ValueError('No start of json char found')
-
-    # Filter trailing junk
-    lines = lines[start:]
-
-    for reverse_end_offset, line in enumerate(reversed(lines)):
-        if line.strip().endswith(u'}'):
-            break
-    else:
-        raise ValueError('No end of json char found')
-
-    if reverse_end_offset > 0:
-        # Trailing junk is uncommon and can point to things the user might
-        # want to change.  So print a warning if we find any
-        trailing_junk = lines[len(lines) - reverse_end_offset:]
-        warnings.append('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
-
-    lines = lines[:(len(lines) - reverse_end_offset)]
-
-    return ('\n'.join(lines), warnings)
-
-
 def _get_interpreter(module_path):
     with open(module_path, 'rb') as module_fd:
         head = module_fd.read(1024)
@@ -127,7 +131,6 @@ def _make_temp_dir(path):
 
 
 def _run_module(wrapped_cmd, jid, job_path):
-
     tmp_job_path = job_path + ".tmp"
     jobfile = open(tmp_job_path, "w")
     jobfile.write(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid}))
@@ -203,46 +206,44 @@ def _run_module(wrapped_cmd, jid, job_path):
 
 
 def main():
-    if len(sys.argv) < 5:
-        print(json.dumps({
-            "failed": True,
-            "msg": "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile> [-preserve_tmp]  "
-                   "Humans, do not call directly!"
-        }))
-        sys.exit(1)
+    module = AnsibleModule(
+        argument_spec=dict(
+            jid=dict(type='int', required=True),
+            time_limit=dict(type='int', required=True),
+            module_script=dict(type='path', required=True),
+            module_args_file=dict(type='path', required=False),
+            preserve_tmp=dict(type='bool', default=False),
+            async_dir=dict(type='path', required=True),
+        ),
+        supports_check_mode=False, # ??? The module does, the wrapper doesn't.
+    )
 
-    jid = "%s.%d" % (sys.argv[1], os.getpid())
-    time_limit = sys.argv[2]
-    wrapped_module = sys.argv[3]
-    argsfile = sys.argv[4]
+    jid = "{0}.{1}".format(module.params['jid'], os.getpid())
+    time_limit = module.params['time_limit']
+    wrapped_module = module.params['module_script']
+    argsfile = module.params['module_args_file']
     if '-tmp-' not in os.path.dirname(wrapped_module):
         preserve_tmp = True
-    elif len(sys.argv) > 5:
-        preserve_tmp = sys.argv[5] == '-preserve_tmp'
     else:
-        preserve_tmp = False
-    # consider underscore as no argsfile so we can support passing of additional positional parameters
-    if argsfile != '_':
-        cmd = "%s %s" % (wrapped_module, argsfile)
+        preserve_tmp = module.params['preserve_tmp']
+
+    if argsfile:
+        cmd = "{0} {1}".format(wrapped_module, argsfile)
     else:
         cmd = wrapped_module
     step = 5
 
-    async_dir = os.environ.get('ANSIBLE_ASYNC_DIR', '~/.ansible_async')
-
     # setup job output directory
+    async_dir = module.params['async_dir']
     jobdir = os.path.expanduser(async_dir)
     job_path = os.path.join(jobdir, jid)
 
     try:
         _make_temp_dir(jobdir)
     except Exception as e:
-        print(json.dumps({
-            "failed": 1,
-            "msg": "could not create: %s - %s" % (jobdir, to_text(e)),
-            "exception": to_text(traceback.format_exc()),
-        }))
-        sys.exit(1)
+        module.fail_json(
+            msg="could not create: {0} - {1}".format(jobdir, e),
+            exception=traceback.format_exc())
 
     # immediately exit this process, leaving an orphaned process
     # running which immediately forks a supervisory timing process
@@ -272,10 +273,12 @@ def main():
                     continue
 
             notice("Return async_wrapper task started.")
-            print(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
-                              "_ansible_suppress_tmpdir_delete": not preserve_tmp}))
-            sys.stdout.flush()
-            sys.exit(0)
+            module.exit_json(
+                started=1,
+                finished=0,
+                ansible_job_id=jid,
+                results_file=job_path,
+                _ansible_suppress_tmpdir_delete=not preserve_tmp)
         else:
             # The actual wrapper process
 
@@ -295,7 +298,7 @@ def main():
                 ipc_notifier.close()
 
                 # the parent stops the process after the time limit
-                remaining = int(time_limit)
+                remaining = time_limit
 
                 # set the child process group id to kill all children
                 os.setpgid(sub_pid, sub_pid)
@@ -325,20 +328,10 @@ def main():
                 notice("Module complete (%s)" % os.getpid())
                 sys.exit(0)
 
-    except SystemExit:
-        # On python2.4, SystemExit is a subclass of Exception.
-        # This block makes python2.4 behave the same as python2.5+
-        raise
-
     except Exception:
         e = sys.exc_info()[1]
         notice("error: %s" % e)
-        print(json.dumps({
-            "failed": True,
-            "msg": "FATAL ERROR: %s" % e
-        }))
-        sys.exit(1)
-
+        module.fail_json(msg="FATAL ERROR: {0}".format(to_text(e)))
 
 if __name__ == '__main__':
     main()

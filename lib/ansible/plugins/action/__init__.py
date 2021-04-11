@@ -957,26 +957,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._update_module_args(module_name, module_args, task_vars)
 
-        # FIXME: convert async_wrapper.py to not rely on environment variables
-        # make sure we get the right async_dir variable, backwards compatibility
-        # means we need to lookup the env value ANSIBLE_ASYNC_DIR first
-        remove_async_dir = None
-        if wrap_async or self._task.async_val:
-            env_async_dir = [e for e in self._task.environment if
-                             "ANSIBLE_ASYNC_DIR" in e]
-            if len(env_async_dir) > 0:
-                msg = "Setting the async dir from the environment keyword " \
-                      "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
-                      "shell option instead"
-                self._display.deprecated(msg, "2.12", collection_name='ansible.builtin')
-            else:
-                # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
-                # from the shell option and temporarily add to the environment
-                # list for async_wrapper to pick up
-                async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
-                remove_async_dir = len(self._task.environment)
-                self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
-
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
@@ -1019,12 +999,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
-        # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
-        # the async_wrapper task - this is so the async_status plugin doesn't
-        # fire a deprecation warning when it runs after this task
-        if remove_async_dir is not None:
-            del self._task.environment[remove_async_dir]
-
         remote_files = []
         if tmpdir and remote_module_path:
             remote_files = [tmpdir, remote_module_path]
@@ -1037,46 +1011,43 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         cmd = ""
 
         if wrap_async and not self._connection.always_pipeline_modules:
+            async_wrapper_args = {
+                'jid': random.randint(0, 999999999999),  # Can't the module itself gen this?
+                'time_limit': self._task.async_val,
+                'module_script': remote_module_path,
+                'async_dir': self.get_shell_option('async_dir', default="~/.ansible_async"),
+            }
+
+            if args_file_path:
+                async_wrapper_args['module_args_file'] = args_file_path
+
+            if not self._should_remove_tmp_path(tmpdir):
+                async_wrapper_args['preserve_tmp'] = True
+
             # configure, upload, and chmod the async_wrapper module
-            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(
-                module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
+            (async_module_style, shebang, async_module_data, async_module_path) = \
+                self._configure_module(
+                    module_name='ansible.legacy.async_wrapper',
+                    module_args=async_wrapper_args,
+                    task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async_val
-            async_jid = str(random.randint(0, 999999999999))
-
-            # call the interpreter for async_wrapper directly
-            # this permits use of a script for an interpreter on non-Linux platforms
-            # TODO: re-implement async_wrapper as a regular module to avoid this special case
-            interpreter = shebang.replace('#!', '').strip()
-            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
-
-            if environment_string:
-                async_cmd.insert(0, environment_string)
-
-            if args_file_path:
-                async_cmd.append(args_file_path)
-            else:
-                # maintain a fixed number of positional parameters for async_wrapper
-                async_cmd.append('_')
-
-            if not self._should_remove_tmp_path(tmpdir):
-                async_cmd.append("-preserve_tmp")
-
-            cmd = " ".join(to_text(x) for x in async_cmd)
-
+            cmd = remote_async_module_path
         else:
-
             if self._is_pipelining_enabled(module_style):
                 in_data = module_data
                 display.vvv("Pipelining is enabled.")
             else:
                 cmd = remote_module_path
 
-            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
+        cmd = self._connection._shell.build_module_command(
+            environment_string,
+            shebang,
+            cmd,
+            arg_path=args_file_path).strip()
 
         # Fix permissions of the tmpdir path and tmpdir files. This should be called after all
         # files have been transferred.

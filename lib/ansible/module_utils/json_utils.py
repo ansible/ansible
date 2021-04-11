@@ -29,9 +29,6 @@ __metaclass__ = type
 
 import json
 
-
-# NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any
-# changes are propagated there.
 def _filter_non_json_lines(data, objects_only=False):
     '''
     Used to filter unrelated output around module JSON output, like messages from

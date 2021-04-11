@@ -19,8 +19,18 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
+* When calling tasks and setting ``async``, setting ``ANSIBLE_ASYNC_DIR`` under ``environment:`` is no longer valid. Instead, use the shell configuration variable ``async_dir``, for example by setting ``ansible_async_dir``:
 
+.. code-block:: yaml
+
+   tasks:
+     - dnf:
+         name: '*'
+         state: latest
+       async: 300
+       poll: 5
+       vars:
+         ansible_async_dir: /path/to/my/custom/dir
 
 Command Line
 ============
