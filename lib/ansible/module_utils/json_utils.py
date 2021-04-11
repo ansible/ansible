@@ -29,6 +29,7 @@ __metaclass__ = type
 
 import json
 
+
 def _filter_non_json_lines(data, objects_only=False):
     '''
     Used to filter unrelated output around module JSON output, like messages from

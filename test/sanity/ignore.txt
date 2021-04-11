@@ -91,7 +91,6 @@ lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documente
 lib/ansible/modules/async_status.py use-argspec-type-path
 lib/ansible/modules/async_status.py validate-modules!skip
 lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
-lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
 lib/ansible/modules/async_wrapper.py use-argspec-type-path
 lib/ansible/modules/blockinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/blockinfile.py validate-modules:doc-default-does-not-match-spec
@@ -148,8 +147,6 @@ lib/ansible/playbook/conditional.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/play_context.py pylint:ansible-deprecated-version
-lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
-lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility

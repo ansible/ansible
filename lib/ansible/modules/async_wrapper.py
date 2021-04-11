@@ -113,6 +113,7 @@ def daemonize_self():
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
 
+
 def _get_interpreter(module_path):
     with open(module_path, 'rb') as module_fd:
         head = module_fd.read(1024)
@@ -215,7 +216,7 @@ def main():
             preserve_tmp=dict(type='bool', default=False),
             async_dir=dict(type='path', required=True),
         ),
-        supports_check_mode=False, # ??? The module does, the wrapper doesn't.
+        supports_check_mode=False,  # ??? The module does (maybe), the wrapper doesn't.
     )
 
     jid = "{0}.{1}".format(module.params['jid'], os.getpid())
@@ -332,6 +333,7 @@ def main():
         e = sys.exc_info()[1]
         notice("error: %s" % e)
         module.fail_json(msg="FATAL ERROR: {0}".format(to_text(e)))
+
 
 if __name__ == '__main__':
     main()
