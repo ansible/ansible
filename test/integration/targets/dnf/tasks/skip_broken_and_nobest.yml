@@ -109,8 +109,8 @@
         that:
           - skip_broken_res.rc == 0
           - skip_broken_res.results|length == 2
-          - "'Installed: broken-a-1.2.4' in skip_broken_res.results[0]"
-          - "'Installed: broken-d-1.2.5' in skip_broken_res.results[1]"
+          - res.results|select("contains", "Installed: broken-a-1.2.4")|length > 0
+          - res.results|select("contains", "Installed: broken-d-1.2.5")|length > 0
 
     - name: Remove all test packages
       dnf:
@@ -148,7 +148,7 @@
     - assert:
         that:
           - res is changed
-          - '"Installed: broken-a-1.2.3" in res.results[0]'
+          - res.results|select("contains", "Installed: broken-a-1.2.3")|length > 0
 
     # Still case 2, but with broken package to test skip_broken
     # skip_broken: false
@@ -199,7 +199,7 @@
     - assert:
         that:
           - res is changed
-          - '"Installed: broken-a-1.2.3" in res.results[0]'
+          - res.results|select("contains", "Installed: broken-a-1.2.3")|length > 0
 
     # Case 3 still, with broken package and skip_broken tests like above.
     - name: Install an older known broken version of broken-a, allow_downgrade=true, skip_broken=false
