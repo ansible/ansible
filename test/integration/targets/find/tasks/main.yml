@@ -378,7 +378,7 @@
       {% endfor %}
       ]
 
-- name: assert we only find the hello world file and a checksum is present
+- name: assert we do not find the hello world file and a checksum is present
   assert:
     that:
       - result.matched == 2
