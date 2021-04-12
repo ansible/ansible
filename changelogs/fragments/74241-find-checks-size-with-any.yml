@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix a bug in the find module where 'size' argument was ignored with 'file_type: any'.
