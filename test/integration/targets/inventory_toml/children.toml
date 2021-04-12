@@ -1,0 +1,8 @@
+[proxies.hosts]
+local001 = {}
+
+[proxies.vars]
+ansible_connection = "local"
+
+[web]
+children = ["proxies"]
