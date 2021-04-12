@@ -14,11 +14,11 @@ export PYTHONPATH="$new_pythonpath:$PYTHONPATH"
 set +e
 distro_id_fail="$(python -c 'import distro; distro.id' 2>&1)"
 set -e
-grep -q "AttributeError: module 'distro' has no attribute 'id'" <<< "$distro_id_fail"
+grep -q "AttributeError:.*has no attribute 'id'" <<< "$distro_id_fail"
 
 # ansible.module_utils.common.sys_info imports distro, and itself gets imported
 # in DataLoader, so all we have to do to test the fallback is run `ansible`.
-ansirun="$(ansible -i ../../inventory -a 'echo $PYTHONPATH' localhost)"
+ansirun="$(ansible -i ../../inventory -a "echo \$PYTHONPATH" localhost)"
 grep -q "$new_pythonpath" <<< "$ansirun"
 
 rm -rf "$new_pythonpath"
