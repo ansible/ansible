@@ -1822,6 +1822,11 @@ releases:
     - win_iis_webapppool-check-mode.yaml
     - windows-coverage-encoding.yaml
     release_date: '2019-12-04'
+  2.9.20:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.20_summary.yaml
+    release_date: '2021-04-12'
   2.9.20rc1:
     codename: Immigrant Song
     fragments:
