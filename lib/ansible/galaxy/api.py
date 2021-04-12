@@ -11,6 +11,7 @@ import functools
 import hashlib
 import json
 import os
+import random
 import stat
 import tarfile
 import time
@@ -44,6 +45,27 @@ def cache_lock(func):
             return func(*args, **kwargs)
 
     return wrapped
+
+
+def rate_limit_backoff(function):
+    def run_function(*args, **kwargs):
+        # TODO: support user configuration
+        retries = 6
+        delay = 2
+        max_delay = 40
+
+        for retry in range(0, retries):
+            delay = random.randint(0, min(max_delay, delay * 2 ** retry))
+
+            try:
+                return function(*args, **kwargs)
+            except GalaxyError as e:
+                # Galaxy can't always return a helpful error code because cloud.redhat.com masks it
+                if e.http_code not in (520, 429):
+                    raise e
+                time.sleep(delay)
+
+    return run_function
 
 
 def g_connect(versions):
@@ -309,6 +331,7 @@ class GalaxyAPI:
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
 
+    @rate_limit_backoff
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
         url_info = urlparse(url)
