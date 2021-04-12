@@ -126,5 +126,5 @@ class LookupBase(AnsiblePlugin):
 
     def _deprecate_inline_kv(self):
         # TODO: place holder to deprecate in future version allowing for long transition period
-        #self._display.deprecated('Passing inline k=v values embeded in a string to this lookup. Use direct ,k=v, k2=v2 syntax instead.', version='2.18')
+        # self._display.deprecated('Passing inline k=v values embeded in a string to this lookup. Use direct ,k=v, k2=v2 syntax instead.', version='2.18')
         pass
