@@ -200,51 +200,58 @@ class ConfigCLI(CLI):
 
         return text
 
+    def _get_global_configs(self):
+        defaults = self.config.get_configuration_definitions(ignore_private=True).copy()
+        for setting in self.config.data.get_settings():
+            if setting.name in defaults:
+                defaults[setting.name] = setting
+
+        return self._render_settings(defaults)
+
+    def _get_plugin_configs(self):
+        text = []
+        config_entries = {}
+        loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
+        for plugin in loader.all(class_only=True):
+            finalname = name = plugin._load_name
+            if name.startswith('_'):
+                # alias or deprecated
+                if os.path.islink(plugin._original_path):
+                    continue
+                else:
+                    finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+            # default entries per plugin
+            config_entries[finalname] = self.config.get_configuration_definitions(context.CLIARGS['type'], name)
+
+            try:
+                # populate config entries by loading plugin
+                dump = loader.get(name)
+            except Exception as e:
+                # TODO: figure how to mock other rquirements (play_contxt for connections?)
+                display.display('cannot load plugin to check config due to : %s' % str(e))
+                continue
+
+            for setting in config_entries[finalname].keys():
+                v, o = C.config.get_config_value_and_origin(setting, plugin_type=context.CLIARGS['type'], plugin_name=name)
+                config_entries[finalname][setting]['value'] = v
+                config_entries[finalname][setting]['origin'] = o
+
+            results = self._render_settings(config_entries[finalname])
+            if results:
+                # avoid header for empty lists (only changed!)
+                text.append('\n%s:\n%s' % (finalname.upper(), '_' * len(finalname)))
+                text.extend(results)
+        return text
+
     def execute_dump(self):
         '''
         Shows the current settings, merges ansible.cfg if specified
         '''
-        text = []
         if context.CLIARGS['type'] is not None:
             # deal with plugins
-            config_entries = {}
-            loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
-            for plugin in loader.all(class_only=True):
-                finalname = name = plugin._load_name
-                if name.startswith('_'):
-                    # alias or deprecated
-                    if os.path.islink(plugin._original_path):
-                        continue
-                    else:
-                        finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
-                # default entries per plugin
-                config_entries[finalname] = self.config.get_configuration_definitions(context.CLIARGS['type'], name)
-
-                # get 'current' entries
-                try:
-                    p = loader.get(name)
-                except Exception as e:
-                    # TODO: figure how to mock other rquirements (play_contxt for connections?)
-                    display.display('cannot load plugin to check config due to : %s' % str(e))
-                    continue
-
-                for setting in config_entries[finalname].keys():
-                    v,o = C.config.get_config_value_and_origin(setting, plugin_type=context.CLIARGS['type'], plugin_name=name)
-                    config_entries[finalname][setting]['value'] = v
-                    config_entries[finalname][setting]['origin'] = o
-
-                results = self._render_settings(config_entries[finalname])
-                if results:
-                    # avoid header for empty lists (only changed!)
-                    text.append('\n%s:\n%s' % (finalname.upper(), '_' * len(finalname)))
-                    text.extend(results)
+            text = self._get_plugin_configs()
         else:
             # deal with base
-            defaults = self.config.get_configuration_definitions(ignore_private=True).copy()
-            for setting in self.config.data.get_settings():
-                if setting.name in defaults:
-                    defaults[setting.name] = setting
-
-            text = self._render_settings(defaults)
+            text = self._get_global_configs()
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
