@@ -216,7 +216,7 @@ def test_keyed_group_exclusive_argument(inventory_module):
             'key': 'tag',
             'separator': '_',
             'default_value': 'default_value_name',
-            'skip_if_empty': True
+            'trailing_separator': True
         }
     ]
     with pytest.raises(AnsibleParserError) as err_message:
@@ -263,7 +263,7 @@ def test_keyed_group_empy_value_with_default_value(inventory_module):
         assert group_name in inventory_module.inventory.groups
 
 
-def test_keyed_group_with_skip_if_empty_value(inventory_module):
+def test_keyed_group_with_trailing_separator(inventory_module):
     inventory_module.inventory.add_host('server0')
     inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'context': None})
     host = inventory_module.inventory.get_host('server0')
@@ -272,7 +272,7 @@ def test_keyed_group_with_skip_if_empty_value(inventory_module):
             'prefix': 'tag',
             'separator': '_',
             'key': 'tags',
-            'skip_if_empty': True
+            'trailing_separator': True
         }
     ]
     inventory_module._add_host_to_keyed_groups(
