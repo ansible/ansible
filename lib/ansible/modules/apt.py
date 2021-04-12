@@ -158,6 +158,13 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  lock_timeout:
+    description:
+      - How many seconds will this action wait to aquire a lock on the apt db.
+      - Sometimes there is a transitory lock and this will retry at least until timeout is hit.
+    type: int
+    default: 60
+    version_added: "2.12"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -312,12 +319,11 @@ import datetime
 import fnmatch
 import itertools
 import os
-import shutil
+import random
 import re
+import shutil
 import sys
 import tempfile
-import time
-import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -1079,6 +1085,7 @@ def main():
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
+            lock_timeout=dict(type='int', default=60),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -1166,144 +1173,155 @@ def main():
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
 
-    # Get the cache object
-    cache = get_cache(module)
+    # max times we'll retry
+    deadline = time.time() + p['lock_timeout']
 
-    try:
-        if p['default_release']:
-            try:
-                apt_pkg.config['APT::Default-Release'] = p['default_release']
-            except AttributeError:
-                apt_pkg.Config['APT::Default-Release'] = p['default_release']
-            # reopen cache w/ modified config
-            cache.open(progress=None)
+    # keep running on lock issues unless timeout or resolution is hit.
+    while True:
 
-        mtimestamp, updated_cache_time = get_updated_cache_time()
-        # Cache valid time is default 0, which will update the cache if
-        #  needed and `update_cache` was set to true
-        updated_cache = False
-        if p['update_cache'] or p['cache_valid_time']:
-            now = datetime.datetime.now()
-            tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
-            if not mtimestamp + tdelta >= now:
-                # Retry to update the cache with exponential backoff
-                err = ''
-                update_cache_retries = module.params.get('update_cache_retries')
-                update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
-                randomize = random.randint(0, 1000) / 1000.0
+        # Get the cache object, this has 3 retries built in
+        cache = get_cache(module)
 
-                for retry in range(update_cache_retries):
-                    try:
-                        cache.update()
-                        break
-                    except apt.cache.FetchFailedException as e:
-                        err = to_native(e)
-
-                    # Use exponential backoff plus a little bit of randomness
-                    delay = 2 ** retry + randomize
-                    if delay > update_cache_retry_max_delay:
-                        delay = update_cache_retry_max_delay + randomize
-                    time.sleep(delay)
-                else:
-                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
-
+        try:
+            if p['default_release']:
+                try:
+                    apt_pkg.config['APT::Default-Release'] = p['default_release']
+                except AttributeError:
+                    apt_pkg.Config['APT::Default-Release'] = p['default_release']
+                # reopen cache w/ modified config
                 cache.open(progress=None)
-                mtimestamp, post_cache_update_time = get_updated_cache_time()
-                if updated_cache_time != post_cache_update_time:
-                    updated_cache = True
-                updated_cache_time = post_cache_update_time
 
-            # If there is nothing else to do exit. This will set state as
-            #  changed based on if the cache was updated.
-            if not p['package'] and not p['upgrade'] and not p['deb']:
-                module.exit_json(
-                    changed=updated_cache,
-                    cache_updated=updated_cache,
-                    cache_update_time=updated_cache_time
+            mtimestamp, updated_cache_time = get_updated_cache_time()
+            # Cache valid time is default 0, which will update the cache if
+            #  needed and `update_cache` was set to true
+            updated_cache = False
+            if p['update_cache'] or p['cache_valid_time']:
+                now = datetime.datetime.now()
+                tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
+                if not mtimestamp + tdelta >= now:
+                    # Retry to update the cache with exponential backoff
+                    err = ''
+                    update_cache_retries = module.params.get('update_cache_retries')
+                    update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
+                    randomize = random.randint(0, 1000) / 1000.0
+
+                    for retry in range(update_cache_retries):
+                        try:
+                            cache.update()
+                            break
+                        except apt.cache.FetchFailedException as e:
+                            err = to_native(e)
+
+                        # Use exponential backoff plus a little bit of randomness
+                        delay = 2 ** retry + randomize
+                        if delay > update_cache_retry_max_delay:
+                            delay = update_cache_retry_max_delay + randomize
+                        time.sleep(delay)
+                    else:
+                        module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+
+                    cache.open(progress=None)
+                    mtimestamp, post_cache_update_time = get_updated_cache_time()
+                    if updated_cache_time != post_cache_update_time:
+                        updated_cache = True
+                    updated_cache_time = post_cache_update_time
+
+                # If there is nothing else to do exit. This will set state as
+                #  changed based on if the cache was updated.
+                if not p['package'] and not p['upgrade'] and not p['deb']:
+                    module.exit_json(
+                        changed=updated_cache,
+                        cache_updated=updated_cache,
+                        cache_update_time=updated_cache_time
+                    )
+
+            force_yes = p['force']
+
+            if p['upgrade']:
+                upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+
+            if p['deb']:
+                if p['state'] != 'present':
+                    module.fail_json(msg="deb only supports state=present")
+                if '://' in p['deb']:
+                    p['deb'] = fetch_file(module, p['deb'])
+                install_deb(module, p['deb'], cache,
+                            install_recommends=install_recommends,
+                            allow_unauthenticated=allow_unauthenticated,
+                            force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
+
+            unfiltered_packages = p['package'] or ()
+            packages = [package.strip() for package in unfiltered_packages if package != '*']
+            all_installed = '*' in unfiltered_packages
+            latest = p['state'] == 'latest'
+
+            if latest and all_installed:
+                if packages:
+                    module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
+                upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+
+            if packages:
+                for package in packages:
+                    if package.count('=') > 1:
+                        module.fail_json(msg="invalid package spec: %s" % package)
+                    if latest and '=' in package:
+                        module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+
+            if not packages:
+                if autoclean:
+                    cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
+                if autoremove:
+                    cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
+
+            if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
+                state_upgrade = False
+                state_builddep = False
+                state_fixed = False
+                if p['state'] == 'latest':
+                    state_upgrade = True
+                if p['state'] == 'build-dep':
+                    state_builddep = True
+                if p['state'] == 'fixed':
+                    state_fixed = True
+
+                success, retvals = install(
+                    module,
+                    packages,
+                    cache,
+                    upgrade=state_upgrade,
+                    default_release=p['default_release'],
+                    install_recommends=install_recommends,
+                    force=force_yes,
+                    dpkg_options=dpkg_options,
+                    build_dep=state_builddep,
+                    fixed=state_fixed,
+                    autoremove=autoremove,
+                    fail_on_autoremove=fail_on_autoremove,
+                    only_upgrade=p['only_upgrade'],
+                    allow_unauthenticated=allow_unauthenticated
                 )
 
-        force_yes = p['force']
+                # Store if the cache has been updated
+                retvals['cache_updated'] = updated_cache
+                # Store when the update time was last
+                retvals['cache_update_time'] = updated_cache_time
 
-        if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+                if success:
+                    module.exit_json(**retvals)
+                else:
+                    module.fail_json(**retvals)
+            elif p['state'] == 'absent':
+                remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
 
-        if p['deb']:
-            if p['state'] != 'present':
-                module.fail_json(msg="deb only supports state=present")
-            if '://' in p['deb']:
-                p['deb'] = fetch_file(module, p['deb'])
-            install_deb(module, p['deb'], cache,
-                        install_recommends=install_recommends,
-                        allow_unauthenticated=allow_unauthenticated,
-                        force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
+        except apt.cache.LockFailedException as lockFailedException:
+            if time.time() < deadline:
+                continue
+            module.fail_json(msg="Failed to lock apt for exclusive operation: %s" % lockFailedException)
+        except apt.cache.FetchFailedException as fetchFailedException:
+            module.fail_json(msg="Could not fetch updated apt files: %s" % fetchFailedException)
 
-        unfiltered_packages = p['package'] or ()
-        packages = [package.strip() for package in unfiltered_packages if package != '*']
-        all_installed = '*' in unfiltered_packages
-        latest = p['state'] == 'latest'
-
-        if latest and all_installed:
-            if packages:
-                module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
-
-        if packages:
-            for package in packages:
-                if package.count('=') > 1:
-                    module.fail_json(msg="invalid package spec: %s" % package)
-                if latest and '=' in package:
-                    module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
-
-        if not packages:
-            if autoclean:
-                cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
-            if autoremove:
-                cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
-
-        if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
-            state_upgrade = False
-            state_builddep = False
-            state_fixed = False
-            if p['state'] == 'latest':
-                state_upgrade = True
-            if p['state'] == 'build-dep':
-                state_builddep = True
-            if p['state'] == 'fixed':
-                state_fixed = True
-
-            success, retvals = install(
-                module,
-                packages,
-                cache,
-                upgrade=state_upgrade,
-                default_release=p['default_release'],
-                install_recommends=install_recommends,
-                force=force_yes,
-                dpkg_options=dpkg_options,
-                build_dep=state_builddep,
-                fixed=state_fixed,
-                autoremove=autoremove,
-                fail_on_autoremove=fail_on_autoremove,
-                only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
-            )
-
-            # Store if the cache has been updated
-            retvals['cache_updated'] = updated_cache
-            # Store when the update time was last
-            retvals['cache_update_time'] = updated_cache_time
-
-            if success:
-                module.exit_json(**retvals)
-            else:
-                module.fail_json(**retvals)
-        elif p['state'] == 'absent':
-            remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
-
-    except apt.cache.LockFailedException as lockFailedException:
-        module.fail_json(msg="Failed to lock apt for exclusive operation: %s" % lockFailedException)
-    except apt.cache.FetchFailedException as fetchFailedException:
-        module.fail_json(msg="Could not fetch updated apt files: %s" % fetchFailedException)
+        # got here w/o exception and/or exit???
+        module.exit_json({'failed': True, 'msg': 'Unexpected code path taken,we really should have exited before, this is a bug'})
 
 
 if __name__ == "__main__":
