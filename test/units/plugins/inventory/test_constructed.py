@@ -226,7 +226,7 @@ def test_keyed_group_exclusive_argument(inventory_module):
         assert 'parameters are mutually exclusive' in err_message
 
 
-def test_keyed_group_empy_value(inventory_module):
+def test_keyed_group_empty_value(inventory_module):
     inventory_module.inventory.add_host('server0')
     inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
     host = inventory_module.inventory.get_host('server0')
@@ -244,7 +244,7 @@ def test_keyed_group_empy_value(inventory_module):
         assert group_name in inventory_module.inventory.groups
 
 
-def test_keyed_group_empy_value_with_default_value(inventory_module):
+def test_keyed_group_with_default_value(inventory_module):
     inventory_module.inventory.add_host('server0')
     inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
     host = inventory_module.inventory.get_host('server0')
@@ -265,7 +265,7 @@ def test_keyed_group_empy_value_with_default_value(inventory_module):
 
 def test_keyed_group_with_trailing_separator(inventory_module):
     inventory_module.inventory.add_host('server0')
-    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'context': None})
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
     host = inventory_module.inventory.get_host('server0')
     keyed_groups = [
         {
@@ -278,5 +278,5 @@ def test_keyed_group_with_trailing_separator(inventory_module):
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
     )
-    for group_name in ('tag_environment_prod', 'tag_status', 'tag_context'):
+    for group_name in ('tag_environment_prod', 'tag_status'):
         assert group_name in inventory_module.inventory.groups
