@@ -2,6 +2,9 @@
 
 set -eux
 
+source virtualenv.sh
+pip install toml
+
 export ANSIBLE_INVENTORY_ENABLED=toml
 
 # A few things to make it easier to grep against adhoc
