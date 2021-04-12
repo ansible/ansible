@@ -93,7 +93,7 @@ def _get_plugin_config(pname, ptype, config, variables):
         if p is None:
             raise AnsibleLookupError('Unable to load %s plugin "%s"' % (ptype, pname))
         result = C.config.get_config_value(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
-    except AnsibleLookupErrore:
+    except AnsibleLookupError:
         raise
     except AnsibleError as e:
         msg = to_native(e)
