@@ -288,7 +288,7 @@ def main():
 
             notice("Return async_wrapper task started.")
             end({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
-                              "_ansible_suppress_tmpdir_delete": not preserve_tmp})
+                              "_ansible_suppress_tmpdir_delete": (not preserve_tmp)})
         else:
             # The actual wrapper process
 
