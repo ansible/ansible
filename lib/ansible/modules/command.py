@@ -47,7 +47,7 @@ options:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
-      - This is checked before c(remove) is checked.
+      - This is checked before I(removes) is checked.
   removes:
     type: path
     description:
