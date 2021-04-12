@@ -133,7 +133,7 @@ class LookupModule(LookupBase):
                 params = _parse_params(term, paramvals)
                 try:
                     for param in params:
-                        if ('=') in param:
+                        if '=' in param:
                             name, value = param.split('=')
                             if name not in paramvals:
                                 raise AnsibleLookupError('%s is not a valid option.' % name)
