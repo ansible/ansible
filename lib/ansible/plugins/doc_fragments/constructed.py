@@ -48,7 +48,7 @@ options:
         - The key from input dictionary used to generate groups
       default_value:
         description:
-        - The default name when the key's value is empty, null or undefined
+        - The default name when the key's value is empty or null.
         - This option is mutually exclusive with C(trailing_separator).
         type: str
         version_added: '2.11'
