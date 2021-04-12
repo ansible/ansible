@@ -431,7 +431,7 @@ class Constructable(object):
                         default_value_name = keyed.get('default_value', None)
                         trailing_separator = keyed.get('trailing_separator')
                         if trailing_separator is not None and default_value_name is not None:
-                            raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|skip_if_empty")
+                            raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|trailing_separator")
                         if raw_parent_name:
                             try:
                                 raw_parent_name = self.templar.template(raw_parent_name)
