@@ -51,7 +51,7 @@ def daemonize_self():
         pid = os.fork()
         if pid > 0:
             # exit first parent
-            end()
+            end({})
     except OSError:
         e = sys.exc_info()[1]
         end({'msg': "fork #1 failed: %d (%s)\n" % (e.errno, e.strerror), 'failed': True}, 1)
@@ -334,7 +334,7 @@ def main():
                 notice("Done in kid B.")
                 if not preserve_tmp:
                     shutil.rmtree(os.path.dirname(wrapped_module), True)
-                end()
+                end({})
             else:
                 # the child process runs the actual module
                 notice("Start module (%s)" % os.getpid())
