@@ -36,7 +36,7 @@ For complex variables such as hashes or arrays, use ``!unsafe`` on the individua
 
     ---
     my_unsafe_array:
-        - !unsafe 'unsafe element'
+        - !unsafe 'unsafe element' 
         - 'safe element'
 
     my_unsafe_hash:
