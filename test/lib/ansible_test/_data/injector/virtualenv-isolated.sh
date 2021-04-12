@@ -14,5 +14,5 @@ source "${OUTPUT_DIR}/venv/bin/activate"
 set -ux
 
 if [[ "${ANSIBLE_TEST_COVERAGE}" ]]; then
-    pip install coverage -c ../../../runner/requirements/constraints.txt --disable-pip-version-check
+    pip install coverage -c $OUTPUT_DIR/../../../lib/ansible_test/_data/requirements/constraints.txt --disable-pip-version-check
 fi
