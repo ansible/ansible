@@ -41,7 +41,7 @@ DOCUMENTATION = """
         version_added: '2.11'
         type: bool
       template_vars:
-        description: A dictionary, the keys become additional variables available for temlpating
+        description: A dictionary, the keys become additional variables available for templating.
         default: {}
         version_added: '2.3'
         type: dict
