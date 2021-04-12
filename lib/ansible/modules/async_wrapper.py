@@ -38,8 +38,8 @@ def notice(msg):
     syslog.syslog(syslog.LOG_NOTICE, msg)
 
 
-def end(res, exit_msg=0):
-    if res:
+def end(res=None, exit_msg=0):
+    if res is not None:
         print(json.dumps(res))
     sys.stdout.flush()
     sys.exit(exit_msg)
@@ -51,7 +51,7 @@ def daemonize_self():
         pid = os.fork()
         if pid > 0:
             # exit first parent
-            end({})
+            end()
     except OSError:
         e = sys.exc_info()[1]
         end({'msg': "fork #1 failed: %d (%s)\n" % (e.errno, e.strerror), 'failed': True}, 1)
@@ -257,7 +257,7 @@ def main():
             "failed": 1,
             "msg": "could not create directory: %s - %s" % (jobdir, to_text(e)),
             "exception": to_text(traceback.format_exc()),
-        })
+        }, 1)
 
     # immediately exit this process, leaving an orphaned process
     # running which immediately forks a supervisory timing process
@@ -287,7 +287,7 @@ def main():
                     continue
 
             notice("Return async_wrapper task started.")
-            end({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path, "_ansible_suppress_tmpdir_delete": (not preserve_tmp)})
+            end({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path, "_ansible_suppress_tmpdir_delete": (not preserve_tmp)}, 0)
         else:
             # The actual wrapper process
 
@@ -334,7 +334,7 @@ def main():
                 notice("Done in kid B.")
                 if not preserve_tmp:
                     shutil.rmtree(os.path.dirname(wrapped_module), True)
-                end({})
+                end()
             else:
                 # the child process runs the actual module
                 notice("Start module (%s)" % os.getpid())
