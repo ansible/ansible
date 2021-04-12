@@ -64,7 +64,8 @@ def daemonize_self():
     try:
         pid = os.fork()
         if pid > 0:
-            end({'async_wrappper_pid': pid})
+            #TODO: print 'async_wrapper_pid': pid, but careful as it will polute expectec output.
+            end()
     except OSError:
         e = sys.exc_info()[1]
         end({'msg': "fork #2 failed: %d (%s)\n" % (e.errno, e.strerror), 'failed': True}, 1)
