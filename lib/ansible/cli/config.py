@@ -209,33 +209,42 @@ class ConfigCLI(CLI):
         return self._render_settings(defaults)
 
     def _get_plugin_configs(self):
+
+        # prep loading
+        ptype = context.CLIARGS['type']
+        loader = getattr(plugin_loader, '%s_loader' % ptype)
+
+        # acumulators
         text = []
         config_entries = {}
-        loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
         for plugin in loader.all(class_only=True):
+            # in case of deprecastion they diverge
             finalname = name = plugin._load_name
             if name.startswith('_'):
-                # alias or deprecated
                 if os.path.islink(plugin._original_path):
+                    # skip alias
                     continue
-                else:
-                    finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+                # deprecated, but use 'nice name'
+                finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+
             # default entries per plugin
-            config_entries[finalname] = self.config.get_configuration_definitions(context.CLIARGS['type'], name)
+            config_entries[finalname] = self.config.get_configuration_definitions(ptype, name)
 
             try:
                 # populate config entries by loading plugin
                 dump = loader.get(name)
             except Exception as e:
                 # TODO: figure how to mock other rquirements (play_contxt for connections?)
-                display.display('cannot load plugin to check config due to : %s' % str(e))
+                display.warning('Skipping "%s" %s plugin, as we cannot load plugin to check config due to : %s' % (name, ptype, to_native(e)))
                 continue
 
+            # actually get the values
             for setting in config_entries[finalname].keys():
-                v, o = C.config.get_config_value_and_origin(setting, plugin_type=context.CLIARGS['type'], plugin_name=name)
+                v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name)
                 config_entries[finalname][setting]['value'] = v
                 config_entries[finalname][setting]['origin'] = o
 
+            # pretty please!
             results = self._render_settings(config_entries[finalname])
             if results:
                 # avoid header for empty lists (only changed!)
