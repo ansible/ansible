@@ -49,12 +49,12 @@ options:
       default_value:
         description:
         - The default name when the key's value is empty, null or undefined
-        - This option is mutually exclusive with C(skip_if_empty).
+        - This option is mutually exclusive with C(trailing_separator).
         type: str
         version_added: '2.11'
-      skip_if_empty:
+      trailing_separator:
         description:
-        - Set this option to I(True) to omit the C(separator) after the key when the key's value is empty,null or undefined.
+        - Set this option to I(True) to omit the C(separator) after the key when the key's value is empty or null.
         - This option is mutually exclusive with C(default_value).
         type: bool
         default: False
