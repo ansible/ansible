@@ -32,7 +32,7 @@ grep '@tag_environment_test' out.txt
 grep '@tag_status_running' out.txt
 
 # keyed group with 'skip_if_empty' set to 'True' for key's value empty
-ansible-inventory -i tag_inventory.yml -i keyed_group_skip_if_empty.yml --graph | tee out.txt
+ansible-inventory -i tag_inventory.yml -i keyed_group_trailing_separator.yml --graph | tee out.txt
 
 grep '@tag_name_host0' out.txt
 grep '@tag_environment_test' out.txt
