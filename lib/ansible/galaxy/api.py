@@ -22,7 +22,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
@@ -336,6 +336,7 @@ class GalaxyAPI:
                      cache=False):
         url_info = urlparse(url)
         cache_id = get_cache_id(url)
+        query = parse_qs(url_info.query)
         if cache and self._cache:
             server_cache = self._cache.setdefault(cache_id, {})
             iso_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
@@ -345,7 +346,7 @@ class GalaxyAPI:
                 expires = datetime.datetime.strptime(server_cache[url_info.path]['expires'], iso_datetime_format)
                 valid = datetime.datetime.utcnow() < expires
 
-            if valid and not url_info.query:
+            if valid and 'page' not in query:
                 # Got a hit on the cache and we aren't getting a paginated response
                 path_cache = server_cache[url_info.path]
                 if path_cache.get('paginated'):
@@ -365,7 +366,7 @@ class GalaxyAPI:
 
                 return res
 
-            elif not url_info.query:
+            elif 'page' not in query:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.utcnow()
                 expires += datetime.timedelta(days=1)
@@ -804,7 +805,7 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
 
-        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?page_size=100')
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
