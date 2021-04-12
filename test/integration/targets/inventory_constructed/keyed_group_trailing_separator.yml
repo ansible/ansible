@@ -2,4 +2,4 @@ plugin: constructed
 keyed_groups:
   - key: tags
     prefix: tag
-    skip_if_empty: True
+    trailing_separator: True
