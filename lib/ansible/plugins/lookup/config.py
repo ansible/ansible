@@ -81,7 +81,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.utils.sentinel import Sentinel
 
 
-class MissingSetting(AnsibleError):
+class MissingSetting(AnsibleOptionsError):
     pass
 
 
