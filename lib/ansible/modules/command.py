@@ -338,16 +338,17 @@ def main():
     # special skips for idempotence if file exists (assumes command creates)
     if creates:
         if glob.glob(creates):
-            r['stdout'] = "%s not run command since '%s' exists" % (shoulda, creates)
+            r['msg'] = "%s not run command since '%s' exists" % (shoulda, creates)
             r['rc'] = 0
-            module.exit_json(**r)
 
     # special skips for idempotence if file does not exist (assumes command removes)
-    if removes:
+    if not r['msg'] and removes:
         if not glob.glob(removes):
-            r['stdout'] = "%s not run command since '%s' does not exist" % (shoulda, removes)
+            r['msg'] = "%s not run command since '%s' does not exist" % (shoulda, removes)
             r['rc'] = 0
-            module.exit_json(**r)
+
+    if r['msg']:
+        module.exit_json(**r)
 
     # actually executes command (or not ...)
     if not module.check_mode:
