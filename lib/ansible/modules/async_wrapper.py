@@ -346,7 +346,7 @@ def main():
     except Exception:
         e = sys.exc_info()[1]
         notice("error: %s" % e)
-        end({"failed": True, "msg": "FATAL ERROR: %s" % e}, "async_wrapper exited prematurely")
+        end({"failed": True, "msg": "FATAL ERROR: %s" % e}, "async_wrapper exited prematurely", 250)
 
 
 if __name__ == '__main__':
