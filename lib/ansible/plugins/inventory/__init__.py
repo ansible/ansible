@@ -429,8 +429,8 @@ class Constructable(object):
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
                         default_value_name = keyed.get('default_value', None)
-                        skip_if_empty = keyed.get('skip_if_empty')
-                        if skip_if_empty is not None and default_value_name is not None:
+                        trailing_separator = keyed.get('trailing_separator')
+                        if trailing_separator is not None and default_value_name is not None:
                             raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|skip_if_empty")
                         if raw_parent_name:
                             try:
@@ -449,11 +449,11 @@ class Constructable(object):
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
                                 bare_name = '%s%s%s' % (gname, sep, gval)
-                                if gval is None or gval == '':
-                                    # key's value is empty or undefined
+                                if gval == '':
+                                    # key's value is empty
                                     if default_value_name is not None:
                                         bare_name = '%s%s%s' % (gname, sep, default_value_name)
-                                    elif skip_if_empty:
+                                    elif trailing_separator:
                                         bare_name = gname
                                 new_raw_group_names.append(bare_name)
                         else:
