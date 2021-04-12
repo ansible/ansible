@@ -16,6 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- shell: sleep 30
+  async: 1
+  poll: 0
+  register: sleep_command
+- name: check status
+  async_status:
+    jid: "{{ sleep_command.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 1
+  delay: 10
+  ignore_errors: yes
+- assert:
+    that: "job_result.msg == 'Timeout exceeded'"
+
+
 - name: run a 2 second loop
   shell: for i in $(seq 1 2); do echo $i ; sleep 1; done;
   async: 10
