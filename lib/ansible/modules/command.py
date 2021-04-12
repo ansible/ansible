@@ -52,7 +52,7 @@ options:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
-      - This is checked after c(creates) is checked.
+      - This is checked after I(creates) is checked.
     version_added: "0.8"
   chdir:
     type: path
