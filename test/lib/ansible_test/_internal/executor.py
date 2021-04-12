@@ -1601,6 +1601,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
+        _ANSIBLE_COVERAGE_CONSTRAINTS=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt'),
     )
 
     if args.debug_strategy:
