@@ -58,7 +58,7 @@ class ShellScriptTemplate:
 
     def substitute(self, **kwargs):
         """Return a string templated with the given arguments."""
-        kvp = dict((k, cmd_quote(v)) for k, v in kwargs.items())
+        kvp = dict((k, cmd_quote(v or '')) for k, v in kwargs.items())
         pattern = re.compile(r'#{(?P<name>[^}]+)}')
         value = pattern.sub(lambda match: kvp[match.group('name')], self.template)
         return value
