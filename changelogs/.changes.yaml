@@ -1863,6 +1863,11 @@ releases:
     - win_get_url-Fix-restricted-header-handling.yml
     - win_shell-arg-space.yaml
     release_date: '2019-07-03'
+  2.8.20:
+    codename: How Many More Times
+    fragments:
+    - v2.8.20_summary.yaml
+    release_date: '2021-04-12'
   2.8.20rc1:
     codename: How Many More Times
     fragments:
