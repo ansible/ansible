@@ -42,9 +42,10 @@ class TestAsyncWrapper:
 
         command = fn
         jobid = 0
-        jobpath = os.path.join(os.path.dirname(command), 'job')
+        job_path = os.path.join(os.path.dirname(command), 'job')
 
         monkeypatch.setattr(async_wrapper, '_get_interpreter', mock_get_interpreter)
+        monkeypatch.setattr(async_wrapper, 'job_path', job_path)
 
         res = async_wrapper._run_module(command, jobid)
 
