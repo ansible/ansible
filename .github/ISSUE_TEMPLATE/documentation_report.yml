@@ -62,6 +62,22 @@ body:
 - type: dropdown
   attributes:
     label: Issue Type
+    description: >
+      Please select the single available option in the drop-down.
+
+      <details>
+        <summary>
+          <em>Why?</em>
+        </summary>
+
+        We would do it by ourselves but unfortunatelly, the curent
+        edition of GitHub Issue Forms Alpha does not support this yet 🤷
+
+
+        _We will make it easier in the future, once GitHub
+        supports dropdown defaults. Promise!_
+
+      </details>
     # FIXME: Once GitHub allows defining the default choice, update this
     options:
     - Documentation Report
