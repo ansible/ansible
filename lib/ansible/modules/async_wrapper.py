@@ -41,6 +41,7 @@ def notice(msg):
 def end(res, exit_msg=0):
     if res:
         print(json.dumps(res))
+    sys.stdout.flush()
     sys.exit(exit_msg)
 
 
@@ -286,10 +287,8 @@ def main():
                     continue
 
             notice("Return async_wrapper task started.")
-            print(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
-                              "_ansible_suppress_tmpdir_delete": not preserve_tmp}))
-            sys.stdout.flush()
-            end()
+            end({"started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
+                              "_ansible_suppress_tmpdir_delete": not preserve_tmp})
         else:
             # The actual wrapper process
 
