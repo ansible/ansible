@@ -43,15 +43,9 @@ body:
 
       Also test if the devel branch does not already implement this.
 
-      *Complete **all** sections as described, this form is processed
-      automatically.*
-
 
       **Tip:** If you are seeking community support, please consider
       [starting a mailing list thread or chatting in IRC][ML||IRC].
-
-
-      Thank you for your collaboration!
 
 
 
@@ -166,6 +160,23 @@ body:
       advised me to do X, Y and Z.
   validations:
     required: true
+
+
+- type: markdown
+  attributes:
+    value: >
+      *One last thing...*
+
+
+      *Please, complete **all** sections as described, this form
+      is [processed automatically by a robot][ansibot help].*
+
+
+      Thank you for your collaboration!
+
+
+      [ansibot help]:
+      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
 
 
 - type: checkboxes
