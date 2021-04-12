@@ -24,6 +24,15 @@ DOCUMENTATION = """
         default: error
         type: string
         choices: ['error', 'skip', 'warn']
+      plugin_type:
+        description: the type of the plugin referenced by 'plugin_name' option.
+        choices: ['become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars']
+        type: string
+        version_added: '2.12'
+      plugin_name:
+        description: name of the plugin for which you want to retrieve configuration settings.
+        type: string
+        version_added: '2.12'
 """
 
 EXAMPLES = """
@@ -47,6 +56,12 @@ EXAMPLES = """
       debug: msg="{{ lookup('config', config_in_var, on_missing='skip')}}"
       var:
         config_in_var: UNKNOWN
+
+    - name: show remote user and port for ssh connection
+      debug: msg={{q("config", "remote_user", "port", plugin_type="connection", plugin_name="ssh", on_missing='skip')}}
+
+    - name: show remote_tmp setting for shell (sh) plugin
+      debug: msg={{q("config", "remote_tmp", plugin_type="shell", plugin_name="sh")}}
 """
 
 RETURN = """
@@ -56,32 +71,81 @@ _raw:
   type: raw
 """
 
+import ansible.plugins.loader as plugin_loader
+
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleLookupError, AnsibleOptionsError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.sentinel import Sentinel
+
+
+class MissingSetting(AnsibleOptionsError):
+    pass
+
+
+def _get_plugin_config(pname, ptype, config, variables):
+    try:
+        # plugin creates settings on load, this is cached so not too expensive to redo
+        loader = getattr(plugin_loader, '%s_loader' % ptype)
+        dump = loader.get(pname, class_only=True)
+        result = C.config.get_config_value(config, plugin_type=ptype, plugin_name=pname, variables=variables)
+    except AnsibleError as e:
+        msg = to_native(e)
+        if 'was not defined' in msg:
+            raise MissingSetting(msg, orig_exc=e)
+        raise e
+
+    return result
+
+
+def _get_global_config(config):
+    try:
+        result = getattr(C, config)
+        if callable(result):
+            raise AnsibleLookupError('Invalid setting "%s" attempted' % config)
+    except AttributeError as e:
+        raise MissingSetting(to_native(e), orig_exc=e)
+
+    return result
 
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        missing = kwargs.get('on_missing', 'error').lower()
+        self.set_options(var_options=variables, direct=kwargs)
+
+        missing = self.get_option('on_missing')
+        ptype = self.get_option('plugin_type')
+        pname = self.get_option('plugin_name')
+
+        if (ptype or pname) and not (ptype and pname):
+            raise AnsibleOptionsError('Both plugin_type and plugin_name are required, cannot use one without the other')
+
         if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
-            raise AnsibleError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+            raise AnsibleOptionsError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
 
         ret = []
         for term in terms:
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleOptionsError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+
+            result = Sentinel
             try:
-                result = getattr(C, term)
-                if callable(result):
-                    raise AnsibleError('Invalid setting "%s" attempted' % term)
-                ret.append(result)
-            except AttributeError:
+                if pname:
+                    result = _get_plugin_config(pname, ptype, term, variables)
+                else:
+                    result = _get_global_config(term)
+            except MissingSetting as e:
                 if missing == 'error':
-                    raise AnsibleError('Unable to find setting %s' % term)
+                    raise AnsibleLookupError('Unable to find setting %s' % term, orig_exc=e)
                 elif missing == 'warn':
                     self._display.warning('Skipping, did not find setting %s' % term)
+                elif missing == 'skip':
+                    pass  # this is not needed, but added to have all 3 options stated
+
+            if result is not Sentinel:
+                ret.append(result)
         return ret
