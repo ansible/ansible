@@ -7,7 +7,7 @@ source virtualenv-isolated.sh
 
 # And install enough deps in the venv to run ansible...
 pip install --upgrade pip
-pip install -r $OUTPUT_DIR/../../../../requirements.txt -c $OUTPUT_DIR/../../../lib/ansible_test/_data/requirements/constraints.txt --disable-pip-version-check
+pip install -r "$OUTPUT_DIR/../../../../requirements.txt" -c "$OUTPUT_DIR/../../../lib/ansible_test/_data/requirements/constraints.txt" --disable-pip-version-check
 
 # This should never be installed in the isolated venv, but just to be safe...
 pip list | grep '^toml\W' && pip uninstall -y toml

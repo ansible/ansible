@@ -50,7 +50,6 @@ grep -q "Invalid \"hosts\" entry for \"mygroup\" group" <<< "$invalid_hosts"
 
 ansible-inventory -i children.toml --graph 2>&1 | diff -u - children_graph.txt
 
-
 # needs #74234
 bash missing_toml_venv.sh
 bash old_toml_venv.sh
