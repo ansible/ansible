@@ -5,3 +5,8 @@ all:
         name: "host0"
         environment: "test"
         status: ""
+      os: ""
+      roles:
+        - db
+        - web
+        - ""

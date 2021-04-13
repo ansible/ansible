@@ -48,16 +48,16 @@ options:
         - The key from input dictionary used to generate groups
       default_value:
         description:
-        - The default name when the key's value is empty or null.
+        - The default value when the host variable's value is an empty string.
         - This option is mutually exclusive with C(trailing_separator).
         type: str
-        version_added: '2.11'
+        version_added: '2.12'
       trailing_separator:
         description:
-        - Set this option to I(True) to omit the C(separator) after the host variable when the value is an empty string.
+        - Set this option to I(False) to omit the C(separator) after the host variable when the value is an empty string.
         - This option is mutually exclusive with C(default_value).
         type: bool
-        default: False
+        default: True
         version_added: '2.12'
   use_extra_vars:
     version_added: '2.11'

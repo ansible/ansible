@@ -423,15 +423,14 @@ class Constructable(object):
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
-
-                    if key:
+                    default_value_name = keyed.get('default_value', None)
+                    trailing_separator = keyed.get('trailing_separator')
+                    if trailing_separator is not None and default_value_name is not None:
+                        raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|trailing_separator")
+                    if key or (key == '' and default_value_name is not None):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
-                        default_value_name = keyed.get('default_value', None)
-                        trailing_separator = keyed.get('trailing_separator')
-                        if trailing_separator is not None and default_value_name is not None:
-                            raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|trailing_separator")
                         if raw_parent_name:
                             try:
                                 raw_parent_name = self.templar.template(raw_parent_name)
@@ -442,10 +441,18 @@ class Constructable(object):
 
                         new_raw_group_names = []
                         if isinstance(key, string_types):
-                            new_raw_group_names.append(key)
+                            # if key is empty, 'default_value' will be used as group name
+                            if key == '' and default_value_name is not None:
+                                new_raw_group_names.append(default_value_name)
+                            else:
+                                new_raw_group_names.append(key)
                         elif isinstance(key, list):
                             for name in key:
-                                new_raw_group_names.append(name)
+                                # if list item is empty, 'default_value' will be used as group name
+                                if name == '' and default_value_name is not None:
+                                    new_raw_group_names.append(default_value_name)
+                                else:
+                                    new_raw_group_names.append(name)
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
                                 bare_name = '%s%s%s' % (gname, sep, gval)
@@ -453,7 +460,7 @@ class Constructable(object):
                                     # key's value is empty
                                     if default_value_name is not None:
                                         bare_name = '%s%s%s' % (gname, sep, default_value_name)
-                                    elif trailing_separator:
+                                    elif trailing_separator is not None and trailing_separator is False:
                                         bare_name = gname
                                 new_raw_group_names.append(bare_name)
                         else:
