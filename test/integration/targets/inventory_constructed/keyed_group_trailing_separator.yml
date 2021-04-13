@@ -1,0 +1,5 @@
+plugin: constructed
+keyed_groups:
+  - key: tags
+    prefix: tag
+    trailing_separator: False
