@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Update the Ansible Core and Ansible Collection default test containers to 3.2.0 and 3.2.2 respectively.
