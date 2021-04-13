@@ -21,10 +21,11 @@ __metaclass__ = type
 
 from units.compat import unittest, mock
 from ansible.errors import AnsibleError
-from ansible.plugins.cache import FactCache, CachePluginAdjudicator
+from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 from ansible.plugins.loader import cache_loader
+from ansible.vars.fact_cache import FactCache
 
 import pytest
 
@@ -120,16 +121,6 @@ class TestFactCache(unittest.TestCase):
     def test_update(self):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
-
-    def test_update_legacy(self):
-        self.cache.update('cache_key', {'key2': 'updatedvalue'})
-        assert self.cache['cache_key']['key2'] == 'updatedvalue'
-
-    def test_update_legacy_key_exists(self):
-        self.cache['cache_key'] = {'key': 'value', 'key2': 'value2'}
-        self.cache.update('cache_key', {'key': 'updatedvalue'})
-        assert self.cache['cache_key']['key'] == 'updatedvalue'
-        assert self.cache['cache_key']['key2'] == 'value2'
 
 
 class TestAbstractClass(unittest.TestCase):
