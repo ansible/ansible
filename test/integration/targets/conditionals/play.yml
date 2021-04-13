@@ -6,10 +6,6 @@
   vars_files:
     - vars/main.yml
   tasks:
-    - name: set conditional bare vars status
-      set_fact:
-        bare: "{{lookup('config', 'CONDITIONAL_BARE_VARS')|bool}}"
-
     - name: test conditional '=='
       shell: echo 'testing'
       when: 1 == 1
@@ -164,6 +160,136 @@
         - "result.stdout == 'testing'"
         - "result.rc == 0"
 
+    - name: not test bare conditional
+      shell: echo 'testing'
+      when: not test_bare
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: empty string is false
+      shell: echo 'testing'
+      when: string_lit_empty
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: not empty string is true
+      shell: echo 'testing'
+      when: not string_lit_empty
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: literal 0 is false
+      shell: echo 'testing'
+      when: int_lit_0
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: not literal 0 is true
+      shell: echo 'testing'
+      when: not int_lit_0
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: literal 1 is true
+      shell: echo 'testing'
+      when: int_lit_1
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: not literal 1 is false
+      shell: echo 'testing'
+      when: not int_lit_1
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: null is false
+      shell: echo 'testing'
+      when: lit_null
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: literal string "true" is true
+      shell: echo 'testing'
+      when: string_lit_true
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: not literal string "true" is false
+      shell: echo 'testing'
+      when: not string_lit_true
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: literal string "false" is true (nonempty string)
+      shell: echo 'testing'
+      when: string_lit_false
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: not literal string "false" is false
+      shell: echo 'testing'
+      when: not string_lit_false
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: not literal string "true" is false
+      shell: echo 'testing'
+      when: not string_lit_true
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
     - name: test conditional using a variable
       shell: echo 'testing'
       when: test_bare_var == 123
@@ -195,23 +321,13 @@
 
     - debug: var={{item}}
       loop:
-        - bare
         - result
         - test_bare_nested_bad
 
-    - name: assert that the bad nested conditional is skipped since 'bare' since 'string' template is resolved to 'false'
+    - name: assert that the bad nested conditional ran (it is a non-empty string, so truthy)
       assert:
         that:
-         - result is skipped
-
-      when: bare|bool
-
-    - name: assert that the bad nested conditional did run since non bare 'string' is untemplated but 'trueish'
-      assert:
-        that:
-         - result is skipped
-      when: not bare|bool
-         - result is changed
+         - result is not skipped
 
     - name: test bad conditional based on nested variables with bool filter
       shell: echo 'testing'
@@ -222,6 +338,7 @@
       assert:
         that:
         - result is skipped
+
 
     #-----------------------------------------------------------------------
     # proper booleanification tests (issue #8629)
@@ -382,7 +499,6 @@
 
     - name: Deal with multivar equality
       tags: ['leveldiff']
-      when: not bare|bool
       vars:
           toplevel_hash:
             hash_var_one: justastring
