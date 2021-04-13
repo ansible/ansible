@@ -54,7 +54,7 @@ options:
         version_added: '2.11'
       trailing_separator:
         description:
-        - Set this option to I(True) to omit the C(separator) after the key when the key's value is empty or null.
+        - Set this option to I(True) to omit the C(separator) after the host variable when the value is an empty string.
         - This option is mutually exclusive with C(default_value).
         type: bool
         default: False
