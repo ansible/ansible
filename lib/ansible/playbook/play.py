@@ -130,8 +130,8 @@ class Play(Base, Taggable, CollectionSearch):
             # this should never happen, but error out with a helpful message
             # to the user if it does...
             if 'remote_user' in ds:
-                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s. "
-                                         "The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
+                raise AnsibleParserError("both 'user' and 'remote_user' are set for this play. "
+                                         "The use of 'user' is deprecated, and should be removed", obj=ds)
 
             ds['remote_user'] = ds['user']
             del ds['user']

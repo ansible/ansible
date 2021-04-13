@@ -1,0 +1,3 @@
+- hosts: localhost
+  vars_prompt:
+    - foo: bar
