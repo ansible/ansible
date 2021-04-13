@@ -466,7 +466,12 @@ def main():
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
                                 r['checksum'] = module.sha1(fsname)
-                            filelist.append(r)
+
+                            if stat.S_ISREG(st.st_mode):
+                                if sizefilter(st, size):
+                                    filelist.append(r)
+                            else:
+                                filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
