@@ -302,10 +302,14 @@ class SLESStrategy(GenericStrategy):
 
 class RedHatStrategy(GenericStrategy):
     """
-    This is a Redhat Hostname strategy class - it edits the
-    /etc/sysconfig/network file.
+    This is a Redhat Hostname strategy class - it reads the current
+    hostname from /etc/sysconfig/network and sets one using hostnamectl
     """
     NETWORK_FILE = '/etc/sysconfig/network'
+
+    def __init__(self, module):
+        super(RedHatStrategy, self).__init__(module)
+        self.hostname_cmd = self.module.get_bin_path('hostnamectl', True)
 
     def get_permanent_hostname(self):
         try:
@@ -321,30 +325,14 @@ class RedHatStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to read hostname: %s" %
                                       to_native(e), exception=traceback.format_exc())
 
+    def set_current_hostname(self, name):
+        self.set_permanent_hostname(name)
+
     def set_permanent_hostname(self, name):
-        try:
-            lines = []
-            found = False
-            f = open(self.NETWORK_FILE, 'rb')
-            try:
-                for line in f.readlines():
-                    if line.startswith('HOSTNAME'):
-                        lines.append("HOSTNAME=%s\n" % name)
-                        found = True
-                    else:
-                        lines.append(line)
-            finally:
-                f.close()
-            if not found:
-                lines.append("HOSTNAME=%s\n" % name)
-            f = open(self.NETWORK_FILE, 'w+')
-            try:
-                f.writelines(lines)
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to update hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+        cmd = [self.hostname_cmd, "set-hostname", name]
+        rc, _, err = self.module.run_command(cmd, True)
+        if rc != 0:
+            self.module.fail_json(msg="failed to update hostname %s err=%s" % (name, err))
 
 
 class AlpineStrategy(GenericStrategy):
