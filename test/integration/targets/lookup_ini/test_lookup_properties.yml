@@ -6,18 +6,18 @@
     - name: "read properties value"
       set_fact:
         test1:            "{{lookup('ini', 'value1            type=properties  file=lookup.properties')}}"
-        test2:            "{{lookup('ini', 'value2            type=properties  file=lookup.properties')}}"
-        test_dot:         "{{lookup('ini', 'value.dot         type=properties  file=lookup.properties')}}"
+        test2:            "{{lookup('ini', 'value2', type='properties',  file='lookup.properties')}}"
+        test_dot:         "{{lookup('ini', 'value.dot', type='properties',  file='lookup.properties')}}"
         field_with_space: "{{lookup('ini', 'field.with.space  type=properties  file=lookup.properties')}}"
     - assert:
         that: "{{item}} is defined"
       with_items: [ 'test1', 'test2', 'test_dot', 'field_with_space' ]
     - name: "read ini value"
       set_fact:
-        value1_global:    "{{lookup('ini', 'value1            section=global   file=lookup.ini')}}"
-        value2_global:    "{{lookup('ini', 'value2            section=global   file=lookup.ini')}}"
-        value1_section1:  "{{lookup('ini', 'value1            section=section1 file=lookup.ini')}}"
-        field_with_unicode: "{{lookup('ini', 'unicode         section=global   file=lookup.ini')}}"
+        value1_global:    "{{lookup('ini', 'value1', section='global', file='lookup.ini')}}"
+        value2_global:    "{{lookup('ini', 'value2', section='global', file='lookup.ini')}}"
+        value1_section1:  "{{lookup('ini', 'value1', section='section1', file='lookup.ini')}}"
+        field_with_unicode: "{{lookup('ini', 'unicode', section='global', file='lookup.ini')}}"
     - debug: var={{item}}
       with_items: [ 'value1_global', 'value2_global', 'value1_section1', 'field_with_unicode' ]
     - assert:

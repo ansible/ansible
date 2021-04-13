@@ -40,6 +40,11 @@ DOCUMENTATION = """
         default: False
         version_added: '2.11'
         type: bool
+      template_vars:
+        description: A dictionary, the keys become additional variables available for templating.
+        default: {}
+        version_added: '2.3'
+        type: dict
 """
 
 EXAMPLES = """
@@ -78,13 +83,17 @@ display = Display()
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
-        convert_data_p = kwargs.get('convert_data', True)
-        lookup_template_vars = kwargs.get('template_vars', {})
-        jinja2_native = kwargs.get('jinja2_native', False)
+
         ret = []
 
-        variable_start_string = kwargs.get('variable_start_string', None)
-        variable_end_string = kwargs.get('variable_end_string', None)
+        self.set_options(var_options=variables, direct=kwargs)
+
+        # capture options
+        convert_data_p = self.get_option('convert_data')
+        lookup_template_vars = self.get_option('template_vars')
+        jinja2_native = self.get_option('jinja2_native')
+        variable_start_string = self.get_option('variable_start_string')
+        variable_end_string = self.get_option('variable_end_string')
 
         if USE_JINJA2_NATIVE and not jinja2_native:
             templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)

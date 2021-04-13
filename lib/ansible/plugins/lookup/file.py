@@ -62,6 +62,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         ret = []
+        self.set_options(var_options=variables, direct=kwargs)
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
@@ -73,9 +74,9 @@ class LookupModule(LookupBase):
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
                     contents = to_text(b_contents, errors='surrogate_or_strict')
-                    if kwargs.get('lstrip', False):
+                    if self.get_option('lstrip'):
                         contents = contents.lstrip()
-                    if kwargs.get('rstrip', True):
+                    if self.get_option('rstrip'):
                         contents = contents.rstrip()
                     ret.append(contents)
                 else:

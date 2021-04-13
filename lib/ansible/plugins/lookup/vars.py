@@ -79,7 +79,7 @@ class LookupModule(LookupBase):
             self._templar.available_variables = variables
         myvars = getattr(self._templar, '_available_variables', {})
 
-        self.set_options(direct=kwargs)
+        self.set_options(var_options=variables, direct=kwargs)
         default = self.get_option('default')
 
         ret = []
