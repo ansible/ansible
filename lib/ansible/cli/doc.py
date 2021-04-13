@@ -284,7 +284,7 @@ class RoleMixin(object):
 
 def _doclink(url):
     # assume that if it is relative, it is for docsite, ignore rest
-    if not url.startswith("http"):
+    if not url.startswith("http") and not url.startswith(".."):
         url = get_versioned_doclink(url)
     return url
 
