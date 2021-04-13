@@ -346,7 +346,7 @@ class GalaxyAPI:
                 expires = datetime.datetime.strptime(server_cache[url_info.path]['expires'], iso_datetime_format)
                 valid = datetime.datetime.utcnow() < expires
 
-            if valid and 'page' not in query:
+            if valid and not ('page' in query or 'offset' in query):
                 # Got a hit on the cache and we aren't getting a paginated response
                 path_cache = server_cache[url_info.path]
                 if path_cache.get('paginated'):
@@ -366,7 +366,7 @@ class GalaxyAPI:
 
                 return res
 
-            elif 'page' not in query:
+            elif not ('page' in query or 'offset' in query):
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.utcnow()
                 expires += datetime.timedelta(days=1)
@@ -805,7 +805,10 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
 
-        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?page_size=100')
+        if 'v3' in self.available_api_versions:
+            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?limit=100')
+        else:
+            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?page_size=100')
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures

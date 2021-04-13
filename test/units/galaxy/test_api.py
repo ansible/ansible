@@ -791,9 +791,10 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
     actual = api.get_collection_versions('namespace', 'collection')
     assert actual == [u'1.0.0', u'1.0.1']
 
+    page_query = '?limit=100' if api_version == 'v3' else '?page_size=100'
     assert mock_open.call_count == 1
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.server.com/api/%s/collections/namespace/collection/' \
-                                            'versions/' % api_version
+                                            'versions/%s' % (api_version, page_query)
     if token_ins:
         assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
 
@@ -802,9 +803,9 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
     ('v2', None, None, [
         {
             'count': 6,
-            'next': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=2',
+            'next': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=2?page_size=100',
             'previous': None,
-            'results': [
+            'results': [  # Pay no mind, using more manageable results than page_size would indicate
                 {
                     'version': '1.0.0',
                     'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.0',
@@ -817,7 +818,7 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
         },
         {
             'count': 6,
-            'next': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=3',
+            'next': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=3?page_size=100',
             'previous': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions',
             'results': [
                 {
@@ -833,7 +834,7 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
         {
             'count': 6,
             'next': None,
-            'previous': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=2',
+            'previous': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=2?page_size=100',
             'results': [
                 {
                     'version': '1.0.4',
@@ -850,6 +851,7 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
         {
             'count': 6,
             'links': {
+                # v3 links are relative and the limit is included during pagination
                 'next': '/api/v3/collections/namespace/collection/versions/?page=2',
                 'previous': None,
             },
@@ -916,12 +918,14 @@ def test_get_collection_versions_pagination(api_version, token_type, token_ins, 
     assert actual == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
 
     assert mock_open.call_count == 3
+
+    page_query = '?limit=100' if api_version == 'v3' else '?page_size=100'
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.server.com/api/%s/collections/namespace/collection/' \
-                                            'versions/' % api_version
+                                            'versions/%s' % (api_version, page_query)
     assert mock_open.mock_calls[1][1][0] == 'https://galaxy.server.com/api/%s/collections/namespace/collection/' \
-                                            'versions/?page=2' % api_version
+                                            'versions/?page=2%s' % (api_version, page_query)
     assert mock_open.mock_calls[2][1][0] == 'https://galaxy.server.com/api/%s/collections/namespace/collection/' \
-                                            'versions/?page=3' % api_version
+                                            'versions/?page=3%s' % (api_version, page_query)
 
     if token_type:
         assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
