@@ -339,12 +339,15 @@ def main():
     if creates:
         if glob.glob(creates):
             r['msg'] = "%s not run command since '%s' exists" % (shoulda, creates)
+            r['stdout'] = "skipped, since %s exists" % creates  # TODO: deprecate
+
             r['rc'] = 0
 
     # special skips for idempotence if file does not exist (assumes command removes)
     if not r['msg'] and removes:
         if not glob.glob(removes):
             r['msg'] = "%s not run command since '%s' does not exist" % (shoulda, removes)
+            r['stdout'] = "skipped, since %s does not exist" % removes # TODO: deprecate
             r['rc'] = 0
 
     if r['msg']:
