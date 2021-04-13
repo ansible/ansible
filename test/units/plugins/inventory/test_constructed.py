@@ -280,6 +280,7 @@ def test_keyed_group_str_no_default_value(inventory_module):
     # when the value is an empty string. this group is not generated
     assert "tag_" not in inventory_module.inventory.groups
 
+
 def test_keyed_group_str_with_default_value(inventory_module):
     inventory_module.inventory.add_host('server0')
     inventory_module.inventory.set_variable('server0', 'tags', '')
@@ -297,9 +298,10 @@ def test_keyed_group_str_with_default_value(inventory_module):
     )
     assert "tag_running" in inventory_module.inventory.groups
 
+
 def test_keyed_group_list_with_default_value(inventory_module):
     inventory_module.inventory.add_host('server0')
-    inventory_module.inventory.set_variable('server0', 'tags', ['test',''])
+    inventory_module.inventory.set_variable('server0', 'tags', ['test', ''])
     host = inventory_module.inventory.get_host('server0')
     keyed_groups = [
         {
