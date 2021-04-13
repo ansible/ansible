@@ -131,7 +131,7 @@ def _get_type_validator(wanted):
         of the wanted type.
     """
 
-    # Use one our our builtin validators.
+    # Use one of our builtin validators.
     if not callable(wanted):
         if wanted is None:
             # Default type for parameters
@@ -860,7 +860,7 @@ def remove_values(value, no_log_strings):
 
     Use of deferred_removals exists, rather than a pure recursive solution,
     because of the potential to hit the maximum recursion depth when dealing with
-    large amounts of data (see issue #24560).
+    large amounts of data (see `issue #24560 <https://github.com/ansible/ansible/issues/24560>`_).
     """
 
     deferred_removals = deque()
