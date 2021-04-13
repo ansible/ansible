@@ -1,5 +1,4 @@
 - name: test with_first_found
-  #shell: echo {{ item }}
   set_fact: "first_found={{ item }}"
   with_first_found:
     - "{{ role_path + '/files/does_not_exist' }}"
@@ -15,8 +14,8 @@
 - name: verify with_first_found results
   assert:
     that:
-        - "first_found == first_expected"
-        - "first_found != first_unexpected"
+      - "first_found == first_expected"
+      - "first_found != first_unexpected"
 
 - name: test q(first_found) with no files produces empty list
   set_fact:
@@ -71,3 +70,105 @@
   assert:
     that:
       - "this_not_set is not defined"
+
+- name: test first_found with paths in a loop
+  set_fact: "file={{ item }}"
+  vars:
+    params:
+      files:
+        - not/a/file.yaml
+        - another/non/file.yaml
+        - foo1
+      paths:
+        - "{{ role_path + '/not-real-dir/' }}"
+        - "{{ role_path + '/files/' }}"
+  loop: "{{ query('first_found', params) }}"
+
+- name: verify errors=ignore
+  assert:
+    that:
+      - "file == role_path + '/files/foo1'"
+
+# https://github.com/ansible/ansible/issues/70772
+- name: test first_found with files with empty variables works (dict)
+  set_fact:
+    file_found_dict_var: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ this_var_is_empty }}"
+        - "{{ role_path + '/files/foo1' }}"
+  vars:
+    this_var_is_empty: null
+
+- name: verify task does work
+  assert:
+    that:
+      - "file_found_dict_var == first_expected"
+
+- name: test first_found with files with empty variable works (list)
+  set_fact:
+    file_found_list_var: "{{ item }}"
+  with_first_found:
+    - "{{ this_var_is_empty }}"
+    - "{{ role_path + '/files/foo1' }}"
+  vars:
+    this_var_is_empty: null
+
+- name: verify task does work
+  assert:
+    that:
+      - "file_found_list_var == first_expected"
+
+- name: test first_found with files with non-existing variables works (dict)
+  set_fact:
+    file_found_dict_var: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ this_var_does_not_exist }}"
+        - "{{ role_path + '/files/foo1' }}"
+
+- name: verify task does work
+  assert:
+    that:
+      - "file_found_dict_var == first_expected"
+
+- name: test first_found with files with non-existing key works (list)
+  set_fact:
+    file_found_list_var: "{{ item }}"
+  with_first_found:
+    - "{{ this_var_is_empty.key_does_not_exist }}"
+    - "{{ role_path + '/files/foo1' }}"
+
+- name: verify task does work
+  assert:
+    that:
+      - "file_found_list_var == first_expected"
+
+- name: test first_found with files with non-existing variables works (dict)
+  set_fact:
+    file_found_dict_var: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ this_var_is_empty.key_does_not_exist }}"
+        - "{{ role_path + '/files/foo1' }}"
+  vars:
+    this_var_is_empty: null
+
+- name: verify task does work
+  assert:
+    that:
+      - "file_found_dict_var == first_expected"
+
+- name: test first_found with files with non-existint key works (list)
+  set_fact:
+    file_found_list_var: "{{ item }}"
+  with_first_found:
+    - "{{ this_var_is_empty.key_does_not_exist }}"
+    - "{{ role_path + '/files/foo1' }}"
+  vars:
+    this_var_is_empty: null
+
+- name: verify task does work
+  assert:
+    that:
+      - "file_found_list_var == first_expected"
