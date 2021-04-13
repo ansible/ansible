@@ -23,8 +23,12 @@ DOCUMENTATION = """
         description: list of file names
       files:
         description: list of file names
+        type: list
+        default: []
       paths:
         description: list of paths in which to look for the files
+        type: list
+        default: []
       skip:
         type: boolean
         default: False
@@ -106,71 +110,100 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
+
+
+def _split_on(terms, spliters=','):
+
+    # TODO: fix as it does not allow spaces in names
+    termlist = []
+    if isinstance(terms, string_types):
+        for spliter in spliters:
+            terms = terms.replace(spliter, ' ')
+        termlist = terms.split(' ')
+    else:
+        # added since options will already listify
+        for t in terms:
+            termlist.extend(_split_on(t, spliters))
+
+    return termlist
 
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables, **kwargs):
-
-        anydict = False
-        skip = False
-
-        for term in terms:
-            if isinstance(term, dict):
-                anydict = True
+    def _process_terms(self, terms, variables, kwargs):
 
         total_search = []
-        if anydict:
-            for term in terms:
-                if isinstance(term, dict):
+        skip = False
 
-                    files = term.get('files', [])
-                    paths = term.get('paths', [])
-                    skip = boolean(term.get('skip', False), strict=False)
+        # can use a dict instead of list item to pass inline config
+        for term in terms:
+            if isinstance(term, Mapping):
+                self.set_options(var_options=variables, direct=term)
+            elif isinstance(term, string_types):
+                self.set_options(var_options=variables, direct=kwargs)
+            elif isinstance(term, Sequence):
+                partial, skip = self._process_terms(term, variables, kwargs)
+                total_search.extend(partial)
+                continue
+            else:
+                raise AnsibleLookupError("Invalid term supplied, can handle string, mapping or list of strings but got: %s for %s" % (type(term), term))
 
-                    filelist = files
-                    if isinstance(files, string_types):
-                        files = files.replace(',', ' ')
-                        files = files.replace(';', ' ')
-                        filelist = files.split(' ')
+            files = self.get_option('files')
+            paths = self.get_option('paths')
 
-                    pathlist = paths
-                    if paths:
-                        if isinstance(paths, string_types):
-                            paths = paths.replace(',', ' ')
-                            paths = paths.replace(':', ' ')
-                            paths = paths.replace(';', ' ')
-                            pathlist = paths.split(' ')
+            # NOTE: this is used as 'global' but  can be set many times?!?!?
+            skip = self.get_option('skip')
 
-                    if not pathlist:
-                        total_search = filelist
-                    else:
-                        for path in pathlist:
-                            for fn in filelist:
-                                f = os.path.join(path, fn)
-                                total_search.append(f)
-                else:
-                    total_search.append(term)
-        else:
-            total_search = self._flatten(terms)
+            # magic extra spliting to create lists
+            filelist = _split_on(files, ',;')
+            pathlist = _split_on(paths, ',:;')
 
+            # create search structure
+            if pathlist:
+                for path in pathlist:
+                    for fn in filelist:
+                        f = os.path.join(path, fn)
+                        total_search.append(f)
+            elif filelist:
+                # NOTE: this seems wrong, should be 'extend' as any option/entry can clobber all
+                total_search = filelist
+            else:
+                total_search.append(term)
+
+        return total_search, skip
+
+    def run(self, terms, variables, **kwargs):
+
+        total_search, skip = self._process_terms(terms, variables, kwargs)
+
+        # NOTE: during refactor noticed that the 'using a dict' as term
+        # is designed to only work with 'one' otherwise inconsistencies will appear.
+        # see other notes below.
+
+        # actually search
+        subdir = getattr(self, '_subdir', 'files')
+
+        path = None
         for fn in total_search:
+
             try:
                 fn = self._templar.template(fn)
             except (AnsibleUndefinedVariable, UndefinedError):
                 continue
 
             # get subdir if set by task executor, default to files otherwise
-            subdir = getattr(self, '_subdir', 'files')
-            path = None
             path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
+
+            # exit if we find one!
             if path is not None:
                 return [path]
+
+        # if we get here, no file was found
         if skip:
+            # NOTE: global skip wont matter, only last 'skip' value in dict term
             return []
-        raise AnsibleLookupError("No file was found when using first_found. Use errors='ignore' to allow this task to be skipped if no "
-                                 "files are found")
+        raise AnsibleLookupError("No file was found when using first_found. Use errors='ignore' to allow this task to be skipped if no files are found")

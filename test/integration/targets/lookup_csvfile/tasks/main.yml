@@ -1,15 +1,23 @@
-- set_fact:
-    this_will_error: "{{ lookup('csvfile', 'file=people.csv delimiter=, col=1') }}"
+- name: using deprecated syntax but missing keyword
+  set_fact:
+    this_will_error: "{{ lookup('csvfile', 'file=people.csv, delimiter=, col=1') }}"
   ignore_errors: yes
   register: no_keyword
 
-- set_fact:
+- name: extra arg in k=v syntax (deprecated)
+  set_fact:
     this_will_error: "{{ lookup('csvfile', 'foo file=people.csv delimiter=, col=1 thisarg=doesnotexist') }}"
   ignore_errors: yes
   register: invalid_arg
 
+- name: extra arg in config syntax
+  set_fact:
+    this_will_error: "{{ lookup('csvfile', 'foo', file='people.csv', delimiter=',' col=1, thisarg='doesnotexist') }}"
+  ignore_errors: yes
+  register: invalid_arg2
+
 - set_fact:
-    this_will_error: "{{ lookup('csvfile', 'foo file=doesnotexist delimiter=, col=1') }}"
+    this_will_error: "{{ lookup('csvfile', 'foo',  file='doesnotexist', delimiter=',', col=1) }}"
   ignore_errors: yes
   register: missing_file
 
@@ -19,24 +27,30 @@
       - no_keyword is failed
       - >
         "Search key is required but was not found" in no_keyword.msg
+      - invalid_arg is failed
+      - invalid_arg2 is failed
       - >
-        "not in paramvals" in invalid_arg.msg
+        "is not a valid option" in invalid_arg.msg
       - missing_file is failed
       - >
-        "need string or buffer" in missing_file.msg or "expected str, bytes or os.PathLike object" in missing_file.msg
+        "need string or buffer" in missing_file.msg or
+        "expected str, bytes or os.PathLike object" in missing_file.msg or
+        "No such file or directory" in missing_file.msg
 
 - name: Check basic comma-separated file
   assert:
     that:
-      - lookup('csvfile', 'Smith file=people.csv delimiter=, col=1') == "Jane"
+      - lookup('csvfile', 'Smith', file='people.csv', delimiter=',', col=1) == "Jane"
       - lookup('csvfile', 'German von Lastname file=people.csv delimiter=, col=1') == "Demo"
 
 - name: Check tab-separated file
   assert:
     that:
       - lookup('csvfile', 'electronics file=tabs.csv delimiter=TAB col=1') == "tvs"
-      - lookup('csvfile', 'fruit file=tabs.csv delimiter=TAB col=1') == "bananas"
+      - "lookup('csvfile', 'fruit', file='tabs.csv', delimiter='TAB', col=1) == 'bananas'"
       - lookup('csvfile', 'fruit file=tabs.csv delimiter="\t" col=1') == "bananas"
+      - lookup('csvfile', 'electronics', 'fruit', file='tabs.csv', delimiter='\t', col=1) == "tvs,bananas"
+      - lookup('csvfile', 'electronics', 'fruit', file='tabs.csv', delimiter='\t', col=1, wantlist=True) == ["tvs", "bananas"]
 
 - name: Check \x1a-separated file
   assert:

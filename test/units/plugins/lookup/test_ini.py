@@ -56,8 +56,9 @@ class TestINILookup(unittest.TestCase):
     )
 
     def test_parse_parameters(self):
+        pvals = {'file': '', 'section': '', 'key': '', 'type': '', 're': '', 'default': '', 'encoding': ''}
         for testcase in self.old_style_params_data:
             # print(testcase)
-            params = _parse_params(testcase['term'])
+            params = _parse_params(testcase['term'], pvals)
             params.sort()
             self.assertEqual(params, testcase['expected'])
