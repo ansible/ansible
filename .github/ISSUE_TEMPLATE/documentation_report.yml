@@ -5,22 +5,47 @@ description: Ask us about docs
 body:
 - type: markdown
   attributes:
-    value: |
-      ⚠
-      Verify first that your issue is not [already reported on GitHub][issue search].
-      Also test if the latest release and devel branch are affected too.
-      *Complete **all** sections as described, this form is processed automatically.*
+    value: >
+      **Thank you for wanting to report a problem with ansible-core
+      documentation!**
 
-      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
+
+      Please fill out your suggestions below. If the problem seems
+      straightforward, feel free to go ahead and
+      [submit a pull request] instead!
+
+
+      ⚠
+      Verify first that your issue is not [already reported on
+      GitHub][issue search].
+
+      Also test if the latest release and devel branch are affected too.
+
+
+      **Tip:** If you are seeking community support, please consider
+      [starting a mailing list thread or chatting in IRC][ML||IRC].
+
+
+      [ML||IRC]:
+      https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--documentation_report.yml#mailing-list-information
+
+      [issue search]: ../search?q=is%3Aissue&type=issues
+
+      [submit a pull request]:
+      https://docs.ansible.com/ansible-core/devel/community/documentation_contributions.html
 
 
 - type: textarea
   attributes:
     label: Summary
-    description: |
-      Explain the problem briefly below, add suggestions to wording or structure.
+    description: >
+      Explain the problem briefly below, add suggestions to wording
+      or structure.
 
-      **HINT:** Did you know the documentation has an `Edit on GitHub` link on every page?
+
+      **HINT:** Did you know the documentation has a `View on GitHub`
+      link on every page? Feel free to use it to start a pull request
+      right from the GitHub UI!
     placeholder: >-
       I was reading the ansible-core documentation of version X and I'm having
       problems understanding Y. It would be very helpful if that got
@@ -31,6 +56,22 @@ body:
 - type: dropdown
   attributes:
     label: Issue Type
+    description: >
+      Please select the single available option in the drop-down.
+
+      <details>
+        <summary>
+          <em>Why?</em>
+        </summary>
+
+        We would do it by ourselves but unfortunatelly, the curent
+        edition of GitHub Issue Forms Alpha does not support this yet 🤷
+
+
+        _We will make it easier in the future, once GitHub
+        supports dropdown defaults. Promise!_
+
+      </details>
     # FIXME: Once GitHub allows defining the default choice, update this
     options:
     - Documentation Report
@@ -40,9 +81,22 @@ body:
 - type: input
   attributes:
     label: Component Name
-    description: >-
+    description: >
       Write the short name of the rst file, module, plugin, task or
       feature below, *use your best guess if unsure*.
+
+
+      **Tip:** Be advised that the source for some parts of the
+      documentation are hosted outside of this repository. If the page
+      you are reporting describes modules/plugins/etc that are not
+      officially supported by the Ansible Core Engineering team, there
+      is a good chance that it is coming from one of the [Ansible
+      Collections maintained by the community][collections org]. If this
+      is the case, please make sure to file an issue under the
+      appropriate project there instead.
+
+
+      [collections org]: ../../ansible-collections
     placeholder: docs/docsite/rst/dev_guide/debugging.rst
   validations:
     required: true
@@ -52,7 +106,8 @@ body:
     label: Ansible Version
     description: >-
       Paste verbatim output from `ansible --version` below, under
-      the prompt line. Please don't wrap it with tripple backticks.
+      the prompt line. Please don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
     render: console
     value: |
       $ ansible --version
@@ -76,7 +131,8 @@ body:
     description: >-
       Paste verbatim output from `ansible-config dump --only-changed`
       below, under the prompt line.
-      Please don't wrap it with tripple backticks.
+      Please don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
     render: console
     value: |
       $ ansible-config dump --only-changed
@@ -111,6 +167,23 @@ body:
       to understand X.
   validations:
     required: true
+
+
+- type: markdown
+  attributes:
+    value: >
+      *One last thing...*
+
+
+      *Please, complete **all** sections as described, this form
+      is [processed automatically by a robot][ansibot help].*
+
+
+      Thank you for your collaboration!
+
+
+      [ansibot help]:
+      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
 
 
 - type: checkboxes

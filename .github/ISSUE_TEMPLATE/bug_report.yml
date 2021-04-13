@@ -5,13 +5,31 @@ description: Create a report to help us improve
 body:
 - type: markdown
   attributes:
-    value: |
-      ⚠
-      Verify first that your issue is not [already reported on GitHub][issue search].
-      Also test if the latest release and devel branch are affected too.
-      *Complete **all** sections as described, this form is processed automatically.*
+    value: >
+      **Thank you for wanting to report a bug in ansible-core!**
 
-      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
+
+      ⚠
+      Verify first that your issue is not [already reported on
+      GitHub][issue search] and keep in mind that we may have to keep
+      the current behavior because [every change breaks someone's
+      workflow][XKCD 1172].
+      We try to be mindful about this.
+
+      Also test if the latest release and devel branch are affected too.
+
+
+      **Tip:** If you are seeking community support, please consider
+      [starting a mailing list thread or chatting in IRC][ML||IRC].
+
+
+
+      [ML||IRC]:
+      https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--bug_report.yml#mailing-list-information
+
+      [issue search]: ../search?q=is%3Aissue&type=issues
+
+      [XKCD 1172]: https://xkcd.com/1172/
 
 
 - type: textarea
@@ -28,6 +46,22 @@ body:
 - type: dropdown
   attributes:
     label: Issue Type
+    description: >
+      Please select the single available option in the drop-down.
+
+      <details>
+        <summary>
+          <em>Why?</em>
+        </summary>
+
+        We would do it by ourselves but unfortunatelly, the curent
+        edition of GitHub Issue Forms Alpha does not support this yet 🤷
+
+
+        _We will make it easier in the future, once GitHub
+        supports dropdown defaults. Promise!_
+
+      </details>
     # FIXME: Once GitHub allows defining the default choice, update this
     options:
     - Bug Report
@@ -37,9 +71,22 @@ body:
 - type: input
   attributes:
     label: Component Name
-    description: >-
-      Write the short name of the module, plugin, task or feature below,
-      *use your best guess if unsure*.
+    description: >
+      Write the short name of the rst file, module, plugin, task or
+      feature below, *use your best guess if unsure*.
+
+
+      **Tip:** Cannot find it in this repository? Please be advised that
+      the source for some parts of the documentation are hosted outside
+      of this repository. If the page you are reporting describes
+      modules/plugins/etc that are not officially supported by the
+      Ansible Core Engineering team, there is a good chance that it is
+      coming from one of the [Ansible Collections maintained by the
+      community][collections org]. If this is the case, please make sure
+      to file an issue under the appropriate project there instead.
+
+
+      [collections org]: /ansible-collections
     placeholder: dnf, apt, yum, pip, user etc.
   validations:
     required: true
@@ -49,7 +96,8 @@ body:
     label: Ansible Version
     description: >-
       Paste verbatim output from `ansible --version` below, under
-      the prompt line. Please don't wrap it with tripple backticks.
+      the prompt line. Please don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
     render: console
     value: |
       $ ansible --version
@@ -73,7 +121,8 @@ body:
     description: >-
       Paste verbatim output from `ansible-config dump --only-changed`
       below, under the prompt line.
-      Please don't wrap it with tripple backticks.
+      Please don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
     render: console
     value: |
       $ ansible-config dump --only-changed
@@ -108,6 +157,20 @@ body:
       ```yaml (paste below)
 
       ```
+    placeholder: |
+      1. Implement the following playbook:
+
+         ```yaml
+         ---
+         # ping.yml
+         - hosts: all
+           gather_facts: false
+           tasks:
+           - ping:
+         ...
+         ```
+      2. Then run `ANSIBLE_DEBUG=1 ansible-playbook ping.yml -vvvvv`
+      3. An error occurs.
   validations:
     required: true
 
@@ -128,10 +191,63 @@ body:
     description: |
       Describe what actually happened. If possible run with extra verbosity (`-vvvv`).
 
-      Paste verbatim command output and don't wrap it with tripple backticks.
+      Paste verbatim command output and don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
     render: console
+    placeholder: >-
+      Certificate did not match expected hostname: files.pythonhosted.org. Certificate: {'notAfter': 'Apr 28 19:20:25 2021 GMT', 'subjectAltName': ((u'DNS', 'r.ssl.fastly.net'), (u'DNS', '*.catchpoint.com'), (u'DNS', '*.cnn.io'), (u'DNS', '*.dollarshaveclub.com'), (u'DNS', '*.eater.com'), (u'DNS', '*.fastly.picmonkey.com'), (u'DNS', '*.files.saymedia-content.com'), (u'DNS', '*.ft.com'), (u'DNS', '*.meetupstatic.com'), (u'DNS', '*.nfl.com'), (u'DNS', '*.pagar.me'), (u'DNS', '*.picmonkey.com'), (u'DNS', '*.realself.com'), (u'DNS', '*.sbnation.com'), (u'DNS', '*.shakr.com'), (u'DNS', '*.streamable.com'), (u'DNS', '*.surfly.com'), (u'DNS', '*.theverge.com'), (u'DNS', '*.thrillist.com'), (u'DNS', '*.vox-cdn.com'), (u'DNS', '*.vox.com'), (u'DNS', '*.voxmedia.com'), (u'DNS', 'eater.com'), (u'DNS', 'ft.com'), (u'DNS', 'i.gse.io'), (u'DNS', 'picmonkey.com'), (u'DNS', 'realself.com'), (u'DNS', 'static.wixstatic.com'), (u'DNS', 'streamable.com'), (u'DNS', 'surfly.com'), (u'DNS', 'theverge.com'), (u'DNS', 'vox-cdn.com'), (u'DNS', 'vox.com'), (u'DNS', 'www.joyent.com')), 'subject': ((('countryName', u'US'),), (('stateOrProvinceName', u'California'),), (('localityName', u'San Francisco'),), (('organizationName', u'Fastly, Inc'),), (('commonName', u'r.ssl.fastly.net'),))}
+      Exception:
+      Traceback (most recent call last):
+        File "/usr/local/lib/python2.6/dist-packages/pip/basecommand.py", line 215, in main
+          status = self.run(options, args)
+        File "/usr/local/lib/python2.6/dist-packages/pip/commands/install.py", line 335, in run
+          wb.build(autobuilding=True)
+        File "/usr/local/lib/python2.6/dist-packages/pip/wheel.py", line 749, in build
+          self.requirement_set.prepare_files(self.finder)
+        File "/usr/local/lib/python2.6/dist-packages/pip/req/req_set.py", line 380, in prepare_files
+          ignore_dependencies=self.ignore_dependencies))
+        File "/usr/local/lib/python2.6/dist-packages/pip/req/req_set.py", line 620, in _prepare_file
+          session=self.session, hashes=hashes)
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 821, in unpack_url
+          hashes=hashes
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 659, in unpack_http_url
+          hashes)
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 853, in _download_http_url
+          stream=True,
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/sessions.py", line 521, in get
+          return self.request('GET', url, **kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 386, in request
+          return super(PipSession, self).request(method, url, *args, **kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/sessions.py", line 508, in request
+          resp = self.send(prep, **send_kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/sessions.py", line 618, in send
+          r = adapter.send(request, **kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/cachecontrol/adapter.py", line 47, in send
+          resp = super(CacheControlAdapter, self).send(request, **kw)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/adapters.py", line 506, in send
+          raise SSLError(e, request=request)
+      SSLError: HTTPSConnectionPool(host='files.pythonhosted.org', port=443): Max retries exceeded with url: /packages/ef/ab/aa12712415809bf698e719b307419f953e25344e8f42d557533d7a02b276/netapp_lib-2020.7.16-py2-none-any.whl (Caused by SSLError(CertificateError("hostname 'files.pythonhosted.org' doesn't match either of 'r.ssl.fastly.net', '*.catchpoint.com', '*.cnn.io', '*.dollarshaveclub.com', '*.eater.com', '*.fastly.picmonkey.com', '*.files.saymedia-content.com', '*.ft.com', '*.meetupstatic.com', '*.nfl.com', '*.pagar.me', '*.picmonkey.com', '*.realself.com', '*.sbnation.com', '*.shakr.com', '*.streamable.com', '*.surfly.com', '*.theverge.com', '*.thrillist.com', '*.vox-cdn.com', '*.vox.com', '*.voxmedia.com', 'eater.com', 'ft.com', 'i.gse.io', 'picmonkey.com', 'realself.com', 'static.wixstatic.com', 'streamable.com', 'surfly.com', 'theverge.com', 'vox-cdn.com', 'vox.com', 'www.joyent.com'",),))
+      ERROR: Command "/usr/bin/python2.6 /root/ansible/test/lib/ansible_test/_data/quiet_pip.py install --disable-pip-version-check -r /root/ansible/test/lib/ansible_test/_data/requirements/units.txt -r tests/unit/requirements.txt -c /root/ansible/test/lib/ansible_test/_data/requirements/constraints.txt" returned exit status 2.
+      ERROR: Command "docker exec d47eb360db4ce779c1f690db964655b76e68895c4360ff252c46fe7fe6f5c75a /usr/bin/env ANSIBLE_TEST_CONTENT_ROOT=/root/ansible_collections/netapp/ontap LC_ALL=en_US.UTF-8 /usr/bin/python3.6 /root/ansible/bin/ansible-test units --metadata tests/output/.tmp/metadata-9i2qfrcl.json --truncate 200 --redact --color yes --requirements --python default --requirements-mode only" returned exit status 1.
   validations:
     required: true
+
+
+- type: markdown
+  attributes:
+    value: >
+      *One last thing...*
+
+
+      *Please, complete **all** sections as described, this form
+      is [processed automatically by a robot][ansibot help].*
+
+
+      Thank you for your collaboration!
+
+
+      [ansibot help]:
+      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
 
 
 - type: checkboxes
