@@ -1,0 +1,2 @@
+minor_changes:
+  - constructed - a new options ``trailing_separator`` and ``default_value`` to deal with key's value empty on keyed group.

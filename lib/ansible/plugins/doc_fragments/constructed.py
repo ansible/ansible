@@ -29,6 +29,36 @@ options:
     description: Add hosts to group based on the values of a variable.
     type: list
     default: []
+    elements: dict
+    suboptions:
+      parent_group:
+        type: str
+        description: parent group for keyed group
+      prefix:
+        type: str
+        description: A keyed group name will start with this prefix
+        default: ''
+      separator:
+        type: str
+        description: separator used to build the keyed group name
+        default: "_"
+      key:
+        type: str
+        description:
+        - The key from input dictionary used to generate groups
+      default_value:
+        description:
+        - The default value when the host variable's value is an empty string.
+        - This option is mutually exclusive with C(trailing_separator).
+        type: str
+        version_added: '2.12'
+      trailing_separator:
+        description:
+        - Set this option to I(False) to omit the C(separator) after the host variable when the value is an empty string.
+        - This option is mutually exclusive with C(default_value).
+        type: bool
+        default: True
+        version_added: '2.12'
   use_extra_vars:
     version_added: '2.11'
     description: Merge extra vars into the available variables for composition (highest precedence).
