@@ -96,7 +96,7 @@ body:
       appropriate project there instead.
 
 
-      [collections org]: ../../ansible-collections
+      [collections org]: /ansible-collections
     placeholder: docs/docsite/rst/dev_guide/debugging.rst
   validations:
     required: true
