@@ -31,7 +31,19 @@ No notable changes
 Deprecated
 ==========
 
-No notable changes
+* Bare variables in conditionals: ``when`` conditionals no longer automatically parse string booleans such as ``"true"`` and ``"false"`` into actual booleans. Any variable containing a non-empty string is considered true. This was previously configurable with the ``CONDITIONAL_BARE_VARS`` configuration option (and the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable). This setting no longer has any effect. Users can work around the issue by using the ``|bool`` filter:
+
+.. code-block:: yaml
+
+    vars:
+      teardown: 'false'
+
+    tasks:
+      - include_tasks: teardown.yml
+        when: teardown | bool
+
+      - include_tasks: provision.yml
+        when: not teardown | bool
 
 
 Modules

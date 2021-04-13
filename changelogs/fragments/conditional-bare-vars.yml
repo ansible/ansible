@@ -1,0 +1,2 @@
+breaking_changes:
+  - conditionals - ``when`` conditionals no longer automatically parse string booleans such as ``"true"`` and ``"false"`` into actual booleans. Any non-empty string is now considered true. The ``CONDITIONAL_BARE_VARS`` configuration variable no longer has any effect.
