@@ -1,6 +1,6 @@
-- name: Verify unique's fallback's exception throwing for case_sensitive=True
+- name: Verify unique's fallback's exception throwing for case_sensitive=False
   set_fact:
-    unique_fallback_exc1: '{{ [{"foo": "bar", "moo": "cow"}]|unique(case_sensitive=True) }}'
+    unique_fallback_exc1: '{{ [{"foo": "bar", "moo": "cow"}]|unique(case_sensitive=False) }}'
   ignore_errors: true
   tags: unique
   register: unique_fallback_exc1_res
