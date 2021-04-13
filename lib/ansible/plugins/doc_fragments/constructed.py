@@ -58,7 +58,7 @@ options:
         - This option is mutually exclusive with C(default_value).
         type: bool
         default: False
-        version_added: '2.11'
+        version_added: '2.12'
   use_extra_vars:
     version_added: '2.11'
     description: Merge extra vars into the available variables for composition (highest precedence).
