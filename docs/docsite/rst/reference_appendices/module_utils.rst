@@ -27,8 +27,40 @@ To use this functionality, include ``import ansible.module_utils.basic`` in your
    :members:
 
 
-ArgumentSpecValidator
+Argument Spec
 ---------------------
 
-.. automodule:: ansible.module_utils.common.arg_spec
-    :members:
+Classes and functions for validating parameters against an argument spec.
+
+ArgumentSpecValidator
+=====================
+
+.. autoclass:: ansible.module_utils.common.arg_spec.ArgumentSpecValidator
+   :members:
+
+ValidationResult
+================
+
+.. autoclass:: ansible.module_utils.common.arg_spec.ValidationResult
+   :members:
+
+Parameters
+==========
+
+.. automodule:: ansible.module_utils.common.parameters
+   :members:
+
+Validation
+==========
+
+Standalone functions for validating various parameter types.
+
+.. automodule: ansible.module_utils.common.validation
+   :members:
+
+
+Errors
+------
+
+.. automodule:: ansible.module_utils.errors
+   :members:
