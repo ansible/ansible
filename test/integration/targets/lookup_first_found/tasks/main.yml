@@ -1,10 +1,9 @@
 - name: test with_first_found
-  #shell: echo {{ item }}
   set_fact: "first_found={{ item }}"
   with_first_found:
-    - "{{ role_path + '/files/does_not_exist' }}"
-    - "{{ role_path + '/files/foo1' }}"
-    - "{{ role_path + '/files/bar1' }}"
+    - "does_not_exist"
+    - "foo1"
+    - "{{ role_path + '/files/bar1' }}"   # will only hit this if dwim search is broken
 
 - name: set expected
   set_fact: first_expected="{{ role_path + '/files/foo1' }}"
@@ -24,6 +23,7 @@
   vars:
     params:
       files: "not_a_file.yaml"
+      skip: True
 
 - name: verify q(first_found) result
   assert:
@@ -71,3 +71,16 @@
   assert:
     that:
       - "this_not_set is not defined"
+
+- name: test legacy formats
+  set_fact: hatethisformat={{item}}
+  vars:
+      params:
+        files: not/a/file.yaml;hosts
+        paths: not/a/path:/etc
+  loop: "{{ q('first_found', params) }}"
+
+- name: verify /etc/hosts was found
+  assert:
+    that:
+      - "hatethisformat == '/etc/hosts'"

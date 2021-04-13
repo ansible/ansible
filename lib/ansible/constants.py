@@ -5,19 +5,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import re
 
 from ast import literal_eval
 from jinja2 import Template
 from string import ascii_letters, digits
 
-from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
+from ansible.config.manager import ConfigManager, ensure_type
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
-from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
+from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
+
+# 4 versions above current
+default_deprecated = to_text(float('.'.join(__version__.split('.')[0:2])) + 0.04)
 
 
 def _warning(msg):
@@ -30,7 +33,7 @@ def _warning(msg):
         sys.stderr.write(' [WARNING] %s\n' % (msg))
 
 
-def _deprecated(msg, version='2.8'):
+def _deprecated(msg, version=default_deprecated):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
         from ansible.utils.display import Display

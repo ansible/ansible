@@ -42,7 +42,15 @@ from jinja2.loaders import FileSystemLoader
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsiblePluginRemovedError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.errors import (
+    AnsibleAssertionError,
+    AnsibleError,
+    AnsibleFilterError,
+    AnsibleLookupError,
+    AnsibleOptionsError,
+    AnsiblePluginRemovedError,
+    AnsibleUndefinedVariable,
+)
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils.six.moves import range
 from ansible.module_utils._text import to_native, to_text, to_bytes
@@ -997,7 +1005,22 @@ class Templar:
             ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
             raise AnsibleUndefinedVariable(e)
+        except AnsibleOptionsError as e:
+            # invalid options given to lookup, just reraise
+            raise e
+        except AnsibleLookupError as e:
+            # lookup handled error but still decided to bail
+            if self._fail_on_lookup_errors:
+                msg = 'Lookup failed but the error is being ignored: %s' % to_native(e)
+                if errors == 'warn':
+                    display.warning(msg)
+                elif errors == 'ignore':
+                    display.display(msg, log_only=True)
+                else:
+                    raise e
+            return [] if wantlist else None
         except Exception as e:
+            # errors not handled by lookup
             if self._fail_on_lookup_errors:
                 msg = u"An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % \
                       (name, type(e), to_text(e))
@@ -1006,7 +1029,8 @@ class Templar:
                 elif errors == 'ignore':
                     display.display(msg, log_only=True)
                 else:
-                    raise AnsibleError(to_native(msg))
+                    display.vvv('exception during Jinja2 execution: {0}'.format(format_exc()))
+                    raise AnsibleError(to_native(msg), orig_exc=e)
             return [] if wantlist else None
 
         if ran and allow_unsafe is False:

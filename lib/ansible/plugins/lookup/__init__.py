@@ -123,3 +123,8 @@ class LookupBase(AnsiblePlugin):
                 self._display.warning("Unable to find '%s' in expected paths (use -vvvvv to see paths)" % needle)
 
         return result
+
+    def _deprecate_inline_kv(self):
+        # TODO: place holder to deprecate in future version allowing for long transition period
+        # self._display.deprecated('Passing inline k=v values embeded in a string to this lookup. Use direct ,k=v, k2=v2 syntax instead.', version='2.18')
+        pass
