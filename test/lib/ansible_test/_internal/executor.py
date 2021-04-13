@@ -2144,7 +2144,7 @@ class EnvironmentDescription:
         if not os.path.exists(path):
             return None
 
-        file_hash = hashlib.md5()
+        file_hash = hashlib.sha256()
 
         with open(path, 'rb') as file_fd:
             file_hash.update(file_fd.read())
