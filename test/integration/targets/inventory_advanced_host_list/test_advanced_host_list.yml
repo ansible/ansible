@@ -1,0 +1,9 @@
+- hosts: all
+  connection: local
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - assert:
+        that:
+          - inventory_hostname in ["local100", "local102", "local104", "local106", "local108", "local110", "local118"]
+          - inventory_hostname not in ["local101", "local103", "local105", "local107", "local109", "local111"]
