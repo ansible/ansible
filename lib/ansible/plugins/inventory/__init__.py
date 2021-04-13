@@ -460,7 +460,7 @@ class Constructable(object):
                                     # key's value is empty
                                     if default_value_name is not None:
                                         bare_name = '%s%s%s' % (gname, sep, default_value_name)
-                                    elif trailing_separator is not None and trailing_separator is False:
+                                    elif trailing_separator is False:
                                         bare_name = gname
                                 new_raw_group_names.append(bare_name)
                         else:
