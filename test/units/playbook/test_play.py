@@ -22,7 +22,7 @@ __metaclass__ = type
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleAssertionError, AnsibleParserError
 from ansible.playbook.play import Play
 
 from units.mock.loader import DictDataLoader
@@ -63,6 +63,14 @@ class TestPlay(unittest.TestCase):
             remote_user="testing",
         )
         self.assertRaises(AnsibleParserError, Play.load, play_data)
+
+    def test_play_with_bad_ds_type(self):
+        play_data = []
+        self.assertRaisesRegexp(
+            AnsibleAssertionError,
+            r"while preprocessing data \(\[\]\), ds should be a dict but was a <(?:class|type) 'list'>",
+            Play.load,
+            play_data)
 
     def test_play_with_tasks(self):
         p = Play.load(dict(
