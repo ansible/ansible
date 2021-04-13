@@ -78,7 +78,7 @@
       params:
         files: not/a/file.yaml;hosts
         paths: not/a/path:/etc
-  loop: "{{ q('first_found', params) }}"```
+  loop: "{{ q('first_found', params) }}"
 
 - name: verify /etc/hosts was found
   assert:
