@@ -39,13 +39,13 @@ Other:
 * If you import Python ``module_utils`` into any modules you maintain, you may now mark the import as optional during the module payload build by wrapping the ``import`` statement in a ``try`` or ``if`` block. This allows modules to use ``module_utils`` that may not be present in all versions of Ansible or a collection, and to perform arbitrary recovery or fallback actions during module runtime.
 
 
-Deprecated
-==========
+Breaking Changes
+================
 
 Changes to ``AnsibleModule``
 ----------------------------
 
-With the move to ``ArgumentSpecValidator`` for performing argument spec validation, the following private methods in ``AnsibleModule`` are deprecated:
+With the move to :class:`ArgumentSpecValidator <ansible.module_utils.common.arg_spec.ArgumentSpecValidator>` for performing argument spec validation, the following private methods in :class:`AnsibleModule <ansible.module_utils.basic.AnsibleModule>` have been removed:
 
 .. code-block:: python
 
@@ -77,11 +77,18 @@ With the move to ``ArgumentSpecValidator`` for performing argument spec validati
     _set_defaults()
     _set_fallbacks()
 
-Modules or plugins using these private methods should use the public functions in ``lib/ansible/module_utils/common/validation.py`` or ``ArgumentSpecValidator.validate()``.
+Modules or plugins using these private methods should use the public functions in :mod:`ansible.module_utils.common.validation` or :meth:`ArgumentSpecValidator.validate() <argumentspecvalidator>` if no public function was listed above.
 
+.. code-block:: python
 
     _CHECK_ARGUMENT_TYPES_DISPATCHER  # --> module_utils.parameters.DEFAULT_TYPE_VALIDATORS
 
+Changes to :mod:`ansible.module_utils.common.parameters`
+--------------------------------------------------------
+
+The following functions are now private and should not be used directly. Use :class:`AnsibleModule <ansible.module_utils.basic.AnsibleModule>` instead.
+
+.. code-block:: text
 
 
 Modules
