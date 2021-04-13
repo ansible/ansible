@@ -138,7 +138,7 @@ body:
       appropriate project there instead.
 
 
-      [collections org]: ../../ansible-collections
+      [collections org]: /ansible-collections
     placeholder: dnf, apt, yum, pip, user etc.
   validations:
     required: true
