@@ -68,6 +68,9 @@ class EnvironmentConfig(CommonConfig):
         """
         super(EnvironmentConfig, self).__init__(args, command)
 
+        self.pypi_endpoint = args.pypi_endpoint  # type: str
+        self.pypi_proxy = args.pypi_proxy  # type: bool
+
         self.local = args.local is True
         self.venv = args.venv
         self.venv_system_site_packages = args.venv_system_site_packages
