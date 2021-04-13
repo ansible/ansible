@@ -330,7 +330,7 @@ class RedHatStrategy(GenericStrategy):
 
     def set_permanent_hostname(self, name):
         cmd = [self.hostname_cmd, "set-hostname", name]
-        rc, _, err = self.module.run_command(cmd, True)
+        rc, out, err = self.module.run_command(cmd, True)
         if rc != 0:
             self.module.fail_json(msg="failed to update hostname %s err=%s" % (name, err))
 
