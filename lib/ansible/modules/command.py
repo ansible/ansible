@@ -47,10 +47,12 @@ options:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
+      - This is checked before I(removes) is checked.
   removes:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
+      - This is checked after I(creates) is checked.
     version_added: "0.8"
   chdir:
     type: path
@@ -254,6 +256,7 @@ def main():
 
     # the command module is the one ansible module that does not take key=value args
     # hence don't copy this one if you are looking to build others!
+    # NOTE: ensure splitter.py is kept in sync for exceptions
     module = AnsibleModule(
         argument_spec=dict(
             _raw_params=dict(),
@@ -283,95 +286,103 @@ def main():
     stdin_add_newline = module.params['stdin_add_newline']
     strip = module.params['strip_empty_ends']
 
+    # we promissed these in 'always' ( _lines get autoaded on action plugin)
+    r = {'changed': False, 'stdout': '', 'stderr': '', 'rc': None, 'cmd': None, 'start': None, 'end': None, 'delta': None, 'msg': ''}
+
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
     if (not args or args.strip() == '') and not argv:
-        module.fail_json(rc=256, msg="no command given")
+        r['rc'] = 256
+        r['msg'] = "no command given"
+        module.fail_json(**r)
 
     if args and argv:
-        module.fail_json(rc=256, msg="only command or argv can be given, not both")
+        r['rc'] = 256
+        r['msg'] = "only command or argv can be given, not both"
+        module.fail_json(**r)
 
     if not shell and args:
         args = shlex.split(args)
 
     args = args or argv
-
     # All args must be strings
     if is_iterable(args, include_strings=False):
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
+    r['cmd'] = args
+    if warn:
+        # nany telling you to use module instead!
+        check_command(module, args)
+
     if chdir:
         try:
-            chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
+            chdir = to_bytes(chdir, errors='surrogate_or_strict')
         except ValueError as e:
-            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
+            r['msg'] = 'Unable to use supplied chdir from %s: %s ' % (os.getcwd(), to_text(e))
+            module.fail_json(**r)
 
         try:
             os.chdir(chdir)
         except (IOError, OSError) as e:
-            module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
+            r['msg'] = 'Unable to change directory before execution: %s' % to_text(e)
+            module.fail_json(**r)
 
-    if creates:
-        # do not run the command if the line contains creates=filename
-        # and the filename already exists.  This allows idempotence
-        # of command executions.
-        if glob.glob(creates):
-            module.exit_json(
-                cmd=args,
-                stdout="skipped, since %s exists" % creates,
-                changed=False,
-                rc=0
-            )
-
-    if removes:
-        # do not run the command if the line contains removes=filename
-        # and the filename does not exist.  This allows idempotence
-        # of command executions.
-        if not glob.glob(removes):
-            module.exit_json(
-                cmd=args,
-                stdout="skipped, since %s does not exist" % removes,
-                changed=False,
-                rc=0
-            )
-
-    if warn:
-        check_command(module, args)
-
-    startd = datetime.datetime.now()
-
-    if not module.check_mode:
-        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin, binary_data=(not stdin_add_newline))
-    elif creates or removes:
-        rc = 0
-        out = err = b'Command would have run if not in check mode'
+    # check_mode partial support, since it only really works in checking creates/removes
+    if module.check_mode:
+        shoulda = "Would"
     else:
-        module.exit_json(msg="skipped, running in check mode", skipped=True)
+        shoulda = "Did"
 
-    endd = datetime.datetime.now()
-    delta = endd - startd
+    # special skips for idempotence if file exists (assumes command creates)
+    if creates:
+        if glob.glob(creates):
+            r['msg'] = "%s not run command since '%s' exists" % (shoulda, creates)
+            r['stdout'] = "skipped, since %s exists" % creates  # TODO: deprecate
+
+            r['rc'] = 0
+
+    # special skips for idempotence if file does not exist (assumes command removes)
+    if not r['msg'] and removes:
+        if not glob.glob(removes):
+            r['msg'] = "%s not run command since '%s' does not exist" % (shoulda, removes)
+            r['stdout'] = "skipped, since %s does not exist" % removes  # TODO: deprecate
+            r['rc'] = 0
+
+    if r['msg']:
+        module.exit_json(**r)
+
+    # actually executes command (or not ...)
+    if not module.check_mode:
+        r['start'] = datetime.datetime.now()
+        r['rc'], r['stdout'], r['stderr'] = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None,
+                                                               data=stdin, binary_data=(not stdin_add_newline))
+        r['end'] = datetime.datetime.now()
+    else:
+        # this is partial check_mode support, since we end up skipping if we get here
+        r['rc'] = 0
+        r['msg'] = "Command would have run if not in check mode"
+        r['skipped'] = True
+
+    r['changed'] = True
+
+    # convert to text for jsonization and usability
+    if r['start'] is not None and r['end'] is not None:
+        # these are datetime objects, but need them as strings to pass back
+        r['delta'] = to_text(r['end'] - r['start'])
+        r['end'] = to_text(r['end'])
+        r['start'] = to_text(r['start'])
 
     if strip:
-        out = out.rstrip(b"\r\n")
-        err = err.rstrip(b"\r\n")
+        r['stdout'] = to_text(r['stdout']).rstrip("\r\n")
+        r['stderr'] = to_text(r['stderr']).rstrip("\r\n")
 
-    result = dict(
-        cmd=args,
-        stdout=out,
-        stderr=err,
-        rc=rc,
-        start=str(startd),
-        end=str(endd),
-        delta=str(delta),
-        changed=True,
-    )
+    if r['rc'] != 0:
+        r['msg'] = 'non-zero return code'
+        module.fail_json(**r)
 
-    if rc != 0:
-        module.fail_json(msg='non-zero return code', **result)
-
-    module.exit_json(**result)
+    module.exit_json(**r)
 
 
 if __name__ == '__main__':
