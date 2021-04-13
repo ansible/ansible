@@ -290,39 +290,13 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
-class DeprecatedCache(object):
-    def __init__(self, real_cacheable):
-        self.real_cacheable = real_cacheable
-
-    def get(self, key):
-        display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
-                           'When expecting a KeyError, use self._cache[key] instead of using self.cache.get(key). '
-                           'self._cache is a dictionary and will return a default value instead of raising a KeyError '
-                           'when the key does not exist', version='2.12', collection_name='ansible.builtin')
-        return self.real_cacheable._cache[key]
-
-    def set(self, key, value):
-        display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
-                           'To set the self._cache dictionary, use self._cache[key] = value instead of self.cache.set(key, value). '
-                           'To force update the underlying cache plugin with the contents of self._cache before parse() is complete, '
-                           'call self.set_cache_plugin and it will use the self._cache dictionary to update the cache plugin',
-                           version='2.12', collection_name='ansible.builtin')
-        self.real_cacheable._cache[key] = value
-        self.real_cacheable.set_cache_plugin()
-
-    def __getattr__(self, name):
-        display.deprecated('InventoryModule should utilize self._cache instead of self.cache',
-                           version='2.12', collection_name='ansible.builtin')
-        return self.real_cacheable._cache.__getattribute__(name)
-
-
 class Cacheable(object):
 
     _cache = CacheObject()
 
     @property
     def cache(self):
-        return DeprecatedCache(self)
+        return self._cache
 
     def load_cache_plugin(self):
         plugin_name = self.get_option('cache_plugin')
