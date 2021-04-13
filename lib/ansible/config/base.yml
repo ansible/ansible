@@ -330,20 +330,6 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
-CONDITIONAL_BARE_VARS:
-  name: Allow bare variable evaluation in conditionals
-  default: False
-  type: boolean
-  description:
-    - With this setting on (True), running conditional evaluation 'var' is treated differently than 'var.subkey' as the first is evaluated
-      directly while the second goes through the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
-    - With this setting off they both evaluate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
-    - Currently this setting defaults to 'True' but will soon change to 'False' and the setting itself will be removed in the future.
-    - Expect that this setting eventually will be deprecated after 2.12
-  env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
-  ini:
-  - {key: conditional_bare_variables, section: defaults}
-  version_added: "2.8"
 COVERAGE_REMOTE_OUTPUT:
   name: Sets the output directory and filename prefix to generate coverage run info.
   description:
