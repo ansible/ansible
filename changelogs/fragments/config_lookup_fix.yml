@@ -1,0 +1,2 @@
+bugfixes:
+  - config lookup, can also handle collection plugins now
