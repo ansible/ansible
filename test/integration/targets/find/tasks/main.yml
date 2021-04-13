@@ -272,3 +272,116 @@
   assert:
     that:
       - '"{{ output_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
+
+- name: create our age/size testing sub-directory
+  file:
+    path: "{{ output_dir_test }}/astest"
+    state: directory
+
+- name: create test file with old timestamps
+  file:
+    path: "{{ output_dir_test }}/astest/old.txt"
+    state: touch
+    modification_time: "202001011200.0"
+
+- name: create test file with current timestamps
+  file:
+    path: "{{ output_dir_test }}/astest/new.txt"
+    state: touch
+
+- name: create hidden test file with current timestamps
+  file:
+    path: "{{ output_dir_test }}/astest/.hidden.txt"
+    state: touch
+
+- name: find files older than 1 week
+  find:
+    path: "{{ output_dir_test }}/astest"
+    age: 1w
+    hidden: true
+  register: result
+
+- set_fact:
+    astest_list: >-
+      [ {% for f in result.files %}
+      {{ f.path }}
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+      ]
+
+- name: assert we only find the old file
+  assert:
+    that:
+      - result.matched == 1
+      - '"{{ output_dir_test }}/astest/old.txt" in astest_list'
+
+- name: find files newer than 1 week
+  find:
+    path: "{{ output_dir_test }}/astest"
+    age: -1w
+  register: result
+
+- set_fact:
+    astest_list: >-
+      [ {% for f in result.files %}
+      {{ f.path }}
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+      ]
+
+- name: assert we only find the current file
+  assert:
+    that:
+      - result.matched == 1
+      - '"{{ output_dir_test }}/astest/new.txt" in astest_list'
+
+- name: add some content to the new file
+  shell: "echo hello world > {{ output_dir_test }}/astest/new.txt"
+
+- name: find files with MORE than 5 bytes, also get checksums
+  find:
+    path: "{{ output_dir_test }}/astest"
+    size: 5
+    hidden: true
+    get_checksum: true
+  register: result
+
+- set_fact:
+    astest_list: >-
+      [ {% for f in result.files %}
+      {{ f.path }}
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+      ]
+
+- name: assert we only find the hello world file
+  assert:
+    that:
+      - result.matched == 1
+      - '"{{ output_dir_test }}/astest/new.txt" in astest_list'
+      - '"checksum" in result.files[0]'
+
+- name: find ANY item with LESS than 5 bytes, also get checksums
+  find:
+    path: "{{ output_dir_test }}/astest"
+    size: -5
+    hidden: true
+    get_checksum: true
+    file_type: any
+  register: result
+
+- set_fact:
+    astest_list: >-
+      [ {% for f in result.files %}
+      {{ f.path }}
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+      ]
+
+- name: assert we do not find the hello world file and a checksum is present
+  assert:
+    that:
+      - result.matched == 2
+      - '"{{ output_dir_test }}/astest/old.txt" in astest_list'
+      - '"{{ output_dir_test }}/astest/.hidden.txt" in astest_list'
+      - '"checksum" in result.files[0]'
