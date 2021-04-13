@@ -89,8 +89,12 @@ def _get_plugin_config(pname, ptype, config, variables):
     try:
         # plugin creates settings on load, this is cached so not too expensive to redo
         loader = getattr(plugin_loader, '%s_loader' % ptype)
-        dump = loader.get(pname, class_only=True)
-        result = C.config.get_config_value(config, plugin_type=ptype, plugin_name=pname, variables=variables)
+        p = loader.get(pname, class_only=True)
+        if p is None:
+            raise AnsibleLookupError('Unable to load %s plugin "%s"' % (ptype, pname))
+        result = C.config.get_config_value(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
+    except AnsibleLookupError:
+        raise
     except AnsibleError as e:
         msg = to_native(e)
         if 'was not defined' in msg:
