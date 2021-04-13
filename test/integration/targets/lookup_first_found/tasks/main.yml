@@ -71,3 +71,16 @@
   assert:
     that:
       - "this_not_set is not defined"
+
+- name: test legacy formats
+  set_fact: hatethisformat={{item}}
+  vars:
+      params:
+        files: not/a/file.yaml;hosts
+        paths: not/a/path:/etc
+  loop: "{{ q('first_found', params) }}"```
+
+- name: verify /etc/hosts was found
+  assert:
+    that:
+      - "hatethisformat == '/etc/hosts'"
