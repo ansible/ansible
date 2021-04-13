@@ -367,6 +367,7 @@ A few recommendations when creating such playbooks, ``hosts:`` should be generic
 
 
 This will have an implied entry in the ``collections:`` keyword of ``my_namespace.my_collection`` just as with roles.
+
 .. seealso::
 
   :ref:`developing_collections`
