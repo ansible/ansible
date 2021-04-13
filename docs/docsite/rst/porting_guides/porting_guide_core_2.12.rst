@@ -47,6 +47,12 @@ Deprecated
         when: not teardown | bool
 
 
+Breaking Changes
+================
+
+* Set theory filters (``intersect``, ``difference``, ``symmetric_difference`` and ``union``) are now case-sensitive. Explicitly use ``case_sensitive=False`` to keep previous behavior. Note: with Jinja2 < 2.10, the filters were already case-sensitive by default.
+
+
 Modules
 =======
 

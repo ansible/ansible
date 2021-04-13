@@ -1,0 +1,3 @@
+breaking_changes:
+  - intersect, difference, symmetric_difference, union filters - the default behavior
+    is now to be case-sensitive (https://github.com/ansible/ansible/issues/74255)

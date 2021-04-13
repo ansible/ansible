@@ -91,7 +91,7 @@ def intersect(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     else:
-        c = unique(environment, [x for x in a if x in b])
+        c = unique(environment, [x for x in a if x in b], True)
     return c
 
 
@@ -100,7 +100,7 @@ def difference(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     else:
-        c = unique(environment, [x for x in a if x not in b])
+        c = unique(environment, [x for x in a if x not in b], True)
     return c
 
 
@@ -119,7 +119,7 @@ def union(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     else:
-        c = unique(environment, a + b)
+        c = unique(environment, a + b, True)
     return c
 
 
