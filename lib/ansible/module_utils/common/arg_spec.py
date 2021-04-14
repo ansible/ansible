@@ -59,11 +59,20 @@ class ValidationResult:
 
     def __init__(self, parameters):
         self._no_log_values = set()
+        """:class:`set` of values marked as ``no_log`` in the argument spec. This
+        is a temporary holding place for these values and may move in the future.
+        """
+
         self._unsupported_parameters = set()
         self._validated_parameters = deepcopy(parameters)
         self._deprecations = []
         self._warnings = []
         self.errors = AnsibleValidationErrorMultiple()
+        """
+        :class:`~ansible.module_utils.errors.AnsibleValidationErrorMultiple` containing all
+        :class:`~ansible.module_utils.errors.AnsibleValidationError` objects if there were
+        any failures during validation.
+        """
 
     @property
     def validated_parameters(self):
@@ -77,7 +86,7 @@ class ValidationResult:
 
     @property
     def error_messages(self):
-        """:class:`list` of all error messages."""
+        """:class:`list` of all error messages from :attribute:`errors`."""
         return self.errors.messages
 
 
@@ -146,8 +155,7 @@ class ArgumentSpecValidator:
         :param parameters: Parameters provided
         :type parameters: dict
 
-        :return: Object containing validated parameters.
-        :rtype: ValidationResult
+        :return: :class:`ValidationResult` containing validated parameters.
 
         :Simple Example:
 

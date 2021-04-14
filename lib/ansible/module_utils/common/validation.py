@@ -236,32 +236,38 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
 def check_required_if(requirements, parameters, options_context=None):
     """Check parameters that are conditionally required
 
-    Raises TypeError if the check fails
+    Raises :class:`TypeError` if the check fails
 
     :arg requirements: List of lists specifying a parameter, value, parameters
         required when the given parameter is the specified value, and optionally
         a boolean indicating any or all parameters are required.
 
-        Example:
+        :Example:
+
+        .. code-block: python
+
             required_if=[
                 ['state', 'present', ('path',), True],
                 ['someint', 99, ('bool_param', 'string_param')],
             ]
 
-    :arg module_paramaters: Dictionary of parameters
+    :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
         The results attribute of the exception contains a list of dictionaries.
-        Each dictionary is the result of evaluting each item in requirements.
+        Each dictionary is the result of evaluating each item in requirements.
         Each return dictionary contains the following keys:
 
             :key missing: List of parameters that are required but missing
             :key requires: 'any' or 'all'
-            :key paramater: Parameter name that has the requirement
-            :key value: Original value of the paramater
+            :key parameter: Parameter name that has the requirement
+            :key value: Original value of the parameter
             :key requirements: Original required parameters
 
-        Example:
+        :Example:
+
+        .. code-block:: python
+
             [
                 {
                     'parameter': 'someint',
