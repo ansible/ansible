@@ -32,7 +32,7 @@ Command Line
 Deprecated
 ==========
 
-The constant :const:`ansible.module_utils.basic._CHECK_ARGUMENT_TYPES_DISPATCHER` is deprecated. Use :const:`ansible.module_utils.parameters.DEFAULT_TYPE_VALIDATORS` instead.
+The constant ``ansible.module_utils.basic._CHECK_ARGUMENT_TYPES_DISPATCHER`` is deprecated. Use :const:`ansible.module_utils.common.parameters.DEFAULT_TYPE_VALIDATORS` instead.
 
 
 Breaking Changes
@@ -43,35 +43,35 @@ Changes to ``AnsibleModule``
 
 With the move to :class:`ArgumentSpecValidator <ansible.module_utils.common.arg_spec.ArgumentSpecValidator>` for performing argument spec validation, the following private methods in :class:`AnsibleModule <ansible.module_utils.basic.AnsibleModule>` have been removed:
 
-    - :func:`_check_argument_types()`
-    - :func:`_check_argument_values()`
-    - :func:`_check_arguments()`
-    - :func:`_check_mutually_exclusive()` --> :func:`module_utils.common.validation.check_mutually_exclusive`
-    - :func:`_check_required_arguments()` --> :func:`module_utils.common.validation.check_required_arguments`
-    - :func:`_check_required_by()` --> :func:`module_utils.common.validation._check_required_by`
-    - :func:`_check_required_if()` --> :func:`module_utils.common.validation.check_required_if`
-    - :func:`_check_required_one_of()` --> :func:`module_utils.common.validation.check_required_one_of`
-    - :func:`_check_required_together()` --> :func:`module_utils.common.validation.check_required_together`
-    - :func:`_check_type_bits()` --> :func:`module_utils.common.validation.check_type_bits`
-    - :func:`_check_type_bool()` --> :func:`module_utils.common.validation.check_type_bool`
-    - :func:`_check_type_bytes()` --> :func:`module_utils.common.validation.check_type_bytes`
-    - :func:`_check_type_dict()` --> :func:`module_utils.common.validation.check_type_dict`
-    - :func:`_check_type_float()` --> :func:`module_utils.common.validation.check_type_float`
-    - :func:`_check_type_int()` --> :func:`module_utils.common.validation.check_type_int`
-    - :func:`_check_type_jsonarg()` --> :func:`module_utils.common.validation.check_type_jsonarg`
-    - :func:`_check_type_list()` --> :func:`module_utils.common.validation.check_type_list`
-    - :func:`_check_type_path()` --> :func:`module_utils.common.validation.check_type_path`
-    - :func:`_check_type_raw()` --> :func:`module_utils.common.validation.check_type_raw`
-    - :func:`_check_type_str()` --> :func:`module_utils.common.validation.check_type_str`
-    - :func:`_count_terms()` --> :func:`module_utils.common.validation.count_terms`
-    - :func:`_get_wanted_type()`
-    - :func:`_handle_aliases()`
-    - :func:`_handle_no_log_values()`
-    - :func:`_handle_options()`
-    - :func:`_set_defaults()`
-    - :func:`_set_fallbacks()`
+    - ``_check_argument_types()``
+    - ``_check_argument_values()``
+    - ``_check_arguments()``
+    - ``_check_mutually_exclusive()`` --> :func:`ansible.module_utils.common.validation.check_mutually_exclusive`
+    - ``_check_required_arguments()`` --> :func:`ansible.module_utils.common.validation.check_required_arguments`
+    - ``_check_required_by()`` --> :func:`ansible.module_utils.common.validation.check_required_by`
+    - ``_check_required_if()`` --> :func:`ansible.module_utils.common.validation.check_required_if`
+    - ``_check_required_one_of()`` --> :func:`ansible.module_utils.common.validation.check_required_one_of`
+    - ``_check_required_together()`` --> :func:`ansible.module_utils.common.validation.check_required_together`
+    - ``_check_type_bits()`` --> :func:`ansible.module_utils.common.validation.check_type_bits`
+    - ``_check_type_bool()`` --> :func:`ansible.module_utils.common.validation.check_type_bool`
+    - ``_check_type_bytes()`` --> :func:`ansible.module_utils.common.validation.check_type_bytes`
+    - ``_check_type_dict()`` --> :func:`ansible.module_utils.common.validation.check_type_dict`
+    - ``_check_type_float()`` --> :func:`ansible.module_utils.common.validation.check_type_float`
+    - ``_check_type_int()`` --> :func:`ansible.module_utils.common.validation.check_type_int`
+    - ``_check_type_jsonarg()`` --> :func:`ansible.module_utils.common.validation.check_type_jsonarg`
+    - ``_check_type_list()`` --> :func:`ansible.module_utils.common.validation.check_type_list`
+    - ``_check_type_path()`` --> :func:`ansible.module_utils.common.validation.check_type_path`
+    - ``_check_type_raw()`` --> :func:`ansible.module_utils.common.validation.check_type_raw`
+    - ``_check_type_str()`` --> :func:`ansible.module_utils.common.validation.check_type_str`
+    - ``_count_terms()`` --> :func:`ansible.module_utils.common.validation.count_terms`
+    - ``_get_wanted_type()``
+    - ``_handle_aliases()``
+    - ``_handle_no_log_values()``
+    - ``_handle_options()``
+    - ``_set_defaults()``
+    - ``_set_fallbacks()``
 
-Modules or plugins using these private methods should use the public functions in :mod:`ansible.module_utils.common.validation` or :meth:`ArgumentSpecValidator.validate() <argumentspecvalidator>` if no public function was listed above.
+Modules or plugins using these private methods should use the public functions in :mod:`ansible.module_utils.common.validation` or :meth:`ArgumentSpecValidator.validate() <ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate>` if no public function was listed above.
 
 
 Changes to :mod:`ansible.module_utils.common.parameters`
@@ -79,9 +79,9 @@ Changes to :mod:`ansible.module_utils.common.parameters`
 
 The following functions in :mod:`ansible.module_utils.common.parameters` are now private and should not be used directly. Use :meth:`ArgumentSpecValidator.validate() <ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate>` instead.
 
-    - :func:`list_no_log_values`
-    - :func:`list_deprecations`
-    - :func:`handle_aliases`
+    - ``list_no_log_values``
+    - ``list_deprecations``
+    - ``handle_aliases``
 
 
 Other
