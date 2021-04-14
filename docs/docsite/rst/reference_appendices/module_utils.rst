@@ -43,6 +43,8 @@ ValidationResult
 
 .. autoclass:: ansible.module_utils.common.arg_spec.ValidationResult
    :members:
+   :member-order: bysource
+   :private-members: _no_log_values
 
 Parameters
 ==========
@@ -50,12 +52,17 @@ Parameters
 .. automodule:: ansible.module_utils.common.parameters
    :members:
 
+   .. py:data:: DEFAULT_TYPE_VALIDATORS
+
+     :class:`dict` of type names, such as ``str``, and the default function
+     used to check that type, ``check_type_str`` in this case.
+
 Validation
 ==========
 
 Standalone functions for validating various parameter types.
 
-.. automodule: ansible.module_utils.common.validation
+.. automodule:: ansible.module_utils.common.validation
    :members:
 
 
@@ -64,3 +71,4 @@ Errors
 
 .. automodule:: ansible.module_utils.errors
    :members:
+   :member-order: bysource
