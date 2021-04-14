@@ -484,7 +484,12 @@ class StrategyBase:
         '''
 
         ret_results = []
-        handler_templar = Templar(self._loader)
+        self._handler_templar = None
+
+        def handler_templar():
+            # Lazy-load to avoid unnecessary Templar instanciation when there are no results.
+            self._handler_templar = self._handler_templar or Templar(self._loader)
+            return self._handler_templar
 
         def search_handler_blocks_by_name(handler_name, handler_blocks):
             # iterate in reversed order since last handler loaded with the same name wins
@@ -492,12 +497,12 @@ class StrategyBase:
                 for handler_task in handler_block.block:
                     if handler_task.name:
                         if not handler_task.cached_name:
-                            if handler_templar.is_template(handler_task.name):
-                                handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
-                                                                                                      task=handler_task,
-                                                                                                      _hosts=self._hosts_cache,
-                                                                                                      _hosts_all=self._hosts_cache_all)
-                                handler_task.name = handler_templar.template(handler_task.name)
+                            if handler_templar().is_template(handler_task.name):
+                                handler_templar().available_variables = self._variable_manager.get_vars(play=iterator._play,
+                                                                                                        task=handler_task,
+                                                                                                        _hosts=self._hosts_cache,
+                                                                                                        _hosts_all=self._hosts_cache_all)
+                                handler_task.name = handler_templar().template(handler_task.name)
                             handler_task.cached_name = True
 
                         try:
@@ -633,7 +638,7 @@ class StrategyBase:
                                             continue
 
                                         listeners = listening_handler.get_validated_value(
-                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar()
                                         )
                                         if handler_name not in listeners:
                                             continue
@@ -656,12 +661,12 @@ class StrategyBase:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
                         self._add_host(new_host_info, result_item)
-                        post_process_whens(result_item, original_task, handler_templar)
+                        post_process_whens(result_item, original_task, handler_templar())
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
-                        post_process_whens(result_item, original_task, handler_templar)
+                        post_process_whens(result_item, original_task, handler_templar())
 
                     if 'ansible_facts' in result_item and original_task.action not in C._ACTION_DEBUG:
                         # if delegated fact and we are delegating facts, we need to change target host for them
