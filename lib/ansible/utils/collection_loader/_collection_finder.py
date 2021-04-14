@@ -890,13 +890,18 @@ def _get_collection_playbook_path(playbook):
             pkg = None
 
         if pkg:
+            parts = []
             cpath = os.path.join(sys.modules[acr.n_python_collection_package_name].__file__.replace('__synthetic__', 'playbooks'))
-            path = os.path.join(cpath, to_native(acr.resource))
+            parts.append(cpath)
+            parts.extend(acr.subdirs.split(u'.'))
+            parts.append(to_native(acr.resource))
+            path = os.path.join(*parts)
             if os.path.exists(to_bytes(path)):
                 return acr.resource, path, acr.collection
             elif not acr.resource.endswith(PB_EXTENSIONS):
                 for ext in PB_EXTENSIONS:
-                    path = os.path.join(cpath, to_native(acr.resource + ext))
+                    parts[-1] = to_native(acr.resource + ext)
+                    path = os.path.join(*parts)
                     if os.path.exists(to_bytes(path)):
                         return acr.resource, path, acr.collection
     return None
