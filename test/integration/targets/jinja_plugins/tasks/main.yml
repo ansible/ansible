@@ -13,6 +13,10 @@
       - '"[WARNING]: Skipping filter plugin" in result.stderr'
       - '"[WARNING]: Skipping test plugin" in result.stderr'
       - |
-        result.stderr|regex_findall('bad_filter')|length == 4
+        result.stderr|regex_findall('bad_filter')|length == 2
       - |
         result.stderr|regex_findall('bad_test')|length == 2
+      - |
+        result.stderr|regex_findall('bad_collection_filter')|length == 2
+      - |
+        result.stderr|regex_findall('bad_collection_test')|length == 2
