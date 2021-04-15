@@ -20,15 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import crypt
 import glob
 import hashlib
-import itertools
 import json
 import ntpath
 import os.path
 import re
-import string
 import sys
 import time
 import uuid
@@ -41,8 +38,8 @@ from random import Random, SystemRandom, shuffle
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
-from ansible.module_utils.six import iteritems, string_types, integer_types, reraise, text_type
-from ansible.module_utils.six.moves import reduce, shlex_quote
+from ansible.module_utils.six import string_types, integer_types, reraise, text_type
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
