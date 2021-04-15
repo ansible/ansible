@@ -18,3 +18,6 @@ ANSIBLE_CONFIG=nonexistent.cfg ansible-config dump --only-changed -v | grep 'No 
 
 # https://github.com/ansible/ansible/pull/73715
 ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | grep "'ansibull'"
+
+# test the config option validation
+ansible-playbook validation.yml "$@"
