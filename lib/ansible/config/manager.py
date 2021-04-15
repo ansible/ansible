@@ -552,7 +552,15 @@ class ConfigManager(object):
 
             # deal with restricted values
             if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
-                if value not in defs[config]['choices']:
+                invalid_choices = True  # assume the worst!
+                if defs[config].get('type') == 'list':
+                    # for a list type, compare all values in type are allowed
+                    invalid_choices = not all(choice in defs[config]['choices'] for choice in value)
+                else:
+                    # these should be only the simple data types (string, int, bool, float, etc) .. ignore dicts for now
+                    invalid_choices = value not in defs[config]['choices']
+
+                if invalid_choices:
                     raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
                                               (value, to_native(_get_entry(plugin_type, plugin_name, config)), defs[config]['choices']))
 
