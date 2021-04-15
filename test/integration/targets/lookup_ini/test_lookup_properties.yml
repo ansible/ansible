@@ -78,10 +78,8 @@
           register: bad_mojo
           ignore_errors: true
 
-       - name: verify
-         assert:
-          that:
+        - name: verify
+          assert:
+            that:
             - bad_mojo is failed
             - '"No key to lookup was provided as first term with in string inline option" in bad_mojo.msg'
-
-
