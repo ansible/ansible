@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: does nothing but an empty assign, should fail only if lookup gets invalid options
+      set_fact: whatever={{ lookup('bogus', 1, test_list=['Dan', 'Manuela']) }}
+
+    - name: now pass invalid option and fail!
+      set_fact: whatever={{ lookup('bogus', 1, test_list=['Dan', 'Manuela', 'Yoko']) }}
+      register: bad_input
+      ignore_errors: true
+
+    - name: ensure it fails as expected
+      assert:
+        that:
+          - bad_input is failed
+          - '"Invalid value " in bad_input.msg'
+          - '"valid values are:" in bad_input.msg'
