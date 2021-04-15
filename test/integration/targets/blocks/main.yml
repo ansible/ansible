@@ -96,7 +96,7 @@
   tasks:
   - block:
     - name: include fail.yml in tasks
-      include: fail.yml
+      include_tasks: file=fail.yml
       args:
         msg: "failed from tasks"
     - name: tasks flag should not be set after failure
@@ -106,7 +106,7 @@
     - set_fact:
         rescue_run_after_include_fail: true
     - name: include fail.yml in rescue
-      include: fail.yml
+      include_tasks: file=fail.yml
       args:
         msg: "failed from rescue"
     - name: flag should not be set after failure in rescue
