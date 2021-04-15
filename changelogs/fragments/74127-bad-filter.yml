@@ -1,0 +1,5 @@
+bugfixes:
+- Templating - Ensure we catch exceptions when calling ``.filters()`` or
+  ``.tests()`` on their respective plugins and properly error, instead of
+  aborting which results in no filters being added to the jinja2 environment
+  (https://github.com/ansible/ansible/pull/74127)

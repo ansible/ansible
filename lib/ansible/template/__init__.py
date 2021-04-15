@@ -438,8 +438,12 @@ class JinjaPluginIntercept(MutableMapping):
             return
 
         for plugin in self._pluginloader.all():
-            method_map = getattr(plugin, self._method_map_name)
-            self._delegatee.update(method_map())
+            try:
+                method_map = getattr(plugin, self._method_map_name)
+                self._delegatee.update(method_map())
+            except Exception as e:
+                display.warning("Skipping %s plugin %s as it seems to be invalid: %r" % (self._dirname, to_text(plugin._original_path), e))
+                continue
 
         if self._pluginloader.class_name == 'FilterModule':
             for plugin_name, plugin in self._delegatee.items():
@@ -546,7 +550,15 @@ class JinjaPluginIntercept(MutableMapping):
 
                 method_map = getattr(plugin_impl, self._method_map_name)
 
-                for func_name, func in iteritems(method_map()):
+                try:
+                    func_items = iteritems(method_map())
+                except Exception as e:
+                    display.warning(
+                        "Skipping %s plugin %s as it seems to be invalid: %r" % (self._dirname, to_text(plugin_impl._original_path), e),
+                    )
+                    continue
+
+                for func_name, func in func_items:
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
                     if self._pluginloader.class_name == 'FilterModule':
