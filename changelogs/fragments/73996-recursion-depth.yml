@@ -1,0 +1,3 @@
+bugfixes:
+- Task depth - Prevent exception when the task depth exceeds Pythons recursion depth
+  (https://github.com/ansible/ansible/issues/73996)
