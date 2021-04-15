@@ -283,6 +283,7 @@ class Connection(ConnectionBase):
             for find, replace in replacers.items():
                 proxy_command = proxy_command.replace(find, str(replace))
             try:
+                proxy_command = os.path.expandvars(proxy_command)
                 sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
                 display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command, host=self._play_context.remote_addr)
             except AttributeError:
