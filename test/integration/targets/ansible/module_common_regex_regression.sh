@@ -5,11 +5,11 @@
 
 set -eux
 
-ansible_lib=$(python -c 'import os, ansible; print(os.path.dirname(ansible.__file__))')
+lib_path=$(python -c 'import os, ansible; print(os.path.dirname(os.path.dirname(ansible.__file__)))')
 bad_dir="${OUTPUT_DIR}/ansi[ble"
 
 mkdir "${bad_dir}"
-cp -a "${ansible_lib}" "${bad_dir}"
+cp -a "${lib_path}" "${bad_dir}"
 
-PYTHONPATH="${bad_dir}" ansible -m ping localhost -i ../../inventory "$@"
+PYTHONPATH="${bad_dir}/lib" ansible -m ping localhost -i ../../inventory "$@"
 rm -rf "${bad_dir}"
