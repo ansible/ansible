@@ -65,7 +65,7 @@ import re
 from io import StringIO
 from collections import defaultdict
 
-from ansible.errors import AnsibleLookupError
+from ansible.errors import AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.common._collections_compat import MutableSequence
@@ -132,6 +132,7 @@ class LookupModule(LookupBase):
                 self._deprecate_inline_kv()
                 params = _parse_params(term, paramvals)
                 try:
+                    updated_key = False
                     for param in params:
                         if '=' in param:
                             name, value = param.split('=')
@@ -141,9 +142,13 @@ class LookupModule(LookupBase):
                         elif key == term:
                             # only take first, this format never supported multiple keys inline
                             key = param
+                            updated_key = True
                 except ValueError as e:
                     # bad params passed
                     raise AnsibleLookupError("Could not use '%s' from '%s': %s" % (param, params, to_native(e)), orig_exc=e)
+                if not updated_key:
+                    raise AnsibleOptionsError("No key to lookup was provided as first term with in string inline options: %s" % term)
+                    # only passed options in inline string
 
             # TODO: look to use cache to avoid redoing this for every term if they use same file
             # Retrieve file path
