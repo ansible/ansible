@@ -1,0 +1,3 @@
+minor_changes:
+- Ad Hoc - Add new ``--env`` flag to support ``key=value`` assignments to specify environment variables
+  for the task (https://github.com/ansible/ansible/pull/73762)
