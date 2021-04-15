@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - assert:
+        that:
+          - '"World"|hello == "Hello, World!"'
+          - '"World" is world'
+
+          - '"World"|foo.bar.hello == "Hello, World!"'
+          - '"World" is foo.bar.world'
