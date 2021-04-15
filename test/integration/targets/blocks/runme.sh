@@ -94,4 +94,6 @@ cat rc_test.out
 [ "$(grep -c 'failed=0' rc_test.out)" -eq 1 ]
 rm -f rc_test.out
 
+ansible-playbook unsafe_failed_task.yml "$@"
+
 ansible-playbook finalized_task.yml "$@"
