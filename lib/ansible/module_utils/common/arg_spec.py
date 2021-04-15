@@ -152,10 +152,7 @@ class ArgumentSpecValidator:
         Error messages in the :class:`ValidationResult` may contain no_log values and should be
         sanitized with :func:`ansible.module_utils.common.parameters.sanitize_keys` before logging or displaying.
 
-        :param argument_spec: Specification of parameters, type, and valid values
-        :type argument_spec: dict
-
-        :param parameters: Parameters provided
+        :param parameters: Parameters to validate against the argument spec
         :type parameters: dict
 
         :return: :class:`ValidationResult` containing validated parameters.
