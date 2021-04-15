@@ -1,0 +1,2 @@
+bugfixes:
+  - ini lookup - better error on mixed/bad parameters
