@@ -69,3 +69,17 @@
         that:
           - '_.results.0.item == "section1/value1"'
           - '_.results.1.item == "section1/value2"'
+
+
+    - name: capture bad behaviour
+      block:
+        - name: mix options type and push key out of order
+          debug: msg="{{ lookup('ini', 'file=lookup.ini', 'value1', section='value_section') }}"
+          register: bad_mojo
+          ignore_errors: true
+
+        - name: verify
+          assert:
+            that:
+            - bad_mojo is failed
+            - '"No key to lookup was provided as first term with in string inline option" in bad_mojo.msg'
