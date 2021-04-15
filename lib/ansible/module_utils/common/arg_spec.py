@@ -96,28 +96,6 @@ class ArgumentSpecValidator:
     Creates a validator based on the ``argument_spec`` that can be used to
     validate a number of parameters using the :meth:`validate` method.
 
-    :param argument_spec: Specification of valid parameters and their type. May
-        include nested argument specs.
-    :type argument_spec: dict
-
-    :param mutually_exclusive: List or list of lists of terms that should not
-        be provided together.
-    :type mutually_exclusive: list, optional
-
-    :param required_together: List of lists of terms that are required together.
-    :type required_together: list, optional
-
-    :param required_one_of: List of lists of terms, one of which in each list
-        is required.
-    :type required_one_of: list, optional
-
-    :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
-        one of ``[parameters]`` is required if ``parameter == value``.
-    :type required_if: list, optional
-
-    :param required_by: Dictionary of parameter names that contain a list of
-        parameters required by each key in the dictionary.
-    :type required_by: dict, optional
     """
 
     def __init__(self, argument_spec,
@@ -127,6 +105,31 @@ class ArgumentSpecValidator:
                  required_if=None,
                  required_by=None,
                  ):
+
+        """
+        :param argument_spec: Specification of valid parameters and their type. May
+            include nested argument specs.
+        :type argument_spec: dict
+
+        :param mutually_exclusive: List or list of lists of terms that should not
+            be provided together.
+        :type mutually_exclusive: list
+
+        :kwarg required_together: List of lists of terms that are required together.
+        :type required_together: list
+
+        :param required_one_of: List of lists of terms, one of which in each list
+            is required.
+        :type required_one_of: list
+
+        :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
+            one of ``[parameters]`` is required if ``parameter == value``.
+        :type required_if: list
+
+        :param required_by: Dictionary of parameter names that contain a list of
+            parameters required by each key in the dictionary.
+        :type required_by: dict
+        """
 
         self._mutually_exclusive = mutually_exclusive
         self._required_together = required_together
