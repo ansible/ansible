@@ -80,3 +80,7 @@ if ansible-playbook -i ../../inventory --extra-vars ./vars.yml playbook.yml; the
 fi
 
 ansible-playbook -i ../../inventory --extra-vars @./vars.yml playbook.yml
+
+# #74270 -- ensure we escape directory names before passing to re.compile()
+# particularly in module_common.
+bash module_common_regex_regression.sh

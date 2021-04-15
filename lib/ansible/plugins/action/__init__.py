@@ -1173,7 +1173,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             # try to figure out if we are missing interpreter
             if self._used_interpreter is not None:
-                match = re.compile('%s: (?:No such file or directory|not found)' % self._used_interpreter.lstrip('!#'))
+                interpreter = re.escape(self._used_interpreter.lstrip('!#'))
+                match = re.compile('%s: (?:No such file or directory|not found)' % interpreter)
                 if match.search(data['module_stderr']) or match.search(data['module_stdout']):
                     data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
 
