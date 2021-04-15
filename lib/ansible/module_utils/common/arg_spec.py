@@ -86,7 +86,7 @@ class ValidationResult:
 
     @property
     def error_messages(self):
-        """:class:`list` of all error messages from :attribute:`errors`."""
+        """:class:`list` of all error messages from each exception in :attr:`errors`."""
         return self.errors.messages
 
 
