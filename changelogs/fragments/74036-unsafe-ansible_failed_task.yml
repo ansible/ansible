@@ -1,0 +1,2 @@
+bugfixes:
+  - Prevent ``ansible_failed_task`` from further templating (https://github.com/ansible/ansible/issues/74036)
