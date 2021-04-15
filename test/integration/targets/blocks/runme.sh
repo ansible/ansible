@@ -105,3 +105,5 @@ rm -f role_complete_test.out
 ansible-playbook inherit_notify.yml "$@"
 
 ansible-playbook unsafe_failed_task.yml "$@"
+
+ansible-playbook finalized_task.yml "$@"
