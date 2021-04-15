@@ -417,7 +417,7 @@ else:
 # Do this instead of getting site-packages from distutils.sysconfig so we work when we
 # haven't been installed
 site_packages = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.(py|ps1)$' % site_packages)
+CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.(py|ps1)$' % re.escape(site_packages))
 COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.(py|ps1)$')
 
 # Detect new-style Python modules by looking for required imports:
