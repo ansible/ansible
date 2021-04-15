@@ -553,7 +553,7 @@ def form_urlencoded(body):
     return body
 
 
-def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path):
+def uri(module, url, dest, use_proxy, body, body_format, method, headers, socket_timeout, ca_path):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
     redirected = False
@@ -579,7 +579,8 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
         module.params['follow_redirects'] = False
         if os.path.isdir(dest):
             # first check if we are redirected to a file download
-            _, redir_info = fetch_url(module, url, data=body,
+            _, redir_info = fetch_url(module, url, use_proxy=use_proxy,
+                                      data=body,
                                       headers=headers,
                                       method=method,
                                       timeout=socket_timeout, unix_socket=module.params['unix_socket'])
@@ -596,7 +597,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
         # Reset follow_redirects back to the stashed value
         module.params['follow_redirects'] = follow_redirects
 
-    resp, info = fetch_url(module, url, data=data, headers=headers,
+    resp, info = fetch_url(module, url, use_proxy=use_proxy, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path,
                            **kwargs)
@@ -641,6 +642,7 @@ def main():
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
+        use_proxy=dict(type='bool', default=True),
         ca_path=dict(type='path', default=None),
     )
 
@@ -659,6 +661,7 @@ def main():
     body_format = module.params['body_format'].lower()
     method = module.params['method'].upper()
     dest = module.params['dest']
+    use_proxy = module.params['use_proxy']
     return_content = module.params['return_content']
     creates = module.params['creates']
     removes = module.params['removes']
@@ -707,7 +710,7 @@ def main():
 
     # Make the request
     start = datetime.datetime.utcnow()
-    resp, content, dest = uri(module, url, dest, body, body_format, method,
+    resp, content, dest = uri(module, url, dest, use_proxy, body, body_format, method,
                               dict_headers, socket_timeout, ca_path)
     resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     resp['status'] = int(resp['status'])
