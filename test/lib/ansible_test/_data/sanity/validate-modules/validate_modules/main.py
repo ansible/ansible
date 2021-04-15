@@ -1122,7 +1122,7 @@ class ModuleValidator(Validator):
             if not (filename_deprecated_or_removed or removed or deprecated or doc_deprecated):
                 mismatched_deprecation = False
             else:
-                if (filename_deprecated_or_removed and deprecated and doc_deprecated):
+                if (filename_deprecated_or_removed and doc_deprecated):
                     mismatched_deprecation = False
                 if (filename_deprecated_or_removed and removed and not (documentation_exists or examples_exist or returns_exist)):
                     mismatched_deprecation = False
