@@ -51,7 +51,11 @@ class AnsibleValidationErrorMultiple(AnsibleValidationError):
         return [err.msg for err in self.errors]
 
     def append(self, error):
-        """Add a new error to ``self.errors``. Only :class:`AnsibleValidationError` should be added."""
+        """Append a new error to ``self.errors``.
+
+        Only :class:`AnsibleValidationError` should be added.
+        """
+
         self.errors.append(error)
 
     def extend(self, errors):

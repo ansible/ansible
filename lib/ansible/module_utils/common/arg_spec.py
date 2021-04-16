@@ -50,14 +50,16 @@ from ansible.module_utils.errors import (
 class ValidationResult:
     """Result of argument spec validation.
 
-    This is the object returned by :func:`ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate()`.
-
-    :param parameters: Terms to be validated and coerced to the correct type.
-    :type parameters: dict
-
+    This is the object returned by :func:`ArgumentSpecValidator.validate()
+    <ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate()>`
+    containing the validated parameters and any errors.
     """
 
     def __init__(self, parameters):
+        """
+        :arg parameters: Terms to be validated and coerced to the correct type.
+        :type parameters: dict
+        """
         self._no_log_values = set()
         """:class:`set` of values marked as ``no_log`` in the argument spec. This
         is a temporary holding place for these values and may move in the future.
@@ -95,7 +97,6 @@ class ArgumentSpecValidator:
 
     Creates a validator based on the ``argument_spec`` that can be used to
     validate a number of parameters using the :meth:`validate` method.
-
     """
 
     def __init__(self, argument_spec,
@@ -107,28 +108,28 @@ class ArgumentSpecValidator:
                  ):
 
         """
-        :param argument_spec: Specification of valid parameters and their type. May
+        :arg argument_spec: Specification of valid parameters and their type. May
             include nested argument specs.
-        :type argument_spec: dict
+        :type argument_spec: dict[str, dict]
 
-        :param mutually_exclusive: List or list of lists of terms that should not
+        :kwarg mutually_exclusive: List or list of lists of terms that should not
             be provided together.
-        :type mutually_exclusive: list
+        :type mutually_exclusive: list or list[list]
 
         :kwarg required_together: List of lists of terms that are required together.
-        :type required_together: list
+        :type required_together: list[list[str]]
 
-        :param required_one_of: List of lists of terms, one of which in each list
+        :kwarg required_one_of: List of lists of terms, one of which in each list
             is required.
-        :type required_one_of: list
+        :type required_one_of: list[list[str]]
 
-        :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
+        :kwarg required_if: List of lists of ``[parameter, value, [parameters]]`` where
             one of ``[parameters]`` is required if ``parameter == value``.
         :type required_if: list
 
-        :param required_by: Dictionary of parameter names that contain a list of
+        :kwarg required_by: Dictionary of parameter names that contain a list of
             parameters required by each key in the dictionary.
-        :type required_by: dict
+        :type required_by: dict[str, list[str]]
         """
 
         self._mutually_exclusive = mutually_exclusive
@@ -147,13 +148,13 @@ class ArgumentSpecValidator:
                 self._valid_parameter_names.update([key])
 
     def validate(self, parameters, *args, **kwargs):
-        """Validate parameters against argument spec. Returns a :class:`ValidationResult` object.
+        """Validate ``parameters`` against argument spec.
 
         Error messages in the :class:`ValidationResult` may contain no_log values and should be
-        sanitized with :func:`ansible.module_utils.common.parameters.sanitize_keys` before logging or displaying.
+        sanitized with :func:`~ansible.module_utils.common.parameters.sanitize_keys` before logging or displaying.
 
-        :param parameters: Parameters to validate against the argument spec
-        :type parameters: dict
+        :arg parameters: Parameters to validate against the argument spec
+        :type parameters: dict[str, dict]
 
         :return: :class:`ValidationResult` containing validated parameters.
 
@@ -262,6 +263,12 @@ class ArgumentSpecValidator:
 
 
 class ModuleArgumentSpecValidator(ArgumentSpecValidator):
+    """Argument spec validation class used by :class:`AnsibleModule`.
+
+    This is not meant to be used outside of :class:`AnsibleModule`. Use
+    :class:`ArgumentSpecValidator` instead.
+    """
+
     def __init__(self, *args, **kwargs):
         super(ModuleArgumentSpecValidator, self).__init__(*args, **kwargs)
 

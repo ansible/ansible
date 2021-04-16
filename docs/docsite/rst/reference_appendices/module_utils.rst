@@ -44,7 +44,7 @@ ValidationResult
 .. autoclass:: ansible.module_utils.common.arg_spec.ValidationResult
    :members:
    :member-order: bysource
-   :private-members: _no_log_values
+   :private-members: _no_log_values  # This only works in sphinx >= 3.2. Otherwise it shows all private members with doc strings.
 
 Parameters
 ==========
@@ -54,8 +54,8 @@ Parameters
 
    .. py:data:: DEFAULT_TYPE_VALIDATORS
 
-     :class:`dict` of type names, such as ``str``, and the default function
-     used to check that type, ``check_type_str`` in this case.
+     :class:`dict` of type names, such as ``'str'``, and the default function
+     used to check that type, :func:`~ansible.module_utils.common.validation.check_type_str` in this case.
 
 Validation
 ==========
