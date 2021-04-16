@@ -121,9 +121,9 @@ extends_documentation_fragment:
 - decrypt
 - files
 - validate
+- action_common_attributes
 notes:
 - The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
-- Supports C(check_mode).
 seealso:
 - module: ansible.builtin.assemble
 - module: ansible.builtin.fetch
@@ -134,6 +134,15 @@ seealso:
 author:
 - Ansible Core Team
 - Michael DeHaan
+attributes:
+  action:
+    support: full
+  check_mode:
+    version_added: '0.9'
+    support: full
+  diff_mode:
+    support: full
+    version_added: '0.9'
 '''
 
 EXAMPLES = r'''
