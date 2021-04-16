@@ -538,6 +538,9 @@ class User(object):
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
 
+        if self.umask is not None and self.local is not None:
+            module.fail_json(msg="'umask' can not be used with 'local'")
+
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
 
