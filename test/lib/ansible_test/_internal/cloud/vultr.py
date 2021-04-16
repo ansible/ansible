@@ -30,9 +30,7 @@ class VultrCloudProvider(CloudProvider):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(VultrCloudProvider, self).setup()
 
-        if os.path.isfile(self.config_static_path):
-            self.config_path = self.config_static_path
-            self.managed = False
+        self._use_static_config()
 
 
 class VultrCloudEnvironment(CloudEnvironment):

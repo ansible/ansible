@@ -31,9 +31,7 @@ class ScalewayCloudProvider(CloudProvider):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(ScalewayCloudProvider, self).setup()
 
-        if os.path.isfile(self.config_static_path):
-            self.config_path = self.config_static_path
-            self.managed = False
+        self._use_static_config()
 
 
 class ScalewayCloudEnvironment(CloudEnvironment):
