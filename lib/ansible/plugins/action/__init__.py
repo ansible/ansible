@@ -676,7 +676,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if group is not None:
             res = self._remote_chgrp(remote_paths, group)
             if res['rc'] == 0:
-                # user that something might go weirdly here.
+                # warn user that something might go weirdly here.
                 if self.get_shell_option('world_readable_temp'):
                     display.warning(
                         'Both common_remote_group and '
