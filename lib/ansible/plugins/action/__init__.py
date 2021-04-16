@@ -698,7 +698,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     return remote_paths
 
         # Step 4: World-readable temp directory
-        if self.get_shell_option('world_readable_temp')
+        if self.get_shell_option('world_readable_temp'):
             # chown and fs acls failed -- do things this insecure way only if
             # the user opted in in the config file
             display.warning(
