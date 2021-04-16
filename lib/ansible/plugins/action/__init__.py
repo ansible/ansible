@@ -576,6 +576,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             setfacl_mode = 'r-x'
             # Apple patches their "file_cmds" chmod with ACL support
             chmod_acl_mode = '{0} allow read,execute'.format(become_user)
+            # POSIX-draft ACL specification. Solaris, maybe others.
+            # See chmod(1) on something Solaris-based for syntax details.
+            posix_acl_mode = 'A+user:{0}:rx:allow'.format(become_user)
         else:
             chmod_mode = 'rX'
             # TODO: this form fails silently on freebsd.  We currently
@@ -584,6 +587,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             setfacl_mode = 'r-X'
             # Apple
             chmod_acl_mode = '{0} allow read'.format(become_user)
+            # POSIX-draft
+            posix_acl_mode = 'A+user:{0}:r:allow'.format(become_user)
 
         # Step 3a: Are we able to use setfacl to add user ACLs to the file?
         res = self._remote_set_user_facl(
@@ -639,7 +644,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if res['rc'] == 0:
                 return remote_paths
 
-        # Step 3e: Common group
+        # Step 3e: Try Solaris/OpenSolaris/OpenIndiana-sans-setfacl chmod
+        # Similar to macOS above, Solaris 11.4 drops setfacl and takes file ACLs
+        # via chmod instead. OpenSolaris and illumos-based distros allow for
+        # using either setfacl or chmod, and compatibility depends on filesystem.
+        # It should be possible to debug this branch by installing OpenIndiana
+        # (use ZFS) and going unpriv -> unpriv.
+        res = self._remote_chmod(remote_paths, posix_acl_mode)
+        if res['rc'] == 0:
+            return remote_paths
+
+        # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
         # be able to chown it to that.
