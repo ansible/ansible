@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - git - Add ``accept_newhostkey`` option (https://github.com/ansible/ansible/issues/69846).
