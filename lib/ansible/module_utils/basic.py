@@ -249,13 +249,21 @@ PERMS_RE = re.compile(r'[^rwxXstugo]')
 # and should only restrict on our documented minimum versions
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
 _PY2_MIN = (2, 6) <= sys.version_info[:2] < (3,)
+_PY26 = (2, 6) == sys.version_info[:2]
 _PY_MIN = _PY3_MIN or _PY2_MIN
 if not _PY_MIN:
     print(
         '\n{"failed": true, '
-        '"msg": "Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
+        '"msg": "ansible-core requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
+
+if _PY26:
+    deprecate(
+        'ansible-core 2.13 will require Python 2.7 or newer on the target. '
+        'Current version: %s' % ''.join(sys.version.splitlines()),
+        version='2.13',
+    )
 
 
 #

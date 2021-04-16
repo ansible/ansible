@@ -57,8 +57,8 @@
   - name: Assert that the deprecation message is given correctly
     assert:
       that:
-        - result.deprecations[0].msg == "Alias 'baz' is deprecated. See the module docs for more information"
-        - result.deprecations[0].version == '9.99'
+        - result.deprecations[-1].msg == "Alias 'baz' is deprecated. See the module docs for more information"
+        - result.deprecations[-1].version == '9.99'
 
   - block:
       - name: Get a string with a \0 in it
