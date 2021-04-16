@@ -27,7 +27,7 @@ from ansible import constants as C
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock, mock_open
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote, builtins
 from ansible.module_utils._text import to_bytes
@@ -332,6 +332,9 @@ class TestActionBase(unittest.TestCase):
         remote_paths = ['/tmp/foo/bar.txt', '/tmp/baz.txt']
         remote_user = 'remoteuser1'
 
+        # Used for skipping down to common group dir.
+        CHMOD_ACL_FLAGS = ('+a', 'A+user:remoteuser2:r:allow')
+
         def runWithNoExpectation(execute=False):
             return action_base._fixup_perms2(
                 remote_paths,
@@ -455,12 +458,27 @@ class TestActionBase(unittest.TestCase):
             ['remoteuser2 allow read'] + remote_paths,
             '+a')
 
+        # This case can cause Solaris chmod to return 5 which the ssh plugin
+        # treats as failure. To prevent a regression and ensure we still try the
+        # rest of the cases below, we mock the thrown exception here.
+        # This function ensures that only the macOS case (+a) throws this.
+        def raise_if_plus_a(definitely_not_underscore, mode):
+            if mode == '+a':
+                raise AnsibleAuthenticationFailure()
+            return {'rc': 0, 'stdout': '', 'stderr': ''}
+
+        action_base._remote_chmod.side_effect = raise_if_plus_a
+        assertSuccess()
+
         # Step 3e: Common group
+        def rc_1_if_chmod_acl(definitely_not_underscore, mode):
+            rc = 0
+            if mode in CHMOD_ACL_FLAGS:
+                rc = 1
+            return {'rc': rc, 'stdout': '', 'stderr': ''}
+
         action_base._remote_chmod = MagicMock()
-        action_base._remote_chmod.side_effect = \
-            lambda x, y: \
-            dict(rc=1, stdout='', stderr='') if y == '+a' \
-            else dict(rc=0, stdout='', stderr='')
+        action_base._remote_chmod.side_effect = rc_1_if_chmod_acl
 
         get_shell_option = action_base.get_shell_option
         action_base.get_shell_option = MagicMock()
