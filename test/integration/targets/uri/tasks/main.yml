@@ -474,6 +474,16 @@
       - multipart.json.form.text_form_field1 == 'value1'
       - multipart.json.form.text_form_field2 == 'value2'
 
+# https://github.com/ansible/ansible/issues/74276 - verifies we don't have a traceback
+- name: multipart/form-data with invalid value
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      integer_value: 1
+  register: multipart_invalid
+  failed_when: 'multipart_invalid.msg != "failed to parse body as form-multipart: value must be a string, or mapping, cannot be type int"'
 
 - name: Validate invalid method
   uri:
