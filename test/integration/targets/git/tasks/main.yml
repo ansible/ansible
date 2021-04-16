@@ -21,6 +21,7 @@
 
 - import_tasks: formats.yml
 - import_tasks: missing_hostkey.yml
+- import_tasks: missing_hostkey_acceptnew.yml
 - import_tasks: no-destination.yml
 - import_tasks: specific-revision.yml
 - import_tasks: submodules.yml
