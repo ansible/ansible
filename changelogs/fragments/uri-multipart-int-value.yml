@@ -1,0 +1,2 @@
+bugfixes:
+- uri - Fix traceback and provide error message when trying to use non-string or mapping for ``form-multipart`` body - https://github.com/ansible/ansible/issues/74276

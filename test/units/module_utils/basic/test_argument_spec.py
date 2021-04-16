@@ -15,6 +15,7 @@ import pytest
 from units.compat.mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
+from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 from ansible.module_utils.six import integer_types, string_types
 from ansible.module_utils.six.moves import builtins
@@ -400,8 +401,10 @@ class TestComplexArgSpecs:
         assert am.params['bar3'][1] == 'test/'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
-    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec, monkeypatch):
         """Test a deprecated alias"""
+        monkeypatch.setattr(warnings, '_global_deprecations', [])
+
         am = basic.AnsibleModule(**complex_argspec)
 
         assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']

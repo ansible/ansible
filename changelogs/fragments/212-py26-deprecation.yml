@@ -1,0 +1,4 @@
+minor_changes:
+- Python 2.6 Target Support - Deprecate Python 2.6 for targets, requiring Python 2.7 or newer.
+  ``ansible-core==2.13`` will drop support for Python 2.6.
+  (https://github.com/ansible/ansible/pull/74165)
