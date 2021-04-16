@@ -42,3 +42,16 @@
           - umaskuser_test_2_path.stat.mode == "0700"
           - umaskuser_test_remove is changed
   when: logindefs.stdout_lines is not search ("HOME_MODE")
+
+- name: Create user with setting both umask and local
+  user:
+    name: umaskuser_test_3
+    umask: "077"
+    local: true
+  register: umaskuser_test_3
+  ignore_errors: true
+
+- name: Ensure task has been failed
+  assert:
+    that:
+      - umaskuser_test_3 is failed
