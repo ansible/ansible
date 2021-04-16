@@ -26,6 +26,7 @@ The 'api' module provides the following common argument specs:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import random
 import sys
 import time
 
@@ -91,26 +92,57 @@ def rate_limit(rate=None, rate_limit=None):
     return wrapper
 
 
+def _retry_limit_exceeded(retries):
+    def function_wrapper(function):
+        def raise_error(*args, **kwargs):
+            raise Exception("Retry limit exceeded: %d" % retries)
+        return raise_error
+    return function_wrapper
+
+
 def retry(retries=None, retry_pause=1):
-    """Retry decorator"""
-    def wrapper(f):
+    """Retry decorator.
+    This assumes the function has already been called, so if retries == 1, the maximum attempts
+    have been reached. If retries is None, the function is a no-op.
+    """
+    if retries is None:
+        return lambda function: lambda *args, **kwargs: None
+    if retries <= 1:
+        return _retry_limit_exceeded(retries)
+    try:
+        backoff_delays = [retry_pause for delay in range(0, retries)]
+        return retry_wrapper(backoff_iterator=backoff_delays, retry_condition=lambda x: True)
+    except Exception:
+        raise Exception("Retry limit exceeded: %d" % retries)
 
-        def retried(*args, **kwargs):
-            retry_count = 0
-            if retries is not None:
-                ret = None
-                while True:
-                    retry_count += 1
-                    if retry_count >= retries:
-                        raise Exception("Retry limit exceeded: %d" % retries)
-                    try:
-                        ret = f(*args, **kwargs)
-                    except Exception:
-                        pass
-                    if ret:
-                        break
-                    time.sleep(retry_pause)
-                return ret
 
-        return retried
-    return wrapper
+def jittered_backoff_generator(retries=10, delay=3, max_delay=60):
+    for retry in range(0, retries):
+        yield random.randint(0, min(max_delay, delay * 2 ** retry))
+
+
+def retry_wrapper(backoff_iterator, retry_condition):
+    """Generic retry decorator.
+
+    :param backoff_iterator: An iterable of delays in seconds.
+    :param retry_condition: A function that takes an exception as an argument and returns a boolean.
+    """
+    def function_wrapper(function):
+        def run_function(*args, **kwargs):
+            """This assumes the function has not already been called.
+            If backoff_iterator is empty, we should still run the function a single time with no delay.
+            """
+
+            for delay in backoff_iterator:
+                try:
+                    return function(*args, **kwargs)
+                except Exception as e:
+                    if retry_condition(e):
+                        time.sleep(delay)
+                    else:
+                        raise e
+            # Only or final attempt
+            return function(*args, **kwargs)
+
+        return run_function
+    return function_wrapper

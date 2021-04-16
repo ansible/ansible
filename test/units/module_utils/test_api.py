@@ -46,3 +46,11 @@ class TestRetry:
 
         with pytest.raises(Exception):
             login_database()
+
+    def test_no_retries(self):
+
+        @retry()
+        def login_database():
+            raise Exception("Should not execute")
+
+        login_database()

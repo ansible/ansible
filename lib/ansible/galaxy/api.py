@@ -11,7 +11,6 @@ import functools
 import hashlib
 import json
 import os
-import random
 import stat
 import tarfile
 import time
@@ -20,9 +19,11 @@ import threading
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
+from ansible.module_utils.api import retry_wrapper
+from ansible.module_utils.api import jittered_backoff_generator
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
@@ -37,6 +38,11 @@ except ImportError:
 
 display = Display()
 _CACHE_LOCK = threading.Lock()
+COLLECTION_PAGE_SIZE = '100'
+RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
+    429,  # Too Many Requests
+    520,  # Galaxy rate limit error code
+]
 
 
 def cache_lock(func):
@@ -47,25 +53,13 @@ def cache_lock(func):
     return wrapped
 
 
-def rate_limit_backoff(function):
-    def run_function(*args, **kwargs):
-        # TODO: support user configuration
-        retries = 6
-        delay = 2
-        max_delay = 40
-
-        for retry in range(0, retries):
-            delay = random.randint(0, min(max_delay, delay * 2 ** retry))
-
-            try:
-                return function(*args, **kwargs)
-            except GalaxyError as e:
-                # Galaxy can't always return a helpful error code because cloud.redhat.com masks it
-                if e.http_code not in (520, 429):
-                    raise e
-                time.sleep(delay)
-
-    return run_function
+def rate_limit_exception(exception=None):
+    # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
+    # Since 403 could reflect the actual problem (such as an expired token), we should
+    # not retry by default.
+    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+        return True
+    return False
 
 
 def g_connect(versions):
@@ -331,7 +325,7 @@ class GalaxyAPI:
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
 
-    @rate_limit_backoff
+    @retry_wrapper(jittered_backoff_generator(retries=6, delay=2, max_delay=40), rate_limit_exception)
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
         url_info = urlparse(url)
@@ -806,9 +800,9 @@ class GalaxyAPI:
             pagination_path = ['next']
 
         if 'v3' in self.available_api_versions:
-            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?limit=100')
+            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?limit=%s' % COLLECTION_PAGE_SIZE)
         else:
-            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?page_size=100')
+            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?page_size=%s' % COLLECTION_PAGE_SIZE)
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
@@ -865,6 +859,9 @@ class GalaxyAPI:
             elif relative_link:
                 # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
                 # with someone who knows the AH API.
+
+                # Remove the query string from the versions_url to use the next_link's query
+                versions_url = urljoin(versions_url, urlparse(versions_url).path)
                 next_link = versions_url.replace(versions_url_info.path, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
