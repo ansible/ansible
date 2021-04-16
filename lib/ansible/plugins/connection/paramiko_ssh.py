@@ -21,7 +21,7 @@ DOCUMENTATION = """
         - connection_paramiko
         - connection_ssh_args
     options:
-        ssh_args:
+      ssh_args:
           description: Arguments to pass to all ssh cli tools, used here just to extract proxy command options.
       ssh_common_args:
           description: Common extra args for all ssh CLI tools, used here just to extract proxy command options.
@@ -245,7 +245,7 @@ class Connection(ConnectionBase):
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
-                password=conn_password
+                password=conn_password,
                 timeout=self.get_option('timeout'),
                 port=port,
                 **ssh_connect_kwargs
