@@ -102,6 +102,7 @@ def _retry_limit_exceeded(retries):
 
 def retry(retries=None, retry_pause=1):
     """Retry decorator.
+
     This assumes the function has already been called, so if retries == 1, the maximum attempts
     have been reached. If retries is None, the function is a no-op.
     """

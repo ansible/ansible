@@ -57,9 +57,7 @@ def rate_limit_exception(exception=None):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
-        return True
-    return False
+    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
 
 
 def g_connect(versions):
@@ -799,10 +797,8 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
 
-        if 'v3' in self.available_api_versions:
-            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?limit=%s' % COLLECTION_PAGE_SIZE)
-        else:
-            versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?page_size=%s' % COLLECTION_PAGE_SIZE)
+        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%s' % (page_size_name, COLLECTION_PAGE_SIZE))
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
