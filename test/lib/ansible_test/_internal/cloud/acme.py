@@ -4,14 +4,18 @@ __metaclass__ = type
 
 import os
 
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
+from ..config import (
+    IntegrationConfig,
 )
 
 from ..containers import (
     run_support_container,
+)
+
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
 )
 
 
@@ -19,10 +23,7 @@ class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
     DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(ACMEProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
@@ -33,7 +34,7 @@ class ACMEProvider(CloudProvider):
 
         self.uses_docker = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(ACMEProvider, self).setup()
 
@@ -42,7 +43,7 @@ class ACMEProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_dynamic(self):
+    def _setup_dynamic(self):  # type: () -> None
         """Create a ACME test container using docker."""
         ports = [
             5000,  # control port for flask app in container
@@ -63,16 +64,14 @@ class ACMEProvider(CloudProvider):
 
         self._set_cloud_config('acme_host', self.DOCKER_SIMULATOR_NAME)
 
-    def _setup_static(self):
+    def _setup_static(self):  # type: () -> None
         raise NotImplementedError()
 
 
 class ACMEEnvironment(CloudEnvironment):
     """ACME environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(
             acme_host=self._get_cloud_config('acme_host'),
         )

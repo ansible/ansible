@@ -7,30 +7,30 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
+from ..util import (
+    ConfigParser,
+    display,
 )
 
-from ..util import ConfigParser, display
+from ..config import (
+    IntegrationConfig,
+)
+
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
+)
 
 
 class CloudscaleCloudProvider(CloudProvider):
-    """Cloudscale cloud provider plugin. Sets up cloud resources before
-       delegation.
-    """
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    """Cloudscale cloud provider plugin. Sets up cloud resources before delegation."""
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(CloudscaleCloudProvider, self).__init__(args)
 
         self.uses_config = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(CloudscaleCloudProvider, self).setup()
 
@@ -38,13 +38,9 @@ class CloudscaleCloudProvider(CloudProvider):
 
 
 class CloudscaleCloudEnvironment(CloudEnvironment):
-    """Cloudscale cloud environment plugin. Updates integration test environment
-       after delegation.
-    """
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    """Cloudscale cloud environment plugin. Updates integration test environment after delegation."""
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         parser = ConfigParser()
         parser.read(self.config_path)
 
