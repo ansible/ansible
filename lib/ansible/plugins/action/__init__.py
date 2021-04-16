@@ -659,8 +659,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         'member. In this situation, '
                         'allow_world_readable_tmpfiles is a no-op. See this '
                         'URL for more details: '
-                        'https://docs.ansible.com/ansible/become.html'
-                        '#becoming-an-unprivileged-user')
+                        'https://docs.ansible.com/ansible/latest/user_guide/become.html'
+                        '#risks-of-becoming-an-unprivileged-user')
                 if execute:
                     group_mode = 'g+rwx'
                 else:
@@ -679,7 +679,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 'Using world-readable permissions for temporary files Ansible '
                 'needs to create when becoming an unprivileged user. This may '
                 'be insecure. For information on securing this, see '
-                'https://docs.ansible.com/ansible/user_guide/become.html'
+                'https://docs.ansible.com/ansible/latest/user_guide/become.html'
                 '#risks-of-becoming-an-unprivileged-user')
             res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
             if res['rc'] == 0:
@@ -694,8 +694,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             'Failed to set permissions on the temporary files Ansible needs '
             'to create when becoming an unprivileged user '
             '(rc: %s, err: %s}). For information on working around this, see '
-            'https://docs.ansible.com/ansible/become.html'
-            '#becoming-an-unprivileged-user' % (
+            'https://docs.ansible.com/ansible/latest/user_guide/become.html'
+            '#risks-of-becoming-an-unprivileged-user' % (
                 res['rc'],
                 to_native(res['stderr'])))
 
