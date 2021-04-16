@@ -79,6 +79,8 @@ def test_date_time_epoch(fake_date_facts):
 
     assert fake_date_facts['date_time']['epoch'].isdigit()
     assert len(fake_date_facts['date_time']['epoch']) == 10  # This length will not change any time soon
+    assert fake_date_facts['date_time']['epoch_int'].isdigit()
+    assert len(fake_date_facts['date_time']['epoch_int']) == 10  # This length will not change any time soon
 
 
 @pytest.mark.parametrize('fact_name', ('tz', 'tz_dst'))
