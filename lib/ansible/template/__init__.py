@@ -1010,14 +1010,13 @@ class Templar:
             raise e
         except AnsibleLookupError as e:
             # lookup handled error but still decided to bail
-            if self._fail_on_lookup_errors:
-                msg = 'Lookup failed but the error is being ignored: %s' % to_native(e)
-                if errors == 'warn':
-                    display.warning(msg)
-                elif errors == 'ignore':
-                    display.display(msg, log_only=True)
-                else:
-                    raise e
+            msg = 'Lookup failed but the error is being ignored: %s' % to_native(e)
+            if errors == 'warn':
+                display.warning(msg)
+            elif errors == 'ignore':
+                display.display(msg, log_only=True)
+            else:
+                raise e
             return [] if wantlist else None
         except Exception as e:
             # errors not handled by lookup
