@@ -48,6 +48,15 @@ options:
         type: bool
         default: 'no'
         version_added: "1.5"
+    accept_newhostkey:
+        description:
+            - As of OpenSSH 7.5, "-o StrictHostKeyChecking=accept-new" can be
+              used which is safer and will only accepts host keys which are
+              not present or are the same. if C(yes), ensure that
+              "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
+        type: bool
+        default: 'no'
+        version_added: "2.12"
     ssh_opts:
         description:
             - Creates a wrapper script and exports the path as GIT_SSH
@@ -317,6 +326,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.process import get_bin_path
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
@@ -460,6 +470,21 @@ def get_version(module, git_path, dest, ref="HEAD"):
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
     sha = to_native(stdout).rstrip('\n')
     return sha
+
+
+def ssh_supports_acceptnewhostkey(module):
+    try:
+        ssh_path = get_bin_path('ssh')
+    except ValueError as err:
+        module.fail_json(
+            msg='Remote host is missing ssh command, so you cannot '
+            'use acceptnewhostkey option.', details=to_text(err))
+    supports_acceptnewhostkey = True
+    cmd = [ssh_path, '-o', 'StrictHostKeyChecking=accept-new', '-V']
+    rc, stdout, stderr = module.run_command(cmd)
+    if rc != 0:
+        supports_acceptnewhostkey = False
+    return supports_acceptnewhostkey
 
 
 def get_submodule_versions(git_path, module, dest, version='HEAD'):
@@ -1107,6 +1132,7 @@ def main():
             verify_commit=dict(default='no', type='bool'),
             gpg_whitelist=dict(default=[], type='list', elements='str'),
             accept_hostkey=dict(default='no', type='bool'),
+            accept_newhostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
@@ -1119,7 +1145,7 @@ def main():
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
-        mutually_exclusive=[('separate_git_dir', 'bare')],
+        mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
         supports_check_mode=True
     )
@@ -1150,10 +1176,20 @@ def main():
 
     if module.params['accept_hostkey']:
         if ssh_opts is not None:
-            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+            if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
                 ssh_opts += " -o StrictHostKeyChecking=no"
         else:
             ssh_opts = "-o StrictHostKeyChecking=no"
+
+    if module.params['accept_newhostkey']:
+        if not ssh_supports_acceptnewhostkey(module):
+            module.warn("Your ssh client does not support accept_newhostkey option, therefore it cannot be used.")
+        else:
+            if ssh_opts is not None:
+                if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
+                    ssh_opts += " -o StrictHostKeyChecking=accept-new"
+            else:
+                ssh_opts = "-o StrictHostKeyChecking=accept-new"
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
