@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    become - fix a regression on Solaris where chmod can return 5 which we
+    interpret as auth failure and stop trying become tmpdir permission fallbacks
