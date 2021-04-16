@@ -10,6 +10,8 @@ import json
 
 import pytest
 
+from ansible.module_utils.common import warnings
+
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
 def test_warn(am, capfd):
@@ -23,7 +25,9 @@ def test_warn(am, capfd):
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate(am, capfd):
+def test_deprecate(am, capfd, monkeypatch):
+    monkeypatch.setattr(warnings, '_global_deprecations', [])
+
     am.deprecate('deprecation1')
     am.deprecate('deprecation2', '2.3')  # pylint: disable=ansible-deprecated-no-collection-name
     am.deprecate('deprecation3', version='2.4')  # pylint: disable=ansible-deprecated-no-collection-name
