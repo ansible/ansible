@@ -19,6 +19,14 @@ DOCUMENTATION = """
     version_added: "0.1"
     extends_documentation_fragment:
         - connection_paramiko
+        - connection_ssh_args
+    options:
+        ssh_args:
+          description: Arguments to pass to all ssh cli tools, used here just to extract proxy command options.
+      ssh_common_args:
+          description: Common extra args for all ssh CLI tools, used here just to extract proxy command options.
+      ssh_extra_args:
+          description: Extra exclusive to the 'ssh' CLI, used here just to extract proxy command options.
 """
 
 import os
@@ -141,12 +149,11 @@ class Connection(ConnectionBase):
 
     def _parse_proxy_command(self, port=22):
         proxy_command = None
+        ssh_args = []
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
-        ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', '') or '',
-            getattr(self._play_context, 'ssh_common_args', '') or '',
-            getattr(self._play_context, 'ssh_args', '') or '',
-        ]
+        sources = ['ssh_extra_args', 'ssh_common_args', 'ssh_args']
+        for source in sources:
+            ssh_args.append(self.get_option(source) or getattr(self._play_context, source, ''))
 
         args = self._split_ssh_args(' '.join(ssh_args))
         for i, arg in enumerate(args):

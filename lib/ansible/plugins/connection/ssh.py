@@ -18,6 +18,7 @@ DOCUMENTATION = '''
     author: ansible (@core)
     extends_documentation_fragment:
         - connection_pipelining
+        - connection_ssh_args
     version_added: historical
     notes:
         - Many options default to C(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
@@ -29,8 +30,6 @@ DOCUMENTATION = '''
                - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
-               - name: delegated_vars['ansible_host']
-               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if SSH should check host keys.
           default: True
@@ -691,7 +690,7 @@ class Connection(ConnectionBase):
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
             b_command += [b'-b', b'-']
 
-        if self._play_context.verbosity > 3:
+        if display.verbosity > 3:
             b_command.append(b'-vvv')
 
         # Next, we add ssh_args

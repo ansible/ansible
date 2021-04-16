@@ -18,9 +18,6 @@ options:
             - name: ansible_host
             - name: ansible_ssh_host
             - name: ansible_paramiko_host
-            - name: delegated_vars['ansible_host']
-            - name: delegated_vars['ansible_ssh_host']
-            - name: delegated_vars['ansible_paramiko_host']
     remote_user:
         description:
             - User to login/authenticate as
