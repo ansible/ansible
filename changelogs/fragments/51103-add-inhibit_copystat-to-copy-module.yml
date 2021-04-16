@@ -1,0 +1,2 @@
+bugfixes:
+  - Added the inhibit_copystat flag to copy to allow copy to succeed on platforms where stat values cannot be copied from src to dest. (https://github.com/ansible/ansible/pull/51103)
