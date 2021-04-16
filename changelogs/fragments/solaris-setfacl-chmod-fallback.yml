@@ -1,0 +1,2 @@
+bugfixes:
+  - become - work around setfacl not existing on modern Solaris (and possibly failing on some filesystems even when it does exist)
