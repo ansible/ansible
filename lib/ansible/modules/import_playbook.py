@@ -22,6 +22,27 @@ options:
   free-form:
     description:
       - The name of the imported playbook is specified directly without any other option.
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: full
+    conditional:
+        support: none
+    connection:
+        support: none
+    delegation:
+        support: none
+    loops:
+        support: none
+    tags:
+        support: none
+    until:
+        support: none
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 seealso:
