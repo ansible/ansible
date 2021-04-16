@@ -236,6 +236,12 @@ options:
     version_added: "1.5"
     default: "yes"
     type: bool
+  cacheonly:
+    description:
+      - Tells yum to run entirely from system cache; does not download or update metadata.
+    default: "no"
+    type: bool
+    version_added: "2.12"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -1557,6 +1563,9 @@ class YumModule(YumDnf):
 
         if self.disable_excludes:
             self.yum_basecmd.extend(['--disableexcludes=%s' % self.disable_excludes])
+
+        if self.cacheonly:
+            self.yum_basecmd.extend(['--cacheonly'])
 
         if self.download_only:
             self.yum_basecmd.extend(['--downloadonly'])

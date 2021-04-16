@@ -26,6 +26,7 @@ yumdnf_argument_spec = dict(
         allow_downgrade=dict(type='bool', default=False),
         autoremove=dict(type='bool', default=False),
         bugfix=dict(required=False, type='bool', default=False),
+        cacheonly=dict(type='bool', default=False),
         conf_file=dict(type='str'),
         disable_excludes=dict(type='str', default=None),
         disable_gpg_check=dict(type='bool', default=False),
@@ -71,6 +72,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.allow_downgrade = self.module.params['allow_downgrade']
         self.autoremove = self.module.params['autoremove']
         self.bugfix = self.module.params['bugfix']
+        self.cacheonly = self.module.params['cacheonly']
         self.conf_file = self.module.params['conf_file']
         self.disable_excludes = self.module.params['disable_excludes']
         self.disable_gpg_check = self.module.params['disable_gpg_check']

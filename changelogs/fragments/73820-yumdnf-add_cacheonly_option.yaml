@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - yum - Add ``cacheonly`` option (https://github.com/ansible/ansible/issues/69397).
+  - dnf - Add ``cacheonly`` option (https://github.com/ansible/ansible/issues/69397).
