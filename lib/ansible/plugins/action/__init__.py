@@ -18,7 +18,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
@@ -624,9 +624,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # macOS chmod's +a flag takes its own argument. As a slight hack, we
         # pass that argument as the first element of remote_paths. So we end
         # up running `chmod +a [that argument] [file 1] [file 2] ...`
-        res = self._remote_chmod([chmod_acl_mode] + remote_paths, '+a')
-        if res['rc'] == 0:
-            return remote_paths
+        try:
+            res = self._remote_chmod([chmod_acl_mode] + remote_paths, '+a')
+        except AnsibleAuthenticationFailure as e:
+            # Solaris-based chmod will return 5 when it sees an invalid mode,
+            # and +a is invalid there. Because it returns 5, which is the same
+            # thing sshpass returns on auth failure, our sshpass code will
+            # assume that auth failed. If we don't handle that case here, none
+            # of the other logic below will get run. This is fairly hacky and a
+            # corner case, but probably one that shows up pretty often in
+            # Solaris-based environments (and possibly others).
+            pass
+        else:
+            if res['rc'] == 0:
+                return remote_paths
 
         # Step 3e: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
