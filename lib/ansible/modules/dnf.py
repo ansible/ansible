@@ -228,6 +228,12 @@ options:
     type: bool
     default: "no"
     version_added: "2.11"
+  cacheonly:
+    description:
+      - Tells dnf to run entirely from system cache; does not download or update metadata.
+    type: bool
+    default: "no"
+    version_added: "2.12"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -608,6 +614,9 @@ class DnfModule(YumDnf):
             conf.downloadonly = True
             if self.download_dir:
                 conf.destdir = self.download_dir
+
+        if self.cacheonly:
+            conf.cacheonly = True
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
