@@ -30,7 +30,7 @@ attributes:
     become:
         support: none
     bypass_host_loop:
-        support: partial
+        support: full
     conditional:
         support: none
     connection:
