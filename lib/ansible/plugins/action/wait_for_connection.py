@@ -108,7 +108,7 @@ class ActionModule(ActionBase):
             self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test", sleep=sleep)
 
         except TimedOutException as e:
-            result['failed'] = True
+            result['unreachable'] = True
             result['msg'] = to_text(e)
 
         elapsed = datetime.now() - start
