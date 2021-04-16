@@ -26,50 +26,55 @@ def deprecation_messages():
     ]
 
 
-def test_deprecate_message_only():
+@pytest.fixture
+def reset(monkeypatch):
+    monkeypatch.setattr(warnings, '_global_deprecations', [])
+
+
+def test_deprecate_message_only(reset):
     deprecate('Deprecation message')
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': None, 'collection_name': None}]
 
 
-def test_deprecate_with_collection():
+def test_deprecate_with_collection(reset):
     deprecate(msg='Deprecation message', collection_name='ansible.builtin')
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': None, 'collection_name': 'ansible.builtin'}]
 
 
-def test_deprecate_with_version():
+def test_deprecate_with_version(reset):
     deprecate(msg='Deprecation message', version='2.14')
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': '2.14', 'collection_name': None}]
 
 
-def test_deprecate_with_version_and_collection():
+def test_deprecate_with_version_and_collection(reset):
     deprecate(msg='Deprecation message', version='2.14', collection_name='ansible.builtin')
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': '2.14', 'collection_name': 'ansible.builtin'}]
 
 
-def test_deprecate_with_date():
+def test_deprecate_with_date(reset):
     deprecate(msg='Deprecation message', date='2199-12-31')
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'date': '2199-12-31', 'collection_name': None}]
 
 
-def test_deprecate_with_date_and_collection():
+def test_deprecate_with_date_and_collection(reset):
     deprecate(msg='Deprecation message', date='2199-12-31', collection_name='ansible.builtin')
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'date': '2199-12-31', 'collection_name': 'ansible.builtin'}]
 
 
-def test_multiple_deprecations(deprecation_messages):
+def test_multiple_deprecations(deprecation_messages, reset):
     for d in deprecation_messages:
         deprecate(**d)
 
     assert deprecation_messages == warnings._global_deprecations
 
 
-def test_get_deprecation_messages(deprecation_messages):
+def test_get_deprecation_messages(deprecation_messages, reset):
     for d in deprecation_messages:
         deprecate(**d)
 
