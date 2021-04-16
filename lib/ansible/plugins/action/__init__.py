@@ -14,11 +14,10 @@ import random
 import re
 import stat
 import tempfile
-import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError, AnsibleAuthenticationFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
