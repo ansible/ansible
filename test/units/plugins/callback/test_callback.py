@@ -27,6 +27,8 @@ import types
 from units.compat import unittest
 from units.compat.mock import MagicMock
 
+from ansible.executor.task_result import TaskResult
+from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
 
 
@@ -46,6 +48,18 @@ class TestCallback(unittest.TestCase):
         display_mock.verbosity = 5
         cb = CallbackBase(display=display_mock)
         self.assertIs(cb._display, display_mock)
+
+    def test_host_label(self):
+        result = TaskResult(host=Host('host1'), task=None, return_data={})
+        self.assertEquals(CallbackBase.host_label(result), 'host1')
+
+    def test_host_label_delegated(self):
+        result = TaskResult(
+            host=Host('host1'),
+            task=None,
+            return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
+        )
+        self.assertEquals(CallbackBase.host_label(result), 'host1 -> host2')
 
     # TODO: import callback module so we can patch callback.cli/callback.C
 
