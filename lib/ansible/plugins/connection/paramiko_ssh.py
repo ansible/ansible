@@ -148,13 +148,15 @@ class Connection(ConnectionBase):
         self._log_channel = name
 
     def _parse_proxy_command(self, port=22):
+        # Parse ansible ssh connection args, specifically looking for ProxyCommand
+
         proxy_command = None
         ssh_args = []
-        # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         sources = ['ssh_extra_args', 'ssh_common_args', 'ssh_args']
         for source in sources:
             ssh_args.append(self.get_option(source) or getattr(self._play_context, source, ''))
 
+        # now check for actual proxycommand
         args = self._split_ssh_args(' '.join(ssh_args))
         for i, arg in enumerate(args):
             if arg.lower() == 'proxycommand':
@@ -223,11 +225,9 @@ class Connection(ConnectionBase):
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
-        conn_password = self.get_option('password') or self._play_context.password
-
         allow_agent = True
-
-        if self.get_option('password') is not None:
+        conn_password = self.get_option('password') or self._play_context.password
+        if conn_password is not None:
             allow_agent = False
 
         try:
@@ -245,7 +245,7 @@ class Connection(ConnectionBase):
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
-                password=self.get_option('password'),
+                password=conn_password
                 timeout=self.get_option('timeout'),
                 port=port,
                 **ssh_connect_kwargs
