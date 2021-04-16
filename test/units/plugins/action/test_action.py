@@ -470,7 +470,15 @@ class TestActionBase(unittest.TestCase):
         action_base._remote_chmod.side_effect = raise_if_plus_a
         assertSuccess()
 
-        # Step 3e: Common group
+        # Step 3e: chmod A+ on Solaris
+        # We threw AnsibleAuthenticationFailure above, try Solaris fallback.
+        # Based on our lambda above, it should be successful.
+        action_base._remote_chmod.assert_called_with(
+            remote_paths,
+            'A+user:remoteuser2:r:allow')
+        assertSuccess()
+
+        # Step 3f: Common group
         def rc_1_if_chmod_acl(definitely_not_underscore, mode):
             rc = 0
             if mode in CHMOD_ACL_FLAGS:
