@@ -15,6 +15,7 @@ from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Re
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 from ansible.utils.version import SemanticVersion
+from ansible.release import __version__
 
 from .utils import parse_isodate
 
