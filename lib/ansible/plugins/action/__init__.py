@@ -32,7 +32,7 @@ from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
-from ansible.utils.plugin_docs import get_versioned_docklink
+from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
 
@@ -656,7 +656,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return remote_paths
 
         # we'll need this down here
-        become_link = get_versioned_docklink('user_guide/become.html')
+        become_link = get_versioned_doclink('user_guide/become.html')
 
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
