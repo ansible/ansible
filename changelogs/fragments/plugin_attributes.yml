@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-doc now supports 'attributes' for plugins as per proposal.
