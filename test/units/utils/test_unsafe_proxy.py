@@ -7,6 +7,7 @@ __metaclass__ = type
 
 from ansible.module_utils.six import PY3
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeBytes, AnsibleUnsafeText, wrap_var
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 
 
 def test_wrap_var_text():
@@ -108,3 +109,13 @@ def test_AnsibleUnsafeText():
 
 def test_AnsibleUnsafeBytes():
     assert isinstance(AnsibleUnsafeBytes(b'foo'), AnsibleUnsafe)
+
+
+def test_to_text_unsafe():
+    assert isinstance(to_text(AnsibleUnsafeBytes(b'foo')), AnsibleUnsafeText)
+    assert to_text(AnsibleUnsafeBytes(b'foo')) == AnsibleUnsafeText(u'foo')
+
+
+def test_to_bytes_unsafe():
+    assert isinstance(to_bytes(AnsibleUnsafeText(u'foo')), AnsibleUnsafeBytes)
+    assert to_bytes(AnsibleUnsafeText(u'foo')) == AnsibleUnsafeBytes(b'foo')
