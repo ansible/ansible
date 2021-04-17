@@ -4,31 +4,41 @@ __metaclass__ = type
 
 import os
 
+from .. import types as t
+
 from ..io import (
     read_text_file,
 )
 
 from ..util import (
     ApplicationError,
-    display,
     ConfigParser,
+    display,
 )
 
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
+from ..config import (
+    IntegrationConfig,
+)
+
+from ..target import (
+    IntegrationTarget,
 )
 
 from ..http import (
     HttpClient,
+    parse_qs,
     urlparse,
     urlunparse,
-    parse_qs,
 )
 
 from ..core_ci import (
     AnsibleCoreCI,
+)
+
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
 )
 
 
@@ -36,21 +46,15 @@ class AzureCloudProvider(CloudProvider):
     """Azure cloud provider plugin. Sets up cloud resources before delegation."""
     SHERLOCK_CONFIG_PATH = os.path.expanduser('~/.ansible-sherlock-ci.cfg')
 
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(AzureCloudProvider, self).__init__(args)
 
         self.aci = None
 
         self.uses_config = True
 
-    def filter(self, targets, exclude):
-        """Filter out the cloud tests when the necessary config and resources are not available.
-        :type targets: tuple[TestTarget]
-        :type exclude: list[str]
-        """
+    def filter(self, targets, exclude):  # type: (t.Tuple[IntegrationTarget, ...], t.List[str]) -> None
+        """Filter out the cloud tests when the necessary config and resources are not available."""
         aci = self._create_ansible_core_ci()
 
         if aci.available:
@@ -61,7 +65,7 @@ class AzureCloudProvider(CloudProvider):
 
         super(AzureCloudProvider, self).filter(targets, exclude)
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(AzureCloudProvider, self).setup()
 
@@ -70,14 +74,14 @@ class AzureCloudProvider(CloudProvider):
 
         get_config(self.config_path)  # check required variables
 
-    def cleanup(self):
+    def cleanup(self):  # type: () -> None
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.aci:
             self.aci.stop()
 
         super(AzureCloudProvider, self).cleanup()
 
-    def _setup_dynamic(self):
+    def _setup_dynamic(self):  # type: () -> None
         """Request Azure credentials through Sherlock."""
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
@@ -131,19 +135,15 @@ class AzureCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _create_ansible_core_ci(self):
-        """
-        :rtype: AnsibleCoreCI
-        """
+    def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
+        """Return an Azure instance of AnsibleCoreCI."""
         return AnsibleCoreCI(self.args, 'azure', 'azure', persist=False, stage=self.args.remote_stage, provider='azure', internal=True)
 
 
 class AzureCloudEnvironment(CloudEnvironment):
     """Azure cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         env_vars = get_config(self.config_path)
 
         display.sensitive.add(env_vars.get('AZURE_SECRET'))
@@ -160,21 +160,15 @@ class AzureCloudEnvironment(CloudEnvironment):
             ansible_vars=ansible_vars,
         )
 
-    def on_failure(self, target, tries):
-        """
-        :type target: TestTarget
-        :type tries: int
-        """
+    def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
+        """Callback to run when an integration target fails."""
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the test policy may need to be updated. '
                            'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
 
 
-def get_config(config_path):
-    """
-    :type config_path: str
-    :rtype: dict[str, str]
-    """
+def get_config(config_path):    # type: (str) -> t.Dict[str, str]
+    """Return a configuration dictionary parsed from the given configuration path."""
     parser = ConfigParser()
     parser.read(config_path)
 

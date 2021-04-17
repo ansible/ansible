@@ -5,10 +5,8 @@ __metaclass__ = type
 import os
 import tempfile
 
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
+from ..config import (
+    IntegrationConfig,
 )
 
 from ..docker_util import (
@@ -17,6 +15,12 @@ from ..docker_util import (
 
 from ..containers import (
     run_support_container,
+)
+
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
 )
 
 
@@ -70,17 +74,11 @@ foreground {
 
 
 class GalaxyProvider(CloudProvider):
-    """Galaxy plugin.
-
-    Sets up pulp (ansible-galaxy) servers for tests.
-
+    """
+    Galaxy plugin. Sets up pulp (ansible-galaxy) servers for tests.
     The pulp source itself resides at: https://github.com/pulp/pulp-oci-images
     """
-
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(GalaxyProvider, self).__init__(args)
 
         # Cannot use the latest container image as either galaxy_ng 4.2.0rc2 or pulp 0.5.0 has sporatic issues with
@@ -94,7 +92,7 @@ class GalaxyProvider(CloudProvider):
 
         self.uses_docker = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup cloud resource before delegation and reg cleanup callback."""
         super(GalaxyProvider, self).setup()
 
@@ -145,14 +143,9 @@ class GalaxyProvider(CloudProvider):
 
 
 class GalaxyEnvironment(CloudEnvironment):
-    """Galaxy environment plugin.
-
-    Updates integration test environment after delegation.
-    """
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    """Galaxy environment plugin. Updates integration test environment after delegation."""
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         pulp_user = self._get_cloud_config('PULP_USER')
         pulp_password = self._get_cloud_config('PULP_PASSWORD')
         pulp_host = self._get_cloud_config('PULP_HOST')
