@@ -5,16 +5,16 @@ __metaclass__ = type
 import json
 import os
 
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
-)
+from .. import types as t
 
 from ..util import (
     ApplicationError,
-    display,
     ConfigParser,
+    display,
+)
+
+from ..config import (
+    IntegrationConfig,
 )
 
 from ..http import (
@@ -30,15 +30,18 @@ from ..containers import (
     wait_for_file,
 )
 
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
+)
+
 
 class CsCloudProvider(CloudProvider):
     """CloudStack cloud provider plugin. Sets up cloud resources before delegation."""
     DOCKER_SIMULATOR_NAME = 'cloudstack-sim'
 
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(CsCloudProvider, self).__init__(args)
 
         self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
@@ -48,7 +51,7 @@ class CsCloudProvider(CloudProvider):
         self.uses_docker = True
         self.uses_config = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(CsCloudProvider, self).setup()
 
@@ -57,7 +60,7 @@ class CsCloudProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_static(self):
+    def _setup_static(self):  # type: () -> None
         """Configure CloudStack tests for use with static configuration."""
         parser = ConfigParser()
         parser.read(self.config_static_path)
@@ -82,7 +85,7 @@ class CsCloudProvider(CloudProvider):
 
         display.info('Read cs host "%s" and port %d from config: %s' % (self.host, self.port, self.config_static_path), verbosity=1)
 
-    def _setup_dynamic(self):
+    def _setup_dynamic(self):  # type: () -> None
         """Create a CloudStack simulator using docker."""
         config = self._read_config_template()
 
@@ -129,11 +132,8 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_credentials(self, container_name):
-        """Wait for the CloudStack simulator to return credentials.
-        :type container_name: str
-        :rtype: dict[str, str]
-        """
+    def _get_credentials(self, container_name):  # type: (str) -> t.Dict[str, t.Any]
+        """Wait for the CloudStack simulator to return credentials."""
         def check(value):
             # noinspection PyBroadException
             try:
@@ -150,10 +150,8 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         parser = ConfigParser()
         parser.read(self.config_path)
 
