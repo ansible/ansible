@@ -1,0 +1,5 @@
+breaking_changes:
+    - ansible-test - Unit tests for ``modules`` and ``module_utils`` are now limited to importing only ``ansible.module_utils`` from the ``ansible`` module.
+minor_changes:
+    - ansible-test - Unit tests other than ``modules`` and ``module_utils`` are now run only on Python versions supported by the controller (Python 3.8+).
+    - ansible-test - Unit tests are now run in separate contexts (``controller``, ``modules``, ``module_utils``), each using separate invocations of ``pytest``.

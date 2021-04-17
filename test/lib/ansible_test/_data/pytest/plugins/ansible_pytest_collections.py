@@ -3,9 +3,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 
 # set by ansible-test to a single directory, rather than a list of directories as supported by Ansible itself
 ANSIBLE_COLLECTIONS_PATH = os.path.join(os.environ['ANSIBLE_COLLECTIONS_PATH'], 'ansible_collections')
+
+# set by ansible-test to the minimum python version supported on the controller
+ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION = tuple(int(x) for x in os.environ['ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION'].split('.'))
 
 
 # this monkeypatch to _pytest.pathlib.resolve_package_path fixes PEP420 resolution for collections in pytest >= 6.0.0
@@ -37,8 +41,12 @@ def pytest_configure():
     except AttributeError:
         pytest_configure.executed = True
 
-    # noinspection PyProtectedMember
-    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+    if sys.version_info >= ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION:
+        # noinspection PyProtectedMember
+        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+    else:
+        # noinspection PyProtectedMember
+        from ansible_test._internal.legacy_collection_loader._collection_finder import _AnsibleCollectionFinder
 
     # allow unit tests to import code from collections
 
