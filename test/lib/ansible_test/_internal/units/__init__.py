@@ -5,24 +5,34 @@ __metaclass__ = type
 import os
 import sys
 
+from ..io import (
+    write_text_file,
+    make_dirs,
+)
+
 from ..util import (
     ANSIBLE_TEST_DATA_ROOT,
     display,
     get_available_python_versions,
     is_subdir,
     SubprocessError,
-    REMOTE_ONLY_PYTHON_VERSIONS,
+    SUPPORTED_PYTHON_VERSIONS,
+    ANSIBLE_LIB_ROOT,
+    str_to_version,
+    version_to_str,
 )
 
 from ..util_common import (
     intercept_command,
     ResultType,
     handle_layout_messages,
+    create_temp_dir,
 )
 
 from ..ansible_util import (
     ansible_environment,
     check_pyyaml,
+    get_ansible_python_path,
 )
 
 from ..target import (
@@ -47,8 +57,14 @@ from ..executor import (
     Delegate,
     get_changes_filter,
     install_command_requirements,
-    SUPPORTED_PYTHON_VERSIONS,
 )
+
+
+class TestContext:
+    """Contexts that unit tests run in based on the type of content."""
+    controller = 'controller'
+    modules = 'modules'
+    module_utils = 'module_utils'
 
 
 def command_units(args):
@@ -62,20 +78,33 @@ def command_units(args):
     include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
 
     paths = [target.path for target in include]
-    remote_paths = [path for path in paths
-                    if is_subdir(path, data_context().content.unit_module_path)
-                    or is_subdir(path, data_context().content.unit_module_utils_path)]
+
+    module_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_path)]
+    module_utils_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_utils_path)]
+    controller_paths = sorted(path for path in set(paths) - set(module_paths) - set(module_utils_paths))
+
+    remote_paths = module_paths or module_utils_paths
+
+    test_context_paths = {
+        TestContext.modules: module_paths,
+        TestContext.module_utils: module_utils_paths,
+        TestContext.controller: controller_paths,
+    }
+
+    # temporary definition of "remote" python versions until the full split controller/remote implementation is in place
+    controller_min_python_version = (3, 8)
+    remote_only_python_versions = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) < controller_min_python_version)
 
     if not paths:
         raise AllTargetsSkipped()
 
-    if args.python and args.python in REMOTE_ONLY_PYTHON_VERSIONS and not remote_paths:
+    if args.python and args.python in remote_only_python_versions and not remote_paths:
         raise AllTargetsSkipped()
 
     if args.delegate:
         raise Delegate(require=changes, exclude=args.exclude)
 
-    version_commands = []
+    test_sets = []
 
     available_versions = sorted(get_available_python_versions(list(SUPPORTED_PYTHON_VERSIONS)).keys())
 
@@ -84,15 +113,41 @@ def command_units(args):
         if args.python and version != args.python_version:
             continue
 
+        test_candidates = []
+
+        for test_context, paths in test_context_paths.items():
+            if test_context == TestContext.controller and version in remote_only_python_versions:
+                continue
+
+            if not paths:
+                continue
+
+            env = ansible_environment(args)
+
+            env.update(
+                PYTHONPATH=get_units_ansible_python_path(args, test_context),
+                ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=version_to_str(controller_min_python_version),
+            )
+
+            test_candidates.append((test_context, version, paths, env))
+
+        if not test_candidates:
+            continue
+
         if not args.python and version not in available_versions:
             display.warning("Skipping unit tests on Python %s due to missing interpreter." % version)
             continue
 
         if args.requirements_mode != 'skip':
             install_command_requirements(args, version)
+            check_pyyaml(args, version)
 
-        env = ansible_environment(args)
+        test_sets.extend(test_candidates)
 
+    if args.requirements_mode == 'only':
+        sys.exit()
+
+    for test_context, version, paths, env in test_sets:
         cmd = [
             'pytest',
             '--boxed',
@@ -102,7 +157,7 @@ def command_units(args):
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
-            '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-units.xml' % version),
+            '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (version, test_context)),
         ]
 
         if not data_context().content.collection:
@@ -130,30 +185,61 @@ def command_units(args):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        if version in REMOTE_ONLY_PYTHON_VERSIONS:
-            test_paths = remote_paths
-        else:
-            test_paths = paths
+        cmd.extend(paths)
 
-        if not test_paths:
-            continue
-
-        cmd.extend(test_paths)
-
-        version_commands.append((version, cmd, env))
-
-    if args.requirements_mode == 'only':
-        sys.exit()
-
-    for version, command, env in version_commands:
-        check_pyyaml(args, version)
-
-        display.info('Unit test with Python %s' % version)
+        display.info('Unit test %s with Python %s' % (test_context, version))
 
         try:
             with coverage_context(args):
-                intercept_command(args, command, target_name='units', env=env, python_version=version)
+                intercept_command(args, cmd, target_name=test_context, env=env, python_version=version)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
                 raise
+
+
+def get_units_ansible_python_path(args, test_context):  # type: (UnitsConfig, str) -> str
+    """
+    Return a directory usable for PYTHONPATH, containing only the modules and module_utils portion of the ansible package.
+    The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    if test_context == TestContext.controller:
+        return get_ansible_python_path(args)
+
+    try:
+        cache = get_units_ansible_python_path.cache
+    except AttributeError:
+        cache = get_units_ansible_python_path.cache = {}
+
+    python_path = cache.get(test_context)
+
+    if python_path:
+        return python_path
+
+    python_path = create_temp_dir(prefix='ansible-test-')
+    ansible_path = os.path.join(python_path, 'ansible')
+    ansible_test_path = os.path.join(python_path, 'ansible_test')
+
+    write_text_file(os.path.join(ansible_path, '__init__.py'), '', True)
+    os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), os.path.join(ansible_path, 'module_utils'))
+
+    if data_context().content.collection:
+        # built-in runtime configuration for the collection loader
+        make_dirs(os.path.join(ansible_path, 'config'))
+        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'config', 'ansible_builtin_runtime.yml'), os.path.join(ansible_path, 'config', 'ansible_builtin_runtime.yml'))
+
+        # current collection loader required by all python versions supported by the controller
+        write_text_file(os.path.join(ansible_path, 'utils', '__init__.py'), '', True)
+        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader'), os.path.join(ansible_path, 'utils', 'collection_loader'))
+
+        # legacy collection loader required by all python versions not supported by the controller
+        write_text_file(os.path.join(ansible_test_path, '__init__.py'), '', True)
+        write_text_file(os.path.join(ansible_test_path, '_internal', '__init__.py'), '', True)
+        os.symlink(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'legacy_collection_loader'), os.path.join(ansible_test_path, '_internal', 'legacy_collection_loader'))
+    elif test_context == TestContext.modules:
+        # only non-collection ansible module tests should have access to ansible built-in modules
+        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'modules'), os.path.join(ansible_path, 'modules'))
+
+    cache[test_context] = python_path
+
+    return python_path
