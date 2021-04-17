@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Clean up code in the cloud plugins.

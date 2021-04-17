@@ -9,24 +9,25 @@ from ..util import (
     ConfigParser,
 )
 
+from ..config import (
+    IntegrationConfig,
+)
+
 from . import (
-    CloudProvider,
     CloudEnvironment,
     CloudEnvironmentConfig,
+    CloudProvider,
 )
 
 
 class GcpCloudProvider(CloudProvider):
     """GCP cloud provider plugin. Sets up cloud resources before delegation."""
-    def __init__(self, args):
-        """Set up container references for provider.
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(GcpCloudProvider, self).__init__(args)
 
         self.uses_config = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(GcpCloudProvider, self).setup()
 
@@ -38,10 +39,8 @@ class GcpCloudProvider(CloudProvider):
 
 class GcpCloudEnvironment(CloudEnvironment):
     """GCP cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         parser = ConfigParser()
         parser.read(self.config_path)
 

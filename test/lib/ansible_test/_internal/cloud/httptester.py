@@ -4,12 +4,6 @@ __metaclass__ = type
 
 import os
 
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
-)
-
 from ..util import (
     display,
     generate_password,
@@ -21,6 +15,12 @@ from ..config import (
 
 from ..containers import (
     run_support_container,
+)
+
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
 )
 
 KRB5_PASSWORD_ENV = 'KRB5_PASSWORD'
@@ -83,7 +83,7 @@ class HttptesterProvider(CloudProvider):
 class HttptesterEnvironment(CloudEnvironment):
     """HTTP Tester environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
-        """Returns the cloud environment config."""
+        """Return environment configuration for use in the test environment after delegation."""
         return CloudEnvironmentConfig(
             env_vars=dict(
                 HTTPTESTER='1',  # backwards compatibility for tests intended to work with or without HTTP Tester

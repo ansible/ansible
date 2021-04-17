@@ -4,12 +4,6 @@ __metaclass__ = type
 
 import re
 
-from . import (
-    CloudProvider,
-    CloudEnvironment,
-    CloudEnvironmentConfig,
-)
-
 from ..io import (
     read_text_file,
 )
@@ -18,9 +12,19 @@ from ..util import (
     display,
 )
 
+from ..config import (
+    IntegrationConfig,
+)
+
 from ..containers import (
     run_support_container,
     wait_for_file,
+)
+
+from . import (
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+    CloudProvider,
 )
 
 
@@ -28,10 +32,7 @@ class OpenShiftCloudProvider(CloudProvider):
     """OpenShift cloud provider plugin. Sets up cloud resources before delegation."""
     DOCKER_CONTAINER_NAME = 'openshift-origin'
 
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         super(OpenShiftCloudProvider, self).__init__(args, config_extension='.kubeconfig')
 
         # The image must be pinned to a specific version to guarantee CI passes with the version used.
@@ -40,7 +41,7 @@ class OpenShiftCloudProvider(CloudProvider):
         self.uses_docker = True
         self.uses_config = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(OpenShiftCloudProvider, self).setup()
 
@@ -49,7 +50,7 @@ class OpenShiftCloudProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_static(self):
+    def _setup_static(self):  # type: () -> None
         """Configure OpenShift tests for use with static configuration."""
         config = read_text_file(self.config_static_path)
 
@@ -58,7 +59,7 @@ class OpenShiftCloudProvider(CloudProvider):
         if not match:
             display.warning('Could not find OpenShift endpoint in kubeconfig.')
 
-    def _setup_dynamic(self):
+    def _setup_dynamic(self):  # type: () -> None
         """Create a OpenShift container using docker."""
         port = 8443
 
@@ -88,12 +89,8 @@ class OpenShiftCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_config(self, container_name, server):
-        """Get OpenShift config from container.
-        :type container_name: str
-        :type server: str
-        :rtype: dict[str, str]
-        """
+    def _get_config(self, container_name, server):  # type: (str, str) -> str
+        """Get OpenShift config from container."""
         stdout = wait_for_file(self.args, container_name, '/var/lib/origin/openshift.local.config/master/admin.kubeconfig', sleep=10, tries=30)
 
         config = stdout
@@ -105,10 +102,8 @@ class OpenShiftCloudProvider(CloudProvider):
 
 class OpenShiftCloudEnvironment(CloudEnvironment):
     """OpenShift cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
         env_vars = dict(
             K8S_AUTH_KUBECONFIG=self.config_path,
         )

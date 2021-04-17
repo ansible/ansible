@@ -5,10 +5,10 @@ __metaclass__ = type
 import abc
 import atexit
 import datetime
-import time
 import os
 import re
 import tempfile
+import time
 
 from .. import types as t
 
@@ -21,25 +21,26 @@ from ..io import (
 )
 
 from ..util import (
+    ABC,
+    ANSIBLE_TEST_CONFIG_ROOT,
     ApplicationError,
     display,
     import_plugins,
     load_plugins,
-    ABC,
-    ANSIBLE_TEST_CONFIG_ROOT,
 )
 
 from ..util_common import (
-    write_json_test_results,
     ResultType,
+    write_json_test_results,
 )
 
 from ..target import (
-    TestTarget,
+    IntegrationTarget,
 )
 
 from ..config import (
     IntegrationConfig,
+    TestConfig,
 )
 
 from ..ci import (
@@ -58,7 +59,7 @@ PROVIDERS = {}
 ENVIRONMENTS = {}
 
 
-def initialize_cloud_plugins():
+def initialize_cloud_plugins():  # type: () -> None
     """Import cloud plugins and load them into the plugin dictionaries."""
     import_plugins('cloud')
 
@@ -66,12 +67,8 @@ def initialize_cloud_plugins():
     load_plugins(CloudEnvironment, ENVIRONMENTS)
 
 
-def get_cloud_platforms(args, targets=None):
-    """
-    :type args: TestConfig
-    :type targets: tuple[IntegrationTarget] | None
-    :rtype: list[str]
-    """
+def get_cloud_platforms(args, targets=None):  # type: (TestConfig, t.Optional[t.Tuple[IntegrationTarget, ...]]) -> t.List[str]
+    """Return cloud platform names for the specified targets."""
     if isinstance(args, IntegrationConfig):
         if args.list_targets:
             return []
@@ -86,11 +83,8 @@ def get_cloud_platforms(args, targets=None):
     return sorted(cloud_platforms)
 
 
-def get_cloud_platform(target):
-    """
-    :type target: IntegrationTarget
-    :rtype: str | None
-    """
+def get_cloud_platform(target):  # type: (IntegrationTarget) -> t.Optional[str]
+    """Return the name of the cloud platform used for the given target, or None if no cloud platform is used."""
     cloud_platforms = set(a.split('/')[1] for a in target.aliases if a.startswith('cloud/') and a.endswith('/') and a != 'cloud/')
 
     if not cloud_platforms:
@@ -107,21 +101,13 @@ def get_cloud_platform(target):
     raise ApplicationError('Target %s aliases contains multiple cloud platforms: %s' % (target.name, ', '.join(sorted(cloud_platforms))))
 
 
-def get_cloud_providers(args, targets=None):
-    """
-    :type args: IntegrationConfig
-    :type targets: tuple[IntegrationTarget] | None
-    :rtype: list[CloudProvider]
-    """
+def get_cloud_providers(args, targets=None):  # type: (IntegrationConfig, t.Optional[t.Tuple[IntegrationTarget, ...]]) -> t.List[CloudProvider]
+    """Return a list of cloud providers for the given targets."""
     return [PROVIDERS[p](args) for p in get_cloud_platforms(args, targets)]
 
 
-def get_cloud_environment(args, target):
-    """
-    :type args: IntegrationConfig
-    :type target: IntegrationTarget
-    :rtype: CloudEnvironment
-    """
+def get_cloud_environment(args, target):  # type: (IntegrationConfig, IntegrationTarget) -> t.Optional[CloudEnvironment]
+    """Return the cloud environment for the given target, or None if no cloud environment is used for the target."""
     cloud_platform = get_cloud_platform(target)
 
     if not cloud_platform:
@@ -130,12 +116,8 @@ def get_cloud_environment(args, target):
     return ENVIRONMENTS[cloud_platform](args)
 
 
-def cloud_filter(args, targets):
-    """
-    :type args: IntegrationConfig
-    :type targets: tuple[IntegrationTarget]
-    :return: list[str]
-    """
+def cloud_filter(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationTarget, ...]) -> t.List[str]
+    """Return a list of target names to exclude based on the given targets."""
     if args.metadata.cloud_config is not None:
         return []  # cloud filter already performed prior to delegation
 
@@ -147,11 +129,8 @@ def cloud_filter(args, targets):
     return exclude
 
 
-def cloud_init(args, targets):
-    """
-    :type args: IntegrationConfig
-    :type targets: tuple[IntegrationTarget]
-    """
+def cloud_init(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationTarget, ...]) -> None
+    """Initialize cloud plugins for the given targets."""
     if args.metadata.cloud_config is not None:
         return  # cloud configuration already established prior to delegation
 
@@ -192,10 +171,7 @@ class CloudBase(ABC):
     _MANAGED = 'managed'
     _SETUP_EXECUTED = 'setup_executed'
 
-    def __init__(self, args):
-        """
-        :type args: IntegrationConfig
-        """
+    def __init__(self, args):  # type: (IntegrationConfig) -> None
         self.args = args
         self.platform = self.__module__.split('.')[-1]
 
@@ -214,87 +190,60 @@ class CloudBase(ABC):
         data_context().register_payload_callback(config_callback)
 
     @property
-    def setup_executed(self):
-        """
-        :rtype: bool
-        """
+    def setup_executed(self):  # type: () -> bool
+        """True if setup has been executed, otherwise False."""
         return self._get_cloud_config(self._SETUP_EXECUTED, False)
 
     @setup_executed.setter
-    def setup_executed(self, value):
-        """
-        :type value: bool
-        """
+    def setup_executed(self, value):  # type: (bool) -> None
+        """True if setup has been executed, otherwise False."""
         self._set_cloud_config(self._SETUP_EXECUTED, value)
 
     @property
-    def config_path(self):
-        """
-        :rtype: str
-        """
+    def config_path(self):  # type: () -> str
+        """Path to the configuration file."""
         return os.path.join(data_context().content.root, self._get_cloud_config(self._CONFIG_PATH))
 
     @config_path.setter
-    def config_path(self, value):
-        """
-        :type value: str
-        """
+    def config_path(self, value):  # type: (str) -> None
+        """Path to the configuration file."""
         self._set_cloud_config(self._CONFIG_PATH, value)
 
     @property
-    def resource_prefix(self):
-        """
-        :rtype: str
-        """
+    def resource_prefix(self):  # type: () -> str
+        """Resource prefix."""
         return self._get_cloud_config(self._RESOURCE_PREFIX)
 
     @resource_prefix.setter
-    def resource_prefix(self, value):
-        """
-        :type value: str
-        """
+    def resource_prefix(self, value):  # type: (str) -> None
+        """Resource prefix."""
         self._set_cloud_config(self._RESOURCE_PREFIX, value)
 
     @property
-    def managed(self):
-        """
-        :rtype: bool
-        """
+    def managed(self):  # type: () -> bool
+        """True if resources are managed by ansible-test, otherwise False."""
         return self._get_cloud_config(self._MANAGED)
 
     @managed.setter
-    def managed(self, value):
-        """
-        :type value: bool
-        """
+    def managed(self, value):  # type: (bool) -> None
+        """True if resources are managed by ansible-test, otherwise False."""
         self._set_cloud_config(self._MANAGED, value)
 
-    def _get_cloud_config(self, key, default=None):
-        """
-        :type key: str
-        :type default: str | int | bool | None
-        :rtype: str | int | bool
-        """
+    def _get_cloud_config(self, key, default=None):  # type: (str, t.Optional[t.Union[str, int, bool]]) -> t.Union[str, int, bool]
+        """Return the specified value from the internal configuration."""
         if default is not None:
             return self.args.metadata.cloud_config[self.platform].get(key, default)
 
         return self.args.metadata.cloud_config[self.platform][key]
 
-    def _set_cloud_config(self, key, value):
-        """
-        :type key: str
-        :type value: str | int | bool
-        """
+    def _set_cloud_config(self, key, value):  # type: (str, t.Union[str, int, bool]) -> None
+        """Set the specified key and value in the internal configuration."""
         self.args.metadata.cloud_config[self.platform][key] = value
 
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
-    def __init__(self, args, config_extension='.ini'):
-        """
-        :type args: IntegrationConfig
-        :type config_extension: str
-        """
+    def __init__(self, args, config_extension='.ini'):  # type: (IntegrationConfig, str) -> None
         super(CloudProvider, self).__init__(args)
 
         self.ci_provider = get_ci_provider()
@@ -307,11 +256,8 @@ class CloudProvider(CloudBase):
         self.uses_config = False
         self.uses_docker = False
 
-    def filter(self, targets, exclude):
-        """Filter out the cloud tests when the necessary config and resources are not available.
-        :type targets: tuple[TestTarget]
-        :type exclude: list[str]
-        """
+    def filter(self, targets, exclude):  # type: (t.Tuple[IntegrationTarget, ...], t.List[str]) -> None
+        """Filter out the cloud tests when the necessary config and resources are not available."""
         if not self.uses_docker and not self.uses_config:
             return
 
@@ -337,22 +283,20 @@ class CloudProvider(CloudBase):
                 display.warning('Excluding tests marked "%s" which requires container support or config (see "%s"): %s'
                                 % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
         self.resource_prefix = self.ci_provider.generate_resource_prefix()
         self.resource_prefix = re.sub(r'[^a-zA-Z0-9]+', '-', self.resource_prefix)[:63].lower().rstrip('-')
 
         atexit.register(self.cleanup)
 
-    def cleanup(self):
+    def cleanup(self):  # type: () -> None
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.remove_config:
             os.remove(self.config_path)
 
-    def _use_static_config(self):
-        """
-        :rtype: bool
-        """
+    def _use_static_config(self):  # type: () -> bool
+        """Use a static config file if available. Returns True if static config is used, otherwise returns False."""
         if os.path.isfile(self.config_static_path):
             display.info('Using existing %s cloud config: %s' % (self.platform, self.config_static_path), verbosity=1)
             self.config_path = self.config_static_path
@@ -364,10 +308,8 @@ class CloudProvider(CloudBase):
 
         return static
 
-    def _write_config(self, content):
-        """
-        :type content: str
-        """
+    def _write_config(self, content):  # type: (t.Text) -> None
+        """Write the given content to the config file."""
         prefix = '%s-' % os.path.splitext(os.path.basename(self.config_static_path))[0]
 
         with tempfile.NamedTemporaryFile(dir=data_context().content.integration_path, prefix=prefix, suffix=self.config_extension, delete=False) as config_fd:
@@ -381,22 +323,16 @@ class CloudProvider(CloudBase):
             config_fd.write(to_bytes(content))
             config_fd.flush()
 
-    def _read_config_template(self):
-        """
-        :rtype: str
-        """
+    def _read_config_template(self):  # type: () -> t.Text
+        """Read and return the configuration template."""
         lines = read_text_file(self.config_template_path).splitlines()
         lines = [line for line in lines if not line.startswith('#')]
         config = '\n'.join(lines).strip() + '\n'
         return config
 
     @staticmethod
-    def _populate_config_template(template, values):
-        """
-        :type template: str
-        :type values: dict[str, str]
-        :rtype: str
-        """
+    def _populate_config_template(template, values):  # type: (t.Text, t.Dict[str, str]) -> t.Text
+        """Populate and return the given template with the provided values."""
         for key in sorted(values):
             value = values[key]
             template = template.replace('@%s' % key, value)
@@ -406,7 +342,7 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
-    def setup_once(self):
+    def setup_once(self):  # type: () -> None
         """Run setup if it has not already been run."""
         if self.setup_executed:
             return
@@ -414,31 +350,25 @@ class CloudEnvironment(CloudBase):
         self.setup()
         self.setup_executed = True
 
-    def setup(self):
+    def setup(self):  # type: () -> None
         """Setup which should be done once per environment instead of once per test target."""
 
     @abc.abstractmethod
-    def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
+    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+        """Return environment configuration for use in the test environment after delegation."""
 
-    def on_failure(self, target, tries):
-        """
-        :type target: IntegrationTarget
-        :type tries: int
-        """
+    def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
+        """Callback to run when an integration target fails."""
 
 
 class CloudEnvironmentConfig:
     """Configuration for the environment."""
-    def __init__(self, env_vars=None, ansible_vars=None, module_defaults=None, callback_plugins=None):
-        """
-        :type env_vars: dict[str, str] | None
-        :type ansible_vars: dict[str, any] | None
-        :type module_defaults: dict[str, dict[str, any]] | None
-        :type callback_plugins: list[str] | None
-        """
+    def __init__(self,
+                 env_vars=None,  # type: t.Optional[t.Dict[str, str]]
+                 ansible_vars=None,  # type: t.Optional[t.Dict[str, t.Any]]
+                 module_defaults=None,  # type: t.Optional[t.Dict[str, t.Dict[str, t.Any]]]
+                 callback_plugins=None,  # type: t.Optional[t.List[str]]
+                 ):
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars
         self.module_defaults = module_defaults
