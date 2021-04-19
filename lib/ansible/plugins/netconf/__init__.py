@@ -32,7 +32,10 @@ try:
     from ncclient.xml_ import to_xml, to_ele, NCElement
     HAS_NCCLIENT = True
     NCCLIENT_IMP_ERR = None
-except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+# paramiko and gssapi are incompatible and raise AttributeError not ImportError
+# When running in FIPS mode, cryptography raises InternalError
+# https://bugzilla.redhat.com/show_bug.cgi?id=1778939
+except Exception as err:
     HAS_NCCLIENT = False
     NCCLIENT_IMP_ERR = err
 
