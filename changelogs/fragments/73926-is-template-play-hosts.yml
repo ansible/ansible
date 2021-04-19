@@ -1,0 +1,3 @@
+bugfixes:
+- Variable Manager - Only check if ``play.hosts`` is a template when the play
+  hasn't been finalized (https://github.com/ansible/ansible/issues/73926)

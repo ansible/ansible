@@ -487,7 +487,7 @@ class VariableManager:
             variables['groups'] = self._inventory.get_groups_dict()
             if play:
                 templar = Templar(loader=self._loader)
-                if templar.is_template(play.hosts):
+                if not play.finalized and templar.is_template(play.hosts):
                     pattern = 'all'
                 else:
                     pattern = play.hosts or 'all'
