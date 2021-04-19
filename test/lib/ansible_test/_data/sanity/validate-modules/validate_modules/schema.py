@@ -452,8 +452,9 @@ def deprecation_schema(for_collection):
             Required('removed_in'): version(for_collection),
         }
     else:
-        version_schema = {Required('removed_in'): deprecation_versions()}
-
+        version_schema = {
+            Required('removed_in'): deprecation_versions(),
+        }
     version_schema.update(main_fields)
 
     result = Any(
