@@ -9,4 +9,4 @@
 
 # perform an include task which should be static if all of the task's parents are static, otherwise it should be dynamic
 # this file was loaded using import_tasks, which is static, so this include should also be static
-- include: syntax_error.yml
+- include_tasks: syntax_error.yml

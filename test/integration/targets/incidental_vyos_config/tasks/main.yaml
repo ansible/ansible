@@ -1,3 +1,9 @@
 ---
-- {include: cli.yaml, tags: ['cli']}
-- {include: cli_config.yaml, tags: ['cli_config']}
+- include_tasks: cli.yaml
+  apply:
+      tags:
+          - 'cli'
+- include_tasks: cli_config.yaml
+  apply:
+      tags:
+          - 'cli_config'
