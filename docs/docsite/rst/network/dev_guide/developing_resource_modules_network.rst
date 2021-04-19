@@ -518,7 +518,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
 .. code-block:: yaml
 
    ---
-   - include: cli.yaml
+   - import_tasks: cli.yaml
      tags:
        - cli
 
@@ -538,13 +538,20 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
      set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
    - name: run test cases (connection=network_cli)
-     include: "{{ test_case_to_run }} ansible_connection=network_cli"
+     include_tasks:
+        file: "{{ test_case_to_run }}"
+     vars:
+        ansible_connection: network_cli
      with_items: "{{ test_items }}"
      loop_control:
        loop_var: test_case_to_run
 
    - name: run test case (connection=local)
-     include: "{{ test_case_to_run }} ansible_connection=local ansible_become=no"
+     include_tasks:
+        file: "{{ test_case_to_run }}"
+     vars:
+        ansible_connection: local
+        ansible_become: no
      with_first_found: "{{ test_items }}"
      loop_control:
        loop_var: test_case_to_run
@@ -558,11 +565,11 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
    msg: START vyos_l3_interfaces merged integration tests on connection={{ ansible_connection
      }}
 
-  - include_tasks: _remove_config.yaml
+  - import_tasks: _remove_config.yaml
 
   - block:
 
-   - include_tasks: _populate.yaml
+   - import_tasks: _populate.yaml
 
    - name: Overrides all device configuration with provided configuration
      register: result
@@ -613,7 +620,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
            \ == 0 }}"
   always:
 
-   - include_tasks: _remove_config.yaml
+   - import_tasks: _remove_config.yaml
 
 
 Detecting test resources at runtime
