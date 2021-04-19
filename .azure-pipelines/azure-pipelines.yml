@@ -99,6 +99,8 @@ stages:
               test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
+            - name: FreeBSD 13.0
+              test: freebsd/13.0
           groups:
             - 1
             - 2
@@ -178,6 +180,8 @@ stages:
               test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
+            - name: FreeBSD 13.0
+              test: freebsd/13.0
   - stage: Incidental_Docker
     displayName: Incidental Docker
     dependsOn: []
