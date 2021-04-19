@@ -158,6 +158,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # later when the object is actually loaded
         self._loader = None
         self._variable_manager = None
+        self._templar = None
 
         # other internal params
         self._validated = False
@@ -179,6 +180,19 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
+
+    def _resolve_templar(self, templar=None):
+
+        if templar is None:
+            if self._templar is None:
+                raise AnsibleError("A templar object is required for this function, either passing directly or by using `set_templar`, but none were suplied")
+            else:
+                templar = self._templar
+        else:
+            self._templar = templar
+
+        return templar
+
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -255,7 +269,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
     def get_variable_manager(self):
         return self._variable_manager
 
-    def _post_validate_debugger(self, attr, value, templar):
+    def _post_validate_debugger(self, attr, value, templar=None):
+
+        templar = self._resolve_templar(templar)
+
         value = templar.template(value)
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
         if value and isinstance(value, string_types) and value not in valid_values:
@@ -339,7 +356,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return new_me
 
-    def get_validated_value(self, name, attribute, value, templar):
+    def get_validated_value(self, name, attribute, value, templar=None):
+
+        templar = self._resolve_templar(templar)
+
         if attribute.isa == 'string':
             value = to_text(value)
         elif attribute.isa == 'int':
@@ -390,12 +410,14 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             value.post_validate(templar=templar)
         return value
 
-    def post_validate(self, templar):
+    def post_validate(self, templar=None):
         '''
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
         any _post_validate_<foo> functions.
         '''
+
+        templar = self._resolve_templar(templar)
 
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
@@ -599,6 +621,19 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
 
+        def set_templar(self, templar):
+            self._templar = templar
+
+        def get_fa(self, key):
+            return self.'_%s' % key
+
+        def __getter__(self, key):
+            if self._templar is None:
+                value = getattr(self, get_fa(key))
+            else
+                value = self.get_validated_value(key, self.get_fa(key), getattr(self, key))
+
+            return value
 
 class Base(FieldAttributeBase):
 
