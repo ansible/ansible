@@ -117,12 +117,18 @@ def retry(retries=None, retry_pause=1):
     return wrapper
 
 
-def jittered_backoff_generator(retries=10, delay=3, max_delay=60):
+def generate_jittered_backoff(retries=10, delay=3, max_delay=60):
+    """The "Full Jitter" backoff strategy described here https://www.awsarchitectureblog.com/2015/03/backoff.html
+
+    :param retries: The number of delays to generate.
+    :param delay: The time in seconds for the initial delay.
+    :param max_delay: The maximum time in seconds for any delay.
+    """
     for retry in range(0, retries):
         yield random.randint(0, min(max_delay, delay * 2 ** retry))
 
 
-def retry_wrapper(backoff_iterator, retry_condition):
+def retry_with_delays_and_condition(backoff_iterator, retry_condition):
     """Generic retry decorator.
 
     :param backoff_iterator: An iterable of delays in seconds.
@@ -138,10 +144,9 @@ def retry_wrapper(backoff_iterator, retry_condition):
                 try:
                     return function(*args, **kwargs)
                 except Exception as e:
-                    if retry_condition(e):
-                        time.sleep(delay)
-                    else:
-                        raise e
+                    if not retry_condition(e):
+                        raise
+                    time.sleep(delay)
             # Only or final attempt
             return function(*args, **kwargs)
 

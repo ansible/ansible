@@ -19,8 +19,8 @@ import threading
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils.api import retry_wrapper
-from ansible.module_utils.api import jittered_backoff_generator
+from ansible.module_utils.api import retry_with_delays_and_condition
+from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
@@ -38,10 +38,10 @@ except ImportError:
 
 display = Display()
 _CACHE_LOCK = threading.Lock()
-COLLECTION_PAGE_SIZE = '100'
+COLLECTION_PAGE_SIZE = 100
 RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
     429,  # Too Many Requests
-    520,  # Galaxy rate limit error code
+    520,  # Galaxy rate limit error code (Cloudflare unknown error)
 ]
 
 
@@ -53,7 +53,7 @@ def cache_lock(func):
     return wrapped
 
 
-def rate_limit_exception(exception=None):
+def is_rate_limit_exception():
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
@@ -323,7 +323,10 @@ class GalaxyAPI:
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
 
-    @retry_wrapper(jittered_backoff_generator(retries=6, delay=2, max_delay=40), rate_limit_exception)
+    @retry_with_delays_and_condition(
+        backoff_iterator=generate_jittered_backoff(retries=6, delay=2, max_delay=40),
+        retry_condition=is_rate_limit_exception
+    )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
         url_info = urlparse(url)
@@ -798,7 +801,7 @@ class GalaxyAPI:
             pagination_path = ['next']
 
         page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
-        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%s' % (page_size_name, COLLECTION_PAGE_SIZE))
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
