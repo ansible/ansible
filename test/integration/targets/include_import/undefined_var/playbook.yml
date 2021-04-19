@@ -26,7 +26,7 @@
           - "_include_role_result is failed"
         msg: "'include_role' did not evaluate it's attached condition and failed"
 
-    - include_tasks: include_that_defines_var.yml
+    - include: include_that_defines_var.yml
       static: yes
       when:
         - "_undefined == 'yes'"
