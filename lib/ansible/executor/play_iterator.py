@@ -36,7 +36,8 @@ __all__ = ['PlayIterator']
 
 
 class AnsibleEndPlay(Exception):
-    pass
+    def __init__(self, result):
+        self.result = result
 
 
 class HostState:

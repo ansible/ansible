@@ -322,7 +322,7 @@ class TaskQueueManager:
             self._failed_hosts[host_name] = True
 
         if iterator.end_play:
-            raise AnsibleEndPlay
+            raise AnsibleEndPlay(play_return)
 
         return play_return
 
