@@ -13,10 +13,10 @@
             if ( "{{ slug }}" == "{{ current_version }}" ) {
               option.selected = true;
             }
-            if (current_url.search("{{ current_version }}") > -1) {
-              option.value = current_url.replace("{{ current_version }}","{{ slug }}");
+            if (current_url.search("/{{ current_version }}/") > -1) {
+              option.value = current_url.replace("/{{ current_version }}/","/{{ slug }}/");
             } else {
-              option.value = current_url.replace("latest","{{ slug }}");
+              option.value = current_url.replace("/latest/","/{{ slug }}/");
             }
             x.add(option);
           </script>
