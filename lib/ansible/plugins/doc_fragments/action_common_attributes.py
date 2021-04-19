@@ -18,6 +18,9 @@ attributes:
       description: If module_defaults are settable for this action, as it is part of an action_group
       support: none
       membership: []
+    api:
+      description: Instead of executing code on a target, this action interacts with an API on behalf of the target.
+      support: none
     async:
       description: Supports being used with the ``async`` keyword
       support: full
