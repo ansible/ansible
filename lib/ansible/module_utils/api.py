@@ -128,11 +128,13 @@ def generate_jittered_backoff(retries=10, delay=3, max_delay=60):
         yield random.randint(0, min(max_delay, delay * 2 ** retry))
 
 
-def retry_with_delays_and_condition(backoff_iterator, retry_condition):
+def retry_with_delays_and_condition(backoff_iterator, retry_condition, do_on_retry=None, retry_on_success=None):
     """Generic retry decorator.
 
     :param backoff_iterator: An iterable of delays in seconds.
-    :param retry_condition: A function that takes an exception as an argument and returns a boolean.
+    :param retry_condition: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
+    :param do_on_retry: An optional callable that takes an exception/None and the current delay and runs before the sleep (returns None).
+    :param retry_on_success: An optional callable that accepts the decorated function return value and decides whether or not to retry (returns a bool).
     """
     def function_wrapper(function):
         def run_function(*args, **kwargs):
@@ -141,12 +143,23 @@ def retry_with_delays_and_condition(backoff_iterator, retry_condition):
             """
 
             for delay in backoff_iterator:
+                error = None
+
                 try:
-                    return function(*args, **kwargs)
+                    result = function(*args, **kwargs)
                 except Exception as e:
                     if not retry_condition(e):
                         raise
-                    time.sleep(delay)
+                    error = e
+                else:
+                    if not callable(retry_on_success) or not retry_on_success(result):
+                        return result
+
+                if callable(do_on_retry):
+                    do_on_retry(error, delay)
+
+                time.sleep(delay)
+
             # Only or final attempt
             return function(*args, **kwargs)
 
