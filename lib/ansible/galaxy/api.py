@@ -53,7 +53,7 @@ def cache_lock(func):
     return wrapped
 
 
-def is_rate_limit_exception():
+def is_rate_limit_exception(exception):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
