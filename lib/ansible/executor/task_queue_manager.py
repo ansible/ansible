@@ -29,7 +29,7 @@ import multiprocessing.queues
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
-from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.play_iterator import PlayIterator, AnsibleEndPlay
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import PY3, string_types
@@ -320,6 +320,9 @@ class TaskQueueManager:
         # now re-save the hosts that failed from the iterator to our internal list
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
+
+        if iterator.end_play:
+            raise AnsibleEndPlay
 
         return play_return
 

@@ -35,6 +35,10 @@ display = Display()
 __all__ = ['PlayIterator']
 
 
+class AnsibleEndPlay(Exception):
+    pass
+
+
 class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
@@ -218,6 +222,8 @@ class PlayIterator:
             # play context to flag that we've started at a task (and future
             # plays won't try to advance)
             play_context.start_at_task = None
+
+        self.end_play = False
 
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,

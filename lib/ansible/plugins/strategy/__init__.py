@@ -1177,6 +1177,7 @@ class StrategyBase:
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
+                        iterator.end_play = True
                 msg = "ending play"
             else:
                 skipped = True
