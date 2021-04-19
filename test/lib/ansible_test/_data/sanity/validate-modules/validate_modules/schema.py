@@ -448,7 +448,9 @@ def deprecation_schema(for_collection):
     date_schema.update(main_fields)
 
     if for_collection:
-        version_schema = {Required('removed_in'): version(for_collection)}
+        version_schema = {
+            Required('removed_in'): version(for_collection),
+        }
     else:
         version_schema = {Required('removed_in'): deprecation_versions()}
 
