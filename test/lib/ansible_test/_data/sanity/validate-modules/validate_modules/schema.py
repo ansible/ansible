@@ -61,9 +61,9 @@ def collection_name(v, error_code=None):
 
 
 def deprecation_versions():
-    ''' Create a list of valid version for deprecation entries, current+4 '''
-    current = float('.'.join(__version__.split('.')[0:2]))
-    return Any(*[str(current + x / 100) for x in range(0, 5)])
+    """Create a list of valid version for deprecation entries, current+4"""
+    major, minor = [int(version) for version in __version__.split('.')[0:2]]
+    return Any(*['{0}.{1}'.format(major, minor + increment) for increment in range(0, 5)])
 
 
 def version(for_collection=False):
