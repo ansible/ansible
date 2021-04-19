@@ -251,7 +251,7 @@ class StrategyBase:
         if not refresh and all((self._hosts_cache, self._hosts_cache_all)):
             return
 
-        if Templar(None).is_template(play.hosts):
+        if not play.finalized and Templar(None).is_template(play.hosts):
             _pattern = 'all'
         else:
             _pattern = play.hosts or 'all'

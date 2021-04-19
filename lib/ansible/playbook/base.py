@@ -180,6 +180,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
+    @property
+    def finalized(self):
+        return self._finalized
+
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
         if depth == 0:
