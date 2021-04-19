@@ -37,7 +37,7 @@ Or for OpenBSD:
 
 .. code-block:: bash
 
-    ansible -m raw -a "pkg_add python%3.7"
+    ansible -m raw -a "pkg_add python%2.7"
 
 Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 
