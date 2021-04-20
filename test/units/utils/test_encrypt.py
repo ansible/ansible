@@ -48,7 +48,7 @@ def assert_hash(expected, secret, algorithm, **settings):
         assert encrypt.passlib_or_crypt(secret, algorithm, **settings) == expected
         with pytest.raises(AnsibleError) as excinfo:
             encrypt.PasslibHash(algorithm).hash(secret, **settings)
-        assert excinfo.value.args[0] == "passlib must be installed to hash with '%s'" % algorithm
+        assert excinfo.value.args[0] == "passlib must be installed and usable to hash with '%s'" % algorithm
 
 
 @pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')

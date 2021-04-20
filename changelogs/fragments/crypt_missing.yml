@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible.utils.encrypt now handles missing or unusable 'crypt' library.
