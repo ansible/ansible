@@ -16,9 +16,11 @@ class AnsibleValidationError(Exception):
     def __init__(self, message):
         super(AnsibleValidationError, self).__init__(message)
         self.error_message = message
+        """The error message passed in when the exception was raised."""
 
     @property
     def msg(self):
+        """The error message passed in when the exception was raised."""
         return self.args[0]
 
 
@@ -27,6 +29,7 @@ class AnsibleValidationErrorMultiple(AnsibleValidationError):
 
     def __init__(self, errors=None):
         self.errors = errors[:] if errors else []
+        """:class:`list` of :class:`AnsibleValidationError` objects"""
 
     def __getitem__(self, key):
         return self.errors[key]
@@ -39,16 +42,24 @@ class AnsibleValidationErrorMultiple(AnsibleValidationError):
 
     @property
     def msg(self):
+        """The first message from the first error in ``errors``."""
         return self.errors[0].args[0]
 
     @property
     def messages(self):
+        """:class:`list` of each error message in ``errors``."""
         return [err.msg for err in self.errors]
 
     def append(self, error):
+        """Append a new error to ``self.errors``.
+
+        Only :class:`AnsibleValidationError` should be added.
+        """
+
         self.errors.append(error)
 
     def extend(self, errors):
+        """Append each item in ``errors`` to ``self.errors``. Only :class:`AnsibleValidationError` should be added."""
         self.errors.extend(errors)
 
 
