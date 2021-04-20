@@ -26,10 +26,6 @@ from ansible.module_utils.common.warnings import deprecate, warn
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
     check_required_arguments,
-    check_required_by,
-    check_required_if,
-    check_required_one_of,
-    check_required_together,
 )
 
 from ansible.module_utils.errors import (
@@ -37,12 +33,8 @@ from ansible.module_utils.errors import (
     AnsibleValidationErrorMultiple,
     MutuallyExclusiveError,
     NoLogError,
-    RequiredByError,
     RequiredDefaultError,
     RequiredError,
-    RequiredIfError,
-    RequiredOneOfError,
-    RequiredTogetherError,
     UnsupportedError,
 )
 
