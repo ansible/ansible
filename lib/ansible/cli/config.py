@@ -232,9 +232,8 @@ class ConfigCLI(CLI):
 
             try:
                 # populate config entries by loading plugin
-                dump = loader.get(name)
+                dump = loader.get(name, class_only=True)
             except Exception as e:
-                # TODO: figure how to mock other rquirements (play_contxt for connections?)
                 display.warning('Skipping "%s" %s plugin, as we cannot load plugin to check config due to : %s' % (name, ptype, to_native(e)))
                 continue
 
