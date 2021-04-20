@@ -109,7 +109,7 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = systemd_container
                 virtual_facts['virtualization_role'] = 'guest'
                 found_virt = True
-        elif os.path.isfile('/.dockerenv') or os.path.isfile('/.dockerinit'):
+        elif os.path.exists('/.dockerenv') or os.path.exists('/.dockerinit'):
             guest_tech.add('docker')
             virtual_facts['virtualization_type'] = 'docker'
             virtual_facts['virtualization_role'] = 'guest'
