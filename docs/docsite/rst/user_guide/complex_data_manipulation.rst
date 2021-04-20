@@ -55,7 +55,7 @@ The Python equivalent code would be:
 There are several ways to do it in Ansible, this is just one example:
 
 .. code-block:: YAML+Jinja
- :emphasize-lines: 3
+ :emphasize-lines: 4
  :caption: Way to extract matching keys from a list of dictionaries
 
   tasks:
@@ -110,7 +110,7 @@ In this case, we want to find the mount point for a given path across our machin
 
 .. code-block:: YAML+Jinja
  :caption: Use selectattr to filter mounts into list I can then sort and select the last from
- :emphasize-lines: 7
+ :emphasize-lines: 8
 
    - hosts: all
      gather_facts: True
@@ -131,7 +131,7 @@ The special ``omit`` variable ONLY works with module options, but we can still u
 
 .. code-block:: YAML+Jinja
  :caption: Inline list filtering when feeding a module option
- :emphasize-lines: 3, 7
+ :emphasize-lines: 3, 6
 
     - name: Enable a list of Windows features, by name
       ansible.builtin.set_fact:
