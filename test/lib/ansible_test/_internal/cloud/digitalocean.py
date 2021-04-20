@@ -46,7 +46,7 @@ class DigitalOceanCloudEnvironment(CloudEnvironment):
         display.sensitive.add(env_vars['DO_API_KEY'])
 
         ansible_vars = dict(
-            digitalocean_resource_prefix=self.resource_prefix,
+            resource_prefix=self.resource_prefix,
         )
 
         return CloudEnvironmentConfig(
