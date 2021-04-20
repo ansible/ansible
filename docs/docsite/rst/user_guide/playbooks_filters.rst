@@ -1743,7 +1743,8 @@ This can then be used to reference hashes in Pod specifications::
 
     my_secret:
       kind: Secret
-      name: my_secret_name
+      metadata:
+        name: my_secret_name
 
     deployment_resource:
       kind: Deployment
