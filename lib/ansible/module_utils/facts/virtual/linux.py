@@ -109,6 +109,11 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = systemd_container
                 virtual_facts['virtualization_role'] = 'guest'
                 found_virt = True
+        elif os.path.isfile('/.dockerenv') or os.path.isfile('/.dockerinit'):
+            guest_tech.add('docker')
+            virtual_facts['virtualization_type'] = 'docker'
+            virtual_facts['virtualization_role'] = 'guest'
+            found_virt = True
 
         # ensure 'container' guest_tech is appropriately set
         if guest_tech.intersection(set(['docker', 'lxc', 'podman', 'openvz', 'containerd'])) or systemd_container:
