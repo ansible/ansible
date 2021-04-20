@@ -34,7 +34,7 @@
 
 - name: Run tests
   block:
-    - include: tests.yml
+    - import_tasks: tests.yml
   always:
     - name: Detach disk
       win_command: diskpart.exe /s {{ remote_tmp_dir }}\partition_deletion_script.txt
