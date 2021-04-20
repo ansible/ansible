@@ -294,7 +294,7 @@ def _update_wrapper(wrapper, func):
     return wrapper
 
 
-def _wrap_native_text(func):
+def _wrap_filter_text(func):
     """Wrapper function, that intercepts the result of a filter
     and wraps it into NativeJinjaText which is then used
     in ``ansible_native_concat`` to indicate that it is a text
@@ -448,7 +448,7 @@ class JinjaPluginIntercept(MutableMapping):
         if self._pluginloader.class_name == 'FilterModule':
             for plugin_name, plugin in self._delegatee.items():
                 if plugin_name in C.STRING_TYPE_FILTERS:
-                    self._delegatee[plugin_name] = _wrap_native_text(plugin)
+                    self._delegatee[plugin_name] = _wrap_filter_text(plugin)
                 else:
                     self._delegatee[plugin_name] = _unroll_iterator(plugin)
 
@@ -564,7 +564,7 @@ class JinjaPluginIntercept(MutableMapping):
                     if self._pluginloader.class_name == 'FilterModule':
                         if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
                                 func_name in C.STRING_TYPE_FILTERS:
-                            self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
+                            self._collection_jinja_func_cache[fq_name] = _wrap_filter_text(func)
                         else:
                             self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
                     else:
