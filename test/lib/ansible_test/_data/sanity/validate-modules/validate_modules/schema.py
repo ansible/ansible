@@ -15,6 +15,7 @@ from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Re
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 from ansible.utils.version import SemanticVersion
+from ansible.release import __version__
 
 from .utils import parse_isodate
 
@@ -57,6 +58,12 @@ def collection_name(v, error_code=None):
         raise _add_ansible_error_code(
             Invalid('Collection name must be of format `<namespace>.<name>`'), error_code or 'collection-invalid-name')
     return v
+
+
+def deprecation_versions():
+    """Create a list of valid version for deprecation entries, current+4"""
+    major, minor = [int(version) for version in __version__.split('.')[0:2]]
+    return Any(*['{0}.{1}'.format(major, minor + increment) for increment in range(0, 5)])
 
 
 def version(for_collection=False):
@@ -446,11 +453,7 @@ def deprecation_schema(for_collection):
         }
     else:
         version_schema = {
-            # Only list branches that are deprecated or may have docs stubs in
-            # Deprecation cycle changed at 2.4 (though not retroactively)
-            # 2.3 -> removed_in: "2.5" + n for docs stub
-            # 2.4 -> removed_in: "2.8" + n for docs stub
-            Required('removed_in'): Any("2.12", "2.13", "2.14", "2.15", "2.16"),
+            Required('removed_in'): deprecation_versions(),
         }
     version_schema.update(main_fields)
 
