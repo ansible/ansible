@@ -697,7 +697,7 @@ def main():
                         # assume unwanted ACLs by default
                         src_has_acls = True
 
-                module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
+                module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'], inhibit_copystat=inhibit_copystat)
 
                 if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
                     # atomic_move used above to copy src into dest might, in some cases,

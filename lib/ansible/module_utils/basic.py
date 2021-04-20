@@ -1633,7 +1633,7 @@ class AnsibleModule(object):
         current_attribs = current_attribs.get('attr_flags', '')
         self.set_attributes_if_different(dest, current_attribs, True)
 
-    def atomic_move(self, src, dest, unsafe_writes=False):
+    def atomic_move(self, src, dest, unsafe_writes=False, inhibit_copystat=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
@@ -1746,7 +1746,7 @@ class AnsibleModule(object):
                     finally:
                         self.cleanup(b_tmp_dest_name)
 
-        if creating:
+        if creating and not inhibit_copystat:
             # make sure the file has the correct permissions
             # based on the current value of umask
             umask = os.umask(0)
