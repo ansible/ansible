@@ -45,6 +45,8 @@ from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.yaml import yaml_load
 
+import yaml
+
 
 display = Display()
 
