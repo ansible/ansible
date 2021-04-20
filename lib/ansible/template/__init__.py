@@ -297,7 +297,7 @@ def _update_wrapper(wrapper, func):
 def _wrap_filter_text(func):
     """Wrapper function, that intercepts the result of a filter
     and wraps it into NativeJinjaText which is then used
-    in ``ansible_native_concat`` to indicate that it is a text
+    in ``ansible_native_concat`` to indicate that it is text
     which should not be passed into ``literal_eval``.
     """
     def wrapper(*args, **kwargs):
@@ -674,8 +674,6 @@ class Templar:
 
         # FIXME these regular expressions should be re-compiled each time variable_start_string and variable_end_string are changed
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
-                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
     @property
     def jinja2_native(self):
