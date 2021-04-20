@@ -7,9 +7,9 @@ Ansible-core 2.12 Porting Guide
 
 This section discusses the behavioral changes between ``ansible-core`` 2.11 and ``ansible-core`` 2.12.
 
-It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of ``ansible-core``.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for 2.12 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.12.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `ansible-core Changelog for 2.12 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.12.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -103,6 +103,7 @@ Plugins
 
 * ``unique`` filter with Jinja2 < 2.10 is case-sensitive and now raise coherently an error if ``case_sensitive=False`` instead of when ``case_sensitive=True``.
 * Set theory filters (``intersect``, ``difference``, ``symmetric_difference`` and ``union``) are now case-sensitive. Explicitly use ``case_sensitive=False`` to keep previous behavior. Note: with Jinja2 < 2.10, the filters were already case-sensitive by default.
+
 
 Porting custom scripts
 ======================
