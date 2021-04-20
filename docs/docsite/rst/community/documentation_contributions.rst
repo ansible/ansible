@@ -80,6 +80,7 @@ following packages installed:
     - ``gcc``
     - ``jinja2``
     - ``libyaml``
+    - ``make``
     - ``Pygments``
     - ``pyparsing``
     - ``PyYAML``
@@ -121,12 +122,6 @@ Building the documentation locally
 ----------------------------------
 
 Building the documentation is the best way to check for errors and review your changes. Once `rstcheck` runs with no errors, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
-
-Setup the appropriate Sphinx configuration and structure based on the documentation you want to work on.
-
- - All docs, including plugins and collections: ``make ansible_structure``. This takes the longest to build.
- - Ansible Core module and plugin docs: ``make core_structure``
- - i18n docs: ``make gettext_structure``
 
  .. note::
 
