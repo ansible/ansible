@@ -854,7 +854,7 @@ To get a random item from a list::
     "{{ ['a','b','c'] | random }}"
     # => 'c'
 
-To get a random number between 0 and a specified number::
+To get a random number between 0 (inclusive) and a specified integer (exclusive)::
 
     "{{ 60 | random }} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
