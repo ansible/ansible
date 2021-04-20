@@ -182,31 +182,31 @@ class ConfigCLI(CLI):
 
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
-    def _render_settings(self, defaults):
+    def _render_settings(self, config):
 
         text = []
-        for setting in sorted(defaults):
-            if isinstance(defaults[setting], Setting):
-                if defaults[setting].origin == 'default':
+        for setting in sorted(config):
+            if isinstance(config[setting], Setting):
+                if config[setting].origin == 'default':
                     color = 'green'
                 else:
                     color = 'yellow'
-                msg = "%s(%s) = %s" % (setting, defaults[setting].origin, defaults[setting].value)
+                msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
             else:
                 color = 'green'
-                msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
+                msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
             if not context.CLIARGS['only_changed'] or color == 'yellow':
                 text.append(stringc(msg, color))
 
         return text
 
     def _get_global_configs(self):
-        defaults = self.config.get_configuration_definitions(ignore_private=True).copy()
+        config = self.config.get_configuration_definitions(ignore_private=True).copy()
         for setting in self.config.data.get_settings():
-            if setting.name in defaults:
-                defaults[setting.name] = setting
+            if setting.name in config:
+                config[setting.name] = setting
 
-        return self._render_settings(defaults)
+        return self._render_settings(config)
 
     def _get_plugin_configs(self):
 
@@ -240,8 +240,7 @@ class ConfigCLI(CLI):
             # actually get the values
             for setting in config_entries[finalname].keys():
                 v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name)
-                config_entries[finalname][setting]['value'] = v
-                config_entries[finalname][setting]['origin'] = o
+                config_entries[finalname][setting] = Setting(setting, v, o, None)
 
             # pretty please!
             results = self._render_settings(config_entries[finalname])
