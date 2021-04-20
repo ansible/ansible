@@ -49,6 +49,8 @@ fmt
        Playbook organization by roles
    :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
+   `Jinja2 Docs <https://jinja.palletsprojects.com/en/master/templates/>`_
+      Jinja2 documentation, includes the syntax and semantics of the templates
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
