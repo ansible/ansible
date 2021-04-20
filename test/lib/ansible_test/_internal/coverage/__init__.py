@@ -2,6 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import os
 import re
 
@@ -123,8 +124,15 @@ def get_powershell_coverage_files(path=None):  # type: (t.Optional[str]) -> t.Li
 def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> t.List[str]
     """Return the list of coverage file paths for the given language."""
     coverage_dir = path or ResultType.COVERAGE.path
-    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
-                      if '=coverage.' in f and '=%s' % language in f]
+
+    try:
+        coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
+                          if '=coverage.' in f and '=%s' % language in f]
+    except IOError as ex:
+        if ex.errno == errno.ENOENT:
+            return []
+
+        raise
 
     return coverage_files
 
