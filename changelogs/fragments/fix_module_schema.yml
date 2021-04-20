@@ -1,0 +1,2 @@
+bugfixes:
+  - schema validation now uses dynamic range of versions for valid deprecation entries vs hardcoded out of date list.
