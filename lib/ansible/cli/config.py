@@ -239,7 +239,7 @@ class ConfigCLI(CLI):
 
             # actually get the values
             for setting in config_entries[finalname].keys():
-                v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name)
+                v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name, skip_required=True)
                 config_entries[finalname][setting] = Setting(setting, v, o, None)
 
             # pretty please!
