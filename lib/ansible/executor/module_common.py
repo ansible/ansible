@@ -1361,8 +1361,8 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
             # _get_shebang() takes text strings
             args = [to_text(a, errors='surrogate_or_strict') for a in args]
             interpreter = args[0]
-            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0],
-                                     errors='surrogate_or_strict', nonstring='passthru', remote_is_local=remote_is_local)
+            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:], remote_is_local=remote_is_local)[0],
+                                     errors='surrogate_or_strict', nonstring='passthru')
 
             if b_new_shebang:
                 b_lines[0] = b_shebang = b_new_shebang
