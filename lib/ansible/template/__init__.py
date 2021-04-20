@@ -562,8 +562,7 @@ class JinjaPluginIntercept(MutableMapping):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
                     if self._pluginloader.class_name == 'FilterModule':
-                        if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
-                                func_name in C.STRING_TYPE_FILTERS:
+                        if fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and func_name in C.STRING_TYPE_FILTERS:
                             self._collection_jinja_func_cache[fq_name] = _wrap_filter_text(func)
                         else:
                             self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
