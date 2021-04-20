@@ -121,7 +121,7 @@ from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 from ansible.utils.version import SemanticVersion
-from ansible.utils.yaml import safe_dump, safe_load
+from ansible.utils.yaml import yaml_dump
 
 
 display = Display()
@@ -387,7 +387,7 @@ def download_collections(
             "to '{path!s}'".format(path=to_text(requirements_path)),
         )
         yaml_bytes = to_bytes(
-            yaml.safe_dump({'collections': requirements}),
+            yaml_dump({'collections': requirements}),
             errors='surrogate_or_strict',
         )
         with open(b_requirements_path, mode='wb') as req_fd:

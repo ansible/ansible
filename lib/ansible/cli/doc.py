@@ -41,6 +41,7 @@ from ansible.utils.plugin_docs import (
     get_docstring,
     get_versioned_doclink,
 )
+from ansible.utils.yaml import yaml_dump
 
 display = Display()
 
@@ -1188,7 +1189,7 @@ class DocCLI(CLI, RoleMixin):
             if isinstance(doc['plainexamples'], string_types):
                 text.append(doc.pop('plainexamples').strip())
             else:
-                text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+                text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
             text.append('')
             text.append('')
 

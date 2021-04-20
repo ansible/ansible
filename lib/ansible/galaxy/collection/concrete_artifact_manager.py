@@ -43,8 +43,7 @@ from ansible.module_utils.six.moves.urllib.parse import urldefrag
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-
-import yaml
+from ansible.utils.yaml import yaml_load
 
 
 display = Display()
@@ -524,7 +523,7 @@ def _get_meta_from_src_dir(
 
     with open(galaxy_yml, 'rb') as manifest_file_obj:
         try:
-            manifest = yaml.safe_load(manifest_file_obj)
+            manifest = yaml_load(manifest_file_obj)
         except yaml.error.YAMLError as yaml_err:
             raise_from(
                 AnsibleError(

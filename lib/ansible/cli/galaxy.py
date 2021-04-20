@@ -1503,7 +1503,7 @@ class GalaxyCLI(CLI):
         if output_format == 'json':
             display.display(json.dumps(collections_in_paths))
         elif output_format == 'yaml':
-            display.display(yaml.safe_dump(collections_in_paths))
+            display.display(yaml_dump(collections_in_paths))
 
         return 0
 
