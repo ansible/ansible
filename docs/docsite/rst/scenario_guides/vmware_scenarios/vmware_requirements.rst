@@ -60,3 +60,5 @@ For example, if ``/var/vmware/certs/vcenter1.crt`` is the SSL certificate for yo
        password: '{{ vcenter_password }}'
      environment:
        REQUESTS_CA_BUNDLE: /var/vmware/certs/vcenter1.crt
+
+There is a `known issue <https://github.com/psf/requests/issues/3829>`_ in ``requests`` library (version 2) which you may want to consider when using this environment variable. Basically, setting ``REQUESTS_CA_BUNDLE`` environment variable on managed nodes overrides the ``validate_certs`` value. This may result in unexpected behavior while running the playbook. Please see `community.vmware issue 601 <https://github.com/ansible-collections/community.vmware/issues/601>`_ and `vmware issue 254 <https://github.com/vmware/vsphere-automation-sdk-python/issues/254>`_ for more information.
