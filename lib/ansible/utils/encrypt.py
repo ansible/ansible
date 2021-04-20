@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import crypt
 import multiprocessing
 import random
 import re
@@ -19,7 +18,8 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.utils.display import Display
 
-PASSLIB_AVAILABLE = False
+PASSLIB_E = CRYPT_E = None
+HAS_CRYPT = PASSLIB_AVAILABLE = False
 try:
     import passlib
     import passlib.hash
@@ -29,8 +29,15 @@ try:
     except ImportError:
         from passlib.utils import bcrypt64
     PASSLIB_AVAILABLE = True
-except Exception:
-    pass
+except Exception as e:
+    PASSLIB_E = e
+
+try:
+    import crypt
+    HAS_CRYPT = True
+except Exception as e:
+    CRYPT_E = e
+
 
 display = Display()
 
@@ -80,6 +87,9 @@ class BaseHash(object):
 class CryptHash(BaseHash):
     def __init__(self, algorithm):
         super(CryptHash, self).__init__(algorithm)
+
+        if not HAS_CRYPT:
+            raise AnsibleError("crypt.crypt cannot be used as the 'crypt' python library is not installed or is unusable.", orig_exc=CRYPT_E)
 
         if sys.platform.startswith('darwin'):
             raise AnsibleError("crypt.crypt not supported on Mac OS X/Darwin, install passlib python module")
@@ -143,7 +153,7 @@ class PasslibHash(BaseHash):
         super(PasslibHash, self).__init__(algorithm)
 
         if not PASSLIB_AVAILABLE:
-            raise AnsibleError("passlib must be installed to hash with '%s'" % algorithm)
+            raise AnsibleError("passlib must be installed and usable to hash with '%s'" % algorithm, orig_exc=PASSLIB_E)
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
@@ -216,8 +226,10 @@ class PasslibHash(BaseHash):
 def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None):
     if PASSLIB_AVAILABLE:
         return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
-    else:
+    elif HAS_CRYPT:
         return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
+    else:
+        raise AnsibleError("Unable to encrypt nor hash, either crypt or passlib must be installed.", orig_exc=CRYPT_E)
 
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
