@@ -140,8 +140,11 @@
   - name: debian assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
-    when: distro == 'debian' and distro_version is version('10', '>=')
+      # Debian 8 and older
+      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('8', '<=') or distro_version is version('8', '>')
+      # Debian 10 and newer
+      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('10', '>=') or distro_version is version('10', '<')
+    when: distro == 'debian'
 
   - name: fedora assertions
     assert:
