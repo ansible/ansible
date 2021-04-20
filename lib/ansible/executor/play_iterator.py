@@ -35,11 +35,6 @@ display = Display()
 __all__ = ['PlayIterator']
 
 
-class AnsibleEndPlay(Exception):
-    def __init__(self, result):
-        self.result = result
-
-
 class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
