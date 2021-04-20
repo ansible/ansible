@@ -443,7 +443,7 @@ class ConfigManager(object):
             raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, skip_required=False):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
         if cfile is None:
             # use default config
@@ -528,7 +528,7 @@ class ConfigManager(object):
                 # set default if we got here w/o a value
                 if value is None:
                     if defs[config].get('required', False):
-                        if not skip_required and (not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {})):
+                        if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
                             raise AnsibleError("No setting was provided for required configuration %s" %
                                                to_native(_get_entry(plugin_type, plugin_name, config)))
                     else:

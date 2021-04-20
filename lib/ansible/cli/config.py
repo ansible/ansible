@@ -189,6 +189,8 @@ class ConfigCLI(CLI):
             if isinstance(config[setting], Setting):
                 if config[setting].origin == 'default':
                     color = 'green'
+                elif config[setting].origin == 'REQUIRED':
+                    color = 'red'
                 else:
                     color = 'yellow'
                 msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
@@ -239,7 +241,14 @@ class ConfigCLI(CLI):
 
             # actually get the values
             for setting in config_entries[finalname].keys():
-                v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name, skip_required=True)
+                try:
+                    v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name)
+                except AnsibleError as e:
+                    if to_text(e).startswith('No setting was provided for required configuration'):
+                        v = None
+                        o = 'REQUIRED'
+                    else:
+                        raise e
                 config_entries[finalname][setting] = Setting(setting, v, o, None)
 
             # pretty please!
