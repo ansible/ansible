@@ -1,7 +1,7 @@
 # file module tests for dealing with symlinks (state=link)
 
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
 
 #
 # Basic absolute symlink to a file

@@ -716,4 +716,4 @@
     that: "\"'y' is undefined\" in error.msg"
 
 # aliases file requires root for template tests so this should be safe
-- include: backup_test.yml
+- import_tasks: backup_test.yml
