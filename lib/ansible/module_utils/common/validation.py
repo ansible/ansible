@@ -76,7 +76,7 @@ def check_mutually_exclusive(terms, parameters, options_context=None):
     :arg terms: List of mutually exclusive parameters
     :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     results = []
@@ -107,8 +107,10 @@ def check_required_one_of(terms, parameters, options_context=None):
     :arg terms: List of lists of terms to check. For each list of terms, at
         least one is required.
     :arg parameters: Dictionary of parameters
+    :kwarg options_context: List of strings of parent key names if ``terms`` are
+        in a sub spec.
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     results = []
@@ -132,16 +134,16 @@ def check_required_one_of(terms, parameters, options_context=None):
 
 def check_required_together(terms, parameters, options_context=None):
     """Check each list of terms to ensure every parameter in each list exists
-    in the given parameters
+    in the given parameters.
 
-    Accepts a list of lists or tuples
+    Accepts a list of lists or tuples.
 
     :arg terms: List of lists of terms to check. Each list should include
         parameters that are all required when at least one is specified
         in the parameters.
     :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     results = []
@@ -166,14 +168,14 @@ def check_required_together(terms, parameters, options_context=None):
 
 def check_required_by(requirements, parameters, options_context=None):
     """For each key in requirements, check the corresponding list to see if they
-    exist in parameters
+    exist in parameters.
 
-    Accepts a single string or list of values for each key
+    Accepts a single string or list of values for each key.
 
     :arg requirements: Dictionary of requirements
     :arg parameters: Dictionary of parameters
 
-    :returns: Empty dictionary or raises TypeError if the
+    :returns: Empty dictionary or raises :class:`TypeError` if the
     """
 
     result = {}
@@ -203,16 +205,16 @@ def check_required_by(requirements, parameters, options_context=None):
 
 
 def check_required_arguments(argument_spec, parameters, options_context=None):
-    """Check all paramaters in argument_spec and return a list of parameters
-    that are required but not present in parameters
+    """Check all parameters in argument_spec and return a list of parameters
+    that are required but not present in parameters.
 
-    Raises TypeError if the check fails
+    Raises :class:`TypeError` if the check fails
 
-    :arg argument_spec: Argument spec dicitionary containing all parameters
+    :arg argument_spec: Argument spec dictionary containing all parameters
         and their specification
-    :arg module_paramaters: Dictionary of parameters
+    :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     missing = []
@@ -236,32 +238,38 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
 def check_required_if(requirements, parameters, options_context=None):
     """Check parameters that are conditionally required
 
-    Raises TypeError if the check fails
+    Raises :class:`TypeError` if the check fails
 
     :arg requirements: List of lists specifying a parameter, value, parameters
         required when the given parameter is the specified value, and optionally
         a boolean indicating any or all parameters are required.
 
-        Example:
-            required_if=[
-                ['state', 'present', ('path',), True],
-                ['someint', 99, ('bool_param', 'string_param')],
-            ]
+    :Example:
 
-    :arg module_paramaters: Dictionary of parameters
+    .. code-block:: python
 
-    :returns: Empty list or raises TypeError if the check fails.
+        required_if=[
+            ['state', 'present', ('path',), True],
+            ['someint', 99, ('bool_param', 'string_param')],
+        ]
+
+    :arg parameters: Dictionary of parameters
+
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
         The results attribute of the exception contains a list of dictionaries.
-        Each dictionary is the result of evaluting each item in requirements.
+        Each dictionary is the result of evaluating each item in requirements.
         Each return dictionary contains the following keys:
 
             :key missing: List of parameters that are required but missing
             :key requires: 'any' or 'all'
-            :key paramater: Parameter name that has the requirement
-            :key value: Original value of the paramater
+            :key parameter: Parameter name that has the requirement
+            :key value: Original value of the parameter
             :key requirements: Original required parameters
 
-        Example:
+        :Example:
+
+        .. code-block:: python
+
             [
                 {
                     'parameter': 'someint',
@@ -321,13 +329,12 @@ def check_missing_parameters(parameters, required_parameters=None):
     """This is for checking for required params when we can not check via
     argspec because we need more information than is simply given in the argspec.
 
-    Raises TypeError if any required parameters are missing
+    Raises :class:`TypeError` if any required parameters are missing
 
-    :arg module_paramaters: Dictionary of parameters
-    :arg required_parameters: List of parameters to look for in the given module
-        parameters
+    :arg parameters: Dictionary of parameters
+    :arg required_parameters: List of parameters to look for in the given parameters.
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
     missing_params = []
     if required_parameters is None:
@@ -374,13 +381,13 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
 def check_type_list(value):
     """Verify that the value is a list or convert to a list
 
-    A comma separated string will be split into a list. Rases a TypeError if
-    unable to convert to a list.
+    A comma separated string will be split into a list. Raises a :class:`TypeError`
+    if unable to convert to a list.
 
     :arg value: Value to validate or convert to a list
 
     :returns: Original value if it is already a list, single item list if a
-        float, int or string without commas, or a multi-item list if a
+        float, int, or string without commas, or a multi-item list if a
         comma-delimited string.
     """
     if isinstance(value, list):
@@ -397,9 +404,9 @@ def check_type_list(value):
 def check_type_dict(value):
     """Verify that value is a dict or convert it to a dict and return it.
 
-    Raises TypeError if unable to convert to a dict
+    Raises :class:`TypeError` if unable to convert to a dict
 
-    :arg value: Dict or string to convert to a dict. Accepts 'k1=v2, k2=v2'.
+    :arg value: Dict or string to convert to a dict. Accepts ``k1=v2, k2=v2``.
 
     :returns: value converted to a dictionary
     """
@@ -451,7 +458,7 @@ def check_type_dict(value):
 def check_type_bool(value):
     """Verify that the value is a bool or convert it to a bool and return it.
 
-    Raises TypeError if unable to convert to a bool
+    Raises :class:`TypeError` if unable to convert to a bool
 
     :arg value: String, int, or float to convert to bool. Valid booleans include:
          '1', 'on', 1, '0', 0, 'n', 'f', 'false', 'true', 'y', 't', 'yes', 'no', 'off'
@@ -471,11 +478,11 @@ def check_type_int(value):
     """Verify that the value is an integer and return it or convert the value
     to an integer and return it
 
-    Raises TypeError if unable to convert to an int
+    Raises :class:`TypeError` if unable to convert to an int
 
     :arg value: String or int to convert of verify
 
-    :return: Int of given value
+    :return: int of given value
     """
     if isinstance(value, integer_types):
         return value
@@ -492,11 +499,11 @@ def check_type_int(value):
 def check_type_float(value):
     """Verify that value is a float or convert it to a float and return it
 
-    Raises TypeError if unable to convert to a float
+    Raises :class:`TypeError` if unable to convert to a float
 
-    :arg value: Float, int, str, or bytes to verify or convert and return.
+    :arg value: float, int, str, or bytes to verify or convert and return.
 
-    :returns: Float of given value.
+    :returns: float of given value.
     """
     if isinstance(value, float):
         return value
@@ -519,15 +526,14 @@ def check_type_path(value,):
 
 
 def check_type_raw(value):
-    """Returns the raw value
-    """
+    """Returns the raw value"""
     return value
 
 
 def check_type_bytes(value):
     """Convert a human-readable string value to bytes
 
-    Raises TypeError if unable to covert the value
+    Raises :class:`TypeError` if unable to covert the value
     """
     try:
         return human_to_bytes(value)
@@ -538,9 +544,9 @@ def check_type_bytes(value):
 def check_type_bits(value):
     """Convert a human-readable string bits value to bits in integer.
 
-    Example: check_type_bits('1Mb') returns integer 1048576.
+    Example: ``check_type_bits('1Mb')`` returns integer 1048576.
 
-    Raises TypeError if unable to covert the value.
+    Raises :class:`TypeError` if unable to covert the value.
     """
     try:
         return human_to_bytes(value, isbits=True)
@@ -552,7 +558,7 @@ def check_type_jsonarg(value):
     """Return a jsonified string. Sometimes the controller turns a json string
     into a dict/list so transform it back into json here
 
-    Raises TypeError if unable to covert the value
+    Raises :class:`TypeError` if unable to covert the value
 
     """
     if isinstance(value, (text_type, binary_type)):

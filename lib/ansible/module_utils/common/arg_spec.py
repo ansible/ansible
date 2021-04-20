@@ -50,29 +50,45 @@ from ansible.module_utils.errors import (
 class ValidationResult:
     """Result of argument spec validation.
 
-    :param parameters: Terms to be validated and coerced to the correct type.
-    :type parameters: dict
-
+    This is the object returned by :func:`ArgumentSpecValidator.validate()
+    <ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate()>`
+    containing the validated parameters and any errors.
     """
 
     def __init__(self, parameters):
+        """
+        :arg parameters: Terms to be validated and coerced to the correct type.
+        :type parameters: dict
+        """
         self._no_log_values = set()
+        """:class:`set` of values marked as ``no_log`` in the argument spec. This
+        is a temporary holding place for these values and may move in the future.
+        """
+
         self._unsupported_parameters = set()
         self._validated_parameters = deepcopy(parameters)
         self._deprecations = []
         self._warnings = []
         self.errors = AnsibleValidationErrorMultiple()
+        """
+        :class:`~ansible.module_utils.errors.AnsibleValidationErrorMultiple` containing all
+        :class:`~ansible.module_utils.errors.AnsibleValidationError` objects if there were
+        any failures during validation.
+        """
 
     @property
     def validated_parameters(self):
+        """Validated and coerced parameters."""
         return self._validated_parameters
 
     @property
     def unsupported_parameters(self):
+        """:class:`set` of unsupported parameter names."""
         return self._unsupported_parameters
 
     @property
     def error_messages(self):
+        """:class:`list` of all error messages from each exception in :attr:`errors`."""
         return self.errors.messages
 
 
@@ -80,30 +96,7 @@ class ArgumentSpecValidator:
     """Argument spec validation class
 
     Creates a validator based on the ``argument_spec`` that can be used to
-    validate a number of parameters using the ``validate()`` method.
-
-    :param argument_spec: Specification of valid parameters and their type. May
-        include nested argument specs.
-    :type argument_spec: dict
-
-    :param mutually_exclusive: List or list of lists of terms that should not
-        be provided together.
-    :type mutually_exclusive: list, optional
-
-    :param required_together: List of lists of terms that are required together.
-    :type required_together: list, optional
-
-    :param required_one_of: List of lists of terms, one of which in each list
-        is required.
-    :type required_one_of: list, optional
-
-    :param required_if: List of lists of ``[parameter, value, [parameters]]`` where
-        one of [parameters] is required if ``parameter`` == ``value``.
-    :type required_if: list, optional
-
-    :param required_by: Dictionary of parameter names that contain a list of
-        parameters required by each key in the dictionary.
-    :type required_by: dict, optional
+    validate a number of parameters using the :meth:`validate` method.
     """
 
     def __init__(self, argument_spec,
@@ -113,6 +106,31 @@ class ArgumentSpecValidator:
                  required_if=None,
                  required_by=None,
                  ):
+
+        """
+        :arg argument_spec: Specification of valid parameters and their type. May
+            include nested argument specs.
+        :type argument_spec: dict[str, dict]
+
+        :kwarg mutually_exclusive: List or list of lists of terms that should not
+            be provided together.
+        :type mutually_exclusive: list[str] or list[list[str]]
+
+        :kwarg required_together: List of lists of terms that are required together.
+        :type required_together: list[list[str]]
+
+        :kwarg required_one_of: List of lists of terms, one of which in each list
+            is required.
+        :type required_one_of: list[list[str]]
+
+        :kwarg required_if: List of lists of ``[parameter, value, [parameters]]`` where
+            one of ``[parameters]`` is required if ``parameter == value``.
+        :type required_if: list
+
+        :kwarg required_by: Dictionary of parameter names that contain a list of
+            parameters required by each key in the dictionary.
+        :type required_by: dict[str, list[str]]
+        """
 
         self._mutually_exclusive = mutually_exclusive
         self._required_together = required_together
@@ -130,30 +148,37 @@ class ArgumentSpecValidator:
                 self._valid_parameter_names.update([key])
 
     def validate(self, parameters, *args, **kwargs):
-        """Validate module parameters against argument spec. Returns a
-        ValidationResult object.
+        """Validate ``parameters`` against argument spec.
 
-        Error messages in the ValidationResult may contain no_log values and should be
-        sanitized before logging or displaying.
+        Error messages in the :class:`ValidationResult` may contain no_log values and should be
+        sanitized with :func:`~ansible.module_utils.common.parameters.sanitize_keys` before logging or displaying.
 
-        :Example:
+        :arg parameters: Parameters to validate against the argument spec
+        :type parameters: dict[str, dict]
 
-        validator = ArgumentSpecValidator(argument_spec)
-        result = validator.validate(parameters)
+        :return: :class:`ValidationResult` containing validated parameters.
 
-        if result.error_messages:
-            sys.exit("Validation failed: {0}".format(", ".join(result.error_messages))
+        :Simple Example:
 
-        valid_params = result.validated_parameters
+            .. code-block:: text
 
-        :param argument_spec: Specification of parameters, type, and valid values
-        :type argument_spec: dict
+                argument_spec = {
+                    'name': {'type': 'str'},
+                    'age': {'type': 'int'},
+                }
 
-        :param parameters: Parameters provided to the role
-        :type parameters: dict
+                parameters = {
+                    'name': 'bo',
+                    'age': '42',
+                }
 
-        :return: Object containing validated parameters.
-        :rtype: ValidationResult
+                validator = ArgumentSpecValidator(argument_spec)
+                result = validator.validate(parameters)
+
+                if result.error_messages:
+                    sys.exit("Validation failed: {0}".format(", ".join(result.error_messages))
+
+                valid_params = result.validated_parameters
         """
 
         result = ValidationResult(parameters)
@@ -238,6 +263,12 @@ class ArgumentSpecValidator:
 
 
 class ModuleArgumentSpecValidator(ArgumentSpecValidator):
+    """Argument spec validation class used by :class:`AnsibleModule`.
+
+    This is not meant to be used outside of :class:`AnsibleModule`. Use
+    :class:`ArgumentSpecValidator` instead.
+    """
+
     def __init__(self, *args, **kwargs):
         super(ModuleArgumentSpecValidator, self).__init__(*args, **kwargs)
 
