@@ -114,7 +114,7 @@ class ArgumentSpecValidator:
 
         :kwarg mutually_exclusive: List or list of lists of terms that should not
             be provided together.
-        :type mutually_exclusive: list or list[list]
+        :type mutually_exclusive: list[str] or list[list[str]]
 
         :kwarg required_together: List of lists of terms that are required together.
         :type required_together: list[list[str]]
