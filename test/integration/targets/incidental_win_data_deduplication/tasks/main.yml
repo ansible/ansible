@@ -1,2 +1,2 @@
 ---
-- include: pre_test.yml
+- import_tasks: pre_test.yml

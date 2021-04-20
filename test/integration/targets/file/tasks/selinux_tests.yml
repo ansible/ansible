@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
 
 - name: touch a file for testing
   file: path={{output_dir}}/foo-se.txt state=touch

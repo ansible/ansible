@@ -1489,13 +1489,13 @@
 # src is a file, dest is a non-existent directory (2 levels of directories):
 # using remote_src
 # checks that dest is created
-- include: dest_in_non_existent_directories_remote_src.yml
+- include_tasks: file=dest_in_non_existent_directories_remote_src.yml
   with_items:
     - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
 # using remote_src
-- include: src_file_dest_file_in_non_existent_dir_remote_src.yml
+- include_tasks: file=src_file_dest_file_in_non_existent_dir_remote_src.yml
   with_items:
     - 'new_sub_dir1/sub_dir2/foo.txt'
     - 'new_sub_dir1/foo.txt'
@@ -1504,7 +1504,7 @@
 
 # src is a file, dest is a non-existent directory (2 levels of directories):
 # checks that dest is created
-- include: dest_in_non_existent_directories.yml
+- include_tasks: file=dest_in_non_existent_directories.yml
   with_items:
     - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
     - { src: 'subdir', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/subdir/bar.txt' }
@@ -1513,7 +1513,7 @@
     - { src: 'subdir/', dest: 'new_sub_dir1/sub_dir2', check: 'new_sub_dir1/sub_dir2/bar.txt' }
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
-- include: src_file_dest_file_in_non_existent_dir.yml
+- include_tasks: file=src_file_dest_file_in_non_existent_dir.yml
   with_items:
     - 'new_sub_dir1/sub_dir2/foo.txt'
     - 'new_sub_dir1/foo.txt'
