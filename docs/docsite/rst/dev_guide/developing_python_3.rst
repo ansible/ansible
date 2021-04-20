@@ -116,7 +116,7 @@ to yield text but instead do the conversion explicitly ourselves. For example:
 
 .. code-block:: python
 
-    from ansible.module_utils._text import to_text
+    from ansible.module_utils.common.text.converters import to_text
 
     with open('filename-with-utf8-data.txt', 'rb') as my_file:
         b_data = my_file.read()
@@ -136,7 +136,7 @@ Writing to files is the opposite process:
 
 .. code-block:: python
 
-    from ansible.module_utils._text import to_bytes
+    from ansible.module_utils.common.text.converters import to_bytes
 
     with open('filename.txt', 'wb') as my_file:
         my_file.write(to_bytes(some_text_string))
@@ -160,7 +160,7 @@ works on both versions:
 
     import os.path
 
-    from ansible.module_utils._text import to_bytes
+    from ansible.module_utils.common.text.converters import to_bytes
 
     filename = u'/var/tmp/くらとみ.txt'
     f = open(to_bytes(filename), 'wb')
@@ -246,9 +246,9 @@ In ``module_utils`` code:
 * Functions that return strings **must** document whether they return strings of the same type as they were given or native strings.
 
 Module-utils functions are therefore often very defensive in nature.
-They convert their string parameters into text (using ``ansible.module_utils._text.to_text``)
+They convert their string parameters into text (using ``ansible.module_utils.common.text.converters.to_text``)
 at the beginning of the function, do their work, and then convert
-the return values into the native string type (using ``ansible.module_utils._text.to_native``)
+the return values into the native string type (using ``ansible.module_utils.common.text.converters.to_native``)
 or back to the string type that their parameters received.
 
 Tips, tricks, and idioms for Python 2/Python 3 compatibility

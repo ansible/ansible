@@ -225,7 +225,7 @@ In the Python example the ``module_utils`` is ``helper`` and the :abbr:`FQCN (Fu
 .. code-block:: text
 
   from ansible.module_utils.basic import AnsibleModule
-  from ansible.module_utils._text import to_text
+  from ansible.module_utils.common.text.converters import to_text
   from ansible.module_utils.six.moves.urllib.parse import urlencode
   from ansible.module_utils.six.moves.urllib.error import HTTPError
   from ansible_collections.ansible_example.community.plugins.module_utils.helper import HelperRequest
