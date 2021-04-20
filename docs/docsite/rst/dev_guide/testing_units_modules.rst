@@ -296,7 +296,7 @@ variable is set it will be treated as if the input came on ``STDIN`` to the modu
 
     import json
     from units.modules.utils import set_module_args
-    from ansible.module_utils._text import to_bytes
+    from ansible.module_utils.common.text.converters import to_bytes
 
     def test_already_registered(self):
         set_module_args({
@@ -388,7 +388,7 @@ mock for :meth:`Ansible.get_bin_path`::
     from units.compat import unittest
     from units.compat.mock import patch
     from ansible.module_utils import basic
-    from ansible.module_utils._text import to_bytes
+    from ansible.module_utils.common.text.converters import to_bytes
     from ansible.modules.namespace import my_module
 
 

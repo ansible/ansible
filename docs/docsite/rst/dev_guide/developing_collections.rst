@@ -100,7 +100,7 @@ In the Python example the ``module_util`` in question is called ``qradar`` such 
 .. code-block:: python
 
     from ansible.module_utils.basic import AnsibleModule
-    from ansible.module_utils._text import to_text
+    from ansible.module_utils.common.text.converters import to_text
 
     from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
     from ansible.module_utils.six.moves.urllib.error import HTTPError
