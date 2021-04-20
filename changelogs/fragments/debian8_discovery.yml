@@ -1,0 +1,2 @@
+bugfixes:
+- interpreter discovery - Debian 8 and lower will avoid unsupported Python3 version in interpreter discovery

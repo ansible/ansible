@@ -1490,6 +1490,7 @@ INTERPRETER_PYTHON_DISTRO_MAP:
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
     debian:
+      '8': /usr/bin/python
       '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
