@@ -29,9 +29,9 @@ from stat import S_IRUSR, S_IWUSR
 from ansible import constants as C
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-from ansible.utils.yaml import yaml_dump, yaml_load
 
 display = Display()
 

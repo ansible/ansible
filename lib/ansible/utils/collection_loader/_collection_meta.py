@@ -9,7 +9,7 @@ try:
 except ImportError:
     from collections import Mapping  # pylint: disable=ansible-bad-import-from
 
-from ansible.utils.yaml import yaml_load
+from ansible.module_utils.common.yaml import yaml_load
 
 
 def _meta_yml_to_dict(yaml_string_data, content_id):

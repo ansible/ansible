@@ -41,6 +41,7 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
 from ansible.parsing.dataloader import DataLoader
@@ -50,7 +51,6 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
-from ansible.utils.yaml import yaml_dump, yaml_load
 
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse

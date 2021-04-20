@@ -22,7 +22,7 @@ __metaclass__ = type
 from yaml.resolver import Resolver
 
 from ansible.parsing.yaml.constructor import AnsibleConstructor
-from ansible.utils.yaml import Parser, HAS_LIBYAML
+from ansible.module_utils.common.yaml import HAS_LIBYAML, Parser
 
 if HAS_LIBYAML:
 

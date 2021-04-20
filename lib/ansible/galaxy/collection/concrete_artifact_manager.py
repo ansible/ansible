@@ -38,12 +38,12 @@ from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six.moves.urllib.error import URLError
 from ansible.module_utils.six.moves.urllib.parse import urldefrag
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-from ansible.utils.yaml import yaml_load
 
 import yaml
 

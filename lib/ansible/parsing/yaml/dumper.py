@@ -22,9 +22,9 @@ __metaclass__ = type
 import yaml
 
 from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
-from ansible.utils.yaml import SafeDumper
 from ansible.vars.hostvars import HostVars, HostVarsVars
 
 

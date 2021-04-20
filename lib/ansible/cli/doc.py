@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.plugin_docs import read_docstub
@@ -41,7 +42,6 @@ from ansible.utils.plugin_docs import (
     get_docstring,
     get_versioned_doclink,
 )
-from ansible.utils.yaml import yaml_dump
 
 display = Display()
 

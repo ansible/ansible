@@ -17,9 +17,9 @@ from jinja2 import __version__ as j2_version
 import ansible
 from ansible import constants as C
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
-from ansible.utils.yaml import HAS_LIBYAML, yaml_load
 
 
 #

@@ -18,6 +18,7 @@ from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
+from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -25,7 +26,6 @@ from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils import py3compat
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
-from ansible.utils.yaml import yaml_load
 
 
 Plugin = namedtuple('Plugin', 'name type')

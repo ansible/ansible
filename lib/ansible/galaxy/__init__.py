@@ -28,7 +28,7 @@ import os
 import ansible.constants as C
 from ansible import context
 from ansible.module_utils._text import to_bytes
-from ansible.utils.yaml import yaml_load
+from ansible.module_utils.common.yaml import yaml_load
 
 #      default_readme_template
 #      default_meta_template
