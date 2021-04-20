@@ -255,6 +255,7 @@ options:
             - Sets the umask of the user.
             - Does nothing when used with other platforms.
             - Currently supported on Linux.
+            - Requires C(local) is omitted or False.
         type: str
         version_added: "2.12"
 
@@ -538,7 +539,7 @@ class User(object):
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
 
-        if self.umask is not None and self.local is not None:
+        if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
 
         if module.params['groups'] is not None:
