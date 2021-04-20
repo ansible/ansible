@@ -37,3 +37,5 @@
 - import_tasks: test_password_lock.yml
 - import_tasks: test_password_lock_new_user.yml
 - import_tasks: test_local.yml
+- import_tasks: test_umask.yml
+  when: ansible_facts.system == 'Linux'
