@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - add freebsd/13.0 as a remote option.
