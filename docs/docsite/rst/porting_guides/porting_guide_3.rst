@@ -16,6 +16,30 @@ Ansible 3 is based on Ansible-Base 2.10, which is the same major release as Ansi
 
 We suggest you read this page along with the `Ansible 3 Changelog <https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst>`_ to understand what updates you may need to make.
 
+Porting Guide for v3.3.0
+========================
+
+Major Changes
+-------------
+
+community.mysql
+~~~~~~~~~~~~~~~
+
+- mysql_user - the ``REQUIRESSL`` is an alias for the ``ssl`` key in the ``tls_requires`` option in ``community.mysql`` 2.0.0 and support will be dropped altogether in ``community.mysql`` 3.0.0 (https://github.com/ansible-collections/community.mysql/issues/121).
+
+Deprecated Features
+-------------------
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_vmkernel_ip_config - deprecate in favor of vmware_vmkernel (https://github.com/ansible-collections/community.vmware/pull/667).
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Support for Python versions earlier than 3.5 is being deprecated
+
 Porting Guide for v3.2.0
 ========================
 
