@@ -346,12 +346,12 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         dir=b_path,
         prefix=to_bytes(name, errors='surrogate_or_strict'),
     )  # type: bytes
-    git_clone_cmd = (
-        'git', 'clone',
-        *(('--depth=1',) if version == 'HEAD' else tuple()),
-        git_url,
-        to_text(b_checkout_path)
-    )
+
+    git_clone_cmd = ['git', 'clone']
+    # Perform a shallow clone if simply cloning HEAD
+    if version == 'HEAD':
+        git_clone_cmd.append('--depth=1')
+    git_clone_cmd.extend([git_url, to_text(b_checkout_path)])
     # FIXME: '--branch', version
 
     try:
