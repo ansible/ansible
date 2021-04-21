@@ -169,27 +169,39 @@ def test_play_compile():
     assert len(blocks) == 4
 
 
-@pytest.mark.parametrize(
-    'data, error',
-    (
-        ({'name': '', 'hosts': ''}, 'Hosts list must be a sequence'),
-        ({'hosts': ''}, 'Hosts list cannot be empty'),
-        ({'hosts': []}, 'Hosts list cannot be empty'),
-        ({'hosts': [None]}, "Hosts list cannot contain values of 'None'"),
-        ({'hosts': ['one', None, 'three']}, "Hosts list cannot contain values of 'None'"),
-        ({'hosts': [{'one': None}]}, "Hosts list cannot contain values of 'None'"),
-    ),
-    ids=[
-        'empty_name_hosts',
-        'no_name_empty_hosts_str',
-        'no_name_empt_hosts_list',
-        'no_name_hosts_list_all_none',
-        'no_name_hosts_list_some_none',
-        'no_name_host_dict_none',
-    ]
-)
-def test_play_with_invalid_hosts(data, error):
+@pytest.mark.parametrize('value', ('', set(), [], {}, None))
+def test_play_empty_hosts(value):
     with pytest.raises(AnsibleParserError) as exc:
-        Play.load(data)
+        Play.load({'hosts': value})
 
-    assert error in exc.value.message
+    assert 'Hosts list cannot be empty' in exc.value.message
+
+
+@pytest.mark.parametrize('value', ([None], (None,), set(('one', None)), ['one', None]))
+def test_play_none_hosts(value):
+    with pytest.raises(AnsibleParserError) as exc:
+        Play.load({'hosts': value})
+
+    assert "Hosts list cannot contain values of 'None'" in exc.value.message
+
+
+@pytest.mark.parametrize(
+    'value',
+    (
+        {'one': None},
+        {'one': 'two'},
+    )
+)
+def test_play_invalid_hosts_sequence(value):
+    with pytest.raises(AnsibleParserError) as exc:
+        Play.load({'hosts': value})
+
+    assert 'Hosts list must be a sequence' in exc.value.message
+
+
+@pytest.mark.parametrize('value', ([[1, 'two']]))
+def test_play_invalid_hosts(value):
+    with pytest.raises(AnsibleParserError) as exc:
+        Play.load({'hosts': value})
+
+    assert 'Hosts list contains an invalid host value' in exc.value.message
