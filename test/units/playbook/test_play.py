@@ -36,7 +36,11 @@ def test_empty_play():
 def test_play_with_hosts_string():
     p = Play.load({'hosts': 'foo'})
 
-    assert str(p) == 'foo'
+    assert str(p) == ''
+    assert p.get_name() == 'foo'
+
+    # Test the caching
+    assert p.get_name() == 'foo'
 
 
 def test_basic_play():

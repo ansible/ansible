@@ -100,7 +100,15 @@ class Play(Base, Taggable, CollectionSearch):
 
     def get_name(self):
         ''' return the name of the Play '''
-        return self.name
+        if self.name:
+            return self.name
+
+        if is_sequence(self.hosts):
+            self.name = ','.join(self.hosts)
+        else:
+            self.name = self.hosts
+
+        return ''
 
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
@@ -121,13 +129,6 @@ class Play(Base, Taggable, CollectionSearch):
 
             elif not is_string(hosts):
                 raise AnsibleParserError("Hosts list must be a sequence or a string. Please check your playbook.")
-
-            # Set name if it wasn't provided
-            if not data.get('name'):
-                if is_string(hosts):
-                    data['name'] = hosts
-                elif is_sequence(hosts):
-                    data['name'] = ','.join(hosts)
 
         p = Play()
         if vars:
