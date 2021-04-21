@@ -43,7 +43,6 @@ class HostState:
         self.cur_regular_task = 0
         self.cur_rescue_task = 0
         self.cur_always_task = 0
-        self.cur_dep_chain = None
         self.run_state = PlayIterator.ITERATING_SETUP
         self.fail_state = PlayIterator.FAILED_NONE
         self.pending_setup = False
@@ -96,7 +95,7 @@ class HostState:
             return False
 
         for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-                     'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
+                     'run_state', 'fail_state', 'pending_setup',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
@@ -117,8 +116,6 @@ class HostState:
         new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
-        if self.cur_dep_chain is not None:
-            new_state.cur_dep_chain = self.cur_dep_chain[:]
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
         if self.rescue_child_state is not None:
