@@ -45,7 +45,7 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
-        common.add_argument("-t", "--type", action="store", default=None, dest='type', choices=C.CONFIGURABLE_PLUGINS,
+        common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
                             help='Show configuration for a plugin type, can also take additional plugin name to show just that plugin.')
 
         subparsers = self.parser.add_subparsers(dest='action')
@@ -160,25 +160,41 @@ class ConfigCLI(CLI):
         except Exception as e:
             raise AnsibleError("Failed to open editor: %s" % to_native(e))
 
+    def _list_plugin_settings(self, ptype):
+        entries = {}
+        loader = getattr(plugin_loader, '%s_loader' % ptype)
+        for plugin in loader.all(class_only=True):
+            finalname = name = plugin._load_name
+            if name.startswith('_'):
+                # alias or deprecated
+                if os.path.islink(plugin._original_path):
+                    continue
+                else:
+                    finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+
+            entries[finalname] = self.config.get_configuration_definitions(ptype, name)
+
+        return entries
+
     def execute_list(self):
         '''
         list all current configs reading lib/constants.py and shows env and config file setting names
         '''
+
         config_entries = {}
-        if context.CLIARGS['type'] is not None:
-            loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
-            for plugin in loader.all(class_only=True):
-                finalname = name = plugin._load_name
-                if name.startswith('_'):
-                    # alias or deprecated
-                    if os.path.islink(plugin._original_path):
-                        continue
-                    else:
-                        finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
-                config_entries[finalname] = self.config.get_configuration_definitions(context.CLIARGS['type'], name)
-        else:
+        if context.CLIARGS['type'] == 'base':
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
+        elif context.CLIARGS['type'] == 'all':
+            # get global
+            config_entries = self.config.get_configuration_definitions(ignore_private=True)
+
+            config_entries['PLUGINS'] = {}
+            # now each plugin type
+            for ptype in C.CONFIGURABLE_PLUGINS:
+                config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
+        else:
+            config_entries = self._list_plugin_settings(context.CLIARGS['type'])
 
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
@@ -210,16 +226,16 @@ class ConfigCLI(CLI):
 
         return self._render_settings(config)
 
-    def _get_plugin_configs(self):
+    def _get_plugin_configs(self, ptype):
 
         # prep loading
-        ptype = context.CLIARGS['type']
         loader = getattr(plugin_loader, '%s_loader' % ptype)
 
         # acumulators
         text = []
         config_entries = {}
         for plugin in loader.all(class_only=True):
+
             # in case of deprecastion they diverge
             finalname = name = plugin._load_name
             if name.startswith('_'):
@@ -255,7 +271,7 @@ class ConfigCLI(CLI):
             results = self._render_settings(config_entries[finalname])
             if results:
                 # avoid header for empty lists (only changed!)
-                text.append('\n%s:\n%s' % (finalname.upper(), '_' * len(finalname)))
+                text.append('\n%s:\n%s' % (finalname, '_' * len(finalname)))
                 text.extend(results)
         return text
 
@@ -263,11 +279,18 @@ class ConfigCLI(CLI):
         '''
         Shows the current settings, merges ansible.cfg if specified
         '''
-        if context.CLIARGS['type'] is not None:
-            # deal with plugins
-            text = self._get_plugin_configs()
-        else:
+        if context.CLIARGS['type'] == 'base':
             # deal with base
             text = self._get_global_configs()
+        elif context.CLIARGS['type'] == 'all':
+            # deal with base
+            text = self._get_global_configs()
+            # deal with plugins
+            for ptype in C.CONFIGURABLE_PLUGINS:
+                text.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
+                text.extend(self._get_plugin_configs(ptype))
+        else:
+            # deal with plugins
+            text = self._get_plugin_configs(context.CLIARGS['type'])
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
