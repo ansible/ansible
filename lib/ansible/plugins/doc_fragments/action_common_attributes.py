@@ -15,7 +15,7 @@ attributes:
       description: Indicates this has a corresponding action plugin so some parts of the options can be executed on the controller
       support: none
     action_group:
-      description: If module_defaults are settable for this action, as it is part of an action_group
+      description: Action is part of action_group(s), for convenient setting of module_defaults.
       support: none
       membership: []
     api:
@@ -28,7 +28,8 @@ attributes:
       description: Is usable alongside become keywords
       support: full
     bypass_host_loop:
-      description: Forces a 'global' task that does not execute per host, cannot be used in non lockstep strategies
+      description: Forces a 'global' task that does not execute per host, this bypasses per host templating and serial,
+                   throttle and other loop considerations.  Also, this action cannot be used in non lockstep strategies
       support: none
     check_mode:
       description: Can run in check_mode and return changed status prediction
@@ -62,13 +63,14 @@ attributes:
       description: both ``loop`` and ``with_`` looping keywords will be honored.
       support: full
     proprietary:
-      description: Can only be run against specific proprietary OS, normally a network appliance or similar
+      description: Designed to only be run against specific proprietary OS(s), normally a network appliance or similar.
       support: none
+      platforms: []
     posix:
       description: Can be run against most POSIX (and GNU/Linux) OS targets
       support: full
     tags:
-      description: Tags will determine if this task considered for execution
+      description: Tags will be evaluated to determine if this task considered for execution
       support: full
     tty:
       description: requires direct access to a TTY
