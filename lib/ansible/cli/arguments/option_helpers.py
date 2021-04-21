@@ -11,19 +11,13 @@ import os
 import os.path
 import sys
 import time
-import yaml
-
-try:
-    import _yaml
-    HAS_LIBYAML = True
-except ImportError:
-    HAS_LIBYAML = False
 
 from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
@@ -113,7 +107,8 @@ def _git_repo_info(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+                with open(repo_path) as f:
+                    gitdir = yaml_load(f).get('gitdir')
                 # There is a possibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir

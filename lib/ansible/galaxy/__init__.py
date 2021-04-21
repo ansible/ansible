@@ -24,11 +24,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import yaml
 
 import ansible.constants as C
 from ansible import context
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.yaml import yaml_load
 
 #      default_readme_template
 #      default_meta_template
@@ -37,7 +37,7 @@ from ansible.module_utils._text import to_bytes
 def get_collections_galaxy_meta_info():
     meta_path = os.path.join(os.path.dirname(__file__), 'data', 'collections_galaxy_meta.yml')
     with open(to_bytes(meta_path, errors='surrogate_or_strict'), 'rb') as galaxy_obj:
-        return yaml.safe_load(galaxy_obj)
+        return yaml_load(galaxy_obj)
 
 
 class Galaxy(object):

@@ -378,6 +378,18 @@
       - "2|from_yaml == 2"
       - "'---\nbananas: yellow\n---\napples: red'|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
       - "2|from_yaml_all == 2"
+      - "unsafe_fruit|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
+      - "unsafe_fruit_all|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
+  vars:
+    unsafe_fruit: !unsafe |
+      ---
+      bananas: yellow
+      apples: red
+    unsafe_fruit_all: !unsafe |
+      ---
+      bananas: yellow
+      ---
+      apples: red
 
 - name: Verify random raises on non-iterable input (failure expected)
   set_fact:

@@ -38,6 +38,7 @@ from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six.moves.urllib.error import URLError
 from ansible.module_utils.six.moves.urllib.parse import urldefrag
 from ansible.module_utils.six import raise_from
@@ -524,7 +525,7 @@ def _get_meta_from_src_dir(
 
     with open(galaxy_yml, 'rb') as manifest_file_obj:
         try:
-            manifest = yaml.safe_load(manifest_file_obj)
+            manifest = yaml_load(manifest_file_obj)
         except yaml.error.YAMLError as yaml_err:
             raise_from(
                 AnsibleError(

@@ -117,6 +117,7 @@ from ansible.galaxy.dependency_resolution.errors import (
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
@@ -386,7 +387,7 @@ def download_collections(
             "to '{path!s}'".format(path=to_text(requirements_path)),
         )
         yaml_bytes = to_bytes(
-            yaml.safe_dump({'collections': requirements}),
+            yaml_dump({'collections': requirements}),
             errors='surrogate_or_strict',
         )
         with open(b_requirements_path, mode='wb') as req_fd:
