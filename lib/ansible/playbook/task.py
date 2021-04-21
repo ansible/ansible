@@ -107,12 +107,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         super(Task, self).__init__()
 
-    def _get_action_group_cache(self):
-        return self._parent._play._action_groups
-
-    def _get_group_action_cache(self):
-        return self._parent._play._group_actions
-
     def get_path(self):
         ''' return the absolute path of the task with its line number '''
 

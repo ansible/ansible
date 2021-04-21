@@ -306,7 +306,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         self._validated = True
 
-    def _validate_module_defaults(self, attribute, name, value):
+    def _load_module_defaults(self, name, value):
         if value is None:
             return
 
@@ -333,9 +333,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     if len(group_name.split('.')) < 3:
                         group_name = 'ansible.legacy.' + group_name
 
-                    # If we have the actions_group cache (i.e. using a class that inherits
-                    # from Task or Block), we need to also resolve and cache the actions in the group
-                    if self._action_group_cache is not None:
+                    # The resolved action_groups cache is associated saved on the current Play
+                    if self.play is not None:
                         collection_name = '.'.join(group_name.split('.')[0:2])
                         self._resolve_group(group_name, collection_name)
 
@@ -359,17 +358,22 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
             validated_module_defaults.append(validated_defaults_dict)
 
-        setattr(self, name, validated_module_defaults)
+        return validated_module_defaults
 
     @property
-    def _action_group_cache(self):
-        if hasattr(self, '_get_action_group_cache'):
-            return self._get_action_group_cache()
+    def play(self):
+        if hasattr(self, '_play'):
+            play = self._play
+        elif hasattr(self, '_parent') and hasattr(self._parent, '_play'):
+            play = self._parent._play
+        else:
+            play = self
 
-    @property
-    def _group_action_cache(self):
-        if hasattr(self, '_get_group_action_cache'):
-            return self._get_group_action_cache()
+        if play.__class__.__name__ != 'Play':
+            # Should never happen, but handle gracefully by returning None, just in case
+            return None
+
+        return play
 
     def _resolve_group(self, group, collection_name):
         # The group should be part of the current collection
@@ -379,8 +383,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             fq_group_name = group
 
         # Check if the group has already been resolved and cached
-        if fq_group_name in self._group_action_cache:
-            return fq_group_name, self._group_action_cache[fq_group_name]
+        if fq_group_name in self.play._group_actions:
+            return fq_group_name, self.play._group_actions[fq_group_name]
 
         try:
             if collection_name == 'ansible.legacy':
@@ -403,12 +407,15 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for action in action_group:
             # Check if this is a special 'metadata' entry
             if isinstance(action, dict) and len(action) == 1 and 'metadata' in action:
-                for extend_group in action['metadata'].get('extend_group', []):
+                extend_groups = action['metadata'].get('extend_group', [])
+                if isinstance(extend_groups, string_types):
+                    extend_groups = [extend_groups]
+                for extend_group in extend_groups:
                     if len(extend_group.split('.')) == 3:
                         extend_group_collection = '.'.join(extend_group.split('.')[0:2])
                     else:
                         extend_group_collection = collection_name
-                    _, group_actions = self._resolve_group(extend_group, extend_group_collection)
+                    dummy, group_actions = self._resolve_group(extend_group, extend_group_collection)
                     resolved_actions.extend(group_actions)
                 continue
 
@@ -429,12 +436,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     resolved_actions.append(resolved_action)
 
         for action in resolved_actions:
-            if action in self._action_group_cache:
-                self._action_group_cache[action].append(fq_group_name)
+            if action in self.play._action_groups:
+                self.play._action_groups[action].append(fq_group_name)
             else:
-                self._action_group_cache[action] = [fq_group_name]
+                self.play._action_groups[action] = [fq_group_name]
 
-        self._group_action_cache[fq_group_name] = resolved_actions
+        self.play._group_actions[fq_group_name] = resolved_actions
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name):
