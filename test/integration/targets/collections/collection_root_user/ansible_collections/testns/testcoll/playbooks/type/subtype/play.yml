@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact: play_type_subtype='in subtype subdir'
