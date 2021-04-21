@@ -211,7 +211,7 @@
     - user_test_local_mode
 
 - name: Ensure lgroupadd is present - Alpine
-  command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+  command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
   when: ansible_distribution == 'Alpine'
   tags:
     - user_test_local_mode
