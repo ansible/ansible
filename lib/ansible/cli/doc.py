@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.plugin_docs import read_docstub
@@ -1188,7 +1189,7 @@ class DocCLI(CLI, RoleMixin):
             if isinstance(doc['plainexamples'], string_types):
                 text.append(doc.pop('plainexamples').strip())
             else:
-                text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+                text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
             text.append('')
             text.append('')
 

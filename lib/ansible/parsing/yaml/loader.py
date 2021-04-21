@@ -19,21 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-try:
-    from _yaml import CParser, CEmitter
-    HAVE_PYYAML_C = True
-except ImportError:
-    HAVE_PYYAML_C = False
-
 from yaml.resolver import Resolver
 
 from ansible.parsing.yaml.constructor import AnsibleConstructor
+from ansible.module_utils.common.yaml import HAS_LIBYAML, Parser
 
-if HAVE_PYYAML_C:
+if HAS_LIBYAML:
 
-    class AnsibleLoader(CParser, AnsibleConstructor, Resolver):
+    class AnsibleLoader(Parser, AnsibleConstructor, Resolver):
         def __init__(self, stream, file_name=None, vault_secrets=None):
-            CParser.__init__(self, stream)
+            Parser.__init__(self, stream)  # pylint: disable=non-parent-init-called
             AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
             Resolver.__init__(self)
 else:
@@ -46,7 +41,7 @@ else:
         def __init__(self, stream, file_name=None, vault_secrets=None):
             Reader.__init__(self, stream)
             Scanner.__init__(self)
-            Parser.__init__(self)
+            Parser.__init__(self)  # pylint: disable=non-parent-init-called
             Composer.__init__(self)
             AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
             Resolver.__init__(self)

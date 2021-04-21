@@ -43,6 +43,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -208,13 +209,19 @@ def regex_escape(string, re_type='python'):
 
 def from_yaml(data):
     if isinstance(data, string_types):
-        return yaml.safe_load(data)
+        # The ``text_type`` call here strips any custom
+        # string wrapper class, so that CSafeLoader can
+        # read the data
+        return yaml_load(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
 
 def from_yaml_all(data):
     if isinstance(data, string_types):
-        return yaml.safe_load_all(data)
+        # The ``text_type`` call here strips any custom
+        # string wrapper class, so that CSafeLoader can
+        # read the data
+        return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
 
