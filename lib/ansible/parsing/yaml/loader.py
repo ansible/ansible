@@ -28,7 +28,7 @@ if HAS_LIBYAML:
 
     class AnsibleLoader(Parser, AnsibleConstructor, Resolver):
         def __init__(self, stream, file_name=None, vault_secrets=None):
-            Parser.__init__(self, stream)
+            Parser.__init__(self, stream)  # pylint: non-parent-init-called
             AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
             Resolver.__init__(self)
 else:
@@ -41,7 +41,7 @@ else:
         def __init__(self, stream, file_name=None, vault_secrets=None):
             Reader.__init__(self, stream)
             Scanner.__init__(self)
-            Parser.__init__(self)
+            Parser.__init__(self)  # pylint: non-parent-init-called
             Composer.__init__(self)
             AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
             Resolver.__init__(self)

@@ -15,6 +15,7 @@ HAS_LIBYAML = False
 try:
     import yaml as _yaml
 except ImportError:
+    HAS_YAML = False
     SafeLoader = None
     SafeDumper = None
     Parser = None
@@ -23,6 +24,7 @@ except ImportError:
     yaml_dump = None
     yaml_dump_all = None
 else:
+    HAS_YAML = True
     try:
         SafeLoader = _yaml.CSafeLoader
         SafeDumper = _yaml.CSafeDumper
