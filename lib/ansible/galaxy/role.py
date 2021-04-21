@@ -27,7 +27,6 @@ import datetime
 import os
 import tarfile
 import tempfile
-import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
@@ -35,6 +34,7 @@ from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
@@ -111,7 +111,7 @@ class GalaxyRole(object):
                     if os.path.isfile(meta_path):
                         try:
                             with open(meta_path, 'r') as f:
-                                self._metadata = yaml.safe_load(f)
+                                self._metadata = yaml_load(f)
                         except Exception:
                             display.vvvvv("Unable to load metadata for %s" % self.name)
                             return False
@@ -130,7 +130,7 @@ class GalaxyRole(object):
             if os.path.isfile(info_path):
                 try:
                     f = open(info_path, 'r')
-                    self._install_info = yaml.safe_load(f)
+                    self._install_info = yaml_load(f)
                 except Exception:
                     display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
@@ -162,7 +162,7 @@ class GalaxyRole(object):
         info_path = os.path.join(self.path, self.META_INSTALL)
         with open(info_path, 'w+') as f:
             try:
-                self._install_info = yaml.safe_dump(info, f)
+                self._install_info = yaml_dump(info, f)
             except Exception:
                 return False
 
@@ -299,7 +299,7 @@ class GalaxyRole(object):
                     raise AnsibleError("this role does not appear to have a meta/main.yml file.")
                 else:
                     try:
-                        self._metadata = yaml.safe_load(role_tar_file.extractfile(meta_file))
+                        self._metadata = yaml_load(role_tar_file.extractfile(meta_file))
                     except Exception:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
@@ -392,7 +392,7 @@ class GalaxyRole(object):
                 if os.path.isfile(meta_path):
                     try:
                         f = open(meta_path, 'r')
-                        self._requirements = yaml.safe_load(f)
+                        self._requirements = yaml_load(f)
                     except Exception:
                         display.vvvvv("Unable to load requirements for %s" % self.name)
                     finally:
