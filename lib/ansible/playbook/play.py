@@ -107,19 +107,20 @@ class Play(Base, Taggable, CollectionSearch):
         if 'hosts' in data:
             hosts = data.get('hosts')
 
-            # Check for empty data such as '', [], {}, and None.
-            if not hosts:
+            # Check for empty data
+            if hosts in ([], tuple(), set(), {}, ''):
                 raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
-            elif any(host is None for host in hosts):
-                raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
 
-            if not is_sequence(hosts, True):
-                raise AnsibleParserError("Hosts list must be a sequence. Please check your playbook.")
+            if is_sequence(hosts):
+                # Make sure each item in the sequence is a string and not None
+                for host in hosts:
+                    if host is None:
+                        raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
+                    elif not is_string(host):
+                        raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=host))
 
-            # Make sure each item in the sequence is a string
-            for host in hosts:
-                if not is_string(host):
-                    raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=host))
+            elif not is_string(hosts):
+                raise AnsibleParserError("Hosts list must be a sequence or a string. Please check your playbook.")
 
             # Set name if it wasn't provided
             if not data.get('name'):
