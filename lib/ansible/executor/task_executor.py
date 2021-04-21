@@ -728,6 +728,11 @@ class TaskExecutor:
             for k in plugin_vars:
                 result["_ansible_delegated_vars"][k] = cvars.get(k)
 
+            # note: here for callbacks that rely on this info to display delegation
+            for requireshed in ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'):
+                if requireshed not in result["_ansible_delegated_vars"] and requireshed in cvars:
+                    result["_ansible_delegated_vars"][requireshed] = cvars.get(requireshed)
+
         # and return
         display.debug("attempt loop complete, returning result")
         return result
