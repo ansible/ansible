@@ -78,32 +78,32 @@ gettext_generate_rst: collections_meta config cli keywords testing
 # The following two symlinks are necessary to produce two different docsets
 # from the same set of rst files (Ansible the package docs, and core docs).
 # Symlink the relevant index into place for building Ansible docs
-ansible_structure: generate_rst
+ansible_structure:
 	# We must have python and python-packaging for the version_helper
 	# script so use it for version comparison
 	if python -c "import sys, packaging.version as p; sys.exit(not p.Version('$(MAJOR_VERSION)') >  p.Version('2.10'))" ; then \
-		echo "Creating symlinks in generate_rst"; \
+		echo "Creating symlinks in ansible_structure"; \
 		ln -sf ../rst/ansible_index.rst rst/index.rst; \
 		ln -sf ../sphinx_conf/ansible_conf.py rst/conf.py; \
 	else \
-		echo 'Creating symlinks for older ansible in generate_rst'; \
+		echo 'Creating symlinks for older ansible in ansible_structure'; \
 		ln -sf ../rst/2.10_index.rst rst/index.rst; \
 		ln -sf ../sphinx_conf/2.10_conf.py rst/conf.py; \
 	fi
 
 # Symlink the relevant index into place for building core docs
-core_structure: core_generate_rst
-	@echo "Creating symlinks in core_generate_rst"
+core_structure:
+	@echo "Creating symlinks in core_structure"
 	-ln -sf ../rst/core_index.rst rst/index.rst
 	-ln -sf ../sphinx_conf/core_conf.py rst/conf.py
 
 # Symlink the relevant index into place for building core docs
-gettext_structure: gettext_generate_rst
-	@echo "Creating symlinks in gettext_generate_rst"
+gettext_structure:
+	@echo "Creating symlinks in gettext_structure"
 	-ln -sf ../rst/core_index.rst rst/index.rst
 	-ln -sf ../sphinx_conf/all_conf.py rst/conf.py
 
-gettext: gettext_structure
+gettext: gettext_structure gettext_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx gettext
 	# if msgcat is installed handle all indexes, otherwise use the index from gettext_structure.
 	-msgcat "$(POTDIR)/core_index.pot" "$(POTDIR)/ansible_index.pot" "$(POTDIR)/2.10_index.pot" > "$(POTDIR)/tmp_index.pot" && mv "$(POTDIR)/tmp_index.pot" "$(POTDIR)/index.pot"
@@ -123,20 +123,26 @@ else
 	(cd docs/docsite/; sphinx-intl stat -d rst/locales -l $(LANGUAGES) | grep -E ' [1-9][0-9]* (fuzzy|untranslated)' | sort)
 endif
 
-htmldocs: ansible_structure
+htmldocs: ansible_structure generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-core_htmldocs: core_structure
+core_htmldocs: core_structure core_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-singlehtmldocs: ansible_structure
+singlehtmldocs: ansible_structure generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
-core_singlehtmldocs: core_structure
+core_singlehtmldocs: core_structure core_generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx singlehtml
 
-linkcheckdocs: generate_rst
+# Note: The linkcheckdocs and htmlsingle targets depend on gettext_structure
+# because that one does not exclude any rst files in its conf.py.
+linkcheckdocs: gettext_structure generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx linkcheck
+
+htmlsingle: assertrst gettext_structure
+	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
+	@echo "Output is in $(BUILDDIR)/html/$(rst:.rst=.html)"
 
 webdocs: docs
 
@@ -170,7 +176,7 @@ clean:
 		fi \
 	done
 	@echo "Cleanning up generated ansible_structure"
-	find -type l -delete
+	find . -type l -delete
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
 	rm -f rst/plugins/*/*.rst
@@ -205,7 +211,3 @@ testing:
 
 epub:
 	(CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx epub)
-
-htmlsingle: assertrst
-	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
-	@echo "Output is in $(BUILDDIR)/html/$(rst:.rst=.html)"
