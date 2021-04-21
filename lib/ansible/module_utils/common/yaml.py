@@ -1,5 +1,5 @@
 # (c) 2020 Matt Martz <matt@sivel.net>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 """
 This file provides ease of use shortcuts for loading and dumping YAML,
