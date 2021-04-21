@@ -2,7 +2,7 @@
 jinja2
 PyYAML
 rstcheck
-sphinx==2.1.2
+sphinx
 sphinx-notfound-page >= 0.6
 sphinx-intl
 resolvelib
