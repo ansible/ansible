@@ -1,0 +1,2 @@
+bugfixes:
+  - playbook loaded from collection subdir now does not ignore subdirs.
