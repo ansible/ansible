@@ -346,8 +346,8 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         dir=b_path,
         prefix=to_bytes(name, errors='surrogate_or_strict'),
     )  # type: bytes
-    git_clone_cmd = 'git', 'clone', git_url, to_text(b_checkout_path)
-    # FIXME: '--depth', '1', '--branch', version
+    git_clone_cmd = 'git', 'clone', '--depth=1', git_url, to_text(b_checkout_path)
+    # FIXME: '--branch', version
     try:
         subprocess.check_call(git_clone_cmd)
     except subprocess.CalledProcessError as proc_err:
