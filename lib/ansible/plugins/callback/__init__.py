@@ -104,11 +104,10 @@ class CallbackBase(AnsiblePlugin):
         """Return label for the hostname (& delegated hostname) of a task
         result.
         """
-        hostname = result._host.get_name()
-        delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if delegated_vars:
-            return "%s -> %s" % (hostname, delegated_vars['ansible_host'])
-        return "%s" % (hostname,)
+        label = "%s" % result._host.get_name()
+        if result._task.delegate_to:
+            label += " -> %s" % result._task.delegate_to
+        return label
 
     def _run_is_verbose(self, result, verbosity=0):
         return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)

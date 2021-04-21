@@ -1,0 +1,2 @@
+bugfixes:
+  - callbacks, restore displaying delegation to host as host label.
