@@ -27,6 +27,7 @@ from ansible.playbook.play import Play
 
 from units.mock.loader import DictDataLoader
 
+
 def test_empty_play():
     p = Play.load({})
 
@@ -36,10 +37,9 @@ def test_empty_play():
 def test_play_with_hosts_string():
     p = Play.load({'hosts': 'foo'})
 
-    assert str(p) == ''
-    assert p.get_name() == 'foo'
+    assert str(p) == 'foo'
 
-    # Test the caching
+    # Test the caching since self.name should be set by previous call.
     assert p.get_name() == 'foo'
 
 
