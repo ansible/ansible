@@ -423,7 +423,13 @@ class DockerInspect:
     def get_ip_address(self):  # type: () -> t.Optional[str]
         """Return the IP address of the container for the preferred docker network."""
         if self.networks:
-            network_name = get_docker_preferred_network_name(self.args) or 'bridge'
+            network_name = get_docker_preferred_network_name(self.args)
+
+            if not network_name:
+                # Sort networks and use the first available.
+                # This assumes all containers will have access to the same networks.
+                network_name = sorted(self.networks.keys()).pop(0)
+
             ipaddress = self.networks[network_name]['IPAddress']
         else:
             ipaddress = self.network_settings['IPAddress']
