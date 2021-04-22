@@ -1069,7 +1069,8 @@ class ModuleValidator(Validator):
             else:
                 _doc, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                                   doc_info['EXAMPLES']['lineno'],
-                                                  self.name, 'EXAMPLES', load_all=True)
+                                                  self.name, 'EXAMPLES', load_all=True,
+                                                  ansible_loader=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,

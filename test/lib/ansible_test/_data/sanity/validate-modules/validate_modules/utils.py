@@ -31,7 +31,9 @@ import yaml.reader
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.yaml import SafeLoader
 from ansible.module_utils.six import string_types
+from ansible.parsing.yaml.loader import AnsibleLoader
 
 
 class AnsibleTextIOWrapper(TextIOWrapper):
@@ -133,18 +135,23 @@ def get_module_name_from_filename(filename, collection):
     return name
 
 
-def parse_yaml(value, lineno, module, name, load_all=False):
+def parse_yaml(value, lineno, module, name, load_all=False, ansible_loader=False):
     traces = []
     errors = []
     data = None
 
     if load_all:
-        loader = yaml.safe_load_all
+        yaml_load = yaml.load_all
     else:
-        loader = yaml.safe_load
+        yaml_load = yaml.load
+
+    if ansible_loader:
+        loader = AnsibleLoader
+    else:
+        loader = SafeLoader
 
     try:
-        data = loader(value)
+        data = yaml_load(value, Loader=loader)
         if load_all:
             data = list(data)
     except yaml.MarkedYAMLError as e:
