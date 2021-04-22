@@ -6,32 +6,7 @@ examples/scripts/my_test_facts.py shebang # example module but not in a normal m
 examples/scripts/my_test_info.py shebang # example module but not in a normal module location
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/announce.py compile-3.5!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.6!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.7!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_config.py compile-3.5!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-2.6!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-2.7!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-3.5!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.6!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.7!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/generate_man.py compile-3.5!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.6!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.7!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-3.5!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-2.6!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-2.7!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-3.5!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.6!skip # release process and docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.7!skip # release process and docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-3.5!skip # release process and docs build only, 3.6+ required
-hacking/build_library/build_ansible/commands.py compile-2.6!skip # release and docs process only, 3.6+ required
-hacking/build_library/build_ansible/commands.py compile-2.7!skip # release and docs process only, 3.6+ required
-hacking/build_library/build_ansible/commands.py compile-3.5!skip # release and docs process only, 3.6+ required
 lib/ansible/cli/console.py pylint:blacklisted-name
-lib/ansible/cli/galaxy.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/cli/scripts/ansible_cli_stub.py pylint:ansible-deprecated-version
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
@@ -41,10 +16,6 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
-lib/ansible/galaxy/collection/__init__.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
-lib/ansible/galaxy/collection/galaxy_api_proxy.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
-lib/ansible/galaxy/dependency_resolution/dataclasses.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
-lib/ansible/galaxy/dependency_resolution/providers.py compile-2.6!skip  # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
@@ -165,7 +136,6 @@ test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integrati
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
-test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate  # testing Python 2.x implicit relative imports
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util3.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
@@ -230,55 +200,13 @@ test/support/integration/plugins/module_utils/postgres.py future-import-boilerpl
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
 test/support/integration/plugins/modules/lvg.py pylint:blacklisted-name
 test/support/integration/plugins/modules/timezone.py pylint:blacklisted-name
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/network_agnostic.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/network_agnostic.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/cfg/base.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/cfg/base.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/config.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/config.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/netconf.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/netconf.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/network.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/network.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/parsing.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/parsing.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/netconf/netconf.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/netconf/netconf.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/restconf/restconf.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/restconf/restconf.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/doc_fragments/ios.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/doc_fragments/ios.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/module_utils/network/ios/ios.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/module_utils/network/ios/ios.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_command.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_command.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pep8:E501
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/doc_fragments/vyos.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/doc_fragments/vyos.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/module_utils/network/vyos/vyos.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/module_utils/network/vyos/vyos.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:blacklisted-name
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_config.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_config.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py metaclass-boilerplate
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
@@ -303,8 +231,6 @@ test/units/playbook/role/test_role.py pylint:blacklisted-name
 test/units/plugins/test_plugins.py pylint:blacklisted-name
 test/units/template/test_templar.py pylint:blacklisted-name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py future-import-boilerplate # test expects no boilerplate
-test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py metaclass-boilerplate # test expects no boilerplate
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits
