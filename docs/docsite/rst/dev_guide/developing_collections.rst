@@ -11,14 +11,9 @@ You can create a collection and publish it to `Ansible Galaxy <https://galaxy.an
 * For details on how to *use* collections in playbooks and roles, see :ref:`collections`.
 * For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
 
-.. contents::
-   :local:
-   :depth: 2
-
-.. _collection_structure:
-
-Collection structure
-====================
+.. toctree::
+   :maxdepth: 2
+   :caption: Developing new collections
 
    developing_collections_creating
    developing_collections_shared
@@ -26,12 +21,12 @@ Collection structure
    developing_collections_distributing
 
 .. toctree::
-  :maxdepth: 2
-  :caption: Working with existing collections
+   :maxdepth: 2
+   :caption: Working with existing collections
 
-  developing_collections_migrating
-  developing_collections_contributing
-  developing_collections_changelogs
+   developing_collections_migrating
+   developing_collections_contributing
+   developing_collections_changelogs
 
 .. toctree::
    :maxdepth: 2
