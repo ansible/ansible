@@ -250,7 +250,7 @@ class TestMacOSXPkgMgrFacts(BaseFactsTest):
         "ansible_os_family": "Darwin"
     }
 
-    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect = lambda path: path == '/opt/homebrew/bin/brew')
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/opt/homebrew/bin/brew')
     def test_collect_opt_homebrew(self, p_exists):
         module = self._mock_module()
         fact_collector = self.collector_class()
@@ -259,7 +259,7 @@ class TestMacOSXPkgMgrFacts(BaseFactsTest):
         self.assertIn('pkg_mgr', facts_dict)
         self.assertEqual(facts_dict['pkg_mgr'], 'homebrew')
 
-    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect = lambda path: path == '/usr/local/bin/brew')
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/usr/local/bin/brew')
     def test_collect_usr_homebrew(self, p_exists):
         module = self._mock_module()
         fact_collector = self.collector_class()
@@ -268,7 +268,7 @@ class TestMacOSXPkgMgrFacts(BaseFactsTest):
         self.assertIn('pkg_mgr', facts_dict)
         self.assertEqual(facts_dict['pkg_mgr'], 'homebrew')
 
-    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect = lambda path: path == '/opt/local/bin/port')
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/opt/local/bin/port')
     def test_collect_macports(self, p_exists):
         module = self._mock_module()
         fact_collector = self.collector_class()
