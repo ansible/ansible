@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - detect docker container with check for ./dockerenv or ./dockinit (https://github.com/ansible/ansible/pull/74349).
