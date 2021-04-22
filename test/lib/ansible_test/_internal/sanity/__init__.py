@@ -33,6 +33,7 @@ from ..util import (
     str_to_version,
     SUPPORTED_PYTHON_VERSIONS,
     CONTROLLER_PYTHON_VERSIONS,
+    REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
 from ..util_common import (
@@ -72,6 +73,10 @@ from ..test import (
 
 from ..data import (
     data_context,
+)
+
+from ..content_config import (
+    get_content_config,
 )
 
 COMMAND = 'sanity'
@@ -142,18 +147,21 @@ def command_sanity(args):
             options = ''
 
             if test.supported_python_versions and version not in test.supported_python_versions:
-                display.warning("Skipping sanity test '%s' on Python %s. Supported Python versions: %s" % (
-                    test.name, version, ', '.join(test.supported_python_versions)))
+                # There are two ways this situation can occur:
+                #
+                # - A specific Python version was requested with the `--python` option and that version is not supported by the test.
+                #   This means that the test supports only a subset of the controller supported Python versions, and not the one given by the `--python` option.
+                #   Or that a remote-only Python version was specified for a Python based sanity test that is not multi-version.
+                #
+                # - No specific Python version was requested and no supported version was found on the system.
+                #   This means that the test supports only a subset of the controller supported Python versions, and not the one used to run ansible-test.
+                #   Or that the Python version used to run ansible-test is not supported by the controller, a condition which will soon not be possible.
+                #
+                # Neither of these are affected by the Python versions supported by a collection.
                 result = SanitySkipped(test.name, skip_version)
-            elif not args.python and version not in available_versions:
-                display.warning("Skipping sanity test '%s' on Python %s due to missing interpreter." % (test.name, version))
-                result = SanitySkipped(test.name, skip_version)
+                result.reason = "Skipping sanity test '%s' on Python %s. Supported Python versions: %s" % (
+                    test.name, version, ', '.join(test.supported_python_versions))
             else:
-                if test.supported_python_versions:
-                    display.info("Running sanity test '%s' with Python %s" % (test.name, version))
-                else:
-                    display.info("Running sanity test '%s'" % test.name)
-
                 if isinstance(test, SanityCodeSmellTest):
                     settings = test.load_processor(args)
                 elif isinstance(test, SanityMultipleVersion):
@@ -177,11 +185,27 @@ def command_sanity(args):
                 all_targets = SanityTargets.filter_and_inject_targets(test, all_targets)
                 usable_targets = SanityTargets.filter_and_inject_targets(test, usable_targets)
 
-                usable_targets = sorted(test.filter_targets(list(usable_targets)))
+                usable_targets = sorted(test.filter_targets_by_version(list(usable_targets), version))
                 usable_targets = settings.filter_skipped_targets(usable_targets)
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
-                if usable_targets or test.no_targets:
+                test_needed = bool(usable_targets or test.no_targets)
+                result = None
+
+                if test_needed and not args.python and version not in available_versions:
+                    # Deferred checking of Python availability. Done here since it is now known to be required for running the test.
+                    # Earlier checking could cause a spurious warning to be generated for a collection which does not support the Python version.
+                    # If the `--python` option was used, this warning will be skipped and an error will be reported when running the test instead.
+                    result = SanitySkipped(test.name, skip_version)
+                    result.reason = "Skipping sanity test '%s' on Python %s due to missing interpreter." % (test.name, version)
+
+                if not result:
+                    if test.supported_python_versions:
+                        display.info("Running sanity test '%s' with Python %s" % (test.name, version))
+                    else:
+                        display.info("Running sanity test '%s'" % test.name)
+
+                if test_needed and not result:
                     install_command_requirements(args, version, context=test.name, enable_pyyaml_check=True)
 
                     if isinstance(test, SanityCodeSmellTest):
@@ -195,6 +219,8 @@ def command_sanity(args):
                         result = test.test(args, sanity_targets)
                     else:
                         raise Exception('Unsupported test type: %s' % type(test))
+                elif result:
+                    pass
                 else:
                     result = SanitySkipped(test.name, skip_version)
 
@@ -274,13 +300,18 @@ class SanityIgnoreParser:
         for test in sanity_get_tests():
             test_targets = SanityTargets.filter_and_inject_targets(test, targets)
 
-            paths_by_test[test.name] = set(target.path for target in test.filter_targets(test_targets))
-
             if isinstance(test, SanityMultipleVersion):
                 versioned_test_names.add(test.name)
-                tests_by_name.update(dict(('%s-%s' % (test.name, python_version), test) for python_version in test.supported_python_versions))
+
+                for python_version in test.supported_python_versions:
+                    test_name = '%s-%s' % (test.name, python_version)
+
+                    paths_by_test[test_name] = set(target.path for target in test.filter_targets_by_version(test_targets, python_version))
+                    tests_by_name[test_name] = test
             else:
                 unversioned_test_names.update(dict(('%s-%s' % (test.name, python_version), test.name) for python_version in SUPPORTED_PYTHON_VERSIONS))
+
+                paths_by_test[test.name] = set(target.path for target in test.filter_targets_by_version(test_targets, ''))
                 tests_by_name[test.name] = test
 
         for line_no, line in enumerate(lines, start=1):
@@ -347,7 +378,7 @@ class SanityIgnoreParser:
                 self.parse_errors.append((line_no, 1, "Sanity test '%s' does not support directory paths" % test_name))
                 continue
 
-            if path not in paths_by_test[test.name] and not test.no_targets:
+            if path not in paths_by_test[test_name] and not test.no_targets:
                 self.parse_errors.append((line_no, 1, "Sanity test '%s' does not test path '%s'" % (test_name, path)))
                 continue
 
@@ -658,6 +689,11 @@ class SanityTest(ABC):
         return False
 
     @property
+    def py2_compat(self):  # type: () -> bool
+        """True if the test only applies to code that runs on Python 2.x."""
+        return False
+
+    @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return CONTROLLER_PYTHON_VERSIONS
@@ -668,6 +704,47 @@ class SanityTest(ABC):
             return []
 
         raise NotImplementedError('Sanity test "%s" must implement "filter_targets" or set "no_targets" to True.' % self.name)
+
+    def filter_targets_by_version(self, targets, python_version):  # type: (t.List[TestTarget], str) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
+        del python_version  # python_version is not used here, but derived classes may make use of it
+
+        targets = self.filter_targets(targets)
+
+        if self.py2_compat:
+            # This sanity test is a Python 2.x compatibility test.
+            content_config = get_content_config()
+
+            if content_config.py2_support:
+                # This collection supports Python 2.x.
+                # Filter targets to include only those that require support for remote-only Python versions.
+                targets = self.filter_remote_targets(targets)
+            else:
+                # This collection does not support Python 2.x.
+                # There are no targets to test.
+                targets = []
+
+        return targets
+
+    def filter_remote_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return a filtered list of the given targets, including only those that require support for remote-only Python versions."""
+        targets = [target for target in targets if (
+            is_subdir(target.path, data_context().content.module_path) or
+            is_subdir(target.path, data_context().content.module_utils_path) or
+            is_subdir(target.path, data_context().content.unit_module_path) or
+            is_subdir(target.path, data_context().content.unit_module_utils_path) or
+            # include modules/module_utils within integration test library directories
+            re.search('^%s/.*/library/' % re.escape(data_context().content.integration_targets_path), target.path) or
+            # special handling for content in ansible-core
+            (data_context().content.is_ansible and (
+                # temporary solution until ansible-test code is reorganized when the split controller/remote implementation is complete
+                is_subdir(target.path, 'test/lib/ansible_test/') or
+                # integration test support modules/module_utils continue to require support for remote-only Python versions
+                re.search('^test/support/integration/.*/(modules|module_utils)/', target.path)
+            ))
+        )]
+
+        return targets
 
 
 class SanityCodeSmellTest(SanityTest):
@@ -701,6 +778,7 @@ class SanityCodeSmellTest(SanityTest):
             self.__no_targets = self.config.get('no_targets')  # type: bool
             self.__include_directories = self.config.get('include_directories')  # type: bool
             self.__include_symlinks = self.config.get('include_symlinks')  # type: bool
+            self.__py2_compat = self.config.get('py2_compat', False)  # type: bool
         else:
             self.output = None
             self.extensions = []
@@ -715,6 +793,7 @@ class SanityCodeSmellTest(SanityTest):
             self.__no_targets = True
             self.__include_directories = False
             self.__include_symlinks = False
+            self.__py2_compat = False
 
         if self.no_targets:
             mutually_exclusive = (
@@ -752,6 +831,11 @@ class SanityCodeSmellTest(SanityTest):
     def include_symlinks(self):  # type: () -> bool
         """True if the test targets should include symlinks."""
         return self.__include_symlinks
+
+    @property
+    def py2_compat(self):  # type: () -> bool
+        """True if the test only applies to code that runs on Python 2.x."""
+        return self.__py2_compat
 
     @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
@@ -936,6 +1020,25 @@ class SanityMultipleVersion(SanityFunc):
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return SUPPORTED_PYTHON_VERSIONS
+
+    def filter_targets_by_version(self, targets, python_version):  # type: (t.List[TestTarget], str) -> t.List[TestTarget]
+        """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
+        if not python_version:
+            raise Exception('python_version is required to filter multi-version tests')
+
+        targets = super(SanityMultipleVersion, self).filter_targets_by_version(targets, python_version)
+
+        if python_version in REMOTE_ONLY_PYTHON_VERSIONS:
+            content_config = get_content_config()
+
+            if python_version not in content_config.modules.python_versions:
+                # when a remote-only python version is not supported there are no paths to test
+                return []
+
+            # when a remote-only python version is supported, tests must be applied only to targets that support remote-only Python versions
+            targets = self.filter_remote_targets(targets)
+
+        return targets
 
 
 SANITY_TESTS = (
