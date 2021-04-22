@@ -228,16 +228,29 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
+    def __init__(self, command, test, python_version=None):
+        """
+        :type command: str
+        :type test: str
+        :type python_version: str
+        """
+        super(TestSkipped, self).__init__(command, test, python_version)
+
+        self.reason = None  # type: t.Optional[str]
+
     def write_console(self):
         """Write results to console."""
-        display.info('No tests applicable.', verbosity=1)
+        if self.reason:
+            display.warning(self.reason)
+        else:
+            display.info('No tests applicable.', verbosity=1)
 
     def write_junit(self, args):
         """
         :type args: TestConfig
         """
         test_case = self.junit.TestCase(classname=self.command, name=self.name)
-        test_case.add_skipped_info('No tests applicable.')
+        test_case.add_skipped_info(self.reason or 'No tests applicable.')
 
         self.save_junit(args, test_case)
 
