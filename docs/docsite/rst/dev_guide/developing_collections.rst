@@ -8,9 +8,6 @@ Collections are a distribution format for Ansible content. You can package and d
 
 You can create a collection and publish it to `Ansible Galaxy <https://galaxy.ansible.com>`_ or to a private Automation Hub instance. You can publish certified collections to the Red Hat Automation Hub, part of the Red Hat Ansible Automation Platform.
 
-* For details on how to *use* collections in playbooks and roles, see :ref:`collections`.
-* For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
-
 .. toctree::
    :maxdepth: 2
    :caption: Developing new collections
@@ -40,9 +37,11 @@ For instructions on developing modules, see :ref:`developing_modules_general`.
 .. seealso::
 
    :ref:`collections`
-       Learn how to install and use collections.
+       Learn how to install and use collections in playbooks and roles
    :ref:`contributing_maintained_collections`
        Guidelines for contributing to selected collections
+   `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_
+       Current development status of community collections and FAQ
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
