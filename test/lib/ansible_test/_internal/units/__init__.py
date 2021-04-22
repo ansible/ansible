@@ -60,6 +60,10 @@ from ..executor import (
     install_command_requirements,
 )
 
+from ..content_config import (
+    get_content_config,
+)
+
 
 class TestContext:
     """Contexts that unit tests run in based on the type of content."""
@@ -80,8 +84,18 @@ def command_units(args):
 
     paths = [target.path for target in include]
 
-    module_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_path)]
-    module_utils_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_utils_path)]
+    content_config = get_content_config()
+    supported_remote_python_versions = content_config.modules.python_versions
+
+    if content_config.modules.controller_only:
+        # controller-only collections run modules/module_utils unit tests as controller-only tests
+        module_paths = []
+        module_utils_paths = []
+    else:
+        # normal collections run modules/module_utils unit tests isolated from controller code due to differences in python version requirements
+        module_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_path)]
+        module_utils_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_utils_path)]
+
     controller_paths = sorted(path for path in set(paths) - set(module_paths) - set(module_utils_paths))
 
     remote_paths = module_paths or module_utils_paths
@@ -96,9 +110,19 @@ def command_units(args):
         raise AllTargetsSkipped()
 
     if args.python and args.python in REMOTE_ONLY_PYTHON_VERSIONS:
+        if args.python not in supported_remote_python_versions:
+            display.warning('Python %s is not supported by this collection. Supported Python versions are: %s' % (
+                args.python, ', '.join(content_config.python_versions)))
+            raise AllTargetsSkipped()
+
         if not remote_paths:
             display.warning('Python %s is only supported by module and module_utils unit tests, but none were selected.' % args.python)
             raise AllTargetsSkipped()
+
+    if args.python and args.python not in supported_remote_python_versions and not controller_paths:
+        display.warning('Python %s is not supported by this collection for modules/module_utils. Supported Python versions are: %s' % (
+            args.python, ', '.join(supported_remote_python_versions)))
+        raise AllTargetsSkipped()
 
     if args.delegate:
         raise Delegate(require=changes, exclude=args.exclude)
@@ -117,6 +141,9 @@ def command_units(args):
         for test_context, paths in test_context_paths.items():
             if test_context == TestContext.controller:
                 if version not in CONTROLLER_PYTHON_VERSIONS:
+                    continue
+            else:
+                if version not in supported_remote_python_versions:
                     continue
 
             if not paths:
