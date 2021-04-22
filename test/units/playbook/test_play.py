@@ -226,10 +226,11 @@ def test_play_none_hosts(value):
     (
         {'one': None},
         {'one': 'two'},
+        None,
     )
 )
 def test_play_invalid_hosts_sequence(value):
-    with pytest.raises(AnsibleParserError, match='Hosts list must be a sequence'):
+    with pytest.raises(AnsibleParserError, match='Hosts list must be a sequence or string'):
         Play.load({'hosts': value})
 
 

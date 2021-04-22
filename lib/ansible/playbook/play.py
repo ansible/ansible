@@ -128,7 +128,7 @@ class Play(Base, Taggable, CollectionSearch):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=host))
 
             elif not is_string(hosts):
-                raise AnsibleParserError("Hosts list must be a sequence or a string. Please check your playbook.")
+                raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
         p = Play()
         if vars:
