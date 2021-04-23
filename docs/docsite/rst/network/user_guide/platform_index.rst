@@ -33,6 +33,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_slxos
    platform_voss
    platform_vyos
+   platform_weos4
    platform_netconf_enabled
 
 .. _settings_by_platform:
@@ -86,6 +87,7 @@ Settings by Platform
     `Pluribus Netvisor`_             ``community.network.netvisor``    ✓
     `Ruckus ICX`_                    ``community.network.icx``         ✓
     `VyOS`_ `[†]`_                   ``vyos.vyos.vyos``                ✓                              ✓
+    `Westermo WeOS 4`_               ``community.network.weos4``       ✓
     OS that supports Netconf `[†]`_  ``<network-os>``                               ✓                 ✓
     ===============================  ================================  ===========  =======  =======  ===========
 
@@ -116,6 +118,7 @@ Settings by Platform
 .. _Pluribus Netvisor: https://galaxy.ansible.com/community/network
 .. _Ruckus ICX: https://galaxy.ansible.com/community/network
 .. _VyOS: https://galaxy.ansible.com/vyos/vyos
+.. _Westermo WeOS 4: https://galaxy.ansible.com/community/network
 .. _`[†]`:
 
 **[†]** Maintained by Ansible Network Team
