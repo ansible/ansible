@@ -1337,14 +1337,17 @@ def _do_ini_snippet(text, doc):
 
 def _do_lookup_snippet(text, doc):
 
-    snippet = "lookup('%s'," % doc.get('plugin', doc.get('name'))
+    snippet = "lookup('%s', " % doc.get('plugin', doc.get('name'))
+    comment = ''
     for o in sorted(doc['options'].keys()):
 
+        opt = doc['options'][o]
         if o in ('_terms', '_raw', '_list'):
-            snippet += '<list of arguments>'
+            # these are 'list of arguments'
+            snippet += '< %s >' % (o)
+            comment = '# %s: %s' % (o, opt.get('description', ''))
             continue
 
-        opt = doc['options'][o]
         required = opt.get('required', False)
         if not isinstance(required, bool):
             raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
@@ -1360,4 +1363,6 @@ def _do_lookup_snippet(text, doc):
             snippet += ', %s=%s' % (o, default)
 
     snippet += ")"
+    if comment:
+        text.append(comment)
     text.append(snippet)
