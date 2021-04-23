@@ -77,7 +77,7 @@ def unique(environment, a, case_sensitive=None, attribute=None):
 
         # handle Jinja2 specific attributes when using Ansible's version
         if case_sensitive is False or attribute:
-            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
+            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
         c = []
