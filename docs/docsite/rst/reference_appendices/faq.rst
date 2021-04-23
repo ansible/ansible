@@ -424,11 +424,11 @@ How do I access a variable name programmatically?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
-via a role parameter or other input. Variable names can be built by adding strings together, like so:
+via a role parameter or other input. Variable names can be built by adding strings together using "~", like so:
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
+    {{ hostvars[inventory_hostname]['ansible_' ~ which_interface]['ipv4']['address'] }}
 
 The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables. ``inventory_hostname``
 is a magic variable that indicates the current host you are looping over in the host loop.
@@ -437,7 +437,7 @@ In the example above, if your interface names have dashes, you must replace them
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['ansible_' + which_interface | replace('_', '-') ]['ipv4']['address'] }}
+    {{ hostvars[inventory_hostname]['ansible_' ~ which_interface | replace('_', '-') ]['ipv4']['address'] }}
 
 Also see dynamic_variables_.
 
@@ -681,13 +681,13 @@ The above DOES NOT WORK as you expect, if you need to use a dynamic variable use
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
+    {{ hostvars[inventory_hostname]['somevar_' ~ other_var] }}
 
 For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
 .. code-block:: jinja
 
-     {{ lookup('vars', 'somevar_' + other_var) }}
+     {{ lookup('vars', 'somevar_' ~ other_var) }}
 
 
 .. _why_no_wheel:
