@@ -17,9 +17,10 @@ from ..util import (
     is_subdir,
     SubprocessError,
     SUPPORTED_PYTHON_VERSIONS,
+    CONTROLLER_MIN_PYTHON_VERSION,
+    CONTROLLER_PYTHON_VERSIONS,
+    REMOTE_ONLY_PYTHON_VERSIONS,
     ANSIBLE_LIB_ROOT,
-    str_to_version,
-    version_to_str,
 )
 
 from ..util_common import (
@@ -91,15 +92,13 @@ def command_units(args):
         TestContext.controller: controller_paths,
     }
 
-    # temporary definition of "remote" python versions until the full split controller/remote implementation is in place
-    controller_min_python_version = (3, 8)
-    remote_only_python_versions = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) < controller_min_python_version)
-
     if not paths:
         raise AllTargetsSkipped()
 
-    if args.python and args.python in remote_only_python_versions and not remote_paths:
-        raise AllTargetsSkipped()
+    if args.python and args.python in REMOTE_ONLY_PYTHON_VERSIONS:
+        if not remote_paths:
+            display.warning('Python %s is only supported by module and module_utils unit tests, but none were selected.' % args.python)
+            raise AllTargetsSkipped()
 
     if args.delegate:
         raise Delegate(require=changes, exclude=args.exclude)
@@ -116,8 +115,9 @@ def command_units(args):
         test_candidates = []
 
         for test_context, paths in test_context_paths.items():
-            if test_context == TestContext.controller and version in remote_only_python_versions:
-                continue
+            if test_context == TestContext.controller:
+                if version not in CONTROLLER_PYTHON_VERSIONS:
+                    continue
 
             if not paths:
                 continue
@@ -126,7 +126,7 @@ def command_units(args):
 
             env.update(
                 PYTHONPATH=get_units_ansible_python_path(args, test_context),
-                ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=version_to_str(controller_min_python_version),
+                ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=CONTROLLER_MIN_PYTHON_VERSION,
             )
 
             test_candidates.append((test_context, version, paths, env))

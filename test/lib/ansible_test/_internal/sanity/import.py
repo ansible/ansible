@@ -87,6 +87,10 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
+        settings = self.load_processor(args, python_version)
+
+        paths = [target.path for target in targets.include]
+
         capture_pip = args.verbosity < 2
 
         python = find_python(python_version)
@@ -96,10 +100,6 @@ class ImportTest(SanityMultipleVersion):
             # on Python 3.x we can use the built-in venv
             pip = generate_pip_command(python)
             run_command(args, generate_pip_install(pip, '', packages=['virtualenv']), capture=capture_pip)
-
-        settings = self.load_processor(args, python_version)
-
-        paths = [target.path for target in targets.include]
 
         env = ansible_environment(args, color=False)
 

@@ -31,6 +31,8 @@ from ..util import (
     paths_to_dirs,
     get_ansible_version,
     str_to_version,
+    SUPPORTED_PYTHON_VERSIONS,
+    CONTROLLER_PYTHON_VERSIONS,
 )
 
 from ..util_common import (
@@ -54,7 +56,6 @@ from ..executor import (
     AllTargetsSkipped,
     Delegate,
     install_command_requirements,
-    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from ..config import (
@@ -659,7 +660,7 @@ class SanityTest(ABC):
     @property
     def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
-        return tuple(python_version for python_version in SUPPORTED_PYTHON_VERSIONS if str_to_version(python_version) >= (3, 6))
+        return CONTROLLER_PYTHON_VERSIONS
 
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]  # pylint: disable=unused-argument
         """Return the given list of test targets, filtered to include only those relevant for the test."""

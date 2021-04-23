@@ -113,9 +113,7 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
-REMOTE_ONLY_PYTHON_VERSIONS = (
-    '2.6',
-)
+CONTROLLER_MIN_PYTHON_VERSION = '3.8'
 
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
@@ -904,3 +902,6 @@ def get_host_ip():
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name
+
+CONTROLLER_PYTHON_VERSIONS = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) >= str_to_version(CONTROLLER_MIN_PYTHON_VERSION))
+REMOTE_ONLY_PYTHON_VERSIONS = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) < str_to_version(CONTROLLER_MIN_PYTHON_VERSION))
