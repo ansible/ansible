@@ -1,6 +1,6 @@
-- name: Verify unique's fallback's exception throwing for case_sensitive=True
+- name: Verify unique's fallback's exception throwing for case_sensitive=False
   set_fact:
-    unique_fallback_exc1: '{{ [{"foo": "bar", "moo": "cow"}]|unique(case_sensitive=True) }}'
+    unique_fallback_exc1: '{{ [{"foo": "bar", "moo": "cow"}]|unique(case_sensitive=False) }}'
   ignore_errors: true
   tags: unique
   register: unique_fallback_exc1_res
@@ -67,6 +67,11 @@
       - '[1,2,3]|intersect([3,2,1]) == [1,2,3]'
       - '(1,2,3)|intersect((4,5,6))|list == []'
       - '(1,2,3)|intersect((3,4,5,6))|list == [3]'
+      - '["a","A","b"]|intersect(["B","c","C"]) == []'
+      - '["a","A","b"]|intersect(["b","B","c","C"]) == ["b"]'
+      - '["a","A","b"]|intersect(["b","A","a"]) == ["a","A","b"]'
+      - '("a","A","b")|intersect(("B","c","C"))|list == []'
+      - '("a","A","b")|intersect(("b","B","c","C"))|list == ["b"]'
 
 - name: Verify difference
   tags: difference
@@ -77,6 +82,11 @@
       - '[1,2,3]|difference([3,2,1]) == []'
       - '(1,2,3)|difference((4,5,6))|list == [1,2,3]'
       - '(1,2,3)|difference((3,4,5,6))|list == [1,2]'
+      - '["a","A","b"]|difference(["B","c","C"]) == ["a","A","b"]'
+      - '["a","A","b"]|difference(["b","B","c","C"]) == ["a","A"]'
+      - '["a","A","b"]|difference(["b","A","a"]) == []'
+      - '("a","A","b")|difference(("B","c","C"))|list|sort(case_sensitive=True) == ["A","a","b"]'
+      - '("a","A","b")|difference(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","a"]'
 
 - name: Verify symmetric_difference
   tags: symmetric_difference
@@ -87,6 +97,11 @@
       - '[1,2,3]|symmetric_difference([3,2,1]) == []'
       - '(1,2,3)|symmetric_difference((4,5,6))|list == [1,2,3,4,5,6]'
       - '(1,2,3)|symmetric_difference((3,4,5,6))|list == [1,2,4,5,6]'
+      - '["a","A","b"]|symmetric_difference(["B","c","C"]) == ["a","A","b","B","c","C"]'
+      - '["a","A","b"]|symmetric_difference(["b","B","c","C"]) == ["a","A","B","c","C"]'
+      - '["a","A","b"]|symmetric_difference(["b","A","a"]) == []'
+      - '("a","A","b")|symmetric_difference(("B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '("a","A","b")|symmetric_difference(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","c"]'
 
 - name: Verify union
   tags: union
@@ -97,6 +112,11 @@
       - '[1,2,3]|union([3,2,1]) == [1,2,3]'
       - '(1,2,3)|union((4,5,6))|list == [1,2,3,4,5,6]'
       - '(1,2,3)|union((3,4,5,6))|list == [1,2,3,4,5,6]'
+      - '["a","A","b"]|union(["B","c","C"]) == ["a","A","b","B","c","C"]'
+      - '["a","A","b"]|union(["b","B","c","C"]) == ["a","A","b","B","c","C"]'
+      - '["a","A","b"]|union(["b","A","a"]) == ["a","A","b"]'
+      - '("a","A","b")|union(("B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '("a","A","b")|union(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
 
 - name: Verify min
   tags: min

@@ -1,0 +1,6 @@
+breaking_changes:
+  - intersect, difference, symmetric_difference, union filters - the default behavior
+    is now to be case-sensitive (https://github.com/ansible/ansible/issues/74255)
+  - unique filter - the default behavior is now to fail if Jinja2's filter fails and
+    explicit ``case_sensitive=False`` as the Ansible's fallback is case-sensitive
+    (https://github.com/ansible/ansible/pull/74256)
