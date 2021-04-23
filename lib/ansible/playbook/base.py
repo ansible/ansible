@@ -412,19 +412,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             raise AnsibleParserError(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
 
         resolved_actions = []
+        include_groups = []
         for action in action_group:
             # Check if this is a special 'metadata' entry
             if isinstance(action, dict) and len(action) == 1 and 'metadata' in action:
-                extend_groups = action['metadata'].get('extend_group', [])
-                if isinstance(extend_groups, string_types):
-                    extend_groups = [extend_groups]
-                for extend_group in extend_groups:
-                    if len(extend_group.split('.')) == 3:
-                        extend_group_collection = '.'.join(extend_group.split('.')[0:2])
-                    else:
-                        extend_group_collection = collection_name
-                    dummy, group_actions = self._resolve_group(extend_group, extend_group_collection, mandatory=False)
-                    resolved_actions.extend(group_actions)
+                include_groups = action['metadata'].get('extend_group', [])
+                if isinstance(include_groups, string_types):
+                    include_groups = [include_groups]
                 continue
 
             # The collection may or may not use the fully qualified name.
@@ -450,6 +444,24 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 self.play._action_groups[action] = [fq_group_name]
 
         self.play._group_actions[fq_group_name] = resolved_actions
+
+        # Resolve extended groups last, after caching the group in case they recursively refer to each other
+        for include_group in include_groups:
+            if len(include_group.split('.')) == 3:
+                include_group_collection = '.'.join(include_group.split('.')[0:2])
+            else:
+                include_group_collection = collection_name
+            dummy, group_actions = self._resolve_group(include_group, include_group_collection, mandatory=False)
+
+            for action in group_actions:
+                if action in self.play._action_groups:
+                    self.play._action_groups[action].append(fq_group_name)
+                else:
+                    self.play._action_groups[action] = [fq_group_name]
+
+            self.play._group_actions[fq_group_name].extend(group_actions)
+            resolved_actions.extend(group_actions)
+
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name, mandatory=True):
