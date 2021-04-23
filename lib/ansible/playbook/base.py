@@ -375,7 +375,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return play
 
-    def _resolve_group(self, group, collection_name):
+    def _resolve_group(self, group, collection_name, mandatory=True):
         # The group should be part of the current collection
         if not group.startswith(collection_name + '.'):
             fq_group_name = collection_name + '.' + group
@@ -392,16 +392,24 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             else:
                 action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
         except ValueError:
-            # Don't fail if the collection isn't installed
-            return fq_group_name, []
+            if not mandatory:
+                display.vvvvv(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
+                return fq_group_name, []
+
+            raise AnsibleParserError(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
 
         # The collection may or may not use the fully qualified name
         # Don't fail if the group doesn't exist in the collection
         short_name = fq_group_name.split(collection_name + '.')[-1]
         action_group = action_groups.get(
             fq_group_name,
-            action_groups.get(short_name, [])
+            action_groups.get(short_name)
         )
+        if action_group is None:
+            if not mandatory:
+                display.vvvvv(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
+                return fq_group_name, []
+            raise AnsibleParserError(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
 
         resolved_actions = []
         for action in action_group:
@@ -415,7 +423,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                         extend_group_collection = '.'.join(extend_group.split('.')[0:2])
                     else:
                         extend_group_collection = collection_name
-                    dummy, group_actions = self._resolve_group(extend_group, extend_group_collection)
+                    dummy, group_actions = self._resolve_group(extend_group, extend_group_collection, mandatory=False)
                     resolved_actions.extend(group_actions)
                 continue
 
@@ -431,7 +439,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     action_names.append('ansible.builtin.' + action)
 
             for action_name in action_names:
-                resolved_action = self._resolve_action(action_name)
+                resolved_action = self._resolve_action(action_name, mandatory=False)
                 if resolved_action:
                     resolved_actions.append(resolved_action)
 
@@ -444,7 +452,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self.play._group_actions[fq_group_name] = resolved_actions
         return fq_group_name, resolved_actions
 
-    def _resolve_action(self, action_name):
+    def _resolve_action(self, action_name, mandatory=True):
         context = action_loader.find_plugin_with_context(action_name)
         if not context.resolved:
             context = module_loader.find_plugin_with_context(action_name)
@@ -452,6 +460,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # TODO: use the canonical name on the context once it's available?
         if context.resolved:
             return context.redirect_list[-1]
+        if mandatory:
+            raise AnsibleParserError(f"Could not resolve action {action_name} in module_defaults")
+        display.vvvvv(f"Could not resolve action {action_name} in module_defaults")
 
     def squash(self):
         '''

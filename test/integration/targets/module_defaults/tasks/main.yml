@@ -39,7 +39,7 @@
       module_defaults:
         # Meaningless values to make sure that 'module_defaults' gets
         # evaluated for this block
-        foo:
+        ping:
           bar: baz
       block:
       - debug:
