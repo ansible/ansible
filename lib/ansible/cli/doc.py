@@ -1354,7 +1354,7 @@ def _do_lookup_snippet(text, doc):
         else:
             default = opt.get('default', 'None')
 
-        if opt.get('type') == 'string':
+        if opt.get('type') in ('string', 'str'):
             snippet += ", %s='%s'" % (o, default)
         else:
             snippet += ', %s=%s' % (o, default)
