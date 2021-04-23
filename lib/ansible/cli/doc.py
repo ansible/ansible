@@ -1323,7 +1323,7 @@ def _do_ini_snippet(text, doc):
                 sections[entry['section']] = []
 
             if required:
-                default = '(required)'
+                default = '(REQUIRED)'
             else:
                 default = opt.get('default', '')
 
@@ -1356,7 +1356,7 @@ def _do_lookup_snippet(text, doc):
             raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
 
         if required:
-            default = '<required>'
+            default = '<REQUIRED>'
         else:
             default = opt.get('default', 'None')
 
