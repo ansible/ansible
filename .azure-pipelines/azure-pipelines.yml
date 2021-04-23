@@ -157,7 +157,7 @@ stages:
           testFormat: generic/{0}/1
           targets:
             - test: 2.7
-            - test: 3.6
+            - test: 3.9
   - stage: Incidental_Remote
     displayName: Incidental Remote
     dependsOn: []
