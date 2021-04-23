@@ -238,6 +238,46 @@ class TestPkgMgrFacts(BaseFactsTest):
         self.assertIn('pkg_mgr', facts_dict)
 
 
+class TestMacOSXPkgMgrFacts(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "MacOSX",
+        "ansible_distribution_major_version": "11",
+        "ansible_os_family": "Darwin"
+    }
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/opt/homebrew/bin/brew')
+    def test_collect_opt_homebrew(self, p_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'homebrew')
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/usr/local/bin/brew')
+    def test_collect_usr_homebrew(self, p_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'homebrew')
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/opt/local/bin/port')
+    def test_collect_macports(self, p_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'macports')
+
+
 def _sanitize_os_path_apt_get(path):
     if path == '/usr/bin/apt-get':
         return True
