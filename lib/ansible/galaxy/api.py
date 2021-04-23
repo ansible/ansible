@@ -341,7 +341,8 @@ class GalaxyAPI:
                 expires = datetime.datetime.strptime(server_cache[url_info.path]['expires'], iso_datetime_format)
                 valid = datetime.datetime.utcnow() < expires
 
-            if valid and not ('page' in query or 'offset' in query):
+            is_paginated_url = 'page' in query or 'offset' in query
+            if valid and not is_paginated_url:
                 # Got a hit on the cache and we aren't getting a paginated response
                 path_cache = server_cache[url_info.path]
                 if path_cache.get('paginated'):

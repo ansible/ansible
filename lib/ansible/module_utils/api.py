@@ -118,7 +118,9 @@ def retry(retries=None, retry_pause=1):
 
 
 def generate_jittered_backoff(retries=10, delay=3, max_delay=60):
-    """The "Full Jitter" backoff strategy described here https://www.awsarchitectureblog.com/2015/03/backoff.html
+    """The "Full Jitter" backoff strategy.
+
+    Ref: https://www.awsarchitectureblog.com/2015/03/backoff.html
 
     :param retries: The number of delays to generate.
     :param delay: The time in seconds for the initial delay.
