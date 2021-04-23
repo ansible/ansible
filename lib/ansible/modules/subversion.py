@@ -295,7 +295,7 @@ def main():
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C')
+    module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C', LC_ALL='en_US.UTF-8')
 
     if not dest and (checkout or update or export):
         module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
