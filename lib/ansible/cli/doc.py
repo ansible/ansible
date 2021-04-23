@@ -419,7 +419,6 @@ class DocCLI(CLI, RoleMixin):
                                  action=opt_help.PrependListAction,
                                  help='The path to the directory containing your roles.')
 
-
         # modifiers
         exclusive = self.parser.add_mutually_exclusive_group()
         # TODO: wanr if not used with -t roles
@@ -437,7 +436,6 @@ class DocCLI(CLI, RoleMixin):
                                help='List available plugins. %s' % coll_filter)
         exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
                                help='**For internal testing only** Dump json metadata for all plugins.')
-
 
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
@@ -964,13 +962,14 @@ class DocCLI(CLI, RoleMixin):
 
         text = []
 
-        # ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars', 'module', 'strategy', 'role', 'keyword')
+        # ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory',
+        #  'lookup', 'netconf', 'shell', 'vars', 'module', 'strategy', 'role', 'keyword')
         # those that support YAML format
         if ptype in ('inventory', 'module') and 'options' in doc:
             _do_yaml_snippet(text, doc)
         elif ptype == 'lookup':
             _do_lookup_snippet(text, doc)
-        else:
+        elif not in ('role', 'keyword'):
             _do_ini_snippet(text, doc)
 
         # show something for those that really wont work any other way (ini/toml/script inventories)
