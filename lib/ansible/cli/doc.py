@@ -840,7 +840,7 @@ class DocCLI(CLI, RoleMixin):
         doc['metadata'] = metadata
 
         if context.CLIARGS['show_snippet']:
-            text = DocCLI.get_snippet_text(plugin_type, doc, plainexamples)
+            text = DocCLI.get_snippet_text(plugin_type, doc)
         else:
             try:
                 text = DocCLI.get_man_text(doc, collection_name, plugin_type)
@@ -958,26 +958,21 @@ class DocCLI(CLI, RoleMixin):
         return os.pathsep.join(ret)
 
     @staticmethod
-    def get_snippet_text(ptype, doc, examples):
+    def get_snippet_text(ptype, doc):
 
         text = []
 
-        # ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory',
-        #  'lookup', 'netconf', 'shell', 'vars', 'module', 'strategy', 'role', 'keyword')
-        # those that support YAML format
-        if ptype in ('inventory', 'module') and 'options' in doc:
-            _do_yaml_snippet(text, doc)
-        elif ptype == 'lookup':
+        if ptype == 'lookup':
             _do_lookup_snippet(text, doc)
-        elif not in ('role', 'keyword'):
+        elif ptype == 'module':
+            _do_yaml_snippet(text, doc)
+        elif 'options' in doc:
             _do_ini_snippet(text, doc)
+        else:
+            # TODO: should we show examples?
+            text.append('# nothing to set or configure for this plugin')
 
-        # show something for those that really wont work any other way (ini/toml/script inventories)
-        if not text and examples:
-            text.append(examples)
-
-        if text:
-            text.append('')
+        text.append('')
 
         return "\n".join(text)
 
@@ -1263,9 +1258,11 @@ def _do_yaml_snippet(text, doc):
     mdesc = DocCLI.tty_ify(doc['short_description'])
     module = doc.get('module')
     if module:
+        # this is actually a usable task!
         text.append("- name: %s" % (mdesc))
         text.append("  %s:" % (module))
     else:
+        # just a comment, hopefully useful yaml file
         text.append("# %s:" % doc.get('plugin', doc.get('name')))
 
     pad = 29
@@ -1329,12 +1326,15 @@ def _do_ini_snippet(text, doc):
             key = textwrap.fill('# ' + desc, limit, max_lines=3, subsequent_indent=subdent) + '\n' + '%s=%s' % (entry['key'], default)
             sections[entry['section']].append(key)
 
-    for section in sections.keys():
-        text.append('[%s]' % section)
-        for key in sections[section]:
-            text.append(key)
+    if sections:
+        for section in sections.keys():
+            text.append('[%s]' % section)
+            for key in sections[section]:
+                text.append(key)
+                text.append('')
             text.append('')
-        text.append('')
+    else:
+        text.append('# no ini configuration options available')
 
 
 def _do_lookup_snippet(text, doc):
