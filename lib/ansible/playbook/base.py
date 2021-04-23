@@ -413,12 +413,48 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         resolved_actions = []
         include_groups = []
+
+        found_group_metadata = False
+        valid_metadata = {
+            'extend_group': {
+                'types': (list, string_types,),
+                'errortype': 'list',
+            },
+        }
         for action in action_group:
-            # Check if this is a special 'metadata' entry
-            if isinstance(action, dict) and len(action) == 1 and 'metadata' in action:
-                include_groups = action['metadata'].get('extend_group', [])
-                if isinstance(include_groups, string_types):
-                    include_groups = [include_groups]
+            # Everything should be a string except the metadata entry
+            if not isinstance(action, string_types):
+                metadata_warning = ""
+
+                if not (isinstance(action, dict) and len(action) == 1 and 'metadata' in action):
+                    metdata_warning = f"the only expected field is 'metadata'."
+                elif found_group_metadata:
+                    metadata_warning = f"the group contains multiple metadata entries."
+                elif not isinstance(action['metadata'], dict):
+                    metadata_warning = f"the metadata is not a dictionary."
+                elif action['metadata'].keys() > valid_metadata.keys():
+                    unexpected_keys = set(action['metadata'].keys()) - set(valid_metadata.keys())
+                    metadata_warning = f"the metadata contains unexpected keys ({', '.join(unexpected_keys)})"
+                else:
+                    unexpected_types = []
+                    for k, v in action['metadata'].items():
+                        if not isinstance(v, valid_metadata[k]['types']):
+                            unexpected_types += [f"{type(v)} for {k} (expected {valid_metadata[k]['errortype']})"]
+                    if unexpected_types:
+                        metadata_warning = f"the metadata contains unexpected key types ({', '.join(unexpected_types)})"
+
+                if metadata_warning and C.VALIDATE_ACTION_GROUP_METADATA:
+                    display.warning(f"Invalid metadata was found for action_group {fq_group_name} while loading module_defaults: {metadata_warning}")
+
+                if isinstance(action['metadata'], dict):
+                    found_group_metadata = True
+
+                    include_groups = action['metadata'].get('extend_group', [])
+                    if isinstance(include_groups, string_types):
+                        include_groups = [include_groups]
+                    if not isinstance(include_groups, list):
+                        # Bad entries may be a warning above, but prevent tracebacks by setting it back to the acceptable type.
+                        include_groups = []
                 continue
 
             # The collection may or may not use the fully qualified name.
