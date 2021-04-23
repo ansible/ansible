@@ -1300,13 +1300,12 @@ def _do_yaml_snippet(text, doc):
 
 def _do_ini_snippet(text, doc):
 
-    text.append("# %s settings:" % doc.get('plugin', doc.get('name')).upper())
+    #text.append("# %s:" % doc.get('plugin', doc.get('name')).upper())
 
-    pad = 31
-    subdent = " " * pad + '# '
-    limit = display.columns - pad
+    subdent = "# "
+    limit = display.columns - 20
 
-    prev_section = None
+    sections = {}
     for o in sorted(doc['options'].keys()):
         opt = doc['options'][o]
         if isinstance(opt['description'], string_types):
@@ -1320,19 +1319,23 @@ def _do_ini_snippet(text, doc):
 
         if 'ini' in opt:
             entry = opt['ini'][-1]
-
-            # deal with sections
-            if prev_section != entry['section']:
-                text.append('[%s]' % entry['section'])
-                prev_section = entry['section']
+            if entry['section'] not in sections:
+                sections[entry['section']] = []
 
             if required:
                 default = '(required)'
             else:
-                default = opt.get('default', 'None')
-            key = '%s=%s' % (entry['key'], default)
+                default = opt.get('default', '')
 
-            text.append("%-26s   # %s" % (key, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
+            key = textwrap.fill('# ' + desc, limit, max_lines=3, subsequent_indent=subdent) + '\n' + '%s=%s' % (entry['key'], default)
+            sections[entry['section']].append(key)
+
+    for section in sections.keys():
+        text.append('[%s]' % section)
+        for key in sections[section]:
+            text.append(key)
+            text.append('')
+        text.append('')
 
 
 def _do_lookup_snippet(text, doc):
