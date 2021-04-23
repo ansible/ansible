@@ -1323,7 +1323,7 @@ def _do_ini_snippet(text, doc):
                 sections[entry['section']] = []
 
             if required:
-                default = '# <REQUIRED>'
+                default = '  # <REQUIRED>'
             else:
                 default = opt.get('default', '')
 
