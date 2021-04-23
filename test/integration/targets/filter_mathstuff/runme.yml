@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - { role: filter_mathstuff }
