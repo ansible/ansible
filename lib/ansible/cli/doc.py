@@ -1295,7 +1295,7 @@ def _do_yaml_snippet(text, doc):
             else:
                 default = opt.get('default', 'None')
 
-            text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+            text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
 
 
 def _do_ini_snippet(text, doc):
@@ -1332,7 +1332,7 @@ def _do_ini_snippet(text, doc):
                 default = opt.get('default', 'None')
             key = '%s=%s' % (entry['key'], default)
 
-            text.append("%-26s   # %s" % (key, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+            text.append("%-26s   # %s" % (key, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
 
 
 def _do_lookup_snippet(text, doc):
