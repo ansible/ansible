@@ -7,8 +7,8 @@ cd "${WORK_DIR}/ansible_collections/ns/col"
 
 # rename the sanity ignore file to match the current ansible version and update import ignores with the python version
 ansible_version="$(python -c 'import ansible.release; print(".".join(ansible.release.__version__.split(".")[:2]))')"
-if [ "${ANSIBLE_TEST_PYTHON_VERSION}" == "2.6" ]; then
-    # Non-module/module_utils plugins are not checked on this remote-only Python versions
+if [[ "${ANSIBLE_TEST_PYTHON_VERSION}" =~ ^2\. ]] || [[ "${ANSIBLE_TEST_PYTHON_VERSION}" =~ ^3\.[567] ]]; then
+    # Non-module/module_utils plugins are not checked on these remote-only Python versions
     sed "s/ import$/ import-${ANSIBLE_TEST_PYTHON_VERSION}/;" < "tests/sanity/ignore.txt" | grep -v 'plugins/[^m].* import' > "tests/sanity/ignore-${ansible_version}.txt"
 else
     sed "s/ import$/ import-${ANSIBLE_TEST_PYTHON_VERSION}/;" < "tests/sanity/ignore.txt" > "tests/sanity/ignore-${ansible_version}.txt"
