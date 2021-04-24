@@ -146,7 +146,7 @@ def to_bits(val):
     bits = ''
     for octet in val.split('.'):
         bits += bin(int(octet))[2:].zfill(8)
-    return str
+    return bits
 
 
 def is_mac(mac_address):
