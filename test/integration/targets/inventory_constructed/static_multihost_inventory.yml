@@ -1,0 +1,24 @@
+all:
+  hosts:
+    host0:
+      hostvar0: hostvalue0
+    host1:
+      hostvar1: hostvalue1
+    host10:
+      hostvar10: hostvalue10
+    host11:
+      hostvar11: hostvalue11
+    host100:
+      hostvar100: hostvalue100
+    host101:
+      hostvar101: hostvalue101
+    host110:
+      hostvar110: hostvalue110
+    host111:
+      hostvar111: hostvalue111
+    host1000:
+      hostvar1000: hostvalue1000
+    host1001:
+      hostvar1001: hostvalue1001
+    host1010:
+      hostvar1010: hostvalue1010

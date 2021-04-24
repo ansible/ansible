@@ -9,13 +9,15 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common.network import (
+    is_mac,
+    is_masklen,
+    is_netmask,
     to_bits,
+    to_ipv6_network,
+    to_ipv6_subnet,
     to_masklen,
     to_netmask,
     to_subnet,
-    to_ipv6_network,
-    is_masklen,
-    is_netmask
 )
 
 
@@ -61,6 +63,7 @@ def test_is_netmask():
     assert is_netmask('255.255.255.255')
     assert not is_netmask(24)
     assert not is_netmask('foo')
+    assert not is_netmask('127.0.0.1')
 
 
 def test_to_ipv6_network():
@@ -77,3 +80,17 @@ def test_to_bits():
     assert to_bits('127.0.0.1') == '01111111000000000000000000000001'
     assert to_bits('255.255.255.255') == '11111111111111111111111111111111'
     assert to_bits('255.255.255.0') == '11111111111111111111111100000000'
+
+
+def test_to_ipv6_subnet():
+    assert to_ipv6_subnet('2001:db8:ffff:ffff:ffff:ffff:ffff:ffff') == '2001:db8:ffff:ffff::'
+    assert to_ipv6_subnet('') == '::'
+    assert to_ipv6_subnet('9') == '9::'
+    assert to_ipv6_subnet('invalid but oh well') == 'invalid but oh well::'
+
+
+def test_is_mac():
+    assert not is_mac('foobar')
+    assert not is_mac('')
+    assert not is_mac('1')
+    assert is_mac('11:22:33:44:55:66')

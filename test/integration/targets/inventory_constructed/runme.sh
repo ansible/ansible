@@ -57,3 +57,7 @@ ansible-inventory -i invs/1/one.yml -i invs/2/constructed.yml --graph | tee out.
 
 grep '@c_lola' out.txt
 grep '@c_group4testing' out.txt
+
+
+# test with groups
+ansible-playbook -i static_multihost_inventory.yml -i with_groups.yml playbooks/with_groups.yml "$@"

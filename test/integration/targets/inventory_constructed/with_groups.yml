@@ -1,0 +1,4 @@
+plugin: constructed
+groups:
+  even_hosts: inventory_hostname.endswith('0')
+  odd_hosts: inventory_hostname.endswith('1')

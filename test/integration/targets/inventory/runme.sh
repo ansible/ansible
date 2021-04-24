@@ -88,3 +88,12 @@ fi
 
 # ensure we don't traceback on inventory due to variables with int as key
 ansible-inventory  -i inv_with_int.yml --list "$@"
+
+export ANSIBLE_INVENTORY_ENABLED=demo
+
+# Coverage: This tests a path where a plugin alias is used directly.
+ansible-playbook with_aliases/play.yml -i with_aliases.demo.yml "$@"
+
+# Coverage: Empty plugin config
+empty="$(ansible-playbook with_aliases/play.yml -i empty.demo.yml "$@" 2>&1)"
+grep -q "/empty.demo.yml is empty" <<< "$empty"

@@ -1,0 +1,10 @@
+- hosts: localhost
+  tasks:
+    - assert:
+        that:
+          - groups['odd_hosts']|length == 5
+          - groups['even_hosts']|length == 6
+          - "'host1010' in groups['even_hosts']"
+          - "'host1010' not in groups['odd_hosts']"
+          - "'host101' in groups['odd_hosts']"
+          - "'host101' not in groups['even_hosts']"
