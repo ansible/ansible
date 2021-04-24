@@ -68,6 +68,7 @@ def test_to_ipv6_network():
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0:0:8a2e:0370:7334')
 
+
 def test_to_bits():
     assert to_bits('0') == '00000000'
     assert to_bits('1') == '00000001'
