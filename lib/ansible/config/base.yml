@@ -1,6 +1,15 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ---
+ANSIBLE_IGNORE_BATCH_FAILURES:
+  name: Ignore failures of whole batches
+  default: false
+  type: boolean
+  env: [{name: ANSIBLE_IGNORE_BATCH_FAILURES}]
+  ini:
+  - {key: ansible_ignore_batch_failures, section: defaults}
+  yaml: {key: defaults.ansible_ignore_batch_failures}
 ALLOW_WORLD_READABLE_TMPFILES:
   name: Allow world-readable temporary files
   default: False

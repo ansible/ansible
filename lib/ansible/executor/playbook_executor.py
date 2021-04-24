@@ -200,7 +200,7 @@ class PlaybookExecutor:
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
                                 (previously_failed + previously_unreachable)
 
-                            if len(batch) == failed_hosts_count:
+                            if not C.ANSIBLE_IGNORE_BATCH_FAILURES and len(batch) == failed_hosts_count:
                                 break_play = True
                                 break
 
