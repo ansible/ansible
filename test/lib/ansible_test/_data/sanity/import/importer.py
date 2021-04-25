@@ -238,6 +238,8 @@ def main():
         capture_normal = Capture()
         capture_main = Capture()
 
+        run_module_ok = False
+
         try:
             with monitor_sys_modules(path, messages):
                 with restrict_imports(path, name, messages, restrict_to_module_paths):
@@ -245,13 +247,19 @@ def main():
                         import_module(name)
 
             if run_main:
+                run_module_ok = is_ansible_module
+
                 with monitor_sys_modules(path, messages):
                     with restrict_imports(path, name, messages, restrict_to_module_paths):
                         with capture_output(capture_main):
                             runpy.run_module(name, run_name='__main__', alter_sys=True)
         except ImporterAnsibleModuleException:
             # module instantiated AnsibleModule without raising an exception
-            pass
+            if not run_module_ok:
+                if is_ansible_module:
+                    report_message(path, 0, 0, 'module-guard', "AnsibleModule instantiation not guarded by `if __name__ == '__main__'`", messages)
+                else:
+                    report_message(path, 0, 0, 'non-module', "AnsibleModule instantiated by import of non-module", messages)
         except BaseException as ex:  # pylint: disable=locally-disabled, broad-except
             # intentionally catch all exceptions, including calls to sys.exit
             exc_type, _exc, exc_tb = sys.exc_info()
