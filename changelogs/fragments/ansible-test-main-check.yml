@@ -1,0 +1,6 @@
+minor_changes:
+  - ansible-test - The ``validate-modules`` sanity test no longer enforces the ``missing-if-name-main``, ``last-line-main-call`` or ``missing-main-call`` checks
+                   on non-deleted Ansible modules. Modules are still required to instantiate ``AnsibleModule`` when ``__name__ == '__main__'``.
+  - ansible-test - The ``import`` sanity test now requires that Ansible modules guard instantiation of ``AnsibleModule`` with a ``if __name__ == '__main__'``
+                   conditional, or equivalent logic.
+  - ansible-test - The ``import`` sanity test now requires that non-modules do not instantiate ``AnsibleModule`` on import.

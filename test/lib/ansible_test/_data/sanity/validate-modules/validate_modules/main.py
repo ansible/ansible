@@ -545,7 +545,7 @@ class ModuleValidator(Validator):
                                 **options['error']
                             )
 
-    def _find_module_utils(self, main):
+    def _find_module_utils(self):
         linenos = []
         found_basic = False
         for child in self.ast.body:
@@ -2228,8 +2228,7 @@ class ModuleValidator(Validator):
             self._validate_ansible_module_call(docs)
             self._check_for_sys_exit()
             self._find_rejectlist_imports()
-            main = self._find_main_call()
-            self._find_module_utils(main)
+            self._find_module_utils()
             self._find_has_import()
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
