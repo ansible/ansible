@@ -85,7 +85,7 @@ To rename a module or plugin in a collection, or to redirect a module or plugin 
             old_cloud:
                 redirect: foo.bar.new_cloud
 
-If you want to deprecate the old name, add a ``deprecation:`` entry (see above):
+If you want to deprecate the old name, add a ``deprecation:`` entry (see above)::
 
     plugin_routing:
         modules:
