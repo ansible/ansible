@@ -42,14 +42,16 @@ Deprecating modules and plugins in a collection
 
 To deprecate a module in a collection, you must:
 
-1. Add a ``deprecation`` entry to ``plugin_routing`` in ``meta/runtime.yml``. For example, to deprecate the module ``old_cloud``, add::
+1. Add a ``deprecation`` entry to ``plugin_routing`` in ``meta/runtime.yml``. For example, to deprecate the module ``old_cloud``, add:
 
-    plugin_routing:
-        modules:
-            old_cloud:
-                deprecation:
-                    removal_version: 2.0.0
-                    warning_text: Use foo.bar.new_cloud instead.
+   .. code-block:: yaml
+
+       plugin_routing:
+           modules:
+               old_cloud:
+                   deprecation:
+                       removal_version: 2.0.0
+                       warning_text: Use foo.bar.new_cloud instead.
 
    For other plugin types, you have to replace ``modules:`` with ``<plugin_type>:``, for example ``lookup:`` for lookup plugins.
 
@@ -78,14 +80,18 @@ This example allows the ``stat`` module to be called with ``fileinfo``, making t
 Renaming a module or plugin in a collection, or redirecting a module or plugin to another collection
 ====================================================================================================
 
-To rename a module or plugin in a collection, or to redirect a module or plugin to another collection, you need to add a ``redirect`` entry to ``plugin_routing`` in ``meta/runtime.yml``. For example, to redirect the module ``old_cloud`` to ``foo.bar.new_cloud``, add::
+To rename a module or plugin in a collection, or to redirect a module or plugin to another collection, you need to add a ``redirect`` entry to ``plugin_routing`` in ``meta/runtime.yml``. For example, to redirect the module ``old_cloud`` to ``foo.bar.new_cloud``, add:
+
+.. code-block:: yaml
 
     plugin_routing:
         modules:
             old_cloud:
                 redirect: foo.bar.new_cloud
 
-If you want to deprecate the old name, add a ``deprecation:`` entry (see above)::
+If you want to deprecate the old name, add a ``deprecation:`` entry (see above):
+
+.. code-block:: yaml
 
     plugin_routing:
         modules:
@@ -106,13 +112,15 @@ Tombstoning a module or plugin in a collection
 To remove a deprecated module or plugin from a collection, you need to tombstone it:
 
 1. Remove the module or plugin file with related files like tests and documentation.
-2. Add a tombstone entry in ``meta/runtime.yml``. For example, to tombstone the module ``old_cloud``, add::
+2. Add a tombstone entry in ``meta/runtime.yml``. For example, to tombstone the module ``old_cloud``, add:
 
-    plugin_routing:
-        modules:
-            old_cloud:
-                tombstone:
-                    removal_version: 2.0.0
-                    warning_text: Use foo.bar.new_cloud instead.
+   .. code-block:: yaml
+
+       plugin_routing:
+           modules:
+               old_cloud:
+                   tombstone:
+                       removal_version: 2.0.0
+                       warning_text: Use foo.bar.new_cloud instead.
 
    Instead of ``removal_version``, you can also use ``removal_date`` with an ISO 8601 formatted date. The date should be the date of the next major release.
