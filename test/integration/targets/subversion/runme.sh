@@ -16,7 +16,7 @@ export ANSIBLE_ROLES_PATH=roles/
 ansible-playbook runme.yml "$@" -v --tags setup
 
 # Test functionality
-LC_ALL=es_ES.UTF-8 ansible-playbook runme.yml "$@" -v --tags tests
+ansible-playbook runme.yml "$@" -v --tags tests
 
 # Test a warning is displayed for versions < 1.10.0 when a password is provided
 ansible-playbook runme.yml "$@" --tags warnings 2>&1 | tee out.txt

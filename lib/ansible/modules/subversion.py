@@ -228,14 +228,28 @@ class Subversion(object):
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.dest]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
-        url = re.search(r'^URL:.*$', text, re.MULTILINE).group(0)
+        rev = re.search(r'^Revision:.*$', text, re.MULTILINE)
+        if rev:
+            rev = rev.group(0)
+        else:
+            rev = 'Unable to get revision'
+
+        url = re.search(r'^URL:.*$', text, re.MULTILINE)
+        if url:
+            url = url.group(0)
+        else:
+            url = 'Unable to get URL'
+
         return rev, url
 
     def get_remote_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.repo]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
+        rev = re.search(r'^Revision:.*$', text, re.MULTILINE)
+        if rev:
+            rev = rev.group(0)
+        else:
+            rev = 'Unable to get remote revision'
         return rev
 
     def has_local_mods(self):
@@ -250,7 +264,11 @@ class Subversion(object):
     def needs_update(self):
         curr, url = self.get_revision()
         out2 = '\n'.join(self._exec(["info", "-r", self.revision, self.dest]))
-        head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
+        head = re.search(r'^Revision:.*$', out2, re.MULTILINE)
+        if head:
+            head = head.group(0)
+        else:
+            head = 'Unable to get revision'
         rev1 = int(curr.split(':')[1].strip())
         rev2 = int(head.split(':')[1].strip())
         change = False
@@ -295,7 +313,7 @@ def main():
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C', LC_ALL='en_US.UTF-8')
+    module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C')
 
     if not dest and (checkout or update or export):
         module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
