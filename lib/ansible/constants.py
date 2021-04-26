@@ -19,9 +19,6 @@ from ansible.module_utils.six import string_types
 from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
-# 4 versions above current
-default_deprecated = to_text(float('.'.join(__version__.split('.')[0:2])) + 0.04)
-
 
 def _warning(msg):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
@@ -33,7 +30,7 @@ def _warning(msg):
         sys.stderr.write(' [WARNING] %s\n' % (msg))
 
 
-def _deprecated(msg, version=default_deprecated):
+def _deprecated(msg, version):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
         from ansible.utils.display import Display
@@ -55,11 +52,11 @@ class _DeprecatedSequenceConstant(Sequence):
         self._version = version
 
     def __len__(self):
-        _deprecated(self._msg, version=self._version)
+        _deprecated(self._msg, self._version)
         return len(self._value)
 
     def __getitem__(self, y):
-        _deprecated(self._msg, version=self._version)
+        _deprecated(self._msg, self._version)
         return self._value[y]
 
 
