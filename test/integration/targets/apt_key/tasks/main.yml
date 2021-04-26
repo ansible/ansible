@@ -1,5 +1,5 @@
 # Test code for the apt_key module.
-# (c) 2017, James Tanner <tanner.jc@gmail.com>
+# (c) 2017 James Tanner <tanner.jc@gmail.com>
 
 # This file is part of Ansible
 #
@@ -28,4 +28,7 @@
   when: ansible_distribution in ('Ubuntu', 'Debian')
   
 - import_tasks: 'file.yml'
+  when: ansible_distribution in ('Ubuntu', 'Debian')
+
+- import_tasks: 'apt_key_binary.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')

@@ -1,0 +1,8 @@
+bugfixes:
+  - Binary GnuPG keys downloaded via URLs by the ansible.builtin.apt_key were corrupted so 'gpg' cound not import them (https://github.com/ansible/ansible/issues/74424).
+  - The error message about the failure to import a 'gpg' key by the ansible.builtin.apt_key was incorrect (https://github.com/ansible/ansible/issues/74423).
+minor_changes:
+  - The command line of the 'gpg' program was logged on error in some cases but not logged in the other by the ansible.builtin.apt_key module. Now it is logged in all cases.
+  - The return codes of the 'gpg' program were not always checked for an error by the ansible.builtin.apt_key module, and the details of the error were not always logged. Now the return codes are always checked and the details are always logged by this module.
+  - The details of some exceptions ansible.builtin.apt_key module were not logged. Now they are logged by the module.
+  - Resolved some pylint warnings in the source code of the ansible.builtin.apt_key module.

@@ -208,7 +208,7 @@ def parse_key_id(key_id):
         key_id = key_id[2:]
 
     key_id_len = len(key_id)
-    if (key_id_len != 8 and key_id_len != 16) and key_id_len <= 16:
+    if (key_id_len not in (8, 16)) and key_id_len <= 16:
         raise ValueError('key_id must be 8, 16, or 16+ hexadecimal characters in length')
 
     short_key_id = key_id[-8:]
@@ -253,7 +253,8 @@ def all_keys(module, keyring, short_format):
     else:
         cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
     (rc, out, err) = module.run_command(cmd)
-
+    if rc != 0:
+        module.fail_json(msg="Unable to list public keys", cmd=cmd, rc=rc, stdout=out, stderr=err)
     return parse_output_for_keys(out, short_format)
 
 
@@ -269,16 +270,20 @@ def shorten_key_ids(key_id_list):
 
 
 def download_key(module, url):
-
+    res = None
     try:
         # note: validate_certs and other args are pulled from module directly
         rsp, info = fetch_url(module, url, use_proxy=True)
         if info['status'] != 200:
             module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
-
-        return rsp.read()
-    except Exception:
-        module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
+        res = rsp.read()
+    except Exception as exc:
+        module.fail_json(
+            msg="error getting key id from url: %s" % url,
+            exception=format(exc),
+            traceback=format_exc(),
+        )
+    return res
 
 
 def get_key_id_from_file(module, filename, data=None):
@@ -288,9 +293,40 @@ def get_key_id_from_file(module, filename, data=None):
 
     cmd = [gpg_bin, '--with-colons', filename]
 
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=to_native(data))
+    native_data = to_native(data)
+    is_armored = (native_data.find("-----BEGIN PGP PUBLIC KEY BLOCK-----") >= 0) or (
+        native_data.find("-----END PGP PUBLIC KEY BLOCK-----") >= 0
+    )
+    if is_armored:
+        data_for_gpg = native_data
+    else:
+        data_for_gpg = data
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=data_for_gpg, binary_data=not is_armored)
     if rc != 0:
-        module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is None else filename), stdout=out, stderr=err)
+        fail_dict = dict()
+        if data is None:
+            fnm = filename
+        else:
+            fnm = "inline data (%s)" % ('armored' if is_armored else 'binary')
+            if is_armored:
+                fail_dict.update(dict(
+                    data_len_armored_source=len(data),
+                    data_len_armored_converted_to_native=len(native_data),
+                ))
+            else:
+                fail_dict.update(dict(
+                    data_len_binary=len(data),
+                ))
+        fail_dict.update(dict(
+            msg="Unable to extract key from '%s'"
+            % (fnm),
+            cmd=cmd,
+            rc=rc,
+            environ_update=lang_env,
+            stdout=out,
+            stderr=err,
+        ))
+        module.fail_json(fail_dict)
 
     keys = parse_output_for_keys(out)
     # assume we only want first key?
@@ -308,9 +344,18 @@ def import_key(module, keyring, keyserver, key_id):
 
     global lang_env
     if keyring:
-        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (
+            apt_key_bin,
+            keyring,
+            keyserver,
+            key_id,
+        )
     else:
-        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (
+            apt_key_bin,
+            keyserver,
+            key_id,
+        )
 
     # check for proxy
     cmd = add_http_proxy(cmd)
@@ -323,10 +368,12 @@ def import_key(module, keyring, keyserver, key_id):
         # Out of retries
         if rc == 2 and 'not found on keyserver' in out:
             msg = 'Key %s not found on keyserver %s' % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg)
+            module.fail_json(msg=msg, cmd=cmd, environ_update=lang_env)
         else:
             msg = "Error fetching key %s from keyserver: %s" % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg, rc=rc, stdout=out, stderr=err)
+            module.fail_json(
+                msg=msg, cmd=cmd, rc=rc, environ_update=lang_env, stdout=out, stderr=err
+            )
     return True
 
 
@@ -336,41 +383,71 @@ def add_key(module, keyfile, keyring, data=None):
             cmd = "%s --keyring %s add -" % (apt_key_bin, keyring)
         else:
             cmd = "%s add -" % apt_key_bin
-        (rc, out, err) = module.run_command(cmd, data=data, check_rc=True, binary_data=True)
+        (rc, out, err) = module.run_command(cmd, data=data, binary_data=True)
+        if rc != 0:
+            module.fail_json(
+                msg="Unable to add a key from binary data",
+                cmd=cmd,
+                rc=rc,
+                stdout=out,
+                stderr=err,
+            )
     else:
         if keyring:
             cmd = "%s --keyring %s add %s" % (apt_key_bin, keyring, keyfile)
         else:
             cmd = "%s add %s" % (apt_key_bin, keyfile)
-        (rc, out, err) = module.run_command(cmd, check_rc=True)
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0:
+            module.fail_json(
+                msg="Unable to add a key from file %s" % (keyfile),
+                cmd=cmd,
+                rc=rc,
+                keyfile=keyfile,
+                stdout=out,
+                stderr=err,
+            )
     return True
 
 
 def remove_key(module, key_id, keyring):
-    # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
     if keyring:
         cmd = '%s --keyring %s del %s' % (apt_key_bin, keyring, key_id)
     else:
         cmd = '%s del %s' % (apt_key_bin, key_id)
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(
+            msg="Unable to remove a key with id %s" % (key_id),
+            cmd=cmd,
+            rc=rc,
+            key_id=key_id,
+            stdout=out,
+            stderr=err,
+        )
     return True
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            id=dict(type='str'),
-            url=dict(type='str'),
-            data=dict(type='str'),
-            file=dict(type='path'),
-            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin', no_log=False),
-            keyring=dict(type='path'),
-            validate_certs=dict(type='bool', default=True),
-            keyserver=dict(type='str'),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
+            id=dict(type="str"),
+            url=dict(type="str"),
+            data=dict(type="str"),
+            file=dict(type="path"),
+            key=dict(
+                type="str",
+                removed_in_version="2.14",
+                removed_from_collection="ansible.builtin",
+                no_log=False,
+            ),
+            keyring=dict(type="path"),
+            validate_certs=dict(type="bool", default=True),
+            keyserver=dict(type="str"),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
         ),
         supports_check_mode=True,
-        mutually_exclusive=(('data', 'file', 'keyserver', 'url'),),
+        mutually_exclusive=(("data", "file", "keyserver", "url"),),
     )
 
     # parameters
@@ -413,12 +490,15 @@ def main():
         r['short_id'] = short_key_id
         r['fp'] = fingerprint
         r['key_id'] = key_id
-    except ValueError:
-        module.fail_json(msg='Invalid key_id', **r)
+    except ValueError as exc:
+        module.fail_json(msg='Invalid key_id', exception=format(exc), **r)
 
     if not fingerprint:
         # invalid key should fail well before this point, but JIC ...
-        module.fail_json(msg="Unable to continue as we could not extract a valid fingerprint to compare against existing keys.", **r)
+        module.fail_json(
+            msg="Unable to continue as we could not extract a valid fingerprint to compare against existing keys.",
+            **r
+        )
 
     if len(key_id) == 8:
         short_format = True
@@ -428,7 +508,9 @@ def main():
     keys2 = []
 
     if state == 'present':
-        if (short_format and short_key_id not in keys) or (not short_format and fingerprint not in keys):
+        if (short_format and short_key_id not in keys) or (
+            not short_format and fingerprint not in keys
+        ):
             r['changed'] = True
             if not module.check_mode:
                 if filename:
@@ -447,7 +529,9 @@ def main():
 
                 # verify it got added
                 r['after'] = keys2 = all_keys(module, keyring, short_format)
-                if (short_format and short_key_id not in keys2) or (not short_format and fingerprint not in keys2):
+                if (short_format and short_key_id not in keys2) or (
+                    not short_format and fingerprint not in keys2
+                ):
                     module.fail_json(msg=error_no_error % 'failed to add the key', **r)
 
     elif state == 'absent':
