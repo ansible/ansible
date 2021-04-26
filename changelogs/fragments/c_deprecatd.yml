@@ -1,0 +1,2 @@
+bugfixes:
+  - constants, internal _deprecated function always requires version.
