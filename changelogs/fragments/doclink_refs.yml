@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-doc will now correcty handle relative refs to 'current' ansible version
+  - set_fact module, removed hardcoded url to relative reference
+  - user module, removed hardcoded url to relative reference
