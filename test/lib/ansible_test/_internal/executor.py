@@ -1245,7 +1245,6 @@ def run_pypi_proxy(args):  # type: (EnvironmentConfig) -> t.Tuple[t.Optional[str
 
     options = [
         '--detach',
-        '-p', '%d:%d' % (port, port),
     ]
 
     docker_pull(args, proxy_image)
