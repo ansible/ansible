@@ -93,3 +93,5 @@ cat rc_test.out
 [ "$(grep -c 'rescued=3' rc_test.out)" -eq 1 ]
 [ "$(grep -c 'failed=0' rc_test.out)" -eq 1 ]
 rm -f rc_test.out
+
+ansible-playbook finalized_task.yml "$@"
