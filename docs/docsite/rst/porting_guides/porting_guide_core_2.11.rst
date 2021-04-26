@@ -9,7 +9,7 @@ This section discusses the behavioral changes between ``ansible-base`` 2.10 and 
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they work with this version of ``ansible-core``.
 
-We suggest you read this page along with the `ansible-core Changelog for 2.11 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.11.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with the `ansible-core Changelog for 2.11 <https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst>`_ to understand what updates you may need to make.
 
 ``ansible-core`` is mainly of interest for developers and users who only want to use a small, controlled subset of the available collections. Regular users should install Ansible.
 
@@ -120,7 +120,7 @@ Noteworthy module changes
 
 * facts - On NetBSD, ``ansible_virtualization_type`` now tries to report a more accurate result than ``xen`` when virtualized and not running on Xen.
 * facts - Virtualization facts now include ``virtualization_tech_guest`` and ``virtualization_tech_host`` keys. These are lists of virtualization technologies that a guest is a part of, or that a host provides, respectively. As an example, if you set up a host to provide both KVM and VirtualBox, both values are included in ``virtualization_tech_host``.  Similarly, a podman container running on a VM powered by KVM has a ``virtualization_tech_guest`` of ``["kvm", "podman", "container"]``.
-* The parameter ``filter`` type is changed from ``string`` to ``list`` in the :ref:`setup <setup_module>` module in order to use more than one filter. Previous behaviour (using a ``string``) still remains and works as a single filter.
+* The parameter ``filter`` type is changed from ``string`` to ``list`` in the :ref:`setup <setup_module>` module in order to use more than one filter. Previous behavior (using a ``string``) still remains and works as a single filter.
 
 
 Plugins

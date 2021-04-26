@@ -47,8 +47,8 @@ The two community releases are related - the release cycle follows this pattern:
 #. Release candidate for ansible-core, testing, additional release candidates as necessary
 #. Release of the next ansible-core major version, cycle begins again
 
-Release cycle for the Ansible community package
------------------------------------------------
+Ansible community package release cycle
+---------------------------------------
 
 The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes.
 
@@ -81,8 +81,8 @@ Ansible Community Package Release       Status
 .. _2.10 Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
 
 
-Release cycle for ansible-core
--------------------------------
+ansible-core release cycle
+--------------------------
 
 ``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details.
 
@@ -107,16 +107,19 @@ significant changes in each minor release.
 ============================================= ======================================================
  ``ansible-core`` / ``ansible-base`` Release                          Status
 ============================================= ======================================================
-devel                                         In development (ansible-core 2.11 unreleased, trunk)
-`2.10 ansible-base Release Notes`_            Maintained (security **and** general bug fixes)
-`2.9 Release Notes`_                          Maintained (pre-collections) (security **and** critical bug fixes)
-`2.8 Release Notes`_                          Maintained (pre-collections) (security fixes only)
+devel                                         In development (ansible-core 2.12 unreleased, trunk)
+`2.11 ansible-core Release Notes`_            Maintained (security **and** general bug fixes)
+`2.10 ansible-base Release Notes`_            Maintained (security **and** critical bug fixes)
+`2.9 Release Notes`_                          Maintained (pre-collections) (security fixes only)
+`2.8 Release Notes`_                          Unmaintained (end of life)
 `2.7 Release Notes`_                          Unmaintained (end of life)
 `2.6 Release Notes`_                          Unmaintained (end of life)
 `2.5 Release Notes`_                          Unmaintained (end of life)
 <2.5                                          Unmaintained (end of life)
 ============================================= ======================================================
 
+.. _2.11 ansible-core Release Notes:
+.. _2.11: https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst
 .. _2.10 ansible-base Release Notes:
 .. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
 .. _2.9 Release Notes:
@@ -162,8 +165,8 @@ Development and maintenance workflows
 
 In between releases, the Ansible community develops new features, maintains existing functionality, and fixes bugs in ``ansible-core`` and in the collections included in the Ansible community package.
 
-Workflow for the Ansible community package
-------------------------------------------
+Ansible community package workflow
+----------------------------------
 
 The Ansible community develops and maintains the features and functionality included in the Ansible community package in Collections repositories, with a workflow that looks like this:
 
@@ -176,8 +179,8 @@ We generally do not provide fixes for unmaintained releases of the Ansible commu
 
 Some Collections are maintained by the Ansible team, some by Partner organizations, and some by community teams. For more information on adding features or fixing bugs in Ansible-maintained Collections, see :ref:`contributing_maintained_collections`.
 
-Workflow for ansible-core
--------------------------
+ansible-core workflow
+---------------------
 
 The Ansible community develops and maintains ``ansible-core`` on GitHub_, with a workflow that looks like this:
 
@@ -209,13 +212,13 @@ Deprecation cycles
 
 Sometimes we remove a feature, normally in favor of a reimplementation that we hope does a better job. To do this we have a deprecation cycle. First we mark a feature as 'deprecated'. This is normally accompanied with warnings to the user as to why we deprecated it, what alternatives they should switch to and when (which version) we are scheduled to remove the feature permanently.
 
-Deprecation cycle for the Ansible community package
----------------------------------------------------
+Ansible community package deprecation cycle
+--------------------------------------------
 
 Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0, and do not remove the feature until 5.0.0, or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Thus the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed.
 
-Deprecation cycle for ansible-core
-----------------------------------
+ansible-core deprecation cycle
+-------------------------------
 
 The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we do not jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering.
 
