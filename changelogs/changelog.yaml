@@ -1,5 +1,32 @@
 ancestor: 2.10.0
 releases:
+  2.11.0:
+    changes:
+      bugfixes:
+      - ansible-test - ensure the correct unit test target is given when the ``__init__.py``
+        file is modified inside the connection plugins directory
+      major_changes:
+      - ansible-test - Tests run with the ``centos6`` and ``default`` test containers
+        now use a PyPI proxy container to access PyPI when Python 2.6 is used. This
+        allows tests running under Python 2.6 to continue functioning even though
+        PyPI is discontinuing support for non-SNI capable clients.
+      minor_changes:
+      - ansible-test - Update distribution test containers from version 2.0.1 to 2.0.2.
+      - ansible-test - Update the Ansible Core and Ansible Collection default test
+        containers to 3.2.0 and 3.2.2 respectively.
+      release_summary: '| Release Date: 2021-04-26
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - ansible-test-connection-units-init.yml
+    - ansible-test-default-containers-3.2.yml
+    - ansible-test-distro-containers-2.0.2.yml
+    - ansible-test-pypi-test-container.yml
+    - v2.11.0_summary.yaml
+    release_date: '2021-04-26'
   2.11.0b1:
     changes:
       breaking_changes:

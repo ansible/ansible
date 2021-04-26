@@ -5,146 +5,13 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
-v2.11.0rc2
-==========
+v2.11.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-04-06
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Bugfixes
---------
-
-- WorkerProcess - Python 3.5 fix for workaround for stdout deadlock in multiprocessing shutdown to avoid process hangs. (https://github.com/ansible/ansible/issues/74149)
-
-v2.11.0rc1
-==========
-
-Release Summary
----------------
-
-| Release Date: 2021-04-05
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - Add constraint for ``decorator`` for Python versions prior to 3.5.
-- service_facts - return service state information on OpenBSD.
-
-Bugfixes
---------
-
-- OpenBSD module_utils - update sysctl variable name
-- WorkerProcess - Implement workaround for stdout deadlock in multiprocessing shutdown to avoid process hangs.
-- ansible-test - Add a ``six < 1.14.0`` constraint for Python 2.6.
-- ansible-test - The ``--export`` option for ``ansible-test coverage`` is now limited to the ``combine`` command. It was previously available for reporting commands on which it had no effect.
-- ansible-test - The ``ansible-test coverage combine`` option ``--export`` now exports relative paths. This avoids loss of coverage data when aggregating across systems with different absolute paths. Paths will be converted back to absolute when generating reports.
-- debug action, prevent setting facts when displaying ansible_facts.
-
-v2.11.0b4
-=========
-
-Release Summary
----------------
-
-| Release Date: 2021-03-29
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-galaxy CLI - ``collection verify`` command now exits with a non-zero exit code on verification failure
-- ansible-galaxy CLI - ``collection verify`` command now supports a ``--offline`` option for local-only verification
-
-Bugfixes
---------
-
-- Correctly set template_path and template_fullpath for usage in template lookup and action plugins.
-- Try to avoid kernel 'blocking' state on reading files while fact gathering.
-- apt - fix policy_rc_d parameter throwing an exception when restoring original file (https://github.com/ansible/ansible/issues/66211)
-- argument spec validation - fix behavior of ``apply_defaults=True`` when an empty dictionary is specified for such an option (https://github.com/ansible/ansible/pull/74029).
-- pause - do not accept enter to continue when a timeout is set (https://github.com/ansible/ansible/issues/73948)
-- setup module, fix error handling on bad subset given
-- wait_for module, move missing socket into function to get proper comparrison in time.
-
-v2.11.0b3
-=========
-
-Release Summary
----------------
-
-| Release Date: 2021-03-19
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Major Changes
--------------
-
-- AnsibleModule - use ``ArgumentSpecValidator`` class for validating argument spec and remove private methods related to argument spec validation. Any modules using private methods should now use the ``ArgumentSpecValidator`` class or the appropriate validation function.
-
-Minor Changes
--------------
-
-- Callbacks - Migrate more places in the ``TaskExecutor`` to sending callbacks directly over the queue, instead of sending them as ``TaskResult`` and short circuiting in the Strategy to send the callback. This enables closer to real time callbacks of retries and loop results (https://github.com/ansible/ansible/issues/73899)
-- setup - fix distribution facts for Older Amazon Linux with ``/etc/os-release`` (https://github.com/ansible/ansible/issues/73946).
-
-Bugfixes
---------
-
-- Fix adding unrelated candidate names to the plugin loader redirect list.
-- Strategy - When building the task in the Strategy from the Worker, ensure it is properly marked as finalized and squashed. Addresses an issue with ``ansible_failed_task``. (https://github.com/ansible/ansible/issues/57399)
-- ansible-pull - Run all playbooks that when multiple are supplied via the command line (https://github.com/ansible/ansible/issues/72708)
-- find module, fix default pattern when use_regex is true.
-
-v2.11.0b2
-=========
-
-Release Summary
----------------
-
-| Release Date: 2021-03-15
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - The generated ``resource_prefix`` variable now meets the host name syntax requirements specified in RFC 1123 and RFC 952. The value used for local tests now places the random number before the hostname component, rather than after. If the resulting value is too long, it will be truncated.
-- ansible-test validate-modules - option names that seem to indicate they contain secret information that should be marked ``no_log=True`` are now flagged in the validate-modules sanity test. False positives can be marked by explicitly setting ``no_log=False`` for these options in the argument spec. Please note that many false positives are expected; the assumption is that it is by far better to have false positives than false negatives (https://github.com/ansible/ansible/pull/73508).
-- distribution - add facts about Amazon Linux Distribution facts (https://github.com/ansible/ansible/issues/73742).
-- module payload builder - module_utils imports in any nested block (eg, ``try``, ``if``) are treated as optional during module payload builds; this allows modules to implement runtime fallback behavior for module_utils that do not exist in older versions of Ansible.
-
-Bugfixes
---------
-
-- A handler defined within a role will now search handlers subdir for included tasks (issue https://github.com/ansible/ansible/issues/71222).
-- ALLOW_WORLD_READABLE_TMP, switched to 'moved' message as 'deprecation' is misleading since config settings still work w/o needing change.
-- Automatically remove async cache files for polled async tasks that have completed (issue https://github.com/ansible/ansible/issues/73206).
-- Deal with failures when sorting JSON and you have incompatible key types.
-- Setup virtualization_facts - add RHV and oVirt type. This change will fully work for VMs in clusters at cluster level 4.4 or newer (https://github.com/ansible/ansible/pull/72876).
-- [set_fact] Corrected and expanded documentation as well as now raise errors that were previously ignored.
-- ansible-test - ensure unit test paths for connection and inventory plugins are correctly identified for collections (https://github.com/ansible/ansible/issues/73876).
-- connection/ssh, ensure parameters come from correct source get_option, so functionality matches docs.
-- connection/ssh, fix reset to use same parameters to check if socket exists as actually used, was hardcoded to default string construction previouslly.
-- j2 plugin loader clarified comments, made note with better fqcn detection.
-- notify keyword is not ignored anymore on import_tasks, also able to apply to blocks now.
-- restrict module valid JSON parsed output to objects as lists are not valid responses.
-- setup, don't give up on all local facts gathering if one script file fails.
-- su become plugin, ensure correct type for localization option.
-
-v2.11.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2021-03-02
+| Release Date: 2021-04-26
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -152,6 +19,7 @@ Major Changes
 -------------
 
 - A collection can be reinstalled with new version requirements without using the ``--force`` flag. The collection's dependencies will also be updated if necessary with the new requirements. Use ``--upgrade`` to force transitive dependency updates.
+- AnsibleModule - use ``ArgumentSpecValidator`` class for validating argument spec and remove private methods related to argument spec validation. Any modules using private methods should now use the ``ArgumentSpecValidator`` class or the appropriate validation function.
 - Declared ``resolvelib >= 0.5.3, < 0.6.0`` a direct dependency of
   ansible-core. Refs:
   - https://github.com/sarugaku/resolvelib
@@ -161,6 +29,7 @@ Major Changes
 - It became possible to upgrade Ansible collections from Galaxy servers using the ``--upgrade`` option with ``ansible-galaxy collection install``.
 - Support for role argument specification validation at role execution time. When a role contains an argument spec, an implicit validation task is inserted at the start of role execution.
 - add ``ArgumentSpecValidator`` class for validating parameters against an argument spec outside of ``AnsibleModule`` (https://github.com/ansible/ansible/pull/73335)
+- ansible-test - Tests run with the ``centos6`` and ``default`` test containers now use a PyPI proxy container to access PyPI when Python 2.6 is used. This allows tests running under Python 2.6 to continue functioning even though PyPI is discontinuing support for non-SNI capable clients.
 
 Minor Changes
 -------------
@@ -188,6 +57,7 @@ Minor Changes
 - CLI - Specify jinja version in ``--version`` output
 - CLI - Specify whether PyYAML includes libyaml support in version output
 - CLI version displays clarified as core version
+- Callbacks - Migrate more places in the ``TaskExecutor`` to sending callbacks directly over the queue, instead of sending them as ``TaskResult`` and short circuiting in the Strategy to send the callback. This enables closer to real time callbacks of retries and loop results (https://github.com/ansible/ansible/issues/73899)
 - Collection routing: Cisco NSO content from community.network migrated to cisco.nso (https://github.com/ansible/ansible/pull/73046).
 - Collection routing: DellEMC content from community.general migrated to dellemc.openmanage (https://github.com/ansible/ansible/pull/73046).
 - Collection routing: FortiOS content from community.network migrated to community.fortios (https://github.com/ansible/ansible/pull/73046).
@@ -241,9 +111,12 @@ Minor Changes
 - ansible-galaxy - Change the output verbosity level of the download message from 3 to 0 (https://github.com/ansible/ansible/issues/70010)
 - ansible-galaxy - Ensure ``get_collection_versions`` returns an empty list when a collection does not exist for consistency across API versions.
 - ansible-galaxy - find any collection dependencies in the globally configured Galaxy servers and not just the server the parent collection is from.
+- ansible-galaxy CLI - ``collection verify`` command now exits with a non-zero exit code on verification failure
+- ansible-galaxy CLI - ``collection verify`` command now supports a ``--offline`` option for local-only verification
 - ansible-test - A warning is no longer emitted when a ``pip*`` or ``python*`` binary is found without a matching couterpart.
 - ansible-test - Add ``macos/10.15`` as a supported value for the ``--remote`` option.
 - ansible-test - Add a ``--docker-network`` option to choose the network for running containers when using the ``--docker`` option.
+- ansible-test - Add constraint for ``decorator`` for Python versions prior to 3.5.
 - ansible-test - Add support for running tests on Fedora 33 (https://github.com/ansible/ansible/pull/72861).
 - ansible-test - Added Ubuntu 20.04 LTS image to the default completion list
 - ansible-test - Added a ``--export`` option to the ``ansible-test coverage combine`` command to facilitate multi-stage aggregation of coverage in CI pipelines.
@@ -299,9 +172,12 @@ Minor Changes
 - ansible-test - The ``pylint`` sanity test is now skipped with a warning on Python 3.9 due to unresolved upstream regressions.
 - ansible-test - The ``pylint`` sanity test is now supported on Python 3.8.
 - ansible-test - The ``rstcheck`` sanity test is no longer used for collections, but continues to be used for ansible-core.
+- ansible-test - The generated ``resource_prefix`` variable now meets the host name syntax requirements specified in RFC 1123 and RFC 952. The value used for local tests now places the random number before the hostname component, rather than after. If the resulting value is too long, it will be truncated.
 - ansible-test - Ubuntu containers as well as ``default-test-container`` and ``ansible-base-test-container`` are now slightly smaller due to apt cleanup (https://github.com/ansible/distro-test-containers/pull/46).
 - ansible-test - Update ``pylint`` and its dependencies to the latest available versions to support Python 3.9.
 - ansible-test - Update built-in service endpoints for the ``--remote`` option.
+- ansible-test - Update distribution test containers from version 2.0.1 to 2.0.2.
+- ansible-test - Update the Ansible Core and Ansible Collection default test containers to 3.2.0 and 3.2.2 respectively.
 - ansible-test - Updated the default test containers to version 3.1.0.
 - ansible-test - Upgrade ansible-runner version used in compatibility tests, remove some tasks that were only needed with older versions, and skip in python2 because ansible-runner is soon dropping it.
 - ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
@@ -327,6 +203,7 @@ Minor Changes
 - ansible-test runtime-metadata - validate removal version numbers, and check removal dates more strictly (https://github.com/ansible/ansible/pull/71679).
 - ansible-test validate-modules - ensure that removal collection version numbers and version_added collection version numbers conform to the semantic versioning specification at https://semver.org/ (https://github.com/ansible/ansible/pull/71679).
 - ansible-test validate-modules - no longer assume that ``default`` for ``type=bool`` options is ``false``, as the default is ``none`` and for some modules, ``none`` and ``false`` mean different things (https://github.com/ansible/ansible/issues/69561).
+- ansible-test validate-modules - option names that seem to indicate they contain secret information that should be marked ``no_log=True`` are now flagged in the validate-modules sanity test. False positives can be marked by explicitly setting ``no_log=False`` for these options in the argument spec. Please note that many false positives are expected; the assumption is that it is by far better to have false positives than false negatives (https://github.com/ansible/ansible/pull/73508).
 - ansible-test validate-modules - validate removal version numbers (https://github.com/ansible/ansible/pull/71679).
 - ansible.utils.encrypt now returns `AnsibleError` instead of crypt.crypt's `OSError` on Python 3.9
 - apt - module now works under any supported Python interpreter
@@ -344,6 +221,7 @@ Minor Changes
 - default callback - task name is now shown for ``include_tasks`` when using the ``free`` strategy (https://github.com/ansible/ansible/issues/71277).
 - default callback - task name is now shown for ``include_tasks`` when using the ``linear`` strategy with ``ANSIBLE_DISPLAY_SKIPPED_HOSTS=0``.
 - default_callback - moving 'check_mode_markers' documentation in default_callback doc_fragment (https://github.com/ansible-collections/community.general/issues/565).
+- distribution - add facts about Amazon Linux Distribution facts (https://github.com/ansible/ansible/issues/73742).
 - distribution - add support for DragonFly distribution (https://github.com/ansible/ansible/issues/43739).
 - distribution - added distribution fact and hostname support for Parrot OS (https://github.com/ansible/ansible/pull/69158).
 - distribution - handle NetBSD OS Family (https://github.com/ansible/ansible/issues/43739).
@@ -369,6 +247,7 @@ Minor Changes
 - lineinfile - add search_string parameter for non-regexp searching (https://github.com/ansible/ansible/issues/70470)
 - linux facts - Add additional check to ensure 'container' virtual fact gets added to guest_tech when appropriate (https://github.com/ansible/ansible/pull/71385)
 - meta - now include a ``skip_reason`` when skipped (https://github.com/ansible/ansible/pull/71355).
+- module payload builder - module_utils imports in any nested block (eg, ``try``, ``if``) are treated as optional during module payload builds; this allows modules to implement runtime fallback behavior for module_utils that do not exist in older versions of Ansible.
 - module_utils - ``get_file_attributes()`` now takes an optional ``include_version`` boolean parameter. When ``True`` (default), the file's version/generation number is included in the result (but requires ``lsattr -v`` to work on the target platform).
 - now !unsafe works on all types of data, not just strings, even recursively for mappings and sequences.
 - package_facts - module support for apt and rpm now works under any supported Python interpreter
@@ -379,7 +258,9 @@ Minor Changes
 - remove ``excommunicate`` debug command from AnsiballZ
 - selinux - return selinux_getpolicytype facts correctly.
 - service_facts - return service state information on AIX.
+- service_facts - return service state information on OpenBSD.
 - setup - allow list of filters (https://github.com/ansible/ansible/pull/68551).
+- setup - fix distribution facts for Older Amazon Linux with ``/etc/os-release`` (https://github.com/ansible/ansible/issues/73946).
 - setup.py - Declare that Python 3.9 is now supported (https://github.com/ansible/ansible/pull/72861).
 - setup.py - Skip doing conflict checks for ``sdist`` and ``egg_info`` commands (https://github.com/ansible/ansible/pull/71310)
 - subelements - clarify the lookup plugin documentation for parameter handling (https://github.com/ansible/ansible/issues/38182).
@@ -437,6 +318,8 @@ Security Fixes
 Bugfixes
 --------
 
+- A handler defined within a role will now search handlers subdir for included tasks (issue https://github.com/ansible/ansible/issues/71222).
+- ALLOW_WORLD_READABLE_TMP, switched to 'moved' message as 'deprecation' is misleading since config settings still work w/o needing change.
 - ANSIBLE_COLLECTIONS_PATHS - remove deprecation so that users of Ansible 2.9 and 2.10+ can use the same var when specifying a collection path without a warning.
 - Added unsafe_writes test.
 - Address compat with rpmfluff-0.6 for integration tests
@@ -448,6 +331,7 @@ Bugfixes
 - Ansible output now uses stdout to determine column width instead of stdin
 - AnsibleModule - added arg ``ignore_invalid_cwd`` to ``AnsibleModule.run_command()``, to control its behaviour when ``cwd`` is invalid. (https://github.com/ansible/ansible/pull/72390)
 - Apply ``_wrap_native_text`` only for builtin filters specified in STRING_TYPE_FILTERS.
+- Automatically remove async cache files for polled async tasks that have completed (issue https://github.com/ansible/ansible/issues/73206).
 - Be smarter about collection paths ending with ansible_collections, emulating a-galaxy behaviour. Issue 72628
 - CLI - Restore git information in version output when running from source
 - Collection callbacks were ignoring options and rules for stdout and adhoc cases.
@@ -456,6 +340,8 @@ Bugfixes
 - ConfigManager - Normalize ConfigParser between Python2 and Python3 to for handling comments (https://github.com/ansible/ansible/issues/73709)
 - Continue execution when  'flatten' filter when it hits a None/null value as part of the list.
 - Correct the inventory source error parse handling, specifically make the config INVENTORY_ANY_UNPARSED_IS_FAILED work as expected.
+- Correctly set template_path and template_fullpath for usage in template lookup and action plugins.
+- Deal with failures when sorting JSON and you have incompatible key types.
 - Display - Use wcswidth to calculate printable width of a text string (https://github.com/ansible/ansible/issues/63105)
 - Enabled unsafe_writes for get_url which was ignoring the paramter.
 - Ensure Ansible's unique filter preserves order (https://github.com/ansible/ansible/issues/63417)
@@ -466,6 +352,7 @@ Bugfixes
 - Fix --list-tasks format `role_name : task_name` when task name contains the role name. (https://github.com/ansible/ansible/issues/72505)
 - Fix ``RecursionError`` when templating large vars structures (https://github.com/ansible/ansible/issues/71920)
 - Fix ``delegate_facts: true`` when ``ansible_python_interpreter`` is not set. (https://github.com/ansible/ansible/issues/70168)
+- Fix adding unrelated candidate names to the plugin loader redirect list.
 - Fix an exit code for a non-failing playbook (https://github.com/ansible/ansible/issues/71306)
 - Fix ansible-galaxy collection list to show collections in site-packages (https://github.com/ansible/ansible/issues/70147)
 - Fix bytestring vs string comparison in module_utils.basic.is_special_selinux_path() so that special-cased filesystems which don't support SELinux context attributes still allow files to be manipulated on them. (https://github.com/ansible/ansible/issues/70244)
@@ -492,6 +379,7 @@ Bugfixes
 - InventoryManager - Fix unhandled exception when inventory directory was empty or contained empty subdirectories (https://github.com/ansible/ansible/issues/73658).
 - JSON Encoder - Ensure we treat single vault encrypted values as strings (https://github.com/ansible/ansible/issues/70784)
 - Lookup user by UID in password database if login name is not found (https://github.com/ansible/ansible/issues/17029)
+- OpenBSD module_utils - update sysctl variable name
 - Pass expression in angle-bracket notation as filename argument to a ``compile()`` built-in function, so that Python debuggers do not try to parse it as filename.
 - Pass the connection's timeout to connection plugins instead of the task's timeout.
 - Provide more information in AnsibleUndefinedVariable (https://github.com/ansible/ansible/issues/55152)
@@ -502,9 +390,11 @@ Bugfixes
 - Restored unsafe_writes functionality which was being skipped.
 - Restructured pipelining settings to be at the connection plugins leaving base config as global and for backwards compatiblity.
 - SSH plugin - Improve error message when ssh client is not found on the host
+- Setup virtualization_facts - add RHV and oVirt type. This change will fully work for VMs in clusters at cluster level 4.4 or newer (https://github.com/ansible/ansible/pull/72876).
 - Skip invalid collection names when listing in ansible-doc instead of throwing exception. Issue#72257
 - Skip literal_eval for string filters results in native jinja. (https://github.com/ansible/ansible/issues/70831)
 - Stop adding the connection variables to the output results
+- Strategy - When building the task in the Strategy from the Worker, ensure it is properly marked as finalized and squashed. Addresses an issue with ``ansible_failed_task``. (https://github.com/ansible/ansible/issues/57399)
 - Suppress warning when user directory used in --playbook-dir option with ansible-inventory command (https://github.com/ansible/ansible/issues/65262).
 - TOML inventory - Ensure we register dump functions for ``AnsibleUnsafe`` to support dumping unsafe values. Note that the TOML format has no functionality to mark that the data is unsafe for re-consumption. (https://github.com/ansible/ansible/issues/71307)
 - Terminal plugins - add "\e[m" to the list of ANSI sequences stripped from device output
@@ -512,9 +402,13 @@ Bugfixes
 - The ``flush()`` method of ``CachePluginAdjudicator`` now calls the plugin's ``flush()`` method instead of iterating over the keys that the adjudicator knows about and deleting those from the cache. (https://github.com/ansible/ansible/issues/68770)
 - The `ansible_become` value was not being treated as a boolean value when set in an INI format inventory file (fixes bug https://github.com/ansible/ansible/issues/70476).
 - The machine-readable changelog ``changelogs/changelog.yaml`` is now contained in the release.
+- Try to avoid kernel 'blocking' state on reading files while fact gathering.
 - Updated docs and added warning on max_fail_percentage and free strategy usage. fixes issue 16666.
 - VariableManager - Add the 'vars' key before getting delegated variables (https://github.com/ansible/ansible/issues/71092).
 - Vault - Allow single vault encrypted values to be used directly as module parameters. (https://github.com/ansible/ansible/issues/68275)
+- WorkerProcess - Implement workaround for stdout deadlock in multiprocessing shutdown to avoid process hangs.
+- WorkerProcess - Python 3.5 fix for workaround for stdout deadlock in multiprocessing shutdown to avoid process hangs. (https://github.com/ansible/ansible/issues/74149)
+- [set_fact] Corrected and expanded documentation as well as now raise errors that were previously ignored.
 - account for bug in Python 2.6 that occurs during interpreter shutdown to avoid stack trace
 - action plugins - change all action/module delegations to use FQ names while allowing overrides (https://github.com/ansible/ansible/issues/69788)
 - add AlmaLinux to fact gathering (https://github.com/ansible/ansible/pull/73458)
@@ -543,7 +437,9 @@ Bugfixes
 - ansible-galaxy collection download - fix downloading tar.gz files and collections in git repositories (https://github.com/ansible/ansible/issues/70429)
 - ansible-galaxy collection install - fix fallback mechanism if the AH server did not have the collection requested - https://github.com/ansible/ansible/issues/70940
 - ansible-galaxy download - fix bug when downloading a collection in a SCM subdirectory
+- ansible-pull - Run all playbooks that when multiple are supplied via the command line (https://github.com/ansible/ansible/issues/72708)
 - ansible-test - Add ``pytest < 6.0.0`` constraint for managed installations on Python 3.x to avoid issues with relative imports.
+- ansible-test - Add a ``six < 1.14.0`` constraint for Python 2.6.
 - ansible-test - Always connect additional Docker containers to the network used by the current container (if any).
 - ansible-test - Always map ``/var/run/docker.sock`` into test containers created by the ``--docker`` option if the docker host is not ``localhost``.
 - ansible-test - Attempt to detect the Docker hostname instead of assuming ``localhost``.
@@ -559,10 +455,12 @@ Bugfixes
 - ansible-test - Skip installing requirements if they are already installed.
 - ansible-test - Symbolic links are no longer used to inject ``python`` into the environment, since they do not work reliably in all cases. Instead, the existing Python based exec wrapper is always used.
 - ansible-test - Temporarily limit ``cryptography`` to versions before 3.4 to enable tests to function.
+- ansible-test - The ``--export`` option for ``ansible-test coverage`` is now limited to the ``combine`` command. It was previously available for reporting commands on which it had no effect.
 - ansible-test - The ``--raw`` option for ``ansible-test shell --remote`` now uses ``sh`` for the shell instead of ``bash``, which may not be present.
 - ansible-test - The ``--remote`` option has been updated for Python 2.7 to work around breaking changes in the newly released ``get-pip.py`` bootstrapper.
 - ansible-test - The ``--remote`` option has been updated to use a versioned ``get-pip.py`` bootstrapper to avoid issues with future releases.
 - ansible-test - The ``ansible-doc`` sanity test now works for ``netconf`` plugins.
+- ansible-test - The ``ansible-test coverage combine`` option ``--export`` now exports relative paths. This avoids loss of coverage data when aggregating across systems with different absolute paths. Paths will be converted back to absolute when generating reports.
 - ansible-test - The ``changelog`` sanity test has been updated to ensure ``rstcheck`` does not load the ``sphinx`` module.
 - ansible-test - The ``cs`` and ``openshift`` test plugins now search for containers on the current network instead of assuming the ``bridge`` network.
 - ansible-test - The ``resource_prefix`` variable provided to tests running on Azure Pipelines is now converted to lowercase to match other CI providers.
@@ -571,6 +469,8 @@ Bugfixes
 - ansible-test - ``cryptography`` is now limited to versions prior to 3.2 only when an incompatible OpenSSL version (earlier than 1.1.0) is detected
 - ansible-test - add constraint for ``cffi`` to prevent failure on systems with older versions of ``gcc`` (https://foss.heptapod.net/pypy/cffi/-/issues/480)
 - ansible-test - convert target paths to unicode on Python 2 to avoid ``UnicodeDecodeError`` (https://github.com/ansible/ansible/issues/68398, https://github.com/ansible/ansible/pull/72623).
+- ansible-test - ensure the correct unit test target is given when the ``__init__.py`` file is modified inside the connection plugins directory
+- ansible-test - ensure unit test paths for connection and inventory plugins are correctly identified for collections (https://github.com/ansible/ansible/issues/73876).
 - ansible-test - improve classification of changes to ``.gitignore``, ``COPYING``, ``LICENSE``, ``Makefile``, and all files ending with one of ``.in`, ``.md`, ``.rst``, ``.toml``, ``.txt`` in the collection root directory (https://github.com/ansible/ansible/pull/72353).
 - ansible-test - integration and unit test change detection now works for filter, lookup and test plugins
 - ansible-test now always uses the ``--python`` option for ``virtualenv`` to select the correct interpreter when creating environments with the ``--venv`` option
@@ -582,9 +482,11 @@ Bugfixes
 - ansible_pkg_mgr fact - now correctly returns ``atomic_container`` when run on "RHEL for Edge" images and Fedora/RHEL/CentOS Atomic Host (https://github.com/ansible/ansible/issues/73084).
 - api - time.clock is removed in Python 3.8, add backward compatible code (https://github.com/ansible/ansible/issues/70649).
 - apt - add ``fail_on_autoremove`` param to apt module to avoid unintended package removals (https://github.com/ansible/ansible/issues/63231)
+- apt - fix policy_rc_d parameter throwing an exception when restoring original file (https://github.com/ansible/ansible/issues/66211)
 - apt - include exception message from apt python library in error output
 - apt_key - Specifying ``file`` as mutually exclusive with ``data``, ``keyserver``, ``url`` (https://github.com/ansible/ansible/pull/70492).
 - apt_repository - fixes ``mode`` doc to remove ineffective default (https://github.com/ansible/ansible/pull/70319).
+- argument spec validation - fix behavior of ``apply_defaults=True`` when an empty dictionary is specified for such an option (https://github.com/ansible/ansible/pull/74029).
 - assemble - fix decrypt argument in the module (https://github.com/ansible/ansible/issues/65450).
 - async - Fix Python 3 interpreter parsing from module by comparing with bytes (https://github.com/ansible/ansible/issues/70690)
 - async_wrapper - Fix race condition when ``~/.ansible_async`` folder tries to be created by multiple async tasks at the same time - https://github.com/ansible/ansible/issues/59306
@@ -597,8 +499,11 @@ Bugfixes
 - clarified changed status to reflect existing rule that had never been written down.
 - collection loader - fix bogus code coverage entries for synthetic packages
 - collection metadata - ensure collection loader uses libyaml/CSafeLoader to parse collection metadata if available
+- connection/ssh, ensure parameters come from correct source get_option, so functionality matches docs.
+- connection/ssh, fix reset to use same parameters to check if socket exists as actually used, was hardcoded to default string construction previouslly.
 - cron - cron file should not be empty after adding var (https://github.com/ansible/ansible/pull/71207)
 - cron - encode and decode crontab files in UTF-8 explicitly to allow non-ascii chars in cron filepath and job (https://github.com/ansible/ansible/issues/69492)
+- debug action, prevent setting facts when displaying ansible_facts.
 - default callback - Ensure that the ``host_pinned`` strategy is not treated as lockstep (https://github.com/ansible/ansible/issues/73364)
 - delegate_to - Ensure that calculating ``delegate_to`` vars with a loop uses the correct context to correctly evaluate the loop (https://github.com/ansible/ansible/issues/37132)
 - display correct error information when an error exists in the last line of the file (https://github.com/ansible/ansible/issues/16456)
@@ -619,6 +524,7 @@ Bugfixes
 - file - the module should warn in check_mode when path an owner/group don't exist (https://github.com/ansible/ansible/issues/67307).
 - find module - Don't treat empty excludes as a match (https://github.com/ansible/ansible/issues/70640)
 - find module - Stop traversing directories past the requested depth. (https://github.com/ansible/ansible/issues/73627)
+- find module, fix default pattern when use_regex is true.
 - fix issue with inventory_hostname and delegated host vars mixing on connection settings.
 - fortimanager httpapi plugin - fix redirect to point to the ``fortinet.fortimanager`` collection (https://github.com/ansible/ansible/pull/71073).
 - galaxy - handle plus sign in user token appearing in role url (https://github.com/ansible/ansible/issues/45475).
@@ -636,15 +542,18 @@ Bugfixes
 - inventory plugins - Let plugins define the sanitization method for the constructed ``groups`` feature.
 - inventory_hostnames - Use ``InventoryManager`` instead of trying to replicate its behavior (https://github.com/ansible/ansible/issues/17268)
 - is_string/vault - Ensure the is_string helper properly identifies AnsibleVaultEncryptedUnicode as a string (https://github.com/ansible/ansible/pull/71609)
+- j2 plugin loader clarified comments, made note with better fqcn detection.
 - lineinfile - fix not subscriptable error in exception handling around file creation
 - linux network facts - get the correct value for broadcast address (https://github.com/ansible/ansible/issues/64384)
 - native jinja2 types - properly handle Undefined in nested data.
+- notify keyword is not ignored anymore on import_tasks, also able to apply to blocks now.
 - package - use list of built in package managers from facts rather than creating a new list
 - paramiko connection plugin - Ensure we only reset the connection when one has been previously established (https://github.com/ansible/ansible/issues/65812)
 - password hashing - Ensure we validate salts against allowed characters and length when using ``crypt`` (https://github.com/ansible/ansible/issues/71107)
 - password lookup - Try to automatically generate salts using known salt sizes (https://github.com/ansible/ansible/issues/53750)
 - pause - Fix indefinite hang when using a pause task on a background process (https://github.com/ansible/ansible/issues/32142)
 - pause - catch additional error on setting up curses (https://github.com/ansible/ansible/pull/73588).
+- pause - do not accept enter to continue when a timeout is set (https://github.com/ansible/ansible/issues/73948)
 - pause - do not warn when running in the background if a timeout is provided (https://github.com/ansible/ansible/issues/73042)
 - pause - handle exception when there is no stdout (https://github.com/ansible/ansible/pull/47851)
 - powershell - fix escaping of strings that broken modules like fetch when dealing with special chars - https://github.com/ansible/ansible/issues/62781
@@ -657,15 +566,19 @@ Bugfixes
 - remove contradictory recomendation from template docs. https://github.com/ansible/ansible/issues/63484
 - remove redundant remote_user setting in play_context for local as plugin already does it, also removes fork/thread issue from use of pwd library.
 - reset logging level to INFO due to CVE-2019-14846.
+- restrict module valid JSON parsed output to objects as lists are not valid responses.
 - runas - create a new token when running as ``SYSTEM`` to ensure it has the full privileges assigned to that account
 - service - Fix for the BSD rcconf code using a Python 2 specific string replace function
 - set_mode_if_different - handle symlink if it is inside a directory with sticky bit set (https://github.com/ansible/ansible/pull/45198)
+- setup module, fix error handling on bad subset given
+- setup, don't give up on all local facts gathering if one script file fails.
 - several fixes to make apt_key better at identifying needs for change and also to avoid changes in check_mode.
 - shell - fix quoting of mkdir command in creation of remote_tmp in order to allow spaces and other special characters (https://github.com/ansible/ansible/issues/69577).
 - splunk httpapi plugin - switch from splunk.enterprise_security to splunk.es in runtime.yml to reflect upstream change of Collection Name
 - ssh connection plugin - use ``get_option()`` rather than ``_play_context`` to ensure ``ANSBILE_SSH_ARGS`` are applied properly (https://github.com/ansible/ansible/issues/70437)
 - stat - handle colons in filename while parsing the mimetype output (https://github.com/ansible/ansible/issues/70256).
 - strftime filter - Input epoch is allowed to be a float (https://github.com/ansible/ansible/issues/71257)
+- su become plugin, ensure correct type for localization option.
 - systemd - account for templated unit files using ``@`` when searching for the unit file (https://github.com/ansible/ansible/pull/72347#issuecomment-730626228)
 - systemd - fixed chroot usage on new versions of systemd, that broke because of upstream changes in systemctl output
 - systemd - follow up fix to https://github.com/ansible/ansible/issues/72338 to use ``list-unit-files`` rather than ``list-units`` in order to show all units files on the system.
@@ -691,6 +604,7 @@ Bugfixes
 - vault - Support reading raw binary data from stdin under python3
 - virtual facts - kubevirt is now identified as "KubeVirt" and with a "guest" role instead of "kvm" and "host" role (https://github.com/ansible/ansible/issues/72001).
 - wait_for - catch and ignore errors when getting active connections with psutil (https://github.com/ansible/ansible/issues/72322)
+- wait_for module, move missing socket into function to get proper comparrison in time.
 - win setup - Fix redirection path for the windows setup module
 - windows async - use full path when calling PowerShell to reduce reliance on environment vars being correct - https://github.com/ansible/ansible/issues/70655
 - winrm - preserve winrm forensic data on put_file failures
