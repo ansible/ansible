@@ -6,7 +6,6 @@ examples/scripts/my_test_facts.py shebang # example module but not in a normal m
 examples/scripts/my_test_info.py shebang # example module but not in a normal module location
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-3.5!skip # release process only, 3.6+ required
