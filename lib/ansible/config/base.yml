@@ -3,12 +3,16 @@
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
   name: Allow world-readable temporary files
-  default: False
   description:
     - This setting has been moved to the individual shell plugins as a plugin option :ref:`shell_plugins`.
     - The existing configuration settings are still accepted with the shell plugin adding additional options, like variables.
     - This message will be removed in 2.14.
   type: boolean
+  default: False
+  deprecated:  # (kept for autodetection and removal, deprecation is irrelevant since w/o settings this can never show runtime msg)
+      why: moved to shell plugins
+      version: "2.14"
+      alternatives: 'world_readable_tmp'
 ANSIBLE_CONNECTION_PATH:
   name: Path of ansible-connection script
   default: null

@@ -14,11 +14,10 @@ import random
 import re
 import stat
 import tempfile
-import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError, AnsibleAuthenticationFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
@@ -32,6 +31,7 @@ from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
+from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
 
@@ -654,6 +654,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if res['rc'] == 0:
             return remote_paths
 
+        # we'll need this down here
+        become_link = get_versioned_doclink('user_guide/become.html')
+
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
@@ -672,9 +675,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if group is not None:
             res = self._remote_chgrp(remote_paths, group)
             if res['rc'] == 0:
-                # If ALLOW_WORLD_READABLE_TMPFILES is set, we should warn the
-                # user that something might go weirdly here.
-                if C.ALLOW_WORLD_READABLE_TMPFILES:
+                # warn user that something might go weirdly here.
+                if self.get_shell_option('world_readable_temp'):
                     display.warning(
                         'Both common_remote_group and '
                         'allow_world_readable_tmpfiles are set. chgrp was '
@@ -684,9 +686,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         'group of which the unprivileged become user is not a '
                         'member. In this situation, '
                         'allow_world_readable_tmpfiles is a no-op. See this '
-                        'URL for more details: '
-                        'https://docs.ansible.com/ansible/become.html'
-                        '#becoming-an-unprivileged-user')
+                        'URL for more details: %s'
+                        '#becoming-an-unprivileged-user' % become_link)
                 if execute:
                     group_mode = 'g+rwx'
                 else:
@@ -696,17 +697,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     return remote_paths
 
         # Step 4: World-readable temp directory
-        if self.get_shell_option(
-                'world_readable_temp',
-                C.ALLOW_WORLD_READABLE_TMPFILES):
+        if self.get_shell_option('world_readable_temp'):
             # chown and fs acls failed -- do things this insecure way only if
             # the user opted in in the config file
             display.warning(
                 'Using world-readable permissions for temporary files Ansible '
                 'needs to create when becoming an unprivileged user. This may '
-                'be insecure. For information on securing this, see '
-                'https://docs.ansible.com/ansible/user_guide/become.html'
-                '#risks-of-becoming-an-unprivileged-user')
+                'be insecure. For information on securing this, see %s'
+                '#risks-of-becoming-an-unprivileged-user' % become_link)
             res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
             if res['rc'] == 0:
                 return remote_paths
@@ -719,11 +717,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         raise AnsibleError(
             'Failed to set permissions on the temporary files Ansible needs '
             'to create when becoming an unprivileged user '
-            '(rc: %s, err: %s}). For information on working around this, see '
-            'https://docs.ansible.com/ansible/become.html'
+            '(rc: %s, err: %s}). For information on working around this, see %s'
             '#becoming-an-unprivileged-user' % (
                 res['rc'],
-                to_native(res['stderr'])))
+                to_native(res['stderr']), become_link))
 
     def _remote_chmod(self, paths, mode, sudoable=False):
         '''

@@ -1,0 +1,3 @@
+bugfixes:
+  - correctly use world readable setting since old constant is not 'settable' anymore.
+  - correct doc links for become on warnings over world readable settings.
