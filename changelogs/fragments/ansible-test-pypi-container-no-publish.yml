@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Avoid publishing the port used by the ``pypi-test-container`` since it is only accessed by other containers.
+                   This avoids issues when trying to run tests in parallel on a single host.
