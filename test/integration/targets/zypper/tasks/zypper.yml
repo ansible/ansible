@@ -1,5 +1,5 @@
 - name: get hello package version
-  shell: zypper --xml se -svx hello | grep 'name="hello"' | grep 'repository="Main Repository"' | sed 's/.*edition="\([^ ]*\)".*/\1/'
+  shell: zypper -x se -svx hello | grep 'name="hello"' | grep 'repository="Main Repository"' | sed 's/.*edition="\([^ ]*\)".*/\1/'
   register: hello_version
 
 - name: set URL of test package
