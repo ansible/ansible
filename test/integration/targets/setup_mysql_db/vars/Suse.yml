@@ -4,3 +4,7 @@ mysql_packages:
     - mariadb
     - python-PyMySQL
     - bzip2
+
+mysql_cleanup_packages:
+    - mariadb*
+    - "*python3*"
