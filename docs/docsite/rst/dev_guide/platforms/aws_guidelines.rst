@@ -389,8 +389,8 @@ The combination of these two approaches is then:
 
 Prior to Ansible 2.10 if the underlying ``describe_some_resources`` API call threw
 a ``ResourceNotFound`` exception, ``AWSRetry`` would take this as a cue to retry until
-it's not thrown (this is so that when creating a resource, we can just retry until it
-exists).  This default was changed and it's now necessary to explicitly request
+it is not thrown (this is so that when creating a resource, we can just retry until it
+exists).  This default was changed and it is now necessary to explicitly request
 this behaviour.  This can be done by using the ``catch_extra_error_codes``
 argument on the decorator.
 
