@@ -5,6 +5,39 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.9rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-04-27
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Major Changes
+-------------
+
+- ansible-test - Tests run with the ``centos6`` and ``default`` test containers now use a PyPI proxy container to access PyPI when Python 2.6 is used. This allows tests running under Python 2.6 to continue functioning even though PyPI is discontinuing support for non-SNI capable clients.
+
+Minor Changes
+-------------
+
+- Switch to hashlib.sha256() for ansible-test to allow for FIPs mode.
+
+Bugfixes
+--------
+
+- Prevent ``ansible_failed_task`` from further templating (https://github.com/ansible/ansible/issues/74036)
+- ansible-test - Avoid publishing the port used by the ``pypi-test-container`` since it is only accessed by other containers. This avoids issues when trying to run tests in parallel on a single host.
+- ansible-test - Fix docker container IP address detection. The ``bridge`` network is no longer assumed to be the default.
+- ansible-test - ensure the correct unit test target is given when the ``__init__.py`` file is modified inside the connection plugins directory
+- ansible.utils.encrypt now handles missing or unusable 'crypt' library.
+- facts - detect homebrew installed at /opt/homebrew/bin/brew
+- interpreter discovery - Debian 8 and lower will avoid unsupported Python3 version in interpreter discovery
+- undeprecate hash_merge setting and add more docs clarifying its use and why not to use it.
+- wait_for module, move missing socket into function to get proper comparrison in time.
+
 v2.10.8
 =======
 
