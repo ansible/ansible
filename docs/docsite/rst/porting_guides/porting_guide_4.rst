@@ -83,6 +83,75 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.0.0a4
+==========================
+
+Known Issues
+------------
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Modules for monitor API are not versioned yet.
+
+Breaking Changes
+----------------
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Generic FortiOS Module - FOS module to issue generic request with Ansible.
+- Support for FOS Monitor API - several modules are new for monitor API.
+- Unified Collection - The fortios collection itself will be adapting any FOS platforms.
+
+servicenow.servicenow
+~~~~~~~~~~~~~~~~~~~~~
+
+- auth field now required for anything other than Basic authentication
+
+Major Changes
+-------------
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- New module fortios_configuration_fact
+- New module fortios_json_generic
+- New module fortios_monitor
+- New module fortios_monitor_fact
+
+servicenow.servicenow
+~~~~~~~~~~~~~~~~~~~~~
+
+- refactored client to inherit from AnsibleModule
+- supports OpenID Connect authentication protocol
+- supports bearer tokens for authentication
+
+Removed Features
+----------------
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Removed module fortios_facts
+- Removed module fortios_registration_forticare
+- Removed module fortios_registration_vdom
+- Removed module fortios_system_config_backup_restore
+- Removed module fortios_system_vmlicense
+
+Deprecated Features
+-------------------
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_vmkernel_ip_config - deprecate in favor of vmware_vmkernel (https://github.com/ansible-collections/community.vmware/pull/667).
+
+f5networks.f5_modules
+~~~~~~~~~~~~~~~~~~~~~
+
+- Support for Python versions earlier than 3.5 is being deprecated
+
 Porting Guide for v4.0.0a3
 ==========================
 

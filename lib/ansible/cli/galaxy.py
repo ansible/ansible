@@ -417,7 +417,7 @@ class GalaxyCLI(CLI):
 
     def add_build_options(self, parser, parents=None):
         build_parser = parser.add_parser('build', parents=parents,
-                                         help='Build an Ansible collection artifact that can be publish to Ansible '
+                                         help='Build an Ansible collection artifact that can be published to Ansible '
                                               'Galaxy.')
         build_parser.set_defaults(func=self.execute_build)
 
