@@ -23,7 +23,6 @@ __metaclass__ = type
 from io import StringIO
 import pytest
 
-from ansible.errors import AnsibleError
 from ansible.plugins.connection import paramiko_ssh
 from ansible.playbook.play_context import PlayContext
 
