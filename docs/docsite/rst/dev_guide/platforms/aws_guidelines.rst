@@ -58,7 +58,7 @@ to:
 
 .. code-block:: python
 
-   from ansible.module_utils.aws.core import AnsibleAWSModule
+   from ansible_collections.amazon.aws.plugins.module_utils.core import AnsibleAWSModule
    ...
    module = AnsibleAWSModule(...)
 
@@ -118,7 +118,8 @@ Unless the name of your service is quite unique, please consider using ``aws_`` 
 Importing botocore and boto3
 ----------------------------
 
-The ``ansible.module_utils.ec2`` module and ``ansible.module_utils.core.aws`` modules both
+The ``ansible_collections.amazon.aws.plugins.module_utils.ec2`` module and
+``ansible_collections.amazon.aws.plugins.module_utils.core`` modules both
 automatically import boto3 and botocore.  If boto3 is missing from the system then the variable
 ``HAS_BOTO3`` will be set to false.  Normally, this means that modules don't need to import
 boto3 directly. There is no need to check ``HAS_BOTO3`` when using AnsibleAWSModule
@@ -126,7 +127,7 @@ as the module does that check:
 
 .. code-block:: python
 
-   from ansible.module_utils.aws.core import AnsibleAWSModule
+   from ansible_collections.amazon.aws.plugins.module_utils.core import AnsibleAWSModule
    try:
        import botocore
    except ImportError:
@@ -137,7 +138,7 @@ or:
 .. code-block:: python
 
    from ansible.module_utils.basic import AnsibleModule
-   from ansible.module_utils.ec2 import HAS_BOTO3
+   from ansible_collections.amazon.aws.plugins.module_utils.ec2 import HAS_BOTO3
    try:
        import botocore
    except ImportError:
@@ -220,8 +221,8 @@ and that the more esoteric connection options are documented. For example:
    # some lines omitted here
    requirements: [ 'botocore', 'boto3' ]
    extends_documentation_fragment:
-       - aws
-       - ec2
+       - amazon.aws.aws
+       - amazon.aws.ec2
    '''
 
 Handling exceptions
@@ -234,7 +235,7 @@ are a number of possibilities for handling it.
     ``is_boto3_error_code``.
 * Use ``aws_module.fail_json_aws()`` to report the module failure in a standard way
 * Retry using AWSRetry
-* Use ``fail_json()`` to report the failure without using ``ansible.module_utils.aws.core``
+* Use ``fail_json()`` to report the failure without using ``ansible_collections.amazon.aws.plugins.module_utils.core``
 * Do something custom in the case where you know how to handle the exception
 
 For more information on botocore exception handling see the `botocore error documentation <https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling>`_.
@@ -242,7 +243,7 @@ For more information on botocore exception handling see the `botocore error docu
 Using is_boto3_error_code
 -------------------------
 
-To use ``ansible.module_utils.aws.core.is_boto3_error_code`` to catch a single
+To use ``ansible_collections.amazon.aws.plugins.module_utils.core.is_boto3_error_code`` to catch a single
 AWS error code, call it in place of ``ClientError`` in your except clauses. In
 this case, *only* the ``InvalidGroup.NotFound`` error code will be caught here,
 and any other error will be raised for handling elsewhere in the program.
@@ -268,7 +269,7 @@ amounts of exception handling to existing modules, we recommend migrating the mo
 
 .. code-block:: python
 
-   from ansible.module_utils.aws.core import AnsibleAWSModule
+   from ansible_collections.amazon.aws.plugins.module_utils.core import AnsibleAWSModule
 
    # Set up module parameters
    # module params code here
@@ -302,8 +303,8 @@ If you need to perform an action based on the error boto3 returned, use the erro
    except botocore.exceptions.BotoCoreError as e:
        module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 
-using fail_json() and avoiding ansible.module_utils.aws.core
-------------------------------------------------------------
+using fail_json() and avoiding ansible_collections.amazon.aws.plugins.module_utils.core
+---------------------------------------------------------------------------------------
 
 Boto3 provides lots of useful information when an exception is thrown so pass this to the user
 along with the message.
@@ -494,7 +495,7 @@ and returns True if they are different.
 
 .. code-block:: python
 
-   from ansible.module_utils.ec2 import compare_policies
+   from ansible_collections.amazon.aws.plugins.module_utils.ec2 import compare_policies
 
    import json
 
