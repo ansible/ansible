@@ -575,7 +575,7 @@ As of Ansible 2.9, you can add shell completion of the Ansible command line util
 
 You can install ``python-argcomplete`` from EPEL on Red Hat Enterprise based distributions, and or from the standard OS repositories for many other distributions.
 
-For more information about installation and configuration, see the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_.
+For more information about installation and configuration, see the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_.
 
 Installing ``argcomplete`` on RHEL, CentOS, or Fedora
 -----------------------------------------------------
@@ -647,7 +647,7 @@ You should place the above commands into your shells profile file such as ``~/.p
 Using ``argcomplete`` with zsh or tcsh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>`_.
+See the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_.
 
 
 .. seealso::
