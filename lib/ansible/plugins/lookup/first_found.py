@@ -10,23 +10,23 @@ DOCUMENTATION = """
     version_added: historical
     short_description: return first file found from list
     description:
-      - this lookup checks a list of files and paths and returns the full path to the first combination found.
+      - This lookup checks a list of files and paths and returns the full path to the first combination found.
       - As all lookups, when fed relative paths it will try use the current task's location first and go up the chain
-        to the containing role/play/include/etc's location.
+        to the containing locations of role / play / include and so on.
       - The list of files has precedence over the paths searched.
-        i.e, A task in a  role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
+        For example, A task in a role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
       - Either a list of files C(_terms) or a key `files` with a list of files is required for this plugin to operate.
     notes:
       - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has C(files) and C(paths).
     options:
       _terms:
-        description: list of file names
+        description: A list of file names.
       files:
-        description: list of file names
+        description: A list of file names.
         type: list
         default: []
       paths:
-        description: list of paths in which to look for the files
+        description: A list of paths in which to look for the files.
         type: list
         default: []
       skip:
@@ -37,42 +37,45 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: show first existing file or ignore if none do
-  debug: msg={{lookup('first_found', findme, errors='ignore')}}
+  debug:
+    msg: "{{ lookup('first_found', findme, errors='ignore') }}"
   vars:
     findme:
       - "/path/to/foo.txt"
       - "bar.txt"  # will be looked in files/ dir relative to role and/or play
       - "/path/to/biz.txt"
 
-- name: |
-        include tasks only if files exist.  Note the use of query() to return
-        a blank list for the loop if no files are found.
-  import_tasks: '{{ item }}'
+- name: include tasks only if files exist.
+  include_tasks:
+    file: "{{ query('first_found', params) }}"
   vars:
     params:
       files:
         - path/tasks.yaml
         - path/other_tasks.yaml
-  loop: "{{ query('first_found', params, errors='ignore') }}"
 
 - name: |
         copy first existing file found to /some/file,
         looking in relative directories from where the task is defined and
         including any play objects that contain it
-  copy: src={{lookup('first_found', findme)}} dest=/some/file
+  copy:
+    src: "{{ lookup('first_found', findme) }}"
+    dest: /some/file
   vars:
     findme:
       - foo
-      - "{{inventory_hostname}}"
+      - "{{ inventory_hostname }}"
       - bar
 
 - name: same copy but specific paths
-  copy: src={{lookup('first_found', params)}} dest=/some/file
+  copy:
+    src: "{{ lookup('first_found', params) }}"
+    dest: /some/file
   vars:
     params:
       files:
         - foo
-        - "{{inventory_hostname}}"
+        - "{{ inventory_hostname }}"
         - bar
       paths:
         - /tmp/production
@@ -80,7 +83,7 @@ EXAMPLES = """
 
 - name: INTERFACES | Create Ansible header for /etc/network/interfaces
   template:
-    src: "{{ lookup('first_found', findme)}}"
+    src: "{{ lookup('first_found', findme) }}"
     dest: "/etc/foo.conf"
   vars:
     findme:
@@ -88,12 +91,12 @@ EXAMPLES = """
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
-  include_vars: "{{lookup('first_found', params)}}"
+  include_vars: "{{ lookup('first_found', params) }}"
   vars:
     params:
       files:
-        - '{{ansible_distribution}}.yml'
-        - '{{ansible_os_family}}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
         - default.yml
       paths:
         - 'vars'
