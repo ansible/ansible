@@ -12,7 +12,7 @@ Contributing to a collection: community.general
 
 These instructions apply to collections hosted in the `ansible_collections GitHub org <https://github.com/ansible-collections>`_. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
-This example uses the `community.general collection<https://github.com/ansible-collections/community.general/>`_. To contribute to other collections in the same GitHub org, replace the folder names ``community`` and ``general`` with the namespace and collection name of a different collection.
+This example uses the `community.general collection <https://github.com/ansible-collections/community.general/>`_. To contribute to other collections in the same GitHub org, replace the folder names ``community`` and ``general`` with the namespace and collection name of a different collection.
 
 Prerequisites
 -------------
@@ -29,7 +29,7 @@ Creating a PR
 
     mkdir -p ~/dev/ansible/collections/ansible_collections/community
 
-* Clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
+* Clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the directory ``general``::
 
     cd ~/dev/ansible/collections/ansible_collections/community
     git clone git@github.com:ansible-collections/community.general.git general
