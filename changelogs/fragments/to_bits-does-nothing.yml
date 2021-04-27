@@ -1,0 +1,2 @@
+bugfixes:
+  - network module_utils - fix bug where ``to_bits()`` returned the ``str`` type instead of a useful value.
