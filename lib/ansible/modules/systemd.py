@@ -91,7 +91,7 @@ EXAMPLES = '''
 - name: Make sure a service unit is running
   ansible.builtin.systemd:
     state: started
-    name: httpd.service
+    name: httpd
 
 - name: Stop service cron on debian, if running
   ansible.builtin.systemd:
