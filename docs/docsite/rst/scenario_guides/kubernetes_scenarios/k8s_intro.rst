@@ -24,13 +24,13 @@ To use the modules, you'll need the following:
 Installation
 ============
 
-The Kubernetes modules are part of the `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_.
+The Kubernetes modules are part of the `Ansible Kubernetes collection <https://github.com/ansible-collections/kubernetes.core>`_.
 
 To install the collection, run the following:
 
 .. code-block:: bash
 
-    $ ansible-galaxy collection install community.kubernetes
+    $ ansible-galaxy collection install kubernetes.core
 
 
 Authenticating with the API
@@ -45,6 +45,6 @@ To disable SSL certificate verification, set ``verify_ssl`` to false.
 Reporting an issue
 ==================
 
-If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_.
+If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/kubernetes.core>`_.
 If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_.
 If you find a bug regarding Kubectl binary, please file issues at `Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_

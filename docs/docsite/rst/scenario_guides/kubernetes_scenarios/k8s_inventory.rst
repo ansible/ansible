@@ -30,17 +30,17 @@ To use this Kubernetes dynamic inventory plugin, you need to enable it first by 
 .. code-block:: ini
 
   [inventory]
-  enable_plugins = community.kubernetes.k8s
+  enable_plugins = kubernetes.core.k8s
 
 Then, create a file that ends in ``.k8s.yml`` or ``.k8s.yaml`` in your working directory.
 
-The ``community.kubernetes.k8s`` inventory plugin takes in the same authentication information as any other Kubernetes modules.
+The ``kubernetes.core.k8s`` inventory plugin takes in the same authentication information as any other Kubernetes modules.
 
 Here's an example of a valid inventory file:
 
 .. code-block:: yaml
 
-    plugin: community.kubernetes.k8s
+    plugin: kubernetes.core.k8s
 
 Executing ``ansible-inventory --list -i <filename>.k8s.yml`` will create a list of Pods that are ready to be configured using Ansible.
 
@@ -48,7 +48,7 @@ You can also provide the namespace to gather information about specific pods fro
 
 .. code-block:: yaml
 
-    plugin: community.kubernetes.k8s
+    plugin: kubernetes.core.k8s
     connections:
     - namespaces:
         - test
