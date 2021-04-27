@@ -12,7 +12,7 @@ Spell out the acronym before using it in alone text, such as "The Embedded DevKi
 
 Applications
 +++++++++++++++++++
-When used as a proper name, use the capitalization of the product, such as GNUPro, Source-Navigator, and Ansible Tower. When used as a command, use lowercase as appropriate, such as "To start GCC, type ``gcc``."
+When used as a proper name, use the capitalization of the product, such as GNUPro or Source-Navigator. When used as a command, use lowercase as appropriate, such as "To start GCC, type ``gcc``."
 
 .. note::
 

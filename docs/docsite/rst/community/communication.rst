@@ -18,7 +18,7 @@ Mailing list information
 Ansible has several mailing lists.  Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear.
 
 * `Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_ is a read-only list that shares information about new releases of Ansible, and also rare infrequent event information, such as announcements about an upcoming AnsibleFest, which is our official conference series. Worth subscribing to!
-* `Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_ the upstream version of `Red Hat Ansible Tower <https://www.ansible.com/products/tower>`_
+* `Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_ 
 * `Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ is for users and developers of the Ansible Container project.
 * `Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for learning how to develop on Ansible, asking about prospective feature design, or discussions about extending ansible or features in progress.
 * `Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
@@ -59,7 +59,7 @@ Many of our community `Working Groups <https://github.com/ansible/community/wiki
 
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``
 - `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
-- `AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx`` - Upstream for Ansible Tower
+- `AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx``
 - `Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - ``#ansible-azure``
 - `Community Working Group <https://github.com/ansible/community/wiki/Community>`_ - ``#ansible-community`` - Including Meetups
 - `Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``
@@ -95,13 +95,13 @@ IRC meetings
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to
 participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
-Ansible Tower support questions
-===============================
+Ansible Automation Platform support questions
+=============================================
 
-Red Hat Ansible `Tower <https://www.ansible.com/products/tower>`_ is a UI, Server, and REST endpoint for Ansible.
-The Red Hat Ansible Automation subscription contains support for Ansible, Ansible Tower, Ansible Automation for Networking, and more.
+Red Hat Ansible `Automation Platform <https://www.ansible.com/products/automation-platform>`_ is a subscription that contains support, certified content, and tooling for Ansible including
+content management, a controller, UI and REST API.
 
-If you have a question about Ansible Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC channel or the general project mailing list.
+If you have a question about Ansible Automation Platform, visit `Red Hat support <https://access.redhat.com/products/red-hat-ansible-automation-platform/>`_ rather than using the IRC channel or the general project mailing list.
 
 The Bullhorn
 ============
