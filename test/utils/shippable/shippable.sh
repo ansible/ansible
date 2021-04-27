@@ -117,7 +117,7 @@ function cleanup
                     flags="${flags//=/,}"
                     flags="${flags//[^a-zA-Z0-9_,]/_}"
 
-                    bash <(curl -s https://codecov.io/bash) \
+                    bash <(curl -s https://ansible-ci-files.s3.us-east-1.amazonaws.com/ansible-test/codecov) \
                         -f "${file}" \
                         -F "${flags}" \
                         -n "${test}" \
