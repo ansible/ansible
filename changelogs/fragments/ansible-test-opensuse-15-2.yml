@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Use version 1.21.0 of opensuse test containers which is 15.2, since 15.1 is now EOL.
