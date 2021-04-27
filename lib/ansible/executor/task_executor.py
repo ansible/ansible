@@ -997,26 +997,12 @@ class TaskExecutor:
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
-            options = self._get_persistent_connection_options(connection, cvars, templar)
+            options = connection.get_options()
             socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
         return connection
-
-    def _get_persistent_connection_options(self, connection, final_vars, templar):
-
-        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
-        plugin = connection._sub_plugin
-        if plugin.get('type'):
-            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
-
-        options = {}
-        for k in option_vars:
-            if k in final_vars:
-                options[k] = templar.template(final_vars[k])
-
-        return options
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:
