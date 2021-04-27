@@ -469,7 +469,7 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
        Get started with developing a module
    :ref:`developing_plugins`
        How to develop plugins
-   `Ansible Tower <https://www.ansible.com/products/tower>`_
+   `AWX <https://github.com/ansible/awx>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics

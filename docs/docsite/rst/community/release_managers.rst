@@ -13,7 +13,6 @@ coordinate between:
 * Contributors without commit privileges
 * The community
 * Ansible documentation team
-* Ansible Tower team
 
 Pre-releases: what and why
 ==========================
@@ -70,7 +69,7 @@ The last RC should be as close to the final as possible. The following things ma
 .. note:: We want to specifically emphasize that code (in :file:`bin/`, :file:`lib/ansible/`, and
     :file:`setup.py`) must be the same unless there are extraordinary extenuating circumstances.  If
     there are extenuating circumstances, the Release Manager is responsible for notifying groups
-    (like the Tower Team) which would want to test the code.
+    which would want to test the code.
 
 
 Ansible release process
