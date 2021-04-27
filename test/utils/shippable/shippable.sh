@@ -9,34 +9,17 @@ script="${args[0]}"
 
 test="$1"
 
-docker images ansible/ansible
-docker images quay.io/ansible/*
+docker images
 docker ps
 
-for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v -e '^drydock/' -e '^quay.io/ansible/shippable-build-container:' -e '^quay.io/ansible/azure-pipelines-test-container:' | sed 's/^.* //'); do
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v -e '^quay.io/ansible/azure-pipelines-test-container:' | sed 's/^.* //'); do
     docker rm -f "${container}" || true  # ignore errors
 done
 
 docker ps
 
-if [ -d /home/shippable/cache/ ]; then
-    ls -la /home/shippable/cache/
-fi
-
-command -v python
-python -V
-
-command -v pip
-pip --version
-pip list --disable-pip-version-check
-
 export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
-
-if [ "${JOB_TRIGGERED_BY_NAME:-}" == "nightly-trigger" ]; then
-    COVERAGE=yes
-    COMPLETE=yes
-fi
 
 if [ -n "${COVERAGE:-}" ]; then
     # on-demand coverage reporting triggered by setting the COVERAGE environment variable to a non-empty value
@@ -68,86 +51,6 @@ else
     export UNSTABLE=""
 fi
 
-# remove empty core/extras module directories from PRs created prior to the repo-merge
-find lib/ansible/modules -type d -empty -print -delete
-
-function cleanup
-{
-    # for complete on-demand coverage generate a report for all files with no coverage on the "sanity/5" job so we only have one copy
-    if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/5" ]; then
-        stub="--stub"
-        # trigger coverage reporting for stubs even if no other coverage data exists
-        mkdir -p test/results/coverage/
-    else
-        stub=""
-    fi
-
-    if [ -d test/results/coverage/ ]; then
-        if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
-            process_coverage='yes'  # process existing coverage files
-        elif [ "${stub}" ]; then
-            process_coverage='yes'  # process coverage when stubs are enabled
-        else
-            process_coverage=''
-        fi
-
-        if [ "${process_coverage}" ]; then
-            # use python 3.7 for coverage to avoid running out of memory during coverage xml processing
-            # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
-            virtualenv --python /usr/bin/python3.7 ~/ansible-venv
-            set +ux
-            . ~/ansible-venv/bin/activate
-            set -ux
-
-            # shellcheck disable=SC2086
-            ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
-            cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
-
-            # analyze and capture code coverage aggregated by integration test target
-            ansible-test coverage analyze targets generate -v shippable/testresults/coverage-analyze-targets.json
-
-            # upload coverage report to codecov.io only when using complete on-demand coverage
-            if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
-                for file in test/results/reports/coverage=*.xml; do
-                    flags="${file##*/coverage=}"
-                    flags="${flags%-powershell.xml}"
-                    flags="${flags%.xml}"
-                    # remove numbered component from stub files when converting to tags
-                    flags="${flags//stub-[0-9]*/stub}"
-                    flags="${flags//=/,}"
-                    flags="${flags//[^a-zA-Z0-9_,]/_}"
-
-                    bash <(curl -s https://codecov.io/bash) \
-                        -f "${file}" \
-                        -F "${flags}" \
-                        -n "${test}" \
-                        -t 83cd8957-dc76-488c-9ada-210dcea51633 \
-                        -X coveragepy \
-                        -X gcov \
-                        -X fix \
-                        -X search \
-                        -X xcode \
-                    || echo "Failed to upload code coverage report to codecov.io: ${file}"
-                done
-            fi
-        fi
-    fi
-
-    if [ -d  test/results/junit/ ]; then
-      cp -aT test/results/junit/ shippable/testresults/
-    fi
-
-    if [ -d test/results/data/ ]; then
-      cp -a test/results/data/ shippable/testresults/
-    fi
-
-    if [ -d  test/results/bot/ ]; then
-      cp -aT test/results/bot/ shippable/testresults/
-    fi
-}
-
-if [ "${SHIPPABLE_BUILD_ID:-}" ]; then trap cleanup EXIT; fi
-
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
     timeout=60
 else
@@ -156,5 +59,4 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
-if [ "${SHIPPABLE_BUILD_ID:-}" ]; then "test/utils/shippable/check_matrix.py"; fi
 "test/utils/shippable/${script}.sh" "${test}"
