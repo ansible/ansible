@@ -687,7 +687,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         'member. In this situation, '
                         'allow_world_readable_tmpfiles is a no-op. See this '
                         'URL for more details: %s'
-                        '#becoming-an-unprivileged-user' % become_link)
+                        '#risks-of-becoming-an-unprivileged-user' % become_link)
                 if execute:
                     group_mode = 'g+rwx'
                 else:
@@ -718,7 +718,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             'Failed to set permissions on the temporary files Ansible needs '
             'to create when becoming an unprivileged user '
             '(rc: %s, err: %s}). For information on working around this, see %s'
-            '#becoming-an-unprivileged-user' % (
+            '#risks-of-becoming-an-unprivileged-user' % (
                 res['rc'],
                 to_native(res['stderr']), become_link))
 
