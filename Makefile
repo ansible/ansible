@@ -11,7 +11,7 @@
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make gettext -------------- produce POT files for docs
-#   make generate-po ---------- generate language specfic po file
+#   make generate-po ---------- generate language specific po file
 #   make needs-translation ---- generate list of file with unstranlated or fuzzy string for a specific language
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 
