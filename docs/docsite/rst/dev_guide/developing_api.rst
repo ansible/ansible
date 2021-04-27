@@ -14,7 +14,7 @@ write plugins, and you can plug in inventory data from external data sources.  T
 gives a basic overview and examples of the Ansible execution and playbook API.
 
 If you would like to use Ansible programmatically from a language other than Python, trigger events asynchronously,
-or have access control and logging demands, please see the `Ansible Tower documentation <https://docs.ansible.com/ansible-tower/>`_.
+or have access control and logging demands, please see the `AWX project <https://github.com/ansible/awx/>`_.
 
 .. note:: Because Ansible relies on forking processes, this API is not thread safe.
 
