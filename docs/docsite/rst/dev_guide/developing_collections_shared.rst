@@ -24,12 +24,12 @@ To include documentation fragments in your collection:
 .. code-block:: yaml
 
    extends_documentation_fragment:
-     - community.kubernetes.k8s_name_options
-     - community.kubernetes.k8s_auth_options
-     - community.kubernetes.k8s_resource_options
-     - community.kubernetes.k8s_scale_options
+     - kubernetes.core.k8s_name_options
+     - kubernetes.core.k8s_auth_options
+     - kubernetes.core.k8s_resource_options
+     - kubernetes.core.k8s_scale_options
 
-:ref:`module_docs_fragments` covers the basics for documentation fragments. The `kubernetes <https://github.com/ansible-collections/kubernetes>`_ collection includes a complete example.
+:ref:`module_docs_fragments` covers the basics for documentation fragments. The `kubernetes.core <https://github.com/ansible-collections/kubernetes.core>`_ collection includes a complete example.
 
 If you use FQCN, you can use documentation fragments from one collection in another collection.
 

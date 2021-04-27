@@ -52,7 +52,7 @@ Since Ansible utilizes the Kubernetes API to perform actions, in this use case w
 
 To begin, there are a few bits of information we will need. Here you are using Kubeconfig which is pre-configured in your machine. The Kubeconfig is generally located at ``~/.kube/config``. It is highly recommended to store sensitive information such as password, user certificates in a more secure fashion using :ref:`ansible-vault` or using `Ansible Tower credentials <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_.
 
-Now you need to supply the information about the Pod which will be created. Using ``definition`` parameter of the ``community.kubernetes.k8s`` module, you specify `PodTemplate <https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates>`_. This PodTemplate is identical to what you provide to the ``kubectl`` command.
+Now you need to supply the information about the Pod which will be created. Using ``definition`` parameter of the ``kubernetes.core.k8s`` module, you specify `PodTemplate <https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates>`_. This PodTemplate is identical to what you provide to the ``kubectl`` command.
 
 What to expect
 --------------

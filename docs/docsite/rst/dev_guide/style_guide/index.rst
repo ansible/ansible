@@ -227,7 +227,7 @@ Modules require different suffixes from other plugins:
 .. code-block:: rst
 
    :ref:`arista.eos.eos_config <ansible_collections.arista.eos.eos_config_module>`
-   :ref:`community.kubernetes.kubectl connection plugin <ansible_collections.community.kubernetes.kubectl_connection>`
+   :ref:`kubernetes.core.kubectl connection plugin <ansible_collections.kubernetes.core.kubectl_connection>`
 
 .. note::
 
