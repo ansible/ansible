@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
   collections:
-    - community.kubernetes
+    - kubernetes.core
   tasks:
   - name: Create a pod
     k8s:
