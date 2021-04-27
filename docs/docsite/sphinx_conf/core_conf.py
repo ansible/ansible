@@ -167,9 +167,9 @@ html_context = {
     'github_root_dir': 'devel/lib/ansible',
     'github_cli_version': 'devel/lib/ansible/cli/',
     'current_version': version,
-    'latest_version': '2.10',
+    'latest_version': '2.11',
     # list specifically out of order to make latest work
-    'available_versions': ('2.10', 'devel',),
+    'available_versions': ('2.11', '2.10', 'devel',),
     'css_files': ('_static/core.css',  # overrides to the standard theme
                   ),
 }
