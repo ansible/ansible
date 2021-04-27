@@ -6,4 +6,6 @@ mysql_packages:
     - bzip2
 
 mysql_cleanup_packages:
-    - mariadb*
+    - mariadb-errormessages
+    - mariadb-client
+    - libmariadb3
