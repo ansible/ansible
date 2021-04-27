@@ -5,6 +5,35 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.21rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-04-27
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Major Changes
+-------------
+
+- ansible-test - Tests run with the ``centos6`` and ``default`` test containers now use a PyPI proxy container to access PyPI when Python 2.6 is used. This allows tests running under Python 2.6 to continue functioning even though PyPI is discontinuing support for non-SNI capable clients.
+
+Minor Changes
+-------------
+
+- Switch to hashlib.sha256() for ansible-test to allow for FIPs mode.
+- ansible-test - Use version 1.21.0 of opensuse test containers which is 15.2, since 15.1 is now EOL.
+
+Bugfixes
+--------
+
+- ansible-test - Avoid publishing the port used by the ``pypi-test-container`` since it is only accessed by other containers. This avoids issues when trying to run tests in parallel on a single host.
+- ansible-test - Fix docker container IP address detection. The ``bridge`` network is no longer assumed to be the default.
+- ansible-test - ensure the correct unit test target is given when the ``__init__.py`` file is modified inside the connection plugins directory
+- validate-modules - do not raise an ``AttributeError`` if a value is assigned to a module attribute in a try/except block.
+
 v2.9.20
 =======
 

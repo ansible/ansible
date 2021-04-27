@@ -1848,6 +1848,18 @@ releases:
     - v2.9.20rc1_summary.yaml
     - wafv2-mod-defaults.yml
     release_date: '2021-04-05'
+  2.9.21rc1:
+    codename: Immigrant Song
+    fragments:
+    - 72411-fips-mode-ansible-test.yml
+    - ansible-test-connection-units-init.yml
+    - ansible-test-docker-network-detect.yml
+    - ansible-test-opensuse-15-2.yml
+    - ansible-test-pypi-container-no-publish.yml
+    - ansible-test-pypi-test-container.yml
+    - v2.9.21rc1_summary.yaml
+    - validate-modules_found_try_except_import_fails_module_attribute.yaml
+    release_date: '2021-04-27'
   2.9.3:
     codename: Immigrant Song
     fragments:
