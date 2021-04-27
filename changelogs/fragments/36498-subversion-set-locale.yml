@@ -1,2 +1,0 @@
-bugfixes:
-  - subversion - set ``LC_ALL`` when running commands so output parsing is always accurate (https://github.com/ansible/ansible/issues/36498)
