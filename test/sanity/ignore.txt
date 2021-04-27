@@ -6601,5 +6601,3 @@ test/units/utils/test_helpers.py future-import-boilerplate
 test/units/utils/test_helpers.py metaclass-boilerplate
 test/units/utils/test_shlex.py future-import-boilerplate
 test/units/utils/test_shlex.py metaclass-boilerplate
-test/utils/shippable/check_matrix.py replace-urlopen
-test/utils/shippable/timing.py shebang
