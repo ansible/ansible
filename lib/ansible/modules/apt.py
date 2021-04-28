@@ -1321,7 +1321,7 @@ def main():
             module.fail_json(msg="Could not fetch updated apt files: %s" % fetchFailedException)
 
         # got here w/o exception and/or exit???
-        module.exit_json({'failed': True, 'msg': 'Unexpected code path taken,we really should have exited before, this is a bug'})
+        module.fail_json(msg='Unexpected code path taken, we really should have exited before, this is a bug')
 
 
 if __name__ == "__main__":
