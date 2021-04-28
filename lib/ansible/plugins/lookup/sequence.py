@@ -159,14 +159,14 @@ class LookupModule(LookupBase):
                 setattr(self, arg, arg_cooked)
             except ValueError:
                 raise AnsibleError(
-                    "can't parse %s=%r as integer"
+                    "can't parse %s=%s as integer"
                     % (arg, arg_raw)
                 )
         if 'format' in args:
             self.format = args.pop("format")
         if args:
             raise AnsibleError(
-                "unrecognized arguments to with_sequence: %r"
+                "unrecognized arguments to with_sequence: %s"
                 % list(args.keys())
             )
 
