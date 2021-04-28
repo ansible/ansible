@@ -1622,12 +1622,12 @@ To get the root and extension of a path or file name (new in version 2.0)::
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
 
-The ``splitext`` filter returns a string. The individual components can be accessed by using the ``first`` and ``last`` filters::
+The ``splitext`` filter always returns a pair of strings. The individual components can be accessed by using the ``first`` and ``last`` filters::
 
     # with path == 'nginx.conf' the return would be 'nginx'
     {{ path | splitext | first }}
 
-    # with path == 'nginx.conf' the return would be 'conf'
+    # with path == 'nginx.conf' the return would be '.conf'
     {{ path | splitext | last }}
 
 To join one or more path components::
@@ -1732,12 +1732,12 @@ Getting Kubernetes resource names
 
 .. note::
 
-	These filters have migrated to the `community.kubernetes <https://galaxy.ansible.com/community/kubernetes>`_ collection. Follow the installation instructions to install that collection.
+	These filters have migrated to the `kuberernetes.core <https://galaxy.ansible.com/kubernetes/core>`_ collection. Follow the installation instructions to install that collection.
 
 Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
 including its hash::
 
-    {{ configmap_resource_definition | community.kubernetes.k8s_config_resource_name }}
+    {{ configmap_resource_definition | kuberernetes.core.k8s_config_resource_name }}
 
 This can then be used to reference hashes in Pod specifications::
 
@@ -1754,7 +1754,7 @@ This can then be used to reference hashes in Pod specifications::
             containers:
             - envFrom:
                 - secretRef:
-                    name: {{ my_secret | community.kubernetes.k8s_config_resource_name }}
+                    name: {{ my_secret | kuberernetes.core.k8s_config_resource_name }}
 
 .. versionadded:: 2.8
 

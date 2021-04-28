@@ -18,7 +18,7 @@ Requirements
 
 Ansible VMware modules are written on top of `pyVmomi <https://github.com/vmware/pyvmomi>`_.
 pyVmomi is the Python SDK for the VMware vSphere API that allows user to manage ESX, ESXi,
-and vCenter infrastructure. You can install pyVmomi using pip:
+and vCenter infrastructure. You can install pyVmomi using pip (you may need to use pip3, depending on your OS/distro):
 
 .. code-block:: bash
 
