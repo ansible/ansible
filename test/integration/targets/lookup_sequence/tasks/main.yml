@@ -1,5 +1,5 @@
 - block:
-    - name: EXPECTED FAILURE - test bad arg
+    - name: EXPECTED FAILURE - test invalid arg
       set_fact: "{{ 'x' + item }}={{ item }}"
       with_sequence: start=0 junk=3
 
@@ -8,8 +8,21 @@
   rescue:
     - assert:
         that:
-          - ansible_failed_task.name == "EXPECTED FAILURE - test bad arg"
+          - ansible_failed_task.name == "EXPECTED FAILURE - test invalid arg"
           - ansible_failed_result.msg == "unrecognized arguments to with_sequence: \['junk'\]"
+
+- block:
+    - name: EXPECTED FAILURE - test bad start kv value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=A end=3
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad start kv value"
+          - ansible_failed_result.msg == "can't parse arg start='A' as integer"
 
 - name: test with_sequence
   set_fact: "{{ 'x' + item }}={{ item }}"
