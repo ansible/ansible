@@ -12,7 +12,7 @@
           - ansible_failed_result.msg == "unrecognized arguments to with_sequence: \['junk'\]"
 
 - block:
-    - name: EXPECTED FAILURE - test bad start kv value
+    - name: EXPECTED FAILURE - test bad kv value
       set_fact: "{{ 'x' + item }}={{ item }}"
       with_sequence: start=A end=3
 
@@ -21,8 +21,47 @@
   rescue:
     - assert:
         that:
-          - ansible_failed_task.name == "EXPECTED FAILURE - test bad start kv value"
-          - ansible_failed_result.msg == "can't parse arg start='A' as integer"
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad kv value"
+          - ansible_failed_result.msg == "can't parse start='A' as integer"
+
+- block:
+    - name: EXPECTED FAILURE - test bad simple form start value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: A-4/2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form start value"
+          - ansible_failed_result.msg == "can't parse start=A as integer"
+
+- block:
+    - name: EXPECTED FAILURE - test bad simple form end value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: 1-B/2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form end value"
+          - ansible_failed_result.msg == "can't parse end=B as integer"
+
+- block:
+    - name: EXPECTED FAILURE - test bad simple form stride value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: 1-4/C
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form stride value"
+          - ansible_failed_result.msg == "can't parse stride=C as integer"
 
 - name: test with_sequence
   set_fact: "{{ 'x' + item }}={{ item }}"

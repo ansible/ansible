@@ -159,7 +159,7 @@ class LookupModule(LookupBase):
                 setattr(self, arg, arg_cooked)
             except ValueError:
                 raise AnsibleError(
-                    "can't parse arg %s=%r as integer"
+                    "can't parse %s=%r as integer"
                     % (arg, arg_raw)
                 )
         if 'format' in args:
