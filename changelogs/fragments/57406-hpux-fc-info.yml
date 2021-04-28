@@ -1,0 +1,2 @@
+minor_changes:
+  - facts - add fiber channel facts for HP-UX (https://github.com/ansible/ansible/pull/57406)
