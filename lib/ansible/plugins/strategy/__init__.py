@@ -549,9 +549,7 @@ class StrategyBase:
                         # if we're using run_once, we have to fail every host here
                         for h in self._inventory.get_hosts(iterator._play.hosts):
                             if h.name not in self._tqm._unreachable_hosts:
-                                state, _ = iterator.get_next_task_for_host(h, peek=True)
                                 iterator.mark_host_failed(h)
-                                state, new_task = iterator.get_next_task_for_host(h, peek=True)
                     else:
                         iterator.mark_host_failed(original_host)
 
