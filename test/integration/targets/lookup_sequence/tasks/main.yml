@@ -19,6 +19,7 @@
     - fail:
         msg: "should not get here"
   rescue:
+    - debug: var=ansible_failed_result
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test bad kv value"
