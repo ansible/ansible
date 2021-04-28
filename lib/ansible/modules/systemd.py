@@ -20,7 +20,7 @@ options:
     name:
         description:
             - Name of the unit. This parameter takes the name of exactly one unit to work with.
-            - When no extension is given, it is implied to a `.service` as systemd.
+            - When no extension is given, it is implied to a C(.service) as systemd.
             - When using in a chroot environment you always need to specify the name of the unit with the extension. For example, C(crond.service).
         type: str
         aliases: [ service, unit ]
