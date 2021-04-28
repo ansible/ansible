@@ -1,3 +1,16 @@
+- block:
+    - name: EXPECTED FAILURE - test bad arg
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=0 junk=3
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad arg"
+          - ansible_failed_result.msg == "unrecognized arguments to with_sequence: \['junk'\]"
+
 - name: test with_sequence
   set_fact: "{{ 'x' + item }}={{ item }}"
   with_sequence: start=0 end=3

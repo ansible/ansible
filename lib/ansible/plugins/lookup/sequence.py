@@ -167,7 +167,7 @@ class LookupModule(LookupBase):
         if args:
             raise AnsibleError(
                 "unrecognized arguments to with_sequence: %r"
-                % args.keys()
+                % list(args.keys())
             )
 
     def parse_simple_args(self, term):
