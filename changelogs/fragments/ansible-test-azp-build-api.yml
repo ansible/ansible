@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Use documented API to retrieve build information from Azure Pipelines.
