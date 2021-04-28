@@ -227,9 +227,9 @@ class AzurePipelinesChanges:
             repositoryId='%s/%s' % (self.org, self.project),
         )
 
-        url = '%s%s/build/builds?%s' % (self.org_uri, self.project, urlencode(parameters))
+        url = '%s%s/_apis/build/builds?api-version=6.0&%s' % (self.org_uri, self.project, urlencode(parameters))
 
-        http = HttpClient(self.args)
+        http = HttpClient(self.args, always=True)
         response = http.get(url)
 
         # noinspection PyBroadException
