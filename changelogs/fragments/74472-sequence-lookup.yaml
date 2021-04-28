@@ -1,0 +1,3 @@
+bugfixes:
+  - sequence - Fix error message so that unrecognized options to the plugin display correctly as a list
+    and normalize error messages.
