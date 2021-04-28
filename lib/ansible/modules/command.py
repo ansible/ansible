@@ -232,9 +232,9 @@ def check_command(module, commandline):
         command = commandline.split()[0]
     command = os.path.basename(command)
 
-    disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
+    disable_suffix = "If you need to use '{cmd}' because the {mod} module is insufficient you can add" \
                      " 'warn: false' to this command task or set 'command_warnings=False' in" \
-                     " ansible.cfg to get rid of this message."
+                     " the defaults section of ansible.cfg to get rid of this message."
     substitutions = {'mod': None, 'cmd': command}
 
     if command in arguments:
