@@ -87,6 +87,8 @@ notes:
     - This module is also supported for Windows targets.
     - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
     - Supports C(check_mode).
+    - For more information about delegated facts,
+      please check U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_delegation.html#delegating-facts).
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
@@ -139,6 +141,15 @@ EXAMPLES = """
 
 # Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
 # ansible windows -m ansible.builtin.setup -a "fact_path='c:\\custom_facts'"
+
+# Gathers facts for the machines in the dbservers group (a.k.a Delegating facts)
+- hosts: app_servers
+  tasks:
+    - name: Gather facts from db servers
+      ansible.builtin.setup:
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['dbservers'] }}"
 """
 
 # import module snippets
