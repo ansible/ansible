@@ -32,6 +32,10 @@ from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
 
 
+mock_task = MagicMock()
+mock_task.delegate_to = None
+
+
 class TestCallback(unittest.TestCase):
     # FIXME: This doesn't really test anything...
     def test_init(self):
@@ -50,13 +54,15 @@ class TestCallback(unittest.TestCase):
         self.assertIs(cb._display, display_mock)
 
     def test_host_label(self):
-        result = TaskResult(host=Host('host1'), task=None, return_data={})
+        result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
+
         self.assertEquals(CallbackBase.host_label(result), 'host1')
 
     def test_host_label_delegated(self):
+        mock_task.delegate_to = 'host2'
         result = TaskResult(
             host=Host('host1'),
-            task=None,
+            task=mock_task,
             return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
         )
         self.assertEquals(CallbackBase.host_label(result), 'host1 -> host2')
