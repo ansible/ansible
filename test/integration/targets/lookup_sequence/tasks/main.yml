@@ -73,9 +73,10 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test invalid arg"
-          - ansible_failed_result.msg == expected
+          - ansible_failed_result.msg in [expected1, expected2]
       vars:
-        expected: "unrecognized arguments to with_sequence: ['junk']"
+        expected1: "unrecognized arguments to with_sequence: ['junk']"
+        expected2: "unrecognized arguments to with_sequence: [u'junk']"
 
 - block:
     - name: EXPECTED FAILURE - test bad kv value
