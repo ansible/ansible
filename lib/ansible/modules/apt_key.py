@@ -283,12 +283,15 @@ def download_key(module, url):
 
 def get_key_id_from_file(module, filename, data=None):
 
+    native_data = to_native(data)
+    is_armored = native_data.find("-----BEGIN PGP PUBLIC KEY BLOCK-----") >= 0
+
     global lang_env
     key = None
 
     cmd = [gpg_bin, '--with-colons', filename]
 
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=to_native(data))
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=(native_data if is_armored else data), binary_data=not is_armored)
     if rc != 0:
         module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is None else filename), stdout=out, stderr=err)
 
