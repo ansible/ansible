@@ -15,7 +15,7 @@ author:
 version_added: "2.2"
 short_description:  Manage systemd units
 description:
-    - Controls systemd units (services, timers, ...) on remote hosts.
+    - Controls systemd units (services, timers, and so on) on remote hosts.
 options:
     name:
         description:
