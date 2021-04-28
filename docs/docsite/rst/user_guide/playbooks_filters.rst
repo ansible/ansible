@@ -1485,47 +1485,61 @@ The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path,
 Searching strings with regular expressions
 ------------------------------------------
 
-To search a string with a regex, use the "regex_search" filter::
+To search in a string or extract parts of a string with a regular expression, use the ``regex_search`` filter::
 
-    # search for "foo" in "foobar"
-    {{ 'foobar' | regex_search('(foo)') }}
-    # => "foo"
+    # Extracts the database name from a string
+    {{ 'server1/database42' | regex_search('database[0-9]+') }}
+    # => 'database42'
 
-    # will return empty if it cannot find a match
-    {{ 'ansible' | regex_search('(foobar)') }}
-    # => ""
+    # Returns an empty string if it cannot find a match
+    {{ 'ansible' | regex_search('foobar') }}
+    # => ''
 
-    # case insensitive search in multiline mode
-    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
+    # Example for a case insensitive search in multiline mode
+    {{ 'foo\nBAR' | regex_search('^bar', multiline=True, ignorecase=True) }}
+    # => 'BAR'
+
+    # Extracts server and database id from a string
+    {{ 'server1/database42' | regex_search('server([0-9]+)/database([0-9]+)', '\\1', '\\2') }}
+    # => ['1', '42']
+
+    # Extracts dividend and divisor from a division
+    {{ '21/42' | regex_search('(?P<dividend>[0-9]+)/(?P<divisor>[0-9]+)', '\\g<dividend>', '\\g<divisor>') }}
+    # => ['21', '42']
 
 
-To search for all occurrences of regex matches, use the "regex_findall" filter::
+To extract all occurrences of regex matches in a string, use the ``regex_findall`` filter::
 
-    # Return a list of all IPv4 addresses in the string
+    # Returns a list of all IPv4 addresses in the string
     {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}
+    # => ['8.8.8.8', '8.8.4.4']
+
+    # Returns all lines that end with "ar"
+    {{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True, ignorecase=True) }}
+    # => ['CAR', 'tar', 'bar']
 
 
-To replace text in a string with regex, use the "regex_replace" filter::
+To replace text in a string with regex, use the ``regex_replace`` filter::
 
-    # convert "ansible" to "able"
+    # Convert "ansible" to "able"
     {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
     # => 'able'
 
-    # convert "foobar" to "bar"
+    # Convert "foobar" to "bar"
     {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
     # => 'bar'
 
-    # convert "localhost:80" to "localhost, 80" using named groups
+    # Convert "localhost:80" to "localhost, 80" using named groups
     {{ 'localhost:80' | regex_replace('^(?P<host>.+):(?P<port>\\d+)$', '\\g<host>, \\g<port>') }}
     # => 'localhost, 80'
 
-    # convert "localhost:80" to "localhost"
+    # Convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
     # => 'localhost'
 
-    # change a multiline string
-    {{ 'var' | regex_replace('^', '#CommentThis#', multiline=True) }}
-    # => '#CommentThis#var'
+    # Comment all lines that end with "ar"
+    {{ 'CAR\ntar\nfoo\nbar\n' | regex_replace('^(.ar)$', '#\\1', multiline=True, ignorecase=True) }}
+    # => '#CAR\n#tar\nfoo\n#bar\n'
 
 .. note::
    If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors. For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the end, which means it will make two replacements::
@@ -1549,18 +1563,18 @@ To replace text in a string with regex, use the "regex_replace" filter::
       {{ hosts | map('regex_replace', '(.*)', '\\1:80') | list }}
 
 .. note::
-   Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments), then you needed to escape backreferences (for example, ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+   Prior to ansible 2.0, if ``regex_replace`` filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments), then you needed to escape backreferences (for example, ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 .. versionadded:: 2.0
 
-To escape special characters within a standard Python regex, use the "regex_escape" filter (using the default re_type='python' option)::
+To escape special characters within a standard Python regex, use the ``regex_escape`` filter (using the default ``re_type='python'`` option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
 .. versionadded:: 2.8
 
-To escape special characters within a POSIX basic regex, use the "regex_escape" filter with the re_type='posix_basic' option::
+To escape special characters within a POSIX basic regex, use the ``regex_escape`` filter with the ``re_type='posix_basic'`` option::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o(\.\*)\$'
     {{ '^f.*o(.*)$' | regex_escape('posix_basic') }}
