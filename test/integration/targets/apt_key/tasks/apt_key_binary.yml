@@ -1,0 +1,13 @@
+---
+
+- name: Ensure import of binary key downloaded using URLs works
+  apt_key: url=https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  # replace the above URL to the following, after the pull request is accepted
+  # apt_key: url=https://github.com/ansible/ansible/tree/devel/test/integration/targets/apt_key/samples/apt-key-example-binary.gpg
+  register: apt_key_binary_test
+
+- name: Validate the results
+  assert:
+      that:
+          - 'apt_key_binary_test.changed is defined'
+          - 'apt_key_binary_test.changed'
