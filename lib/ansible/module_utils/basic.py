@@ -890,10 +890,11 @@ class AnsibleModule(object):
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path_stat = os.lstat(b_path)
 
         if self.check_file_absent_if_check_mode(b_path):
             return True
+
+        path_stat = os.lstat(b_path)
 
         if not isinstance(mode, int):
             try:

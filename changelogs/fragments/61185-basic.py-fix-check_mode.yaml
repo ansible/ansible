@@ -1,0 +1,2 @@
+bugfixes:
+- AnsibleModule.set_mode_if_different - don't check file existence when check_mode is activated (https://github.com/ansible/ansible/issues/61185).
