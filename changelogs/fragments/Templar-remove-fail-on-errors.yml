@@ -1,0 +1,2 @@
+minor_changes:
+  - Templar - remove ``_fail_on_lookup_errors`` and ``_fail_on_filter_errors`` instance variables that were never used. (https://github.com/ansible/ansible/pull/73785)
