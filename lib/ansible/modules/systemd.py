@@ -79,7 +79,7 @@ options:
         version_added: "2.3"
 notes:
     - Since 2.4, one of the following options is required C(state), C(enabled), C(masked), C(daemon_reload), (C(daemon_reexec) since 2.8),
-      and all except C(daemon_reload) (and 'daemon_reexec' since 2.8) also require C(name).
+      and all except C(daemon_reload) and (C(daemon_reexec) since 2.8) also require C(name).
     - Before 2.4 you always required C(name).
     - Globs are not supported in name, i.e ``postgres*.service``.
     - Supports C(check_mode).
