@@ -29,7 +29,7 @@ You should return errors encountered during plugin execution by raising ``Ansibl
 
 .. code-block:: python
 
-    from ansible.module_utils._text import to_native
+    from ansible.module_utils.common.text.converters import to_native
 
     try:
         cause_an_exception()
@@ -45,7 +45,7 @@ You must convert any strings returned by your plugin into Python's unicode type.
 
 .. code-block:: python
 
-    from ansible.module_utils._text import to_text
+    from ansible.module_utils.common.text.converters import to_text
     result_string = to_text(result_string)
 
 Plugin configuration & documentation standards
