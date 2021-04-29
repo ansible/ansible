@@ -283,7 +283,10 @@ class CronTab(object):
         if len(self.lines) == 0:
             return True
         else:
-            return False
+            for line in self.lines:
+                if line.strip():
+                    return False
+            return True
 
     def write(self, backup_file=None):
         """

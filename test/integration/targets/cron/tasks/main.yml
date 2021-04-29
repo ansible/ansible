@@ -160,6 +160,42 @@
   - assert:
       that: not cron_file_stats.stat.exists
 
+# BusyBox does not have /etc/cron.d
+- name: Removing a cron file, which contains only whitespace
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Check file does not exist
+    stat:
+      path: /etc/cron.d/cron_remove_whitespace
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+  - name: Cron file creation
+    cron:
+      cron_file: cron_remove_whitespace
+      name: "integration test cron"
+      job: 'ls'
+      user: root
+
+  - name: Add whitespace to cron file
+    shell: 'printf "\n    \n\t\n" >> /etc/cron.d/cron_remove_whitespace'
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_remove_whitespace
+      name: "integration test cron"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_remove_whitespace
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
 - name: System cron tab does not get removed
   block:
   - name: Add cron job
