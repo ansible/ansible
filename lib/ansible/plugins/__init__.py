@@ -138,8 +138,11 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         return options
 
     def set_option(self, option, value):
-        self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
-        _display._report_config_warnings(self.__plugin_info)
+        new_value = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
+        if new_value != self._options[option]:
+            self._options[option] = new_value
+            self._hash = None
+            _display._report_config_warnings(self.__plugin_info)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """
@@ -157,6 +160,8 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
             # these are largely unvalidated passthroughs, either plugin or underlying API will validate
             self._options['_extras'] = var_options['_extras']
         _display._report_config_warnings(self.__plugin_info)
+
+        self._hash = None
 
     def has_option(self, option):
         if not self._options:
