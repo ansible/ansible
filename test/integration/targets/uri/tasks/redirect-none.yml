@@ -11,11 +11,15 @@
     that:
     - http_301_head is failure
     - http_301_head.json is not defined
-    - http_301_head.location == 'https://{{ httpbin_host }}/anything'
-    - "http_301_head.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
+    - http_301_head.location == expected_location
+    - http_301_head.msg == expected_msg
     - http_301_head.redirected == false
     - http_301_head.status == 301
-    - http_301_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything'
+    - http_301_head.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 301 using GET
   uri:
@@ -30,11 +34,15 @@
     that:
     - http_301_get is failure
     - http_301_get.json is not defined
-    - http_301_get.location == 'https://{{ httpbin_host }}/anything'
-    - "http_301_get.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
+    - http_301_get.location == expected_location
+    - http_301_get.msg == expected_msg
     - http_301_get.redirected == false
     - http_301_get.status == 301
-    - http_301_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything'
+    - http_301_get.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 301 using POST
   uri:
@@ -51,11 +59,15 @@
     that:
     - http_301_post is failure
     - http_301_post.json is not defined
-    - http_301_post.location == 'https://{{ httpbin_host }}/anything'
-    - "http_301_post.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
+    - http_301_post.location == expected_location
+    - http_301_post.msg == expected_msg
     - http_301_post.redirected == false
     - http_301_post.status == 301
-    - http_301_post.url == 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything'
+    - http_301_post.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 302 using HEAD
   uri:
@@ -70,11 +82,15 @@
     that:
     - http_302_head is failure
     - http_302_head.json is not defined
-    - http_302_head.location == 'https://{{ httpbin_host }}/anything'
-    - "http_302_head.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
+    - http_302_head.location == expected_location
+    - http_302_head.msg == expected_msg
     - http_302_head.redirected == false
     - http_302_head.status == 302
-    - http_302_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything'
+    - http_302_head.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 302 and not [200]: HTTP Error 302: FOUND'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 302 using GET
   uri:
@@ -89,11 +105,15 @@
     that:
     - http_302_get is failure
     - http_302_get.json is not defined
-    - http_302_get.location == 'https://{{ httpbin_host }}/anything'
-    - "http_302_get.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
+    - http_302_get.location == expected_location
+    - http_302_get.msg == expected_msg
     - http_302_get.redirected == false
     - http_302_get.status == 302
-    - http_302_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything'
+    - http_302_get.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 302 and not [200]: HTTP Error 302: FOUND'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 302 using POST
   uri:
@@ -110,11 +130,15 @@
     that:
     - http_302_post is failure
     - http_302_post.json is not defined
-    - http_302_post.location == 'https://{{ httpbin_host }}/anything'
-    - "http_302_post.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
+    - http_302_post.location == expected_location
+    - http_302_post.msg == expected_msg
     - http_302_post.redirected == false
     - http_302_post.status == 302
-    - http_302_post.url == 'https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything'
+    - http_302_post.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 302 and not [200]: HTTP Error 302: FOUND'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 303 using HEAD
   uri:
@@ -129,11 +153,15 @@
     that:
     - http_303_head is failure
     - http_303_head.json is not defined
-    - http_303_head.location == 'https://{{ httpbin_host }}/anything'
-    - "http_303_head.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
+    - http_303_head.location == expected_location
+    - http_303_head.msg == expected_msg
     - http_303_head.redirected == false
     - http_303_head.status == 303
-    - http_303_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything'
+    - http_303_head.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 303 using GET
   uri:
@@ -148,11 +176,15 @@
     that:
     - http_303_get is failure
     - http_303_get.json is not defined
-    - http_303_get.location == 'https://{{ httpbin_host }}/anything'
-    - "http_303_get.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
+    - http_303_get.location == expected_location
+    - http_303_get.msg == expected_msg
     - http_303_get.redirected == false
     - http_303_get.status == 303
-    - http_303_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything'
+    - http_303_get.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 303 using POST
   uri:
@@ -169,11 +201,15 @@
     that:
     - http_303_post is failure
     - http_303_post.json is not defined
-    - http_303_post.location == 'https://{{ httpbin_host }}/anything'
-    - "http_303_post.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
+    - http_303_post.location == expected_location
+    - http_303_post.msg == expected_msg
     - http_303_post.redirected == false
     - http_303_post.status == 303
-    - http_303_post.url == 'https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything'
+    - http_303_post.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 307 using HEAD
   uri:
@@ -188,11 +224,15 @@
     that:
     - http_307_head is failure
     - http_307_head.json is not defined
-    - http_307_head.location == 'https://{{ httpbin_host }}/anything'
-    - "http_307_head.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
+    - http_307_head.location == expected_location
+    - http_307_head.msg == expected_msg
     - http_307_head.redirected == false
     - http_307_head.status == 307
-    - http_307_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything'
+    - http_307_head.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 307 using GET
   uri:
@@ -207,11 +247,15 @@
     that:
     - http_307_get is failure
     - http_307_get.json is not defined
-    - http_307_get.location == 'https://{{ httpbin_host }}/anything'
-    - "http_307_get.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
+    - http_307_get.location == expected_location
+    - http_307_get.msg == expected_msg
     - http_307_get.redirected == false
     - http_307_get.status == 307
-    - http_307_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything'
+    - http_307_get.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 307 using POST
   uri:
@@ -228,11 +272,15 @@
     that:
     - http_307_post is failure
     - http_307_post.json is not defined
-    - http_307_post.location == 'https://{{ httpbin_host }}/anything'
-    - "http_307_post.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
+    - http_307_post.location == expected_location
+    - http_307_post.msg == expected_msg
     - http_307_post.redirected == false
     - http_307_post.status == 307
-    - http_307_post.url == 'https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything'
+    - http_307_post.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_msg: 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything'
 
 # NOTE: This is a bug, fixed in https://github.com/ansible/ansible/pull/36809
 - name: Test HTTP 308 using HEAD
@@ -248,11 +296,14 @@
     that:
     - http_308_head is failure
     - http_308_head.json is not defined
-    - http_308_head.location == 'https://{{ httpbin_host }}/anything'
+    - http_308_head.location == expected_location
     - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_head.msg"
     - http_308_head.redirected == false
     - http_308_head.status == 308
-    - http_308_head.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
+    - http_308_head.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
 
 # NOTE: This is a bug, fixed in https://github.com/ansible/ansible/pull/36809
 - name: Test HTTP 308 using GET
@@ -268,11 +319,14 @@
     that:
     - http_308_get is failure
     - http_308_get.json is not defined
-    - http_308_get.location == 'https://{{ httpbin_host }}/anything'
+    - http_308_get.location == expected_location
     - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_get.msg"
     - http_308_get.redirected == false
     - http_308_get.status == 308
-    - http_308_get.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
+    - http_308_get.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
 
 - name: Test HTTP 308 using POST
   uri:
@@ -289,8 +343,11 @@
     that:
     - http_308_post is failure
     - http_308_post.json is not defined
-    - http_308_post.location == 'https://{{ httpbin_host }}/anything'
+    - http_308_post.location == expected_location
     - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_post.msg"
     - http_308_post.redirected == false
     - http_308_post.status == 308
-    - http_308_post.url == 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
+    - http_308_post.url == expected_url
+  vars:
+    expected_location: 'https://{{ httpbin_host }}/anything'
+    expected_url: 'https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything'
