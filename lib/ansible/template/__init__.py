@@ -93,8 +93,8 @@ if C.DEFAULT_JINJA2_NATIVE:
         from ansible.utils.native_jinja import NativeJinjaText
         USE_JINJA2_NATIVE = True
     except ImportError:
-        from jinja2 import Environment
-        from jinja2.utils import concat as j2_concat
+        from jinja2 import Environment  # noqa: F811
+        from jinja2.utils import concat as j2_concat  # noqa: F811
         display.warning(
             'jinja2_native requires Jinja 2.10 and above. '
             'Version detected: %s. Falling back to default.' % j2_version
@@ -258,9 +258,9 @@ def _is_rolled(value):
     iterator, or similar object
     """
     return (
-        isinstance(value, Iterator) or
-        isinstance(value, MappingView) or
-        isinstance(value, RANGE_TYPE)
+        isinstance(value, Iterator)
+        or isinstance(value, MappingView)
+        or isinstance(value, RANGE_TYPE)
     )
 
 
@@ -826,10 +826,10 @@ class Templar:
                 variable_hash = sha1(text_type(variable).encode('utf-8'))
                 options_hash = sha1(
                     (
-                        text_type(preserve_trailing_newlines) +
-                        text_type(escape_backslashes) +
-                        text_type(fail_on_undefined) +
-                        text_type(overrides)
+                        text_type(preserve_trailing_newlines)
+                        + text_type(escape_backslashes)
+                        + text_type(fail_on_undefined)
+                        + text_type(overrides)
                     ).encode('utf-8')
                 )
                 sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
