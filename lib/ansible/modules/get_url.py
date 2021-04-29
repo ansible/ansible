@@ -511,14 +511,17 @@ def main():
             os.remove(checksum_tmpsrc)
             checksum_map = []
             for line in lines:
-                parts = line.split(None, 1)
+                # Split by one whitespace to keep the leading type char ' ' (whitespace) for text and '*' for binary
+                parts = line.split(" ", 1)
                 if len(parts) == 2:
-                    checksum_map.append((parts[0], parts[1]))
+                    # Remove the leading type char and use basename
+                    checksum_map.append((parts[0], os.path.basename(parts[1][1:])))
+
             filename = url_filename(url)
 
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
-            for cksum in (s for (s, f) in checksum_map if f.strip('./') == filename):
+            for cksum in (s for (s, f) in checksum_map if f == filename):
                 checksum = cksum
                 break
             else:
