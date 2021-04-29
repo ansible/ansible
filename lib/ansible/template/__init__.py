@@ -848,10 +848,14 @@ class Templar:
 
             if not self.jinja2_native:
                 unsafe = hasattr(result, '__UNSAFE__')
-                if convert_data and not self._no_type_regex.match(variable):
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                            result.startswith("[") or result in ("True", "False"):
+                if convert_data:
+                    # If this looks like a dictionary or list, convert it to such using safe_eval()
+                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) \
+                            or result.startswith("[") \
+                            or result in ("True", "False"):
+
+                        # TODO: Another function similar to ansible_native_concat() is needed to preserve the type wrapping.
+                        #       It gets removed by jinja2.utils.concat in do_template() above.
                         eval_results = safe_eval(result, include_exceptions=True)
                         if eval_results[1] is None:
                             result = eval_results[0]
