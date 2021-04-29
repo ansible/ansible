@@ -130,6 +130,14 @@ def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
         yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
 
 
+def retry_never(x):
+    return False
+
+
+def do_nothing(error, delay):
+    return
+
+
 def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_retry_error=None, should_retry_result=None):
     """Generic retry decorator.
 
@@ -138,14 +146,14 @@ def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_r
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
     :param should_retry_result: A callable that accepts the decorated function return value and decides whether or not to retry (returns a bool).
     """
-    def function_wrapper(function):
-        if do_on_retry is None:
-            do_on_retry = lambda x, y: None
-        if should_retry_error is None:
-            should_retry_error = lambda x: False
-        if should_retry_result is None:
-            should_retry_result = lambda x: False
+    if do_on_retry is None:
+        do_on_retry = do_nothing
+    if should_retry_error is None:
+        should_retry_error = retry_never
+    if should_retry_result is None:
+        should_retry_result = retry_never
 
+    def function_wrapper(function):
         def run_function(*args, **kwargs):
             """This assumes the function has not already been called.
             If backoff_iterator is empty, we should still run the function a single time with no delay.
