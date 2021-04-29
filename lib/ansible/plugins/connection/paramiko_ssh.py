@@ -241,6 +241,8 @@ class Connection(ConnectionBase):
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
         else:
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+
+        self._connected = True
         return self
 
     def _set_log_channel(self, name):
