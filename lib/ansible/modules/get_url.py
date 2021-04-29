@@ -518,7 +518,7 @@ def main():
 
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
-            for cksum in (s for (s, f) in checksum_map if f.strip('./') == filename):
+            for cksum in (s for (s, f) in checksum_map if f.strip('./*') == filename):
                 checksum = cksum
                 break
             else:
