@@ -90,18 +90,18 @@ class ConnectionBase(AnsiblePlugin):
 
         self.become = None
 
-    def __hash__(self):
+    def signature(self):
 
         if self._hash is None:
             # prime self, with own options
-            super(ConnectionBase, self).__hash__()
+            super(ConnectionBase, self).signature()
 
             # also shell, we always have!
-            self._hash += hash(self._shell)
+            self._hash += self._shell.signature()
 
             # and become if we have it
             if self.become is not None:
-                self._hash += hash(self.become)
+                self._hash += self.become.signature()
 
         return self._hash
 
