@@ -102,7 +102,6 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import FileLock
 from ansible.module_utils._text import to_bytes, to_native
 
 
