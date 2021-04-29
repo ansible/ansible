@@ -144,7 +144,7 @@ def main():
                 if not self.restrict_to_module_paths:
                     return None  # for non-modules, everything in the ansible namespace is allowed
 
-                if fullname in ('ansible.module_utils.basic', 'ansible.module_utils.common.removed'):
+                if fullname in ('ansible.module_utils.basic',):
                     return self  # intercept loading so we can modify the result
 
                 if is_name_in_namepace(fullname, ['ansible.module_utils', self.name]):
@@ -184,14 +184,6 @@ def main():
                 module.AnsibleModule = ImporterAnsibleModule
                 # no-op for _load_params since it may be called before instantiating AnsibleModule
                 module._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
-
-                return module
-
-            if fullname == 'ansible.module_utils.common.removed':
-                module = self.__load_module(fullname)
-
-                # no-op for removed_module since it is called in place of AnsibleModule instantiation
-                module.removed_module = lambda *args, **kwargs: None
 
                 return module
 

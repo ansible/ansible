@@ -607,74 +607,6 @@ class ModuleValidator(Validator):
 
         return min(linenos)
 
-    def _find_main_call(self, look_for="main"):
-        """ Ensure that the module ends with:
-            if __name__ == '__main__':
-                main()
-        OR, in the case of modules that are in the docs-only deprecation phase
-            if __name__ == '__main__':
-                removed_module()
-        """
-        lineno = False
-        if_bodies = []
-        for child in self.ast.body:
-            if isinstance(child, ast.If):
-                try:
-                    if child.test.left.id == '__name__':
-                        if_bodies.extend(child.body)
-                except AttributeError:
-                    pass
-
-        bodies = self.ast.body
-        bodies.extend(if_bodies)
-
-        for child in bodies:
-
-            # validate that the next to last line is 'if __name__ == "__main__"'
-            if child.lineno == (self.length - 1):
-
-                mainchecked = False
-                try:
-                    if isinstance(child, ast.If) and \
-                            child.test.left.id == '__name__' and \
-                            len(child.test.ops) == 1 and \
-                            isinstance(child.test.ops[0], ast.Eq) and \
-                            child.test.comparators[0].s == '__main__':
-                        mainchecked = True
-                except Exception:
-                    pass
-
-                if not mainchecked:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='missing-if-name-main',
-                        msg='Next to last line should be: if __name__ == "__main__":',
-                        line=child.lineno
-                    )
-
-            # validate that the final line is a call to main()
-            if isinstance(child, ast.Expr):
-                if isinstance(child.value, ast.Call):
-                    if (isinstance(child.value.func, ast.Name) and
-                            child.value.func.id == look_for):
-                        lineno = child.lineno
-                        if lineno < self.length - 1:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='last-line-main-call',
-                                msg=('Call to %s() not the last line' % look_for),
-                                line=lineno
-                            )
-
-        if not lineno:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-main-call',
-                msg=('Did not find a call to %s()' % look_for)
-            )
-
-        return lineno or 0
-
     def _find_has_import(self):
         for child in self.ast.body:
             found_try_except_import = False
@@ -2209,9 +2141,25 @@ class ModuleValidator(Validator):
                             strict_ansible_version = self._create_strict_version(
                                 '.'.join(ansible_version.split('.')[:2]), self.collection_name)
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+
+                            if end_of_deprecation_should_be_removed_only:
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code='ansible-deprecated-module',
+                                    msg='Module is marked for removal in version %s of Ansible when the current version is %s' % (
+                                        version, ansible_version),
+                                )
                         elif self.collection_version:
                             strict_ansible_version = self.collection_version
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+
+                            if end_of_deprecation_should_be_removed_only:
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code='collection-deprecated-module',
+                                    msg='Module is marked for removal in version %s of this collection when the current version is %s' % (
+                                        version, self.collection_version_str),
+                                )
 
                 # handle deprecation by date
                 if 'removed_at_date' in docs['deprecated']:
@@ -2255,12 +2203,6 @@ class ModuleValidator(Validator):
             self._check_type_instead_of_isinstance(
                 powershell=self._powershell_module()
             )
-        if end_of_deprecation_should_be_removed_only:
-            # Ensure that `if __name__ == '__main__':` calls `removed_module()` which ensure that the module has no code in
-            main = self._find_main_call('removed_module')
-            # FIXME: Ensure that the version in the call to removed_module is less than +2.
-            # Otherwise it's time to remove the file (This may need to be done in another test to
-            # avoid breaking whenever the Ansible version bumps)
 
 
 class PythonPackageValidator(Validator):
