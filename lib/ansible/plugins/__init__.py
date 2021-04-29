@@ -88,7 +88,10 @@ class AnsiblePlugin(ABC):
         return options
 
     def set_option(self, option, value):
-        self._options[option] = value
+
+        if value != self._options[option]:
+            self._hash = None
+            self._options[option] = value
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         '''
@@ -104,6 +107,8 @@ class AnsiblePlugin(ABC):
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
+
+        self._hash = None
 
     def has_option(self, option):
         if not self._options:
