@@ -89,9 +89,8 @@ class AnsiblePlugin(ABC):
 
     def set_option(self, option, value):
 
-        if value != self._options[option]:
-            self._hash = None
-            self._options[option] = value
+        self._options[option] = value
+        self._hash = None
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         '''
