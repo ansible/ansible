@@ -7,7 +7,7 @@ set -o pipefail -eu
 
 output_path="$1"
 
-curl --silent --show-error https://codecov.io/bash > codecov.sh
+curl --silent --show-error https://ansible-ci-files.s3.us-east-1.amazonaws.com/codecov/codecov.sh > codecov.sh
 
 for file in "${output_path}"/reports/coverage*.xml; do
     name="${file}"
