@@ -397,3 +397,20 @@ class NetworkConnectionBase(ConnectionBase):
     def _log_messages(self, message):
         if self.get_option('persistent_log_messages'):
             self.queue_message('log', message)
+
+    def signature(self):
+
+        if self._hash is None:
+            # prime self, with own options
+            super(ConnectionBase, self).signature()
+
+            if self._sub_plugin:
+                # also shell, we always have!
+                self._hash += self._sub_plugin.signature()
+        return self._hash
+
+    def set_become_plugin(self, plugin):
+        self.become = plugin
+        # reset hash jic
+        self._hash = None
+
