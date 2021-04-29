@@ -26,20 +26,69 @@ Command Line
 * The ``ansible-galaxy login`` command has been removed, as the underlying API it used for GitHub auth has been shut down. Publishing roles or collections to Galaxy with ``ansible-galaxy`` now requires that a Galaxy API token be passed to the CLI using a token file (default location ``~/.ansible/galaxy_token``) or (insecurely) with the ``--token`` argument to ``ansible-galaxy``.
 
 
-Other:
+Deprecated
+==========
+
+The constant ``ansible.module_utils.basic._CHECK_ARGUMENT_TYPES_DISPATCHER`` is deprecated. Use :const:`ansible.module_utils.common.parameters.DEFAULT_TYPE_VALIDATORS` instead.
+
+
+Breaking Changes
+================
+
+Changes to ``AnsibleModule``
+----------------------------
+
+With the move to :class:`ArgumentSpecValidator <ansible.module_utils.common.arg_spec.ArgumentSpecValidator>` for performing argument spec validation, the following private methods in :class:`AnsibleModule <ansible.module_utils.basic.AnsibleModule>` have been removed:
+
+    - ``_check_argument_types()``
+    - ``_check_argument_values()``
+    - ``_check_arguments()``
+    - ``_check_mutually_exclusive()`` --> :func:`ansible.module_utils.common.validation.check_mutually_exclusive`
+    - ``_check_required_arguments()`` --> :func:`ansible.module_utils.common.validation.check_required_arguments`
+    - ``_check_required_by()`` --> :func:`ansible.module_utils.common.validation.check_required_by`
+    - ``_check_required_if()`` --> :func:`ansible.module_utils.common.validation.check_required_if`
+    - ``_check_required_one_of()`` --> :func:`ansible.module_utils.common.validation.check_required_one_of`
+    - ``_check_required_together()`` --> :func:`ansible.module_utils.common.validation.check_required_together`
+    - ``_check_type_bits()`` --> :func:`ansible.module_utils.common.validation.check_type_bits`
+    - ``_check_type_bool()`` --> :func:`ansible.module_utils.common.validation.check_type_bool`
+    - ``_check_type_bytes()`` --> :func:`ansible.module_utils.common.validation.check_type_bytes`
+    - ``_check_type_dict()`` --> :func:`ansible.module_utils.common.validation.check_type_dict`
+    - ``_check_type_float()`` --> :func:`ansible.module_utils.common.validation.check_type_float`
+    - ``_check_type_int()`` --> :func:`ansible.module_utils.common.validation.check_type_int`
+    - ``_check_type_jsonarg()`` --> :func:`ansible.module_utils.common.validation.check_type_jsonarg`
+    - ``_check_type_list()`` --> :func:`ansible.module_utils.common.validation.check_type_list`
+    - ``_check_type_path()`` --> :func:`ansible.module_utils.common.validation.check_type_path`
+    - ``_check_type_raw()`` --> :func:`ansible.module_utils.common.validation.check_type_raw`
+    - ``_check_type_str()`` --> :func:`ansible.module_utils.common.validation.check_type_str`
+    - ``_count_terms()`` --> :func:`ansible.module_utils.common.validation.count_terms`
+    - ``_get_wanted_type()``
+    - ``_handle_aliases()``
+    - ``_handle_no_log_values()``
+    - ``_handle_options()``
+    - ``_set_defaults()``
+    - ``_set_fallbacks()``
+
+Modules or plugins using these private methods should use the public functions in :mod:`ansible.module_utils.common.validation` or :meth:`ArgumentSpecValidator.validate() <ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate>` if no public function was listed above.
+
+
+Changes to :mod:`ansible.module_utils.common.parameters`
+--------------------------------------------------------
+
+The following functions in :mod:`ansible.module_utils.common.parameters` are now private and should not be used directly. Use :meth:`ArgumentSpecValidator.validate() <ansible.module_utils.common.arg_spec.ArgumentSpecValidator.validate>` instead.
+
+    - ``list_no_log_values``
+    - ``list_deprecations``
+    - ``handle_aliases``
+
+
+Other
 ======
 
 * **Upgrading**: If upgrading from ``ansible < 2.10`` or from ``ansible-base`` and using pip, you must ``pip uninstall ansible`` or ``pip uninstall ansible-base`` before installing ``ansible-core`` to avoid conflicts.
 * Python 3.8 on the controller node is a soft requirement for this release. ``ansible-core`` 2.11 still works with the same versions of Python that ``ansible-base`` 2.10 worked with, however 2.11 emits a warning when running on a controller node with a Python version less than 3.8. This warning can be disabled by setting ``ANSIBLE_CONTROLLER_PYTHON_WARNING=False`` in your environment. ``ansible-core`` 2.12 will require Python 3.8 or greater.
-* The configuration system now validates the ``choices`` field, so any settings that violate it and were ignored in 2.10 cause an error in 2.11. For example, `ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0` now causes an error (valid choices are ``ignore``, ``warn`` or ``error``).
+* The configuration system now validates the ``choices`` field, so any settings that violate it and were ignored in 2.10 cause an error in 2.11. For example, ``ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH=0`` now causes an error (valid choices are ``ignore``, ``warn`` or ``error``).
 * The ``ansible-galaxy`` command now uses ``resolvelib`` for resolving dependencies. In most cases this should not make a user-facing difference beyond being more performant, but we note it here for posterity and completeness.
 * If you import Python ``module_utils`` into any modules you maintain, you may now mark the import as optional during the module payload build by wrapping the ``import`` statement in a ``try`` or ``if`` block. This allows modules to use ``module_utils`` that may not be present in all versions of Ansible or a collection, and to perform arbitrary recovery or fallback actions during module runtime.
-
-
-Deprecated
-==========
-
-No notable changes
 
 
 Modules
@@ -68,7 +117,7 @@ Noteworthy module changes
 
 * facts - On NetBSD, ``ansible_virtualization_type`` now tries to report a more accurate result than ``xen`` when virtualized and not running on Xen.
 * facts - Virtualization facts now include ``virtualization_tech_guest`` and ``virtualization_tech_host`` keys. These are lists of virtualization technologies that a guest is a part of, or that a host provides, respectively. As an example, if you set up a host to provide both KVM and VirtualBox, both values are included in ``virtualization_tech_host``.  Similarly, a podman container running on a VM powered by KVM has a ``virtualization_tech_guest`` of ``["kvm", "podman", "container"]``.
-* The parameter ``filter`` type is changed from ``string`` to ``list`` in the :ref:`setup <setup_module>` module in order to use more than one filter. Previous behaviour (using a ``string``) still remains and works as a single filter.
+* The parameter ``filter`` type is changed from ``string`` to ``list`` in the :ref:`setup <setup_module>` module in order to use more than one filter. Previous behavior (using a ``string``) still remains and works as a single filter.
 
 
 Plugins
@@ -82,6 +131,186 @@ Porting custom scripts
 ======================
 
 No notable changes
+
+Porting Guide for v4.0.0b1
+==========================
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_user - Issue(192043) Module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_configuration_compliance_info - Issue(195592) Module may error out with the message ``unable to process the request because an error occurred``. If the issue persists, report it to the system administrator.
+- ome_smart_fabric - Issue(185322) Only three design types are supported by OpenManage Enterprise Modular but the module successfully creates a fabric when the design type is not supported.
+- ome_smart_fabric_uplink - Issue(186024) ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though this is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+
+Breaking Changes
+----------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- If you use Ansible 2.9 and these plugins or modules from this collection, community.general 3.0.0 results in errors when trying to use the DellEMC content by FQCN, like ``community.general.idrac_firmware``.
+  Since Ansible 2.9 is not able to use redirections, you will have to adjust your playbooks and roles manually to use the new FQCNs (``dellemc.openmanage.idrac_firmware`` for the previous example) and to make sure that you have ``dellemc.openmanage`` installed.
+
+  If you use ansible-base 2.10 or newer and did not install Ansible 4.0.0, but installed (and/or upgraded) community.general manually, you need to make sure to also install the ``dellemc.openmanage`` collection if you are using any of these plugins or modules.
+  While ansible-base 2.10 or newer can use the redirects that community.general 3.0.0 adds, the collection they point to (such as dellemc.openmanage) must be installed for them to work.
+- gitlab_deploy_key - if for an already existing key title a different public key was given as parameter nothing happened, now this changed so that the public key is updated to the new value (https://github.com/ansible-collections/community.general/pull/1661).
+- java_keystore - instead of failing, now overwrites keystore if the alias (name) is changed. This was originally the intended behavior, but did not work due to a logic error. Make sure that your playbooks and roles do not depend on the old behavior of failing instead of overwriting (https://github.com/ansible-collections/community.general/issues/1671).
+- java_keystore - instead of failing, now overwrites keystore if the passphrase is changed. Make sure that your playbooks and roles do not depend on the old behavior of failing instead of overwriting (https://github.com/ansible-collections/community.general/issues/1671).
+- one_image - use pyone instead of python-oca (https://github.com/ansible-collections/community.general/pull/2032).
+- utm_proxy_auth_profile - the ``frontend_cookie_secret`` return value now contains a placeholder string instead of the module's ``frontend_cookie_secret`` parameter (https://github.com/ansible-collections/community.general/pull/1736).
+
+Major Changes
+-------------
+
+Ansible-core
+~~~~~~~~~~~~
+
+- ansible-test - Tests run with the ``centos6`` and ``default`` test containers now use a PyPI proxy container to access PyPI when Python 2.6 is used. This allows tests running under Python 2.6 to continue functioning even though PyPI is discontinuing support for non-SNI capable clients.
+
+community.mysql
+~~~~~~~~~~~~~~~
+
+- mysql_replication - add deprecation warning that the ``Is_Slave`` and ``Is_Master`` return values will be replaced with ``Is_Primary`` and ``Is_Replica`` in ``community.mysql`` 3.0.0 (https://github.com/ansible-collections/community.mysql/pull/147).
+- mysql_replication - the choices of the ``state`` option containing ``master`` will be finally replaced with the alternative ``primary`` choices in ``community.mysql`` 3.0.0, add deprecation warnings (https://github.com/ansible-collections/community.mysql/pull/150).
+- mysql_replication - the return value ``Is_Slave`` and ``Is_Master`` will be replaced with ``Is_Replica`` and ``Is_Primary`` in ``community.mysql`` 3.0.0 (https://github.com/ansible-collections/community.mysql/issues/145).
+- mysql_replication - the word ``master`` in messages returned by the module will be replaced with ``primary`` in ``community.mysql`` 3.0.0 (https://github.com/ansible-collections/community.mysql/issues/145).
+- mysql_replication - the word ``slave`` in messages returned by the module replaced with ``replica`` (https://github.com/ansible-collections/community.mysql/issues/98).
+- mysql_user - the ``REQUIRESSL`` is an alias for the ``ssl`` key in the ``tls_requires`` option in ``community.mysql`` 2.0.0 and support will be dropped altogether in ``community.mysql`` 3.0.0 (https://github.com/ansible-collections/community.mysql/issues/121).
+
+netapp.ontap
+~~~~~~~~~~~~
+
+- na_ontap_autosupport - Added REST support to the module.
+
+Removed Features
+----------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- The ``ome_device_info``, ``idrac_firmware`` and ``idrac_server_config_profile``  modules have now been migrated from community.general to the `dellemc.openmanage <https://galaxy.ansible.com/dellemc/openmanage>`_ Ansible collection.
+  If you use ansible-base 2.10 or newer, redirections have been provided.
+
+  If you use Ansible 2.9 and installed this collection, you need to adjust the FQCNs (``community.general.idrac_firmware`` → ``dellemc.openmanage.idrac_firmware``) and make sure to install the dellemc.openmanage collection.
+- The deprecated ali_instance_facts module has been removed. Use ali_instance_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated gluster_heal_info module has been removed. Use gluster.gluster.gluster_heal_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated gluster_peer module has been removed. Use gluster.gluster.gluster_peer instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated gluster_volume module has been removed. Use gluster.gluster.gluster_volume instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated helm module has been removed. Use community.kubernetes.helm instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated hpilo_facts module has been removed. Use hpilo_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated idrac_redfish_facts module has been removed. Use idrac_redfish_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated jenkins_job_facts module has been removed. Use jenkins_job_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ldap_attr module has been removed. Use ldap_attrs instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated memset_memstore_facts module has been removed. Use memset_memstore_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated memset_server_facts module has been removed. Use memset_server_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated na_ontap_gather_facts module has been removed. Use netapp.ontap.na_ontap_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated nginx_status_facts module has been removed. Use nginx_status_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated one_image_facts module has been removed. Use one_image_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated onepassword_facts module has been removed. Use onepassword_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_datacenter_facts module has been removed. Use oneview_datacenter_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_enclosure_facts module has been removed. Use oneview_enclosure_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_ethernet_network_facts module has been removed. Use oneview_ethernet_network_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_fc_network_facts module has been removed. Use oneview_fc_network_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_fcoe_network_facts module has been removed. Use oneview_fcoe_network_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_logical_interconnect_group_facts module has been removed. Use oneview_logical_interconnect_group_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_network_set_facts module has been removed. Use oneview_network_set_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated oneview_san_manager_facts module has been removed. Use oneview_san_manager_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated online_server_facts module has been removed. Use online_server_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated online_user_facts module has been removed. Use online_user_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt module has been removed. Use ovirt.ovirt.ovirt_vm instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_affinity_label_facts module has been removed. Use ovirt.ovirt.ovirt_affinity_label_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_api_facts module has been removed. Use ovirt.ovirt.ovirt_api_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_cluster_facts module has been removed. Use ovirt.ovirt.ovirt_cluster_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_datacenter_facts module has been removed. Use ovirt.ovirt.ovirt_datacenter_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_disk_facts module has been removed. Use ovirt.ovirt.ovirt_disk_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_event_facts module has been removed. Use ovirt.ovirt.ovirt_event_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_external_provider_facts module has been removed. Use ovirt.ovirt.ovirt_external_provider_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_group_facts module has been removed. Use ovirt.ovirt.ovirt_group_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_host_facts module has been removed. Use ovirt.ovirt.ovirt_host_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_host_storage_facts module has been removed. Use ovirt.ovirt.ovirt_host_storage_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_network_facts module has been removed. Use ovirt.ovirt.ovirt_network_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_nic_facts module has been removed. Use ovirt.ovirt.ovirt_nic_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_permission_facts module has been removed. Use ovirt.ovirt.ovirt_permission_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_quota_facts module has been removed. Use ovirt.ovirt.ovirt_quota_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_scheduling_policy_facts module has been removed. Use ovirt.ovirt.ovirt_scheduling_policy_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_snapshot_facts module has been removed. Use ovirt.ovirt.ovirt_snapshot_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_storage_domain_facts module has been removed. Use ovirt.ovirt.ovirt_storage_domain_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_storage_template_facts module has been removed. Use ovirt.ovirt.ovirt_storage_template_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_storage_vm_facts module has been removed. Use ovirt.ovirt.ovirt_storage_vm_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_tag_facts module has been removed. Use ovirt.ovirt.ovirt_tag_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_template_facts module has been removed. Use ovirt.ovirt.ovirt_template_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_user_facts module has been removed. Use ovirt.ovirt.ovirt_user_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_vm_facts module has been removed. Use ovirt.ovirt.ovirt_vm_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated ovirt_vmpool_facts module has been removed. Use ovirt.ovirt.ovirt_vmpool_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated purefa_facts module has been removed. Use purestorage.flasharray.purefa_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated purefb_facts module has been removed. Use purestorage.flasharray.purefb_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated python_requirements_facts module has been removed. Use python_requirements_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated redfish_facts module has been removed. Use redfish_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_image_facts module has been removed. Use scaleway_image_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_ip_facts module has been removed. Use scaleway_ip_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_organization_facts module has been removed. Use scaleway_organization_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_security_group_facts module has been removed. Use scaleway_security_group_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_server_facts module has been removed. Use scaleway_server_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_snapshot_facts module has been removed. Use scaleway_snapshot_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated scaleway_volume_facts module has been removed. Use scaleway_volume_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated smartos_image_facts module has been removed. Use smartos_image_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated vertica_facts module has been removed. Use vertica_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The deprecated xenserver_guest_facts module has been removed. Use xenserver_guest_info instead (https://github.com/ansible-collections/community.general/pull/1924).
+- The ovirt_facts docs fragment has been removed (https://github.com/ansible-collections/community.general/pull/1924).
+- airbrake_deployment - removed deprecated ``token`` parameter. Use ``project_id`` and ``project_key`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- bigpanda - the alias ``message`` has been removed. Use ``deployment_message`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- cisco_spark, cisco_webex - the alias ``message`` has been removed. Use ``msg`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- clc_aa_policy - the ``wait`` parameter has been removed. It did not have any effect (https://github.com/ansible-collections/community.general/pull/1926).
+- datadog_monitor - the alias ``message`` has been removed. Use ``notification_message`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- django_manage - the parameter ``liveserver`` has been removed (https://github.com/ansible-collections/community.general/pull/1926).
+- idrac_redfish_config - the parameters ``manager_attribute_name`` and ``manager_attribute_value`` have been removed. Use ``manager_attributes`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- iso_extract - the alias ``thirsty`` has been removed. Use ``force`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- ldap_entry - the ``params`` parameter is now completely removed. Using it already triggered an error since community.general 0.1.2 (https://github.com/ansible-collections/community.general/pull/2257).
+- pulp_repo - the ``feed_client_cert`` parameter no longer defaults to the value of the ``client_cert`` parameter (https://github.com/ansible-collections/community.general/pull/1926).
+- pulp_repo - the ``feed_client_key`` parameter no longer defaults to the value of the ``client_key`` parameter (https://github.com/ansible-collections/community.general/pull/1926).
+- pulp_repo - the alias ``ca_cert`` has been removed. Use ``feed_ca_cert`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- rax - unused parameter ``service`` removed (https://github.com/ansible-collections/community.general/pull/2020).
+- redfish modules - issuing a data modification command without specifying the ID of the target System, Chassis or Manager resource when there is more than one is no longer allowed. Use the ``resource_id`` option to specify the target ID (https://github.com/ansible-collections/community.general/pull/1926).
+- redfish_config - the parameters ``bios_attribute_name`` and ``bios_attribute_value`` have been removed. Use ``bios_attributes`` instead (https://github.com/ansible-collections/community.general/pull/1926).
+- syspatch - the ``apply`` parameter has been removed. This is the default mode, so simply removing it will not change the behavior (https://github.com/ansible-collections/community.general/pull/1926).
+- xbps - the ``force`` parameter has been removed. It did not have any effect (https://github.com/ansible-collections/community.general/pull/1926).
+
+community.network
+~~~~~~~~~~~~~~~~~
+
+- The deprecated ``community.network.ce_sflow`` parameters: ``rate_limit``, ``rate_limit_slot``, and ``forward_enp_slot`` have been removed (https://github.com/ansible-collections/community.network/pull/255).
+- The deprecated ``community.network.sros`` netconf plugin has been removed. Use ``nokia.sros.md`` instead (https://github.com/ansible-collections/community.network/pull/255).
+
+Deprecated Features
+-------------------
+
+community.aws
+~~~~~~~~~~~~~
+
+- ec2_vpc_endpoint_info - the ``query`` option has been deprecated and will be removed after 2022-12-01 (https://github.com/ansible-collections/community.aws/pull/346). The ec2_vpc_endpoint_info now defaults to listing information about endpoints. The ability to search for information about available services has been moved to the dedicated module ``ec2_vpc_endpoint_service_info``.
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- apt_rpm - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- composer - deprecated invalid parameter aliases ``working-dir``, ``global-command``, ``prefer-source``, ``prefer-dist``, ``no-dev``, ``no-scripts``, ``no-plugins``, ``optimize-autoloader``, ``classmap-authoritative``, ``apcu-autoloader``, ``ignore-platform-reqs``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- cpanm - parameter ``system_lib`` deprecated in favor of using ``become`` (https://github.com/ansible-collections/community.general/pull/2218).
+- github_deploy_key - deprecated invalid parameter alias ``2fa_token``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- grove - the option ``message`` will be removed in community.general 4.0.0. Use the new option ``message_content`` instead (https://github.com/ansible-collections/community.general/pull/1929).
+- homebrew - deprecated invalid parameter alias ``update-brew``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- homebrew_cask - deprecated invalid parameter alias ``update-brew``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- opkg - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- pacman - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- puppet - deprecated undocumented parameter ``show_diff``, will be removed in 7.0.0. (https://github.com/ansible-collections/community.general/pull/1927).
+- runit - unused parameter ``dist`` marked for deprecation (https://github.com/ansible-collections/community.general/pull/1830).
+- slackpkg - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- urmpi - deprecated invalid parameter aliases ``update-cache`` and ``no-recommends``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- xbps - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
+- xfconf - returning output as facts is deprecated, this will be removed in community.general 4.0.0. Please register the task output in a variable and use it instead. You can already switch to the new behavior now by using the new ``disable_facts`` option (https://github.com/ansible-collections/community.general/pull/1747).
 
 Porting Guide for v4.0.0a4
 ==========================
@@ -379,4 +608,3 @@ community.general
 - slackpkg - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
 - urmpi - deprecated invalid parameter aliases ``update-cache`` and ``no-recommends``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
 - xbps - deprecated invalid parameter alias ``update-cache``, will be removed in 5.0.0 (https://github.com/ansible-collections/community.general/pull/1927).
-- xfconf - returning output as facts is deprecated, this will be removed in community.general 4.0.0. Please register the task output in a variable and use it instead. You can already switch to the new behavior now by using the new ``disable_facts`` option (https://github.com/ansible-collections/community.general/pull/1747).
