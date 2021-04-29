@@ -310,18 +310,51 @@
       - "not (pip_install_empty is changed)"
 
 # https://github.com/ansible/ansible/issues/41043
-- name: do not consider an empty string as a version
-  pip:
-    name: q
-    state: present
-    version: ""
-    virtualenv: "{{ output_dir }}/pipenv"
-  register: pip_install_empty_version_string
+- block:
+    - name: Ensure previous virtualenv no longer exists
+      file:
+        state: absent
+        name: "{{ output_dir }}/pipenv"
 
-- name: ensure that task installation did not fail
-  assert:
-    that:
-      - pip_install_empty_version_string is successful
+    - name: do not consider an empty string as a version
+      pip:
+        name: q
+        state: present
+        version: ""
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_empty_version_string
+
+    - name: test idempotency with empty string
+      pip:
+        name: q
+        state: present
+        version: ""
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_empty_version_string_idempotency
+
+    - name: test idempotency without empty string
+      pip:
+        name: q
+        state: present
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_no_empty_version_string_idempotency
+
+      # 'present' and version=="" is analogous to latest when first installed
+    - name: ensure we installed the latest version
+      pip:
+        name: q
+        state: latest
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_empty_version_idempotency
+
+    - name: ensure that installation worked and is idempotent
+      assert:
+        that:
+          - pip_empty_version_string is changed
+          - pip_empty_version_string is successful
+          - pip_empty_version_idempotency is not changed
+          - pip_no_empty_version_string_idempotency is not changed
+          - pip_empty_version_string_idempotency is not changed
 
 # test version specifiers
 - name: make sure no test_package installed now
