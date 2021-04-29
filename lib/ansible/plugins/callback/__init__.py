@@ -190,7 +190,10 @@ class CallbackBase(AnsiblePlugin):
     _copy_result = deepcopy
 
     def set_option(self, k, v):
-        self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
+        new_v = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
+        if new_v != self._plugin_options[k]:
+            self._plugin_options[k] = new_v
+            self._hash = None
 
     def get_option(self, k, hostvars=None):
         return self._plugin_options[k]
@@ -202,9 +205,9 @@ class CallbackBase(AnsiblePlugin):
         """ This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
             Also _options was already taken for CLI args and callbacks use _plugin_options instead.
         """
-
         # load from config
-        self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._hash = None
 
     @staticmethod
     def host_label(result: CallbackTaskResult) -> str:
