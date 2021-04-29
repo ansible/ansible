@@ -63,8 +63,8 @@ class AnsiblePlugin(ABC):
 
     def __hash__(self):
         if self._hash is None:
-            s_options = pickle.dumps(self._options)
-            self._hash = self._load_name + hash(s_options)
+            s_options = self.get_options()
+            self._hash = hash(self._load_name) + hash(s_options)
         return self._hash
 
     def __eq__(self, other):
