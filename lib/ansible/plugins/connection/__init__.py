@@ -471,7 +471,7 @@ class NetworkConnectionBase(ConnectionBase):
 
         if self._hash is None:
             # prime self, with own options
-            super(ConnectionBase, self).signature()
+            super(NetworkConnectionBase, self).signature()
 
             if self._sub_plugin:
                 # also shell, we always have!
@@ -482,4 +482,3 @@ class NetworkConnectionBase(ConnectionBase):
         self.become = plugin
         # reset hash jic
         self._hash = None
-
