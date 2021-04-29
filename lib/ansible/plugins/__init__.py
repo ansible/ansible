@@ -114,15 +114,15 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         """
         return _plugin_info.get_plugin_info(self)
 
+    def signature(self):
+        return self.__hash__()
+
     def __hash__(self):
         if self._hash is None:
             # create immutable
             s_options = pickle.dumps(self.get_options())
             self._hash = hash(self._load_name) + hash(s_options)
         return self._hash
-
-    def __eq__(self, other):
-        return other == self._hash
 
     def get_option(self, option, hostvars=None):
 
