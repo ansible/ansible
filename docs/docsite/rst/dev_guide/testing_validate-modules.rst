@@ -61,6 +61,8 @@ Codes
 ============================================================   ==================   ====================   =========================================================================================
   **Error Code**                                                 **Type**             **Level**            **Sample Message**
 ------------------------------------------------------------   ------------------   --------------------   -----------------------------------------------------------------------------------------
+  ansible-deprecated-module                                    Documentation        Error                  A module is deprecated and supposed to be removed in the current or an earlier Ansible version
+  collection-deprecated-module                                 Documentation        Error                  A module is deprecated and supposed to be removed in the current or an earlier collection version
   ansible-deprecated-version                                   Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier Ansible version
   ansible-module-not-initialized                               Syntax               Error                  Execution of the module did not result in initialization of AnsibleModule
   collection-deprecated-version                                Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier collection version
@@ -94,14 +96,11 @@ Codes
   invalid-module-schema                                        Documentation        Error                  ``AnsibleModule`` schema validation error
   invalid-removal-version                                      Documentation        Error                  The version at which a feature is supposed to be removed cannot be parsed (for collections, it must be a semantic version, see https://semver.org/)
   invalid-requires-extension                                   Naming               Error                  Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs, Module ``#Requires`` should not end in .psm1
-  last-line-main-call                                          Syntax               Error                  Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-doc-fragment                                         Documentation        Error                  ``DOCUMENTATION`` fragment missing
   missing-existing-doc-fragment                                Documentation        Warning                Pre-existing ``DOCUMENTATION`` fragment missing
   missing-documentation                                        Documentation        Error                  No ``DOCUMENTATION`` provided
   missing-examples                                             Documentation        Error                  No ``EXAMPLES`` provided
   missing-gplv3-license                                        Documentation        Error                  GPLv3 license header not found
-  missing-if-name-main                                         Syntax               Error                  Next to last line is not ``if __name__ == "__main__":``
-  missing-main-call                                            Syntax               Error                  Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
   missing-module-utils-import-csharp-requirements              Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
