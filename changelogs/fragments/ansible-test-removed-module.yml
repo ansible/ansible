@@ -1,0 +1,5 @@
+removed_features:
+  - The built-in module_util ``ansible.module_utils.common.removed`` was previously deprecated and has been removed.
+minor_changes:
+  - ansible-test - The ``validate-modules`` sanity test codes ``last-line-main-call``, ``missing-if-name-main`` and ``missing-main-call`` have been removed.
+  - ansible-test - The ``validate-modules`` sanity test codes ``ansible-deprecated-module`` and ``collection-deprecated-module`` have been added.
