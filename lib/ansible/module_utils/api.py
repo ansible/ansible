@@ -117,28 +117,35 @@ def retry(retries=None, retry_pause=1):
     return wrapper
 
 
-def generate_jittered_backoff(retries=10, delay=3, max_delay=60):
+def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
     """The "Full Jitter" backoff strategy.
 
     Ref: https://www.awsarchitectureblog.com/2015/03/backoff.html
 
     :param retries: The number of delays to generate.
-    :param delay: The time in seconds for the initial delay.
-    :param max_delay: The maximum time in seconds for any delay.
+    :param delay_base: The base time in seconds used to calculate the exponential backoff.
+    :param delay_threshold: The maximum time in seconds for any delay.
     """
     for retry in range(0, retries):
-        yield random.randint(0, min(max_delay, delay * 2 ** retry))
+        yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
 
 
-def retry_with_delays_and_condition(backoff_iterator, retry_condition, do_on_retry=None, retry_on_success=None):
+def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_retry_error=None, should_retry_result=None):
     """Generic retry decorator.
 
     :param backoff_iterator: An iterable of delays in seconds.
-    :param retry_condition: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
-    :param do_on_retry: An optional callable that takes an exception/None and the current delay and runs before the sleep (returns None).
-    :param retry_on_success: An optional callable that accepts the decorated function return value and decides whether or not to retry (returns a bool).
+    :param do_on_retry: A callable that takes an exception/None and the current delay and runs before the sleep (returns None).
+    :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
+    :param should_retry_result: A callable that accepts the decorated function return value and decides whether or not to retry (returns a bool).
     """
     def function_wrapper(function):
+        if do_on_retry is None:
+            do_on_retry = lambda x, y: None
+        if should_retry_error is None:
+            should_retry_error = lambda x: False
+        if should_retry_result is None:
+            should_retry_result = lambda x: False
+
         def run_function(*args, **kwargs):
             """This assumes the function has not already been called.
             If backoff_iterator is empty, we should still run the function a single time with no delay.
@@ -150,16 +157,14 @@ def retry_with_delays_and_condition(backoff_iterator, retry_condition, do_on_ret
                 try:
                     result = function(*args, **kwargs)
                 except Exception as e:
-                    if not retry_condition(e):
+                    if not should_retry_error(e):
                         raise
                     error = e
                 else:
-                    if not callable(retry_on_success) or not retry_on_success(result):
+                    if not should_retry_result(result):
                         return result
 
-                if callable(do_on_retry):
-                    do_on_retry(error, delay)
-
+                do_on_retry(error, delay)
                 time.sleep(delay)
 
             # Only or final attempt

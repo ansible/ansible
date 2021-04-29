@@ -324,8 +324,8 @@ class GalaxyAPI:
         return self._available_api_versions
 
     @retry_with_delays_and_condition(
-        backoff_iterator=generate_jittered_backoff(retries=6, delay=2, max_delay=40),
-        retry_condition=is_rate_limit_exception
+        backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
+        should_retry_error=is_rate_limit_exception
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
@@ -362,7 +362,7 @@ class GalaxyAPI:
 
                 return res
 
-            elif not ('page' in query or 'offset' in query):
+            elif not is_paginated_url:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.utcnow()
                 expires += datetime.timedelta(days=1)
