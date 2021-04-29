@@ -23,20 +23,34 @@ __metaclass__ = type
 from io import StringIO
 import pytest
 
-from units.compat import unittest
 from ansible.plugins.connection import paramiko_ssh
 from ansible.playbook.play_context import PlayContext
 
 
-class TestParamikoConnectionClass(unittest.TestCase):
+@pytest.fixture
+def play_context():
+    play_context = PlayContext()
+    play_context.prompt = (
+        '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+    )
 
-    def test_paramiko_connection_module(self):
-        play_context = PlayContext()
-        play_context.prompt = (
-            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
-        )
-        in_stream = StringIO()
+    return play_context
 
-        self.assertIsInstance(
-            paramiko_ssh.Connection(play_context, in_stream),
-            paramiko_ssh.Connection)
+
+@pytest.fixture()
+def in_stream():
+    return StringIO()
+
+
+def test_paramiko_connection_module(play_context, in_stream):
+    assert isinstance(
+        paramiko_ssh.Connection(play_context, in_stream),
+        paramiko_ssh.Connection)
+
+
+def test_paramiko_connect(play_context, in_stream, mocker):
+    mocker.patch.object(paramiko_ssh.Connection, '_connect_uncached')
+    connection = paramiko_ssh.Connection(play_context, in_stream)._connect()
+
+    assert isinstance(connection, paramiko_ssh.Connection)
+    assert connection._connected is True
