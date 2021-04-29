@@ -46,7 +46,7 @@ class ConfigCLI(CLI):
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
         common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                            help='Show configuration for a plugin type, can also take additional plugin name to show just that plugin.')
+                            help="Show configuration for a plugin type, for a specific plugin's options see ansible-doc.")
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
