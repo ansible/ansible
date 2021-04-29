@@ -1,6 +1,14 @@
 # (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# CAUTION: There are two implementations of the collection loader.
+#          They must be kept functionally identical, although their implementations may differ.
+#
+# 1) The controller implementation resides in the "lib/ansible/utils/collection_loader/" directory.
+#    It must function on all Python versions supported on the controller.
+# 2) The ansible-test implementation resides in the "test/lib/ansible_test/_data/legacy_collection_loader/" directory.
+#    It must function on all Python versions supported on managed hosts which are not supported by the controller.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
