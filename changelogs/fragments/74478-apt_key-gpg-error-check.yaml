@@ -1,0 +1,2 @@
+bugfixes:
+  - The ``apt_key`` module did not properly handle GnuPG errors (https://github.com/ansible/ansible/issues/74477)
