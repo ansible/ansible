@@ -35,3 +35,6 @@
 
 - import_tasks: 'apt_key_binary.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
+
+- import_tasks: 'apt_key_import_lack_error_details.yml'
+  when: ansible_distribution in ('Ubuntu', 'Debian')

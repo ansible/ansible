@@ -1,0 +1,5 @@
+- name: "Ensure error message (on import of a deliberately corrupted GnuPG key) contains the following data: command line and environment variables"
+  apt_key:
+    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/apt-key-corrupt-zeros-2k.gpg
+  register: gpg_import_error_result
+  failed_when: not gpg_import_error_result.cmd is defined or not gpg_import_error_result.forced_environment is defined
