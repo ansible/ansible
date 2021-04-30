@@ -34,7 +34,7 @@ else
 ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
 
-PYTHON=python
+PYTHON ?= python
 GENERATE_CLI = hacking/build-ansible.py generate-man
 
 # fetch version from project release.py as single source-of-truth
