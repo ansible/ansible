@@ -131,7 +131,7 @@ options:
         version_added: "2.6"
     warn:
         description:
-            - Retrun warnings on any issues encountered while walking the paths.
+            - Return warnings on any issues encountered while walking the paths.
         type: bool
         version_added: "2.12"
 seealso:
