@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix ``keys()`` implementation of ``BaseFileCacheModule`` to strip the prefix
+    from the key and only return keys that share the same prefix as the cache.
