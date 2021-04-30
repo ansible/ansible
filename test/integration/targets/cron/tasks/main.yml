@@ -1,3 +1,22 @@
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+        - default.yml
+      paths:
+        - vars
+
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=726661
+- name: Work around vixie-cron/PAM issue on old distros
+  command: sed -i '/pam_loginuid/ s/^/#/' /etc/pam.d/crond
+  when:
+    - ansible_distribution in ('RedHat', 'CentOS')
+    - ansible_distribution_major_version is version('6', '==')
+
 - name: add cron task (check mode enabled, cron task not already created)
   cron:
     name: test cron task
@@ -200,20 +219,20 @@
   block:
   - name: Add cron job
     cron:
-      cron_file: /etc/crontab
+      cron_file: "{{ system_crontab }}"
       user: root
       name: "integration test cron"
       job: 'ls'
 
   - name: Remove cron job
     cron:
-      cron_file: /etc/crontab
+      cron_file: "{{ system_crontab }}"
       name: "integration test cron"
       state: absent
 
   - name: Check system crontab still exists
     stat:
-      path: /etc/crontab
+      path: "{{ system_crontab }}"
     register: cron_file_stats
 
   - assert:
