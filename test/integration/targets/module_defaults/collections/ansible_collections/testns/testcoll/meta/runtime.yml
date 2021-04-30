@@ -15,3 +15,24 @@ action_groups:
     - metadata:
         extend_group:
           - testgroup
+  empty_metadata:
+    - metadata: {}
+  bad_metadata_format:
+    - unexpected_key:
+        key: value
+      metadata:
+        extend_group: testgroup
+  multiple_metadata:
+    - metadata:
+        extend_group: testgroup
+    - metadata:
+        extend_group: othergroup
+  bad_metadata_options:
+    - metadata:
+        unexpected_key: testgroup
+  bad_metadata_type:
+    - metadata: [testgroup]
+  bad_metadata_option_type:
+    - metadata:
+        extend_group:
+          name: testgroup

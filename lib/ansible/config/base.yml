@@ -1968,6 +1968,7 @@ VALIDATE_ACTION_GROUP_METADATA:
     - A toggle to disable validating a collection's 'metadata' entry for a module_defaults action group.
       Metadata containing unexpected fields or value types will produce a warning when this is True.
   default: True
+  env: [{name: ANSIBLE_VALIDATE_ACTION_GROUP_METADATA}]
   ini:
     - section: defaults
       key: validate_action_group_metadata

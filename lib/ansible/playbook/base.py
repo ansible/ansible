@@ -393,10 +393,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
         except ValueError:
             if not mandatory:
-                display.vvvvv(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
+                display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
                 return fq_group_name, []
 
-            raise AnsibleParserError(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
+            raise AnsibleParserError("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
 
         # The collection may or may not use the fully qualified name
         # Don't fail if the group doesn't exist in the collection
@@ -407,9 +407,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         )
         if action_group is None:
             if not mandatory:
-                display.vvvvv(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
+                display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
                 return fq_group_name, []
-            raise AnsibleParserError(f"Error loading module_defaults: could not resolve the module_defaults group {fq_group_name}")
+            raise AnsibleParserError("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
 
         resolved_actions = []
         include_groups = []
@@ -424,27 +424,37 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for action in action_group:
             # Everything should be a string except the metadata entry
             if not isinstance(action, string_types):
-                metadata_warning = ""
+                metadata_warnings = []
 
-                if not (isinstance(action, dict) and len(action) == 1 and 'metadata' in action):
-                    metdata_warning = f"the only expected field is 'metadata'."
-                elif found_group_metadata:
-                    metadata_warning = f"the group contains multiple metadata entries."
-                elif not isinstance(action['metadata'], dict):
-                    metadata_warning = f"the metadata is not a dictionary."
-                elif action['metadata'].keys() > valid_metadata.keys():
-                    unexpected_keys = set(action['metadata'].keys()) - set(valid_metadata.keys())
-                    metadata_warning = f"the metadata contains unexpected keys ({', '.join(unexpected_keys)})"
-                else:
-                    unexpected_types = []
-                    for k, v in action['metadata'].items():
-                        if not isinstance(v, valid_metadata[k]['types']):
-                            unexpected_types += [f"{type(v)} for {k} (expected {valid_metadata[k]['errortype']})"]
-                    if unexpected_types:
-                        metadata_warning = f"the metadata contains unexpected key types ({', '.join(unexpected_types)})"
+                validate = C.VALIDATE_ACTION_GROUP_METADATA
+                metadata_only = isinstance(action, dict) and 'metadata' in action and len(action) == 1
 
-                if metadata_warning and C.VALIDATE_ACTION_GROUP_METADATA:
-                    display.warning(f"Invalid metadata was found for action_group {fq_group_name} while loading module_defaults: {metadata_warning}")
+                if validate and not metadata_only:
+                    found_keys = ', '.join(sorted(list(action)))
+                    metadata_warnings.append("The only expected key is metadata, but got keys: {keys}".format(keys=found_keys))
+                elif validate:
+                    if found_group_metadata:
+                        metadata_warnings.append("The group contains multiple metadata entries.")
+                    if not isinstance(action['metadata'], dict):
+                        metadata_warnings.append("The metadata is not a dictionary. Got {metadata}".format(metadata=action['metadata']))
+                    else:
+                        unexpected_keys = set(action['metadata'].keys()) - set(valid_metadata.keys())
+                        if unexpected_keys:
+                            metadata_warnings.append("The metadata contains unexpected keys: {0}".format(', '.join(unexpected_keys)))
+
+                        unexpected_types = []
+                        for field, requirement in valid_metadata.items():
+                            if field not in action['metadata']:
+                                continue
+                            value = action['metadata'][field]
+                            if not isinstance(value, requirement['types']):
+                                unexpected_types.append("%s is %s (expected type %s)" % (field, value, requirement['errortype']))
+                        if unexpected_types:
+                            metadata_warnings.append("The metadata contains unexpected key types: {0}".format(', '.join(unexpected_types)))
+
+                if metadata_warnings:
+                    metadata_warnings.insert(0, "Invalid metadata was found for action_group {0} while loading module_defaults.".format(fq_group_name))
+                    display.warning(" ".join(metadata_warnings))
 
                 if isinstance(action['metadata'], dict):
                     found_group_metadata = True
@@ -509,8 +519,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if context.resolved:
             return context.redirect_list[-1]
         if mandatory:
-            raise AnsibleParserError(f"Could not resolve action {action_name} in module_defaults")
-        display.vvvvv(f"Could not resolve action {action_name} in module_defaults")
+            raise AnsibleParserError("Could not resolve action %s in module_defaults" % action_name)
+        display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
 
     def squash(self):
         '''
