@@ -190,10 +190,20 @@ class BaseFileCacheModule(BaseCacheModule):
         return True
 
     def keys(self):
+        # When using a prefix we must remove it from the key name before
+        # checking the expiry and returning it to the caller. Keys that do not
+        # share the same prefix cannot be fetched from the cache.
+        prefix = self.get_option('_prefix')
+        prefix_length = len(prefix)
         keys = []
         for k in os.listdir(self._cache_dir):
-            if not (k.startswith('.') or self.has_expired(k)):
+            if k.startswith('.') or not k.startswith(prefix):
+                continue
+
+            k = k[prefix_length:]
+            if not self.has_expired(k):
                 keys.append(k)
+
         return keys
 
     def contains(self, key):
