@@ -435,8 +435,9 @@ def main():
             module.fail_json(size=params['size'], msg="failed to process size")
 
     now = time.time()
-    msg = ''
+    msg = 'All paths examined'
     looked = 0
+    has_warnings = False
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         try:
@@ -460,7 +461,8 @@ def main():
                     try:
                         st = os.lstat(fsname)
                     except (IOError, OSError) as e:
-                        msg += "Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e))
+                        module.warn("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
+                        has_warnings = True
                         continue
 
                     r = {'path': fsname}
@@ -502,10 +504,11 @@ def main():
                 if not params['recurse']:
                     break
         except Exception as e:
-            warn = "Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e))
-            module.warn(warn)
-            msg += warn
+            module.warn("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
+            has_warnings = True
 
+    if has_warnings:
+        msg = 'Not all paths examined, check warnings for details'
     matched = len(filelist)
     module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
 
