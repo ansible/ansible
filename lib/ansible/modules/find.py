@@ -129,12 +129,6 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
-    warn:
-        description:
-            - Issue warnings on any issues encountered while walking the paths.
-            - In any case all issues are returned in the C(problems) return field.
-        type: bool
-        version_added: "2.12"
 seealso:
 - module: ansible.windows.win_find
 '''
@@ -226,12 +220,6 @@ examined:
     returned: success
     type: int
     sample: 34
-problems:
-    description: The issues found while examining the requested paths
-    returned: always
-    type: list
-    sample: ["find had a problem: [Errno 13] Permission denied: '/root'"]
-    version_added: '2.12'
 '''
 
 import fnmatch
@@ -244,7 +232,6 @@ import time
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
@@ -385,6 +372,10 @@ def statinfo(st):
     }
 
 
+def handle_walk_errors(e):
+    raise e
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -403,12 +394,10 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
-            warn=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
 
-    warnings = set()
     params = module.params
 
     # Set the default match pattern to either a match-all glob or
@@ -432,7 +421,7 @@ def main():
         if m:
             age = int(m.group(1)) * seconds_per_unit.get(m.group(2), 1)
         else:
-            module.fail_json(age=params['age'], msg="failed to process age", problems=warnings)
+            module.fail_json(age=params['age'], msg="failed to process age")
 
     if params['size'] is None:
         size = None
@@ -443,25 +432,18 @@ def main():
         if m:
             size = int(m.group(1)) * bytes_per_unit.get(m.group(2), 1)
         else:
-            module.fail_json(size=params['size'], msg="failed to process size", problems=warnings)
+            module.fail_json(size=params['size'], msg="failed to process size")
 
     now = time.time()
     msg = ''
     looked = 0
-
-    def handle_errors(e):
-        msg = to_text(e)
-        if params['warn']:
-            module.warn('find had a problem: %s' % msg)
-        warnings.add(msg)
-
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, onerror=handle_errors, followlinks=params['follow']):
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -478,7 +460,7 @@ def main():
                     try:
                         st = os.lstat(fsname)
                     except (IOError, OSError) as e:
-                        handle_errors("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
+                        msg += "Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e))
                         continue
 
                     r = {'path': fsname}
@@ -520,10 +502,12 @@ def main():
                 if not params['recurse']:
                     break
         except Exception as e:
-            handle_errors("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
+            warn = "Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e))
+            module.warn(warn)
+            msg += warn
 
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, problems=warnings)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
 
 
 if __name__ == '__main__':
