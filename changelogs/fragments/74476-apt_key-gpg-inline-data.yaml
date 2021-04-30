@@ -1,0 +1,2 @@
+bugfixes:
+  - The error message about the failure to import a ```gpg`` key by the ``apt_key`` module was incorrect (https://github.com/ansible/ansible/issues/74423).
