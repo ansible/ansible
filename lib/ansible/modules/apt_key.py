@@ -253,6 +253,8 @@ def all_keys(module, keyring, short_format):
     else:
         cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
     (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Unable to list public keys", cmd=cmd, rc=rc, stdout=out, stderr=err)
 
     return parse_output_for_keys(out, short_format)
 
@@ -326,10 +328,10 @@ def import_key(module, keyring, keyserver, key_id):
         # Out of retries
         if rc == 2 and 'not found on keyserver' in out:
             msg = 'Key %s not found on keyserver %s' % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg)
+            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env)
         else:
             msg = "Error fetching key %s from keyserver: %s" % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg, rc=rc, stdout=out, stderr=err)
+            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env, rc=rc, stdout=out, stderr=err)
     return True
 
 
@@ -339,23 +341,48 @@ def add_key(module, keyfile, keyring, data=None):
             cmd = "%s --keyring %s add -" % (apt_key_bin, keyring)
         else:
             cmd = "%s add -" % apt_key_bin
-        (rc, out, err) = module.run_command(cmd, data=data, check_rc=True, binary_data=True)
+        (rc, out, err) = module.run_command(cmd, data=data, binary_data=True)
+        if rc != 0:
+            module.fail_json(
+                msg="Unable to add a key from binary data",
+                cmd=cmd,
+                rc=rc,
+                stdout=out,
+                stderr=err,
+            )
     else:
         if keyring:
             cmd = "%s --keyring %s add %s" % (apt_key_bin, keyring, keyfile)
         else:
             cmd = "%s add %s" % (apt_key_bin, keyfile)
-        (rc, out, err) = module.run_command(cmd, check_rc=True)
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0:
+            module.fail_json(
+                msg="Unable to add a key from file %s" % (keyfile),
+                cmd=cmd,
+                rc=rc,
+                keyfile=keyfile,
+                stdout=out,
+                stderr=err,
+            )
     return True
 
 
 def remove_key(module, key_id, keyring):
-    # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
     if keyring:
         cmd = '%s --keyring %s del %s' % (apt_key_bin, keyring, key_id)
     else:
         cmd = '%s del %s' % (apt_key_bin, key_id)
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(
+            msg="Unable to remove a key with id %s" % (key_id),
+            cmd=cmd,
+            rc=rc,
+            key_id=key_id,
+            stdout=out,
+            stderr=err,
+        )
     return True
 
 
