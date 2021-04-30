@@ -1,2 +1,0 @@
-minor_changes:
-  - find now can optionally warn about issues encountered while traversing the requested paths.
