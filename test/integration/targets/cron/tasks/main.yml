@@ -1,10 +1,3 @@
-# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=726661
-- name: Work around vixie-cron/PAM issue on old distros
-  command: sed -i '/pam_loginuid/ s/^/#/' /etc/pam.d/crond
-  when:
-    - ansible_distribution in ('RedHat', 'CentOS')
-    - ansible_distribution_major_version is version('6', '==')
-
 - name: add cron task (check mode enabled, cron task not already created)
   cron:
     name: test cron task

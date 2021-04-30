@@ -82,3 +82,15 @@
     FAKETIME: "+0y x10"
     LD_PRELOAD: "/usr/lib/faketime/libfaketime.so.1"
   when: ansible_distribution == 'Alpine'
+
+- name: See if /etc/pam.d/crond exists
+  stat:
+    path: /etc/pam.d/crond
+  register: pamd
+
+# https://github.com/lxc/lxc/issues/661#issuecomment-222444916
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=726661
+- name: Work around containers not being able to write to /proc/self/loginuid
+  command: sed -i '/pam_loginuid\.so$/ s/required/optional/' /etc/pam.d/crond
+  when:
+    - pamd.stat.exists

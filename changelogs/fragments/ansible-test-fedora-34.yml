@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Fedora 34 (``fedora34``) container has been added.
+  - ansible-test - Fedora 32 and 33 (``fedora32`` and ``fedora33``) containers have been updated and now allow for ssh in more container environments.
