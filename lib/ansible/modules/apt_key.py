@@ -293,7 +293,7 @@ def get_key_id_from_file(module, filename, data=None):
 
     (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=(native_data if is_armored else data), binary_data=not is_armored)
     if rc != 0:
-        module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is None else filename), stdout=out, stderr=err)
+        module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is not None else filename), stdout=out, stderr=err)
 
     keys = parse_output_for_keys(out)
     # assume we only want first key?
