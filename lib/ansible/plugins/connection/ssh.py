@@ -19,6 +19,9 @@ DOCUMENTATION = '''
     extends_documentation_fragment:
         - connection_pipelining
     version_added: historical
+    notes:
+        - Many options default to 'None' here but that only means we don't override the ssh tool's defaults and/or configuration.
+          For example, if you specify the port in this plugin it will override any `Port` entry in your `.ssh/config`.
     options:
       host:
           description: Hostname/ip to connect to.
@@ -181,7 +184,6 @@ DOCUMENTATION = '''
       port:
           description: Remote port to connect to.
           type: int
-          default: 22
           ini:
             - section: defaults
               key: remote_port
