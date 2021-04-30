@@ -26,7 +26,10 @@
 
 - import_tasks: 'apt_key.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
-  
+
+- import_tasks: 'apt_key_inline_data.yml'
+  when: ansible_distribution in ('Ubuntu', 'Debian')
+ 
 - import_tasks: 'file.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
 
