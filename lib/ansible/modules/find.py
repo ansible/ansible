@@ -129,6 +129,11 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+    warn:
+        description:
+            - Retrun warnings on any issues encountered while walking the paths.
+        type: bool
+        version_added: "2.12"
 seealso:
 - module: ansible.windows.win_find
 '''
@@ -232,6 +237,7 @@ import time
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
@@ -390,6 +396,7 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
+            warn=dict(type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -433,13 +440,18 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
+
+    def handle_errors(e):
+        if params['warn']:
+            module.warn('find had a problem: ' + to_text(e))
+
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, followlinks=params['follow']):
+            for root, dirs, files in os.walk(npath, onerror=handle_errors, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
