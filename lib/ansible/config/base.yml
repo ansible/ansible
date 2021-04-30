@@ -1578,7 +1578,7 @@ INVENTORY_CACHE_PLUGIN_PREFIX:
   name: Inventory cache plugin table prefix
   description: The table prefix for the cache plugin. If INVENTORY_CACHE_PLUGIN_PREFIX is not provided CACHE_PLUGIN_PREFIX can be used instead.
   env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX}]
-  default: ansible_facts
+  default: ansible_inventory_
   ini:
   - {key: cache_prefix, section: inventory}
 INVENTORY_CACHE_TIMEOUT:
