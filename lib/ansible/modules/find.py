@@ -131,7 +131,8 @@ options:
         version_added: "2.6"
     warn:
         description:
-            - Return warnings on any issues encountered while walking the paths.
+            - Issue warnings on any issues encountered while walking the paths.
+            - In any case all issues are returned in the C(problems) return field.
         type: bool
         version_added: "2.12"
 seealso:
@@ -225,6 +226,12 @@ examined:
     returned: success
     type: int
     sample: 34
+problems:
+    description: The issues found while examining the requested paths
+    returned: always
+    type: list
+    sample: ["find had a problem: [Errno 13] Permission denied: '/root'"]
+    version_added: '2.12'
 '''
 
 import fnmatch
@@ -396,11 +403,12 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
-            warn=dict(type='bool'),
+            warn=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
 
+    warnings = set()
     params = module.params
 
     # Set the default match pattern to either a match-all glob or
@@ -424,7 +432,7 @@ def main():
         if m:
             age = int(m.group(1)) * seconds_per_unit.get(m.group(2), 1)
         else:
-            module.fail_json(age=params['age'], msg="failed to process age")
+            module.fail_json(age=params['age'], msg="failed to process age", problems=warnings)
 
     if params['size'] is None:
         size = None
@@ -435,15 +443,17 @@ def main():
         if m:
             size = int(m.group(1)) * bytes_per_unit.get(m.group(2), 1)
         else:
-            module.fail_json(size=params['size'], msg="failed to process size")
+            module.fail_json(size=params['size'], msg="failed to process size", problems=warnings)
 
     now = time.time()
     msg = ''
     looked = 0
 
     def handle_errors(e):
+        msg = to_text(e)
         if params['warn']:
-            module.warn('find had a problem: ' + to_text(e))
+            module.warn('find had a problem: %s' % msg)
+        warnings.add(msg)
 
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
@@ -468,7 +478,7 @@ def main():
                     try:
                         st = os.lstat(fsname)
                     except (IOError, OSError) as e:
-                        msg += "Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e))
+                        handle_errors("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
                         continue
 
                     r = {'path': fsname}
@@ -510,12 +520,10 @@ def main():
                 if not params['recurse']:
                     break
         except Exception as e:
-            warn = "Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e))
-            module.warn(warn)
-            msg += warn
+            handle_errors("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
 
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, problems=warnings)
 
 
 if __name__ == '__main__':
