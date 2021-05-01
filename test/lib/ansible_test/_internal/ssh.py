@@ -248,7 +248,7 @@ def generate_ssh_inventory(ssh_connections):  # type: (t.List[SshConnectionDetai
                 ansible_user=ssh.user,
                 ansible_ssh_private_key_file=os.path.abspath(ssh.identity_file),
                 ansible_connection='ssh',
-                ansible_ssh_pipelining='yes',
+                ansible_pipelining='yes',
                 ansible_python_interpreter=ssh.python_interpreter,
                 ansible_shell_type=ssh.shell_type,
                 ansible_ssh_extra_args='-o UserKnownHostsFile=/dev/null',  # avoid changing the test environment

@@ -121,7 +121,7 @@ def command_sanity(args):
             display.info(test.name)
             continue
 
-        available_versions = sorted(get_available_python_versions(SUPPORTED_PYTHON_VERSIONS).keys())
+        available_versions = sorted(get_available_python_versions().keys())
 
         if args.python:
             # specific version selected

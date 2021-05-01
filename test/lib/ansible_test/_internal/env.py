@@ -52,10 +52,6 @@ from .test import (
     TestTimeout,
 )
 
-from .executor import (
-    SUPPORTED_PYTHON_VERSIONS,
-)
-
 from .ci import (
     get_ci_provider,
 )
@@ -115,7 +111,7 @@ def show_dump_env(args):
             executable=sys.executable,
             version=platform.python_version(),
         ),
-        interpreters=get_available_python_versions(SUPPORTED_PYTHON_VERSIONS),
+        interpreters=get_available_python_versions(),
     )
 
     if args.show:

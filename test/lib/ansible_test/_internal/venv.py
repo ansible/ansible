@@ -16,7 +16,6 @@ from .util import (
     find_python,
     SubprocessError,
     get_available_python_versions,
-    SUPPORTED_PYTHON_VERSIONS,
     ANSIBLE_TEST_DATA_ROOT,
     display,
     remove_tree,
@@ -63,7 +62,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
         display.info('Created Python %s virtual environment using "virtualenv": %s' % (version, path), verbosity=1)
         return True
 
-    available_pythons = get_available_python_versions(SUPPORTED_PYTHON_VERSIONS)
+    available_pythons = get_available_python_versions()
 
     for available_python_version, available_python_interpreter in sorted(available_pythons.items()):
         virtualenv_version = get_virtualenv_version(args, available_python_interpreter)

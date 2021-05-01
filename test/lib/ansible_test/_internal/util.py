@@ -246,15 +246,15 @@ def get_ansible_version():  # type: () -> str
     return ansible_version
 
 
-def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Dict[str, str]
-    """Return a dictionary indicating which of the requested Python versions are available."""
+def get_available_python_versions():  # type: () -> t.Dict[str, str]
+    """Return a dictionary indicating which supported Python versions are available."""
     try:
         return get_available_python_versions.result
     except AttributeError:
         pass
 
     get_available_python_versions.result = dict((version, path) for version, path in
-                                                ((version, find_python(version, required=False)) for version in versions) if path)
+                                                ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
 
     return get_available_python_versions.result
 

@@ -298,10 +298,13 @@ def get_collection_detail(args, python):  # type: (EnvironmentConfig, str) -> Co
     return detail
 
 
-def run_playbook(args, inventory_path, playbook, run_playbook_vars):  # type: (CommonConfig, str, str, t.Dict[str, t.Any]) -> None
+def run_playbook(args, inventory_path, playbook, run_playbook_vars=None):  # type: (CommonConfig, str, str, t.Optional[t.Dict[str, t.Any]]) -> None
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
-    command = ['ansible-playbook', '-i', inventory_path, playbook_path, '-e', json.dumps(run_playbook_vars)]
+    command = ['ansible-playbook', '-i', inventory_path, playbook_path]
+
+    if run_playbook_vars:
+        command.extend(['-e', json.dumps(run_playbook_vars)])
 
     if args.verbosity:
         command.append('-%s' % ('v' * args.verbosity))
