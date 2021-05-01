@@ -53,7 +53,7 @@ NETWORK_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 
 class ShellScriptTemplate:
     """A simple substition template for shell scripts."""
-    def __init__(self, template):  # type: (str) -> None
+    def __init__(self, template):  # type: (t.Text) -> None
         self.template = template
 
     def substitute(self, **kwargs):
