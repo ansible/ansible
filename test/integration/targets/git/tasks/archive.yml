@@ -119,6 +119,7 @@
   unarchive:
     src: '{{ checkout_dir }}/test_role.{{ item }}'
     dest: '{{ checkout_dir }}/{{ git_archive_prefix }}.{{ item }}'
+    remote_src: yes
   with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
 - name: ARCHIVE | Check if prefix directory exists in what's extracted

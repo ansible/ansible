@@ -320,6 +320,7 @@
 
 - name: run async poll callback test playbook
   command: ansible-playbook {{ role_path }}/callback_test.yml
+  delegate_to: localhost
   register: callback_output
 
 - assert:
