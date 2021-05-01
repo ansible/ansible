@@ -15,6 +15,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.zip"
     dest: "{{ remote_tmp_dir }}/include-zip"
+    remote_src: yes
     include:
       - FOO-UNAR.TXT
 
@@ -39,6 +40,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive-multi.tar"
     dest: "{{ remote_tmp_dir }}/include-tar"
+    remote_src: yes
     include:
       - foo-unarchive-777.txt
 
@@ -61,6 +63,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive-multi.tar"
     dest: "{{ remote_tmp_dir }}/include-tar"
+    remote_src: yes
     include:
       - foo-unarchive-777.txt
     exclude:
