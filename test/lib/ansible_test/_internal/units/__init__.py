@@ -129,7 +129,7 @@ def command_units(args):
 
     test_sets = []
 
-    available_versions = sorted(get_available_python_versions(list(SUPPORTED_PYTHON_VERSIONS)).keys())
+    available_versions = sorted(get_available_python_versions().keys())
 
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
