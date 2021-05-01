@@ -121,6 +121,11 @@ ansible_play_name
 playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
 
+playbook_files
+    List of playbook files that were passed to the ``ansible-playbook`` command line. 
+    Since you can pass playbooks from different directories, the list contains the full path of each file.
+    Added after ``2.11.0``
+
 role_name
     The name of the role currently being executed.
 

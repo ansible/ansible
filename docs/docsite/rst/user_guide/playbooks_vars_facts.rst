@@ -660,6 +660,8 @@ The batch size is defined by ``serial``, when not set it is equivalent to the wh
 
 ``playbook_dir`` contains the playbook base directory.
 
+``playbook_files`` is a list with the full path of all received playbooks files (added after 2.11.0)
+
 ``role_path`` contains the current role's pathname and only works inside a role.
 
 ``ansible_check_mode`` is a boolean, set to ``True`` if you run Ansible with ``--check``.

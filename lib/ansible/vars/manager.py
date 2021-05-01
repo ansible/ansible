@@ -32,6 +32,7 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
@@ -451,6 +452,7 @@ class VariableManager:
         '''
 
         variables = {}
+        variables['playbook_files'] = [os.path.join(os.path.abspath(os.getcwd()), p) for p in context.CLIARGS["args"]]
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
         variables['ansible_config_file'] = C.CONFIG_FILE
