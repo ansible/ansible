@@ -477,7 +477,7 @@ def delegate_remote(args, exclude, require):
 
                 # AIX cp and GNU cp provide different options, no way could be found to have a common
                 # pattern and achieve the same goal
-                cp_opts = '-hr' if remote.platform in ['aix', 'ibmi'] else '-a'
+                cp_opts = '-hr' if remote.platform == 'aix' else '-a'
 
                 try:
                     command = 'rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root)

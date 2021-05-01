@@ -225,7 +225,7 @@ class ManagePosixCI:
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel':
             self.become = ['sudo', '-in', 'bash', '-c']
-        elif self.core_ci.platform in ['aix', 'ibmi']:
+        elif self.core_ci.platform == 'aix':
             self.become = []
 
         if self.become is None:

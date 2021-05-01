@@ -77,7 +77,6 @@ class AnsibleCoreCI:
         ),
         ibmps=(
             'aix',
-            'ibmi',
         ),
         parallels=(
             'macos',
