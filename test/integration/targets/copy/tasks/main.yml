@@ -27,6 +27,7 @@
         chdir: '{{role_path}}/files/subdir/subdir1'
         warn: no
       with_dict: "{{ symlinks }}"
+      delegate_to: localhost
 
     - name: Create remote unprivileged remote user
       user:
@@ -78,6 +79,7 @@
       when: ansible_os_family == 'RedHat' and ansible_selinux.get('mode') == 'enforcing'
 
     - import_tasks: no_log.yml
+      delegate_to: localhost
 
     - import_tasks: check_mode.yml
 
