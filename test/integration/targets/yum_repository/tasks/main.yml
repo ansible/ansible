@@ -106,6 +106,11 @@
         module_hotfixes: no
       register: test_repo_add1
 
+    - name: Get repo file contents
+      slurp:
+        path: "{{ '/etc/yum.repos.d/' ~ yum_repository_test_repo.name ~ '2.repo' }}"
+      register: slurp
+
     - name: check that options are correctly getting written to the repo file
       assert:
         that:
@@ -116,8 +121,7 @@
           - "'keepalive = 0' in repo_file_contents"
           - "'module_hotfixes = 0' in repo_file_contents"
       vars:
-        repo_file: "{{ '/etc/yum.repos.d/' ~ yum_repository_test_repo.name ~ '2.repo' }}"
-        repo_file_contents: "{{ lookup('file', repo_file) }}"
+        repo_file_contents: "{{ slurp.content | b64decode }}"
 
     - name: check new config doesn't change (Idempotant)
       yum_repository:
@@ -175,6 +179,11 @@
           - ddd
       notify: remove listtest repo
 
+    - name: Get repo file
+      slurp:
+        path: /etc/yum.repos.d/listtest.repo
+      register: slurp
+
     - name: Assert that lists were properly inserted
       assert:
         that:
@@ -185,6 +194,6 @@
           - "'aaa bbb' in repofile"
           - "'ccc ddd' in repofile"
       vars:
-        repofile: "{{ lookup('file', '/etc/yum.repos.d/listtest.repo') }}"
+        repofile: "{{ slurp.content | b64decode }}"
         url_hostname: "{{ yum_repository_test_repo.baseurl | urlsplit('hostname') }}"
         url_hostname2: "{{ url_hostname | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
