@@ -101,7 +101,7 @@ If you want to deprecate the old name, add a ``deprecation:`` entry (see above):
                     removal_version: 2.0.0
                     warning_text: Use foo.bar.new_cloud instead.
 
-You need to use the FQCN of the new module/plugin name, even if it is located in the same collection as the redirect. By using a FQCN from another collection, you redirect the module/plugin to that collection.
+You need to use the Fully Qualified Collection Name (FQCN) of the new module/plugin name, even if it is located in the same collection as the redirect. By using a FQCN from another collection, you redirect the module/plugin to that collection.
 
 If you need to support Ansible 2.9, please note that Ansible 2.9 does not know about ``meta/runtime.yml``. With Ansible 2.9 you can still rename plugins and modules inside one collection by using symbolic links. Note that ansible-base 2.10, ansible-core 2.11, and newer will prefer ``meta/runtime.yml`` entries over symbolic links.
 
@@ -111,7 +111,7 @@ Tombstoning a module or plugin in a collection
 
 To remove a deprecated module or plugin from a collection, you need to tombstone it:
 
-1. Remove the module or plugin file with related files like tests and documentation.
+1. Remove the module or plugin file with related files like tests, documentation references, and documentation.
 2. Add a tombstone entry in ``meta/runtime.yml``. For example, to tombstone the module ``old_cloud``, add:
 
    .. code-block:: yaml
