@@ -1848,6 +1848,11 @@ releases:
     - v2.9.20rc1_summary.yaml
     - wafv2-mod-defaults.yml
     release_date: '2021-04-05'
+  2.9.21:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.21_summary.yaml
+    release_date: '2021-05-03'
   2.9.21rc1:
     codename: Immigrant Song
     fragments:
