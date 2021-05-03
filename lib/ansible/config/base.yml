@@ -1560,7 +1560,7 @@ INVENTORY_CACHE_ENABLED:
   description:
     - Toggle to turn on inventory caching.
     - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
-    - The exisitng configuration settings are still accepted with the inventory plugin adding additional options from inventory configuration.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory configuration.
     - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE}]
   ini:
@@ -1571,7 +1571,7 @@ INVENTORY_CACHE_PLUGIN:
   description:
     - The plugin for caching inventory.
     - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
-    - The exisitng configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
     - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN}]
   ini:
@@ -1581,7 +1581,7 @@ INVENTORY_CACHE_PLUGIN_CONNECTION:
   description:
     - The inventory cache connection.
     - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
-    - The exisitng configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
     - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_CONNECTION}]
   ini:
@@ -1591,7 +1591,7 @@ INVENTORY_CACHE_PLUGIN_PREFIX:
   description:
     - The table prefix for the cache plugin.
     - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
-    - The exisitng configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
     - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX}]
   default: ansible_inventory_
@@ -1602,7 +1602,7 @@ INVENTORY_CACHE_TIMEOUT:
   description:
     - Expiration timeout for the inventory cache plugin data.
     - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
-    - The exisitng configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
     - This message will be removed in 2.16.
   default: 3600
   env: [{name: ANSIBLE_INVENTORY_CACHE_TIMEOUT}]
