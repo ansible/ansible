@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - Add Rocky Linux support (https://github.com/ansible/ansible/pull/74530)
