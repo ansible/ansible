@@ -2578,6 +2578,17 @@ releases:
     - su_fix.yml
     - v2.10.8rc1_summary.yaml
     release_date: '2021-04-05'
+  2.10.9:
+    changes:
+      release_summary: '| Release Date: 2021-05-03
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.9_summary.yaml
+    release_date: '2021-05-03'
   2.10.9rc1:
     changes:
       bugfixes:
