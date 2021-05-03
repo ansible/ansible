@@ -14,5 +14,6 @@ else
 fi
 
 # shellcheck disable=SC2086
-ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+target='callback_default'
+ansible-test integration --color -v --coverage --retry-on-error "${target}" ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
     --docker "${image}"
