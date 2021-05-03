@@ -1001,7 +1001,7 @@ class PopHostname(Hostname):
     strategy_class = DebianStrategy
 
 
-class RockyLinuxHostname(Hostname):
+class RockyHostname(Hostname):
     platform = 'Linux'
     distribution = 'Rocky'
     strategy_class = SystemdStrategy
