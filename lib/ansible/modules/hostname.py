@@ -1003,7 +1003,7 @@ class PopHostname(Hostname):
 
 class RockyLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'RockyLinux'
+    distribution = 'Rocky'
     strategy_class = SystemdStrategy
 
 

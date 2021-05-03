@@ -1,39 +1,39 @@
 {
-    "name": "RockyLinux 8.3",
+    "name": "Rocky Linux 8.3",
     "distro": {
         "codename": "",
-        "id": "rockylinux",
-        "name": "RockyLinux",
+        "id": "rocky",
+        "name": "Rocky Linux",
         "version": "8.3",
         "version_best": "8.3",
         "lsb_release_info": {
             "lsb_version": ":core-4.1-amd64:core-4.1-noarch",
-            "distributor_id": "RockyLinux",
-            "description": "RockyLinux release 8.3",
+            "distributor_id": "Rocky",
+            "description": "Rocky Linux release 8.3",
             "release": "8.3",
             "codename": ""
         },
         "os_release_info": {
-            "name": "RockyLinux",
+            "name": "Rocky Linux",
             "version": "8.3",
-            "id": "rockylinux",
+            "id": "rocky",
             "id_like": "rhel fedora",
             "version_id": "8.3",
             "platform_id": "platform:el8",
-            "pretty_name": "RockyLinux 8.3",
+            "pretty_name": "Rocky Linux 8.3",
             "ansi_color": "0;34",
             "cpe_name": "cpe:/o:rockylinux:rockylinux:8.3",
             "home_url": "https://rockylinux.org/",
             "bug_report_url": "https://bugs.rockylinux.org/",
-            "rockylinux_mantisbt_project": "RockyLinux-8",
-            "rockylinux_mantisbt_project_version": "8",
+            "rocky_support_product": "Rocky Linux",
+            "rocky_support_product_version": "8",
             "codename": ""
         }
     },
     "input": {
-        "/etc/centos-release": "RockyLinux release 8.3\n",
-        "/etc/redhat-release": "RockyLinux release 8.3\n",
-        "/etc/system-release": "RockyLinux release 8.3\n",
+        "/etc/rocky-release": "Rocky Linux release 8.3\n",
+        "/etc/redhat-release": "Rocky Linux release 8.3\n",
+        "/etc/system-release": "Rocky Linux release 8.3\n",
         "/etc/os-release": "NAME=\"Rocky Linux\"\nVERSION=\"8\"\nID=\"rocky\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"8\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"Rocky Linux 8\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:rocky:rocky:8\"\nHOME_URL=\"https://rockylinux.org/\"\nBUG_REPORT_URL=\"https://bugs.rockylinux.org/\"\nROCKY_SUPPORT_PRODUCT=\"Rocky Linux\"\nROCKY_SUPPORT_PRODUCT_VERSION=\"8\"\n",
         "/usr/lib/os-release": "NAME=\"Rocky Linux\"\nVERSION=\"8\"\nID=\"rocky\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"8\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"Rocky Linux 8\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:rocky:rocky:8\"\nHOME_URL=\"https://rockylinux.org/\"\nBUG_REPORT_URL=\"https://bugs.rockylinux.org/\"\nROCKY_SUPPORT_PRODUCT=\"Rocky Linux\"\nROCKY_SUPPORT_PRODUCT_VERSION=\"8\"\n"
     },
@@ -43,7 +43,7 @@
         ""
     ],
     "result": {
-        "distribution": "RockyLinux",
+        "distribution": "Rocky Linux",
         "distribution_version": "8.3",
         "distribution_release": "NA",
         "distribution_major_version": "8",
