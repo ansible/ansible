@@ -25,7 +25,7 @@
 
 - name: Add RabbitMQ Erlang repository
   apt_repository:
-    repo: "deb https://dl.bintray.com/rabbitmq-erlang/debian {{ ansible_distribution_release }} erlang-20.x"
+    repo: ppa:rabbitmq/rabbitmq-erlang
     filename: 'rabbitmq-erlang'
     state: present
     update_cache: yes
@@ -37,7 +37,7 @@
 
 - name: Install RabbitMQ Server
   apt:
-    deb: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-server_3.7.14-1_all.deb
+    deb: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/setup_rabbitmq/rabbitmq-server_3.8.14-1_all.deb
 
 - name: Install RabbitMQ TLS dependencies
   apt:
