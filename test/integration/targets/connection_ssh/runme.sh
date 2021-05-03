@@ -65,3 +65,7 @@ fi
 ANSIBLE_SCP_IF_SSH=true ./posix.sh "$@" "${scp_args[@]}"
 # piped
 ANSIBLE_SSH_TRANSFER_METHOD=piped ./posix.sh "$@"
+
+
+# test config defaults override
+ansible-playbook check_ssh_defaults.yml "$@"
