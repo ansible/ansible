@@ -10,7 +10,7 @@ The guides in this section cover using Ansible with a range of public cloud plat
    :maxdepth: 1
 
    guide_alicloud
-   guide_aws
+   ../collections/amazon/aws/guide_aws
    guide_cloudstack
    guide_gce
    guide_azure

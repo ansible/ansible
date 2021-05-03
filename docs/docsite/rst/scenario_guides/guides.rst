@@ -14,7 +14,7 @@ platforms, products, and technologies. They explore particular use cases in grea
    :caption: Public Cloud Guides
 
    guide_alicloud
-   guide_aws
+   ../collections/amazon/aws/index
    guide_cloudstack
    guide_gce
    guide_azure
