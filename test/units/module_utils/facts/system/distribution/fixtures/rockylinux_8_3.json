@@ -40,7 +40,7 @@
         "distribution_version": "8.3",
         "distribution_release": "NA",
         "distribution_major_version": "8",
-        "os_family": "Rocky"
+        "os_family": "RedHat"
     },
     "platform.release": "4.18.0-240.22.1.el8.x86_64"
 }
