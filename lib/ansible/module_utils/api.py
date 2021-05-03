@@ -130,11 +130,11 @@ def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
         yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
 
 
-def retry_never(x):
+def retry_never(exception_or_result):
     return False
 
 
-def do_nothing(error, delay):
+def do_nothing(delay, exception=None, result=None):
     return
 
 
@@ -142,7 +142,7 @@ def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_r
     """Generic retry decorator.
 
     :param backoff_iterator: An iterable of delays in seconds.
-    :param do_on_retry: A callable that takes an exception/None and the current delay and runs before the sleep (returns None).
+    :param do_on_retry: A callable that takes the current delay, the exception/None, the result/None, and executes before the sleep (returns None).
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
     :param should_retry_result: A callable that accepts the decorated function return value and decides whether or not to retry (returns a bool).
     """
@@ -161,6 +161,7 @@ def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_r
 
             for delay in backoff_iterator:
                 error = None
+                result = None
 
                 try:
                     result = function(*args, **kwargs)
@@ -172,7 +173,7 @@ def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_r
                     if not should_retry_result(result):
                         return result
 
-                do_on_retry(error, delay)
+                do_on_retry(delay=delay, exception=error, result=result)
                 time.sleep(delay)
 
             # Only or final attempt
