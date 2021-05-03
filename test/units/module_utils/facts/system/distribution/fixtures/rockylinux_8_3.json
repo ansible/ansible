@@ -1,5 +1,5 @@
 {
-    "name": "Rocky Linux 8.3",
+    "name": "Rocky 8.3",
     "distro": {
         "codename": "",
         "id": "rocky",
