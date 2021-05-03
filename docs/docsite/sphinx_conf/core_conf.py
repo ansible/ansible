@@ -170,8 +170,8 @@ html_context = {
     'latest_version': '2.10',
     # list specifically out of order to make latest work
     'available_versions': ('2.10', 'devel',),
-    'css_files': ('_static/core.css',  # overrides to the standard theme
-                  ),
+    'css_files': ['_static/core.css',  # overrides to the standard theme
+                 ],
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
