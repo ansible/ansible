@@ -1,3 +1,2 @@
 bugfixes:
   - Add RockyLinux to fact gathering (https://github.com/ansible/ansible/pull/74530).
-  - hostname - Add support for RockyLinux (https://github.com/ansible/ansible/pull/74530).
