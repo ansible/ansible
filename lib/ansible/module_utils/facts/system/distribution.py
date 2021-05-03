@@ -467,7 +467,7 @@ class Distribution(object):
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
-                                'AlmaLinux'],
+                                'AlmaLinux', 'Rocky'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
