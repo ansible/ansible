@@ -802,10 +802,12 @@ class CentOSHostname(Hostname):
     distribution = 'Centos'
     strategy_class = RedHatStrategy
 
+
 class RockyHostname(Hostname):
     platform = 'Linux'
     distribution = 'Rocky'
     strategy_class = RedHatStrategy
+
 
 class ClearLinuxHostname(Hostname):
     platform = 'Linux'
