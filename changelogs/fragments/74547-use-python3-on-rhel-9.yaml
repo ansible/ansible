@@ -1,0 +1,2 @@
+minor_changes:
+- On RHEL 9, CentOS Stream 9 etc., use /usr/bin/python3 as the default interpreter; /usr/libexec/platform-python is just a backwards-compatibility symbolic link there.
