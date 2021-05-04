@@ -1494,6 +1494,7 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     centos: &rhelish
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
+      '9': /usr/bin/python3
     debian:
       '8': /usr/bin/python
       '10': /usr/bin/python3
