@@ -584,6 +584,17 @@ class TaskExecutor:
         # feed back into pc to ensure plugins not using get_option can get correct value
         self._connection._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=vars_copy, templar=templar)
 
+        # for persistent connections, initialize socket path and start connection manager
+        if any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence)):
+            self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
+            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
+            display.vvvv('using connection plugin %s' % self._connection.transport, host=self._play_context.remote_addr)
+
+            options = self._connection.get_options()
+            socket_path = start_connection(self._play_context, options, self._task._uuid)
+            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+            setattr(self._connection, '_socket_path', socket_path)
+
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden
         if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
@@ -992,16 +1003,6 @@ class TaskExecutor:
         # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
 
-        if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
-            self._play_context.timeout = connection.get_option('persistent_command_timeout')
-            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
-            display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-
-            options = connection.get_options(cvars)
-            socket_path = start_connection(self._play_context, options, self._task._uuid)
-            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
-            setattr(connection, '_socket_path', socket_path)
-
         return connection
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
@@ -1079,6 +1080,11 @@ class TaskExecutor:
                 except KeyError:
                     pass  # some plugins don't support all base flags
             self._play_context.prompt = self._connection.become.prompt
+
+        # deals with networking sub_plugins (network_cli/httpapi/netconf)
+        sub = getattr(self._connection, '_sub_plugin', None)
+        if sub is not None and sub.get('type') != 'external':
+            varnames.extend(self._set_plugin_options(sub.get('type'), variables, templar, task_keys))
 
         return varnames
 
