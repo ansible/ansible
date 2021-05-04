@@ -1001,6 +1001,12 @@ class PopHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class RockyHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Rocky'
+    strategy_class = SystemdStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
