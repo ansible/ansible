@@ -1,0 +1,2 @@
+minor_changes:
+  - cli scripts - remove trailing blank space in help after newline when outputting.
