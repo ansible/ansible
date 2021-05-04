@@ -6,8 +6,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import curses
-import io
 import importlib
+import io
 import pytest
 import sys
 
