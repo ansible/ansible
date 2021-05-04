@@ -375,7 +375,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             options = self.parser.parse_args(self.args[1:])
         except SystemExit as e:
             if(e.code != 0):
-                self.parser.exit(status=2, message=" \n%s " % self.parser.format_help())
+                self.parser.exit(status=2, message=" \n%s" % self.parser.format_help())
             raise
         options = self.post_process_args(options)
         context._init_global_context(options)
