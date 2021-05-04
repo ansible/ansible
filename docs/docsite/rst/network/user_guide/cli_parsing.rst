@@ -593,6 +593,7 @@ JC is a Python library that converts the output of dozens of common linux/unix/m
 The following is an example using JC to parse the output of the ``dig`` command:
 
 .. code-block:: yaml
+
    - name: "Run dig command and parse with jc"
      hosts: ubuntu
      tasks:
