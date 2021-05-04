@@ -45,7 +45,7 @@
           - ansible_failed_task.name == "EXPECTED FAILURE - test invalid var type"
           - expected in ansible_failed_result.msg
       vars:
-        expected: "Invalid setting identifier, \"42\" is not a string, its a <class 'int'>"
+        expected: "Invalid setting identifier, \"42\" is not a string"
 
 - name: test default
   set_fact:
