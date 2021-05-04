@@ -166,8 +166,8 @@ stages:
         parameters:
           testFormat: i/{0}
           targets:
-            - name: OS X 10.11
-              test: osx/10.11
+            - name: macOS 11.1
+              test: macos/11.1
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.3 py36
