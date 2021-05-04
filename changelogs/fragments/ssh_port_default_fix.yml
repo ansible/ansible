@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove 'default' from ssh plugin as we want to rely on default from ssh itself or ssh/config.
