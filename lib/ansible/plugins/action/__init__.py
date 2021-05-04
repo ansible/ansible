@@ -660,7 +660,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         'allow_world_readable_tmpfiles is a no-op. See this '
                         'URL for more details: '
                         'https://docs.ansible.com/ansible/become.html'
-                        '#becoming-an-unprivileged-user')
+                        '#risks-of-becoming-an-unprivileged-user')
                 if execute:
                     group_mode = 'g+rwx'
                 else:
@@ -695,7 +695,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             'to create when becoming an unprivileged user '
             '(rc: %s, err: %s}). For information on working around this, see '
             'https://docs.ansible.com/ansible/become.html'
-            '#becoming-an-unprivileged-user' % (
+            '#risks-of-becoming-an-unprivileged-user' % (
                 res['rc'],
                 to_native(res['stderr'])))
 
