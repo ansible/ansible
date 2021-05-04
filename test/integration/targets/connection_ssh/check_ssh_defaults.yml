@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: ssh
   gather_facts: false
   vars:
     ansible_connection: ssh
