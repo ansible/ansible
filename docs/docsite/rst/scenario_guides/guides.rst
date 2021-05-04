@@ -6,15 +6,18 @@
 Scenario Guides
 ******************
 
-The guides in this section cover integrating Ansible with a variety of
-platforms, products, and technologies. They explore particular use cases in greater depth and provide a more "top-down" explanation of some basic features.
+The guides in this section are migrating into collections. Remaining guides may be out of date.
+
+These guides cover integrating Ansible with a variety of platforms, products, and technologies. They explore particular use cases in greater depth and provide a more "top-down" explanation of some basic features.
 
 .. toctree::
    :maxdepth: 1
    :caption: Public Cloud Guides
 
    guide_alicloud
-   ../collections/amazon/aws/index
+..
+  guide_aws
+
    guide_cloudstack
    guide_gce
    guide_azure
@@ -40,4 +43,3 @@ platforms, products, and technologies. They explore particular use cases in grea
    guide_kubernetes
    guide_vagrant
    guide_vmware
-   guide_vmware_rest
