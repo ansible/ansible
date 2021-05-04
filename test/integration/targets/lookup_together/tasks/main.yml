@@ -12,3 +12,18 @@
         - "b == '2'"
         - "c == '3'"
         - "d == '4'"
+
+- block:
+    - name: "EXPECTED FAILURE - test empty list"
+      debug:
+        msg: "{{ item.0 }} and {{ item.1 }}"
+      with_together: []
+
+    - fail:
+        msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test empty list"
+          - ansible_failed_result.msg == "with_together requires at least one element in each list"
