@@ -583,6 +583,28 @@ The task sets the follow fact as the ``interfaces`` fact for the host:
      state: up
 
 
+Parsing with JC
+-----------------
+
+JC is a Python library that converts the output of dozens of common linux/unix/macOS/Windows command-line tools and file-types to python dictionaries or lists of dictionaries for easier parsing. JC is available as a filter plugin in the ``community.general`` collection.
+
+The following is an example using JC to parse the output of the ``dig`` command:
+
+.. code-block:: yaml
+   - name: "Run dig command and parse with jc"
+     hosts: ubuntu
+     tasks:
+     - shell: dig example.com
+       register: result
+     - set_fact:
+       myvar: "{{ result.stdout | community.general.jc('dig') }}"
+     - debug:
+       msg: "The IP is: {{ myvar[0].answer[0].data }}"
+- The JC project and documentation can be found `here <https://github.com/kellyjonbrazil/jc/>`.
+
+- See this `blog entry <https://blog.kellybrazil.com/2020/08/30/parsing-command-output-in-ansible-with-jc/>` for more information.
+
+
 Converting XML
 -----------------
 
