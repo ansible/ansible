@@ -1,0 +1,2 @@
+bugfixes:
+- interpreter_discovery - hide warning 'No python interpreters...' when ANSIBLE_PYTHON_INTERPRETER=auto_silent (https://github.com/ansible/ansible/issues/74274).
