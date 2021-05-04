@@ -14,3 +14,43 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_connection'
+
+- block:
+  - name: EXPECTED FAILURE - test invalid var
+    debug:
+      var: '{{ lookup("vars", "doesnotexist") }}'
+
+  - fail:
+      msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test invalid var"
+          - expected in ansible_failed_result.msg
+      vars:
+        expected: "No variable found with this name: doesnotexist"
+
+- block:
+  - name: EXPECTED FAILURE - test invalid var type
+    debug:
+      var: '{{ lookup("vars", 42) }}'
+
+  - fail:
+      msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test invalid var type"
+          - expected in ansible_failed_result.msg
+      vars:
+        expected: "Invalid setting identifier, \"42\" is not a string"
+
+- name: test default
+  set_fact:
+    expected_default_var: '{{ lookup("vars", "doesnotexist", default="some text") }}'
+
+- assert:
+    that:
+      - expected_default_var == "some text"
