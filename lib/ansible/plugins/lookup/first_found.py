@@ -41,9 +41,9 @@ EXAMPLES = """
     msg: "{{ lookup('first_found', findme, errors='ignore') }}"
   vars:
     findme:
-      - "/path/to/foo.txt"
-      - "bar.txt"  # will be looked in files/ dir relative to role and/or play
-      - "/path/to/biz.txt"
+      - /path/to/foo.txt
+      - bar.txt  # will be looked in files/ dir relative to role and/or play
+      - /path/to/biz.txt
 
 - name: include tasks only if files exist.
   include_tasks:

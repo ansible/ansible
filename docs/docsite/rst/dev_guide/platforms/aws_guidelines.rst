@@ -386,27 +386,18 @@ The combination of these two approaches is then:
            module.fail_json_aws(e, msg="Could not describe some resource")
 
 
-If the underlying ``describe_some_resources`` API call throws a ``ResourceNotFound``
-exception, ``AWSRetry`` takes this as a cue to retry until it's not thrown (this
-is so that when creating a resource, we can just retry until it exists).
-
-To handle authorization failures or parameter validation errors in
-``describe_some_resource_with_backoff``, where we just want to return ``None`` if
-the resource doesn't exist and not retry, we need:
+Prior to Ansible 2.10 if the underlying ``describe_some_resources`` API call threw
+a ``ResourceNotFound`` exception, ``AWSRetry`` would take this as a cue to retry until
+it is not thrown (this is so that when creating a resource, we can just retry until it
+exists).  This default was changed and it is now necessary to explicitly request
+this behaviour.  This can be done by using the ``catch_extra_error_codes``
+argument on the decorator.
 
 .. code-block:: python
 
-   @AWSRetry.exponential_backoff(retries=5, delay=5)
-   def describe_some_resource_with_backoff(client, **kwargs):
-        try:
-            return client.describe_some_resource(ResourceName=kwargs['name'])['Resources']
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == 'ResourceNotFound':
-                return None
-            else:
-                raise
-        except BotoCoreError as e:
-            raise
+   @AWSRetry.exponential_backoff(retries=5, delay=5, catch_extra_error_codes=['ResourceNotFound'])
+   def describe_some_resource_retry_missing(client, **kwargs):
+        return client.describe_some_resource(ResourceName=kwargs['name'])['Resources']
 
    def describe_some_resource(client, module):
        name = module.params.get['name']
