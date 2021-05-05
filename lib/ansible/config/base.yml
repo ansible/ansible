@@ -482,7 +482,7 @@ DEFAULT_BECOME_EXE:
   - {key: become_exe, section: privilege_escalation}
 DEFAULT_BECOME_FLAGS:
   name: Set 'become' executable options
-  default: ''
+  default: ~
   description: Flags to pass to the privilege escalation executable.
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
@@ -881,7 +881,7 @@ DEFAULT_MANAGED_STR:
   yaml: {key: defaults.ansible_managed}
 DEFAULT_MODULE_ARGS:
   name: Adhoc default arguments
-  default: ''
+  default: ~
   description:
     - This sets the default arguments to pass to the ``ansible`` adhoc binary if no ``-a`` is specified.
   env: [{name: ANSIBLE_MODULE_ARGS}]
@@ -1566,33 +1566,53 @@ INVENTORY_ANY_UNPARSED_IS_FAILED:
 INVENTORY_CACHE_ENABLED:
   name: Inventory caching enabled
   default: False
-  description: Toggle to turn on inventory caching
+  description:
+    - Toggle to turn on inventory caching.
+    - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory configuration.
+    - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE}]
   ini:
   - {key: cache, section: inventory}
   type: bool
 INVENTORY_CACHE_PLUGIN:
   name: Inventory cache plugin
-  description: The plugin for caching inventory. If INVENTORY_CACHE_PLUGIN is not provided CACHE_PLUGIN can be used instead.
+  description:
+    - The plugin for caching inventory.
+    - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN}]
   ini:
   - {key: cache_plugin, section: inventory}
 INVENTORY_CACHE_PLUGIN_CONNECTION:
   name: Inventory cache plugin URI to override the defaults section
-  description: The inventory cache connection. If INVENTORY_CACHE_PLUGIN_CONNECTION is not provided CACHE_PLUGIN_CONNECTION can be used instead.
+  description:
+    - The inventory cache connection.
+    - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_CONNECTION}]
   ini:
   - {key: cache_connection, section: inventory}
 INVENTORY_CACHE_PLUGIN_PREFIX:
   name: Inventory cache plugin table prefix
-  description: The table prefix for the cache plugin. If INVENTORY_CACHE_PLUGIN_PREFIX is not provided CACHE_PLUGIN_PREFIX can be used instead.
+  description:
+    - The table prefix for the cache plugin.
+    - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX}]
-  default: ansible_facts
+  default: ansible_inventory_
   ini:
   - {key: cache_prefix, section: inventory}
 INVENTORY_CACHE_TIMEOUT:
   name: Inventory cache plugin expiration timeout
-  description: Expiration timeout for the inventory cache plugin data. If INVENTORY_CACHE_TIMEOUT is not provided CACHE_TIMEOUT can be used instead.
+  description:
+    - Expiration timeout for the inventory cache plugin data.
+    - This setting has been moved to the individual inventory plugins as a plugin option :ref:`inventory_plugins`.
+    - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
+    - This message will be removed in 2.16.
   default: 3600
   env: [{name: ANSIBLE_INVENTORY_CACHE_TIMEOUT}]
   ini:

@@ -69,6 +69,11 @@ options:
     ini:
       - section: default
         key: fact_caching_prefix
+        deprecated:
+          alternatives: Use the 'defaults' section instead
+          version: '2.16'
+      - section: defaults
+        key: fact_caching_prefix
       - section: inventory
         key: cache_prefix
 '''
