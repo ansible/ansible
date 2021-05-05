@@ -4,9 +4,9 @@ __metaclass__ = type
 
 import os
 
-from .... import types as t
+from ..... import types as t
 
-from ....encoding import (
+from .....encoding import (
     to_bytes,
 )
 

@@ -2,22 +2,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from .. import types as t
+from .... import types as t
 
-from ..util import (
+from ....util import (
     ConfigParser,
     display,
 )
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..target import (
+from ....target import (
     IntegrationTarget,
 )
 
-from ..core_ci import (
+from ....core_ci import (
     AnsibleCoreCI,
 )
 

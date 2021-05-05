@@ -10,17 +10,17 @@ import signal
 import sys
 import time
 
-from .config import (
+from ...config import (
     CommonConfig,
     TestConfig,
 )
 
-from .io import (
+from ...io import (
     write_json_file,
     read_json_file,
 )
 
-from .util import (
+from ...util import (
     display,
     SubprocessError,
     ApplicationError,
@@ -28,31 +28,31 @@ from .util import (
     get_available_python_versions,
 )
 
-from .util_common import (
+from ...util_common import (
     data_context,
     write_json_test_results,
     ResultType,
 )
 
-from .docker_util import (
+from ...docker_util import (
     get_docker_command,
     docker_info,
     docker_version
 )
 
-from .thread import (
+from ...thread import (
     WrappedThread,
 )
 
-from .constants import (
+from ...constants import (
     TIMEOUT_PATH,
 )
 
-from .test import (
+from ...test import (
     TestTimeout,
 )
 
-from .ci import (
+from ...ci import (
     get_ci_provider,
 )
 

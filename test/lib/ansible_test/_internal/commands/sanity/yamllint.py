@@ -5,11 +5,13 @@ __metaclass__ = type
 import json
 import os
 
-from .. import types as t
+from ... import types as t
 
-from ..import ansible_util
+from ...ansible_util import (
+    check_pyyaml,
+)
 
-from ..sanity import (
+from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
@@ -18,26 +20,26 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..target import (
+from ...target import (
     TestTarget,
 )
 
-from ..util import (
+from ...util import (
     SubprocessError,
     display,
     is_subdir,
     find_python,
 )
 
-from ..util_common import (
+from ...util_common import (
     run_command,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 
@@ -71,7 +73,7 @@ class YamllintTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        pyyaml_presence = ansible_util.check_pyyaml(args, python_version, quiet=True)
+        pyyaml_presence = check_pyyaml(args, python_version, quiet=True)
         if not pyyaml_presence['cloader']:
             display.warning("Skipping sanity test '%s' due to missing libyaml support in PyYAML."
                             % self.name)

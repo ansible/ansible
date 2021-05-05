@@ -4,9 +4,9 @@ __metaclass__ = type
 
 import os
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanityMultipleVersion,
     SanityMessage,
     SanityFailure,
@@ -15,11 +15,11 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..target import (
+from ...target import (
     TestTarget,
 )
 
-from ..util import (
+from ...util import (
     ANSIBLE_TEST_DATA_ROOT,
     SubprocessError,
     remove_tree,
@@ -32,34 +32,34 @@ from ..util import (
     REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
-from ..util_common import (
+from ...util_common import (
     intercept_command,
     run_command,
     ResultType,
 )
 
-from ..ansible_util import (
+from ...ansible_util import (
     ansible_environment,
 )
 
-from ..executor import (
+from ...executor import (
     generate_pip_install,
     install_cryptography,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..coverage_util import (
+from ...coverage_util import (
     coverage_context,
 )
 
-from ..venv import (
+from ...venv import (
     create_virtual_environment,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 

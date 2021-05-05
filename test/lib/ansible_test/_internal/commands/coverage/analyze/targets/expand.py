@@ -2,9 +2,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from .... import types as t
+from ..... import types as t
 
-from ....io import (
+from .....io import (
     SortedSetEncoder,
     write_json_file,
 )

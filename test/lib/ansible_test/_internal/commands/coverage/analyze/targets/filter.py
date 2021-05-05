@@ -4,7 +4,7 @@ __metaclass__ = type
 
 import re
 
-from .... import types as t
+from ..... import types as t
 
 from . import (
     CoverageAnalyzeTargetsConfig,

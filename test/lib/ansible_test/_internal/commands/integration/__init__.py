@@ -8,31 +8,31 @@ import os
 import shutil
 import tempfile
 
-from .. import types as t
+from ... import types as t
 
-from ..encoding import (
+from ...encoding import (
     to_bytes,
 )
 
-from ..target import (
+from ...target import (
     analyze_integration_target_dependencies,
     walk_integration_targets,
 )
 
-from ..config import (
+from ...config import (
     IntegrationConfig,
     NetworkIntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
 )
 
-from ..io import (
+from ...io import (
     make_dirs,
     write_text_file,
     read_text_file,
 )
 
-from ..util import (
+from ...util import (
     ApplicationError,
     display,
     COVERAGE_CONFIG_NAME,
@@ -41,24 +41,24 @@ from ..util import (
     MODE_FILE,
 )
 
-from ..util_common import (
+from ...util_common import (
     named_temporary_file,
     ResultType,
 )
 
-from ..coverage_util import (
+from ...coverage_util import (
     generate_coverage_config,
 )
 
-from ..cache import (
+from ...cache import (
     CommonCache,
 )
 
-from ..cloud import (
+from .cloud import (
     CloudEnvironmentConfig,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 
