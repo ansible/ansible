@@ -57,11 +57,11 @@ def parse_args():
     """Parse and return args."""
     source = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    parser = argparse.ArgumentParser(description='Report on incidental test coverage downloaded from Shippable.')
+    parser = argparse.ArgumentParser(description='Report on incidental test coverage downloaded from Azure Pipelines.')
 
     parser.add_argument('result',
                         type=directory,
-                        help='path to directory containing test results downloaded from Shippable')
+                        help='path to directory containing test results downloaded from Azure Pipelines')
 
     parser.add_argument('--output',
                         type=optional_directory,
@@ -143,7 +143,7 @@ def incidental_report(args):
 
     if not coverage_data.paths:
         raise ApplicationError('no coverage data found\n'
-                               'make sure the downloaded results are from a code coverage run on Shippable')
+                               'make sure the downloaded results are from a code coverage run on Azure Pipelines')
 
     # generate a unique subdirectory in the output directory based on the input files being used
     path_hash = hashlib.sha256(b'\n'.join(p.encode() for p in coverage_data.paths)).hexdigest()
