@@ -11,10 +11,14 @@ import io
 import pytest
 import sys
 
-controller_minversion = pytest.mark.skipif(sys.version_info < (3, 8), reason="Requires Python 3.8 or later")
+from ansible.plugins.action import pause  # noqa: F401
+from ansible.module_utils.six import PY2
+
+builtin_import = 'builtins.__import__'
+if PY2:
+    builtin_import = '__builtin__.__import__'
 
 
-@controller_minversion
 def test_pause_curses_tigetstr_none(mocker, monkeypatch):
     monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
 
@@ -29,7 +33,7 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
         else:
             return dunder_import(*args, **kwargs)
 
-    mocker.patch('builtins.__import__', _import)
+    mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.plugins.action.pause')
 
@@ -38,7 +42,6 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
     assert mod.CLEAR_TO_EOL == b'\x1b[K'
 
 
-@controller_minversion
 def test_pause_missing_curses(mocker, monkeypatch):
     monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
 
@@ -50,7 +53,7 @@ def test_pause_missing_curses(mocker, monkeypatch):
         else:
             return dunder_import(*args, **kwargs)
 
-    mocker.patch('builtins.__import__', _import)
+    mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.plugins.action.pause')
 
@@ -62,7 +65,6 @@ def test_pause_missing_curses(mocker, monkeypatch):
     assert mod.CLEAR_TO_EOL == b'\x1b[K'
 
 
-@controller_minversion
 @pytest.mark.parametrize('exc', (curses.error, TypeError, io.UnsupportedOperation))
 def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
     monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
@@ -78,7 +80,7 @@ def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
         else:
             return dunder_import(*args, **kwargs)
 
-    mocker.patch('builtins.__import__', _import)
+    mocker.patch(builtin_import, _import)
 
     mod = importlib.import_module('ansible.plugins.action.pause')
 
