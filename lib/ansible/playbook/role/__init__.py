@@ -290,7 +290,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         base_argspec_path = os.path.join(self._role_path, 'meta', 'argument_specs')
 
         for ext in extensions:
-            full_path = os.path.join(base_argspec_path, ext)
+            full_path = base_argspec_path + ext
             if self._loader.path_exists(full_path):
                 # Note: _load_role_yaml() takes care of rebuilding the path.
                 argument_specs = self._load_role_yaml('meta', main='argument_specs')
