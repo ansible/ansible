@@ -4,19 +4,19 @@ __metaclass__ = type
 
 import re
 
-from ..io import (
+from ....io import (
     read_text_file,
 )
 
-from ..util import (
+from ....util import (
     display,
 )
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..containers import (
+from ....containers import (
     run_support_container,
     wait_for_file,
 )

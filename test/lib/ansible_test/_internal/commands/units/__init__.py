@@ -5,12 +5,12 @@ __metaclass__ = type
 import os
 import sys
 
-from ..io import (
+from ...io import (
     write_text_file,
     make_dirs,
 )
 
-from ..util import (
+from ...util import (
     ANSIBLE_TEST_DATA_ROOT,
     display,
     get_available_python_versions,
@@ -23,44 +23,44 @@ from ..util import (
     ANSIBLE_LIB_ROOT,
 )
 
-from ..util_common import (
+from ...util_common import (
     intercept_command,
     ResultType,
     handle_layout_messages,
     create_temp_dir,
 )
 
-from ..ansible_util import (
+from ...ansible_util import (
     ansible_environment,
     check_pyyaml,
     get_ansible_python_path,
 )
 
-from ..target import (
+from ...target import (
     walk_internal_targets,
     walk_units_targets,
 )
 
-from ..config import (
+from ...config import (
     UnitsConfig,
 )
 
-from ..coverage_util import (
+from ...coverage_util import (
     coverage_context,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 
-from ..executor import (
+from ...executor import (
     AllTargetsSkipped,
     Delegate,
     get_changes_filter,
     install_command_requirements,
 )
 
-from ..content_config import (
+from ...content_config import (
     get_content_config,
 )
 

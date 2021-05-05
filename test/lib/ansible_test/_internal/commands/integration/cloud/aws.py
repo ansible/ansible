@@ -4,23 +4,23 @@ __metaclass__ = type
 
 import os
 
-from .. import types as t
+from .... import types as t
 
-from ..util import (
+from ....util import (
     ApplicationError,
     ConfigParser,
     display,
 )
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..target import (
+from ....target import (
     IntegrationTarget,
 )
 
-from ..core_ci import (
+from ....core_ci import (
     AnsibleCoreCI,
 )
 

@@ -6,9 +6,9 @@ import json
 import textwrap
 import os
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
@@ -17,11 +17,11 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..target import (
+from ...target import (
     filter_targets,
     walk_posix_integration_targets,
     walk_windows_integration_targets,
@@ -29,21 +29,21 @@ from ..target import (
     walk_module_targets,
 )
 
-from ..cloud import (
+from ..integration.cloud import (
     get_cloud_platforms,
 )
 
-from ..io import (
+from ...io import (
     read_text_file,
 )
 
-from ..util import (
+from ...util import (
     display,
     find_python,
     raw_command,
 )
 
-from ..util_common import (
+from ...util_common import (
     write_json_test_results,
     ResultType,
 )

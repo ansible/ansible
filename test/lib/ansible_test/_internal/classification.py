@@ -789,7 +789,7 @@ class PathMapper:
             if path == 'test/lib/ansible_test/_data/completion/docker.txt':
                 return all_tests(self.args, force=True)  # force all tests due to risk of breaking changes in new test environment
 
-        if path.startswith('test/lib/ansible_test/_internal/cloud/'):
+        if path.startswith('test/lib/ansible_test/_internal/commands/integration/cloud/'):
             cloud_target = 'cloud/%s/' % name
 
             if cloud_target in self.integration_targets_by_alias:
@@ -799,7 +799,7 @@ class PathMapper:
 
             return all_tests(self.args)  # test infrastructure, run all tests
 
-        if path.startswith('test/lib/ansible_test/_internal/sanity/'):
+        if path.startswith('test/lib/ansible_test/_internal/commands/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
                 'integration': 'ansible-test',  # run ansible-test self tests
@@ -811,7 +811,7 @@ class PathMapper:
                 'integration': 'ansible-test',  # run ansible-test self tests
             }
 
-        if path.startswith('test/lib/ansible_test/_internal/units/'):
+        if path.startswith('test/lib/ansible_test/_internal/commands/units/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
                 'integration': 'ansible-test',  # run ansible-test self tests

@@ -4,7 +4,7 @@ __metaclass__ = type
 
 import os
 
-from ..util_common import (
+from ...util_common import (
     ResultType,
 )
 

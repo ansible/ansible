@@ -10,17 +10,17 @@ import re
 import tempfile
 import time
 
-from .. import types as t
+from .... import types as t
 
-from ..encoding import (
+from ....encoding import (
     to_bytes,
 )
 
-from ..io import (
+from ....io import (
     read_text_file,
 )
 
-from ..util import (
+from ....util import (
     ABC,
     ANSIBLE_TEST_CONFIG_ROOT,
     ApplicationError,
@@ -29,29 +29,29 @@ from ..util import (
     load_plugins,
 )
 
-from ..util_common import (
+from ....util_common import (
     ResultType,
     write_json_test_results,
 )
 
-from ..target import (
+from ....target import (
     IntegrationTarget,
 )
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
     TestConfig,
 )
 
-from ..ci import (
+from ....ci import (
     get_ci_provider,
 )
 
-from ..data import (
+from ....data import (
     data_context,
 )
 
-from ..docker_util import (
+from ....docker_util import (
     get_docker_command,
 )
 
@@ -61,7 +61,7 @@ ENVIRONMENTS = {}
 
 def initialize_cloud_plugins():  # type: () -> None
     """Import cloud plugins and load them into the plugin dictionaries."""
-    import_plugins('cloud')
+    import_plugins('commands/integration/cloud')
 
     load_plugins(CloudProvider, PROVIDERS)
     load_plugins(CloudEnvironment, ENVIRONMENTS)

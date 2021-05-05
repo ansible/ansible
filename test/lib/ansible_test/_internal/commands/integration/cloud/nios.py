@@ -4,11 +4,11 @@ __metaclass__ = type
 
 import os
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..containers import (
+from ....containers import (
     run_support_container,
 )
 

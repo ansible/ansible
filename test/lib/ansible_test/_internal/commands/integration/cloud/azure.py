@@ -4,34 +4,34 @@ __metaclass__ = type
 
 import os
 
-from .. import types as t
+from .... import types as t
 
-from ..io import (
+from ....io import (
     read_text_file,
 )
 
-from ..util import (
+from ....util import (
     ApplicationError,
     ConfigParser,
     display,
 )
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..target import (
+from ....target import (
     IntegrationTarget,
 )
 
-from ..http import (
+from ....http import (
     HttpClient,
     parse_qs,
     urlparse,
     urlunparse,
 )
 
-from ..core_ci import (
+from ....core_ci import (
     AnsibleCoreCI,
 )
 
