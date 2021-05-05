@@ -78,15 +78,42 @@ class RoleMixin(object):
     Note: The methods for actual display of role data are not present here.
     """
 
-    ROLE_ARGSPEC_FILE = 'main.yml'
+    ROLE_META_FILE = 'main.yml'
+    ROLE_ARGSPEC_FILE = 'argument_specs.yml'
 
     def _load_argspec(self, role_name, collection_path=None, role_path=None):
+        """Load the role argument spec data from the source file.
+
+        :param str role_name: The name of the role for which we want the argspec data.
+        :param str collection_path: Path to the collection containing the role. This
+            will be None for standard roles.
+        :param str role_path: Path to the standard role. This will be None for
+            collection roles.
+
+        We support two files containing the role arg spec data: either meta/main.yml
+        or meta/argument_spec.yml. The argument_spec.yml file will take precedence
+        over the meta/main.yml file, if it exists. Data is NOT combined between the
+        two files.
+
+        :returns: A dict of all data underneath the `argument_specs` top-level YAML
+            key in the argspec data file. Empty dict is returned if there is no data.
+        """
+
         if collection_path:
-            path = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_ARGSPEC_FILE)
+            argspec_path = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_ARGSPEC_FILE)
+            meta_path = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_META_FILE)
         elif role_path:
-            path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
+            argspec_path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
+            meta_path = os.path.join(role_path, 'meta', self.ROLE_META_FILE)
         else:
             raise AnsibleError("A path is required to load argument specs for role '%s'" % role_name)
+
+        if os.path.exists(argspec_path):
+            path = argspec_path
+        elif os.path.exists(meta_path):
+            path = meta_path
+        else:
+            return {}
 
         try:
             with open(path, 'r') as f:
@@ -113,15 +140,20 @@ class RoleMixin(object):
         for path in role_paths:
             if not os.path.isdir(path):
                 continue
-            # Check each subdir for a meta/main.yml file
+
+            # Check each subdir for an argument spec file
             for entry in os.listdir(path):
                 role_path = os.path.join(path, entry)
-                full_path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
-                if os.path.exists(full_path):
-                    if name_filters is None or entry in name_filters:
-                        if entry not in found_names:
-                            found.add((entry, role_path))
-                        found_names.add(entry)
+
+                # Role argspecs can be in one of two files in meta subdir
+                for specfile in (self.ROLE_ARGSPEC_FILE, self.ROLE_META_FILE):
+                    full_path = os.path.join(role_path, 'meta', specfile)
+                    if os.path.exists(full_path):
+                        if name_filters is None or entry in name_filters:
+                            if entry not in found_names:
+                                found.add((entry, role_path))
+                            found_names.add(entry)
+                        break
         return found
 
     def _find_all_collection_roles(self, name_filters=None, collection_filter=None):
@@ -147,19 +179,23 @@ class RoleMixin(object):
             roles_dir = os.path.join(path, 'roles')
             if os.path.exists(roles_dir):
                 for entry in os.listdir(roles_dir):
-                    full_path = os.path.join(roles_dir, entry, 'meta', self.ROLE_ARGSPEC_FILE)
-                    if os.path.exists(full_path):
-                        if name_filters is None:
-                            found.add((entry, collname, path))
-                        else:
-                            # Name filters might contain a collection FQCN or not.
-                            for fqcn in name_filters:
-                                if len(fqcn.split('.')) == 3:
-                                    (ns, col, role) = fqcn.split('.')
-                                    if '.'.join([ns, col]) == collname and entry == role:
+
+                    # Role argspecs can be in one of two files in meta subdir
+                    for specfile in (self.ROLE_ARGSPEC_FILE, self.ROLE_META_FILE):
+                        full_path = os.path.join(roles_dir, entry, 'meta', specfile)
+                        if os.path.exists(full_path):
+                            if name_filters is None:
+                                found.add((entry, collname, path))
+                            else:
+                                # Name filters might contain a collection FQCN or not.
+                                for fqcn in name_filters:
+                                    if len(fqcn.split('.')) == 3:
+                                        (ns, col, role) = fqcn.split('.')
+                                        if '.'.join([ns, col]) == collname and entry == role:
+                                            found.add((entry, collname, path))
+                                    elif fqcn == entry:
                                         found.add((entry, collname, path))
-                                elif fqcn == entry:
-                                    found.add((entry, collname, path))
+                            break
         return found
 
     def _build_summary(self, role, collection, argspec):
