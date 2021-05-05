@@ -482,7 +482,7 @@ DEFAULT_BECOME_EXE:
   - {key: become_exe, section: privilege_escalation}
 DEFAULT_BECOME_FLAGS:
   name: Set 'become' executable options
-  # no default setting  default: ''
+  default: ~
   description: Flags to pass to the privilege escalation executable.
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
@@ -881,7 +881,7 @@ DEFAULT_MANAGED_STR:
   yaml: {key: defaults.ansible_managed}
 DEFAULT_MODULE_ARGS:
   name: Adhoc default arguments
-  # no default setting  default: ''
+  default: ~
   description:
     - This sets the default arguments to pass to the ``ansible`` adhoc binary if no ``-a`` is specified.
   env: [{name: ANSIBLE_MODULE_ARGS}]
