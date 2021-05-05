@@ -6,43 +6,43 @@ import errno
 import os
 import re
 
-from .. import types as t
+from ... import types as t
 
-from ..encoding import (
+from ...encoding import (
     to_bytes,
 )
 
-from ..io import (
+from ...io import (
     open_binary_file,
     read_json_file,
 )
 
-from ..util import (
+from ...util import (
     ApplicationError,
     common_environment,
     display,
     ANSIBLE_TEST_DATA_ROOT,
 )
 
-from ..util_common import (
+from ...util_common import (
     intercept_command,
     ResultType,
 )
 
-from ..config import (
+from ...config import (
     EnvironmentConfig,
 )
 
-from ..executor import (
+from ...executor import (
     Delegate,
     install_command_requirements,
 )
 
-from .. target import (
+from ... target import (
     walk_module_targets,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 

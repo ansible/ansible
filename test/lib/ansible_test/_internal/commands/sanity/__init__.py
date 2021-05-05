@@ -8,13 +8,13 @@ import os
 import re
 import collections
 
-from .. import types as t
+from ... import types as t
 
-from ..io import (
+from ...io import (
     read_json_file,
 )
 
-from ..util import (
+from ...util import (
     ApplicationError,
     SubprocessError,
     display,
@@ -36,34 +36,34 @@ from ..util import (
     REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
-from ..util_common import (
+from ...util_common import (
     run_command,
     intercept_command,
     handle_layout_messages,
 )
 
-from ..ansible_util import (
+from ...ansible_util import (
     ansible_environment,
 )
 
-from ..target import (
+from ...target import (
     walk_internal_targets,
     walk_sanity_targets,
     TestTarget,
 )
 
-from ..executor import (
+from ...executor import (
     get_changes_filter,
     AllTargetsSkipped,
     Delegate,
     install_command_requirements,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..test import (
+from ...test import (
     TestSuccess,
     TestFailure,
     TestSkipped,
@@ -71,11 +71,11 @@ from ..test import (
     calculate_best_confidence,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 
-from ..content_config import (
+from ...content_config import (
     get_content_config,
 )
 
@@ -1047,7 +1047,7 @@ SANITY_TESTS = (
 
 def sanity_init():
     """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
-    import_plugins('sanity')
+    import_plugins('commands/sanity')
     sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityFunc]]
     load_plugins(SanityFunc, sanity_plugins)
     sanity_tests = tuple([plugin() for plugin in sanity_plugins.values() if data_context().content.is_ansible or not plugin.ansible_only])

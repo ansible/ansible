@@ -4,17 +4,17 @@ __metaclass__ = type
 
 import os
 
-from .... import types as t
+from ..... import types as t
 
-from ....encoding import (
+from .....encoding import (
     to_text,
 )
 
-from ....data import (
+from .....data import (
     data_context,
 )
 
-from ....util_common import (
+from .....util_common import (
     ResultType,
 )
 

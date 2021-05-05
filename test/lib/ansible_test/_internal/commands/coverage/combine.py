@@ -4,20 +4,20 @@ __metaclass__ = type
 
 import os
 
-from ..target import (
+from ...target import (
     walk_compile_targets,
     walk_powershell_targets,
 )
 
-from ..io import (
+from ...io import (
     read_text_file,
 )
 
-from ..util import (
+from ...util import (
     display,
 )
 
-from ..util_common import (
+from ...util_common import (
     ResultType,
     write_json_file,
     write_json_test_results,

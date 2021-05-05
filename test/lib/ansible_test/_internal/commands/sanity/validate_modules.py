@@ -5,9 +5,9 @@ __metaclass__ = type
 import json
 import os
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
@@ -15,35 +15,35 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..target import (
+from ...target import (
     TestTarget,
 )
 
-from ..util import (
+from ...util import (
     SubprocessError,
     display,
     find_python,
 )
 
-from ..util_common import (
+from ...util_common import (
     run_command,
 )
 
-from ..ansible_util import (
+from ...ansible_util import (
     ansible_environment,
     get_collection_detail,
     CollectionDetailError,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..ci import (
+from ...ci import (
     get_ci_provider,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 

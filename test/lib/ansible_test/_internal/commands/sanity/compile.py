@@ -4,9 +4,9 @@ __metaclass__ = type
 
 import os
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanityMultipleVersion,
     SanityMessage,
     SanityFailure,
@@ -15,11 +15,11 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..target import (
+from ...target import (
     TestTarget,
 )
 
-from ..util import (
+from ...util import (
     SubprocessError,
     display,
     find_python,
@@ -27,11 +27,11 @@ from ..util import (
     is_subdir,
 )
 
-from ..util_common import (
+from ...util_common import (
     run_command,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
