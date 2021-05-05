@@ -38,7 +38,6 @@ from .executor import (
     ApplicationWarning,
     Delegate,
     generate_pip_install,
-    check_startup,
     configure_pypi_proxy,
 )
 
@@ -163,7 +162,6 @@ def main():
         display.redact = config.redact
         display.color = config.color
         display.info_stderr = config.info_stderr
-        check_startup()
         check_delegation_args(config)
         configure_timeout(config)
 
