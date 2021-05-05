@@ -84,7 +84,6 @@ Vagrantfile
 /lib/ansible_base.egg-info/
 # First used in the `devel` branch during Ansible 2.11 development.
 /lib/ansible_core.egg-info/
-/shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version
