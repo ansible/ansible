@@ -380,7 +380,6 @@ class PathMapper:
         if os.path.sep not in path:
             if filename in (
                     'azure-pipelines.yml',
-                    'shippable.yml',
             ):
                 return all_tests(self.args)  # test infrastructure, run all tests
 
