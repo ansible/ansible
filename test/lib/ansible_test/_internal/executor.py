@@ -151,23 +151,6 @@ from .http import (
 )
 
 
-def check_startup():
-    """Checks to perform at startup before running commands."""
-    check_legacy_modules()
-
-
-def check_legacy_modules():
-    """Detect conflicts with legacy core/extras module directories to avoid problems later."""
-    for directory in 'core', 'extras':
-        path = 'lib/ansible/modules/%s' % directory
-
-        for root, _dir_names, file_names in os.walk(path):
-            if file_names:
-                # the directory shouldn't exist, but if it does, it must contain no files
-                raise ApplicationError('Files prohibited in "%s". '
-                                       'These are most likely legacy modules from version 2.2 or earlier.' % root)
-
-
 def create_shell_command(command):
     """
     :type command: list[str]
