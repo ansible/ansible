@@ -578,9 +578,6 @@ def main():
         mutually_exclusive=[
             ['insertafter', 'insertbefore'],
         ],
-        required_one_of=[
-            ['name', 'cron_file']
-        ],
     )
 
     name = module.params['name']
