@@ -33,13 +33,16 @@ from .executor import (
     command_posix_integration,
     command_network_integration,
     command_windows_integration,
-    command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     ApplicationWarning,
     Delegate,
     generate_pip_install,
     check_startup,
     configure_pypi_proxy,
+)
+
+from .commands.shell import (
+    command_shell,
 )
 
 from .config import (

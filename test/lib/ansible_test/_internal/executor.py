@@ -495,19 +495,6 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
     return pip + ['install', '--disable-pip-version-check'] + options
 
 
-def command_shell(args):
-    """
-    :type args: ShellConfig
-    """
-    if args.delegate:
-        raise Delegate()
-
-    install_command_requirements(args)
-
-    cmd = create_shell_command(['bash', '-i'])
-    run_command(args, cmd)
-
-
 def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
