@@ -588,7 +588,7 @@ The task sets the follow fact as the ``interfaces`` fact for the host:
 Parsing with JC
 -----------------
 
-JC is a Python library that converts the output of dozens of common linux/unix/macOS/Windows command-line tools and file-types to python dictionaries or lists of dictionaries for easier parsing. JC is available as a filter plugin in the ``community.general`` collection.
+JC is a Python library that converts the output of dozens of common Linux/UNIX/macOS/Windows command-line tools and file-types to python dictionaries or lists of dictionaries for easier parsing. JC is available as a filter plugin in the ``community.general`` collection.
 
 The following is an example using JC to parse the output of the ``dig`` command:
 
