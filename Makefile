@@ -154,7 +154,6 @@ clean:
 	rm -f ./docs/man/man1/*
 	@echo "Cleaning up output from test runs"
 	rm -rf test/test_data
-	rm -rf shippable/
 	rm -rf logs/
 	rm -rf .cache/
 	rm -f test/units/.coverage*
