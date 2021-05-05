@@ -26,6 +26,7 @@ The 'api' module provides the following common argument specs:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import functools
 import random
 import sys
 import time
@@ -134,50 +135,32 @@ def retry_never(exception_or_result):
     return False
 
 
-def do_nothing(delay, exception=None, result=None):
-    return
-
-
-def retry_with_delays_and_condition(backoff_iterator, do_on_retry=None, should_retry_error=None, should_retry_result=None):
+def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
     """Generic retry decorator.
 
     :param backoff_iterator: An iterable of delays in seconds.
-    :param do_on_retry: A callable that takes the current delay, the exception/None, the result/None, and executes before the sleep (returns None).
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
-    :param should_retry_result: A callable that accepts the decorated function return value and decides whether or not to retry (returns a bool).
     """
-    if do_on_retry is None:
-        do_on_retry = do_nothing
     if should_retry_error is None:
         should_retry_error = retry_never
-    if should_retry_result is None:
-        should_retry_result = retry_never
 
     def function_wrapper(function):
+        @functools.wraps(function)
         def run_function(*args, **kwargs):
             """This assumes the function has not already been called.
             If backoff_iterator is empty, we should still run the function a single time with no delay.
             """
+            call_retryable_function = functools.partial(function, *args, **kwargs)
 
             for delay in backoff_iterator:
-                error = None
-                result = None
-
                 try:
-                    result = function(*args, **kwargs)
+                    return call_retryable_function()
                 except Exception as e:
                     if not should_retry_error(e):
                         raise
-                    error = e
-                else:
-                    if not should_retry_result(result):
-                        return result
-
-                do_on_retry(delay=delay, exception=error, result=result)
                 time.sleep(delay)
 
             # Only or final attempt
-            return function(*args, **kwargs)
-
+            return call_retryable_function()
         return run_function
     return function_wrapper

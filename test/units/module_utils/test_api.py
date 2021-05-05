@@ -26,17 +26,16 @@ class TestRateLimit:
 class TestRetry:
 
     def test_no_retry_required(self):
-        self.counter = 0
-
         @retry(retries=4, retry_pause=2)
         def login_database():
-            self.counter += 1
+            login_database.counter += 1
             return 'success'
 
+        login_database.counter = 0
         r = login_database()
 
         assert r == 'success'
-        assert self.counter == 1
+        assert login_database.counter == 1
 
     def test_catch_exception(self):
 
@@ -59,106 +58,40 @@ class TestRetry:
 class TestRetryWithDelaysAndCondition:
 
     def test_empty_retry_iterator(self):
-        self.counter = 0
-
         @retry_with_delays_and_condition(backoff_iterator=[])
         def login_database():
-            self.counter += 1
+            login_database.counter += 1
 
+        login_database.counter = 0
         r = login_database()
-        assert self.counter == 1
+        assert login_database.counter == 1
 
     def test_no_retry_exception(self):
-        self.counter = 0
-
         @retry_with_delays_and_condition(
             backoff_iterator=[1],
             should_retry_error=lambda x: False,
         )
         def login_database():
-            self.counter += 1
-            if self.counter == 1:
+            login_database.counter += 1
+            if login_database.counter == 1:
                 raise Exception("Error")
 
+        login_database.counter = 0
         with pytest.raises(Exception):
             login_database()
-        assert self.counter == 1
-
-    def test_no_retry_result(self):
-        self.counter = 0
-
-        @retry_with_delays_and_condition(
-            backoff_iterator=[1],
-            should_retry_result=lambda x: False,
-        )
-        def login_database():
-            self.counter += 1
-            if self.counter == 1:
-                return 'retry'
-            return 'success'
-
-        assert login_database() == 'retry'
-        assert self.counter == 1
+        assert login_database.counter == 1
 
     def test_retry_exception(self):
-        self.counter = 0
-
         @retry_with_delays_and_condition(
             backoff_iterator=[1],
             should_retry_error=lambda x: isinstance(x, Exception),
         )
         def login_database():
-            self.counter += 1
-            if self.counter == 1:
+            login_database.counter += 1
+            if login_database.counter == 1:
                 raise Exception("Retry")
             return 'success'
 
+        login_database.counter = 0
         assert login_database() == 'success'
-        assert self.counter == 2
-
-    def test_retry_result(self):
-        self.counter = 0
-
-        @retry_with_delays_and_condition(
-            backoff_iterator=[1],
-            should_retry_result=lambda x: x == 'retry',
-        )
-        def login_database():
-            self.counter += 1
-            if self.counter == 1:
-                return 'retry'
-            return 'success'
-
-        assert login_database() == 'success'
-        assert self.counter == 2
-
-    def test_do_on_retry(self):
-        self.counter = 0
-        self.retry_counter = 0
-
-        def handle_retry(delay, exception, result):
-            self.retry_counter += 1
-            if self.counter == 1:
-                assert exception is not None
-                assert result is None
-            if self.counter == 2:
-                assert exception is None
-                assert result is not None
-
-        @retry_with_delays_and_condition(
-            backoff_iterator=[1, 1],
-            do_on_retry=handle_retry,
-            should_retry_error=lambda x: isinstance(x, Exception),
-            should_retry_result=lambda x: x == 'retry',
-        )
-        def login_database():
-            self.counter += 1
-            if self.counter == 1:
-                raise Exception("Retry")
-            if self.counter == 2:
-                return 'retry'
-            return 'success'
-
-        assert login_database() == 'success'
-        assert self.counter == 3
-        assert self.retry_counter == 2
+        assert login_database.counter == 2
