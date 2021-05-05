@@ -57,7 +57,7 @@ The ``cli_parse`` module includes the following cli_parsing plugins:
 ``pyats``
   Uses the parsers included with the Cisco Test Automation & Validation Solution
 ``jc``
-  A python module which converts the output of dozens of popular linux/unix/macOS/Windows commands and file-types to python dictionaries or lists of dictionaries. Note: this filter plugin can be found in the ``community.general`` collection.
+  A python module that converts the output of dozens of popular Linux/UNIX/macOS/Windows commands and file types to python dictionaries or lists of dictionaries. Note: this filter plugin can be found in the ``community.general`` collection.
 ``json``
   Converts JSON output at the CLI to an Ansible native data structure
 
