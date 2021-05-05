@@ -1594,7 +1594,7 @@ INVENTORY_CACHE_PLUGIN_PREFIX:
     - The existing configuration settings are still accepted with the inventory plugin adding additional options from inventory and fact cache configuration.
     - This message will be removed in 2.16.
   env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX}]
-  default: "ansible_inventory_"
+  default: ansible_inventory_
   ini:
   - {key: cache_prefix, section: inventory}
 INVENTORY_CACHE_TIMEOUT:
