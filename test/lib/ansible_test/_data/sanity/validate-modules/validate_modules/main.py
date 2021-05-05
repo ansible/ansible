@@ -260,7 +260,6 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
 class ModuleValidator(Validator):
     REJECTLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
     REJECTLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
-                                  'shippable.yml',
                                   '.gitattributes', '.gitmodules', 'COPYING',
                                   '__init__.py', 'VERSION', 'test-docs.sh'))
     REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['MODULE'])
