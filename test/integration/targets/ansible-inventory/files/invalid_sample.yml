@@ -1,0 +1,7 @@
+all:
+  children:
+    somegroup:
+      hosts:
+        something:
+          7.2: bar
+    ungrouped: {}
