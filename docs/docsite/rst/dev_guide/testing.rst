@@ -13,7 +13,7 @@ Why test your Ansible contributions?
 
 If you're a developer, one of the most valuable things you can do is to look at GitHub issues and help fix bugs, since bug-fixing is almost always prioritized over feature development.  Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
 
-Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (for example, Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
+Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (for example, Azure Pipelines) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
 
 Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
 
@@ -51,16 +51,16 @@ able to add integration tests and so GitHub pull requests with integration tests
 bugs in action will also be a great way to help.
 
 
-Testing within GitHub & Shippable
-=================================
+Testing within GitHub & Azure Pipelines
+=======================================
 
 
 Organization
 ------------
 
-When Pull Requests (PRs) are created they are tested using Shippable, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
+When Pull Requests (PRs) are created they are tested using Azure Pipelines, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
 
-When Shippable detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example::
+When Azure Pipelines detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example::
 
    The test `ansible-test sanity --test pep8` failed with the following errors:
 
@@ -69,7 +69,7 @@ When Shippable detects an error and it can be linked back to a file that has bee
    The test `ansible-test sanity --test validate-modules` failed with the following error:
    lib/ansible/modules/network/foo/bar.py:0:0: E307 version_added should be 2.4. Currently 2.3
 
-From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Shippable, for example:
+From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Azure Pipelines, for example:
 
 If you haven't already got Ansible available, use the local checkout by running::
 
@@ -90,7 +90,7 @@ Occasionally you may find your PR fails due to a reason unrelated to your change
 * a temporary issue accessing an external resource, such as a yum or git repo
 * a timeout creating a virtual machine to run the tests on
 
-If either of these issues appear to be the case, you can rerun the Shippable test by:
+If either of these issues appear to be the case, you can rerun the Azure Pipelines test by:
 
 * adding a comment with ``/rebuild`` (full rebuild) or ``/rebuild_failed`` (rebuild only failed CI nodes) to the PR
 * closing and re-opening the PR (full rebuild)

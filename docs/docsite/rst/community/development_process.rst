@@ -37,7 +37,7 @@ Here's an overview of the PR lifecycle:
 * Ansibot reviews the PR
 * Ansibot assigns labels
 * Ansibot pings maintainers
-* Shippable runs the test suite
+* Azure Pipelines runs the test suite
 * Developers, maintainers, community review the PR
 * Contributor addresses any feedback from reviewers
 * Developers, maintainers, community re-review
@@ -80,7 +80,7 @@ Ansibullbot runs continuously. You can generally expect to see changes to your i
 -  If the pull request is labeled **community_review** and the reviewer has not responded lately:
 
    -  The reviewer is first politely pinged after two weeks, pinged again after two more weeks and labeled **pending_action**, and then may be reassigned to ``$team_ansible`` or labeled **core_review**, or often the submitter of the pull request is asked to step up as a maintainer.
--  If Shippable tests fail, or if the code is not able to be merged, the pull request is automatically put into **needs_revision** along with a message to the submitter explaining why.
+-  If Azure Pipelines tests fail, or if the code is not able to be merged, the pull request is automatically put into **needs_revision** along with a message to the submitter explaining why.
 
 There are corner cases and frequent refinements, but this is the workflow in general.
 
