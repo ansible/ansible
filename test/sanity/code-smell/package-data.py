@@ -26,7 +26,7 @@ def assemble_files_to_ship(complete_file_list):
         '.github/*/*',
         'changelogs/fragments/*',
         'hacking/backport/*',
-        'hacking/shippable/*',
+        'hacking/azp/*',
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
         'test/sanity/code-smell/botmeta.*',
