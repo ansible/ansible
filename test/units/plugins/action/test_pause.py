@@ -11,9 +11,10 @@ import io
 import pytest
 import sys
 
-from ansible.plugins.action import pause  # noqa: F401
+controller_minversion = pytest.mark.skipif(sys.version_info < (3, 8), reason="Requires Python 3.8 or later")
 
 
+@controller_minversion
 def test_pause_curses_tigetstr_none(mocker, monkeypatch):
     monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
 
@@ -25,8 +26,8 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
             mock_curses.setupterm = mocker.Mock(return_value=True)
             mock_curses.tigetstr = mocker.Mock(return_value=None)
             return mock_curses
-
-        return dunder_import(*args, **kwargs)
+        else:
+            return dunder_import(*args, **kwargs)
 
     mocker.patch('builtins.__import__', _import)
 
@@ -37,6 +38,7 @@ def test_pause_curses_tigetstr_none(mocker, monkeypatch):
     assert mod.CLEAR_TO_EOL == b'\x1b[K'
 
 
+@controller_minversion
 def test_pause_missing_curses(mocker, monkeypatch):
     monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
 
@@ -60,6 +62,7 @@ def test_pause_missing_curses(mocker, monkeypatch):
     assert mod.CLEAR_TO_EOL == b'\x1b[K'
 
 
+@controller_minversion
 @pytest.mark.parametrize('exc', (curses.error, TypeError, io.UnsupportedOperation))
 def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
     monkeypatch.delitem(sys.modules, 'ansible.plugins.action.pause')
@@ -72,8 +75,8 @@ def test_pause_curses_setupterm_error(mocker, monkeypatch, exc):
             mock_curses.setupterm = mocker.Mock(side_effect=exc)
             mock_curses.error = curses.error
             return mock_curses
-
-        return dunder_import(*args, **kwargs)
+        else:
+            return dunder_import(*args, **kwargs)
 
     mocker.patch('builtins.__import__', _import)
 
