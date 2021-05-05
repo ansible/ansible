@@ -256,7 +256,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
         if self._should_validate:
-            task_data = self._prepend_validation_task(task_data)
+            role_argspecs = self._get_role_argspecs()
+            task_data = self._prepend_validation_task(task_data, role_argspecs)
 
         if task_data:
             try:
@@ -274,7 +275,33 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=handler_data, orig_exc=e)
 
-    def _prepend_validation_task(self, task_data):
+    def _get_role_argspecs(self):
+        '''Get the role argument spec data.
+
+        Role arg specs can be in one of two files in the role meta subdir: argument_specs.yml
+        or main.yml. The former has precendence over the latter. Data is not combined
+        between the files.
+
+        :returns: A dict of all data under the top-level 'argument_specs' YAML key
+            in the argument spec file. An empty dict is returned if there is no
+            argspec data.
+        '''
+        extensions = ('.yml', '.yaml')
+        base_argspec_path = os.path.join(self._role_path, 'meta', 'argument_specs')
+
+        for ext in extensions:
+            full_path = os.path.join(base_argspec_path, ext)
+            if self._loader.path_exists(full_path):
+                # Note: _load_role_yaml() takes care of rebuilding the path.
+                argument_specs = self._load_role_yaml('meta', main='argument_specs')
+                return argument_specs.get('argument_specs', {})
+
+        # We did not find the meta/argument_specs.[yml|yaml] file, so use the spec
+        # dict from the role meta data, if it exists. Ansible 2.11 and later will
+        # have the 'argument_specs' attribute, but earlier versions will not.
+        return getattr(self._metadata, 'argument_specs', {})
+
+    def _prepend_validation_task(self, task_data, argspecs):
         '''Insert a role validation task if we have a role argument spec.
 
         This method will prepend a validation task to the front of the role task
@@ -282,14 +309,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         exists for the entry point. Entry point defaults to `main`.
 
         :param task_data: List of tasks loaded from the role.
+        :param argspecs: The role argument spec data dict.
 
         :returns: The (possibly modified) task list.
         '''
-        if self._metadata.argument_specs:
+        if argspecs:
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
             entrypoint = self._from_files.get('tasks', 'main')
-            entrypoint_arg_spec = self._metadata.argument_specs.get(entrypoint)
+            entrypoint_arg_spec = argspecs.get(entrypoint)
 
             if entrypoint_arg_spec:
                 validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint)
