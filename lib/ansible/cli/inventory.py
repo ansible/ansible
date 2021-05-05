@@ -179,7 +179,15 @@ class InventoryCLI(CLI):
                 raise AnsibleError(
                     'The python "toml" library is required when using the TOML output format'
                 )
-            results = toml_dumps(stuff)
+            try:
+                results = toml_dumps(stuff)
+            except KeyError as e:
+                raise AnsibleError(
+                    'The source inventory contains a non-string key (%s) which cannot be represented in TOML. '
+                    'The specified key will need to be converted to a string. Be aware that if your playbooks '
+                    'expect this key to be non-string, your playbooks will need to be modified to support this '
+                    'change.' % e.args[0]
+                )
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder

@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-inventory - handle an exception while parsing inventory in toml format (https://github.com/ansible/ansible/issues/74404).
