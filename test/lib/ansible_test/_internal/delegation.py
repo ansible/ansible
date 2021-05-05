@@ -16,7 +16,6 @@ from .io import (
 )
 
 from .executor import (
-    SUPPORTED_PYTHON_VERSIONS,
     create_shell_command,
     run_pypi_proxy,
     get_python_interpreter,
@@ -54,6 +53,7 @@ from .util import (
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     tempdir,
+    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from .util_common import (
