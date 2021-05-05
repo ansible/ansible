@@ -220,6 +220,12 @@ examined:
     returned: success
     type: int
     sample: 34
+skipped_paths:
+    description: skipped paths and reasons they were skipped
+    returned: success
+    type: dict
+    sample: {"/laskdfj": "'/laskdfj' is not a directory"}
+    version_added: '2.12'
 '''
 
 import fnmatch
@@ -411,6 +417,7 @@ def main():
             params['patterns'] = ['*']
 
     filelist = []
+    skipped = {}
 
     if params['age'] is None:
         age = None
@@ -462,6 +469,7 @@ def main():
                         st = os.lstat(fsname)
                     except (IOError, OSError) as e:
                         module.warn("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
+                        skipped[fsname] = to_text(e)
                         has_warnings = True
                         continue
 
@@ -505,12 +513,13 @@ def main():
                     break
         except Exception as e:
             module.warn("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
+            skipped[npath] = to_text(e)
             has_warnings = True
 
     if has_warnings:
         msg = 'Not all paths examined, check warnings for details'
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, skipped_paths=skipped)
 
 
 if __name__ == '__main__':
