@@ -33,7 +33,7 @@ from .manage_ci import (
     get_network_settings,
 )
 
-from .cloud import (
+from .commands.integration.cloud import (
     cloud_filter,
     cloud_init,
     get_cloud_environment,
@@ -133,7 +133,7 @@ from .metadata import (
     ChangeDescription,
 )
 
-from .integration import (
+from .commands.integration import (
     integration_test_environment,
     integration_test_config_file,
     setup_common_temp_dir,

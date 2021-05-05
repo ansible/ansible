@@ -7,9 +7,9 @@ import json
 import os
 import datetime
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
@@ -17,11 +17,11 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..target import (
+from ...target import (
     TestTarget,
 )
 
-from ..util import (
+from ...util import (
     SubprocessError,
     display,
     ConfigParser,
@@ -29,22 +29,22 @@ from ..util import (
     find_python,
 )
 
-from ..util_common import (
+from ...util_common import (
     run_command,
 )
 
-from ..ansible_util import (
+from ...ansible_util import (
     ansible_environment,
     get_collection_detail,
     CollectionDetail,
     CollectionDetailError,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 

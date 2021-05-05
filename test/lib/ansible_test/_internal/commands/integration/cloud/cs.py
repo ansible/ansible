@@ -5,27 +5,27 @@ __metaclass__ = type
 import json
 import os
 
-from .. import types as t
+from .... import types as t
 
-from ..util import (
+from ....util import (
     ApplicationError,
     ConfigParser,
     display,
 )
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..http import (
+from ....http import (
     urlparse,
 )
 
-from ..docker_util import (
+from ....docker_util import (
     docker_exec,
 )
 
-from ..containers import (
+from ....containers import (
     run_support_container,
     wait_for_file,
 )

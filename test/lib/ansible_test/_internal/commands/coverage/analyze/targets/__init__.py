@@ -4,14 +4,14 @@ __metaclass__ = type
 
 import os
 
-from .... import types as t
+from ..... import types as t
 
-from ....io import (
+from .....io import (
     read_json_file,
     write_json_file,
 )
 
-from ....util import (
+from .....util import (
     ApplicationError,
     display,
 )

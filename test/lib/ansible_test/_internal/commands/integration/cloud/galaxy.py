@@ -5,15 +5,15 @@ __metaclass__ = type
 import os
 import tempfile
 
-from ..config import (
+from ....config import (
     IntegrationConfig,
 )
 
-from ..docker_util import (
+from ....docker_util import (
     docker_cp_to,
 )
 
-from ..containers import (
+from ....containers import (
     run_support_container,
 )
 

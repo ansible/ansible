@@ -4,29 +4,29 @@ __metaclass__ = type
 
 import os
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
-from ..data import (
+from ...data import (
     data_context,
 )
 
-from ..payload import (
+from ...payload import (
     ANSIBLE_BIN_SYMLINK_MAP,
     __file__ as symlink_map_full_path,
 )
 
-from ..util import (
+from ...util import (
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
 )

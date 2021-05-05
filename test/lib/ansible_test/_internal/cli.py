@@ -51,19 +51,19 @@ from .config import (
     ShellConfig,
 )
 
-from .env import (
+from .commands.env import (
     EnvConfig,
     command_env,
     configure_timeout,
 )
 
-from .sanity import (
+from .commands.sanity import (
     command_sanity,
     sanity_init,
     sanity_get_tests,
 )
 
-from .units import (
+from .commands.units import (
     command_units,
 )
 
@@ -76,7 +76,7 @@ from .target import (
     walk_sanity_targets,
 )
 
-from .cloud import (
+from .commands.integration.cloud import (
     initialize_cloud_plugins,
 )
 
@@ -95,53 +95,53 @@ from .util_common import (
     CommonConfig,
 )
 
-from .coverage.combine import (
+from .commands.coverage.combine import (
     command_coverage_combine,
 )
 
-from .coverage.erase import (
+from .commands.coverage.erase import (
     command_coverage_erase,
 )
 
-from .coverage.html import (
+from .commands.coverage.html import (
     command_coverage_html,
 )
 
-from .coverage.report import (
+from .commands.coverage.report import (
     command_coverage_report,
     CoverageReportConfig,
 )
 
-from .coverage.xml import (
+from .commands.coverage.xml import (
     command_coverage_xml,
 )
 
-from .coverage.analyze.targets.generate import (
+from .commands.coverage.analyze.targets.generate import (
     command_coverage_analyze_targets_generate,
     CoverageAnalyzeTargetsGenerateConfig,
 )
 
-from .coverage.analyze.targets.expand import (
+from .commands.coverage.analyze.targets.expand import (
     command_coverage_analyze_targets_expand,
     CoverageAnalyzeTargetsExpandConfig,
 )
 
-from .coverage.analyze.targets.filter import (
+from .commands.coverage.analyze.targets.filter import (
     command_coverage_analyze_targets_filter,
     CoverageAnalyzeTargetsFilterConfig,
 )
 
-from .coverage.analyze.targets.combine import (
+from .commands.coverage.analyze.targets.combine import (
     command_coverage_analyze_targets_combine,
     CoverageAnalyzeTargetsCombineConfig,
 )
 
-from .coverage.analyze.targets.missing import (
+from .commands.coverage.analyze.targets.missing import (
     command_coverage_analyze_targets_missing,
     CoverageAnalyzeTargetsMissingConfig,
 )
 
-from .coverage import (
+from .commands.coverage import (
     COVERAGE_GROUPS,
     CoverageConfig,
 )

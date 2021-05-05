@@ -9,9 +9,9 @@ from xml.etree.ElementTree import (
     Element,
 )
 
-from .. import types as t
+from ... import types as t
 
-from ..sanity import (
+from . import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
@@ -20,21 +20,21 @@ from ..sanity import (
     SANITY_ROOT,
 )
 
-from ..target import (
+from ...target import (
     TestTarget,
 )
 
-from ..util import (
+from ...util import (
     SubprocessError,
     read_lines_without_comments,
     find_executable,
 )
 
-from ..util_common import (
+from ...util_common import (
     run_command,
 )
 
-from ..config import (
+from ...config import (
     SanityConfig,
 )
 
