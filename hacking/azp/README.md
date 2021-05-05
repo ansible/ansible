@@ -1,4 +1,4 @@
-# Shippable Scripts
+# Azure Pipelines Scripts
 
 ## Scripts
 
@@ -8,7 +8,6 @@ This directory contains the following scripts:
 - get_recent_coverage_runs.py - Retrieve CI URLs of recent coverage test runs.
 - incidental.py - Report on incidental code coverage using data from CI.
 - run.py - Start new runs on CI.
-- rebalance.py - Re-balance CI group(s) from a downloaded results directory.
 
 ## Incidental Code Coverage
 
@@ -33,18 +32,18 @@ As additional intentional tests are added, the exclusive coverage provided by in
 Reducing incidental test coverage, and eventually removing incidental tests involves the following process:
 
 1. Run the entire test suite with code coverage enabled.
-   This is done automatically each day on Shippable.
+   This is done automatically each day on Azure Pipelines.
    The URLs and statuses of the most recent such test runs can be found with:
    ```shell
-   hacking/shippable/get_recent_coverage_runs.py <optional branch name>
+   hacking/azp/get_recent_coverage_runs.py <optional branch name>
    ```
    The branch name defaults to `devel`.
-2. Download code coverage data from Shippable for local analysis.
+2. Download code coverage data from Azure Pipelines for local analysis.
    Example:
    ```shell
    # download results to ansible/ansible directory under cwd
-   # substitute the correct run number for the Shippable coverage run you want to download
-   hacking/shippable/download.py https://app.shippable.com/github/ansible/ansible/runs/162160 --test-results --run-metadata -v
+   # substitute the correct run number for the Azure Pipelines coverage run you want to download
+   hacking/azp/download.py 14075 --artifacts --run-metadata -v
    ```
 3. Analyze code coverage data to see which portions of the code are covered by each test.
    Example:
@@ -52,7 +51,7 @@ Reducing incidental test coverage, and eventually removing incidental tests invo
    # make sure ansible-test is in $PATH
    source hacking/env-setup
    # run the script using whichever directory results were downloaded into
-   hacking/shippable/incidental.py ansible/ansible/162160
+   hacking/azp/incidental.py 14075/
    ```
 4. Create new intentional tests, or extend existing ones, to cover code that is currently covered by incidental tests.
    Reports are created by default in a ``test/results/.tmp/incidental/{hash}/reports/`` directory.
@@ -76,7 +75,7 @@ Repeat step 3 for as many plugins as desired.
 To report on multiple plugins at once, such as all ``filter`` plugins, the following command can be used:
 
 ```shell
-find lib/ansible/plugins/filter -name '*.py' -not -name __init__.py -exec hacking/shippable/incidental.py ansible/ansible/162160 --plugin-path '{}' ';'
+find lib/ansible/plugins/filter -name '*.py' -not -name __init__.py -exec hacking/azp/incidental.py 14075/ --plugin-path '{}' ';'
 ```
 
 Each report will show the incidental code coverage missing from the plugin's own tests.
