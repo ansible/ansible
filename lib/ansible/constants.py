@@ -85,6 +85,8 @@ _ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
 _ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
 _ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
 
+ANSIBLE_FILE_EXT = ('.yml', '.yaml')  # extensions for ansible 'non vars' files
+
 # http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
 COLOR_CODES = {
     'black': u'0;30', 'bright gray': u'0;37',

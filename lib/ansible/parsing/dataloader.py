@@ -417,19 +417,11 @@ class DataLoader:
             except Exception as e:
                 display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
-    def find_vars_files(self, path, name, extensions=None, allow_dir=True):
-        """
-        Find vars files in a given path with specified name. This will find
-        files in a dir named <name>/ or a file called <name> ending in known
-        extensions.
-        """
+    def _find_files(self, path, name, extensions, allow_dir):
 
         b_path = to_bytes(os.path.join(path, name))
         found = []
 
-        if extensions is None:
-            # Look for file with no extension first to find dir before file
-            extensions = [''] + C.YAML_FILENAME_EXTENSIONS
         # add valid extensions to name
         for ext in extensions:
 
@@ -438,6 +430,7 @@ class DataLoader:
             elif ext:
                 full_path = b'.'.join([b_path, to_bytes(ext)])
             else:
+                # use empty string extension to look for given name w/o extensions
                 full_path = b_path
 
             if self.path_exists(full_path):
@@ -466,3 +459,24 @@ class DataLoader:
                     found.append(full_spath)
 
         return found
+
+    def find_vars_files(self, path, name, extensions=None, allow_dir=True):
+        """
+        Find vars files in a given path with specified name. This will find
+        files in a dir named <name>/ or a file called <name> ending in known
+        extensions.
+        """
+        if extensions is None:
+            # Look for file with no extension first to find dir before file
+            extensions = [''] + C.YAML_FILENAME_EXTENSIONS
+
+        return self._find_files(path, name, extensions, allow_dir)
+
+    def find_ansible_files(self, path, name, extensions=None, allow_dir=False):
+        """
+        For use on finding ansible yaml files that are not vars files
+        """
+        if extensions is None:
+            extensions = C.ANSIBLE_FILE_EXT
+
+        return self._find_files(path, name, extensions, allow_dir)
