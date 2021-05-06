@@ -220,6 +220,12 @@ examined:
     returned: success
     type: int
     sample: 34
+skipped_paths:
+    description: skipped paths and reasons they were skipped
+    returned: success
+    type: dict
+    sample: {"/laskdfj": "'/laskdfj' is not a directory"}
+    version_added: '2.12'
 '''
 
 import fnmatch
@@ -372,6 +378,10 @@ def statinfo(st):
     }
 
 
+def handle_walk_errors(e):
+    raise e
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -407,6 +417,7 @@ def main():
             params['patterns'] = ['*']
 
     filelist = []
+    skipped = {}
 
     if params['age'] is None:
         age = None
@@ -431,15 +442,16 @@ def main():
             module.fail_json(size=params['size'], msg="failed to process size")
 
     now = time.time()
-    msg = ''
+    msg = 'All paths examined'
     looked = 0
+    has_warnings = False
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, followlinks=params['follow']):
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -456,7 +468,9 @@ def main():
                     try:
                         st = os.lstat(fsname)
                     except (IOError, OSError) as e:
-                        msg += "Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e))
+                        module.warn("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
+                        skipped[fsname] = to_text(e)
+                        has_warnings = True
                         continue
 
                     r = {'path': fsname}
@@ -498,12 +512,14 @@ def main():
                 if not params['recurse']:
                     break
         except Exception as e:
-            warn = "Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e))
-            module.warn(warn)
-            msg += warn
+            module.warn("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
+            skipped[npath] = to_text(e)
+            has_warnings = True
 
+    if has_warnings:
+        msg = 'Not all paths examined, check warnings for details'
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, skipped_paths=skipped)
 
 
 if __name__ == '__main__':

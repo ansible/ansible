@@ -207,7 +207,8 @@
     - assert:
         that:
             - failed_path.files == []
-            - failed_path.msg.startswith("Skipped '{{mypath}}' path due to this access issue")
+            - 'failed_path.msg == "Not all paths examined, check warnings for details"'
+            - mypath in failed_path.skipped_paths
 
 - name: test number of examined directories/files
   block:
