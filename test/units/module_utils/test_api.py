@@ -51,7 +51,7 @@ class TestRetry:
         def login_database():
             return 'success'
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="Retry"):
             login_database()
 
     def test_no_retries(self):
@@ -85,7 +85,7 @@ class TestRetryWithDelaysAndCondition:
                 raise CustomException("Error")
 
         login_database.counter = 0
-        with pytest.raises(CustomException):
+        with pytest.raises(CustomException, match="Error"):
             login_database()
         assert login_database.counter == 1
 
@@ -101,7 +101,7 @@ class TestRetryWithDelaysAndCondition:
                 raise CustomBaseException("Error")
 
         login_database.counter = 0
-        with pytest.raises(CustomBaseException):
+        with pytest.raises(CustomBaseException, match="Error"):
             login_database()
         assert login_database.counter == 1
 
