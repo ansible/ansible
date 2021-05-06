@@ -472,6 +472,7 @@ def main():
 
         with warnings.catch_warnings():
             warnings.simplefilter('error')
+
             if sys.version_info[0] == 2:
                 warnings.filterwarnings(
                     "ignore",
@@ -481,6 +482,7 @@ def main():
                     "ignore",
                     "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
                     " and will be removed in the next release.")
+
             if sys.version_info[:2] == (3, 5):
                 warnings.filterwarnings(
                     "ignore",
@@ -488,6 +490,16 @@ def main():
                 warnings.filterwarnings(
                     "ignore",
                     "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
+
+            if sys.version_info >= (3, 10):
+                # Temporary solution for Python 3.10 until find_spec is implemented in RestrictedModuleLoader.
+                # That implementation is dependent on find_spec being added to the controller's collection loader first.
+                # The warning text is: main.<locals>.RestrictedModuleLoader.find_spec() not found; falling back to find_module()
+                warnings.filterwarnings(
+                    "ignore",
+                    r"main\.<locals>\.RestrictedModuleLoader\.find_spec\(\) not found; falling back to find_module\(\)",
+                )
+
             warnings.filterwarnings(
                 "ignore",
                 "The _yaml extension module is now located at yaml._yaml and its location is subject to change.  To use the "
