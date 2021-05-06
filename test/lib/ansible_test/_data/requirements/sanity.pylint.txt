@@ -8,5 +8,5 @@ lazy-object-proxy == 1.4.3
 mccabe == 0.6.1
 six  # not frozen due to usage outside sanity tests
 toml == 0.10.2
-typed-ast == 1.4.2
+typed-ast == 1.4.3
 wrapt == 1.12.1

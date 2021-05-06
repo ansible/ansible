@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ``typed-ast`` constraint to version 1.4.3 for compatibility with Python 3.10.
