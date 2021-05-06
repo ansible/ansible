@@ -7,9 +7,9 @@ import os
 import re
 import time
 
-from . import types as t
+from .. import types as t
 
-from .target import (
+from ..target import (
     walk_module_targets,
     walk_integration_targets,
     walk_units_targets,
@@ -19,36 +19,36 @@ from .target import (
     analyze_integration_target_dependencies,
 )
 
-from .util import (
+from ..util import (
     display,
     is_subdir,
 )
 
-from .import_analysis import (
+from .python import (
     get_python_module_utils_imports,
     get_python_module_utils_name,
 )
 
-from .csharp_import_analysis import (
+from .csharp import (
     get_csharp_module_utils_imports,
     get_csharp_module_utils_name,
 )
 
-from .powershell_import_analysis import (
+from .powershell import (
     get_powershell_module_utils_imports,
     get_powershell_module_utils_name,
 )
 
-from .config import (
+from ..config import (
     TestConfig,
     IntegrationConfig,
 )
 
-from .metadata import (
+from ..metadata import (
     ChangeDescription,
 )
 
-from .data import (
+from ..data import (
     data_context,
 )
 
