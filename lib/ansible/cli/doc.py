@@ -314,7 +314,7 @@ class DocCLI(CLI, RoleMixin):
     # rst specific
     _RST_ANCHOR = re.compile(r"^\s*.. \w+?::.*$", re.MULTILINE)
     _RST_REFTAG = re.compile(r":\w+?:`")
-    _RST_NOTES = re.compile(r".. note::")  # subset of _ANCHOR
+    _RST_NOTES = re.compile(r".. notes::")  # subset of _ANCHOR
     _RST_CALSO = re.compile(r".. seealso::")  # subset of _ANCHOR
 
     def __init__(self, args):
@@ -333,8 +333,8 @@ class DocCLI(CLI, RoleMixin):
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
         # remove rst
-        t = cls._RST_NOTES.sub(r"Note:", t)  # special case of _ANCHOR, give nice Note header
-        t = cls._RST_CALSO.sub(r"See website for: ", t)  # special case of _ANCHOR, give nice see also header
+        t = cls._RST_NOTES.sub(r"Notes:", t)  # special case of _ANCHOR, give nice Note header
+        t = cls._RST_CALSO.sub(r"See website for:", t)  # special case of _ANCHOR, give nice see also header
         t = cls._RST_ANCHOR.sub(r"", t)  # remove .. versionadded::  and other anchors
         t = cls._RST_REFTAG.sub(r"website for `", t)  # remove :ref: and other tags
 
