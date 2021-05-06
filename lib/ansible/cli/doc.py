@@ -312,10 +312,10 @@ class DocCLI(CLI, RoleMixin):
     _RULER = re.compile(r"\bHORIZONTALLINE\b")
 
     # rst specific
-    _REFTAG = re.compile(r":ref:")
-    _TERM = re.compile(r":term:")
-    _NOTES = re.compile(r".. note:")
-    _SEEALSO = re.compile(r"^\s*.. seealso:.*$", re.MULTILINE)
+    _RST_ANCHOR = re.compile(r"^\s*.. \w+?::.*$", re.MULTILINE)
+    _RST_REFTAG = re.compile(r":\w+?:`")
+    _RST_NOTES = re.compile(r".. note::")  # subset of _ANCHOR
+    _RST_CALSO = re.compile(r".. seealso::")  # subset of _ANCHOR
 
     def __init__(self, args):
 
@@ -332,10 +332,11 @@ class DocCLI(CLI, RoleMixin):
         t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
-        t = cls._REFTAG.sub(r"", t)  # remove rst :ref:
-        t = cls._TERM.sub(r"", t)  # remove rst :term:
-        t = cls._NOTES.sub(r" Note:", t)  # nicer note
-        t = cls._SEEALSO.sub(r"", t)  # remove seealso
+        # remove rst
+        t = cls._RST_NOTES.sub(r"Note:", t)  # special case of _ANCHOR, give nice Note header
+        t = cls._RST_CALSO.sub(r"See website for: ", t)  # special case of _ANCHOR, give nice see also header
+        t = cls._RST_ANCHOR.sub(r"", t)  # remove .. versionadded::  and other anchors
+        t = cls._RST_REFTAG.sub(r"website for `", t)  # remove :ref: and other tags
 
         # handle docsite refs
         # U(word) => word
