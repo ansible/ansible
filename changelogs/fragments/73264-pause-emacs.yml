@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - ensure control characters are always set to an appropriate value (https://github.com/ansible/ansible/issues/73264)
