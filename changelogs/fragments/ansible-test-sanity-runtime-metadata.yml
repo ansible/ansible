@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the ``runtime-metadata`` sanity test to handle a new warning on Python 3.10.
