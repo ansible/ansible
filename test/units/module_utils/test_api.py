@@ -12,6 +12,14 @@ from ansible.module_utils.api import rate_limit, retry, retry_with_delays_and_co
 import pytest
 
 
+class CustomException(Exception):
+    pass
+
+
+class CustomBaseException(BaseException):
+    pass
+
+
 class TestRateLimit:
 
     def test_ratelimit(self):
@@ -74,22 +82,38 @@ class TestRetryWithDelaysAndCondition:
         def login_database():
             login_database.counter += 1
             if login_database.counter == 1:
-                raise Exception("Error")
+                raise CustomException("Error")
 
         login_database.counter = 0
-        with pytest.raises(Exception):
+        with pytest.raises(CustomException):
+            login_database()
+        assert login_database.counter == 1
+
+    def test_no_retry_baseexception(self):
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1],
+            should_retry_error=lambda x: True,  # Retry all exceptions inheriting from Exception
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                # Raise an exception inheriting from BaseException
+                raise CustomBaseException("Error")
+
+        login_database.counter = 0
+        with pytest.raises(CustomBaseException):
             login_database()
         assert login_database.counter == 1
 
     def test_retry_exception(self):
         @retry_with_delays_and_condition(
             backoff_iterator=[1],
-            should_retry_error=lambda x: isinstance(x, Exception),
+            should_retry_error=lambda x: isinstance(x, CustomException),
         )
         def login_database():
             login_database.counter += 1
             if login_database.counter == 1:
-                raise Exception("Retry")
+                raise CustomException("Retry")
             return 'success'
 
         login_database.counter = 0
