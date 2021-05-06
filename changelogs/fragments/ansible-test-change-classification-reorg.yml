@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Relocate change classification code.

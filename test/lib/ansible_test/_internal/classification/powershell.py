@@ -5,19 +5,19 @@ __metaclass__ = type
 import os
 import re
 
-from .io import (
+from ..io import (
     read_text_file,
 )
 
-from .util import (
+from ..util import (
     display,
 )
 
-from .util_common import (
+from ..util_common import (
     resolve_csharp_ps_util,
 )
 
-from .data import (
+from ..data import (
     data_context,
 )
 
