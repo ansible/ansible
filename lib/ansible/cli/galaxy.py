@@ -1142,8 +1142,8 @@ class GalaxyCLI(CLI):
                 raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
 
             if requirements_file:
-                if not (requirements_file.endswith('.yaml') or requirements_file.endswith('.yml')):
-                    raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
+                if not requirements_file.endswith(C.ANSIBLE_FILE_EXT):
+                    raise AnsibleError("Invalid role requirements file, it must end with a valid extension (%s)" % C.ANSIBLE_FILE_EXT)
 
                 requirements = self._parse_requirements_file(
                     requirements_file,

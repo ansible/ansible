@@ -115,7 +115,7 @@ class AdHocCLI(CLI):
 
         if context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS and not context.CLIARGS['module_args']:
             err = "No argument passed to %s module" % context.CLIARGS['module_name']
-            if pattern.endswith(".yml"):
+            if pattern.endswith(C.ANSIBLE_FILE_EXT):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 

@@ -70,9 +70,6 @@ except AttributeError:  # Python 2
         return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, tested_str))
 
 
-PB_EXTENSIONS = ('.yml', '.yaml')
-
-
 class _AnsibleCollectionFinder:
     def __init__(self, paths=None, scan_sys_paths=True):
         # TODO: accept metadata loader override
@@ -796,7 +793,7 @@ class AnsibleCollectionRef:
         ref_type = to_text(ref_type, errors='strict')
         ext = ''
 
-        if ref_type == u'playbook' and ref.endswith(PB_EXTENSIONS):
+        if ref_type == u'playbook' and ref.endswith(C.ANSIBLE_FILE_EXT):
             resource_splitname = ref.rsplit(u'.', 2)
             package_remnant = resource_splitname[0]
             resource = resource_splitname[1]
@@ -908,8 +905,8 @@ def _get_collection_playbook_path(playbook):
             path = os.path.join(cpath, to_native(acr.resource))
             if os.path.exists(to_bytes(path)):
                 return acr.resource, path, acr.collection
-            elif not acr.resource.endswith(PB_EXTENSIONS):
-                for ext in PB_EXTENSIONS:
+            elif not acr.resource.endswith(C.ANSIBLE_FILE_EXT):
+                for ext in C.ANSIBLE_FILE_EXT:
                     path = os.path.join(cpath, to_native(acr.resource + ext))
                     if os.path.exists(to_bytes(path)):
                         return acr.resource, path, acr.collection
