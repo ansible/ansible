@@ -69,6 +69,7 @@ stages:
             - test: 3.7
             - test: 3.8
             - test: 3.9
+            - test: '3.10'
   - stage: Windows
     dependsOn: []
     jobs:
