@@ -96,7 +96,7 @@ class RoleMixin(object):
         over the meta/main.yml file, if it exists. Data is NOT combined between the
         two files.
 
-        :returns: A dict of all data underneath the `argument_specs` top-level YAML
+        :returns: A dict of all data underneath the ``argument_specs`` top-level YAML
             key in the argspec data file. Empty dict is returned if there is no data.
         """
 
