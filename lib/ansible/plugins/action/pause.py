@@ -51,12 +51,12 @@ try:
 except ImportError:
     HAS_CURSES = False
 
+MOVE_TO_BOL = b'\r'
+CLEAR_TO_EOL = b'\x1b[K'
 if HAS_CURSES:
-    MOVE_TO_BOL = curses.tigetstr('cr')
-    CLEAR_TO_EOL = curses.tigetstr('el')
-else:
-    MOVE_TO_BOL = b'\r'
-    CLEAR_TO_EOL = b'\x1b[K'
+    # curses.tigetstr() returns None in some circumstances
+    MOVE_TO_BOL = curses.tigetstr('cr') or MOVE_TO_BOL
+    CLEAR_TO_EOL = curses.tigetstr('el') or CLEAR_TO_EOL
 
 
 class AnsibleTimeoutExceeded(Exception):
