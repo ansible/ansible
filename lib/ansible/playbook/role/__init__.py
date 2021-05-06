@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, binary_type, text_type
@@ -276,20 +277,19 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                                          obj=handler_data, orig_exc=e)
 
     def _get_role_argspecs(self):
-        '''Get the role argument spec data.
+        """Get the role argument spec data.
 
         Role arg specs can be in one of two files in the role meta subdir: argument_specs.yml
-        or main.yml. The former has precendence over the latter. Data is not combined
+        or main.yml. The former has precedence over the latter. Data is not combined
         between the files.
 
-        :returns: A dict of all data under the top-level 'argument_specs' YAML key
+        :returns: A dict of all data under the top-level ``argument_specs`` YAML key
             in the argument spec file. An empty dict is returned if there is no
             argspec data.
-        '''
-        extensions = ('.yml', '.yaml')
+        """
         base_argspec_path = os.path.join(self._role_path, 'meta', 'argument_specs')
 
-        for ext in extensions:
+        for ext in C.YAML_FILENAME_EXTENSIONS:
             full_path = base_argspec_path + ext
             if self._loader.path_exists(full_path):
                 # Note: _load_role_yaml() takes care of rebuilding the path.

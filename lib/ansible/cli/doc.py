@@ -78,8 +78,9 @@ class RoleMixin(object):
     Note: The methods for actual display of role data are not present here.
     """
 
-    ROLE_META_FILE = 'main.yml'
-    ROLE_ARGSPEC_BASE = 'argument_specs'
+    # Potential locations of the role arg spec file in the meta subdir, with main.yml
+    # having the lowest priority.
+    ROLE_ARGSPEC_FILES = ['argument_specs' + e for e in C.YAML_FILENAME_EXTENSIONS] + ["main.yml"]
 
     def _load_argspec(self, role_name, collection_path=None, role_path=None):
         """Load the role argument spec data from the source file.
@@ -100,25 +101,22 @@ class RoleMixin(object):
         """
 
         if collection_path:
-            argspec_base = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_ARGSPEC_BASE)
-            meta_path = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_META_FILE)
+            meta_path = os.path.join(collection_path, 'roles', role_name, 'meta')
         elif role_path:
-            argspec_base = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_BASE)
-            meta_path = os.path.join(role_path, 'meta', self.ROLE_META_FILE)
+            meta_path = os.path.join(role_path, 'meta')
         else:
             raise AnsibleError("A path is required to load argument specs for role '%s'" % role_name)
 
         path = None
 
-        # Allow for .yml or .yaml file extensions
-        for extension in ('.yml', '.yaml'):
-            full_path = argspec_base + extension
+        # Check all potential spec files
+        for specfile in self.ROLE_ARGSPEC_FILES:
+            full_path = os.path.join(meta_path, specfile)
             if os.path.exists(full_path):
                 path = full_path
                 break
-        if path is None and os.path.exists(meta_path):
-            path = meta_path
-        elif path is None:
+
+        if path is None:
             return {}
 
         try:
@@ -143,6 +141,7 @@ class RoleMixin(object):
         """
         found = set()
         found_names = set()
+
         for path in role_paths:
             if not os.path.isdir(path):
                 continue
@@ -151,16 +150,15 @@ class RoleMixin(object):
             for entry in os.listdir(path):
                 role_path = os.path.join(path, entry)
 
-                # Role argspecs can be in one of two files in meta subdir
-                potential_files = [self.ROLE_ARGSPEC_BASE + e for e in ('.yml', '.yaml')]
-                potential_files.append(self.ROLE_META_FILE)
-                for specfile in potential_files:
+                # Check all potential spec files
+                for specfile in self.ROLE_ARGSPEC_FILES:
                     full_path = os.path.join(role_path, 'meta', specfile)
                     if os.path.exists(full_path):
                         if name_filters is None or entry in name_filters:
                             if entry not in found_names:
                                 found.add((entry, role_path))
                             found_names.add(entry)
+                        # select first-found
                         break
         return found
 
@@ -188,8 +186,8 @@ class RoleMixin(object):
             if os.path.exists(roles_dir):
                 for entry in os.listdir(roles_dir):
 
-                    # Role argspecs can be in one of two files in meta subdir
-                    for specfile in (self.ROLE_ARGSPEC_BASE, self.ROLE_META_FILE):
+                    # Check all potential spec files
+                    for specfile in self.ROLE_ARGSPEC_FILES:
                         full_path = os.path.join(roles_dir, entry, 'meta', specfile)
                         if os.path.exists(full_path):
                             if name_filters is None:
