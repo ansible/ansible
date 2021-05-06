@@ -6,19 +6,19 @@ import ast
 import os
 import re
 
-from . import types as t
+from .. import types as t
 
-from .io import (
+from ..io import (
     read_binary_file,
 )
 
-from .util import (
+from ..util import (
     display,
     ApplicationError,
     is_subdir,
 )
 
-from .data import (
+from ..data import (
     data_context,
 )
 
