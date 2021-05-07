@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-test - Add constraint for ``pyspnego>=0.1.6`` for Python 3.10 - https://github.com/ansible/ansible/pull/74612
