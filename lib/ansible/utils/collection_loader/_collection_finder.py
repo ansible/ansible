@@ -23,7 +23,7 @@ from tokenize import Name as _VALID_IDENTIFIER_REGEX
 
 # DO NOT add new non-stdlib import deps here, this loader is used by external tools (eg ansible-test import sanity)
 # that only allow stdlib and module_utils
-from ansible import constants as C
+from ansible.constants import ANSIBLE_FILE_EXT
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.six import string_types, PY3
 from ._collection_config import AnsibleCollectionConfig
@@ -794,7 +794,7 @@ class AnsibleCollectionRef:
         ref_type = to_text(ref_type, errors='strict')
         ext = ''
 
-        if ref_type == u'playbook' and ref.endswith(C.ANSIBLE_FILE_EXT):
+        if ref_type == u'playbook' and ref.endswith(ANSIBLE_FILE_EXT):
             resource_splitname = ref.rsplit(u'.', 2)
             package_remnant = resource_splitname[0]
             resource = resource_splitname[1]
@@ -906,8 +906,8 @@ def _get_collection_playbook_path(playbook):
             path = os.path.join(cpath, to_native(acr.resource))
             if os.path.exists(to_bytes(path)):
                 return acr.resource, path, acr.collection
-            elif not acr.resource.endswith(C.ANSIBLE_FILE_EXT):
-                for ext in C.ANSIBLE_FILE_EXT:
+            elif not acr.resource.endswith(ANSIBLE_FILE_EXT):
+                for ext in ANSIBLE_FILE_EXT:
                     path = os.path.join(cpath, to_native(acr.resource + ext))
                     if os.path.exists(to_bytes(path)):
                         return acr.resource, path, acr.collection
