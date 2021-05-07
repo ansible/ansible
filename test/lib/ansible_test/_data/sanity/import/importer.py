@@ -499,6 +499,45 @@ def main():
                     "ignore",
                     r"main\.<locals>\.RestrictedModuleLoader\.find_spec\(\) not found; falling back to find_module\(\)",
                 )
+                # Temporary solution for Python 3.10 until exec_module is implemented in RestrictedModuleLoader.
+                # That implementation is dependent on exec_module being added to the controller's collection loader first.
+                # The warning text is: main.<locals>.RestrictedModuleLoader.exec_module() not found; falling back to load_module()
+                warnings.filterwarnings(
+                    "ignore",
+                    r"main\.<locals>\.RestrictedModuleLoader\.exec_module\(\) not found; falling back to load_module\(\)",
+                )
+
+                # Temporary solution for Python 3.10 until find_spec is implemented in the controller's collection loader.
+                warnings.filterwarnings(
+                    "ignore",
+                    r"_Ansible.*Finder\.find_spec\(\) not found; falling back to find_module\(\)",
+                )
+                # Temporary solution for Python 3.10 until exec_module is implemented in the controller's collection loader.
+                warnings.filterwarnings(
+                    "ignore",
+                    r"_Ansible.*Loader\.exec_module\(\) not found; falling back to load_module\(\)",
+                )
+
+                # Temporary solution until we have a vendored version of six that avoids the warnings on Python 3.10.
+                # The warning text is: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
+                warnings.filterwarnings(
+                    "ignore",
+                    r"_SixMetaPathImporter\.find_spec\(\) not found; falling back to find_module\(\)",
+                )
+                # Temporary solution until we have a vendored version of six that avoids the warnings on Python 3.10.
+                # The warning text is: _SixMetaPathImporter.exec_module() not found; falling back to load_module()
+                warnings.filterwarnings(
+                    "ignore",
+                    r"_SixMetaPathImporter\.exec_module\(\) not found; falling back to load_module\(\)",
+                )
+
+                # Temporary solution until there is a vendored copy of distutils.version in module_utils.
+                # The warning text is: The distutils package is deprecated and slated for removal in Python 3.12.
+                # Use setuptools or check PEP 632 for potential alternatives
+                warnings.filterwarnings(
+                    "ignore",
+                    r"The distutils package is deprecated and slated for removal in Python 3\.12\. .*",
+                )
 
             warnings.filterwarnings(
                 "ignore",
