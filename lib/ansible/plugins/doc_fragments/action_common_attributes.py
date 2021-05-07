@@ -32,7 +32,7 @@ attributes:
                    throttle and other loop considerations.  Also, this action cannot be used in non lockstep strategies
       support: none
     check_mode:
-      description: Can run in check_mode and return changed status prediction
+      description: Can run in check_mode and return changed status prediction withought modifying target
       support: none
     connection:
       description: Uses the target's configured connection information to execute code on it
@@ -43,8 +43,8 @@ attributes:
     delegation:
       description: Can be used in conjunction with delegate_to and related keywords
       support: full
-    diff:
-      description: Will return details on what has changed when in diff is enabled
+    diff_mode:
+      description: Will return details on what has changed (or possibly needs changing in check_mode), when in diff mode
       support: none
     facts:
       description: Action returns an ``ansible_facts`` dictionary that will update existing host facts
