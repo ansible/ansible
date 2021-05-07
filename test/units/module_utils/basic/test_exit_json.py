@@ -104,6 +104,8 @@ class TestAnsibleModuleExitJson:
 
         if sys.version_info < (3,):
             error_msg = "fail_json() takes exactly 2 arguments (1 given)"
+        elif sys.version_info >= (3, 10):
+            error_msg = "AnsibleModule.fail_json() missing 1 required positional argument: 'msg'"
         else:
             error_msg = "fail_json() missing 1 required positional argument: 'msg'"
 

@@ -543,18 +543,21 @@ class TestVaultCipherAes256(unittest.TestCase):
         self.assertIsInstance(b_key_2, six.binary_type)
         self.assertEqual(b_key_1, b_key_2)
 
-        # And again with pycrypto
-        b_key_3 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_3, six.binary_type)
+        if vault.HAS_PYCRYPTO:
+            # And again with pycrypto
+            b_key_3 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
+            self.assertIsInstance(b_key_3, six.binary_type)
 
-        # verify we get the same answer
-        # we could potentially run a few iterations of this and time it to see if it's roughly constant time
-        #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
-        b_key_4 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_4, six.binary_type)
-        self.assertEqual(b_key_3, b_key_4)
-        self.assertEqual(b_key_1, b_key_4)
+            # verify we get the same answer
+            # we could potentially run a few iterations of this and time it to see if it's roughly constant time
+            #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
+            b_key_4 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
+            self.assertIsInstance(b_key_4, six.binary_type)
+            self.assertEqual(b_key_3, b_key_4)
+            self.assertEqual(b_key_1, b_key_4)
 
+    @pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                        reason='PyCrypto is not installed')
     def test_create_key_known_pycrypto(self):
         b_password = b'hunter42'
 
