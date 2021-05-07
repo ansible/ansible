@@ -30,6 +30,7 @@ TTY_IFY_DATA = {
     # de-rsty refs and anchors
     'yolo :ref:`my boy` does stuff': 'yolo website for `my boy` does stuff',
     '.. seealso:: Something amazing': 'See website for: Something amazing',
+    '.. seealso:: Troublesome multiline\n Stuff goes htere': 'See website for: Troublesome multiline\n Stuff goes htere',
     '.. notes:: boring stuff': 'Notes: boring stuff',
 }
 
