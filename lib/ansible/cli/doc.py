@@ -314,7 +314,7 @@ class DocCLI(CLI, RoleMixin):
     # rst specific
     _RST_ANCHOR = re.compile(r"^\s*.. \w+?::.*$", re.MULTILINE)
     _RST_REFTAG = re.compile(r":\w+?:`")
-    _RST_NOTES = re.compile(r".. notes::")  # subset of _ANCHOR
+    _RST_NOTES = re.compile(r".. note::")  # subset of _ANCHOR
     _RST_SEEALSO = re.compile(r".. seealso::")  # subset of _ANCHOR
 
     def __init__(self, args):
