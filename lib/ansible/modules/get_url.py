@@ -514,8 +514,12 @@ def main():
                 # Split by one whitespace to keep the leading type char ' ' (whitespace) for text and '*' for binary
                 parts = line.split(" ", 1)
                 if len(parts) == 2:
-                    # Remove the leading type char and use basename
-                    checksum_map.append((parts[0], os.path.basename(parts[1][1:])))
+                    # Remove the leading type char, we expect
+                    if parts[1].startswith((" ", "*",)):
+                        parts[1] = parts[1][1:]
+
+                    # Append checksum and path without potential leading './'
+                    checksum_map.append((parts[0], parts[1].lstrip("./")))
 
             filename = url_filename(url)
 
