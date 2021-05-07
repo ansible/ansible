@@ -60,15 +60,18 @@ attributes:
       description: This returns general info (not facts) that you might want to register into a variable for later use
       support: none
     loops:
-      description: both ``loop`` and ``with_`` looping keywords will be honored.
+      description: both ``loop`` and ``with_`` looping keywords will be honored
       support: full
     proprietary:
-      description: Designed to only be run against specific proprietary OS(s), normally a network appliance or similar.
+      description: Designed to only be run against specific proprietary OS(s), normally a network appliance or similar
       support: none
       platforms: []
     posix:
       description: Can be run against most POSIX (and GNU/Linux) OS targets
       support: full
+    safe_file_operations:
+      description: Uses Ansbile's strict file operation functions to ensure proper permissions and avoid data corruption
+      support: none
     tags:
       description: Tags will be evaluated to determine if this task considered for execution
       support: full
@@ -77,7 +80,7 @@ attributes:
       support: none
     turbo:
       description: Uses an Ansible supplied caching mechanism (Turbo!) on the remote for authentication and
-                   3rd party libraries to speed up recurrent execution.
+                   3rd party libraries to speed up recurrent execution
       support: none
     until:
       description: Usable with until/retry loops
