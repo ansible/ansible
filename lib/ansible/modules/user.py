@@ -685,13 +685,8 @@ class User(object):
             cmd.append(self.comment)
 
         if self.home is not None:
-            # If the specified path to the user home contains parent directories that
-            # do not exist and create_home is True first create the parent directory
-            # since useradd cannot create it.
             if self.create_home:
-                parent = os.path.dirname(self.home)
-                if not os.path.isdir(parent):
-                    self.create_homedir(self.home)
+                self.create_homedir(self.home)
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -713,19 +708,7 @@ class User(object):
             else:
                 cmd.append(self.password)
 
-        if self.create_home:
-            if not self.local:
-                cmd.append('-m')
-
-            if self.skeleton is not None:
-                cmd.append('-k')
-                cmd.append(self.skeleton)
-
-            if self.umask is not None:
-                cmd.append('-K')
-                cmd.append('UMASK=' + self.umask)
-        else:
-            cmd.append('-M')
+        cmd.append('-M')
 
         if self.system:
             cmd.append('-r')
@@ -1250,18 +1233,26 @@ class User(object):
                     os.makedirs(path)
                 except OSError as e:
                     self.module.exit_json(failed=True, msg="%s" % to_native(e))
-            # get umask from /etc/login.defs and set correct home mode
-            if os.path.exists(self.LOGIN_DEFS):
-                with open(self.LOGIN_DEFS, 'r') as f:
-                    for line in f:
-                        m = re.match(r'^UMASK\s+(\d+)$', line)
-                        if m:
-                            umask = int(m.group(1), 8)
-                            mode = 0o777 & ~umask
-                            try:
-                                os.chmod(path, mode)
-                            except OSError as e:
-                                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+            umask_string = None
+            # If an umask was set take it from there
+            if self.umask is not None:
+                umask_string = self.umask
+            else:
+                # try to get umask from /etc/login.defs
+                if os.path.exists(self.LOGIN_DEFS):
+                    with open(self.LOGIN_DEFS, 'r') as f:
+                        for line in f:
+                            m = re.match(r'^UMASK\s+(\d+)$', line)
+                            if m:
+                                umask_string = m.group(1)
+            # set correct home mode if we have a umask
+            if umask_string is not None:
+                umask = int(umask_string, 8)
+                mode = 0o777 & ~umask
+                try:
+                    os.chmod(path, mode)
+                except OSError as e:
+                    self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
