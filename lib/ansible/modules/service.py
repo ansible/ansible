@@ -1355,8 +1355,8 @@ class SunOSService(Service):
         # Support for synchronous restart/refresh is only supported on
         # Oracle Solaris >= 11.2
         for line in open('/etc/release', 'r').readlines():
-            m = re.match(r'\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
-            if m and LooseVersion(m.groups()[0]) >= LooseVersion('11.2'):
+            m = re.match(r'\s+Oracle Solaris (\d+)\.(\d+).*', line.rstrip())
+            if m and m.groups() >= ('11', '2'):
                 return True
 
     def get_service_status(self):
