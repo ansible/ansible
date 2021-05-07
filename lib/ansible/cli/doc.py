@@ -80,7 +80,7 @@ class RoleMixin(object):
 
     # Potential locations of the role arg spec file in the meta subdir, with main.yml
     # having the lowest priority.
-    ROLE_ARGSPEC_FILES = ['argument_specs' + e for e in C.YAML_FILENAME_EXTENSIONS] + ["main.yml"]
+    ROLE_ARGSPEC_FILES = ['argument_specs' + e for e in C.YAML_FILENAME_EXTENSIONS] + ["main" + e for e in C.YAML_FILENAME_EXTENSIONS]
 
     def _load_argspec(self, role_name, collection_path=None, role_path=None):
         """Load the role argument spec data from the source file.
