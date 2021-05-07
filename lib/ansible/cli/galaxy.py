@@ -1143,7 +1143,7 @@ class GalaxyCLI(CLI):
 
             if requirements_file:
                 if not requirements_file.endswith(C.ANSIBLE_FILE_EXT):
-                    raise AnsibleError("Invalid role requirements file, it must end with a valid extension (%s)" % C.ANSIBLE_FILE_EXT)
+                    raise AnsibleError("Invalid role requirements file, it must end with a valid extension (%s)" % ' or '.join(C.ANSIBLE_FILE_EXT))
 
                 requirements = self._parse_requirements_file(
                     requirements_file,
