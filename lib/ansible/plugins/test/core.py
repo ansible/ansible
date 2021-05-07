@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
-from distutils.version import LooseVersion, StrictVersion
+from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.module_utils._text import to_native, to_text

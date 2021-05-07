@@ -7,7 +7,7 @@ __metaclass__ = type
 import datetime
 import re
 
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 import astroid
 

@@ -138,7 +138,7 @@ import sys
 import re
 
 from termios import tcflush, TCIFLUSH
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from binascii import hexlify
 
 from ansible.errors import (

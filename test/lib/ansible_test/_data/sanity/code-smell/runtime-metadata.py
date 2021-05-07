@@ -10,7 +10,7 @@ import sys
 import warnings
 
 # Temporary solution for the PEP 632 deprecation warning on Python 3.10.
-# This should be removed once distutils.version has been vendored in ansible.module_utils.
+# This should be removed once ansible.module_utils.compat.version has been vendored in ansible.module_utils.
 # See: https://github.com/ansible/ansible/issues/74599
 # pylint: disable=wrong-import-position
 warnings.filterwarnings(
@@ -19,7 +19,7 @@ warnings.filterwarnings(
     DeprecationWarning,
 )
 
-from distutils.version import StrictVersion, LooseVersion
+from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from functools import partial
 
 import yaml

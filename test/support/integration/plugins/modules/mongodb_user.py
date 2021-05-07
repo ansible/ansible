@@ -200,7 +200,7 @@ user:
 import os
 import ssl as ssl_lib
 import traceback
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from operator import itemgetter
 
 try:

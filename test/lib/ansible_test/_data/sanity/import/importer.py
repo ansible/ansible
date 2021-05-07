@@ -531,14 +531,6 @@ def main():
                     r"_SixMetaPathImporter\.exec_module\(\) not found; falling back to load_module\(\)",
                 )
 
-                # Temporary solution until there is a vendored copy of distutils.version in module_utils.
-                # The warning text is: The distutils package is deprecated and slated for removal in Python 3.12.
-                # Use setuptools or check PEP 632 for potential alternatives
-                warnings.filterwarnings(
-                    "ignore",
-                    r"The distutils package is deprecated and slated for removal in Python 3\.12\. .*",
-                )
-
             warnings.filterwarnings(
                 "ignore",
                 "The _yaml extension module is now located at yaml._yaml and its location is subject to change.  To use the "

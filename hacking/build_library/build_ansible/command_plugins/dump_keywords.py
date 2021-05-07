@@ -10,7 +10,7 @@ import importlib
 import os.path
 import pathlib
 import re
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 import jinja2
 import yaml

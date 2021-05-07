@@ -31,7 +31,7 @@ __metaclass__ = type
 
 
 import sys
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 try:
     import OpenSSL

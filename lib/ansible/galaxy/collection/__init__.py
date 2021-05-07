@@ -22,7 +22,7 @@ import yaml
 
 from collections import namedtuple
 from contextlib import contextmanager
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from itertools import chain
