@@ -23,6 +23,7 @@ from tokenize import Name as _VALID_IDENTIFIER_REGEX
 
 # DO NOT add new non-stdlib import deps here, this loader is used by external tools (eg ansible-test import sanity)
 # that only allow stdlib and module_utils
+from ansbile import constants as C
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.six import string_types, PY3
 from ._collection_config import AnsibleCollectionConfig
