@@ -1,4 +1,4 @@
-pycrypto
+pycrypto ; python_version < '3.10'  # pycrypto is not compatible with Python 3.10
 passlib
 pywinrm
 pytz
