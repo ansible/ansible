@@ -1,0 +1,2 @@
+bugfixes:
+  - "In lib/ansible/plugin/action/__init__.py's _fixup_perms2, wrap ``remote_paths`` in ``list()`` before appending it to another list as it can be a list or tuple (https://github.com/ansible/ansible/pull/74613)."
