@@ -1233,18 +1233,26 @@ class User(object):
                     os.makedirs(path)
                 except OSError as e:
                     self.module.exit_json(failed=True, msg="%s" % to_native(e))
-            # get umask from /etc/login.defs and set correct home mode
-            if os.path.exists(self.LOGIN_DEFS):
-                with open(self.LOGIN_DEFS, 'r') as f:
-                    for line in f:
-                        m = re.match(r'^UMASK\s+(\d+)$', line)
-                        if m:
-                            umask = int(m.group(1), 8)
-                            mode = 0o777 & ~umask
-                            try:
-                                os.chmod(path, mode)
-                            except OSError as e:
-                                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+            umask_string = None
+            # If an umask was set take it from there
+            if self.umask is not None:
+                umask_string = self.umask
+            else:
+            # try to get umask from /etc/login.defs
+                if os.path.exists(self.LOGIN_DEFS):
+                    with open(self.LOGIN_DEFS, 'r') as f:
+                        for line in f:
+                            m = re.match(r'^UMASK\s+(\d+)$', line)
+                            if m:
+                                umask_string = m.group(1)
+            # set correct home mode if we have a umask
+            if umask_string is not None:
+                umask = int(umask_string, 8)
+                mode = 0o777 & ~umask
+                try:
+                    os.chmod(path, mode)
+                except OSError as e:
+                    self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
