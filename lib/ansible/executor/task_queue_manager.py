@@ -298,7 +298,7 @@ class TaskQueueManager:
         # any hosts as failed in the iterator here which may have been marked
         # as failed in previous runs. Then we clear the internal list of failed
         # hosts so we know what failed this round.
-        for host_name in self._failed_hosts.keys():
+        for host_name in list(self._failed_hosts) + list(self._unreachable_hosts):
             host = self._inventory.get_host(host_name)
             iterator.mark_host_failed(host)
 
