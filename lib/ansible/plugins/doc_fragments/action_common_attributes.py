@@ -83,7 +83,7 @@ attributes:
       description: Usable with until/retry loops
       support: full
     vault:
-      description: Can automatically decrypt Ansible vault content
+      description: Can automatically decrypt Ansible vaulted files
       support: none
     windows:
       description: Can be run against Windows OS targets
