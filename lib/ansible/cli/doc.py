@@ -312,9 +312,10 @@ class DocCLI(CLI, RoleMixin):
     _RULER = re.compile(r"\bHORIZONTALLINE\b")
 
     # rst specific
-    _RST_ADMONITION = re.compile(r".. (\w+?)::")
-    _RST_REFTAG = re.compile(r":\w+?:`")
+    _RST_NOTE = re.compile(r".. note::")
     _RST_SEEALSO = re.compile(r".. seealso::")
+    _RST_REFTAGS = re.compile(r":\w+?:`")
+    _RST_GENTAGS = re.compile(r".. \w+?::")
 
     def __init__(self, args):
 
@@ -333,8 +334,9 @@ class DocCLI(CLI, RoleMixin):
 
         # remove rst
         t = cls._RST_SEEALSO.sub(r"See website for:", t) # seealso is special and need to break
-        t = cls._RST_ADMONITION.sub(r"\1:", t)  # .. note:: to Note: and others
-        t = cls._RST_REFTAG.sub(r"website for `", t)  # remove :ref: and other tags
+        t = cls._RST_NOTE.sub(r"note:", t)               # .. note:: to note:
+        t = cls._RST_REFTAGS.sub(r"website for `", t)    # remove :ref: and other tags
+        t = cls._RST_GENTAGS.sub(r"", t)  # remove .. stuff:: in general
 
         # handle docsite refs
         # U(word) => word
