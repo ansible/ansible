@@ -1,0 +1,56 @@
+---
+# Create a new local user account with a path that has parent directories that do not exist
+- name: Create local user with home path that has parents that do not exist
+  user:
+    name: ansibulluser2
+    state: present
+    local: yes
+    home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+  register: create_home_local_with_no_parent_1
+  tags:
+    - user_test_local_mode
+
+- name: Create local user with home path that has parents that do not exist again
+  user:
+    name: ansibulluser2
+    state: present
+    local: yes
+    home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+  register: create_home_local_with_no_parent_2
+  tags:
+    - user_test_local_mode
+
+- name: Check the created home directory
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+  register: home_local_with_no_parent_3
+  tags:
+    - user_test_local_mode
+
+- name: Ensure user with non-existing parent paths was created successfully
+  assert:
+    that:
+      - create_home_local_with_no_parent_1 is changed
+      - create_home_local_with_no_parent_1.home == user_home_prefix[ansible_facts.system] ~ '/in2deep/ansibulluser2'
+      - create_home_local_with_no_parent_2 is not changed
+      - home_local_with_no_parent_3.stat.uid == create_home_local_with_no_parent_1.uid
+      - home_local_with_no_parent_3.stat.gr_name == default_local_user_group[ansible_facts.distribution] | default('ansibulluser2')
+  tags:
+    - user_test_local_mode
+
+- name: Cleanup test account
+  user:
+    name: ansibulluser2
+    home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+    state: absent
+    local: yes
+    remove: yes
+  tags:
+    - user_test_local_mode
+
+- name: Remove testing dir
+  file:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/"
+    state: absent
+  tags:
+    - user_test_local_mode
