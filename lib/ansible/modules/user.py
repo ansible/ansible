@@ -1238,7 +1238,7 @@ class User(object):
             if self.umask is not None:
                 umask_string = self.umask
             else:
-            # try to get umask from /etc/login.defs
+                # try to get umask from /etc/login.defs
                 if os.path.exists(self.LOGIN_DEFS):
                     with open(self.LOGIN_DEFS, 'r') as f:
                         for line in f:
