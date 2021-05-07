@@ -1,7 +1,4 @@
 bugfixes:
-  - >
-     user - The user module created the home directory itself when the parent
-     directory of the home directory was missing. This causes the following
-     execution of ``luseradd`` in case that local is set to yes to fail.
-     Now always create the home directory on our own and don't ask ``luseradd``
-     or ``useradd`` to do this for us.
+  - >-
+     user - properly create home path on Linux when ``local: yes`` and parent directories 
+     specified in ``home`` do not exist (https://github.com/ansible/ansible/pull/71952/)
