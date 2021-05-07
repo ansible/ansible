@@ -1002,7 +1002,6 @@ DEFAULT_REMOTE_PORT:
   yaml: {key: defaults.remote_port}
 DEFAULT_REMOTE_USER:
   name: Login/Remote User
-  default:
   description:
     - Sets the login user for the target machines
     - "When blank it uses the connection plugin's default, normally the user currently executing Ansible."
@@ -1188,7 +1187,6 @@ DEFAULT_VAULT_IDENTITY:
   yaml: {key: defaults.vault_identity}
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
-  default:
   description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The --encrypt-vault-id cli option overrides the configured value.'
   env: [{name: ANSIBLE_VAULT_ENCRYPT_IDENTITY}]
   ini:
@@ -1375,7 +1373,6 @@ GALAXY_IGNORE_CERTS:
   type: boolean
 GALAXY_ROLE_SKELETON:
   name: Galaxy role or collection skeleton directory
-  default:
   description: Role or collection skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
   ini:
