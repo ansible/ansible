@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - Fixed checksum validation for binary files (leading asterisk) in checksum files (https://github.com/ansible/ansible/pull/74502).
