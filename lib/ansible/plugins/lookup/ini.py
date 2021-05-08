@@ -37,6 +37,12 @@ DOCUMENTATION = """
       default:
         description: Return value if the key is not in the ini file.
         default: ''
+      case_sensitive:
+        description:
+          Whether key names read from C(file) should be case sensitive. On Python 3,
+          this prevents duplicate key errors that are silently ignored in Python 2.
+        default: False
+        version_added: '2.12'
 """
 
 EXAMPLES = """
@@ -122,6 +128,8 @@ class LookupModule(LookupBase):
         paramvals = self.get_options()
 
         self.cp = configparser.ConfigParser()
+        if paramvals['case_sensitive']:
+            self.cp.optionxform = to_native
 
         ret = []
         for term in terms:
