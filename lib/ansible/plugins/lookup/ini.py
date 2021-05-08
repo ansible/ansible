@@ -67,7 +67,7 @@ from collections import defaultdict
 
 from ansible.errors import AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
