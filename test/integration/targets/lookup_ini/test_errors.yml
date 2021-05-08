@@ -36,3 +36,15 @@
         that:
           - missing_section is failed
           - "'No section' in missing_section.msg"
+
+    - name: Mix options type and push key out of order
+      debug:
+        msg: "{{ lookup('ini', 'file=lookup.ini', 'value1', section='value_section') }}"
+      register: bad_mojo
+      ignore_errors: yes
+
+    - name: Verify bad behavior reported an error
+      assert:
+        that:
+        - bad_mojo is failed
+        - '"No key to lookup was provided as first term with in string inline option" in bad_mojo.msg'
