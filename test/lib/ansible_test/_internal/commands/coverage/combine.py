@@ -144,9 +144,9 @@ def _command_coverage_combine_powershell(args):
     if args.stub:
         find_executable('pwsh', required=True)
 
-    def _default_stub_value(sources):
+    def _default_stub_value(source_paths):
         cmd = ['pwsh', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coverage_stub.ps1')]
-        cmd.extend(sources)
+        cmd.extend(source_paths)
 
         stubs = json.loads(run_command(args, cmd, capture=True, always=True)[0])
 
