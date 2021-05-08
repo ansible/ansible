@@ -167,8 +167,15 @@ class LookupModule(LookupBase):
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
-            self.cp.readfp(config)
-            var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            try:
+                self.cp.readfp(config)
+            except configparser.DuplicateOptionError as doe:
+                raise AnsibleLookupError("Duplicate option in '{file}': {error}".format(file=paramvals['file'], error=to_native(doe)))
+
+            try:
+                var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            except configparser.NoSectionError:
+                raise AnsibleLookupError("No section '{section}' in {file}".format(section=paramvals['section'], file=paramvals['file']))
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:
