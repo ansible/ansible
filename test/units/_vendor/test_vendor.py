@@ -62,4 +62,4 @@ def test_vendored_conflict():
         import pkgutil
         import sys
         test_vendored(vendored_pkg_names=['sys', 'pkgutil'])  # pass a real package we know is already loaded
-        assert 'pkgutil, sys' in str(w[0].message)  # ensure both conflicting modules are listed and sorted
+        assert any('pkgutil, sys' in str(msg.message) for msg in w)  # ensure both conflicting modules are listed and sorted
