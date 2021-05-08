@@ -90,7 +90,7 @@ class AnsibleUnwantedChecker(BaseChecker):
         # requests=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
         # urllib=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
 
-        # see https://docs.python.org/2/library/urllib2.html
+        # see https://docs.python.org/3.8/library/urllib2.html
         urllib2=UnwantedEntry('ansible.module_utils.urls',
                               ignore_paths=(
                                   '/lib/ansible/module_utils/urls.py',
@@ -119,7 +119,7 @@ class AnsibleUnwantedChecker(BaseChecker):
     )
 
     unwanted_functions = {
-        # see https://docs.python.org/2/library/tempfile.html#tempfile.mktemp
+        # see https://docs.python.org/3.8/library/tempfile.html#tempfile.mktemp
         'tempfile.mktemp': UnwantedEntry('tempfile.mkstemp'),
 
         'sys.exit': UnwantedEntry('exit_json or fail_json',
