@@ -493,6 +493,8 @@ To reference the system hostname::
 
 You can use facts in conditionals (see :ref:`playbooks_conditionals`) and also in templates. You can also use facts to create dynamic groups of hosts that match particular criteria, see the :ref:`group_by module <group_by_module>` documentation for details.
 
+.. note:: We discourage the use of ``ansible_date_time`` for the long running playbooks. You might want to consider other options like ``pipe`` filter like ``lookup('pipe', 'date +%Y-%m-%d.%H:%M:%S')`` or using :ref:`now() <templating_now>` with a Jinja 2 template.
+
 .. _fact_requirements:
 
 Package requirements for fact gathering
