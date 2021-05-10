@@ -19,9 +19,11 @@ import threading
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
+from ansible.module_utils.api import retry_with_delays_and_condition
+from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
@@ -36,6 +38,11 @@ except ImportError:
 
 display = Display()
 _CACHE_LOCK = threading.Lock()
+COLLECTION_PAGE_SIZE = 100
+RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
+    429,  # Too Many Requests
+    520,  # Galaxy rate limit error code (Cloudflare unknown error)
+]
 
 
 def cache_lock(func):
@@ -44,6 +51,13 @@ def cache_lock(func):
             return func(*args, **kwargs)
 
     return wrapped
+
+
+def is_rate_limit_exception(exception):
+    # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
+    # Since 403 could reflect the actual problem (such as an expired token), we should
+    # not retry by default.
+    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
 
 
 def g_connect(versions):
@@ -309,10 +323,15 @@ class GalaxyAPI:
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
 
+    @retry_with_delays_and_condition(
+        backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
+        should_retry_error=is_rate_limit_exception
+    )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
         url_info = urlparse(url)
         cache_id = get_cache_id(url)
+        query = parse_qs(url_info.query)
         if cache and self._cache:
             server_cache = self._cache.setdefault(cache_id, {})
             iso_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
@@ -322,7 +341,8 @@ class GalaxyAPI:
                 expires = datetime.datetime.strptime(server_cache[url_info.path]['expires'], iso_datetime_format)
                 valid = datetime.datetime.utcnow() < expires
 
-            if valid and not url_info.query:
+            is_paginated_url = 'page' in query or 'offset' in query
+            if valid and not is_paginated_url:
                 # Got a hit on the cache and we aren't getting a paginated response
                 path_cache = server_cache[url_info.path]
                 if path_cache.get('paginated'):
@@ -342,7 +362,7 @@ class GalaxyAPI:
 
                 return res
 
-            elif not url_info.query:
+            elif not is_paginated_url:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.utcnow()
                 expires += datetime.timedelta(days=1)
@@ -781,7 +801,8 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
 
-        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
+        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
@@ -838,6 +859,9 @@ class GalaxyAPI:
             elif relative_link:
                 # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
                 # with someone who knows the AH API.
+
+                # Remove the query string from the versions_url to use the next_link's query
+                versions_url = urljoin(versions_url, urlparse(versions_url).path)
                 next_link = versions_url.replace(versions_url_info.path, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
