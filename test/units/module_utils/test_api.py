@@ -7,9 +7,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ansible.module_utils.api import rate_limit, retry
+from ansible.module_utils.api import rate_limit, retry, retry_with_delays_and_condition
 
 import pytest
+
+
+class CustomException(Exception):
+    pass
+
+
+class CustomBaseException(BaseException):
+    pass
 
 
 class TestRateLimit:
@@ -26,17 +34,16 @@ class TestRateLimit:
 class TestRetry:
 
     def test_no_retry_required(self):
-        self.counter = 0
-
         @retry(retries=4, retry_pause=2)
         def login_database():
-            self.counter += 1
+            login_database.counter += 1
             return 'success'
 
+        login_database.counter = 0
         r = login_database()
 
         assert r == 'success'
-        assert self.counter == 1
+        assert login_database.counter == 1
 
     def test_catch_exception(self):
 
@@ -44,5 +51,71 @@ class TestRetry:
         def login_database():
             return 'success'
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="Retry"):
             login_database()
+
+    def test_no_retries(self):
+
+        @retry()
+        def login_database():
+            assert False, "Should not execute"
+
+        login_database()
+
+
+class TestRetryWithDelaysAndCondition:
+
+    def test_empty_retry_iterator(self):
+        @retry_with_delays_and_condition(backoff_iterator=[])
+        def login_database():
+            login_database.counter += 1
+
+        login_database.counter = 0
+        r = login_database()
+        assert login_database.counter == 1
+
+    def test_no_retry_exception(self):
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1],
+            should_retry_error=lambda x: False,
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                raise CustomException("Error")
+
+        login_database.counter = 0
+        with pytest.raises(CustomException, match="Error"):
+            login_database()
+        assert login_database.counter == 1
+
+    def test_no_retry_baseexception(self):
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1],
+            should_retry_error=lambda x: True,  # Retry all exceptions inheriting from Exception
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                # Raise an exception inheriting from BaseException
+                raise CustomBaseException("Error")
+
+        login_database.counter = 0
+        with pytest.raises(CustomBaseException, match="Error"):
+            login_database()
+        assert login_database.counter == 1
+
+    def test_retry_exception(self):
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1],
+            should_retry_error=lambda x: isinstance(x, CustomException),
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                raise CustomException("Retry")
+            return 'success'
+
+        login_database.counter = 0
+        assert login_database() == 'success'
+        assert login_database.counter == 2

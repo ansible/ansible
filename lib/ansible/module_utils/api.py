@@ -26,6 +26,8 @@ The 'api' module provides the following common argument specs:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import functools
+import random
 import sys
 import time
 
@@ -114,3 +116,51 @@ def retry(retries=None, retry_pause=1):
 
         return retried
     return wrapper
+
+
+def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
+    """The "Full Jitter" backoff strategy.
+
+    Ref: https://www.awsarchitectureblog.com/2015/03/backoff.html
+
+    :param retries: The number of delays to generate.
+    :param delay_base: The base time in seconds used to calculate the exponential backoff.
+    :param delay_threshold: The maximum time in seconds for any delay.
+    """
+    for retry in range(0, retries):
+        yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
+
+
+def retry_never(exception_or_result):
+    return False
+
+
+def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
+    """Generic retry decorator.
+
+    :param backoff_iterator: An iterable of delays in seconds.
+    :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
+    """
+    if should_retry_error is None:
+        should_retry_error = retry_never
+
+    def function_wrapper(function):
+        @functools.wraps(function)
+        def run_function(*args, **kwargs):
+            """This assumes the function has not already been called.
+            If backoff_iterator is empty, we should still run the function a single time with no delay.
+            """
+            call_retryable_function = functools.partial(function, *args, **kwargs)
+
+            for delay in backoff_iterator:
+                try:
+                    return call_retryable_function()
+                except Exception as e:
+                    if not should_retry_error(e):
+                        raise
+                time.sleep(delay)
+
+            # Only or final attempt
+            return call_retryable_function()
+        return run_function
+    return function_wrapper
