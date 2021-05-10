@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible adhoc, clarified the help to some options, also added some comments to code.
