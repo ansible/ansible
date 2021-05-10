@@ -13,14 +13,11 @@ stage="${S:-prod}"
 provider="${P:-default}"
 
 # python versions to test in order
-# python 2.7 runs full tests while other versions run minimal tests
-python_versions=(
-    3.5
-    3.6
-    3.7
-    3.8
-    2.7
-)
+IFS=' ' read -r -a python_versions <<< \
+    "$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import util; print(" ".join(util.CONTROLLER_PYTHON_VERSIONS))')"
+
+# python version to run full tests on while other versions run minimal tests
+python_default="$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import util; print(util.CONTROLLER_MIN_PYTHON_VERSION)')"
 
 # version to test when only testing a single version
 single_version=2012-R2
@@ -53,8 +50,8 @@ else
 fi
 
 for version in "${python_versions[@]}"; do
-    if [ "${version}" == "2.7" ]; then
-        # full tests for python 2.7
+    if [ "${version}" == "${python_default}" ]; then
+        # full tests
         ci="${target}"
     else
         # minimal tests for other python versions
