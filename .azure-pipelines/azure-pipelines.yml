@@ -227,10 +227,8 @@ stages:
           targets:
             - name: IOS Python
               test: ios/csr1000v/
-            - name: VyOS Python 2.7
-              test: vyos/1.1.8/2.7
-            - name: VyOS Python 3.6
-              test: vyos/1.1.8/3.6
+            - name: VyOS Python
+              test: vyos/1.1.8/
             - name: AWS Python 2.7
               test: aws/2.7
             - name: AWS Python 3.6
