@@ -16,10 +16,8 @@ provider="${P:-default}"
 
 # python versions to test in order
 # all versions run full tests
-python_versions=(
-    2.7
-    3.6
-)
+IFS=' ' read -r -a python_versions <<< \
+    "$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import util; print(" ".join(util.CONTROLLER_PYTHON_VERSIONS))')"
 
 if [ "${python_version}" ]; then
     # limit tests to a single python version
