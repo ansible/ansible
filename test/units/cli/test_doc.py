@@ -31,7 +31,7 @@ TTY_IFY_DATA = {
     'yolo :ref:`my boy` does stuff': 'yolo website for `my boy` does stuff',
     '.. seealso:: Something amazing': 'See website for: Something amazing',
     '.. seealso:: Troublesome multiline\n Stuff goes htere': 'See website for: Troublesome multiline\n Stuff goes htere',
-    '.. note:: boring stuff': 'note: boring stuff',
+    '.. note:: boring stuff': 'Note: boring stuff',
 }
 
 
