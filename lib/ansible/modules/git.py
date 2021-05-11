@@ -321,7 +321,7 @@ import stat
 import sys
 import shutil
 import tempfile
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b, string_types

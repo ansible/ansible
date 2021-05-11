@@ -27,7 +27,7 @@ import datetime
 import os
 import tarfile
 import tempfile
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from shutil import rmtree
 
 from ansible import context

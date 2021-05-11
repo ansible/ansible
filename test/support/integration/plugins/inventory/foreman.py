@@ -81,7 +81,7 @@ password: secure
 validate_certs: False
 '''
 
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text

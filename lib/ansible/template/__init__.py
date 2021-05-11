@@ -28,7 +28,7 @@ import re
 import time
 
 from contextlib import contextmanager
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from numbers import Number
 from traceback import format_exc
 

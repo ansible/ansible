@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import re
 
-from distutils.version import StrictVersion
+from ansible.module_utils.compat.version import StrictVersion
 from functools import partial
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
