@@ -334,10 +334,10 @@ class DocCLI(CLI, RoleMixin):
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
         # remove rst
-        t = cls._RST_SEEALSO.sub(r"See website for:", t)  # seealso is special and need to break
-        t = cls._RST_NOTE.sub(r"Note:", t)                # .. note:: to note:
-        t = cls._RST_ROLES.sub(r"website for `", t)       # remove :ref: and other tags
-        t = cls._RST_DIRECTIVES.sub(r"", t)               # remove .. stuff:: in general
+        t = cls._RST_SEEALSO.sub(r"See website for:", t)   # seealso is special and need to break
+        t = cls._RST_NOTE.sub(r"Note:", t)                 # .. note:: to note:
+        t = cls._RST_ROLES.sub(r"website for `", t)        # remove :ref: and other tags
+        t = cls._RST_DIRECTIVES.sub(r"", t)                # remove .. stuff:: in general
 
         # handle docsite refs
         # U(word) => word
