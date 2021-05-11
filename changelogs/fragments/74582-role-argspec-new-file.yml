@@ -1,0 +1,2 @@
+bugfixes:
+    - roles - allow for role arg specs in new meta file (https://github.com/ansible/ansible/issues/74525).
