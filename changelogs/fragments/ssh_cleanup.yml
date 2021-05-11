@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection, use self.host which has the most up2date info instead of pc.remote_addr
