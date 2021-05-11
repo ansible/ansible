@@ -65,7 +65,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible'
-copyright = "2021 Red Hat, Inc."
+copyright = "Ansible project contributors."
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
