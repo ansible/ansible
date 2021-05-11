@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from distutils.version import LooseVersion, StrictVersion
+from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 import pytest
 

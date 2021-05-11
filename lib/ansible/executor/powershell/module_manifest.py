@@ -12,7 +12,7 @@ import pkgutil
 import random
 import re
 
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 from ansible import constants as C
 from ansible.errors import AnsibleError

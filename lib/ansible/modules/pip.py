@@ -264,7 +264,7 @@ import tempfile
 import operator
 import shlex
 import traceback
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
 try:

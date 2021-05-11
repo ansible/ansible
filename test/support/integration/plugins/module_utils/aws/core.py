@@ -65,7 +65,7 @@ import re
 import logging
 import traceback
 from functools import wraps
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 try:
     from cStringIO import StringIO

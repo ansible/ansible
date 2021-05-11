@@ -29,7 +29,7 @@ import fnmatch
 import json
 import re
 import sys
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 import packaging.specifiers
 

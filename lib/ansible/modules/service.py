@@ -144,7 +144,7 @@ import time
 # that don't belong on production boxes.  Since our Solaris code doesn't
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
-    from distutils.version import LooseVersion
+    from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.basic import AnsibleModule

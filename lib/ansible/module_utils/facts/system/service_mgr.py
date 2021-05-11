@@ -32,7 +32,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # that don't belong on production boxes.  Since our Solaris code doesn't
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
-    from distutils.version import LooseVersion
+    from ansible.module_utils.compat.version import LooseVersion
 
 
 class ServiceMgrFactCollector(BaseFactCollector):
