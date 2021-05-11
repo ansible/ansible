@@ -260,9 +260,16 @@ Role argument validation
 ========================
 
 Beginning with version 2.11, you may choose to enable role argument validation based on an argument
-specification defined in the role ``meta/main.yml`` file. When this argument specification is defined,
-a new task is inserted at the beginning of role execution that will validate the parameters supplied
-for the role against the specification. If the parameters fail validation, the role will fail execution.
+specification. This specification is defined in the ``meta/argument_specs.yml`` file (or with the ``.yaml``
+file extension). When this argument specification is defined, a new task is inserted at the beginning of role execution
+that will validate the parameters supplied for the role against the specification. If the parameters fail
+validation, the role will fail execution.
+
+.. note::
+
+    Ansible also supports role specifications defined in the role ``meta/main.yml`` file, as well. However,
+    any role that defines the specs within this file will not work on versions below 2.11. For this reason,
+    we recommend using the ``meta/argument_specs.yml`` file to maintain backward compatibility.
 
 .. note::
 
@@ -274,7 +281,7 @@ Specification format
 --------------------
 
 The role argument specification must be defined in a top-level ``argument_specs`` block within the
-role ``meta/main.yml`` file. All fields are lower-case.
+role ``meta/argument_specs.yml`` file. All fields are lower-case.
 
 :entry-point-name:
 
@@ -346,7 +353,7 @@ Sample specification
 
 .. code-block:: yaml
 
- # roles/myapp/meta/main.yml
+ # roles/myapp/meta/argument_specs.yml
  ---
  argument_specs:
    # roles/myapp/tasks/main.yml entry point
@@ -395,7 +402,7 @@ You have two options to force Ansible to run a role more than once.
 Passing different parameters
 ----------------------------
 
-If you pass different parameters in each role definition, Ansible runs the role more than once. Providing different variable values is not the same as passing different role parameters. You must use the ``roles`` keyword for this behavior, since ``import_role`` and ``include_role`` do not accept role parameters. 
+If you pass different parameters in each role definition, Ansible runs the role more than once. Providing different variable values is not the same as passing different role parameters. You must use the ``roles`` keyword for this behavior, since ``import_role`` and ``include_role`` do not accept role parameters.
 
 This playbook runs the ``foo`` role twice:
 
