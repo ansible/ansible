@@ -34,6 +34,10 @@ options:
     vars:
     - name: ansible_user
     - name: ansible_psrp_user
+    cli:
+    - name: user
+    keywords:
+    - name: remote_user
   remote_password:
     description: Authentication password for the C(remote_user). Can be supplied as CLI option.
     type: str
@@ -52,6 +56,10 @@ options:
     vars:
     - name: ansible_port
     - name: ansible_psrp_port
+    keywords:
+    - name: port
+    cli:
+    - name: port
   protocol:
     description:
     - Set the protocol to use for the connection.

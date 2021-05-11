@@ -343,7 +343,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return new_me
 
-    def get_validated_value(self, name, attribute, value, templar):
+    def get_validated_value(self, name, templar):
+
+        attribute = self._valid_attrs[name]
+        value = self._attributes[name]
+
         if attribute.isa == 'string':
             value = to_text(value)
         elif attribute.isa == 'int':
@@ -359,7 +363,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 value = value.replace('%', '')
             value = float(value)
         elif attribute.isa == 'list':
-            if value is None:
+            if value in (None, Sentinel):
                 value = []
             elif not isinstance(value, list):
                 value = [value]
@@ -372,7 +376,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                         if item is None or item.strip() == "":
                             raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
         elif attribute.isa == 'set':
-            if value is None:
+            if value in (None, Sentinel):
                 value = set()
             elif not isinstance(value, (list, set)):
                 if isinstance(value, string_types):
@@ -384,7 +388,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if not isinstance(value, set):
                 value = set(value)
         elif attribute.isa == 'dict':
-            if value is None:
+            if value in (None, Sentinel):
                 value = dict()
             elif not isinstance(value, dict):
                 raise TypeError("%s is not a dictionary" % value)
@@ -449,7 +453,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
                 # and make sure the attribute is of the type it should be
                 if value is not None:
-                    value = self.get_validated_value(name, attribute, value, templar)
+                    value = self.get_validated_value(name, templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)

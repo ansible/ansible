@@ -204,12 +204,15 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
+        mock_templar = MagicMock()
+        mock_connection = MagicMock()
+        mock_connection.get_option = MagicMock(return_value='itworks')
+        te._get_connection = MagicMock(return_value=mock_connection)
+
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.return_value = True
         action_loader.get.return_value = mock.sentinel.handler
 
-        mock_connection = MagicMock()
-        mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
         te._task.action = action
 
@@ -238,13 +241,16 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
+        mock_templar = MagicMock()
+        mock_connection = MagicMock()
+        mock_connection.get_option = MagicMock(return_value='itworks')
+        te._get_connection = MagicMock(return_value=mock_connection)
+
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.side_effect = [False, True]
         action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = True
 
-        mock_connection = MagicMock()
-        mock_templar = MagicMock()
         action = 'namespace.netconf_suffix'
         module_prefix = action.split('_')[0]
         te._task.action = action
@@ -324,6 +330,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
         mock_connection.set_host_overrides.return_value = None
         mock_connection._connect.return_value = None
+        mock_connection.get_option.return_value = 'whatevs'
 
         mock_action = MagicMock()
         mock_queue = MagicMock()

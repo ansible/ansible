@@ -173,16 +173,23 @@ class PlayContext(Base):
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
+        # Not every cli that uses PlayContext has these command line args so have a default
+        # via .get('attrib', default)
+
+        # mot of these are kept for backwards compat
+
+        # DEPRECATED, moved to task
         if context.CLIARGS.get('timeout', False):
             self.timeout = int(context.CLIARGS['timeout'])
 
-        # From the command line.  These should probably be used directly by plugins instead
-        # For now, they are likely to be moved to FieldAttribute defaults
-        self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
-        self.verbosity = context.CLIARGS.get('verbosity')  # Else default
-
-        # Not every cli that uses PlayContext has these command line args so have a default
+        # DEPRECATED, moved to play_iterator
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
+
+        # DEPRECATED, is used directly by plugins instead
+        self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
+
+        # TODO: should be moved to 'private' task settings or consult magic var
+        self.verbosity = context.CLIARGS.get('verbosity')  # Else default
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''

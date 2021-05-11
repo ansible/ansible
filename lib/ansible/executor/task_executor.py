@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
 import pty
 import time
 import json
@@ -20,7 +19,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import iteritems, string_types, binary_type
+from ansible.module_utils.six import iteritems, binary_type
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
@@ -97,6 +96,8 @@ class TaskExecutor:
 
         self._task.squash()
 
+        self.no_log = C.DEFAULT_NO_LOG
+
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
@@ -107,6 +108,7 @@ class TaskExecutor:
 
         display.debug("in run() - task %s" % self._task._uuid)
 
+        no_log = self.no_log
         try:
             try:
                 items = self._get_loop_items()
@@ -118,6 +120,9 @@ class TaskExecutor:
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
+
+                    # update no_log now that we have results
+                    nolog = self._task.no_log
 
                     # create the overall result item
                     res = dict(results=item_results)
@@ -154,6 +159,9 @@ class TaskExecutor:
                         res['msg'] = 'All items skipped'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
+
+                    # update no_log now that we have results
+                    nolog = self._task.no_log
             else:
                 display.debug("calling self._execute()")
                 res = self._execute()
@@ -189,10 +197,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=no_log)
         except Exception as e:
             return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
-                        stdout='', _ansible_no_log=self._play_context.no_log)
+                        stdout='', _ansible_no_log=no_log)
         finally:
             try:
                 self._connection.close()
@@ -357,7 +365,7 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
-            # update 'general no_log' based on specific no_log
+            # update 'general no_log' based on specific no_log, keeping true if any was true
             no_log = no_log or tmp_task.no_log
 
             # now update the result with the item info, and append the result
@@ -466,7 +474,7 @@ class TaskExecutor:
         try:
             if not self._task.evaluate_conditional(templar, variables):
                 display.debug("when evaluation is False, skipping this task")
-                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._task.no_log)
         except AnsibleError as e:
             # loop error takes precedence
             if self._loop_eval_error is not None:
@@ -506,7 +514,7 @@ class TaskExecutor:
         except AnsibleError:
             raise
         except Exception:
-            return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
+            return dict(changed=False, failed=True, _ansible_no_log=self._task.no_log, exception=to_text(traceback.format_exc()))
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
@@ -527,9 +535,9 @@ class TaskExecutor:
         templar.available_variables = cvars
 
         # get the connection and the handler for this execution
-        if (not self._connection or
-                not getattr(self._connection, 'connected', False) or
-                self._play_context.remote_addr != self._connection._play_context.remote_addr):
+        if not self._connection or \
+           not getattr(self._connection, 'connected', False) or \
+           not self._play_context.remote_addr == self._connection.get_option('remote_addr'):
             self._connection = self._get_connection(cvars, templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
@@ -598,7 +606,7 @@ class TaskExecutor:
             display.debug("handler run complete")
 
             # preserve no log
-            result["_ansible_no_log"] = self._play_context.no_log
+            result["_ansible_no_log"] = self._task.no_log
 
             # update the local copy of vars with the registered value, if specified,
             # or any facts which may have been generated by the module execution
@@ -613,7 +621,7 @@ class TaskExecutor:
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
 
                 # ensure no log is preserved
-                result["_ansible_no_log"] = self._play_context.no_log
+                result["_ansible_no_log"] = self._task.no_log
 
             # helper methods for use below in evaluating changed/failed_when
             def _evaluate_changed_when_result(result):
@@ -1036,7 +1044,7 @@ class TaskExecutor:
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
-                         host=self._play_context.remote_addr)
+                         host=connection.get_option('remote_addr'))
         else:
             # use ansible.legacy.normal to allow (historic) local action_plugins/ override without collections search
             handler_name = 'ansible.legacy.normal'

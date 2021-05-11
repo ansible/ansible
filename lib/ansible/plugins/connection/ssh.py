@@ -23,14 +23,12 @@ DOCUMENTATION = '''
         - Many options default to 'None' here but that only means we don't override the ssh tool's defaults and/or configuration.
           For example, if you specify the port in this plugin it will override any C(Port) entry in your C(.ssh/config).
     options:
-      host:
+      remote_addr:
           description: Hostname/ip to connect to.
           vars:
                - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
-               - name: delegated_vars['ansible_host']
-               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if ssh should check host keys
           type: boolean
@@ -206,6 +204,8 @@ DOCUMENTATION = '''
             - name: ansible_ssh_user
           cli:
             - name: user
+          keywords:
+            - name: remote_user
       pipelining:
           env:
             - name: ANSIBLE_PIPELINING
@@ -336,7 +336,6 @@ import subprocess
 import time
 
 from functools import wraps
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -517,6 +516,7 @@ class Connection(ConnectionBase):
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
+
         self.control_path = None
         self.control_path_dir = None
 
@@ -601,7 +601,7 @@ class Connection(ConnectionBase):
             were added.  It will be displayed with a high enough verbosity.
         .. note:: This function does its work via side-effect.  The b_command list has the new arguments appended.
         """
-        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
+        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.get_option('remote_addr'))
         b_command += b_args
 
     def _build_command(self, binary, subsystem, *other_args):
@@ -1232,7 +1232,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self._play_context.remote_addr)
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self.get_option('remote_addr'))
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             # Become method 'runas' is done in the wrapper that is executed,
