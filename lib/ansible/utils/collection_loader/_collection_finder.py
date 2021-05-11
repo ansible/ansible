@@ -23,7 +23,6 @@ from tokenize import Name as _VALID_IDENTIFIER_REGEX
 
 # DO NOT add new non-stdlib import deps here, this loader is used by external tools (eg ansible-test import sanity)
 # that only allow stdlib and module_utils
-from ansible.constants import ANSIBLE_FILE_EXT
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.six import string_types, PY3
 from ._collection_config import AnsibleCollectionConfig
@@ -50,6 +49,7 @@ try:
 except ImportError:
     _meta_yml_to_dict = None
 
+ANSIBLE_FILE_EXT = ('.yml', '.yaml')  # copy here due to test choking, though it should really use centralized in constants.py
 
 if not hasattr(__builtins__, 'ModuleNotFoundError'):
     # this was introduced in Python 3.6
