@@ -1,0 +1,2 @@
+bugfixes:
+    - handle when host disappears form inventory mid execution.

@@ -266,8 +266,7 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
-        if (self._stdout_callback and
-                hasattr(self._stdout_callback, 'set_play_context')):
+        if (self._stdout_callback and hasattr(self._stdout_callback, 'set_play_context')):
             self._stdout_callback.set_play_context(play_context)
 
         for callback_plugin in self._callback_plugins:
@@ -300,7 +299,11 @@ class TaskQueueManager:
         # hosts so we know what failed this round.
         for host_name in self._failed_hosts.keys():
             host = self._inventory.get_host(host_name)
-            iterator.mark_host_failed(host)
+            if host is None:
+                display.warning("Lost host '%s' from inventory, removing from rest of play execution." % host_name)
+                iterator.host_not_in_inventory(host_name)
+            else:
+                iterator.mark_host_failed(host)
 
         self.clear_failed_hosts()
 
