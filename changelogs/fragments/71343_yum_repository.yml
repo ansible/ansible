@@ -1,0 +1,2 @@
+bugfixes:
+- basic - skip over module parameters which are used in ``journal.send`` API call (https://github.com/ansible/ansible/issues/71343).
