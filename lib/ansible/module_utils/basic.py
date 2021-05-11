@@ -1338,7 +1338,16 @@ class AnsibleModule(object):
             if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
                 for arg in log_args:
-                    journal_args.append((arg.upper(), str(log_args[arg])))
+                    name, value = (arg.upper(), str(log_args[arg]))
+                    if name in (
+                        'PRIORITY', 'MESSAGE', 'MESSAGE_ID',
+                        'CODE_FILE', 'CODE_LINE', 'CODE_FUNC',
+                        'SYSLOG_FACILITY', 'SYSLOG_IDENTIFIER',
+                        'SYSLOG_PID',
+                    ):
+                        name = "_%s" % name
+                    journal_args.append((name, value))
+
                 try:
                     if HAS_SYSLOG:
                         # If syslog_facility specified, it needs to convert
