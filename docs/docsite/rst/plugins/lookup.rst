@@ -12,7 +12,9 @@ Lookup plugins are an Ansible-specific extension to the Jinja2 templating langua
 .. note::
    - Lookups are executed with a working directory relative to the role or play,
      as opposed to local tasks, which are executed relative the executed script.
-     The ``file`` lookup plugin is exception to this as it has a list of path candidates in which it searches.
+     The lookup plugins such as ``file``, ``fileglob``, ``template``, and ``filetree`` are exceptions to this as they have a list of path candidates to search files in.
+     Also, note that lookup plugins that use ``files``, ``vars`` or ``templates`` parameters with a relative path will use the ``ansible_search_path``, to find those files.
+     Please read more about this in :ref:`Search paths <playbook_pathing>` documentation.
    - Pass ``wantlist=True`` to lookups to use in Jinja2 template "for" loops.
    - By default, lookup return values are marked as unsafe for security reasons. If you trust the outside source your lookup accesses, pass ``allow_unsafe=True`` to allow Jinja2 templates to evaluate lookup values.
 
