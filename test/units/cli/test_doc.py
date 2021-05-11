@@ -27,6 +27,11 @@ TTY_IFY_DATA = {
     'IBM(International Business Machines)': 'IBM(International Business Machines)',
     'L(the user guide, https://docs.ansible.com/)': 'the user guide <https://docs.ansible.com/>',
     'R(the user guide, user-guide)': 'the user guide',
+    # de-rsty refs and anchors
+    'yolo :ref:`my boy` does stuff': 'yolo website for `my boy` does stuff',
+    '.. seealso:: Something amazing': 'See website for: Something amazing',
+    '.. seealso:: Troublesome multiline\n Stuff goes htere': 'See website for: Troublesome multiline\n Stuff goes htere',
+    '.. note:: boring stuff': 'Note: boring stuff',
 }
 
 
