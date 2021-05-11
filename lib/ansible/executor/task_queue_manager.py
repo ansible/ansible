@@ -301,6 +301,8 @@ class TaskQueueManager:
         for host_name in self._failed_hosts.keys():
             host = self._inventory.get_host(host_name)
             iterator.mark_host_failed(host)
+        for host_name in self._unreachable_hosts.keys():
+            iterator._play._removed_hosts.append(host_name)
 
         self.clear_failed_hosts()
 
