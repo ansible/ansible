@@ -147,8 +147,9 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 2.7
-            - test: 3.6
+            - test: 3.8
+            - test: 3.9
+            - test: '3.10'
   - stage: Generic
     dependsOn: []
     jobs:
@@ -157,8 +158,9 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 2.7
+            - test: 3.8
             - test: 3.9
+            - test: '3.10'
   - stage: Incidental_Remote
     displayName: Incidental Remote
     dependsOn: []
