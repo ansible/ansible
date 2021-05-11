@@ -314,7 +314,7 @@ class DocCLI(CLI, RoleMixin):
     # rst specific
     _RST_NOTE = re.compile(r".. note::")
     _RST_SEEALSO = re.compile(r".. seealso::")
-    _RST_ROLES = re.compile(r":\w+?::`")
+    _RST_ROLES = re.compile(r":\w+?:`")
     _RST_DIRECTIVES = re.compile(r".. \w+?::")
 
     def __init__(self, args):
