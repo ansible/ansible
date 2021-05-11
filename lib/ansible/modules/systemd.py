@@ -13,25 +13,26 @@ module: systemd
 author:
     - Ansible Core Team
 version_added: "2.2"
-short_description:  Manage services
+short_description:  Manage systemd units
 description:
-    - Controls systemd services on remote hosts.
+    - Controls systemd units (services, timers, and so on) on remote hosts.
 options:
     name:
         description:
-            - Name of the service. This parameter takes the name of exactly one service to work with.
-            - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+            - Name of the unit. This parameter takes the name of exactly one unit to work with.
+            - When no extension is given, it is implied to a C(.service) as systemd.
+            - When using in a chroot environment you always need to specify the name of the unit with the extension. For example, C(crond.service).
         type: str
         aliases: [ service, unit ]
     state:
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              C(restarted) will always bounce the service. C(reloaded) will always reload.
+              C(restarted) will always bounce the unit. C(reloaded) will always reload.
         type: str
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Whether the service should start on boot. B(At least one of state and enabled are required.)
+            - Whether the unit should start on boot. B(At least one of state and enabled are required.)
         type: bool
     force:
         description:
@@ -45,7 +46,7 @@ options:
     daemon_reload:
         description:
             - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
-            - When set to C(yes), runs daemon-reload even if the module does not start or stop anything.
+            - When set to C(true), runs daemon-reload even if the module does not start or stop anything.
         type: bool
         default: no
         aliases: [ daemon-reload ]
@@ -77,9 +78,9 @@ options:
         default: no
         version_added: "2.3"
 notes:
-    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
-      and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
-    - Before 2.4 you always required 'name'.
+    - Since 2.4, one of the following options is required C(state), C(enabled), C(masked), C(daemon_reload), (C(daemon_reexec) since 2.8),
+      and all except C(daemon_reload) and (C(daemon_reexec) since 2.8) also require C(name).
+    - Before 2.4 you always required C(name).
     - Globs are not supported in name, i.e ``postgres*.service``.
     - Supports C(check_mode).
 requirements:
@@ -87,7 +88,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Make sure a service is running
+- name: Make sure a service unit is running
   ansible.builtin.systemd:
     state: started
     name: httpd
@@ -105,7 +106,7 @@ EXAMPLES = '''
 
 - name: Reload service httpd, in all cases
   ansible.builtin.systemd:
-    name: httpd
+    name: httpd.service
     state: reloaded
 
 - name: Enable service httpd and ensure it is not masked
@@ -114,7 +115,7 @@ EXAMPLES = '''
     enabled: yes
     masked: no
 
-- name: Enable a timer for dnf-automatic
+- name: Enable a timer unit for dnf-automatic
   ansible.builtin.systemd:
     name: dnf-automatic.timer
     state: started
