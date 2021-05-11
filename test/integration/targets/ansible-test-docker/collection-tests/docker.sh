@@ -7,7 +7,7 @@ cd "${WORK_DIR}/ansible_collections/ns/col"
 
 # common args for all tests
 # because we are running in shippable/generic/ we are already in the default docker container
-common=(--python "${ANSIBLE_TEST_PYTHON_VERSION}" --color --truncate 0 "${@}")
+common=(--python "${ANSIBLE_TEST_PYTHON_VERSION}" --venv --venv-system-site-packages --color --truncate 0 "${@}")
 
 # prime the venv to work around issue with PyYAML detection in ansible-test
 ansible-test sanity "${common[@]}" --test ignores
