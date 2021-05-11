@@ -1,0 +1,2 @@
+bugfixes:
+  - Save unreachable hosts between plays by adding them to the PlayIterator's _play._removed_hosts (https://github.com/ansible/ansible/issues/66945).
