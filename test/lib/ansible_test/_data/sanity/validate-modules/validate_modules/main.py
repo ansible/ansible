@@ -33,7 +33,7 @@ import traceback
 
 from collections import OrderedDict
 from contextlib import contextmanager
-from distutils.version import StrictVersion, LooseVersion
+from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
 
 import yaml

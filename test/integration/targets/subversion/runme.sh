@@ -22,7 +22,7 @@ ansible-playbook runme.yml "$@" -v --tags tests
 ansible-playbook runme.yml "$@" --tags warnings 2>&1 | tee out.txt
 
 version="$(svn --version -q)"
-secure=$(python -c "from distutils.version import LooseVersion; print(LooseVersion('$version') >= LooseVersion('1.10.0'))")
+secure=$(python -c "from ansible.module_utils.compat.version import LooseVersion; print(LooseVersion('$version') >= LooseVersion('1.10.0'))")
 
 if [[ "${secure}" = "False" ]] && [[ "$(grep -c 'To securely pass credentials, upgrade svn to version 1.10.0' out.txt)" -eq 1 ]]; then
     echo "Found the expected warning"

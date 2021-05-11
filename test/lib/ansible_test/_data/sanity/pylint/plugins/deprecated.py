@@ -7,14 +7,13 @@ __metaclass__ = type
 import datetime
 import re
 
-from distutils.version import LooseVersion
-
 import astroid
 
 from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
 from pylint.checkers.utils import check_messages
 
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.six import string_types
 from ansible.release import __version__ as ansible_version_raw
 from ansible.utils.version import SemanticVersion

@@ -532,6 +532,7 @@ def main():
                 )
 
                 # Temporary solution until there is a vendored copy of distutils.version in module_utils.
+                # Some of our dependencies such as packaging.tags also import distutils, which we have no control over
                 # The warning text is: The distutils package is deprecated and slated for removal in Python 3.12.
                 # Use setuptools or check PEP 632 for potential alternatives
                 warnings.filterwarnings(

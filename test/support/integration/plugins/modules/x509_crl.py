@@ -349,7 +349,7 @@ crl:
 
 import os
 import traceback
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_text

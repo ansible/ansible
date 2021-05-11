@@ -14,7 +14,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from traceback import format_exc
 
 display = Display()

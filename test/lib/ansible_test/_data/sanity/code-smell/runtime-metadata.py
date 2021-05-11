@@ -9,17 +9,6 @@ import re
 import sys
 import warnings
 
-# Temporary solution for the PEP 632 deprecation warning on Python 3.10.
-# This should be removed once distutils.version has been vendored in ansible.module_utils.
-# See: https://github.com/ansible/ansible/issues/74599
-# pylint: disable=wrong-import-position
-warnings.filterwarnings(
-    'ignore',
-    'The distutils package is deprecated and slated for removal in Python 3.12. Use setuptools or check PEP 632 for potential alternatives',
-    DeprecationWarning,
-)
-
-from distutils.version import StrictVersion, LooseVersion
 from functools import partial
 
 import yaml
@@ -28,6 +17,7 @@ from voluptuous import All, Any, MultipleInvalid, PREVENT_EXTRA
 from voluptuous import Required, Schema, Invalid
 from voluptuous.humanize import humanize_error
 
+from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 

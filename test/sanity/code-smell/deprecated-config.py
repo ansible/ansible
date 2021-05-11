@@ -25,7 +25,7 @@ import os
 import re
 import sys
 
-from distutils.version import StrictVersion
+from ansible.module_utils.compat.version import StrictVersion
 
 import yaml
 

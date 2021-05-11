@@ -128,7 +128,7 @@ RETURN = r'''#'''
 import os
 import re
 
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 

@@ -96,7 +96,7 @@ EXAMPLES = """
 import os
 import tempfile
 import traceback
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
