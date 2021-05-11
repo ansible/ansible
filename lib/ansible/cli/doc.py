@@ -354,10 +354,10 @@ class DocCLI(CLI, RoleMixin):
     _RULER = re.compile(r"\bHORIZONTALLINE\b")
 
     # rst specific
-    _REFTAG = re.compile(r":ref:")
-    _TERM = re.compile(r":term:")
-    _NOTES = re.compile(r".. note:")
-    _SEEALSO = re.compile(r"^\s*.. seealso:.*$", re.MULTILINE)
+    _RST_NOTE = re.compile(r".. note::")
+    _RST_SEEALSO = re.compile(r".. seealso::")
+    _RST_ROLES = re.compile(r":\w+?:`")
+    _RST_DIRECTIVES = re.compile(r".. \w+?::")
 
     def __init__(self, args):
 
@@ -367,17 +367,19 @@ class DocCLI(CLI, RoleMixin):
     @classmethod
     def tty_ify(cls, text):
 
+        # general formatting
         t = cls._ITALIC.sub(r"`\1'", text)    # I(word) => `word'
         t = cls._BOLD.sub(r"*\1*", t)         # B(word) => *word*
         t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = cls._REF.sub(r"\1", t)                      # R(word, sphinx-ref) => word
-        t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+        t = cls._REF.sub(r"\1", t)            # R(word, sphinx-ref) => word
+        t = cls._CONST.sub(r"`\1'", t)        # C(word) => `word'
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
-        t = cls._REFTAG.sub(r"", t)  # remove rst :ref:
-        t = cls._TERM.sub(r"", t)  # remove rst :term:
-        t = cls._NOTES.sub(r" Note:", t)  # nicer note
-        t = cls._SEEALSO.sub(r"", t)  # remove seealso
+        # remove rst
+        t = cls._RST_SEEALSO.sub(r"See website for:", t)   # seealso is special and need to break
+        t = cls._RST_NOTE.sub(r"Note:", t)                 # .. note:: to note:
+        t = cls._RST_ROLES.sub(r"website for `", t)        # remove :ref: and other tags
+        t = cls._RST_DIRECTIVES.sub(r"", t)                # remove .. stuff:: in general
 
         # handle docsite refs
         # U(word) => word

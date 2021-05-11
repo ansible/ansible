@@ -15,7 +15,6 @@ block: List of tasks in a block.
 changed_when: "Conditional expression that overrides the task's normal 'changed' status."
 check_mode: A boolean that controls if a task is executed in 'check' mode. See :ref:`check_mode_dry`.
 collections: |
-
     List of collection namespaces to search for modules, plugins, and roles. See :ref:`collections_using_playbook`
 
     .. note::
@@ -41,11 +40,7 @@ hosts: "A list of groups, hosts or host pattern that translates into a list of h
 ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
 ignore_unreachable: Boolean that allows you to ignore task failures due to an unreachable host and continue with the play. This does not affect other task errors (see :term:`ignore_errors`) but is useful for groups of volatile/ephemeral hosts.
 loop: "Takes a list for the task to iterate over, saving each list element into the ``item`` variable (configurable via loop_control)"
-loop_control: |
-    Several keys here allow you to modify/set loop behaviour in a task.
-
-    .. seealso:: :ref:`loop_control`
-
+loop_control: Several keys here allow you to modify/set loop behaviour in a task. See :ref:`loop_control`.
 max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed. This only wokrs on linear or linear derived strategies.
 module_defaults: Specifies default parameter values for modules.
 name: "Identifier. Can be used for documentation, or in tasks/handlers."
@@ -62,11 +57,7 @@ rescue: List of tasks in a :term:`block` that run if there is a task error in th
 retries: "Number of retries before giving up in a :term:`until` loop. This setting is only used in combination with :term:`until`."
 roles: List of roles to be imported into the play
 run_once: Boolean that will bypass the host loop, forcing the task to attempt to execute on the first host available and afterwards apply any results and facts to all active hosts in the same batch.
-serial: |
-    Explicitly define how Ansible batches the execution of the current play on the play's target
-
-    .. seealso:: :ref:`rolling_update_batch_size`
-
+serial: Explicitly define how Ansible batches the execution of the current play on the play's target. See :ref:`rolling_update_batch_size`.
 strategy: Allows you to choose the connection plugin to use for the play.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
 tasks: Main list of tasks to execute in the play, they run after :term:`roles` and before :term:`post_tasks`.
