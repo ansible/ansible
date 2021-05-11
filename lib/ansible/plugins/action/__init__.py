@@ -630,7 +630,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # pass that argument as the first element of remote_paths. So we end
         # up running `chmod +a [that argument] [file 1] [file 2] ...`
         try:
-            res = self._remote_chmod([chmod_acl_mode] + remote_paths, '+a')
+            res = self._remote_chmod([chmod_acl_mode] + list(remote_paths), '+a')
         except AnsibleAuthenticationFailure as e:
             # Solaris-based chmod will return 5 when it sees an invalid mode,
             # and +a is invalid there. Because it returns 5, which is the same

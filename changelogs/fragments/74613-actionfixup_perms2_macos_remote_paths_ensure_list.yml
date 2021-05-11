@@ -1,0 +1,2 @@
+bugfixes:
+  - "remote tmpdir permissions - fix type error in macOS chmod ACL fallback (https://github.com/ansible/ansible/pull/74613)."
