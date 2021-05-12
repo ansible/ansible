@@ -9689,8 +9689,10 @@ action_groups:
           - testns.testcoll.anothergroup
           - testns.boguscoll.testgroup
     - ping
-    - legacy_ping
+    - legacy_ping  # Includes ansible.builtin.legacy_ping, not ansible.legacy.legacy_ping
     - formerly_core_ping
+  testlegacy:
+    - ansible.legacy.legacy_ping
   aws:
     - metadata:
         extend_group:

@@ -331,7 +331,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 if defaults_entry.startswith('group/'):
                     group_name = defaults_entry.split('group/')[-1]
                     if len(group_name.split('.')) < 3:
-                        group_name = 'ansible.legacy.' + group_name
+                        group_name = 'ansible.builtin.' + group_name
 
                     # The resolved action_groups cache is associated saved on the current Play
                     if self.play is not None:
@@ -387,10 +387,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             return fq_group_name, self.play._group_actions[fq_group_name]
 
         try:
-            if collection_name == 'ansible.legacy':
-                action_groups = _get_collection_metadata('ansible.builtin').get('action_groups', {})
-            else:
-                action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
+            action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
         except ValueError:
             if not mandatory:
                 display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
@@ -474,9 +471,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 action_names.append(action)
             else:
                 action_names.append(collection_name + '.' + action)
-                if collection_name == 'ansible.legacy':
-                    # ansible.legacy is a superset of ansible.builtin
-                    action_names.append('ansible.builtin.' + action)
 
             for action_name in action_names:
                 resolved_action = self._resolve_action(action_name, mandatory=False)

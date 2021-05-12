@@ -10,19 +10,19 @@
         - legacy_ping:
           register: result
         - assert:
-            that: "result.ping == 'test'"
+            that: "result.ping == 'pong'"
 
         - ansible.legacy.legacy_ping:
           register: result
         - assert:
-            that: "result.ping == 'test'"
+            that: "result.ping == 'pong'"
 
         - ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
 
-        - ansible.legacy.ping:
+        - ansible.legacy.ping:  # resolves to ansible.builtin.ping
           register: result
         - assert:
             that: "result.ping == 'test'"
@@ -42,9 +42,10 @@
         - assert:
             that: "result.ping == 'test'"
 
-    - name: test ansible.legacy fully qualified name
+    - name: test group that includes a legacy action
       module_defaults:
-        group/ansible.legacy.testgroup:
+        # As of 2.12, legacy actions must be included in the action group definition
+        group/testlegacy:
           data: test
       block:
         - legacy_ping:
@@ -53,31 +54,6 @@
             that: "result.ping == 'test'"
 
         - ansible.legacy.legacy_ping:
-          register: result
-        - assert:
-            that: "result.ping == 'test'"
-
-        - ping:
-          register: result
-        - assert:
-            that: "result.ping == 'test'"
-
-        - ansible.legacy.ping:
-          register: result
-        - assert:
-            that: "result.ping == 'test'"
-
-        - ansible.builtin.ping:
-          register: result
-        - assert:
-            that: "result.ping == 'test'"
-
-        - formerly_core_ping:
-          register: result
-        - assert:
-            that: "result.ping == 'test'"
-
-        - ansible.builtin.formerly_core_ping:
           register: result
         - assert:
             that: "result.ping == 'test'"
