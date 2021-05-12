@@ -518,19 +518,6 @@ def main():
                     r"_Ansible.*Loader\.exec_module\(\) not found; falling back to load_module\(\)",
                 )
 
-                # Temporary solution until we have a vendored version of six that avoids the warnings on Python 3.10.
-                # The warning text is: _SixMetaPathImporter.find_spec() not found; falling back to find_module()
-                warnings.filterwarnings(
-                    "ignore",
-                    r"_SixMetaPathImporter\.find_spec\(\) not found; falling back to find_module\(\)",
-                )
-                # Temporary solution until we have a vendored version of six that avoids the warnings on Python 3.10.
-                # The warning text is: _SixMetaPathImporter.exec_module() not found; falling back to load_module()
-                warnings.filterwarnings(
-                    "ignore",
-                    r"_SixMetaPathImporter\.exec_module\(\) not found; falling back to load_module\(\)",
-                )
-
                 # Temporary solution until there is a vendored copy of distutils.version in module_utils.
                 # Some of our dependencies such as packaging.tags also import distutils, which we have no control over
                 # The warning text is: The distutils package is deprecated and slated for removal in Python 3.12.
