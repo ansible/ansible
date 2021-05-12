@@ -33,11 +33,8 @@ import operator
 import sys
 import types
 
-# The following makes it easier for us to script updates of the bundled code.  It is not part of
+# The following makes it easier for us to script updates of the bundled code. It is not part of
 # upstream six
-# six 1.13.0 was the last release to officially support Python 2.6, as long as ansible-core
-# supports python2.6 for target nodes, this file may require Python 2.6 compatibility added
-# when updating to newer versions of six
 _BUNDLED_METADATA = {"pypi_name": "six", "version": "1.16.0"}
 
 __author__ = "Benjamin Peterson <benjamin@python.org>"
