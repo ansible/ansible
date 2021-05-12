@@ -15,7 +15,10 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: The key(s) to look up.
+        description:
+            The key(s) to look up. On Python 2, key names are case B(insensitive).
+            In Python 3, key names are case B(sensitive). Duplicate key names found
+            in a file will result in an error.
         required: True
       type:
         description: Type of the file. 'properties' refers to the Java properties files.
@@ -63,7 +66,7 @@ import os
 import re
 from io import StringIO
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleLookupError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.common._collections_compat import MutableSequence
