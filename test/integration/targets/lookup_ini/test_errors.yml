@@ -1,4 +1,4 @@
-- name: Test duplicate key
+- name: Test INI lookup errors
   hosts: testhost
 
   tasks:
@@ -31,7 +31,7 @@
       ignore_errors: yes
       register: missing_section
 
-    - name: Ensure error was show for a missing section
+    - name: Ensure error was shown for a missing section
       assert:
         that:
           - missing_section is failed
