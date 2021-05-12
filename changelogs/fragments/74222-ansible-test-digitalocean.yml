@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Adding DigitalOcean cloud support to ansible-test (https://github.com/ansible/ansible/pull/74222).
