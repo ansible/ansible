@@ -4,10 +4,13 @@ set -eux
 
 source virtualenv.sh
 
-pip install -U jinja2==2.9.4
+# Update pip in the venv to a version that supports constraints
+pip install --requirement requirements.txt
+
+pip install -U jinja2==2.9.4 --constraint "../../../lib/ansible_test/_data/requirements/constraints.txt"
 
 ansible-playbook -i ../../inventory test_jinja2_groupby.yml -v "$@"
 
-pip install -U "jinja2<2.9.0"
+pip install -U "jinja2<2.9.0" --constraint "../../../lib/ansible_test/_data/requirements/constraints.txt"
 
 ansible-playbook -i ../../inventory test_jinja2_groupby.yml -v "$@"

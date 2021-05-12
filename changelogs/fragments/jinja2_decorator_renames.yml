@@ -1,0 +1,2 @@
+bugfixes:
+  - filter plugins - patch new versions of Jinja2 to prevent warnings/errors on renamed filter decorators (https://github.com/ansible/ansible/issues/74667)
