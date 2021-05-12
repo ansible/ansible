@@ -848,7 +848,7 @@ class Templar:
 
             if not self.jinja2_native:
                 unsafe = hasattr(result, '__UNSAFE__')
-                if convert_data:
+                if convert_data and not isinstance(result, NativeJinjaText):
                     # If this looks like a dictionary or list, convert it to such using safe_eval()
                     if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) \
                             or result.startswith("[") \
