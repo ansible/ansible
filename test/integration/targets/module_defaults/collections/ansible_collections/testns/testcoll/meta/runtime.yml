@@ -3,6 +3,7 @@ action_groups:
     # Test metadata 'extend_group' feature does not get stuck in a recursive loop
     - metadata:
         extend_group: othergroup
+    - metadata
     - ping
     - testns.testcoll.echo1
     - testns.testcoll.echo2

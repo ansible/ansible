@@ -126,3 +126,7 @@
           register: result
         - assert:
             that: "result.ping == 'test'"
+
+        - metadata:
+          collections:
+            - testns.testcoll
