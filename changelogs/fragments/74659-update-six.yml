@@ -1,0 +1,4 @@
+minor_changes:
+- Update vendored copy of ``six`` to 1.16.0 to eliminate warnings for deprecated
+  python loader methods in Python 3.10+
+  (https://github.com/ansible/ansible/issues/74659)
