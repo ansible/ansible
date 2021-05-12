@@ -40,6 +40,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
 
         results = super(ActionModule, self).run(tmp, task_vars)
+        results['stdout'] = results['stderr'] = ''
 
         if "jid" not in self._task.args:
             raise AnsibleActionFail("jid is required")
