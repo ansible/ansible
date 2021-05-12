@@ -15,10 +15,7 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description:
-            The key(s) to look up. On Python 2, key names are case B(insensitive).
-            In Python 3, key names are case B(sensitive). Duplicate key names found
-            in a file will result in an error.
+        description: The key(s) to look up.
         required: True
       type:
         description: Type of the file. 'properties' refers to the Java properties files.
