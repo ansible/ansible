@@ -48,3 +48,15 @@
         that:
         - bad_mojo is failed
         - '"No key to lookup was provided as first term with in string inline option" in bad_mojo.msg'
+
+    - name: Test invalid option
+      debug:
+        msg: "{{ lookup('ini', 'invalid=option') }}"
+      ignore_errors: yes
+      register: invalid_option
+
+    - name: Ensure invalid option failed
+      assert:
+        that:
+          - invalid_option is failed
+          - "'is not a valid option' in invalid_option.msg"
