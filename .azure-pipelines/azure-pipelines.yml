@@ -232,10 +232,6 @@ stages:
               test: aws/2.7
             - name: AWS Python 3.6
               test: aws/3.6
-            - name: Azure Python 2.7
-              test: azure/2.7
-            - name: Azure Python 3.6
-              test: azure/3.6
             - name: Cloud Python
               test: cloud/
   - stage: Summary
