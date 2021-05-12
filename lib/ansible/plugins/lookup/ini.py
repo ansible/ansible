@@ -39,8 +39,8 @@ DOCUMENTATION = """
         default: ''
       case_sensitive:
         description:
-          Whether key names read from C(file) should be case sensitive. On Python 3,
-          this prevents duplicate key errors that are silently ignored in Python 2.
+          Whether key names read from C(file) should be case sensitive. This prevents
+          duplicate key errors if keys only differ in case.
         default: False
         version_added: '2.12'
 """
