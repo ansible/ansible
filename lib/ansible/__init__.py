@@ -22,6 +22,17 @@ __metaclass__ = type
 # make vendored top-level modules accessible EARLY
 import ansible._vendor
 
+# patch Jinja2 >= 3.0 for backwards compatibility
+try:
+    import sys as _sys
+    from jinja2.filters import pass_context as _passctx, pass_environment as _passenv, pass_eval_context as _passevalctx
+    _mod = _sys.modules['jinja2.filters']
+    _mod.contextfilter = _passctx
+    _mod.environmentfilter = _passenv
+    _mod.evalcontextfilter = _passevalctx
+except ImportError:
+    _sys = None
+
 # Note: Do not add any code to this file.  The ansible module may be
 # a namespace package when using Ansible-2.1+ Anything in this file may not be
 # available if one of the other packages in the namespace is loaded first.
