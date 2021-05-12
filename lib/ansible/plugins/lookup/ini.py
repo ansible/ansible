@@ -15,7 +15,7 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: The key(s) to look up
+        description: The key(s) to look up.
         required: True
       type:
         description: Type of the file. 'properties' refers to the Java properties files.
@@ -67,7 +67,7 @@ from collections import defaultdict
 
 from ansible.errors import AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
@@ -167,8 +167,15 @@ class LookupModule(LookupBase):
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
-            self.cp.readfp(config)
-            var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            try:
+                self.cp.readfp(config)
+            except configparser.DuplicateOptionError as doe:
+                raise AnsibleLookupError("Duplicate option in '{file}': {error}".format(file=paramvals['file'], error=to_native(doe)))
+
+            try:
+                var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            except configparser.NoSectionError:
+                raise AnsibleLookupError("No section '{section}' in {file}".format(section=paramvals['section'], file=paramvals['file']))
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:
