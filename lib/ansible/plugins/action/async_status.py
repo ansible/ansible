@@ -64,8 +64,15 @@ class ActionModule(ActionBase):
             results['started'] = 1
             results['finished'] = 0
 
+
+            # local tempfile to copy job file to
             fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=config.get_config_value('DEFAULT_LOCAL_TMP'))
-            self._connection.fetch_file(log_path, tmpfile)
+
+            try:
+                self._connection.fetch_file(log_path, tmpfile)
+            except AnsibleError as e:
+                raise AnsibleActionFail("faild to fetch the job file: %s" % to_text(e), orig_exc=e)
+
             try:
                 with open(tmpfile) as f:
                     file_data = f.read()
