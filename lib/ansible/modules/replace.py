@@ -246,7 +246,7 @@ def main():
         try:
             with open(path, 'rb') as f:
                 contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
-        except Exception:
+        except (OSError, IOError):
             module.fail_json(msg='Unable to read the contents of %s' % path, exception=format_exc())
 
     pattern = u''
