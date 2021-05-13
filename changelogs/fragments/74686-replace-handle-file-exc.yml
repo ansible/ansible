@@ -1,0 +1,2 @@
+bugfixes:
+    - replace - better handling of file operation exceptions (https://github.com/ansible/ansible/pull/74686).
