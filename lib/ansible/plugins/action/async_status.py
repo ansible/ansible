@@ -42,20 +42,22 @@ class ActionModule(ActionBase):
         results = super(ActionModule, self).run(tmp, task_vars)
         results['stdout'] = results['stderr'] = ''
 
-        if "jid" not in self._task.args:
+        try:
+            jid = self._task.args["jid"]
+        except KeyError:
             raise AnsibleActionFail("jid is required")
 
-        jid = self._task.args["jid"]
         mode = self._task.args.get("mode", "status")
 
         async_dir = self._get_async_dir()
         log_path = os.path.join(async_dir, jid)
 
+        cleanup = False
+
         results['ansible_job_id'] = jid
 
         if mode == 'cleanup':
-            self._remove_tmp_path(log_path)
-            results['erased'] = log_path
+            cleanup = True
         else:
             results['results_file'] = log_path
             results['started'] = 1
@@ -71,6 +73,7 @@ class ActionModule(ActionBase):
                 if 'started' not in data:
                     data['finished'] = 1
                     data['ansible_job_id'] = jid
+                    cleanup = True
                 elif 'finished' not in data:
                     data['finished'] = 0
 
@@ -78,10 +81,13 @@ class ActionModule(ActionBase):
 
             except Exception:
                 if file_data:
+                    cleanup = True
                     results['finished'] = 1
                     results['failed'] = True
                     results['msg'] = "Could not parse job output: %s" % to_native(file_data, errors='surrogate_or_strict')
-            finally:
-                self._remove_tmp_path(tmpfile)
+
+        if cleanup:
+            self._remove_tmp_path(log_path, force=True)
+            results['erased'] = log_path
 
         return results
