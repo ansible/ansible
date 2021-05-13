@@ -275,8 +275,12 @@ class LinuxHardware(Hardware):
                 else:
                     cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
 
-                cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
-                                                cpu_facts['processor_count'] * cpu_facts['processor_cores'])
+                # If "physical id" and "core id" all have the same value, use processor_occurence
+                # for the number of VCPUs since it won't be accurately calculated.
+                if len(sockets) == len(cores) == 1:
+                    cpu_facts['processor_vcpus'] = processor_occurence
+                else:
+                    cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] * cpu_facts['processor_count'] * cpu_facts['processor_cores'])
 
                 # if the number of processors available to the module's
                 # thread cannot be determined, the processor count
