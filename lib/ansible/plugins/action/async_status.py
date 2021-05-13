@@ -51,7 +51,8 @@ class ActionModule(ActionBase):
         mode = self._task.args.get("mode", "status")
 
         async_dir = self._get_async_dir()
-        log_path = os.path.join(async_dir, jid)
+
+        log_path = self._connection._shell.join_path(async_dir, jid)
 
         cleanup = False
 
