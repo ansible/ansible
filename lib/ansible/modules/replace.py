@@ -171,6 +171,7 @@ RETURN = r'''#'''
 import os
 import re
 import tempfile
+from traceback import format_exc
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
@@ -242,9 +243,12 @@ def main():
     if not os.path.exists(path):
         module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
-        f = open(path, 'rb')
-        contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
-        f.close()
+        try:
+            with open(path, 'rb') as f:
+                contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
+        except (OSError, IOError) as e:
+            module.fail_json(msg='Unable to read the contents of %s: %s' % (path, to_text(e)),
+                             exception=format_exc())
 
     pattern = u''
     if params['after'] and params['before']:
