@@ -41,6 +41,7 @@ class ActionModule(ActionBase):
 
         results = super(ActionModule, self).run(tmp, task_vars)
         results['stdout'] = results['stderr'] = ''
+        results['stdout_lines'] = results['stderr_lines'] = []
 
         try:
             jid = self._task.args["jid"]
