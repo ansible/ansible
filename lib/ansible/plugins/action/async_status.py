@@ -8,7 +8,7 @@ import json
 import os
 import tempfile
 
-from ansible import constants as C
+from ansible.constants import config
 from ansible.errors import AnsibleActionFail
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
@@ -63,7 +63,7 @@ class ActionModule(ActionBase):
             results['started'] = 1
             results['finished'] = 0
 
-            fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=C.DEFAULT_LOCAL_TMP)
+            fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=config.get_config_value('DEFAULT_LOCAL_TMP'))
             self._connection.fetch_file(log_path, tmpfile)
             try:
                 with open(tmpfile) as f:
