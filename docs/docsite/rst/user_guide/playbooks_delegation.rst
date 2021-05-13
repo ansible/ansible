@@ -77,7 +77,12 @@ To specify more arguments, use the following syntax::
             body: "{{ mail_body }}"
           run_once: True
 
-The `ansible_host` variable reflects the host a task is delegated to.
+.. _warning::
+
+    While you can ``delegate_to`` a host that does not exist in inventory (by adding IP address, DNS name or whatever requirement the connection plugin has),
+    these won't be "true inventory hosts" and might cause issues. For exmample they don't inherit variables from the "all" group', which is where users commonly
+    set connection configuration parameters.  If really need to delegate_to a non inventory host mid play, you should use the M(add_host) action.
+
 
 .. _delegate_facts:
 
