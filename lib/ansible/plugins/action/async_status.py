@@ -9,7 +9,7 @@ import os
 import tempfile
 
 from ansible.constants import config
-from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.plugins.action import ActionBase
@@ -72,6 +72,8 @@ class ActionModule(ActionBase):
                 self._connection.fetch_file(log_path, tmpfile)
             except AnsibleConnectionFailure:
                 raise
+            except AnsibleFileNotFound as e:
+                raise AnsibleActionFail("could not find job", orig_exc=e)
             except AnsibleError as e:
                 raise AnsibleActionFail("failed to fetch the job file: %s" % to_native(e), orig_exc=e)
 
