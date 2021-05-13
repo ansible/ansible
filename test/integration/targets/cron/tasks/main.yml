@@ -215,7 +215,24 @@
   - assert:
       that: not cron_file_stats.stat.exists
 
+- name: System cron tab can not be managed
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Add cron job
+    cron:
+      cron_file: "{{ system_crontab }}"
+      user: root
+      name: "integration test cron"
+      job: 'ls'
+    ignore_errors: yes
+    register: result
+
+  - assert:
+      that: "result.msg == 'Will not manage /etc/crontab via cron_file, see documentation.'"
+
+# TODO: restrict other root crontab locations
 - name: System cron tab does not get removed
+  when: ansible_distribution == 'Alpine'
   block:
   - name: Add cron job
     cron:
