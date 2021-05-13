@@ -375,7 +375,8 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 1,
             'processor_nproc': 1,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 1},
+            'processor_vcpus': 1
+        },
     },
     {
         'architecture': 'armv71',
@@ -393,7 +394,8 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 4,
             'processor_nproc': 4,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 4},
+            'processor_vcpus': 4
+        },
     },
     {
         'architecture': 'aarch64',
@@ -411,13 +413,14 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 4,
             'processor_nproc': 4,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 4},
+            'processor_vcpus': 4
+        },
     },
     {
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-2core-cpuinfo')).readlines(),
         'expected_result': {
             'processor': [
                 '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
@@ -429,13 +432,14 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 2,
             'processor_nproc': 4,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 4},
+            'processor_vcpus': 4
+        },
     },
     {
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-4core-cpuinfo')).readlines(),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
@@ -451,7 +455,8 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 1,
             'processor_nproc': 4,
             'processor_threads_per_core': 2,
-            'processor_vcpus': 8},
+            'processor_vcpus': 8
+        },
     },
     {
         'architecture': 'arm64',
@@ -464,7 +469,8 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 4,
             'processor_nproc': 4,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 4},
+            'processor_vcpus': 4
+        },
     },
     {
         'architecture': 'armv71',
@@ -486,13 +492,14 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 8,
             'processor_nproc': 8,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 8},
+            'processor_vcpus': 8
+        },
     },
     {
         'architecture': 'x86_64',
         'nproc_out': 2,
         'sched_getaffinity': set([0, 1]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-1core-cpuinfo')).readlines(),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
@@ -502,7 +509,8 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 2,
             'processor_nproc': 2,
             'processor_threads_per_core': 1,
-            'processor_vcpus': 2},
+            'processor_vcpus': 2
+        },
     },
     {
         'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64-power7-rhel7-8cpu-cpuinfo')).readlines(),
