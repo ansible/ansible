@@ -77,7 +77,7 @@ To specify more arguments, use the following syntax::
             body: "{{ mail_body }}"
           run_once: True
 
-.. _warning::
+.. warning::
 
     While you can ``delegate_to`` a host that does not exist in inventory (by adding IP address, DNS name or whatever requirement the connection plugin has),
     these won't be "true inventory hosts" and might cause issues. For exmample they don't inherit variables from the "all" group', which is where users commonly
