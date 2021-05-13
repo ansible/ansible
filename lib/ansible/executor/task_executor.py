@@ -480,8 +480,8 @@ class TaskExecutor:
         if self._loop_eval_error is not None:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
 
-        # if we ran into an error while setting up the PlayContext, raise it now
-        if context_validation_error is not None:
+        # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with deleagation
+        if context_validation_error is not None and not self._task.delegate_to:
             raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
