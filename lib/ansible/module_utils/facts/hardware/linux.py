@@ -222,11 +222,11 @@ class LinuxHardware(Hardware):
                     processor_occurrence += 1
                 i += 1
             elif key == 'physical id':
-                physid = val
+                physid = int(val)
                 if physid not in sockets:
                     sockets[physid] = 1
             elif key == 'core id':
-                coreid = val
+                coreid = int(val)
                 if coreid not in sockets:
                     cores[coreid] = 1
             elif key == 'cpu cores':
