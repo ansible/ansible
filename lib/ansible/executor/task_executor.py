@@ -480,7 +480,7 @@ class TaskExecutor:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
 
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with deleagation
-        if context_validation_error is not None and not (self._task.delegate_to and isinstance(context_error_validation, AnsibleUndefinedVariable)):
+        if context_validation_error is not None and not (self._task.delegate_to and isinstance(context_validation_error, AnsibleUndefinedVariable)):
             raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
