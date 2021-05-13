@@ -417,48 +417,6 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'architecture': 'x86_64',
-        'nproc_out': 4,
-        'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-2core-cpuinfo')).readlines(),
-        'expected_result': {
-            'processor': [
-                '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
-                '1', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
-                '2', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
-                '3', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
-            ],
-            'processor_cores': 2,
-            'processor_count': 2,
-            'processor_nproc': 4,
-            'processor_threads_per_core': 1,
-            'processor_vcpus': 4
-        },
-    },
-    {
-        'architecture': 'x86_64',
-        'nproc_out': 4,
-        'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-4core-cpuinfo')).readlines(),
-        'expected_result': {
-            'processor': [
-                '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '1', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '2', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '3', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '4', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '5', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '6', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-                '7', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
-            ],
-            'processor_cores': 4,
-            'processor_count': 1,
-            'processor_nproc': 4,
-            'processor_threads_per_core': 2,
-            'processor_vcpus': 8
-        },
-    },
-    {
         'architecture': 'arm64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
@@ -493,23 +451,6 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_nproc': 8,
             'processor_threads_per_core': 1,
             'processor_vcpus': 8
-        },
-    },
-    {
-        'architecture': 'x86_64',
-        'nproc_out': 2,
-        'sched_getaffinity': set([0, 1]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-1core-cpuinfo')).readlines(),
-        'expected_result': {
-            'processor': [
-                '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
-                '1', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
-            ],
-            'processor_cores': 1,
-            'processor_count': 2,
-            'processor_nproc': 2,
-            'processor_threads_per_core': 1,
-            'processor_vcpus': 2
         },
     },
     {
@@ -588,6 +529,88 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_nproc': 24,
             'processor_threads_per_core': 1,
             'processor_vcpus': 24
+        },
+    },
+    {
+        'architecture': 'x86_64',
+        'nproc_out': 2,
+        'sched_getaffinity': set([0, 1]),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-1core-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
+                '1', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
+            ],
+            'processor_cores': 1,
+            'processor_count': 2,
+            'processor_nproc': 2,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 2
+        },
+    },
+    {
+        'architecture': 'x86_64',
+        'nproc_out': 4,
+        'sched_getaffinity': set([0, 1, 2, 3]),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-2core-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+                '1', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+                '2', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+                '3', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+            ],
+            'processor_cores': 2,
+            'processor_count': 2,
+            'processor_nproc': 4,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 4
+        },
+    },
+    {
+        'architecture': 'x86_64',
+        'nproc_out': 4,
+        'sched_getaffinity': set([0, 1, 2, 3]),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-4core-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '1', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '2', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '3', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '4', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '5', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '6', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '7', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+            ],
+            'processor_cores': 4,
+            'processor_count': 1,
+            'processor_nproc': 4,
+            'processor_threads_per_core': 2,
+            'processor_vcpus': 8
+        },
+    },
+    {
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-1core-cpuinfo')).readlines(),
+        'architecture': 'x86_64',
+        'nproc_out': 8,
+        'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7]),
+        'expected_result': {
+            'processor': [
+                '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '1', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '2', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '3', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '4', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '5', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '6', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+                '7', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz',
+            ],
+            'processor_cores': 1,
+            'processor_count': 1,
+            'processor_nproc': 8,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 8
         },
     },
 ]
