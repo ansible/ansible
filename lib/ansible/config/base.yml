@@ -1286,7 +1286,7 @@ DISPLAY_SKIPPED_HOSTS:
   type: boolean
 DOCSITE_ROOT_URL:
   name: Root docsite URL
-  default: https://docs.ansible.com/ansible/
+  default: https://docs.ansible.com/ansible-core/
   description: Root docsite URL used to generate docs URLs in warning/error text;
                must be an absolute URL with valid scheme and trailing slash.
   ini:
