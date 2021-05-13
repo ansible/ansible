@@ -1,0 +1,2 @@
+minor_changes:
+  - config, default site for ansible-core is now under /ansbile-core/.
