@@ -286,7 +286,10 @@ class CronTab(object):
         if len(self.lines) == 0:
             return True
         else:
-            return False
+            for line in self.lines:
+                if line.strip():
+                    return False
+            return True
 
     def write(self, backup_file=None):
         """
@@ -654,18 +657,6 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.cron_file and not do_install:
-        if module._diff:
-            diff['after'] = ''
-            diff['after_header'] = '/dev/null'
-        else:
-            diff = dict()
-        if module.check_mode:
-            changed = os.path.isfile(crontab.cron_file)
-        else:
-            changed = crontab.remove_job_file()
-        module.exit_json(changed=changed, cron_file=cron_file, state=state, diff=diff)
-
     if env:
         if ' ' in name:
             module.fail_json(msg="Invalid name for environment variable")
@@ -708,6 +699,17 @@ def main():
             if len(old_job) > 0:
                 crontab.remove_job(name)
                 changed = True
+                if crontab.cron_file and crontab.is_empty():
+                    if module._diff:
+                        diff['after'] = ''
+                        diff['after_header'] = '/dev/null'
+                    else:
+                        diff = dict()
+                    if module.check_mode:
+                        changed = os.path.isfile(crontab.cron_file)
+                    else:
+                        changed = crontab.remove_job_file()
+                    module.exit_json(changed=changed, cron_file=cron_file, state=state, diff=diff)
 
     # no changes to env/job, but existing crontab needs a terminating newline
     if not changed and crontab.n_existing != '':
