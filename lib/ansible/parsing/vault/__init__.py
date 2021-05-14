@@ -70,7 +70,7 @@ CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
-NEED_CRYPTO_LIBRARY = "ansible-vault requires either the cryptography library in order to function"
+NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
 
 
 class AnsibleVaultError(AnsibleError):
