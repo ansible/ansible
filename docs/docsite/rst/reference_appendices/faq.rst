@@ -764,8 +764,9 @@ this uses the temporary file Ansible creates before doing the final update. In m
 for the specific application require either specific names, multiple files or some other factor that is not present in this simple feature.
 
 For these cases you have to handle the validation and restoration yourself, the following is a simple example of how to do this with block/rescue
-and backups, which most file based modules also support::
+and backups, which most file based modules also support:
 
+.. code-block:: yaml
 
     - name: update config and backout if validation fails
       block:
@@ -773,8 +774,7 @@ and backups, which most file based modules also support::
            template: src=template.j2 dest=/x/y/z backup=yes moreoptions=stuff
            register: updated
 
-        - name: > run validation, this will change a lot as needed.
-                We assume it returns an error when not passing, use `failed_when` if otherwise.
+        - name: run validation, this will change a lot as needed. We assume it returns an error when not passing, use `failed_when` if otherwise.
           shell: run_validation_commmand
           become: yes
           become_user: requiredbyapp
