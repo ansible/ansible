@@ -21,7 +21,8 @@ Lookup plugins are an Ansible-specific extension to the Jinja2 templating langua
 Enabling lookup plugins
 -----------------------
 
-Ansible enables all lookup plugins it can find. You can activate a custom lookup by placing it in one of four locations:
+Ansible enables all lookup plugins it can find. You do not need to maintain a list of enabled lookup plugins. To activate a custom lookup, place it in one of four locations:
+
  - in the ```lookup_plugins`` directory adjacent to your play
  - in the ``plugins/lookup/`` directory of a collection you have installed
  - inside a standalone role, or
@@ -60,12 +61,12 @@ You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <pl
 Understanding lookup plugin paths
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In general, lookups are executed with a working directory relative to the role or play (as opposed to local tasks, which are executed relative to the executed script). However, there are some special cases.
+Lookups are executed with a working directory relative to the role or play (as opposed to local tasks, which are executed relative to the executed script). However, some lookups search additional paths for files and other resources.
 
  - Lookup plugins that interact with files, including ``file``, ``fileglob``, ``template``, and ``filetree``, search three additional paths when looking for files: ``/path/to/roles/my_role/``, ``/path/to/roles/my_role/tasks/``, and ``path/to/my_playbook``.
- - If you add a ``files``, ``vars`` or ``templates`` parameter when you use a lookup plugin, the plugin will use the ``ansible_search_path``, to find those files.
+ - If you add a ``files``, ``vars`` or ``templates`` parameter when you use a lookup plugin, the plugin uses the ``ansible_search_path``, to find those files.
 
-For more details on relative paths in Ansible, see :ref:`<playbook_pathing>`.
+For more details on relative paths in Ansible, see :ref:`playbook_pathing`.
 
 Controlling lookup plugin errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
