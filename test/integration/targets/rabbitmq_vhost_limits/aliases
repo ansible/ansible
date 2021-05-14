@@ -3,3 +3,4 @@ shippable/posix/group1
 skip/osx
 skip/freebsd
 skip/rhel
+disabled # test is no longer passing due to missing package dependencies
