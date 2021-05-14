@@ -12,7 +12,7 @@ Roles let you automatically load related vars, files, tasks, handlers, and other
 Role directory structure
 ========================
 
-An Ansible role has a defined directory structure with seven main standard directories. You must include at least one of these directories in each role. You can omit any directories the role does not use. For example:
+An Ansible role has a defined directory structure with eight main standard directories. You must include at least one of these directories in each role. You can omit any directories the role does not use. For example:
 
 .. code-block:: text
 
