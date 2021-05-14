@@ -578,7 +578,7 @@ class LinuxHardware(Hardware):
                             failmsg = to_text(res.get())
                             results[mount]['info']['note'] = 'Could not get extra information: %s.' % (failmsg)
                         except mpTimeoutError:
-                            results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                            results[mount]['info']['note'] = 'No more mount info gathered due to timeout'
                             raise
                         except Exception as e:
                             errmsg = to_text(e)
