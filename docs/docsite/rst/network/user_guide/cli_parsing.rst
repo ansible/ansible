@@ -56,6 +56,8 @@ The ``cli_parse`` module includes the following cli_parsing plugins:
   A library for semi-structured text parsing using templates, with added capabilities to simplify the process
 ``pyats``
   Uses the parsers included with the Cisco Test Automation & Validation Solution
+``jc``
+  A python module that converts the output of dozens of popular Linux/UNIX/macOS/Windows commands and file types to python dictionaries or lists of dictionaries. Note: this filter plugin can be found in the ``community.general`` collection.
 ``json``
   Converts JSON output at the CLI to an Ansible native data structure
 
@@ -581,6 +583,29 @@ The task sets the follow fact as the ``interfaces`` fact for the host:
    - admin_state: up,
      interface: Ethernet1/2
      state: up
+
+
+Parsing with JC
+-----------------
+
+JC is a python library that converts the output of dozens of common Linux/UNIX/macOS/Windows command-line tools and file types to python dictionaries or lists of dictionaries for easier parsing. JC is available as a filter plugin in the ``community.general`` collection.
+
+The following is an example using JC to parse the output of the ``dig`` command:
+
+.. code-block:: yaml
+
+   - name: "Run dig command and parse with jc"
+     hosts: ubuntu
+     tasks:
+     - shell: dig example.com
+       register: result
+     - set_fact:
+         myvar: "{{ result.stdout | community.general.jc('dig') }}"
+     - debug:
+         msg: "The IP is: {{ myvar[0].answer[0].data }}"
+
+- The JC project and documentation can be found `here <https://github.com/kellyjonbrazil/jc/>`_.
+- See this `blog entry <https://blog.kellybrazil.com/2020/08/30/parsing-command-output-in-ansible-with-jc/>`_ for more information.
 
 
 Converting XML
