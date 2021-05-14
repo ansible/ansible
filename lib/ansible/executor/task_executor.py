@@ -544,7 +544,7 @@ class TaskExecutor:
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden
-        if self._requires_persistent() and 'ansible_network_os' and not C.config.get_config_value('INTERPRETER_PYTHON', variables=cvars):
+        if self._requires_persistent() and not C.config.get_config_value('INTERPRETER_PYTHON', variables=cvars):
             # this also avoids 'python discovery'
             cvars['ansible_python_interpreter'] = sys.executable
 
