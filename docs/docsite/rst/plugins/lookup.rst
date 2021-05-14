@@ -10,24 +10,22 @@ Lookup Plugins
 Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources.
 
 .. note::
-   - Lookups are executed with a working directory relative to the role or play,
-     as opposed to local tasks, which are executed relative the executed script.
-     The lookup plugins such as ``file``, ``fileglob``, ``template``, and ``filetree`` are exceptions to this as they have a list of path candidates to search files in.
-     Also, note that lookup plugins that use ``files``, ``vars`` or ``templates`` parameters with a relative path will use the ``ansible_search_path``, to find those files.
-     Please read more about this in :ref:`Search paths <playbook_pathing>` documentation.
-   - Pass ``wantlist=True`` to lookups to use in Jinja2 template "for" loops.
-   - By default, lookup return values are marked as unsafe for security reasons. If you trust the outside source your lookup accesses, pass ``allow_unsafe=True`` to allow Jinja2 templates to evaluate lookup values.
+   - Pass ``wantlist=True`` to lookups to use in Jinja2 template "for" loops. See :ref:`query` for more details.
 
 .. warning::
-   - Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
-
+   - By default, lookup return values are marked as unsafe for security reasons. If you trust the outside source that your lookup accesses, pass ``allow_unsafe=True`` to allow Jinja2 templates to evaluate lookup values.
+   - Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the ``|quote`` filter to ensure safe usage.
 
 .. _enabling_lookup:
 
 Enabling lookup plugins
 -----------------------
 
-Ansible enables all lookup plugins it can find. You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside the ``plugins/lookup/`` directory of a collection you have installed, inside a standalone role, or in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
+Ansible enables all lookup plugins it can find. You can activate a custom lookup by placing it in one of four locations:
+ - in the ```lookup_plugins`` directory adjacent to your play
+ - in the ``plugins/lookup/`` directory of a collection you have installed
+ - inside a standalone role, or
+ - in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`
 
 
 .. _using_lookup:
@@ -58,6 +56,19 @@ You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <pl
         - "{{ lookup('consul_kv', 'bcs/' + lookup('file', '/the/question') + ', host=localhost, port=2000')|shuffle }}"
         - "{{ lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list) }}"
         - ['a', 'c', 'd', 'c']
+
+Understanding lookup plugin paths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In general, lookups are executed with a working directory relative to the role or play (as opposed to local tasks, which are executed relative to the executed script). However, there are some special cases.
+
+ - Lookup plugins that interact with files, including ``file``, ``fileglob``, ``template``, and ``filetree``, search three additional paths when looking for files: ``/path/to/roles/my_role/``, ``/path/to/roles/my_role/tasks/``, and ``path/to/my_playbook``.
+ - If you add a ``files``, ``vars`` or ``templates`` parameter when you use a lookup plugin, the plugin will use the ``ansible_search_path``, to find those files.
+
+For more details on relative paths in Ansible, see :ref:`<playbook_pathing>`.
+
+Controlling lookup plugin errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.6
 
@@ -108,7 +119,7 @@ To get a fatal error (the default)::
 .. _query:
 
 Forcing lookups to return lists: ``query`` and ``wantlist=True``
-----------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.5
 
