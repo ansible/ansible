@@ -575,14 +575,12 @@ class LinuxHardware(Hardware):
                     else:
                         # failed, try to find out why, if 'res.successful' we know there are no exceptions
                         try:
-                            failmsg = to_text(res.get())
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (failmsg)
+                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get())
                         except mpTimeoutError:
-                            results[mount]['info']['note'] = 'No more mount info gathered due to timeout'
+                            self.module.warn('Incomplete mount info gathered due to timeout on "%s"' % mount)
                             raise
                         except Exception as e:
-                            errmsg = to_text(e)
-                            self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
+                            self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e))
 
                     mounts.append(results[mount]['info'])
                     del results[mount]
