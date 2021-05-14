@@ -247,7 +247,7 @@ content in a uniform way:
 
 .. note::
 
-  For links between modules and documentation within a collection, you can use any of the options above. Use ``U()`` or ``L()`` with full URLs (not relative links).
+  For links between modules and documentation within a collection, you can use either of the options above. Use ``U()`` or ``L()`` with full URLs (not relative links).
 
 .. note::
     - When a collection is not the right granularity, use ``C(..)``:
