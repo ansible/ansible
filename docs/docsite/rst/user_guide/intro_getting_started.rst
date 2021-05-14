@@ -81,6 +81,8 @@ You should see output for each host in your inventory, similar to this:
        "ping": "pong"
    }
 
+You can use ``-u`` as one way to specify the user to connect as, by default Ansible uses SSH, which defaults to the 'current user'.
+
 Now run a live command on all of your nodes:
 
 .. code-block:: bash
