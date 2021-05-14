@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
 
         return self._remote_expand_user(async_dir)
 
-    def _read_remote_file(self, jid, log_path, results):
+    def _update_results_with_job_file(self, jid, log_path, results):
 
         # local tempfile to copy job file to, using local tmp which is auto cleaned on exit
         fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=config.get_config_value('DEFAULT_LOCAL_TMP'))
@@ -101,7 +101,7 @@ class ActionModule(ActionBase):
                 results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=module_args))
             else:
                 # fetch remote file and read locally
-                self._read_remote_file(jid, log_path, results)
+                self._update_results_with_job_file(jid, log_path, results)
 
         if mode == 'cleanup' or results['finished'] == 1:
             self._remove_tmp_path(log_path, force=True)
