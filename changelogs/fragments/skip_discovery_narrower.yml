@@ -1,0 +1,2 @@
+bugfixes:
+  - Adjust conditions on which we skip interpreter discovery.

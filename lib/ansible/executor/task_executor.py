@@ -418,6 +418,9 @@ class TaskExecutor:
 
         return results
 
+    def _requires_persistent(self):
+        return any(((self._connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), self._connection.force_persistence))
+
     def _execute(self, variables=None):
         '''
         The primary workhorse of the executor system, this runs the task
@@ -541,7 +544,7 @@ class TaskExecutor:
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden
-        if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
+        if self._requires_persistent() and 'ansible_network_os' and not C.config.get_config_value('INTERPRETER_PYTHON', variables=cvars):
             # this also avoids 'python discovery'
             cvars['ansible_python_interpreter'] = sys.executable
 
@@ -917,7 +920,7 @@ class TaskExecutor:
         # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
 
-        if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
+        if self._requires_persistent():
             self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
