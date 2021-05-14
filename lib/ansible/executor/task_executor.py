@@ -539,6 +539,12 @@ class TaskExecutor:
         plugin_vars = self._set_connection_options(cvars, templar)
         templar.available_variables = orig_vars
 
+        # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
+        # special handling for python interpreter for network_os, default to ansible python unless overriden
+        if 'ansible_network_os' in cvars and 'ansible_python_interpreter' not in cvars:
+            # this also avoids 'python discovery'
+            cvars['ansible_python_interpreter'] = sys.executable
+
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
