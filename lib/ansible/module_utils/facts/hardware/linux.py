@@ -573,7 +573,7 @@ class LinuxHardware(Hardware):
                             results[mount]['info'].update(mount_size)
                         results[mount]['info']['uuid'] = uuid or 'N/A'
                     else:
-                        # failed, try to find out why
+                        # failed, try to find out why, if 'res.successful' we know there are no exceptions
                         try:
                             failmsg = to_text(res.get())
                             results[mount]['info']['note'] = 'Could not get extra information: %s.' % (failmsg)
