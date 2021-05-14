@@ -1,0 +1,2 @@
+bugfixes:
+  - fix for some cases of "infinite recursion in template". See (https://github.com/ansible/ansible/issues/8603) (https://github.com/ansible/ansible/issues/58952) (https://github.com/ansible/ansible/pull/74702)
