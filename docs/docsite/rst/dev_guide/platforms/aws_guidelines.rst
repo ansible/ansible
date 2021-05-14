@@ -9,6 +9,47 @@ The Ansible AWS collection (on `Galaxy <https://galaxy.ansible.com/community/aws
 .. contents::
    :local:
 
+Requirements
+============
+
+Python Compatibility
+--------------------
+
+AWS content in Ansible 2.9 and 1.x collection releases supported Python 2.7 and newer.
+
+Starting with the 2.0 releases of both collections, Python 2.7 support will be ended in accordance with AWS' `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_.  Contributions to both collections that target the 2.0 or later collection releases can be written to support Python 3.6+ syntax.
+
+SDK Version Support
+-------------------
+
+Starting with the 2.0 releases of both collections, it is generally the policy to support the versions of botocore and boto3 that were released 12 months prior to the most recent major collection release, following semantic versioning (for example, 2.0.0, 3.0.0).
+
+Features and functionality that require newer versions of the SDK can be contributed provided they are noted in the module documentation:
+
+.. code-block:: yaml
+
+  DOCUMENTATION = '''
+  ---
+  module: ec2_vol
+  options:
+    throughput:
+      description:
+        - Volume throughput in MB/s.
+        - This parameter is only valid for gp3 volumes.
+        - Valid range is from 125 to 1000.
+        - Requires at least botocore version 1.19.27.
+      type: int
+      version_added: 1.4.0
+
+And handled using the ``botocore_at_least`` helper method:
+
+.. code-block:: python
+
+    if module.params.get('throughput'):
+        if not module.botocore_at_least("1.19.27"):
+            module.fail_json(msg="botocore >= 1.19.27 is required to set the throughput for a volume")
+
+
 Maintaining existing modules
 ============================
 
@@ -154,7 +195,7 @@ Supporting Module Defaults
 
 The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common
 authentication parameters.  To do the same for your new module, add an entry for it in
-``lib/ansible/config/module_defaults.yml``.  These entries take the form of:
+``meta/runtime.yml``.  These entries take the form of:
 
 .. code-block:: yaml
 
