@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
         except AnsibleConnectionFailure:
             raise
         except AnsibleFileNotFound as e:
-            raise AnsibleActionFail("could not find job", orig_exc=e)
+            raise AnsibleActionFail("could not find job")
         except AnsibleError as e:
             raise AnsibleActionFail("failed to fetch the job file: %s" % to_native(e), orig_exc=e)
 
