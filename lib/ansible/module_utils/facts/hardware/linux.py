@@ -25,7 +25,7 @@ import re
 import sys
 import time
 
-from multiprocessing import cpu_count
+from multiprocessing import cpu_count, TimeoutError as mpTimeoutError
 from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
@@ -573,10 +573,16 @@ class LinuxHardware(Hardware):
                             results[mount]['info'].update(mount_size)
                         results[mount]['info']['uuid'] = uuid or 'N/A'
                     else:
-                        # give incomplete data
-                        errmsg = to_text(res.get())
-                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
-                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (errmsg)
+                        # failed, try to find out why
+                        try:
+                            failmsg = to_text(res.get())
+                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (failmsg)
+                        except mpTimeoutError:
+                            results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                            raise
+                        except Exception as e:
+                            errmsg = to_text(e)
+                            self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
 
                     mounts.append(results[mount]['info'])
                     del results[mount]

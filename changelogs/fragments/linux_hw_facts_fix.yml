@@ -1,0 +1,2 @@
+bugfixes:
+  - setup, while gathering linux hardware facts be more resilient to errors and try to return more info.
