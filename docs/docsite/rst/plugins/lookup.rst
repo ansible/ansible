@@ -61,7 +61,7 @@ You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <pl
 Understanding lookup plugin paths
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Lookups are executed with a working directory relative to the role or play (as opposed to local tasks, which are executed relative to the executed script). However, some lookups search additional paths for files and other resources.
+Lookups are executed with a working directory relative to the role or play (as opposed to local tasks, which are executed relative to the executed script). When searching for files and other resources, however, some lookups search additional paths.
 
  - Lookup plugins that interact with files, including ``file``, ``fileglob``, ``template``, and ``filetree``, search three additional paths when looking for files: ``/path/to/roles/my_role/``, ``/path/to/roles/my_role/tasks/``, and ``path/to/my_playbook``.
  - If you add a ``files``, ``vars`` or ``templates`` parameter when you use a lookup plugin, the plugin uses the ``ansible_search_path``, to find those files.
