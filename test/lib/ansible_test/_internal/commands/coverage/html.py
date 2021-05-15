@@ -18,17 +18,17 @@ from ...util_common import (
 
 from .combine import (
     command_coverage_combine,
+    CoverageCombineConfig,
 )
 
 from . import (
     run_coverage,
-    CoverageConfig,
 )
 
 
 def command_coverage_html(args):
     """
-    :type args: CoverageConfig
+    :type args: CoverageHtmlConfig
     """
     output_files = command_coverage_combine(args)
 
@@ -43,3 +43,7 @@ def command_coverage_html(args):
         run_coverage(args, output_file, 'html', ['-i', '-d', dir_name])
 
         display.info('HTML report generated: file:///%s' % os.path.join(dir_name, 'index.html'))
+
+
+class CoverageHtmlConfig(CoverageCombineConfig):
+    """Configuration for the coverage html command."""

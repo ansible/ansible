@@ -18,11 +18,11 @@ from ...data import (
 
 from .combine import (
     command_coverage_combine,
+    CoverageCombineConfig,
 )
 
 from . import (
     run_coverage,
-    CoverageConfig,
 )
 
 
@@ -143,7 +143,7 @@ def _generate_powershell_output_report(args, coverage_file):
     return report
 
 
-class CoverageReportConfig(CoverageConfig):
+class CoverageReportConfig(CoverageCombineConfig):
     """Configuration for the coverage report command."""
     def __init__(self, args):
         """

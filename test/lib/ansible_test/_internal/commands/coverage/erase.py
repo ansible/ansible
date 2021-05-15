@@ -13,7 +13,7 @@ from . import (
 )
 
 
-def command_coverage_erase(args):  # type: (CoverageConfig) -> None
+def command_coverage_erase(args):  # type: (CoverageEraseConfig) -> None
     """Erase code coverage data files collected during test runs."""
     coverage_dir = ResultType.COVERAGE.path
 
@@ -25,3 +25,7 @@ def command_coverage_erase(args):  # type: (CoverageConfig) -> None
 
         if not args.explain:
             os.remove(path)
+
+
+class CoverageEraseConfig(CoverageConfig):
+    """Configuration for the coverage erase command."""
