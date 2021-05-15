@@ -108,14 +108,17 @@ from .util_common import (
 
 from .commands.coverage.combine import (
     command_coverage_combine,
+    CoverageCombineConfig,
 )
 
 from .commands.coverage.erase import (
     command_coverage_erase,
+    CoverageEraseConfig,
 )
 
 from .commands.coverage.html import (
     command_coverage_html,
+    CoverageHtmlConfig,
 )
 
 from .commands.coverage.report import (
@@ -125,6 +128,7 @@ from .commands.coverage.report import (
 
 from .commands.coverage.xml import (
     command_coverage_xml,
+    CoverageXmlConfig,
 )
 
 from .commands.coverage.analyze.targets.generate import (
@@ -154,7 +158,6 @@ from .commands.coverage.analyze.targets.missing import (
 
 from .commands.coverage import (
     COVERAGE_GROUPS,
-    CoverageConfig,
 )
 
 if t.TYPE_CHECKING:
@@ -579,6 +582,10 @@ def parse_args():
 
     add_environments(coverage_common, argparse, isolated_delegation=False)
 
+    coverage_common_isolated_delegation = argparse.ArgumentParser(add_help=False, parents=[common])
+
+    add_environments(coverage_common_isolated_delegation, argparse)
+
     coverage = subparsers.add_parser('coverage',
                                      help='code coverage management and reporting')
 
@@ -588,11 +595,11 @@ def parse_args():
     add_coverage_analyze(coverage_subparsers, coverage_common)
 
     coverage_combine = coverage_subparsers.add_parser('combine',
-                                                      parents=[coverage_common],
+                                                      parents=[coverage_common_isolated_delegation],
                                                       help='combine coverage data and rewrite remote paths')
 
     coverage_combine.set_defaults(func=command_coverage_combine,
-                                  config=CoverageConfig)
+                                  config=CoverageCombineConfig)
 
     coverage_combine.add_argument('--export',
                                   help='directory to export combined coverage files to')
@@ -604,10 +611,10 @@ def parse_args():
                                                     help='erase coverage data files')
 
     coverage_erase.set_defaults(func=command_coverage_erase,
-                                config=CoverageConfig)
+                                config=CoverageEraseConfig)
 
     coverage_report = coverage_subparsers.add_parser('report',
-                                                     parents=[coverage_common],
+                                                     parents=[coverage_common_isolated_delegation],
                                                      help='generate console coverage report')
 
     coverage_report.set_defaults(func=command_coverage_report,
@@ -629,20 +636,20 @@ def parse_args():
     add_extra_coverage_options(coverage_report)
 
     coverage_html = coverage_subparsers.add_parser('html',
-                                                   parents=[coverage_common],
+                                                   parents=[coverage_common_isolated_delegation],
                                                    help='generate html coverage report')
 
     coverage_html.set_defaults(func=command_coverage_html,
-                               config=CoverageConfig)
+                               config=CoverageHtmlConfig)
 
     add_extra_coverage_options(coverage_html)
 
     coverage_xml = coverage_subparsers.add_parser('xml',
-                                                  parents=[coverage_common],
+                                                  parents=[coverage_common_isolated_delegation],
                                                   help='generate xml coverage report')
 
     coverage_xml.set_defaults(func=command_coverage_xml,
-                              config=CoverageConfig)
+                              config=CoverageXmlConfig)
 
     add_extra_coverage_options(coverage_xml)
 
