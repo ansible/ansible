@@ -25,6 +25,7 @@ import os
 import pkgutil
 import pwd
 import re
+import sys
 import time
 
 from contextlib import contextmanager
@@ -975,8 +976,21 @@ class Templar:
             # we don't use iteritems() here to avoid problems if the underlying dict
             # changes sizes due to the templating, which can happen with hostvars
             for k in variable.keys():
-                # try:
-                k_path_to_variable = "{0}.{1}".format(path_to_variable, k)
+                try:
+                    k_path_to_variable = "{0}.{1}".format(path_to_variable, k)
+                except Exception:
+                    # Sometimes this fails for Python 2 CI tests on CentOS (ONLY on CentOS), because of weird
+                    # UnicodeDecode/UnicodeEncode errors.
+                    # This part does nothing for "regular" variable parsing, so only variables with "recursion"
+                    # are affected. Thus, when we hit this exception, we fallback to old logic with no actual loss of
+                    # functionality.
+                    # When ansible drops support for Python 2 (or when CI is fixed somehow), this "try-except"
+                    # wrapper can go.
+                    if sys.version_info < (3,):
+                        k_path_to_variable = None
+                    else:
+                        # This should never fail for Python 3 unless we broke something.
+                        raise
                 if k not in static_vars:
                     d[k] = self.template(
                         variable[k],
