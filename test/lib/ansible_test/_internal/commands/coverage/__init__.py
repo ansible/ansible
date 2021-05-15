@@ -59,12 +59,6 @@ class CoverageConfig(EnvironmentConfig):
     def __init__(self, args):  # type: (t.Any) -> None
         super(CoverageConfig, self).__init__(args, 'coverage')
 
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.export = args.export if 'export' in args else None  # type: str
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
-
 
 def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
@@ -109,6 +103,11 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
     cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
     intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
+
+
+def get_all_coverage_files():  # type: () -> t.List[str]
+    """Return a list of all coverage file paths."""
+    return get_python_coverage_files() + get_powershell_coverage_files()
 
 
 def get_python_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]

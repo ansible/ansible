@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - The ``ansible-test coverage`` commands ``combine``, ``report``, ``html`` and ``xml`` now support delegation.
