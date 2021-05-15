@@ -36,17 +36,17 @@ from ...data import (
 
 from .combine import (
     command_coverage_combine,
+    CoverageCombineConfig,
 )
 
 from . import (
     run_coverage,
-    CoverageConfig,
 )
 
 
 def command_coverage_xml(args):
     """
-    :type args: CoverageConfig
+    :type args: CoverageXmlConfig
     """
     output_files = command_coverage_combine(args)
 
@@ -189,3 +189,7 @@ def _add_cobertura_package(packages, package_name, package_data):
     })
 
     return total_lines_hit, total_line_count
+
+
+class CoverageXmlConfig(CoverageCombineConfig):
+    """Configuration for the coverage xml command."""
