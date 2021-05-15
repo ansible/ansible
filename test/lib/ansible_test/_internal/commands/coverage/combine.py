@@ -141,9 +141,6 @@ def _command_coverage_combine_powershell(args):
     """
     coverage_files = get_powershell_coverage_files()
 
-    if args.stub:
-        find_executable('pwsh', required=True)
-
     def _default_stub_value(source_paths):
         cmd = ['pwsh', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coverage_stub.ps1')]
         cmd.extend(source_paths)
