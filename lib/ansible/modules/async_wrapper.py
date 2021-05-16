@@ -64,7 +64,7 @@ def daemonize_self():
     try:
         pid = os.fork()
         if pid > 0:
-            # TODO: print 'async_wrapper_pid': pid, but careful as it will polute expectec output.
+            # TODO: print 'async_wrapper_pid': pid, but careful as it will pollute expected output.
             end()
     except OSError:
         e = sys.exc_info()[1]
