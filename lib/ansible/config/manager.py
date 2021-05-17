@@ -93,7 +93,7 @@ def ensure_type(value, value_type, origin=None):
         elif value_type == 'list':
             if isinstance(value, string_types):
                 list_value = []
-                for item in value.spit(','):
+                for item in value.split(','):
                     # in case this came as a 'string of quoted items' (ini, env var)
                     for q in ('"', "'"):
                         if item.startswith(q) and item.endswith(q):
