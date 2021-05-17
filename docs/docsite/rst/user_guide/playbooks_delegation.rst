@@ -79,10 +79,7 @@ To specify more arguments, use the following syntax::
 
 .. warning::
 
-    While you can ``delegate_to`` a host that does not exist in inventory (by adding IP address, DNS name or whatever requirement the connection plugin has),
-    these won't be "true inventory hosts" and might cause issues. For exmample they don't inherit variables from the "all" group', which is where users commonly
-    set connection configuration parameters.  If really need to delegate_to a non inventory host mid play, you should use the M(add_host) action.
-
+ Although you can ``delegate_to`` a host that does not exist in inventory (by adding IP address, DNS name or whatever requirement the connection plugin has), doing so does not add the host to your inventory and might cause issues. Hosts delegated to in this way do not inherit variables from the "all" group', so variables like connection user and key are missing. If you must ``delegate_to`` a non-inventory host, use the :ref:`add host module <add_host_module>`.
 
 .. _delegate_facts:
 
