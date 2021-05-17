@@ -39,3 +39,4 @@
 - import_tasks: test_local.yml
 - import_tasks: test_umask.yml
   when: ansible_facts.system == 'Linux'
+- import_tasks: test_ownership_of_home_dir.yml
