@@ -94,12 +94,13 @@ def ensure_type(value, value_type, origin=None):
             if isinstance(value, string_types):
                 list_value = []
                 for item in value.split(','):
+                    item = item.strip()
                     # in case this came as a 'string of quoted items' (ini, env var)
                     for q in ('"', "'"):
                         if item.startswith(q) and item.endswith(q):
                             item = item.strip(q)
                             break
-                    list_value.append(item.strip())
+                    list_value.append(item)
                 value = list_value
             elif not isinstance(value, Sequence):
                 errmsg = 'list'
