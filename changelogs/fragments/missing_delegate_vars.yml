@@ -1,0 +1,3 @@
+bugfixes:
+  - callbacks, restores missing delegate_vars
+  - callback default, now uses task delegate_to instead of delegate vars to display delegate to host
