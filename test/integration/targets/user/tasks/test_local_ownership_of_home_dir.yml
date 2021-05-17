@@ -40,6 +40,7 @@
   user:
     name: ansibulluser2
     state: present
+    local: yes
     home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
   register: create_home_ownership_check_local_3
   tags:
@@ -65,6 +66,7 @@
     name: ansibulluser2
     home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
     state: absent
+    local: yes
     remove: yes
   tags:
     - user_test_local_ownership_check
