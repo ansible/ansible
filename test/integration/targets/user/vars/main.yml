@@ -9,7 +9,7 @@ status_command:
   FreeBSD: 'pw user show ansibulluser'
 
 default_user_group:
-#  openSUSE Leap: users
+  openSUSE Leap: users
   MacOSX: admin
 
 default_local_user_group:
