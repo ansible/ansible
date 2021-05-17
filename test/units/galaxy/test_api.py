@@ -477,8 +477,11 @@ def test_wait_import_task_multiple_requests(server_url, api_version, token_type,
     assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % full_import_uri
 
     assert mock_vvv.call_count == 1
-    assert mock_vvv.mock_calls[0][1][0] == \
-        'Galaxy import process has a status of test, wait 2 seconds before trying again'
+
+    # Delays are jittered exponential and the first retry is random.randint(0, 2)
+    wait_status = 'Galaxy import process has a status of test, wait {0} seconds before trying again'
+    delays = (0, 1, 2,)
+    assert mock_vvv.mock_calls[0][1][0] in [wait_status.format(delay) for delay in delays]
 
 
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, import_uri, full_import_uri,', [
