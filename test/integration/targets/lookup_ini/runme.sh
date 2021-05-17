@@ -2,5 +2,4 @@
 
 set -eux
 
-ansible-playbook test_lookup_properties.yml -i inventory -v "$@"
-ansible-playbook test_errors.yml -i inventory -v "$@"
+ansible-playbook test_ini.yml -i inventory -v "$@"
