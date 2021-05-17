@@ -118,6 +118,22 @@ def retry(retries=None, retry_pause=1):
     return wrapper
 
 
+def generate_jittered_backoff_until_timeout(timeout=300, delay_base=3, delay_threshold=60):
+    """The "Full Jitter" backoff strategy.
+
+    Ref: https://www.awsarchitectureblog.com/2015/03/backoff.html
+
+    :param timeout: The amount of time in seconds to generate delays (0 for indefinite).
+    :param delay_base: The base time in seconds used to calculate the exponential backoff.
+    :param delay_threshold: The maximum time in seconds for any delay.
+    """
+    retry = 0
+    start = time.time()
+    while timeout == 0 or (time.time() - start) < timeout:
+        yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
+        retry += 1
+
+
 def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
     """The "Full Jitter" backoff strategy.
 
@@ -135,7 +151,17 @@ def retry_never(exception_or_result):
     return False
 
 
-def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
+def do_nothing(delay, exception_or_result):
+    pass
+
+
+def retry_with_delays_and_condition(
+    backoff_iterator,
+    should_retry_error=None,
+    should_retry_result=None,
+    do_on_error=None,
+    do_on_result=None
+):
     """Generic retry decorator.
 
     :param backoff_iterator: An iterable of delays in seconds.
@@ -143,6 +169,12 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
     """
     if should_retry_error is None:
         should_retry_error = retry_never
+    if should_retry_result is None:
+        should_retry_result = retry_never
+    if do_on_error is None:
+        do_on_error = do_nothing
+    if do_on_result is None:
+        do_on_result = do_nothing
 
     def function_wrapper(function):
         @functools.wraps(function)
@@ -154,10 +186,16 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
 
             for delay in backoff_iterator:
                 try:
-                    return call_retryable_function()
+                    result = call_retryable_function()
                 except Exception as e:
                     if not should_retry_error(e):
                         raise
+                    do_on_error(delay, e)
+                else:
+                    if not should_retry_result(result):
+                        return result
+                    do_on_result(delay, result)
+
                 time.sleep(delay)
 
             # Only or final attempt

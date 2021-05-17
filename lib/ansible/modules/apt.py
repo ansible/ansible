@@ -329,6 +329,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.api import retry_with_delays_and_condition, generate_jittered_backoff
 from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_file
 
@@ -1203,21 +1204,19 @@ def main():
                     err = ''
                     update_cache_retries = module.params.get('update_cache_retries')
                     update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
-                    randomize = random.randint(0, 1000) / 1000.0
 
-                    for retry in range(update_cache_retries):
-                        try:
-                            cache.update()
-                            break
-                        except apt.cache.FetchFailedException as e:
-                            err = to_native(e)
-
-                        # Use exponential backoff plus a little bit of randomness
-                        delay = 2 ** retry + randomize
-                        if delay > update_cache_retry_max_delay:
-                            delay = update_cache_retry_max_delay + randomize
-                        time.sleep(delay)
-                    else:
+                    backoff_iterator = generate_jittered_backoff(
+                        retries=update_cache_retries,
+                        delay_base=2,
+                        delay_threshold=update_cache_retry_max_delay
+                    )
+                    try:
+                        retry_with_delays_and_condition(
+                            backoff_iterator,
+                            should_retry_error=lambda err: isinstance(err, apt.cache.FetchFailedException),
+                        )(cache.update)()
+                    except apt.cache.FetchFailedException as e:
+                        err = to_native(e)
                         module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
 
                     cache.open(progress=None)

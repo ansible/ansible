@@ -20,7 +20,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
-from ansible.module_utils.api import generate_jittered_backoff
+from ansible.module_utils.api import generate_jittered_backoff, generate_jittered_backoff_until_timeout
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
@@ -58,6 +58,23 @@ def is_rate_limit_exception(exception):
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
     return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
+
+
+def is_import_exception(exception):
+    return isinstance(exception, GalaxyError) and exception.http_code == 404
+
+
+def is_import_pending(result):
+    return not result.get('finished_at')
+
+
+def import_error_debug(delay, exception):
+    display.vvv('Galaxy import process has not started, wait %s seconds before trying again' % delay)
+
+
+def import_pending_debug(delay, result):
+    state = result.get('state', 'waiting')
+    display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again' % (state, delay))
 
 
 def g_connect(versions):
@@ -682,32 +699,26 @@ class GalaxyAPI:
                                 'collection-imports', task_id, '/')
 
         display.display("Waiting until Galaxy import task %s has completed" % full_url)
-        start = time.time()
-        wait = 2
 
-        while timeout == 0 or (time.time() - start) < timeout:
-            try:
-                data = self._call_galaxy(full_url, method='GET', auth_required=True,
-                                         error_context_msg='Error when getting import task results at %s' % full_url)
-            except GalaxyError as e:
-                if e.http_code != 404:
-                    raise
-                # The import job may not have started, and as such, the task url may not yet exist
-                display.vvv('Galaxy import process has not started, wait %s seconds before trying again' % wait)
-                time.sleep(wait)
-                continue
+        backoff_iterator = generate_jittered_backoff_until_timeout(timeout=timeout, delay_base=2, delay_threshold=30)
+        retry_handler = retry_with_delays_and_condition(
+            backoff_iterator,
+            should_retry_error=is_import_exception,
+            should_retry_result=is_import_pending,
+             do_on_error=import_error_debug,
+             do_on_result=import_pending_debug,
+        )
 
-            state = data.get('state', 'waiting')
+        data = retry_handler(
+            self._call_galaxy
+        )(
+            full_url,
+            method='GET',
+            auth_required=True,
+            error_context_msg='Error when getting import task results at %s' % full_url
+        )
 
-            if data.get('finished_at', None):
-                break
-
-            display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again'
-                        % (state, wait))
-            time.sleep(wait)
-
-            # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
-            wait = min(30, wait * 1.5)
+        state = data.get('state', 'waiting')
         if state == 'waiting':
             raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
                                % to_native(full_url))

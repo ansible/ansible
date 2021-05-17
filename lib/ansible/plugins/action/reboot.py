@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.api import retry_with_delays_and_condition, generate_jittered_backoff_until_timeout
 from ansible.module_utils.common.validation import check_type_list, check_type_str
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
@@ -279,46 +280,44 @@ class ActionModule(ActionBase):
 
         display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
 
+    def reset_and_display_retry(self, action, action_desc):
+        def do_on_retry(delay, exception):
+            if isinstance(exception, AnsibleConnectionFailure):
+                try:
+                    self._connection.reset()
+                except AnsibleConnectionFailure:
+                    pass
+
+            if action_desc:
+                try:
+                    error = to_text(exception).splitlines()[-1]
+                except IndexError as e:
+                    error = to_text(e)
+                display.debug("{action}: {desc} fail '{err}', retrying in {sleep} seconds...".format(
+                    action=action,
+                    desc=action_desc,
+                    err=error,
+                    sleep=delay))
+        return do_on_retry
+
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
-        max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
+        backoff_iterator = generate_jittered_backoff_until_timeout(timeout=reboot_timeout, delay_base=2, delay_threshold=12)
+        do_on_error = self.reset_and_display_retry(self._task.action, action_desc)
+
         if action_kwargs is None:
             action_kwargs = {}
 
-        fail_count = 0
-        max_fail_sleep = 12
+        try:
+            retry_with_delays_and_condition(
+                backoff_iterator,
+                should_retry_error=lambda x: True,
+                do_on_error=do_on_error,
+            )(action)(distribution=distribution, **action_kwargs)
+            if action_desc:
+                display.debug('{action}: {desc} success'.format(action=self._task.action, desc=action_desc))
+        except Exception as e:
+            raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
 
-        while datetime.utcnow() < max_end_time:
-            try:
-                action(distribution=distribution, **action_kwargs)
-                if action_desc:
-                    display.debug('{action}: {desc} success'.format(action=self._task.action, desc=action_desc))
-                return
-            except Exception as e:
-                if isinstance(e, AnsibleConnectionFailure):
-                    try:
-                        self._connection.reset()
-                    except AnsibleConnectionFailure:
-                        pass
-                # Use exponential backoff with a max timout, plus a little bit of randomness
-                random_int = random.randint(0, 1000) / 1000
-                fail_sleep = 2 ** fail_count + random_int
-                if fail_sleep > max_fail_sleep:
-
-                    fail_sleep = max_fail_sleep + random_int
-                if action_desc:
-                    try:
-                        error = to_text(e).splitlines()[-1]
-                    except IndexError as e:
-                        error = to_text(e)
-                    display.debug("{action}: {desc} fail '{err}', retrying in {sleep:.4} seconds...".format(
-                        action=self._task.action,
-                        desc=action_desc,
-                        err=error,
-                        sleep=fail_sleep))
-                fail_count += 1
-                time.sleep(fail_sleep)
-
-        raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
 
     def perform_reboot(self, task_vars, distribution):
         result = {}
