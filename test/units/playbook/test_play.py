@@ -227,6 +227,9 @@ def test_play_none_hosts(value):
         {'one': None},
         {'one': 'two'},
         None,
+        True,
+        1,
+        1.75,
     )
 )
 def test_play_invalid_hosts_sequence(value):
