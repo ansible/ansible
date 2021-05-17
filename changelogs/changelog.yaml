@@ -1663,3 +1663,96 @@ releases:
     - fix-for-workerprocess-stdout-deadlock-fix.yml
     - v2.11.0rc2_summary.yaml
     release_date: '2021-04-06'
+  2.11.1rc1:
+    changes:
+      bugfixes:
+      - Add RockyLinux to fact gathering (https://github.com/ansible/ansible/pull/74530).
+      - Improve resilience of ``ansible-galaxy collection`` by increasing the page
+        size to make fewer requests overall and retrying queries with a jittered exponential
+        backoff when rate limiting HTTP codes (520 and 429) occur. (https://github.com/ansible/ansible/issues/74191)
+      - Prevent ``ansible_failed_task`` from further templating (https://github.com/ansible/ansible/issues/74036)
+      - Remove 'default' from ssh plugin as we want to rely on default from ssh itself
+        or ssh/config.
+      - The error message about the failure to import a ``gpg`` key by the ``apt_key``
+        module was incorrect (https://github.com/ansible/ansible/issues/74423).
+      - ansible-test - Avoid publishing the port used by the ``pypi-test-container``
+        since it is only accessed by other containers. This avoids issues when trying
+        to run tests in parallel on a single host.
+      - ansible-test - Fix docker container IP address detection. The ``bridge`` network
+        is no longer assumed to be the default.
+      - ansible-test - Use documented API to retrieve build information from Azure
+        Pipelines.
+      - ansible.builtin.cron - Keep non-empty crontabs, when removing cron jobs (https://github.com/ansible/ansible/pull/74497).
+      - ansible.utils.encrypt now handles missing or unusable 'crypt' library.
+      - ansible_test - add constraint for ``MarkupSafe`` (https://github.com/ansible/ansible/pull/74666)
+      - apt_key - Binary GnuPG keys downloaded via URLs were corrupted so GnuPG could
+        not import them (https://github.com/ansible/ansible/issues/74424).
+      - become - fix a regression on Solaris where chmod can return 5 which we interpret
+        as auth failure and stop trying become tmpdir permission fallbacks
+      - become - work around setfacl not existing on modern Solaris (and possibly
+        failing on some filesystems even when it does exist)
+      - callback default, now uses task delegate_to instead of delegate vars to display
+        delegate to host
+      - callbacks, restores missing delegate_vars
+      - correct doc links for become on warnings over world readable settings.
+      - correctly use world readable setting since old constant is not 'settable'
+        anymore.
+      - facts - detect homebrew installed at /opt/homebrew/bin/brew
+      - filter plugins - patch new versions of Jinja2 to prevent warnings/errors on
+        renamed filter decorators (https://github.com/ansible/ansible/issues/74667)
+      - get_url - Fixed checksum validation for binary files (leading asterisk) in
+        checksum files (https://github.com/ansible/ansible/pull/74502).
+      - hostname - Add Rocky Linux support
+      - ini lookup - handle errors for duplicate keys and missing sections (https://github.com/ansible/ansible/issues/74601)
+      - interpreter discovery - Debian 8 and lower will avoid unsupported Python3
+        version in interpreter discovery
+      - pause - ensure control characters are always set to an appropriate value (https://github.com/ansible/ansible/issues/73264)
+      - playbook loaded from collection subdir now does not ignore subdirs.
+      - plugin config now allows list type options to have multiple valid choices
+        (#74225).
+      - replace - better handling of file operation exceptions (https://github.com/ansible/ansible/pull/74686).
+      - roles - allow for role arg specs in new meta file (https://github.com/ansible/ansible/issues/74525).
+      - service - compare version without LooseVersion API (https://github.com/ansible/ansible/issues/74488).
+      minor_changes:
+      - ansible adhoc, clarified the help to some options, also added some comments
+        to code.
+      - command - update the user warning message to point out command name (https://github.com/ansible/ansible/pull/74475).
+      release_summary: '| Release Date: 2021-05-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 73264-pause-emacs.yml
+    - 73887.mac-m1-homebrew.yaml
+    - 74036-unsafe-ansible_failed_task.yml
+    - 74240-ansible-galaxy-increase-pagesize-and-handle-throttling.yml
+    - 74474-apt_key-gpg-binary-import.yaml
+    - 74476-apt_key-gpg-inline-data.yaml
+    - 74488_solaris_looseversion.yml
+    - 74497-keep-non-empty-crontabs.yml
+    - 74502-get_url-filx-checksum-binary.yml
+    - 74582-role-argspec-new-file.yml
+    - 74601-ini-lookup-handle-errors.yml
+    - 74686-replace-handle-file-exc.yml
+    - adhoc_help_clarify.yml
+    - allow_lists_of_config_choices.yml
+    - ansible-test-azp-build-api.yml
+    - ansible-test-docker-network-detect.yml
+    - ansible-test-markupsafe-constraint.yml
+    - ansible-test-pypi-container-no-publish.yml
+    - cmd_wording.yml
+    - coll_pb_subdir_fixes.yml
+    - crypt_missing.yml
+    - debian8_discovery.yml
+    - jinja2_decorator_renames.yml
+    - macos-solaris-regression.yml
+    - missing_delegate_vars.yml
+    - solaris-setfacl-chmod-fallback.yml
+    - ssh_port_default_fix.yml
+    - support_rocky_linux_hostname.yml
+    - support_rockylinux.yml
+    - v2.11.1rc1_summary.yaml
+    - world_readable_fixes.yml
+    release_date: '2021-05-17'
