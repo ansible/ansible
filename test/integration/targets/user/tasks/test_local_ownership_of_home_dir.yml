@@ -121,4 +121,3 @@
     state: absent
   tags:
     - user_test_local_ownership_check
-

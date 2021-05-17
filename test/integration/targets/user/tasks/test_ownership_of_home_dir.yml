@@ -74,4 +74,3 @@
     state: absent
   tags:
     - user_test_ownership_check
-
