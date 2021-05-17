@@ -22,7 +22,6 @@
     that:
       - create_home_ownership_check_local_stat_1.stat.uid == create_home_ownership_check_local_1.uid
       - create_home_ownership_check_local_stat_1.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
-
   tags:
     - user_test_local_ownership_check
 
@@ -58,7 +57,6 @@
     that:
       - create_home_ownership_check_local_stat_3.stat.uid == create_home_ownership_check_local_3.uid
       - create_home_ownership_check_local_stat_3.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
-
   tags:
     - user_test_local_ownership_check
 
@@ -101,7 +99,6 @@
     that:
       - create_home_ownership_check_local_stat_2.stat.uid == create_home_ownership_check_local_2.uid
       - create_home_ownership_check_local_stat_2.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
-
   tags:
     - user_test_local_ownership_check
 
