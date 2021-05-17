@@ -5,6 +5,23 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.22rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-05-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- ansible-test - Use documented API to retrieve build information from Azure Pipelines.
+- ansible_test - add constraint for ``MarkupSafe`` (https://github.com/ansible/ansible/pull/74666)
+- filter plugins - patch new versions of Jinja2 to prevent warnings/errors on renamed filter decorators (https://github.com/ansible/ansible/issues/74667)
+
 v2.9.21
 =======
 
