@@ -119,3 +119,81 @@ class TestRetryWithDelaysAndCondition:
         login_database.counter = 0
         assert login_database() == 'success'
         assert login_database.counter == 2
+
+    def test_do_on_retry_exception(self):
+        def handle_retry(delay, exception):
+            handle_retry.counter += 1
+            assert isinstance(exception, CustomException)
+            assert delay == 1
+
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1, 1],
+            do_on_error=handle_retry,
+            should_retry_error=lambda x: isinstance(x, CustomException),
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                raise CustomException("Retry")
+            return 'success'
+
+        handle_retry.counter = 0
+        login_database.counter = 0
+
+        assert login_database() == 'success'
+        assert login_database.counter == 2
+        assert handle_retry.counter == 1
+
+    def test_no_retry_result(self):
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1],
+            should_retry_result=lambda x: False,
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                return 'retry'
+            return 'success'
+
+        login_database.counter = 0
+        assert login_database() == 'retry'
+        assert login_database.counter == 1
+
+    def test_retry_result(self):
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1],
+            should_retry_result=lambda x: x == 'retry',
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                return 'retry'
+            return 'success'
+
+        login_database.counter = 0
+        assert login_database() == 'success'
+        assert login_database.counter == 2
+
+    def test_do_on_retry_result(self):
+        def handle_retry(delay, result):
+            handle_retry.counter += 1
+            assert result == 'retry'
+            assert delay == 1
+
+        @retry_with_delays_and_condition(
+            backoff_iterator=[1, 1],
+            do_on_result=handle_retry,
+            should_retry_result=lambda x: x == 'retry',
+        )
+        def login_database():
+            login_database.counter += 1
+            if login_database.counter == 1:
+                return 'retry'
+            return 'success'
+
+        handle_retry.counter = 0
+        login_database.counter = 0
+
+        assert login_database() == 'success'
+        assert login_database.counter == 2
+        assert handle_retry.counter == 1
