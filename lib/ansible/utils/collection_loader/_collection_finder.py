@@ -891,6 +891,12 @@ def _get_collection_playbook_path(playbook):
 
         if pkg:
             cpath = os.path.join(sys.modules[acr.n_python_collection_package_name].__file__.replace('__synthetic__', 'playbooks'))
+
+            if acr.subdirs:
+                paths = [to_native(x) for x in acr.subdirs.split(u'.')]
+                paths.insert(0, cpath)
+                cpath = os.path.join(*paths)
+
             path = os.path.join(cpath, to_native(acr.resource))
             if os.path.exists(to_bytes(path)):
                 return acr.resource, path, acr.collection
