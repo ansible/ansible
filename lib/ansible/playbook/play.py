@@ -98,6 +98,24 @@ class Play(Base, Taggable, CollectionSearch):
     def __repr__(self):
         return self.get_name()
 
+    def _validate_hosts(self, attribute, name, value):
+        # Only validate 'hosts' if a value was passed in to original data set.
+        if 'hosts' in self._ds:
+            # Check for empty data
+            if value in ([], tuple(), set(), {}, ''):
+                raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
+
+            if is_sequence(value):
+                # Make sure each item in the sequence is a string and not None
+                for host in value:
+                    if host is None:
+                        raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
+                    elif not is_string(host):
+                        raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=host))
+
+            elif not is_string(value):
+                raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
+
     def get_name(self):
         ''' return the name of the Play '''
         if self.name:
@@ -112,24 +130,6 @@ class Play(Base, Taggable, CollectionSearch):
 
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
-        if 'hosts' in data:
-            hosts = data.get('hosts')
-
-            # Check for empty data
-            if hosts in ([], tuple(), set(), {}, ''):
-                raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
-
-            if is_sequence(hosts):
-                # Make sure each item in the sequence is a string and not None
-                for host in hosts:
-                    if host is None:
-                        raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
-                    elif not is_string(host):
-                        raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=host))
-
-            elif not is_string(hosts):
-                raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
-
         p = Play()
         if vars:
             p.vars = vars.copy()
