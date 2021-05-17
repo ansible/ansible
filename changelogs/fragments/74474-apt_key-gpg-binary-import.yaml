@@ -1,0 +1,2 @@
+bugfixes:
+  - apt_key - Binary GnuPG keys downloaded via URLs were corrupted so GnuPG could not import them (https://github.com/ansible/ansible/issues/74424).
