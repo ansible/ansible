@@ -12,4 +12,4 @@ if ! ansible-test --help >/dev/null 2>&1; then
     pip install https://github.com/ansible/ansible/archive/devel.tar.gz --disable-pip-version-check
 fi
 
-ansible-test coverage xml --stub --venv --venv-system-site-packages --color -v
+ansible-test coverage xml --stub --docker --color -v
