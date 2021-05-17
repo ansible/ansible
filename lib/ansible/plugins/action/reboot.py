@@ -318,7 +318,6 @@ class ActionModule(ActionBase):
         except Exception as e:
             raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
 
-
     def perform_reboot(self, task_vars, distribution):
         result = {}
         reboot_result = {}

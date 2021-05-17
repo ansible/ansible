@@ -68,11 +68,11 @@ def is_import_pending(result):
     return not result.get('finished_at')
 
 
-def import_error_debug(delay, exception):
+def display_import_exception_debug(delay, exception):
     display.vvv('Galaxy import process has not started, wait %s seconds before trying again' % delay)
 
 
-def import_pending_debug(delay, result):
+def display_import_pending_debug(delay, result):
     state = result.get('state', 'waiting')
     display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again' % (state, delay))
 
@@ -705,8 +705,8 @@ class GalaxyAPI:
             backoff_iterator,
             should_retry_error=is_import_exception,
             should_retry_result=is_import_pending,
-             do_on_error=import_error_debug,
-             do_on_result=import_pending_debug,
+            do_on_error=display_import_exception_debug,
+            do_on_result=display_import_pending_debug,
         )
 
         data = retry_handler(
