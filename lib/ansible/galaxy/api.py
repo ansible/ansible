@@ -15,9 +15,11 @@ import time
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
+from ansible.module_utils.api import retry_with_delays_and_condition
+from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
@@ -30,6 +32,18 @@ except ImportError:
     from urlparse import urlparse
 
 display = Display()
+COLLECTION_PAGE_SIZE = 100
+RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
+    429,  # Too Many Requests
+    520,  # Galaxy rate limit error code (Cloudflare unknown error)
+]
+
+
+def is_rate_limit_exception(exception):
+    # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
+    # Since 403 could reflect the actual problem (such as an expired token), we should
+    # not retry by default.
+    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
 
 
 def g_connect(versions):
@@ -187,6 +201,10 @@ class GalaxyAPI:
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
 
+    @retry_with_delays_and_condition(
+        backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
+        should_retry_error=is_rate_limit_exception
+    )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None):
         headers = headers or {}
         self._add_auth_token(headers, url, required=auth_required)
@@ -554,7 +572,9 @@ class GalaxyAPI:
             results_key = 'results'
             pagination_path = ['next']
 
-        n_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
+        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
+        n_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
+        n_url_info = urlparse(n_url)
 
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)
@@ -573,7 +593,10 @@ class GalaxyAPI:
             elif relative_link:
                 # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
                 # with someone who knows the AH API.
-                next_link = n_url.replace(urlparse(n_url).path, next_link)
+
+                # Remove the query string from the versions_url to use the next_link's query
+                n_url = urljoin(n_url, urlparse(n_url).path)
+                next_link = n_url.replace(n_url_info.path, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg)
