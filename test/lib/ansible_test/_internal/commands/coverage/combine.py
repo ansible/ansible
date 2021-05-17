@@ -61,7 +61,7 @@ def command_coverage_combine(args):
     if args.delegate:
         if args.docker or args.remote:
             paths = get_all_coverage_files()
-            exported_paths = [path for path in paths if path.endswith('=coverage.combined')]
+            exported_paths = [path for path in paths if os.path.basename(path).split('=')[-1].split('.')[:2] == ['coverage', 'combined']]
 
             if not exported_paths:
                 raise ExportedCoverageDataNotFound()
