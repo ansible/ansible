@@ -1,0 +1,59 @@
+****************************************
+Manual of the vmware.vmware_rest modules
+****************************************
+
+.. toctree::
+    :maxdepth: 1
+
+    docs/vmware.vmware_rest.vcenter_cluster_info_module
+    docs/vmware.vmware_rest.vcenter_datacenter_info_module
+    docs/vmware.vmware_rest.vcenter_datacenter_module
+    docs/vmware.vmware_rest.vcenter_datastore_info_module
+    docs/vmware.vmware_rest.vcenter_folder_info_module
+    docs/vmware.vmware_rest.vcenter_host_info_module
+    docs/vmware.vmware_rest.vcenter_host_module
+    docs/vmware.vmware_rest.vcenter_network_info_module
+    docs/vmware.vmware_rest.vcenter_resourcepool_info_module
+    docs/vmware.vmware_rest.vcenter_resourcepool_module
+    docs/vmware.vmware_rest.vcenter_storage_policies_info_module
+    docs/vmware.vmware_rest.vcenter_vm_guest_identity_info_module
+    docs/vmware.vmware_rest.vcenter_vm_guest_localfilesystem_info_module
+    docs/vmware.vmware_rest.vcenter_vm_guest_networking_info_module
+    docs/vmware.vmware_rest.vcenter_vm_guest_networking_interfaces_info_module
+    docs/vmware.vmware_rest.vcenter_vm_guest_networking_routes_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_adapter_sata_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_adapter_sata_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_adapter_scsi_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_adapter_scsi_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_boot_device_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_boot_device_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_boot_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_boot_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_cdrom_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_cdrom_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_cpu_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_cpu_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_disk_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_disk_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_ethernet_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_ethernet_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_floppy_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_floppy_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_memory_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_memory_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_parallel_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_parallel_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_serial_info_module
+    docs/vmware.vmware_rest.vcenter_vm_hardware_serial_module
+    docs/vmware.vmware_rest.vcenter_vm_info_module
+    docs/vmware.vmware_rest.vcenter_vm_libraryitem_info_module
+    docs/vmware.vmware_rest.vcenter_vm_module
+    docs/vmware.vmware_rest.vcenter_vm_power_info_module
+    docs/vmware.vmware_rest.vcenter_vm_power_module
+    docs/vmware.vmware_rest.vcenter_vm_storage_policy_compliance_info_module
+    docs/vmware.vmware_rest.vcenter_vm_storage_policy_info_module
+    docs/vmware.vmware_rest.vcenter_vm_storage_policy_module
+    docs/vmware.vmware_rest.vcenter_vm_tools_info_module
+    docs/vmware.vmware_rest.vcenter_vm_tools_module
