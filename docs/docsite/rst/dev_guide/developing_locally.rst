@@ -71,17 +71,17 @@ Adding a plugin locally
 =======================
 Ansible loads plugins automatically too, and loads each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
 
-    * action_plugins*
-    * cache_plugins
-    * callback_plugins
-    * connection_plugins
-    * filter_plugins*
-    * inventory_plugins
-    * lookup_plugins
-    * shell_plugins
-    * strategy_plugins
-    * test_plugins*
-    * vars_plugins
+    * action*
+    * cache
+    * callback
+    * connection
+    * filter*
+    * inventory
+    * lookup
+    * shell
+    * strategy
+    * test*
+    * vars
 
 .. note::
 
