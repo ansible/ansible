@@ -53,8 +53,8 @@
 - name: validate that ownership is correct
   assert:
     that:
-      - create_home_ownership_check_2.stat.uid == create_home_ownership_check_2.uid
-      - create_home_ownership_check_2.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
+      - create_home_ownership_check_stat_2.stat.uid == create_home_ownership_check_2.uid
+      - create_home_ownership_check_stat_2.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
   tags:
     - user_test_ownership_check
 
