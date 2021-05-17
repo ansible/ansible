@@ -1,0 +1,6 @@
+bugfixes:
+- >-
+  Improve resilience of ``ansible-galaxy collection`` by increasing the page
+  size to make fewer requests overall and retrying queries with a jittered
+  exponential backoff when rate limiting HTTP codes (520 and 429) occur.
+  (https://github.com/ansible/ansible/issues/74191)
