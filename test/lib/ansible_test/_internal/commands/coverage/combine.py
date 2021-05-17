@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import json
 
 from ...target import (
     walk_compile_targets,
@@ -14,11 +15,14 @@ from ...io import (
 )
 
 from ...util import (
+    ANSIBLE_TEST_DATA_ROOT,
     display,
+    find_executable,
 )
 
 from ...util_common import (
     ResultType,
+    run_command,
     write_json_file,
     write_json_test_results,
 )
@@ -64,7 +68,7 @@ def _command_coverage_combine_python(args):
 
     counter = 0
     sources = _get_coverage_targets(args, walk_compile_targets)
-    groups = _build_stub_groups(args, sources, lambda line_count: set())
+    groups = _build_stub_groups(args, sources, lambda s: dict((name, set()) for name in s))
 
     collection_search_re, collection_sub_re = get_collection_path_regexes()
 
@@ -137,11 +141,13 @@ def _command_coverage_combine_powershell(args):
     """
     coverage_files = get_powershell_coverage_files()
 
-    def _default_stub_value(lines):
-        val = {}
-        for line in range(lines):
-            val[line] = 0
-        return val
+    def _default_stub_value(source_paths):
+        cmd = ['pwsh', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coverage_stub.ps1')]
+        cmd.extend(source_paths)
+
+        stubs = json.loads(run_command(args, cmd, capture=True, always=True)[0])
+
+        return dict((d['Path'], dict((line, 0) for line in d['Lines'])) for d in stubs)
 
     counter = 0
     sources = _get_coverage_targets(args, walk_powershell_targets)
@@ -236,7 +242,7 @@ def _build_stub_groups(args, sources, default_stub_value):
     """
     :type args: CoverageConfig
     :type sources: List[tuple[str, int]]
-    :type default_stub_value: Func[int]
+    :type default_stub_value: Func[List[str]]
     :rtype: dict
     """
     groups = {}
@@ -248,7 +254,7 @@ def _build_stub_groups(args, sources, default_stub_value):
         stub_line_count = 0
 
         for source, source_line_count in sources:
-            stub_group.append((source, source_line_count))
+            stub_group.append(source)
             stub_line_count += source_line_count
 
             if stub_line_count > stub_line_limit:
@@ -260,8 +266,7 @@ def _build_stub_groups(args, sources, default_stub_value):
             if not stub_group:
                 continue
 
-            groups['=stub-%02d' % (stub_index + 1)] = dict((source, default_stub_value(line_count))
-                                                           for source, line_count in stub_group)
+            groups['=stub-%02d' % (stub_index + 1)] = default_stub_value(stub_group)
 
     return groups
 
