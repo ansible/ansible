@@ -1,0 +1,8 @@
+argument_specs:
+    main:
+        short_description: "The foo.bar.blah role"
+        options:
+            blah_str:
+                type: "str"
+                required: true
+                description: "A string value"

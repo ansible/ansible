@@ -270,3 +270,36 @@
               # and validation wasn't performed up front (thus not returning 'argument_errors').
               - "'argument_errors' not in ansible_failed_result"
               - "'The task includes an option with an undefined variable.' in ansible_failed_result.msg"
+
+- name: "New play to reset vars: Test collection-based role"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: "Valid collection-based role usage"
+      import_role:
+        name: "foo.bar.blah"
+      vars:
+        blah_str: "some string"
+
+
+- name: "New play to reset vars: Test collection-based role will fail"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+      - name: "Invalid collection-based role usage"
+        import_role:
+          name: "foo.bar.blah"
+      - fail:
+          msg: "Should not get here"
+      rescue:
+        - debug: var=ansible_failed_result
+        - name: "Validate import_role failure for collection-based role"
+          assert:
+            that:
+              - ansible_failed_result.argument_errors | length == 1
+              - "'missing required arguments: blah_str' in ansible_failed_result.argument_errors"
+              - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+              - ansible_failed_result.validate_args_context.name == "blah"
+              - ansible_failed_result.validate_args_context.type == "role"
+              - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/collections/ansible_collections/foo/bar/roles/blah')"
