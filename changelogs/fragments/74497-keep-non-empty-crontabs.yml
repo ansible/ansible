@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible.builtin.cron - Keep non-empty crontabs, when removing cron jobs
+    (https://github.com/ansible/ansible/pull/74497).
