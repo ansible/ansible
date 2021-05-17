@@ -1239,7 +1239,7 @@ class VaultAES256:
         """
         Comparing 2 byte arrays in constant time to avoid timing attacks.
 
-        It would be nice if there was a library for this but hey.
+        It would be nice if there were a library for this but hey.
         """
         if not (isinstance(b_a, binary_type) and isinstance(b_b, binary_type)):
             raise TypeError('_is_equal can only be used to compare two byte strings')
