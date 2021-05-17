@@ -1,0 +1,38 @@
+- name: Test INI lookup errors
+  hosts: testhost
+
+  tasks:
+    - name: Test for failure on Python 3
+      when: ansible_facts.python.version_info[0] >= 3
+      block:
+        - name: Lookup a file with duplicate keys
+          debug:
+            msg: "{{ lookup('ini', 'reggae file=duplicate.ini section=reggae') }}"
+          ignore_errors: yes
+          register: duplicate
+
+        - name: Lookup a file with keys that differ only in case
+          debug:
+            msg: "{{ lookup('ini', 'reggae file=duplicate_case_check.ini section=reggae') }}"
+          ignore_errors: yes
+          register: duplicate_case_sensitive
+
+        - name: Ensure duplicate key errers were handled properly
+          assert:
+            that:
+              - duplicate is failed
+              - "'Duplicate option in' in duplicate.msg"
+              - duplicate_case_sensitive is failed
+              - "'Duplicate option in' in duplicate_case_sensitive.msg"
+
+    - name: Lookup a file with a missing section
+      debug:
+        msg: "{{ lookup('ini', 'reggae file=lookup.ini section=missing') }}"
+      ignore_errors: yes
+      register: missing_section
+
+    - name: Ensure error was shown for a missing section
+      assert:
+        that:
+          - missing_section is failed
+          - "'No section' in missing_section.msg"
