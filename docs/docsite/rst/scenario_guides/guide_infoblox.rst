@@ -243,44 +243,47 @@ To configure a reverse DNS zone:
             state: present
             provider: "{{ nios_provider }}"
 
-Dynamic inventory script
+Dynamic inventory plugin
 ========================
 
-You can use the Infoblox dynamic inventory script to import your network node inventory with Infoblox NIOS. To gather the inventory from Infoblox, you need two files:
+Ansible `Infoblox collection <https://github.com/infobloxopen/infoblox-ansible>`_ provides a dynamic inventory plugin for Infoblox.
 
-- `infoblox.yaml <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters.
+To be able to use it you need to enable it first by specifying the following in the ``ansible.cfg`` file:
 
-- `infoblox.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
+.. code-block:: ini
 
-.. note::
+  [inventory]
+  enable_plugins=infoblox.nios_modules.nios_inventory
 
-    Please note that the inventory script only works when Ansible 2.9, 2.10 or 3 have been installed. The inventory script will eventually be removed from `community.general <https://galaxy.ansible.com/community/general>`_, and will not work if `community.general` is only installed with `ansible-galaxy collection install`. Please use the inventory plugin from `infoblox.nios_modules <https://galaxy.ansible.com/infoblox/nios_modules>`_ instead.
+And provide a configuration file to be used with the plugin, the minimal configuration file looks like this:
 
-To use the Infoblox dynamic inventory script:
+.. code-block:: yaml
 
-#. Download the ``infoblox.yaml`` file and save it in the ``/etc/ansible`` directory.
+  ---
+  plugin: infoblox.nios_modules.nios_inventory
+  host: blox.example.com
+  username: admin
 
-#. Modify the ``infoblox.yaml`` file with your NIOS credentials.
+To list the available hosts one can simply run:
 
-#. Download the ``infoblox.py`` file and save it in the ``/etc/ansible/hosts`` directory.
+.. code-block:: console
 
-#. Change the permissions on the ``infoblox.py`` file to make the file an executable:
+  #> ansible-inventory -i infoblox.yml --list
 
-.. code-block:: bash
+For example, this allows you to take action on nodes grouped by location or OS name:
 
-    $ sudo chmod +x /etc/ansible/hosts/infoblox.py
+.. code-block:: yaml
 
-You can optionally use ``./infoblox.py --list`` to test the script. After a few minutes, you should see your Infoblox inventory in JSON format. You can explicitly use the Infoblox dynamic inventory script as follows:
-
-.. code-block:: bash
-
-    $ ansible -i infoblox.py all -m ping
-
-You can also implicitly use the Infoblox dynamic inventory script by including it in your inventory directory (``etc/ansible/hosts`` by default). See :ref:`dynamic_inventory` for more details.
+  ---
+  - hosts: dbservers
+    tasks:
+      - name: Rebooting the machine
+        shell: reboot
+        become: True
 
 .. seealso::
 
-  `Infoblox website <https://www.infoblox.com//>`_
+  `Infoblox website <https://www.infoblox.com/>`_
       The Infoblox website
   `Infoblox and Ansible Deployment Guide <https://www.infoblox.com/resources/deployment-guides/infoblox-and-ansible-integration>`_
       The deployment guide for Ansible integration provided by Infoblox.
@@ -288,5 +291,7 @@ You can also implicitly use the Infoblox dynamic inventory script by including i
       Ansible blog post about Infoblox.
   :ref:`Ansible NIOS modules <nios_net tools_modules>`
       The list of supported NIOS modules, with examples.
+  `Infoblox Collection Issue Tracker <https://github.com/infobloxopen/infoblox-ansible>`_
+      The GitHub repository hosting Infoblox collection.
   `Infoblox Ansible Examples <https://github.com/network-automation/infoblox_ansible>`_
       Infoblox example playbooks.
