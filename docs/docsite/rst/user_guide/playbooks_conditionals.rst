@@ -10,7 +10,7 @@ Ansible uses Jinja2 :ref:`tests <playbooks_tests>` and :ref:`filters <playbooks_
 
 .. note::
 
-  There are many options to control execution flow in Ansible. You can find more examples of supported conditionals at `<https://jinja.palletsprojects.com/en/master/templates/#comparisons>`_.
+  There are many options to control execution flow in Ansible. You can find more examples of supported conditionals at `<https://jinja.palletsprojects.com/en/latest/templates/#comparisons>`_.
 
 .. contents::
    :local:
@@ -67,7 +67,7 @@ If you have multiple conditions, you can group them with parentheses:
         when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
               (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7")
 
-You can use `logical operators <https://jinja.palletsprojects.com/en/master/templates/#logic>`_ to combine conditions. When you have multiple conditions that all need to be true (that is, a logical ``and``), you can specify them as a list::
+You can use `logical operators <https://jinja.palletsprojects.com/en/latest/templates/#logic>`_ to combine conditions. When you have multiple conditions that all need to be true (that is, a logical ``and``), you can specify them as a list::
 
     tasks:
       - name: Shut down CentOS 6 systems
