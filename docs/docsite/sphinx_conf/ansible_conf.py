@@ -96,7 +96,7 @@ exclude_patterns = [
     'core_index.rst',
     'porting_guides/core_porting_guides.rst',
     'porting_guides/porting_guide_base_2.10.rst',
-    'porting_guides/porting_guide_core_2.11.rst',
+    'porting_guides/porting_guide_core_*',
     'roadmap/index.rst',
     'roadmap/ansible_base_roadmap_index.rst',
     'roadmap/ROADMAP_2_10.rst',
@@ -158,9 +158,9 @@ html_context = {
     'github_root_dir': 'devel/lib/ansible',
     'github_cli_version': 'devel/lib/ansible/cli/',
     'current_version': version,
-    'latest_version': '2.10',
+    'latest_version': '4',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.9', '2.9_ja', '2.8', 'devel'),
+    'available_versions': ('latest', '2.9', 'devel'),
     'css_files': ('_static/ansible.css',  # overrides to the standard theme
                   ),
 }
