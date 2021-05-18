@@ -96,11 +96,10 @@ exclude_patterns = [
     'core_index.rst',
     'porting_guides/core_porting_guides.rst',
     'porting_guides/porting_guide_base_2.10.rst',
-    'porting_guides/porting_guide_core_2.11.rst',
+    'porting_guides/porting_guide_core_*',
     'roadmap/index.rst',
     'roadmap/ansible_core_roadmap_index.rst',
-    'roadmap/ROADMAP_2_10.rst',
-    'roadmap/ROADMAP_2_11.rst'
+    'roadmap/ROADMAP_2_1*',
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -158,7 +157,7 @@ html_context = {
     'github_root_dir': 'devel/lib/ansible',
     'github_cli_version': 'devel/lib/ansible/cli/',
     'current_version': version,
-    'latest_version': '3',
+    'latest_version': '4',
     # list specifically out of order to make latest work
     'available_versions': ('latest', '2.9', 'devel'),
     'css_files': ('_static/ansible.css',  # overrides to the standard theme
