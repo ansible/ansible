@@ -235,6 +235,12 @@
   ignore_errors: yes
   register: version_bad_semver
 
+- name: Try version with empty value
+  debug:
+    msg: "{{ '' is version('1.0', '>') }}"
+  ignore_errors: yes
+  register: version_empty
+
 - name: Assert version tests work
   assert:
     that:
@@ -258,6 +264,7 @@
       - version_strict_version_type is failed
       - version_bad_version_type is failed
       - version_bad_semver is failed
+      - version_empty is failed
 
 - name: Assert any tests work
   assert:
@@ -288,7 +295,7 @@
       - '"off" is not truthy(convert_bool=True)'
       - '"fred" is truthy(convert_bool=True)'
       - '{} is not truthy'
-      - '{"key": "value"} is truthy'      
+      - '{"key": "value"} is truthy'
 
 - name: Assert falsy tests work
   assert:
