@@ -4,7 +4,7 @@
 Tests
 *****
 
-`Tests <http://jinja.pocoo.org/docs/dev/templates/#tests>`_ in Jinja are a way of evaluating template expressions and returning True or False. Jinja ships with many of these. See `builtin tests`_ in the official Jinja template documentation.
+`Tests <https://jinja.palletsprojects.com/en/latest/templates/#tests>`_ in Jinja are a way of evaluating template expressions and returning True or False. Jinja ships with many of these. See `builtin tests`_ in the official Jinja template documentation.
 
 The main difference between tests and filters are that Jinja tests are used for comparisons, whereas filters are used for data manipulation, and have different applications in jinja. Tests can also be used in list processing filters, like ``map()`` and ``select()`` to choose items in the list.
 
@@ -20,7 +20,7 @@ In addition to those Jinja2 tests, Ansible supplies a few more and users can eas
 Test syntax
 ===========
 
-`Test syntax <http://jinja.pocoo.org/docs/dev/templates/#tests>`_ varies from `filter syntax <http://jinja.pocoo.org/docs/dev/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
+`Test syntax <https://jinja.palletsprojects.com/en/latest/templates/#tests>`_ varies from `filter syntax <https://jinja.palletsprojects.com/en/latest/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
 
 As of Ansible 2.5, using a jinja test as a filter will generate a warning.
 
@@ -381,7 +381,7 @@ The following tasks are illustrative of the tests meant to check the status of t
 .. note:: From 2.1, you can also use success, failure, change, and skip so that the grammar matches, for those who need to be strict about it.
 
 
-.. _builtin tests: http://jinja.palletsprojects.com/templates/#builtin-tests
+.. _builtin tests: https://jinja.palletsprojects.com/en/latest/templates/#builtin-tests
 
 .. seealso::
 
