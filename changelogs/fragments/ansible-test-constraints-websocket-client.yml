@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - cap websocket-client on python 2 because 1.0.0 stops supporting it.
