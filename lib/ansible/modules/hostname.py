@@ -170,10 +170,8 @@ class Hostname(object):
         self.strategy.set_permanent_hostname(name)
 
 
-class GenericStrategy(object):
+class BaseStrategy(object):
     """
-    This is a generic Hostname manipulation strategy class.
-
     A subclass may wish to override some or all of these methods.
       - get_current_hostname()
       - get_permanent_hostname()
@@ -184,7 +182,7 @@ class GenericStrategy(object):
     def __init__(self, module):
         self.module = module
         self.changed = False
-        self.hostname_cmd = self.module.get_bin_path('hostname', True)
+        self.hostname_cmd = self.module.get_bin_path('hostname', False)
 
     def update_current_and_permanent_hostname(self):
         self.update_current_hostname()
@@ -227,7 +225,17 @@ class GenericStrategy(object):
         pass
 
 
-class DebianStrategy(GenericStrategy):
+class GenericStrategy(BaseStrategy):
+    """
+    This is a generic Hostname manipulation strategy class.
+    """
+
+    def __init__(self, module):
+        super(GenericStrategy, self).__init__(module)
+        self.hostname_cmd = self.module.get_bin_path('hostname', True)
+
+
+class DebianStrategy(BaseStrategy):
     """
     This is a Debian family Hostname manipulation strategy class - it edits
     the /etc/hostname file.
@@ -264,7 +272,7 @@ class DebianStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-class SLESStrategy(GenericStrategy):
+class SLESStrategy(BaseStrategy):
     """
     This is a SLES Hostname strategy class - it edits the
     /etc/HOSTNAME file.
@@ -300,7 +308,7 @@ class SLESStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-class RedHatStrategy(GenericStrategy):
+class RedHatStrategy(BaseStrategy):
     """
     This is a Redhat Hostname strategy class - it edits the
     /etc/sysconfig/network file.
@@ -347,7 +355,7 @@ class RedHatStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-class AlpineStrategy(GenericStrategy):
+class AlpineStrategy(BaseStrategy):
     """
     This is a Alpine Linux Hostname manipulation strategy class - it edits
     the /etc/hostname file then run hostname -F /etc/hostname.
@@ -395,7 +403,7 @@ class AlpineStrategy(GenericStrategy):
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
 
-class SystemdStrategy(GenericStrategy):
+class SystemdStrategy(BaseStrategy):
     """
     This is a Systemd hostname manipulation strategy class - it uses
     the hostnamectl command.
@@ -440,7 +448,7 @@ class SystemdStrategy(GenericStrategy):
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
 
-class OpenRCStrategy(GenericStrategy):
+class OpenRCStrategy(BaseStrategy):
     """
     This is a Gentoo (OpenRC) Hostname manipulation strategy class - it edits
     the /etc/conf.d/hostname file.
@@ -487,7 +495,7 @@ class OpenRCStrategy(GenericStrategy):
             f.close()
 
 
-class OpenBSDStrategy(GenericStrategy):
+class OpenBSDStrategy(BaseStrategy):
     """
     This is a OpenBSD family Hostname manipulation strategy class - it edits
     the /etc/myname file.
@@ -524,7 +532,7 @@ class OpenBSDStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-class SolarisStrategy(GenericStrategy):
+class SolarisStrategy(BaseStrategy):
     """
     This is a Solaris11 or later Hostname manipulation strategy class - it
     execute hostname command.
@@ -553,7 +561,7 @@ class SolarisStrategy(GenericStrategy):
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
 
-class FreeBSDStrategy(GenericStrategy):
+class FreeBSDStrategy(BaseStrategy):
     """
     This is a FreeBSD hostname manipulation strategy class - it edits
     the /etc/rc.conf.d/hostname file.
@@ -607,7 +615,7 @@ class FreeBSDStrategy(GenericStrategy):
             f.close()
 
 
-class DarwinStrategy(GenericStrategy):
+class DarwinStrategy(BaseStrategy):
     """
     This is a macOS hostname manipulation strategy class. It uses
     /usr/sbin/scutil to set ComputerName, HostName, and LocalHostName.
