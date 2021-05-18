@@ -66,6 +66,7 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         defs = C.config.get_configuration_definitions(plugin_type=get_plugin_class(self), name=self._load_name)
         for option in defs:
             options[option] = self.get_option(option, hostvars=hostvars)
+        print(options)
         return options
 
     def set_option(self, option, value):
