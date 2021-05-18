@@ -14,6 +14,7 @@ DOCUMENTATION = '''
 '''
 import sys
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
@@ -26,7 +27,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-WHITELIST = ('meta', 'include_tasks', 'include_roles', 'include_vars', 'add_host', 'group_by', 'set_fact')
+SAFE_TASKS = ('meta', 'include_tasks', 'include_roles', 'include_vars', 'add_host', 'group_by', 'set_fact')
 
 
 class StrategyModule(LinearStrategy):
@@ -40,19 +41,32 @@ class StrategyModule(LinearStrategy):
 
         result = self._tqm.RUN_OK
 
-        # use first host, set for local exec, jic
-        host = Host(iterator._play.hosts.pop())
-        host.set_variable('ansible_connection', 'local')
-        host.set_variable('ansible_python_interpreter', sys.executable)
+        # get hosts for play
+        self._set_hosts_cache(iterator._play)
 
-        self._hosts_cache = [host]
+        # set forced for listing:
+        run_once = True
+        any_errors_fatal = False
+        ignore_errors = True
+        ignore_unreachable = True
 
-        # TODO: add hosts lists if requested
+        # play tags
+        display.display('Play tags: [%s]' % (','.join(iterator._play.tags)))
 
-        display.display('TAGS: [%s]\ntasks:' % (','.join(iterator._play.tags)))
+        # tasks!
+        display.display('Tasks:')
+
         while not self._tqm._terminated:
             try:
                 results = []
+
+                # use first host, set for local exec, jic
+                # host = Host(iterator._play.hosts.pop())
+                host = Host(self._hosts_cache[0])
+
+                # force localhostisms
+                host.set_variable('ansible_connection', 'local')
+                host.set_variable('ansible_python_interpreter', sys.executable)
 
                 (state, task) = iterator.get_next_task_for_host(host)
                 if not task:
@@ -69,8 +83,7 @@ class StrategyModule(LinearStrategy):
                         display.debug("'%s' skipped because role has already run" % task)
                         continue
 
-                if task.action == 'meta':
-
+                if task.action in C._ACTION_META:
                     if task.args.get('_raw_params', None) not in ('reset_connection', 'end_host', 'clear_facts', 'clear_host_errors', 'end_play'):
                         # we skip these for a reason: # end_host to allow listing more tasks,
                         # reset_connection would error out since we are not establishing connections for the hosts, etc
@@ -93,12 +106,15 @@ class StrategyModule(LinearStrategy):
                     # NOTE: don't call 'v2_playbook_on_task_start' or any other events, since we are just listing
 
                     # queue task if whitelisted
-                    if task.action in WHITELIST:
+                    if task.action in SAFE_TASKS:
                         self._queue_task(host, task, task_vars, play_context)
 
                     # TODO: (create list action? push thorugh that?)
                     # print task for list
-                    display.display('\t%s\tTAGS: [%s]' % (task.action, ','.join(task.tags)))
+                    if task.tags:
+                        display.display('\t%s\tTAGS: [%s]' % (task.action, ','.join(task.tags)))
+                    else:
+                        display.display('\t%s' % (task.action))
 
                     del task_vars
 

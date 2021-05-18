@@ -134,34 +134,7 @@ class PlaybookCLI(CLI):
                                 variable_manager=variable_manager, loader=loader,
                                 passwords=passwords)
 
-
-        results = pbex.run()
-
-        if isinstance(results, list):
-            for p in results:
-
-                display.display('\nplaybook: %s' % p['playbook'])
-                for idx, play in enumerate(p['plays']):
-                    if play._included_path is not None:
-                        loader.set_basedir(play._included_path)
-                    else:
-                        pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
-                        loader.set_basedir(pb_dir)
-
-                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
-                    mytags = set(play.tags)
-                    msg += '\tTAGS: [%s]' % (','.join(mytags))
-
-                    if context.CLIARGS['listhosts']:
-                        playhosts = set(inventory.get_hosts(play.hosts))
-                        msg += "\n    pattern: %s\n    hosts (%d):" % (play.hosts, len(playhosts))
-                        for host in playhosts:
-                            msg += "\n      %s" % host
-
-                    display.display(msg)
-            return 0
-        else:
-            return results
+        return pbex.run()
 
     @staticmethod
     def _flush_cache(inventory, variable_manager):
