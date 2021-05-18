@@ -1,53 +1,69 @@
 <?xml version="1.0" ?>
-<testsuites disabled="0" errors="0" failures="0" tests="6">
-        <testsuite disabled="0" errors="0" failures="0" name="junit-callback-test" skipped="0" tests="6">
-                <testcase name="[testhost] testhost: A task in a file msg=This is a task with no prefix">
-                        <system-out>
+<testsuites disabled="0" errors="0" failures="0" tests="8">
+	<testsuite disabled="0" errors="0" failures="0" name="junit-callback-test" skipped="0" tests="8">
+		<testcase name="[testhost] testhost: A task in a file msg=This is a task with no prefix">
+			<system-out>
 {
     &quot;changed&quot;: false,
     &quot;msg&quot;: &quot;This is a task with no prefix&quot;
 }
 </system-out>
-                </testcase>
-                <testcase name="[testhost] testhost: JUNIT TASK PREFIX - A task in a file msg=This is a task with a prefix">
-                        <system-out>
+		</testcase>
+		<testcase name="[testhost] testhost: JUNIT TASK PREFIX - A task in a file msg=This is a task with a prefix">
+			<system-out>
 {
     &quot;changed&quot;: false,
     &quot;msg&quot;: &quot;This is a task with a prefix&quot;
 }
 </system-out>
-                </testcase>
-                <testcase name="[testhost] testhost: A task in a file JUNIT IGNORE THIS TASK msg=This is a task with an ignore string">
-                        <system-out>
+		</testcase>
+		<testcase name="[testhost] testhost: A task in a file JUNIT IGNORE THIS TASK msg=This is a task with an ignore string">
+			<system-out>
 {
     &quot;changed&quot;: false,
     &quot;msg&quot;: &quot;This is a task with an ignore string&quot;
 }
 </system-out>
-                </testcase>
-                <testcase name="[testhost] testhost: a_role : A task in a role msg=This is a task with no prefix">
-                        <system-out>
+		</testcase>
+		<testcase name="[testhost] testhost: JUNIT TASK PREFIX - A task with a variable in the task name some-string msg=This is a task with a variable in the task name">
+			<system-out>
+{
+    &quot;changed&quot;: false,
+    &quot;msg&quot;: &quot;This is a task with a variable in the task name&quot;
+}
+</system-out>
+		</testcase>
+		<testcase name="[testhost] testhost: a_role : A task in a role msg=This is a task with no prefix">
+			<system-out>
 {
     &quot;changed&quot;: false,
     &quot;msg&quot;: &quot;This is a task with no prefix&quot;
 }
 </system-out>
-                </testcase>
-                <testcase name="[testhost] testhost: a_role : JUNIT TASK PREFIX - A task in a role msg=This is a task with a prefix">
-                        <system-out>
+		</testcase>
+		<testcase name="[testhost] testhost: a_role : JUNIT TASK PREFIX - A task in a role msg=This is a task with a prefix">
+			<system-out>
 {
     &quot;changed&quot;: false,
     &quot;msg&quot;: &quot;This is a task with a prefix&quot;
 }
 </system-out>
-                </testcase>
-                <testcase name="[testhost] testhost: a_role : A task in a role JUNIT IGNORE THIS TASK msg=This is a task with an ignore string">
-                        <system-out>
+		</testcase>
+		<testcase name="[testhost] testhost: a_role : A task in a role JUNIT IGNORE THIS TASK msg=This is a task with an ignore string">
+			<system-out>
 {
     &quot;changed&quot;: false,
     &quot;msg&quot;: &quot;This is a task with an ignore string&quot;
 }
 </system-out>
-                </testcase>
-        </testsuite>
+		</testcase>
+		<testcase name="[testhost] testhost: a_role : JUNIT TASK PREFIX - A task with a variable in the task name some-string msg=This is a task with a variable in the task name">
+			<system-out>
+{
+    &quot;changed&quot;: false,
+    &quot;msg&quot;: &quot;This is a task with a variable in the task name&quot;
+}
+</system-out>
+		</testcase>
+	</testsuite>
 </testsuites>

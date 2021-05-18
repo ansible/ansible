@@ -7,6 +7,12 @@
   debug:
     msg: This is a task with a prefix inside a role
 
+- name: "JUNIT TASK PREFIX - A task with a variable in the task name {{ something }}"
+  debug:
+    msg: This is a task with a variable in the task name
+  vars:
+    something: some-string
+
 - name: "A task in a role JUNIT IGNORE THIS TASK"
   fail:
     msg: "This task fails"
