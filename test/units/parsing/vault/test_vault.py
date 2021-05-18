@@ -510,24 +510,6 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key_cryptography, six.binary_type)
 
-    @pytest.mark.skipif(not vault.HAS_PYCRYPTO, reason='Not testing pycrypto key as pycrypto is not installed')
-    def test_create_key_pycrypto(self):
-        b_password = b'hunter42'
-        b_salt = os.urandom(32)
-
-        b_key_pycrypto = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_pycrypto, six.binary_type)
-
-    @pytest.mark.skipif(not vault.HAS_PYCRYPTO,
-                        reason='Not comparing cryptography key to pycrypto key as pycrypto is not installed')
-    def test_compare_new_keys(self):
-        b_password = b'hunter42'
-        b_salt = os.urandom(32)
-        b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-
-        b_key_pycrypto = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertEqual(b_key_cryptography, b_key_pycrypto)
-
     def test_create_key_known_cryptography(self):
         b_password = b'hunter42'
 
@@ -542,36 +524,6 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
         self.assertIsInstance(b_key_2, six.binary_type)
         self.assertEqual(b_key_1, b_key_2)
-
-        if vault.HAS_PYCRYPTO:
-            # And again with pycrypto
-            b_key_3 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-            self.assertIsInstance(b_key_3, six.binary_type)
-
-            # verify we get the same answer
-            # we could potentially run a few iterations of this and time it to see if it's roughly constant time
-            #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
-            b_key_4 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-            self.assertIsInstance(b_key_4, six.binary_type)
-            self.assertEqual(b_key_3, b_key_4)
-            self.assertEqual(b_key_1, b_key_4)
-
-    @pytest.mark.skipif(not vault.HAS_PYCRYPTO,
-                        reason='PyCrypto is not installed')
-    def test_create_key_known_pycrypto(self):
-        b_password = b'hunter42'
-
-        # A fixed salt
-        b_salt = b'q' * 32  # q is the most random letter.
-        b_key_3 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_3, six.binary_type)
-
-        # verify we get the same answer
-        # we could potentially run a few iterations of this and time it to see if it's roughly constant time
-        #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
-        b_key_4 = self.vault_cipher._create_key_pycrypto(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_4, six.binary_type)
-        self.assertEqual(b_key_3, b_key_4)
 
     def test_is_equal_is_equal(self):
         self.assertTrue(self.vault_cipher._is_equal(b'abcdefghijklmnopqrstuvwxyz', b'abcdefghijklmnopqrstuvwxyz'))
@@ -604,19 +556,6 @@ class TestVaultCipherAes256(unittest.TestCase):
         self.assertRaises(TypeError, self.vault_cipher._is_equal, b"One fish", u"two fish")
         self.assertRaises(TypeError, self.vault_cipher._is_equal, 1, b"red fish")
         self.assertRaises(TypeError, self.vault_cipher._is_equal, b"blue fish", 2)
-
-
-@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
-                    reason="Skipping Pycrypto tests because pycrypto is not installed")
-class TestVaultCipherAes256PyCrypto(TestVaultCipherAes256):
-    def setUp(self):
-        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
-        vault.HAS_CRYPTOGRAPHY = False
-        super(TestVaultCipherAes256PyCrypto, self).setUp()
-
-    def tearDown(self):
-        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
-        super(TestVaultCipherAes256PyCrypto, self).tearDown()
 
 
 class TestMatchSecrets(unittest.TestCase):
@@ -926,16 +865,3 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
         self.assertEqual(self.v.cipher_name, "AES256")
-
-
-@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
-                    reason="Skipping Pycrypto tests because pycrypto is not installed")
-class TestVaultLibPyCrypto(TestVaultLib):
-    def setUp(self):
-        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
-        vault.HAS_CRYPTOGRAPHY = False
-        super(TestVaultLibPyCrypto, self).setUp()
-
-    def tearDown(self):
-        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
-        super(TestVaultLibPyCrypto, self).tearDown()

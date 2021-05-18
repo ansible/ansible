@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-vault - remove support for ``PyCrypto`` (https://github.com/ansible/ansible/issues/72646)

@@ -15,7 +15,6 @@ sphinx <= 2.1.2 ; python_version >= '2.7' # docs team hasn't  tested beyond 2.1.
 rstcheck >=3.3.1  # required for sphinx version >= 1.8
 pygments >= 2.4.0 # Pygments 2.4.0 includes bugfixes for YAML and YAML+Jinja lexers
 wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
-pycrypto >= 2.6 # Need features found in 2.6 and greater
 ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
 idna < 2.6, >= 2.5 # linode requires idna < 2.9, >= 2.5, requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6

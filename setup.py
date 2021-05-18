@@ -295,48 +295,12 @@ def read_requirements(file_name):
     return reqs
 
 
-PYCRYPTO_DIST = 'pycrypto'
-
-
-def get_crypto_req():
-    """Detect custom crypto from ANSIBLE_CRYPTO_BACKEND env var.
-
-    pycrypto or cryptography. We choose a default but allow the user to
-    override it. This translates into pip install of the sdist deciding what
-    package to install and also the runtime dependencies that pkg_resources
-    knows about.
-    """
-    crypto_backend = os.environ.get('ANSIBLE_CRYPTO_BACKEND', '').strip()
-
-    if crypto_backend == PYCRYPTO_DIST:
-        # Attempt to set version requirements
-        return '%s >= 2.6' % PYCRYPTO_DIST
-
-    return crypto_backend or None
-
-
-def substitute_crypto_to_req(req):
-    """Replace crypto requirements if customized."""
-    crypto_backend = get_crypto_req()
-
-    if crypto_backend is None:
-        return req
-
-    def is_not_crypto(r):
-        CRYPTO_LIBS = PYCRYPTO_DIST, 'cryptography'
-        return not any(r.lower().startswith(c) for c in CRYPTO_LIBS)
-
-    return [r for r in req if is_not_crypto(r)] + [crypto_backend]
-
-
 def get_dynamic_setup_params():
     """Add dynamically calculated setup params to static ones."""
     return {
         # Retrieve the long description from the README
         'long_description': read_file('README.rst'),
-        'install_requires': substitute_crypto_to_req(
-            read_requirements('requirements.txt'),
-        ),
+        'install_requires': read_requirements('requirements.txt'),
     }
 
 
