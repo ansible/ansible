@@ -71,12 +71,14 @@ This table links to the release notes for each major Ansible release. These rele
 ==================================      =================================================
 Ansible Community Package Release       Status
 ==================================      =================================================
-4.0.0                                   In development (unreleased)
-`3.x Release Notes`_                    Current
+5.0.0                                   In development (unreleased)
+`4.x Release Notes`_                    Current
+`3.x Release Notes`_                    Unmaintained (end of life)
 `2.10 Release Notes`_                   Unmaintained (end of life)
 ==================================      =================================================
 
 
+.. _4.x Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/4/CHANGELOG-v4.rst
 .. _3.x Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst
 .. _2.10 Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
 
