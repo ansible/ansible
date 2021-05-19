@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import re
+import sys
+import types
 
 from string import ascii_letters, digits
 
@@ -13,18 +15,12 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.utils.fqcn import add_internal_fqcns
 
+
 # initialize config manager/config data to read/store global settings
 # and generate 'pseudo constants' for app consumption.
 config = ConfigManager()
 
-
-def set_constant(name, value, export=vars()):
-    """ sets constants and returns resolved options dict """
-    export[name] = value
-
-
 # CONSTANTS ### yes, actual ones
-
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
@@ -131,13 +127,11 @@ VAULT_VERSION_MAX = 1.0
 # This matches a string that cannot be used as a valid python variable name i.e 'not-valid', 'not!valid@either' '1_nor_This'
 INVALID_VARIABLE_NAMES = re.compile(r'^[\d\W]|[^\w]')
 
-
 # FIXME: remove once play_context mangling is removed
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
-
 COMMON_CONNECTION_VARS = frozenset(('ansible_connection', 'ansible_host', 'ansible_user', 'ansible_shell_executable',
                                     'ansible_port', 'ansible_pipelining', 'ansible_password', 'ansible_timeout',
                                     'ansible_shell_type', 'ansible_module_compression', 'ansible_private_key_file'))
@@ -183,6 +177,21 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
+### Generate C.<setting> ###
+_me = sys.modules[__name__]
+
+
+def __getattr__(name):
+    """
+    Dynamically load constants from settings
+    """
+    try:
+        value = _me.__dict__[name]
+    except KeyError as e:
+        try:
+            value = config.get_config_value(name)
+            setattr(_me, name, value)
+        except:
+            raise AttributeError from e
+
+    return value
