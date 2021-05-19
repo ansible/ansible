@@ -51,7 +51,7 @@
     - name: validate results for testcase 3
       assert:
         that:
-          - user_test3_0 is not changed
+          - user_test3_0 is changed
           - user_test3_1 is not changed
           - user_test3_2 is changed
           - user_test3_3 is changed
