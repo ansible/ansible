@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import sys
 
 from ast import literal_eval
 from jinja2 import Template
@@ -176,11 +177,28 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
+_myself = sys.modules[__name__]
 config = ConfigManager()
 
-# Generate constants from config
-for setting in config.data.get_settings():
+
+def __getattr__(name):
+
+    if name in _myself.__dict__:
+        value = getattr(_myself, name)
+    else:
+        setting = config.data.get_setting(name)
+        for warn in config.WARNINGS:
+            _warning(warn)
+        if setting:
+            value = _extract_value(setting)
+            setattr(_myself, name, value)
+        else:
+            raise ImportError("No constant nor setting named: %s" % name)
+    # TODO: _deprecated("Using C.%s is deprecated, code should use ConfigManager's .get_value() instead" % name, '2.16')
+    return value
+
+
+def _extract_value(setting):
 
     value = setting.value
     if setting.origin == 'default' and \
@@ -198,7 +216,4 @@ for setting in config.data.get_settings():
 
         value = ensure_type(value, setting.type)
 
-    set_constant(setting.name, value)
-
-for warn in config.WARNINGS:
-    _warning(warn)
+    return value
