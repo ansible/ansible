@@ -21,3 +21,6 @@ ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | g
 
 # test the config option validation
 ansible-playbook validation.yml "$@"
+
+# test types from config (just lists for now)
+ANSIBLE_CONFIG=type_munging.cfg ansible-playbook types.yml "$@"
