@@ -170,6 +170,3 @@
 
 - name: Test missing home directory parent directory for local users
   import_tasks: test_local_missing_parent_dir.yml
-
-- name: Test ownership of home directory for local users
-  import_tasks: test_local_ownership_of_home_dir.yml
