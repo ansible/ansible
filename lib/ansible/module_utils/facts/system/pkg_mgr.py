@@ -13,7 +13,8 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # A list of dicts.  If there is a platform with more than one
 # package manager, put the preferred one last.  If there is an
 # ansible module, use that as the value for the 'name' key.
-PKG_MGRS = [{'path': '/usr/bin/yum', 'name': 'yum'},
+PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
+            {'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/bin/dnf', 'name': 'dnf'},
             {'path': '/usr/bin/apt-get', 'name': 'apt'},
             {'path': '/usr/bin/zypper', 'name': 'zypper'},
@@ -36,7 +37,6 @@ PKG_MGRS = [{'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/local/sbin/pkg', 'name': 'pkgng'},
             {'path': '/usr/bin/swupd', 'name': 'swupd'},
             {'path': '/usr/sbin/sorcery', 'name': 'sorcery'},
-            {'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
             {'path': '/usr/bin/installp', 'name': 'installp'},
             {'path': '/QOpenSys/pkgs/bin/yum', 'name': 'yum'},
             ]

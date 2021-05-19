@@ -1,0 +1,2 @@
+bugfixes:
+  - pkg_mgr.py - Lower the priority of rpm-ostree detection to avoid false positives on systems not using it as the main package manager (https://github.com/ansible/ansible/issues/74578)
