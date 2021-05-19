@@ -62,6 +62,5 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         self.set_options(var_options=variables, direct=kwargs)
-        print(list(enumerate(self.get_options())))
 
         return terms
