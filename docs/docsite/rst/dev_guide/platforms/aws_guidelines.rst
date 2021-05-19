@@ -246,7 +246,7 @@ An example of the older style connection used for modules based on AnsibleModule
 Common Documentation Fragments for Connection Parameters
 --------------------------------------------------------
 
-There are two :ref:`common documentation fragments <module_docs_fragments>`
+There are two :ref:`common documentation fragments <playbooks_doc_fragments>`
 that should be included into almost all AWS modules:
 
 * ``aws`` - contains the common boto connection parameters

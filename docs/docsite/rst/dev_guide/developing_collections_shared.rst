@@ -29,7 +29,7 @@ To include documentation fragments in your collection:
      - kubernetes.core.k8s_resource_options
      - kubernetes.core.k8s_scale_options
 
-:ref:`module_docs_fragments` covers the basics for documentation fragments. The `kubernetes.core <https://github.com/ansible-collections/kubernetes.core>`_ collection includes a complete example.
+:ref:`playbooks_doc_fragments` covers the basics for documentation fragments. The `kubernetes.core <https://github.com/ansible-collections/kubernetes.core>`_ collection includes a complete example.
 
 If you use FQCN, you can use documentation fragments from one collection in another collection.
 

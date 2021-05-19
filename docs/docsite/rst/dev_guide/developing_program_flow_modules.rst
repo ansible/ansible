@@ -855,7 +855,7 @@ To declare that a module should add support for all common file options, supply 
 
     module = AnsibleModule(argument_spec, add_file_common_args=True)
 
-You can find `a list of all file options here <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_. It is recommended that you make your ``DOCUMENTATION`` extend the doc fragment ``ansible.builtin.files`` (see :ref:`module_docs_fragments`) in this case, to make sure that all these fields are correctly documented.
+You can find `a list of all file options here <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_. It is recommended that you make your ``DOCUMENTATION`` extend the doc fragment ``ansible.builtin.files`` (see :ref:`playbooks_doc_fragments`) in this case, to make sure that all these fields are correctly documented.
 
 The helper functions ``module.load_file_common_arguments()`` and ``module.set_fs_attributes_if_different()`` can be used to handle these arguments for you:
 
