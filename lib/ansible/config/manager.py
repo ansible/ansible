@@ -92,7 +92,7 @@ def ensure_type(value, value_type, origin=None):
 
         elif value_type == 'list':
             if isinstance(value, string_types):
-                value = [x.strip() for x in value.split(',')]
+                value = [unquote(x.strip()) for x in value.split(',')]
             elif not isinstance(value, Sequence):
                 errmsg = 'list'
 
