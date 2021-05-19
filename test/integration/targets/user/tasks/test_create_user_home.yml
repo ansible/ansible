@@ -17,6 +17,11 @@
         home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
       register: user_test3_1
 
+    - name: Check the created home directory
+      stat:
+        path: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_stat_1
+
     - name: change user home
       user:
         name: ansibulluser
@@ -38,6 +43,8 @@
           - user_test3_1 is not changed
           - user_test3_2 is changed
           - user_test3_3 is changed
+          - user_test3_stat_1.stat.uid == user_test3_0.uid
+          - user_test3_stat_1.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
 
 # https://github.com/ansible/ansible/issues/41393
 # Create a new user account with a path that has parent directories that do not exist
