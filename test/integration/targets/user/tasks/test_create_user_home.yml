@@ -3,11 +3,16 @@
 - name: Test home directory creation
   when: ansible_facts.system != 'Darwin'
   block:
+    # Ensure the home directory is not present
+    - name: remove home directory
+      file:
+        path: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        state: absent
+
     # Ensure the user is not present for our test
     - name: remove the test user
       user:
         name: ansibulluser
-        remove: yes
         state: absent
 
     - name: create user specifying home
