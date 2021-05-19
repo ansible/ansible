@@ -31,6 +31,9 @@ jobs:
           # Set the "pipelinesCoverage" variable to determine which type is uploaded.
           # Use "coverage" for Python and "coverage-powershell" for PowerShell.
           summaryFileLocation: "$(outputPath)/reports/$(pipelinesCoverage).xml"
+          # Override the root (sources) path specified in the coverage XML files.
+          # This allows coverage to be reported in Azure Pipelines even if the report was generated in a container.
+          pathToSources: "$(Agent.BuildDirectory)/$(checkoutPath)"
         displayName: Publish to Azure Pipelines
         condition: gt(variables.coverageFileCount, 0)
       - bash: .azure-pipelines/scripts/publish-codecov.sh "$(outputPath)"
