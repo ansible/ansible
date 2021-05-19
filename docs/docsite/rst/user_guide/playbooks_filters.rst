@@ -1664,9 +1664,9 @@ To concatenate a list into a string::
 
 To split a sting into a list::
 
-.. versionadded:: 2.11
-
     {{ csv_string | split(",") }}
+    
+.. versionadded:: 2.11
 
 To work with Base64 encoded strings::
 
