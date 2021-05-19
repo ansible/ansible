@@ -169,7 +169,10 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         raise errors.AnsibleFilterError("Cannot specify both 'strict' and 'version_type'")
 
     if not value:
-        raise errors.AnsibleFilterError("Version to compare cannot be empty")
+        raise errors.AnsibleFilterError("Input version value cannot be empty")
+
+    if not version:
+        raise errors.AnsibleFilterError("Version parameter to compare against cannot be empty")
 
     Version = LooseVersion
     if strict:
