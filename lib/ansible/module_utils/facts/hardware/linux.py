@@ -567,28 +567,27 @@ class LinuxHardware(Hardware):
             for mount in results:
                 restart_loop = False
                 res = results[mount]['extra']
-                if res.ready():
-                    if res.successful():
-                        mount_size, uuid = res.get()
-                        if mount_size:
-                            results[mount]['info'].update(mount_size)
-                        results[mount]['info']['uuid'] = uuid or 'N/A'
-                    else:
+                try:
+                    if res.ready():
+                        if res.successful():
+                            mount_size, uuid = res.get()
+                            if mount_size:
+                                results[mount]['info'].update(mount_size)
+                            results[mount]['info']['uuid'] = uuid or 'N/A'
+                        else:
+                            restart_loop = True
+                            # failed, try to find out why, if 'res.successful' we know there are no exceptions
+                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+
+                    elif time.time() > results[mount]['timelimit']:
                         restart_loop = True
-                        # failed, try to find out why, if 'res.successful' we know there are no exceptions
                         try:
                             results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get(timeout=1)))
-                        except Exception as e:
-                            self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
-
-                elif time.time() > results[mount]['timelimit']:
+                        except mpTimeoutError:
+                            results[mount]['info']['note'] = 'Timed out while attempting to get extra information for this mount'
+                except Exception as e:
                     restart_loop = True
-                    try:
-                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get(timeout=1)))
-                    except mpTimeoutError:
-                        results[mount]['info']['note'] = 'Timed out while attempting to get extra information for mount %s.' % mount
-                    except Exception as e:
-                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
+                    self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
 
                 if results[mount]['info']:
                     mounts.append(results[mount]['info'])
