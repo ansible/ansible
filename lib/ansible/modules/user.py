@@ -715,15 +715,7 @@ class User(object):
 
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
-        if rc != 0:
-            return (rc, out, err)
-
-        if self.home is not None and self.create_home:
-            info = self.user_info()
-            if info is not False:
-                self.chown_homedir(info[2], info[3], self.home)
-
-        if not self.local:
+        if not self.local or rc != 0:
             return (rc, out, err)
 
         if self.expires is not None:
