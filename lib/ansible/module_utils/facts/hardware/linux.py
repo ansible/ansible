@@ -565,6 +565,7 @@ class LinuxHardware(Hardware):
         # wait for workers and get results
         while results:
             for mount in results:
+                restart_loop = False
                 res = results[mount]['extra']
                 if res.ready():
                     if res.successful():
@@ -573,23 +574,27 @@ class LinuxHardware(Hardware):
                             results[mount]['info'].update(mount_size)
                         results[mount]['info']['uuid'] = uuid or 'N/A'
                     else:
+                        restart_loop = True
                         # failed, try to find out why, if 'res.successful' we know there are no exceptions
                         try:
                             results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get(timeout=1)))
-                        except mpTimeoutError:
-                            self.module.warn('Incomplete mount info gathered due to timeout on "%s"' % mount)
-                            raise
                         except Exception as e:
                             self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
 
-                    mounts.append(results[mount]['info'])
-                    del results[mount]
-                    break
                 elif time.time() > results[mount]['timelimit']:
-                    results[mount]['info']['note'] = 'Timed out while attempting to get extra information.'
+                    restart_loop = True
+                    try:
+                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get(timeout=1)))
+                    except mpTimeoutError:
+                        results[mount]['info']['note'] = 'Timed out while attempting to get extra information for mount %s.' % mount
+                    except Exception as e:
+                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
+
+                if results[mount]['info']:
                     mounts.append(results[mount]['info'])
-                    del results[mount]
-                    break
+                    if restart_loop:
+                        del results[mount]
+                        break
             else:
                 # avoid cpu churn
                 time.sleep(0.1)
