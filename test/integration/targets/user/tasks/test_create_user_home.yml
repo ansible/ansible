@@ -3,6 +3,13 @@
 - name: Test home directory creation
   when: ansible_facts.system != 'Darwin'
   block:
+    # Ensure the user is not present for our test
+    - name: remove the test user
+      user:
+        name: ansibulluser
+        remove: yes
+        state: absent
+
     - name: create user specifying home
       user:
         name: ansibulluser
@@ -46,6 +53,14 @@
           - user_test3_stat_1.stat.uid == user_test3_0.uid
           - user_test3_stat_1.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
 
+    # Cleanup the user
+    - name: Cleanup the test user
+      user:
+        name: ansibulluser
+        remove: yes
+        state: absent
+
+    - name: create user specifying home
 # https://github.com/ansible/ansible/issues/41393
 # Create a new user account with a path that has parent directories that do not exist
 - name: Create user with home path that has parents that do not exist
