@@ -193,7 +193,7 @@ def __getattr__(name):
             value = _extract_value(setting)
             setattr(_myself, name, value)
         else:
-            raise ImportError("No constant nor setting named: %s" % name)
+            raise AttributeError("No constant nor setting named: %s" % name)
     # TODO: _deprecated("Using C.%s is deprecated, code should use ConfigManager's .get_value() instead" % name, '2.16')
     return value
 
