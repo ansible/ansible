@@ -1,0 +1,2 @@
+bugfixes:
+  - config, ensure 'quoted' lists from ini or env do not take the quotes literally as part of the list item.
