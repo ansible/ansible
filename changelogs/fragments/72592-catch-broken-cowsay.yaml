@@ -1,0 +1,2 @@
+bugfixes:
+  - catch the case that cowsay is broken which would lead to missing output
