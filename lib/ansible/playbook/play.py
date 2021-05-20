@@ -100,7 +100,6 @@ class Play(Base, Taggable, CollectionSearch):
         return self.get_name()
 
     def _validate_hosts(self, attribute, name, value):
-        # breakpoint()
         # Only validate 'hosts' if a value was passed in to original data set.
         if 'hosts' in self._ds:
             err_msg = "Hosts list contains an invalid host value: '{host!s}'"
@@ -177,8 +176,6 @@ class Play(Base, Taggable, CollectionSearch):
                 new_hosts = _flatten_list(new_hosts)
                 ds['hosts'] = new_hosts
 
-            # The "and ds['hosts']" test is for empty strings. If an empty string
-            # was set for hosts, leave it that way so it will later fail validation.
             if is_string(ds['hosts']):
                 ds['hosts'] = string_to_list(ds['hosts'], ',')
 
