@@ -207,12 +207,10 @@ def test_play_with_vars_files(value, expected):
     assert play.get_vars_files() == expected
 
 
-@pytest.mark.parametrize('value', ([], tuple(), set(), {}, ''))
+@pytest.mark.parametrize('value', ([], tuple(), set(), {}, '', None, False, 0))
 def test_play_empty_hosts(value):
-    with pytest.raises(AnsibleParserError) as exc:
+    with pytest.raises(AnsibleParserError, match='Hosts list cannot be empty'):
         Play.load({'hosts': value})
-
-    assert 'Hosts list cannot be empty' in exc.value.message
 
 
 @pytest.mark.parametrize('value', ([None], (None,), ['one', None]))
@@ -226,7 +224,6 @@ def test_play_none_hosts(value):
     (
         {'one': None},
         {'one': 'two'},
-        None,
         True,
         1,
         1.75,
@@ -245,6 +242,10 @@ def test_play_invalid_hosts_sequence(value):
         [set((None, 'one'))],
         ['one', 'two', {'three': None}],
         ['one', 'two', {'three': 'four'}],
+        'one, [two, three]',
+        'one, {two, three]',
+        'one, {two: three}',
+        '{one: two}',
     )
 )
 def test_play_invalid_hosts_value(value):

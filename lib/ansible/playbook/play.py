@@ -101,17 +101,23 @@ class Play(Base, Taggable, CollectionSearch):
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.
         if 'hosts' in self._ds:
-            # Check for empty data
-            if value in ([], tuple(), set(), {}, ''):
+            err_msg = "Hosts list contains an invalid host value: '{host!s}'"
+
+            if not value:
                 raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
 
+            if is_string(value) and any(c in value for c in ('[', ']', '{', '}')):
+                raise AnsibleParserError(err_msg.format(host=value))
+
             if is_sequence(value):
-                # Make sure each item in the sequence is a string and not None
-                for host in value:
-                    if host is None:
+                # Make sure each item in the sequence is a valid string
+                for entry in value:
+                    if entry is None:
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
-                    elif not is_string(host):
-                        raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=host))
+                    elif not is_string(entry):
+                        raise AnsibleParserError(err_msg.format(host=entry))
+                    elif is_string(entry) and any(c in entry for c in ('[', ']', '{', '}')):
+                        raise AnsibleParserError(err_msg.format(host=entry))
 
             elif not is_string(value):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
