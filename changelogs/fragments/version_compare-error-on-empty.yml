@@ -1,0 +1,2 @@
+bugfixes:
+  - version test - improve error message when an empty version is provided

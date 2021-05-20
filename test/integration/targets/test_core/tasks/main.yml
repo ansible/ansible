@@ -235,6 +235,24 @@
   ignore_errors: yes
   register: version_bad_semver
 
+- name: Try version with empty input value
+  debug:
+    msg: "{{ '' is version('1.0', '>') }}"
+  ignore_errors: yes
+  register: version_empty_input
+
+- name: Try version with empty comparison value
+  debug:
+    msg: "{{ '1.0' is version('', '>') }}"
+  ignore_errors: yes
+  register: version_empty_comparison
+
+- name: Try version with empty input and comparison values
+  debug:
+    msg: "{{ '' is version('', '>') }}"
+  ignore_errors: yes
+  register: version_empty_both
+
 - name: Assert version tests work
   assert:
     that:
@@ -258,6 +276,12 @@
       - version_strict_version_type is failed
       - version_bad_version_type is failed
       - version_bad_semver is failed
+      - version_empty_input is failed
+      - version_empty_input is search('version value cannot be empty')
+      - version_empty_comparison is failed
+      - version_empty_comparison is search('to compare against cannot be empty')
+      - version_empty_both is failed
+      - version_empty_both is search('version value cannot be empty')
 
 - name: Assert any tests work
   assert:
@@ -288,7 +312,7 @@
       - '"off" is not truthy(convert_bool=True)'
       - '"fred" is truthy(convert_bool=True)'
       - '{} is not truthy'
-      - '{"key": "value"} is truthy'      
+      - '{"key": "value"} is truthy'
 
 - name: Assert falsy tests work
   assert:
