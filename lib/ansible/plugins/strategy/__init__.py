@@ -922,20 +922,6 @@ class StrategyBase:
                 raise AnsibleError("included task files must contain a list of tasks")
 
             ti_copy = self._copy_included_file(included_file)
-            # pop tags out of the include args, if they were specified there, and assign
-            # them to the include. If the include already had tags specified, we raise an
-            # error so that users know not to specify them both ways
-            tags = included_file._task.vars.pop('tags', [])
-            if isinstance(tags, string_types):
-                tags = tags.split(',')
-            if len(tags) > 0:
-                if len(included_file._task.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). "
-                                             "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
-                                             obj=included_file._task._ds)
-                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                   version='2.12', collection_name='ansible.builtin')
-                included_file._task.tags = tags
 
             block_list = load_list_of_blocks(
                 data,
