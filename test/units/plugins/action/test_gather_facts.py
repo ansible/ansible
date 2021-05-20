@@ -63,7 +63,7 @@ class TestNetworkFacts(unittest.TestCase):
         self.assertEqual(mod_args['gather_subset'], 'min')
 
         facts_modules = C.config.get_config_value('FACTS_MODULES', variables=self.task_vars)
-        self.assertEqual(facts_modules, ['ansible.legacy.ios_facts'])
+        self.assertEqual(facts_modules, ['smart'])
 
     @patch.object(module_common, '_get_collection_metadata', return_value={})
     def test_network_gather_facts_fqcn(self, mock_collection_metadata):
@@ -84,4 +84,4 @@ class TestNetworkFacts(unittest.TestCase):
         self.assertEqual(mod_args['gather_subset'], 'min')
 
         facts_modules = C.config.get_config_value('FACTS_MODULES', variables=self.fqcn_task_vars)
-        self.assertEqual(facts_modules, ['cisco.ios.ios_facts'])
+        self.assertEqual(facts_modules, ['smart'])

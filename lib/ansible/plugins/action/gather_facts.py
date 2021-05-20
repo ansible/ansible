@@ -62,7 +62,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
+        modules = list(C.config.get_config_value('FACTS_MODULES', variables=task_vars))
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
