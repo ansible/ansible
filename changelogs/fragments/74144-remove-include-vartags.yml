@@ -1,0 +1,3 @@
+bugfixes:
+- includes - Remove the deprecated ability to specify ``tags`` as ``vars`` on includes
+  (https://github.com/ansible/ansible/issues/74144)
