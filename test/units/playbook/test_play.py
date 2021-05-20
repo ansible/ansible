@@ -207,6 +207,25 @@ def test_play_with_vars_files(value, expected):
     assert play.get_vars_files() == expected
 
 
+@pytest.mark.parametrize(
+    'value, expected',
+    (
+        ('host1', ['host1']),
+        ('host1,', ['host1']),
+        ('host1, host2', ['host1', ' host2']),
+        (['host1,host2'], ['host1', 'host2']),
+        (['host1,   host2'], ['host1', '   host2']),
+        (['host1', ['host2,host3,']], ['host1', 'host2', 'host3']),
+        (['host1', ['host2,host3,', ['host4', ['host5,host6']]]], ['host1', 'host2', 'host3', 'host4', 'host5', 'host6']),
+    )
+)
+def test_hosts_data(value, expected):
+    """Ensure host input is change to a valid host pattern"""
+
+    play = Play.load({'hosts': value})
+    assert play.hosts == expected
+
+
 @pytest.mark.parametrize('value', ([], tuple(), set(), {}, '', None, False, 0))
 def test_play_empty_hosts(value):
     with pytest.raises(AnsibleParserError, match='Hosts list cannot be empty'):
@@ -242,10 +261,6 @@ def test_play_invalid_hosts_sequence(value):
         [set((None, 'one'))],
         ['one', 'two', {'three': None}],
         ['one', 'two', {'three': 'four'}],
-        'one, [two, three]',
-        'one, {two, three]',
-        'one, {two: three}',
-        '{one: two}',
     )
 )
 def test_play_invalid_hosts_value(value):

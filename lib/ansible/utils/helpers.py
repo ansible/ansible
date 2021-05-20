@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleRuntimeError
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types
 
 
@@ -49,3 +51,35 @@ def deduplicate_list(original_list):
     """
     seen = set()
     return [x for x in original_list if x not in seen and not seen.add(x)]
+
+
+def _flatten_list(data):
+    if not is_sequence(data):
+        raise TypeError('Cannot flatten a {type}'.format(type=type(data)))
+
+    if not data:
+        return data
+
+    if is_sequence(data[0]):
+        return _flatten_list(data[0] + data[1:])
+
+    try:
+        return data[:1] + _flatten_list(data[1:])
+    except RecursionError:
+        raise AnsibleRuntimeError('List contains too many nested lists')
+
+
+def string_to_list(string, split=None):
+    """Convert a string to a list splitting on ``split``.
+
+    Empty strings will be removed from the returned list.
+
+    If no splitting occurs, return a single item list containing ``string``.
+    """
+
+    if split in string:
+        # The filter() here removes empty strings from entries such as
+        # 'one,'.split(',') --> ['one', '']
+        return list(filter(None, string.split(split)))
+
+    return [string]
