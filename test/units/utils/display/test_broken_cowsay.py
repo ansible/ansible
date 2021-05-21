@@ -21,7 +21,7 @@ def test_display_with_fake_cowsay_binary(capsys, mocker):
     mock_popen.return_value.communicate = mock_communicate
     mock_popen.return_value.returncode = 1
     mocker.patch("subprocess.Popen", mock_popen)
-    
+
     display = Display()
     assert not hasattr(display, "cows_available")
     assert display.b_cowsay is False
