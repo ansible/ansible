@@ -499,6 +499,7 @@ class User(object):
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
     MAIL_SPOOL_FILE_MODE = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
+    MAIL_SPOOL_FILE_MODE_STRICT = stat.S_IRUSR | stat.S_IWUSR
     MAIL_SPOOL_FILE_GROUP_NAME = 'mail'
     HOME_PREFIX = '/home'
 
@@ -1301,6 +1302,10 @@ class User(object):
         if mail_spool_file is not None:
             try:
                 os.chown(mail_spool_file, uid, gid)
+                # In case we have no mail group apply stricter permissions
+                # as useradd would do.
+                if gid == -1:
+                    os.chmod(mail_spool_file, self.MAIL_SPOOL_FILE_MODE_STRICT)
             except OSError as e:
                 self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
