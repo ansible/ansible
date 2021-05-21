@@ -1285,7 +1285,7 @@ class User(object):
         return mail_spool_file
 
     def create_mail_spool_file(self):
-        mail_spool_file = get_mail_spool_file_name()
+        mail_spool_file = self.get_mail_spool_file_name()
         if mail_spool_file is not None:
             # Create empty mail spool file
             with open(mail_spool_file, 'a') as f:
@@ -1294,15 +1294,15 @@ class User(object):
 
     def chown_mail_spool_file(self, uid):
         try:
-            grp_info = grp.getgrnam(MAIL_SPOOL_FILE_GROUP_NAME)
+            grp_info = grp.getgrnam(self.MAIL_SPOOL_FILE_GROUP_NAME)
             gid = grp_info[2]
         except KeyError:
             gid = -1
 
-        mail_spool_file = get_mail_spool_file_name()
+        mail_spool_file = self.get_mail_spool_file_name()
         if mail_spool_file is not None:
             try:
-                os.chown(path, uid, gid)
+                os.chown(mail_spool_file, uid, gid)
             except OSError as e:
                 self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
