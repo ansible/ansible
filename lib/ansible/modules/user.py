@@ -695,7 +695,7 @@ class User(object):
             cmd.append(self.home)
             home = self.home
         else:
-            home = "%s/%s" % ( HOME_PREFIX, self.name )
+            home = "%s/%s" % ( self.HOME_PREFIX, self.name )
 
         if self.create_home:
             self.create_homedir(home)
