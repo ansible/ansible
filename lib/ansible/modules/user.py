@@ -3224,7 +3224,7 @@ def main():
                 user.chown_homedir(info[2], info[3], user.home)
             result['changed'] = True
 
-        mail_spool_file = user.get_mail_spool_file()
+        mail_spool_file = user.get_mail_spool_file_name()
         if mail_spool_file is not None and not os.path.exists(mail_spool_file) and user.create_home:
             if not module.check_mode:
                 user.create_mail_spool_file()
