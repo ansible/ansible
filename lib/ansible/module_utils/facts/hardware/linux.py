@@ -98,7 +98,7 @@ class LinuxHardware(Hardware):
         try:
             mount_facts = self.get_mount_facts()
         except timeout.TimeoutError:
-            pass
+            self.module.warn("No mount facts were gathered due to timeout.")
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
@@ -565,7 +565,6 @@ class LinuxHardware(Hardware):
         # wait for workers and get results
         while results:
             for mount in results:
-                restart_loop = False
                 res = results[mount]['extra']
                 try:
                     if res.ready():
@@ -575,23 +574,19 @@ class LinuxHardware(Hardware):
                                 results[mount]['info'].update(mount_size)
                             results[mount]['info']['uuid'] = uuid or 'N/A'
                         else:
-                            restart_loop = True
                             # failed, try to find out why, if 'res.successful' we know there are no exceptions
                             results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
 
                     elif time.time() > results[mount]['timelimit']:
-                        restart_loop = True
                         results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
                 except Exception as e:
                     results[mount]['info'] = 'N/A'
-                    restart_loop = True
                     self.modulw.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
 
                 if results[mount]['info']:
                     mounts.append(results[mount]['info'])
-                    if restart_loop:
-                        del results[mount]
-                        break
+                    del results[mount]
+                    break
             else:
                 # avoid cpu churn
                 time.sleep(0.1)
