@@ -107,8 +107,8 @@
           - user_test3_3 is not changed
           - user_test3_4 is changed
           - user_test3_5 is changed
-          - user_test3_stat_0.results[0].stat.state == 'absent'
-          - user_test3_stat_0.results[1].stat.state == 'absent'
+          - not user_test3_stat_0.results[0].stat.exists
+          - not user_test3_stat_0.results[1].stat.exists
           - user_test3_stat_1.results[0].stat.uid == user_test3_0.uid
           - user_test3_stat_1.results[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
           - user_test3_stat_1.results[1].stat.uid == user_test3_0.uid
