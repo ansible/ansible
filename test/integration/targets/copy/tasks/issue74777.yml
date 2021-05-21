@@ -1,0 +1,36 @@
+- name: Create test dir
+  file:
+    path: "{{ output_dir }}/src"
+    state: directory
+
+- name: Create test dir dest
+  file:
+    path: "{{ output_dir }}/dest"
+    state: directory
+
+- name: Create a file to symlink to
+  file:
+    path: "{{ output_dir }}/src/issue74777.txt"
+    state: touch
+
+- name: Create a symbolic link to the file in the src dir
+  file:
+    src: "{{ output_dir }}/src/issue74777.txt"
+    dest: "{{ output_dir }}/src/symlink"
+    state: link
+
+- name: Try to copy the symlink to dest dir as a symlink
+  copy:
+    remote_src: true
+    local_follow: false
+    src: "{{ output_dir }}/src/symlink"
+    dest: "{{ output_dir }}/dest/symlink"
+
+- name: get stat info
+  stat:
+    path: "{{ output_dir }}/dest/symlink"
+  register: st
+
+- name: assert we have a link
+  assert:
+    that: st.stat.islnk is defined and st.stat.islnk

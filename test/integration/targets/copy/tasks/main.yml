@@ -96,6 +96,9 @@
           - 'diff_output.diff[0].before == ""'
           - '"Ansible managed" in diff_output.diff[0].after'
 
+    # https://github.com/ansible/ansible/issues/74777
+    - import_tasks: issue74777.yml
+
   always:
     - name: Cleaning
       file:
