@@ -543,7 +543,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
-        self.login_defs_dict = None
+        self.login_defs_dict = {}
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -1253,8 +1253,7 @@ class User(object):
                 umask_string = self.umask
             else:
                 login_defs_dict = self.read_login_defs()
-                if login_defs_dict is not None:
-                    umask_string = login_defs_dict.get('UMASK')
+                umask_string = login_defs_dict.get('UMASK')
             # set correct home mode if we have a umask
             if umask_string is not None:
                 umask = int(umask_string, 8)
@@ -1278,10 +1277,9 @@ class User(object):
     def get_mail_spool_file_name(self):
         mail_spool_file = None
         login_defs_dict = self.read_login_defs()
-        if login_defs_dict is not None:
-            mail_dir = login_defs_dict.get('MAIL_DIR')
-            if mail_dir is not None:
-                mail_spool_file = "%s/%s" % (mail_dir, self.name)
+        mail_dir = login_defs_dict.get('MAIL_DIR')
+        if mail_dir is not None:
+            mail_spool_file = "%s/%s" % (mail_dir, self.name)
         return mail_spool_file
 
     def create_mail_spool_file(self):
@@ -1307,7 +1305,7 @@ class User(object):
                 self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def read_login_defs(self):
-        if self.login_defs_dict is not None:
+        if self.login_defs_dict:
             return self.login_defs_dict
         if os.path.exists(self.LOGIN_DEFS):
             with open(self.LOGIN_DEFS, 'r') as f:
