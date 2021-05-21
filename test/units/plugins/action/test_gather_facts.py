@@ -41,7 +41,7 @@ class TestNetworkFacts(unittest.TestCase):
     templar = Templar(loader=fake_loader)
 
     def setUp(self):
-        C.config.initialize_base_defs()
+        pass
 
     def tearDown(self):
         pass
@@ -62,9 +62,9 @@ class TestNetworkFacts(unittest.TestCase):
         mod_args = plugin._get_module_args('ios_facts', task_vars=self.task_vars)
         self.assertEqual(mod_args['gather_subset'], 'min')
 
-        # gather_facts mutates the config list, otherwise FACTS_MODULE should be 'smart'
+        # gather_facts should not mutate the config list so the default ['smart'] is still the value
         facts_modules = C.config.get_config_value('FACTS_MODULES', variables=self.task_vars)
-        self.assertEqual(facts_modules, ['ansible.legacy.ios_facts'])
+        self.assertEqual(facts_modules, ['smart'])
 
     @patch.object(module_common, '_get_collection_metadata', return_value={})
     def test_network_gather_facts_fqcn(self, mock_collection_metadata):
@@ -83,6 +83,6 @@ class TestNetworkFacts(unittest.TestCase):
         mod_args = plugin._get_module_args('cisco.ios.ios_facts', task_vars=self.fqcn_task_vars)
         self.assertEqual(mod_args['gather_subset'], 'min')
 
-        # gather_facts mutates the config list, otherwise FACTS_MODULE should be 'smart'
+        # gather_facts should not mutate the config list so the default ['smart'] is still the value
         facts_modules = C.config.get_config_value('FACTS_MODULES', variables=self.fqcn_task_vars)
-        self.assertEqual(facts_modules, ['cisco.ios.ios_facts'])
+        self.assertEqual(facts_modules, ['smart'])

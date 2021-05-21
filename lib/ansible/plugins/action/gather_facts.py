@@ -85,7 +85,8 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        modules, default_source = C.config.get_config_value_and_origin('FACTS_MODULES', variables=task_vars)
+        # copy the value with list() so we don't mutate the config
+        modules, default_source = list(C.config.get_config_value_and_origin('FACTS_MODULES', variables=task_vars))
 
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
