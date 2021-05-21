@@ -131,8 +131,8 @@
 # cleanup the user
 - name: cleanup the test user
   user:
-  name: ansibulluser
-  state: absent
+    name: ansibulluser
+    state: absent
 
 # https://github.com/ansible/ansible/issues/41393
 # Create a new user account with a path that has parent directories that do not exist
