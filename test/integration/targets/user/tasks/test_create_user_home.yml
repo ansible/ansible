@@ -3,11 +3,58 @@
 - name: Test home directory creation
   when: ansible_facts.system != 'Darwin'
   block:
-    # Ensure the home directory is not present
-    - name: remove home directory
+    # Ensure the home directory and the mail spool file are not present
+    - name: remove home directory and mail spool file
       file:
-        path: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        path: "{{ item }}"
         state: absent
+      with_items:
+        - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+
+    # Ensure the user is not present for our test
+    - name: remove the test user
+      user:
+        name: ansibulluser
+        state: absent
+
+    - name: create user without specifying home and not creating home
+      user:
+        name: ansibulluser
+        state: present
+        create_home: no
+      register: user_test3_0
+
+    - name: check the created home directory and mail spool file 0
+      stat:
+        path: "{{ item }}"
+      register: user_test3_stat_0
+      with_items:
+        - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+
+    - name: create user again without specifying home and and creating home
+      user:
+        name: ansibulluser
+        state: present
+      register: user_test3_1
+
+    - name: check the created home directory and mail spool file 1
+      stat:
+        path: "{{ item }}"
+      register: user_test3_stat_1
+      with_items:
+        - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+
+    # Ensure the home directory and the mail spool file are not present
+    - name: remove home directory and mail spool file
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
 
     # Ensure the user is not present for our test
     - name: remove the test user
@@ -20,50 +67,72 @@
         name: ansibulluser
         state: present
         home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-      register: user_test3_0
+      register: user_test3_2
 
     - name: create user again specifying home
       user:
         name: ansibulluser
         state: present
         home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-      register: user_test3_1
+      register: user_test3_3
 
-    - name: Check the created home directory
+    - name: check the created home directory and mail spool file 2
       stat:
-        path: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-      register: user_test3_stat_1
+        path: "{{ item }}"
+      register: user_test3_stat_2
+      with_items:
+        - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
 
     - name: change user home
       user:
         name: ansibulluser
         state: present
         home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser-mod"
-      register: user_test3_2
+      register: user_test3_4
 
     - name: change user home back
       user:
         name: ansibulluser
         state: present
         home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-      register: user_test3_3
+      register: user_test3_5
 
     - name: validate results for testcase 3
       assert:
         that:
           - user_test3_0 is changed
-          - user_test3_1 is not changed
+          - user_test3_1 is changed
           - user_test3_2 is changed
-          - user_test3_3 is changed
-          - user_test3_stat_1.stat.uid == user_test3_0.uid
-          - user_test3_stat_1.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
+          - user_test3_3 is not changed
+          - user_test3_4 is changed
+          - user_test3_5 is changed
+          - user_test3_stat_0.result[0].stat.state == 'absent'
+          - user_test3_stat_0.result[1].stat.state == 'absent'
+          - user_test3_stat_1.result[0].stat.uid == user_test3_0.uid
+          - user_test3_stat_1.result[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
+          - user_test3_stat_1.result[1].stat.uid == user_test3_0.uid
+          - user_test3_stat_1.result[1].stat.gr_name == user_mail_group[ansible_facts.system]
+          - user_test3_stat_2.result[0].stat.uid == user_test3_2.uid
+          - user_test3_stat_2.result[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
+          - user_test3_stat_2.result[1].stat.uid == user_test3_2.uid
+          - user_test3_stat_2.result[1].stat.gr_name == user_mail_group[ansible_facts.system]
 
-    # Cleanup the user
-    - name: Cleanup the test user
-      user:
-        name: ansibulluser
-        remove: yes
-        state: absent
+
+# Cleanup the home directory and the mail spool file
+- name: Cleanup home directory and mail spool file
+  file:
+    path: "{{ item }}"
+    state: absent
+    with_items:
+      - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+
+# cleanup the user
+- name: cleanup the test user
+  user:
+  name: ansibulluser
+  state: absent
 
 # https://github.com/ansible/ansible/issues/41393
 # Create a new user account with a path that has parent directories that do not exist

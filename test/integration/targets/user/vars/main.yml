@@ -14,3 +14,14 @@ default_user_group:
 
 default_local_user_group:
   MacOSX: admin
+
+user_mail_prefix:
+  Linux: '/var/spool/mail'
+  FreeBSD: '/var/mail'
+  SunOS: '/var/mail'
+  Darwin: '/var/mail'
+
+user_mail_group:
+  Linux: 'mail'
+  FreeBSD: 'mail'
+  SunOS: 'mail'
