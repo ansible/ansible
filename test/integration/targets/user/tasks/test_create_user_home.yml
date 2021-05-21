@@ -107,16 +107,16 @@
           - user_test3_3 is not changed
           - user_test3_4 is changed
           - user_test3_5 is changed
-          - user_test3_stat_0.result[0].stat.state == 'absent'
-          - user_test3_stat_0.result[1].stat.state == 'absent'
-          - user_test3_stat_1.result[0].stat.uid == user_test3_0.uid
-          - user_test3_stat_1.result[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
-          - user_test3_stat_1.result[1].stat.uid == user_test3_0.uid
-          - user_test3_stat_1.result[1].stat.gr_name == user_mail_group[ansible_facts.system]
-          - user_test3_stat_2.result[0].stat.uid == user_test3_2.uid
-          - user_test3_stat_2.result[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
-          - user_test3_stat_2.result[1].stat.uid == user_test3_2.uid
-          - user_test3_stat_2.result[1].stat.gr_name == user_mail_group[ansible_facts.system]
+          - user_test3_stat_0.results[0].stat.state == 'absent'
+          - user_test3_stat_0.results[1].stat.state == 'absent'
+          - user_test3_stat_1.results[0].stat.uid == user_test3_0.uid
+          - user_test3_stat_1.results[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
+          - user_test3_stat_1.results[1].stat.uid == user_test3_0.uid
+          - user_test3_stat_1.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
+          - user_test3_stat_2.results[0].stat.uid == user_test3_2.uid
+          - user_test3_stat_2.results[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
+          - user_test3_stat_2.results[1].stat.uid == user_test3_2.uid
+          - user_test3_stat_2.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
 
 
 # Cleanup the home directory and the mail spool file
