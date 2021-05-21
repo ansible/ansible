@@ -108,7 +108,7 @@ In a directory of your choice you can create your first playbook in a file calle
 .. code-block:: yaml
 
     ---
-    - name: My task
+    - name: My playbook
       hosts: all
       tasks:
          - name: Leaving a mark
