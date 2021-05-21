@@ -159,6 +159,13 @@ class LinuxHardware(Hardware):
         return memory_facts
 
     def get_cpu_facts(self, collected_facts=None):
+        def _default():
+            return {
+                'core_ids': [],
+                'cores': 1,
+                'siblings': 1,
+            }
+
         cpu_facts = {}
         collected_facts = collected_facts or {}
 
@@ -168,8 +175,7 @@ class LinuxHardware(Hardware):
         processor_occurrence = 0
         physid = 0
         coreid = 0
-        sockets = {}
-        cores = {}
+        sockets = collections.defaultdict(_default)
 
         xen = False
         xen_paravirt = False
@@ -223,16 +229,14 @@ class LinuxHardware(Hardware):
                 i += 1
             elif key == 'physical id':
                 physid = int(val)
-                if physid not in sockets:
-                    sockets[physid] = 1
+                sockets[physid]
             elif key == 'core id':
                 coreid = int(val)
-                if coreid not in sockets:
-                    cores[coreid] = 1
+                sockets[physid]['core_ids'].append(coreid)
             elif key == 'cpu cores':
-                sockets[physid] = int(val)
+                sockets[physid]['cores'] = int(val)
             elif key == 'siblings':
-                cores[coreid] = int(val)
+                sockets[physid]['siblings'] = int(val)
             elif key == '# processors':
                 cpu_facts['processor_cores'] = int(val)
             elif key == 'ncpus active':
@@ -260,27 +264,14 @@ class LinuxHardware(Hardware):
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
+                    cpu_facts['processor_threads_per_core'] = sockets[0]['siblings']
+                    cpu_facts['processor_vcpus'] = sum([len(s['core_ids']) for s in sockets.values()])
                 else:
                     cpu_facts['processor_count'] = i
+                    cpu_facts['processor_vcpus'] = i
 
-                socket_values = list(sockets.values())
-                if socket_values and socket_values[0]:
-                    cpu_facts['processor_cores'] = socket_values[0]
-                else:
-                    cpu_facts['processor_cores'] = 1
-
-                core_values = list(cores.values())
-                if core_values:
-                    cpu_facts['processor_threads_per_core'] = core_values[0] // cpu_facts['processor_cores']
-                else:
-                    cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
-
-                # If "physical id" and "core id" all have the same value, use processor_occurence
-                # for the number of VCPUs since it won't be accurately calculated.
-                if len(sockets) == len(cores) == 1:
-                    cpu_facts['processor_vcpus'] = processor_occurence
-                else:
-                    cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] * cpu_facts['processor_count'] * cpu_facts['processor_cores'])
+                cpu_facts['processor_cores'] = sockets[0]['cores']
+                cpu_facts['processor_threads_per_core'] = sockets[0]['siblings']
 
                 # if the number of processors available to the module's
                 # thread cannot be determined, the processor count
