@@ -699,10 +699,7 @@ class User(object):
 
         if self.create_home:
             self.create_homedir(home)
-            # As we always add -M we need to create the mail spool file,
-            # but only if we use luseradd. useradd still creates it with -M.
-            if self.local:
-                self.create_mail_spool_file()
+            self.create_mail_spool_file()
 
         if self.shell is not None:
             cmd.append('-s')
@@ -3170,10 +3167,7 @@ def main():
                 info = user.user_info()
                 if info is not False:
                     user.chown_homedir(info[2], info[3], info[5])
-                    # We only created the mail spool file ourselves when we
-                    # used luseradd.
-                    if user.local:
-                        user.chown_mail_spool_file(info[2])
+                    user.chown_mail_spool_file(info[2])
 
             if module.check_mode:
                 result['system'] = user.name
