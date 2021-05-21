@@ -144,6 +144,7 @@ Parameters
                                 {% elif choice is sameas false %}
                                     {% set choice = 'no' %}
                                 {% endif %}
+                                {# Format default values differently (whenever a choice is one of the default values) #}
                                 {% if (value.default is not list and value.default == choice) or (value.default is list and choice in value.default) %}
                                     <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
                                 {% else %}
@@ -152,8 +153,12 @@ Parameters
                             {% endfor %}
                         </ul>
                     {% endif %}
-                    {# Show default value, when multiple choice or no choices #}
-                    {% if value.default is defined and value.default not in value.choices %}
+                    {# Show default value on a separate line when there is a non-None default (None
+                       is usually a sentinel that shows the user didn't specify it) and there
+                       either are no choices (like a freeform string) or the default does not exist
+                       in choices
+                     #}
+                    {% if value.default is defined and value.default is not none and (not value.choices or value.default not in value.choices) %}
                         <b>Default:</b><br/><div style="color: blue">@{ value.default | tojson | escape }@</div>
                     {% endif %}
                 </td>
