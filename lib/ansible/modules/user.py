@@ -695,7 +695,7 @@ class User(object):
             cmd.append(self.home)
             home = self.home
         else:
-            home = "%s/%s" % ( self.HOME_PREFIX, self.name )
+            home = "%s/%s" % (self.HOME_PREFIX, self.name)
 
         if self.create_home:
             self.create_homedir(home)
@@ -1279,9 +1279,9 @@ class User(object):
         mail_spool_file = None
         login_defs_dict = self.read_login_defs()
         if login_defs_dict is not None:
-            mail_dir =  login_defs_dict.get('MAIL_DIR')
+            mail_dir = login_defs_dict.get('MAIL_DIR')
             if mail_dir is not None:
-                mail_spool_file = "%s/%s" % ( mail_dir, self.name)
+                mail_spool_file = "%s/%s" % (mail_dir, self.name)
         return mail_spool_file
 
     def create_mail_spool_file(self):
