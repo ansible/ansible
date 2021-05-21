@@ -457,6 +457,8 @@ import socket
 import subprocess
 import time
 import math
+import stat
+import grp
 
 from ansible.module_utils import distro
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -496,6 +498,9 @@ class User(object):
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
+    MAIL_SPOOL_FILE_MODE = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
+    MAIL_SPOOL_FILE_GROUP_NAME = 'mail'
+    HOME_PREFIX = '/home'
 
     def __new__(cls, *args, **kwargs):
         new_cls = get_platform_subclass(User)
@@ -538,6 +543,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
+        self.login_defs_dict = None
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -685,10 +691,18 @@ class User(object):
             cmd.append(self.comment)
 
         if self.home is not None:
-            if self.create_home:
-                self.create_homedir(self.home)
             cmd.append('-d')
             cmd.append(self.home)
+            home = self.home
+        else:
+            home = "%s/%s" % ( HOME_PREFIX, self.name )
+
+        if self.create_home:
+            self.create_homedir(home)
+            # As we always add -M we need to create the mail spool file,
+            # but only if we use luseradd. useradd still creates it with -M.
+            if self.local:
+                self.create_mail_spool_file()
 
         if self.shell is not None:
             cmd.append('-s')
@@ -1238,13 +1252,9 @@ class User(object):
             if self.umask is not None:
                 umask_string = self.umask
             else:
-                # try to get umask from /etc/login.defs
-                if os.path.exists(self.LOGIN_DEFS):
-                    with open(self.LOGIN_DEFS, 'r') as f:
-                        for line in f:
-                            m = re.match(r'^UMASK\s+(\d+)$', line)
-                            if m:
-                                umask_string = m.group(1)
+                login_defs_dict = self.read_login_defs()
+                if login_defs_dict is not None:
+                    umask_string = login_defs_dict.get('UMASK')
             # set correct home mode if we have a umask
             if umask_string is not None:
                 umask = int(umask_string, 8)
@@ -1264,6 +1274,48 @@ class User(object):
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError as e:
             self.module.exit_json(failed=True, msg="%s" % to_native(e))
+
+    def get_mail_spool_file_name(self):
+        mail_spool_file = None
+        login_defs_dict = self.read_login_defs()
+        if login_defs_dict is not None:
+            mail_dir =  login_defs_dict.get('MAIL_DIR')
+            if mail_dir is not None:
+                mail_spool_file = "%s/%s" % ( mail_dir, self.name)
+        return mail_spool_file
+
+    def create_mail_spool_file(self):
+        mail_spool_file = get_mail_spool_file_name()
+        if mail_spool_file is not None:
+            # Create empty mail spool file
+            with open(mail_spool_file, 'a') as f:
+                pass
+            os.chmod(mail_spool_file, self.MAIL_SPOOL_FILE_MODE)
+
+    def chown_mail_spool_file(self, uid):
+        try:
+            grp_info = grp.getgrnam(MAIL_SPOOL_FILE_GROUP_NAME)
+            gid = grp_info[2]
+        except KeyError:
+            gid = -1
+
+        mail_spool_file = get_mail_spool_file_name()
+        if mail_spool_file is not None:
+            try:
+                os.chown(path, uid, gid)
+            except OSError as e:
+                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+
+    def read_login_defs(self):
+        if self.login_defs_dict is not None:
+            return self.login_defs_dict
+        if os.path.exists(self.LOGIN_DEFS):
+            with open(self.LOGIN_DEFS, 'r') as f:
+                for line in f:
+                    m = re.match(r'^([A-Z_]+)\s+(\w+)$', line)
+                    if m:
+                        login_defs_dict[m.group(1)] = m.group(2)
+        return self.login_defs_dict
 
 
 # ===========================================
@@ -3118,12 +3170,12 @@ def main():
             # Make sure file permissions are correct in the created home directory.
             if user.create_home:
                 info = user.user_info()
-                if user.home:
-                    home = user.home
-                else:
-                    home = info[5]
                 if info is not False:
-                    user.chown_homedir(info[2], info[3], home)
+                    user.chown_homedir(info[2], info[3], info[5])
+                    # We only created the mail spool file ourselves when we
+                    # used luseradd.
+                    if self.local:
+                        user.chown_mail_spool_file(info[2])
 
             if module.check_mode:
                 result['system'] = user.name
@@ -3170,6 +3222,13 @@ def main():
             if not module.check_mode:
                 user.create_homedir(user.home)
                 user.chown_homedir(info[2], info[3], user.home)
+            result['changed'] = True
+
+        mail_spool_file = user.get_mail_spool_file()
+        if mail_spool_file is not None and not os.path.exists(mail_spool_file) and user.create_home:
+            if not module.check_mode:
+                user.create_mail_spool_file()
+                user.chown_mail_spool_file(info[2])
             result['changed'] = True
 
         # deal with ssh key
