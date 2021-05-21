@@ -1960,11 +1960,8 @@ class AnsibleModule(object):
 
         env = os.environ.copy()
         # We can set this from both an attribute and per call
-        for key, val in self.run_command_environ_update.items():
-            env[key] = val
-        if environ_update:
-            for key, val in environ_update.items():
-                env[key] = val
+        env.update(self.run_command_environ_update or {})
+        env.update(environ_update or {})
         if path_prefix:
             path = env.get('PATH', '')
             if path:
@@ -1979,13 +1976,11 @@ class AnsibleModule(object):
 
         # Clean out python paths set by ansiballz
         if 'PYTHONPATH' in env:
-            pypaths = env['PYTHONPATH'].split(':')
-            pypaths = [x for x in pypaths
+            pypaths = [x for x in env['PYTHONPATH'].split(':')
                        if not x.endswith('/ansible_modlib.zip') and
                        not x.endswith('/debug_dir')]
-            env['PYTHONPATH'] = ':'.join(pypaths)
-            if not env['PYTHONPATH']:
-                del env['PYTHONPATH']
+            if pypaths and any(pypaths):
+                env['PYTHONPATH'] = ':'.join(p for p in pypaths if p)
 
         if data:
             st_in = subprocess.PIPE
