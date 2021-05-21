@@ -183,15 +183,15 @@ config = ConfigManager()
 
 def __getattr__(name):
 
-    if name in _myself.__dict__:
-        value = getattr(_myself, name)
+    if name in vars():
+        value = vars.get(name)
     else:
         setting = config.data.get_setting(name)
         for warn in config.WARNINGS:
             _warning(warn)
         if setting:
             value = _extract_value(setting)
-            setattr(_myself, name, value)
+            set_constant(name, value)
         else:
             raise AttributeError("No constant nor setting named: %s" % name)
     # TODO: _deprecated("Using C.%s is deprecated, code should use ConfigManager's .get_value() instead" % name, '2.16')
