@@ -564,10 +564,12 @@ class LinuxHardware(Hardware):
 
         # wait for workers and get results
         while results:
-            for mount in results:
+            for mount in list(results):
+                done = False
                 res = results[mount]['extra']
                 try:
                     if res.ready():
+                        done = True
                         if res.successful():
                             mount_size, uuid = res.get()
                             if mount_size:
@@ -580,15 +582,16 @@ class LinuxHardware(Hardware):
                     elif time.time() > results[mount]['timelimit']:
                         results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
                 except Exception as e:
+                    done = True
                     results[mount]['info'] = 'N/A'
                     self.modulw.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
 
-                if results[mount]['info']:
+                if done:
+                    # move results outside and make loop only handle pending
                     mounts.append(results[mount]['info'])
                     del results[mount]
-                    break
             else:
-                # avoid cpu churn
+                # avoid cpu churn, sleep between iterations of all mounts
                 time.sleep(0.1)
 
         return {'mounts': mounts}
