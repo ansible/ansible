@@ -1978,13 +1978,17 @@ class AnsibleModule(object):
         if 'PYTHONPATH' in env:
             pypaths = [x for x in env['PYTHONPATH'].split(':')
                        if x and
-                       if not x.endswith('/ansible_modlib.zip') and
+                       not x.endswith('/ansible_modlib.zip') and
                        not x.endswith('/debug_dir')]
             if pypaths and any(pypaths):
                 env['PYTHONPATH'] = ':'.join(pypaths)
 
         if data:
             st_in = subprocess.PIPE
+
+        def preexec():
+            self._restore_signal_handlers()
+            os.umask(umask)
 
         kwargs = dict(
             executable=executable,
@@ -1993,7 +1997,7 @@ class AnsibleModule(object):
             stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            preexec_fn=self._restore_signal_handlers,
+            preexec_fn=preexec,
             env=env,
         )
         if PY3 and pass_fds:
@@ -2001,25 +2005,13 @@ class AnsibleModule(object):
         elif PY2 and pass_fds:
             kwargs['close_fds'] = False
 
-        # store the pwd
-        prev_dir = os.getcwd()
-
         # make sure we're in the right working directory
         if cwd:
+            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
             if os.path.isdir(cwd):
-                cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
                 kwargs['cwd'] = cwd
-                try:
-                    os.chdir(cwd)
-                except (OSError, IOError) as e:
-                    self.fail_json(rc=e.errno, msg="Could not chdir to %s, %s" % (cwd, to_native(e)),
-                                   exception=traceback.format_exc())
             elif not ignore_invalid_cwd:
                 self.fail_json(msg="Provided cwd is not a valid directory: %s" % cwd)
-
-        old_umask = None
-        if umask:
-            old_umask = os.umask(umask)
 
         try:
             if self._debug:
@@ -2096,15 +2088,9 @@ class AnsibleModule(object):
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
             self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
 
-        if old_umask:
-            os.umask(old_umask)
-
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
             self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
-
-        # reset the pwd
-        os.chdir(prev_dir)
 
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),
