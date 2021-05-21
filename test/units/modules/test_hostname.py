@@ -15,7 +15,7 @@ class TestHostname(ModuleTestCase):
         isfile.return_value = True
 
         set_module_args({'name': 'fooname', '_ansible_check_mode': True})
-        subclasses = get_all_subclasses(hostname.GenericStrategy)
+        subclasses = get_all_subclasses(hostname.BaseStrategy)
         module = MagicMock()
         for cls in subclasses:
             instance = cls(module)
