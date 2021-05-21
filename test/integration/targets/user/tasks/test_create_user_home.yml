@@ -109,15 +109,17 @@
           - user_test3_5 is changed
           - not user_test3_stat_0.results[0].stat.exists
           - user_test3_stat_0.results[1].stat.uid == user_test3_0.uid
-          - user_test3_stat_0.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
+          # The openSUSE Leap images seem to miss the system-user-mail package
+          # and FreeBSD also lacks the mail group
+          - ansible_facts.distribution == 'openSUSE Leap' or ansible_facts.system == 'FreeBSD' or user_test3_stat_0.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
           - user_test3_stat_1.results[0].stat.uid == user_test3_0.uid
           - user_test3_stat_1.results[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
           - user_test3_stat_1.results[1].stat.uid == user_test3_0.uid
-          - user_test3_stat_1.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
+          - ansible_facts.distribution == 'openSUSE Leap' or ansible_facts.system == 'FreeBSD' or user_test3_stat_1.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
           - user_test3_stat_2.results[0].stat.uid == user_test3_2.uid
           - user_test3_stat_2.results[0].stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser')
           - user_test3_stat_2.results[1].stat.uid == user_test3_2.uid
-          - user_test3_stat_2.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
+          - ansible_facts.distribution == 'openSUSE Leap' or ansible_facts.system == 'FreeBSD' or user_test3_stat_2.results[1].stat.gr_name == user_mail_group[ansible_facts.system]
 
 
 # Cleanup the home directory and the mail spool file
