@@ -1988,7 +1988,8 @@ class AnsibleModule(object):
 
         def preexec():
             self._restore_signal_handlers()
-            os.umask(umask)
+            if umask:
+                os.umask(umask)
 
         kwargs = dict(
             executable=executable,
