@@ -13,19 +13,6 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
-# Connection and fact module pairs in 2.8's CONNECTION_FACTS_MODULES
-# Corresponding fact modules for these connections should continue
-# to work with unqualified names in module defaults
-LEGACY_FACT_CONNECTIONS = {
-    'eos': 'eos_facts',
-    'frr': 'frr_facts',
-    'ios': 'ios_facts',
-    'iosxr': 'iosxr_facts',
-    'junos': 'junos_facts',
-    'nxos': 'nxos_facts',
-    'vyos': 'vyos_facts',
-}
-
 
 class ActionModule(ActionBase):
 
@@ -54,8 +41,8 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        if fact_module in self._legacy_module_defaults:
-            redirect_list = [self._legacy_module_defaults[fact_module]]
+        if fact_module == 'ansible.legacy.setup' and self._use_setup_defaults:
+            redirect_list = ['setup']
         else:
             redirect_list = self._shared_loader_obj.module_loader.find_plugin_with_context(
                 fact_module, collection_list=self._task.collections
@@ -80,7 +67,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
-        self._legacy_module_defaults = {}  # FQCN, legacy name pairs
+        # Support module_defaults: {'setup': {...}} for backwards compatibility when FACTS_MODULES is 'smart'
+        self._use_setup_defaults = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
@@ -94,13 +82,8 @@ class ActionModule(ActionBase):
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
 
             connection_module = connection_map.get(network_os or self._connection._load_name)
-            if connection_module:
-                if source == 'default' and (network_os or self._connection._load_name) in LEGACY_FACT_CONNECTIONS:
-                    legacy_module = LEGACY_FACT_CONNECTIONS.get(network_os or self._connection._load_name)
-                    self._legacy_module_defaults[connection_module] = legacy_module
-            else:
-                if default_source == 'default':
-                    self._legacy_module_defaults['ansible.legacy.setup'] = 'setup'
+            if not connection_module:
+                self._use_setup_defaults = True
                 connection_module = 'ansible.legacy.setup'
 
             modules.append(connection_module)
