@@ -125,9 +125,9 @@
   file:
     path: "{{ item }}"
     state: absent
-    with_items:
-      - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-      - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+  with_items:
+    - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+    - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
 
 # cleanup the user
 - name: cleanup the test user
