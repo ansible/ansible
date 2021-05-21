@@ -463,13 +463,20 @@ Ansible 2.8 has added an experimental SSH connection for Windows managed nodes.
     backwards incompatible changes in feature releases. The server side
     components can be unreliable depending on the version that is installed.
 
+Installing OpenSSH using Windows Settings
+-----------------------------------------
+OpenSSH can be used to connect Window 10 clients to Windows Server 2019.
+OpenSSH Client is available to install on Windows 10 build 1809 and later, while OpenSSH Server is available to install on Windows Server 2019 and later.
+
+Please refer `this guide <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>`_.
+
 Installing Win32-OpenSSH
 ------------------------
 The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
 service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows
 capability but currently the version that is installed through this process is
 too old to work with Ansible. To install ``Win32-OpenSSH`` for use with
-Ansible, select one of these three installation options:
+Ansible, select one of these installation options:
 
 * Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
   from Microsoft.
