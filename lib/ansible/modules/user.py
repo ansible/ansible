@@ -3174,7 +3174,7 @@ def main():
                     user.chown_homedir(info[2], info[3], info[5])
                     # We only created the mail spool file ourselves when we
                     # used luseradd.
-                    if self.local:
+                    if user.local:
                         user.chown_mail_spool_file(info[2])
 
             if module.check_mode:
