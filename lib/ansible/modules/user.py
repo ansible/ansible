@@ -3113,22 +3113,17 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=True)
 
-            # Check to see if the provided home path contains parent directories
-            # that do not exist.
-            path_needs_parents = False
-            if user.home and user.create_home:
-                parent = os.path.dirname(user.home)
-                if not os.path.isdir(parent):
-                    path_needs_parents = True
-
             (rc, out, err) = user.create_user()
 
-            # If the home path had parent directories that needed to be created,
-            # make sure file permissions are correct in the created home directory.
-            if path_needs_parents:
+            # Make sure file permissions are correct in the created home directory.
+            if user.create_home:
                 info = user.user_info()
+                if user.home:
+                    home = user.home
+                else:
+                    home = info[5]
                 if info is not False:
-                    user.chown_homedir(info[2], info[3], user.home)
+                    user.chown_homedir(info[2], info[3], home)
 
             if module.check_mode:
                 result['system'] = user.name
