@@ -1314,7 +1314,7 @@ class User(object):
                 for line in f:
                     m = re.match(r'^([A-Z_]+)\s+(\w+)$', line)
                     if m:
-                        login_defs_dict[m.group(1)] = m.group(2)
+                        self.login_defs_dict[m.group(1)] = m.group(2)
         return self.login_defs_dict
 
 
