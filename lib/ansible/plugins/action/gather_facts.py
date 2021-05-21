@@ -74,11 +74,11 @@ class ActionModule(ActionBase):
         result['ansible_facts'] = {}
 
         # copy the value with list() so we don't mutate the config
-        modules, default_source = list(C.config.get_config_value_and_origin('FACTS_MODULES', variables=task_vars))
+        modules = list(C.config.get_config_value('FACTS_MODULES', variables=task_vars))
 
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
-            connection_map, source = C.config.get_config_value_and_origin('CONNECTION_FACTS_MODULES', variables=task_vars)
+            connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
 
             connection_module = connection_map.get(network_os or self._connection._load_name)
