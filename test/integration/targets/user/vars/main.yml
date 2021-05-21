@@ -21,6 +21,9 @@ user_mail_prefix:
   SunOS: '/var/mail'
   Darwin: '/var/mail'
 
+user_mail_prefix_distro:
+  Ubuntu: '/var/mail'
+
 user_mail_group:
   Linux: 'mail'
   FreeBSD: 'mail'

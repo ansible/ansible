@@ -10,7 +10,7 @@
         state: absent
       with_items:
         - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix_distro[ansible_facts.distribution] | default(user_mail_prefix[ansible_facts.system]) }}/ansibulluser"
 
     # Ensure the user is not present for our test
     - name: remove the test user
@@ -31,7 +31,7 @@
       register: user_test3_stat_0
       with_items:
         - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix_distro[ansible_facts.distribution] | default(user_mail_prefix[ansible_facts.system]) }}/ansibulluser"
 
     - name: create user again without specifying home and and creating home
       user:
@@ -45,7 +45,7 @@
       register: user_test3_stat_1
       with_items:
         - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix_distro[ansible_facts.distribution] | default(user_mail_prefix[ansible_facts.system]) }}/ansibulluser"
 
     # Ensure the home directory and the mail spool file are not present
     - name: remove home directory and mail spool file
@@ -54,7 +54,7 @@
         state: absent
       with_items:
         - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix_distro[ansible_facts.distribution] | default(user_mail_prefix[ansible_facts.system]) }}/ansibulluser"
 
     # Ensure the user is not present for our test
     - name: remove the test user
@@ -82,7 +82,7 @@
       register: user_test3_stat_2
       with_items:
         - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-        - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+        - "{{ user_mail_prefix_distro[ansible_facts.distribution] | default(user_mail_prefix[ansible_facts.system]) }}/ansibulluser"
 
     - name: change user home
       user:
@@ -127,7 +127,7 @@
     state: absent
   with_items:
     - "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
-    - "{{ user_mail_prefix[ansible_facts.system] }}/ansibulluser"
+    - "{{ user_mail_prefix_distro[ansible_facts.distribution] | default(user_mail_prefix[ansible_facts.system]) }}/ansibulluser"
 
 # cleanup the user
 - name: cleanup the test user
