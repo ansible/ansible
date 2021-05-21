@@ -563,7 +563,7 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_cores': 2,
             'processor_count': 2,
             'processor_nproc': 4,
-            'processor_threads_per_core': 1,
+            'processor_threads_per_core': 2,
             'processor_vcpus': 4
         },
     },
@@ -586,7 +586,7 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_cores': 4,
             'processor_count': 1,
             'processor_nproc': 4,
-            'processor_threads_per_core': 2,
+            'processor_threads_per_core': 8,
             'processor_vcpus': 8
         },
     },
