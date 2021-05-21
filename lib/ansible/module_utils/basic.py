@@ -1977,10 +1977,11 @@ class AnsibleModule(object):
         # Clean out python paths set by ansiballz
         if 'PYTHONPATH' in env:
             pypaths = [x for x in env['PYTHONPATH'].split(':')
+                       if x and
                        if not x.endswith('/ansible_modlib.zip') and
                        not x.endswith('/debug_dir')]
             if pypaths and any(pypaths):
-                env['PYTHONPATH'] = ':'.join(p for p in pypaths if p)
+                env['PYTHONPATH'] = ':'.join(pypaths)
 
         if data:
             st_in = subprocess.PIPE
