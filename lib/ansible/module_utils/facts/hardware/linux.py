@@ -25,7 +25,7 @@ import re
 import sys
 import time
 
-from multiprocessing import cpu_count, TimeoutError as mpTimeoutError
+from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
@@ -581,10 +581,7 @@ class LinuxHardware(Hardware):
 
                     elif time.time() > results[mount]['timelimit']:
                         restart_loop = True
-                        try:
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get(timeout=1)))
-                        except mpTimeoutError:
-                            results[mount]['info']['note'] = 'Timed out while attempting to get extra information for this mount'
+                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
                 except Exception as e:
                     restart_loop = True
                     self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
