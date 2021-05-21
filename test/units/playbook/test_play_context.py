@@ -92,20 +92,3 @@ def test_play_context(mocker, parser, reset_cli_args):
     mock_task.no_log = False
     play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
     assert play_context.no_log is False
-
-
-def test_play_context_make_become_bad(mocker, parser, reset_cli_args):
-    options = parser.parse_args([])
-    context._init_global_context(options)
-    play_context = PlayContext()
-
-    default_cmd = "/bin/foo"
-    default_exe = "/bin/bash"
-
-    play_context.become = True
-    play_context.become_user = 'foo'
-    play_context.set_become_plugin(become_loader.get('bad'))
-    play_context.become_method = 'bad'
-
-    with pytest.raises(AnsibleError):
-        play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)

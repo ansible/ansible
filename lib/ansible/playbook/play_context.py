@@ -320,43 +320,6 @@ class PlayContext(Base):
     def set_become_plugin(self, plugin):
         self._become_plugin = plugin
 
-    def make_become_cmd(self, cmd, executable=None):
-        """ helper function to create privilege escalation commands """
-        display.deprecated(
-            "PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-
-        if not cmd or not self.become:
-            return cmd
-
-        become_method = self.become_method
-
-        # load/call become plugins here
-        plugin = self._become_plugin
-
-        if plugin:
-            options = {
-                'become_exe': self.become_exe or become_method,
-                'become_flags': self.become_flags or '',
-                'become_user': self.become_user,
-                'become_pass': self.become_pass
-            }
-            plugin.set_options(direct=options)
-
-            if not executable:
-                executable = self.executable
-
-            shell = get_shell_plugin(executable=executable)
-            cmd = plugin.build_become_command(cmd, shell)
-            # for backwards compat:
-            if self.become_pass:
-                self.prompt = plugin.prompt
-        else:
-            raise AnsibleError("Privilege escalation method not found: %s" % become_method)
-
-        return cmd
-
     def update_vars(self, variables):
         '''
         Adds 'magic' variables relating to connections to the variable dictionary provided.
