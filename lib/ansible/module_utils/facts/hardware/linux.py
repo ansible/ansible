@@ -580,6 +580,7 @@ class LinuxHardware(Hardware):
                             results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
 
                     elif time.time() > results[mount]['timelimit']:
+                        done = True
                         results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
                 except Exception as e:
                     done = True
