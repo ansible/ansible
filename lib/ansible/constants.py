@@ -205,8 +205,8 @@ def _extract_value(setting):
        isinstance(setting.value, string_types) and \
        (setting.value.startswith('{{') and setting.value.endswith('}}')):
         try:
-            t = Template(setting.value, variables=_myself)
-            value = t.render(vars())
+            t = Template(setting.value)
+            value = t.render(globals())
             try:
                 value = literal_eval(value)
             except ValueError:
