@@ -583,8 +583,9 @@ class LinuxHardware(Hardware):
                         restart_loop = True
                         results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
                 except Exception as e:
+                    results[mount]['info'] = 'N/A'
                     restart_loop = True
-                    self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
+                    self.modulw.warn("Error prevented getting extra info for mount %s: %s." % (mount, to_text(e)))
 
                 if results[mount]['info']:
                     mounts.append(results[mount]['info'])
