@@ -1,0 +1,2 @@
+bugfixes:
+- recursive_diff - handle condition when parameters are not dict (https://github.com/ansible/ansible/issues/56249).
