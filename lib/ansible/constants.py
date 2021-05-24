@@ -189,6 +189,8 @@ def __getattr__(name):
         setting = config.data.get_setting(name)
         for warn in config.WARNINGS:
             _warning(warn)
+        for dep in config.DEPRECATED:
+            _deprecated(dep[0], dep[1])
         if setting:
             value = _extract_value(setting)
             set_constant(name, value)
