@@ -53,4 +53,3 @@
         - new_st.stat.pw_name == remote_unprivileged_user
         - new_st.stat.mode == orig_st.stat.mode
         - new_st.stat.lnk_source == orig_st.stat.lnk_source
-
