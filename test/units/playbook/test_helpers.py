@@ -193,7 +193,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertEqual(len(res), 0)
 
     def test_one_bogus_include_static(self):
-        ds = [{'import_tasks': 'somefile.yml',}]
+        ds = [{'import_tasks': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
