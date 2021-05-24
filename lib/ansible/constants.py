@@ -45,22 +45,6 @@ def set_constant(name, value, export=vars()):
     ''' sets constants and returns resolved options dict '''
     export[name] = value
 
-
-class _DeprecatedSequenceConstant(Sequence):
-    def __init__(self, value, msg, version):
-        self._value = value
-        self._msg = msg
-        self._version = version
-
-    def __len__(self):
-        _deprecated(self._msg, self._version)
-        return len(self._value)
-
-    def __getitem__(self, y):
-        _deprecated(self._msg, self._version)
-        return self._value[y]
-
-
 # CONSTANTS ### yes, actual ones
 
 # The following are hard-coded action names
@@ -182,15 +166,16 @@ config = ConfigManager()
 
 
 def __getattr__(name):
+    ''' allows to dynamically load constants from settings '''
 
     if name in vars():
         value = vars.get(name)
     else:
         setting = config.data.get_setting(name)
-        for warn in config.WARNINGS:
-            _warning(warn)
         for dep in config.DEPRECATED:
             _deprecated(dep[0], dep[1])
+        for warn in config.WARNINGS:
+            _warning(warn)
         if setting:
             value = _extract_value(setting)
             set_constant(name, value)
@@ -201,6 +186,7 @@ def __getattr__(name):
 
 
 def _extract_value(setting):
+    ''' handles tempating of defaults for a setting's value and ensures it's type '''
 
     value = setting.value
     if setting.origin == 'default' and \
