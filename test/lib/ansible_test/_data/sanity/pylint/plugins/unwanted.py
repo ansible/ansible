@@ -90,7 +90,7 @@ class AnsibleUnwantedChecker(BaseChecker):
         # requests=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
         # urllib=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
 
-        # see https://docs.python.org/3/library/urllib2.html
+        # see https://docs.python.org/2/library/urllib2.html
         urllib2=UnwantedEntry('ansible.module_utils.urls',
                               ignore_paths=(
                                   '/lib/ansible/module_utils/urls.py',
