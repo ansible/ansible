@@ -1335,6 +1335,20 @@ Some hash types allow providing a rounds parameter::
     {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=10000) }}
     # => "$5$rounds=10000$mysecretsalt$Tkm80llAxD4YHll6AgNIztKn0vzAACsuuEfYeGP7tm7"
 
+Hash type 'blowfish' (BCrypt) provides the facility to specify the version of the BCrypt algorithm
+
+.. code-block:: jinja
+
+    {{ 'secretpassword' | password_hash('blowfish', '1234567890123456789012', ident='2b') }}
+    # => "$2b$12$123456789012345678901uuJ4qFdej6xnWjOQT.FStqfdoY8dYUPC"
+
+.. note::
+    The parameter is only available for `blowfish (BCrypt) <https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#passlib.hash.bcrypt>`_.
+    Other hash types will simply ignore this parameter.
+    Valid values for this parameter are: ['2', '2a', '2y', '2b']
+
+.. versionadded:: 2.12
+
 .. _other_useful_filters:
 
 Manipulating text
