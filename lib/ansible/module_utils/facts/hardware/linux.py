@@ -591,9 +591,9 @@ class LinuxHardware(Hardware):
                     # move results outside and make loop only handle pending
                     mounts.append(results[mount]['info'])
                     del results[mount]
-            else:
-                # avoid cpu churn, sleep between iterations of all mounts
-                time.sleep(0.1)
+
+            # avoid cpu churn, sleep between retrying for loop with remaining mounts
+            time.sleep(0.1)
 
         return {'mounts': mounts}
 
