@@ -264,14 +264,16 @@ class LinuxHardware(Hardware):
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
-                    cpu_facts['processor_threads_per_core'] = sockets[0]['siblings']
                     cpu_facts['processor_vcpus'] = sum([len(s['core_ids']) for s in sockets.values()])
                 else:
                     cpu_facts['processor_count'] = i
                     cpu_facts['processor_vcpus'] = i
 
-                cpu_facts['processor_cores'] = sockets[0]['cores']
+                # This call to sockets[0] must happen before calling sockets.values()
+                # so that the default values for the dict can be properly initialized.
+                # Otherwise, 'processor_cores' will be 0.
                 cpu_facts['processor_threads_per_core'] = sockets[0]['siblings']
+                cpu_facts['processor_cores'] = sum(s['cores'] for s in sockets.values())
 
                 # if the number of processors available to the module's
                 # thread cannot be determined, the processor count
