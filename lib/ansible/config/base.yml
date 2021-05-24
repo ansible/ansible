@@ -697,19 +697,6 @@ DEFAULT_GATHER_TIMEOUT:
   - {key: gather_timeout, section: defaults}
   type: integer
   yaml: {key: defaults.gather_timeout}
-DEFAULT_HANDLER_INCLUDES_STATIC:
-  name: Make handler M(ansible.builtin.include) static
-  default: False
-  description:
-    - "Since 2.0 M(ansible.builtin.include) can be 'dynamic', this setting (if True) forces that if the include appears in a ``handlers`` section to be 'static'."
-  env: [{name: ANSIBLE_HANDLER_INCLUDES_STATIC}]
-  ini:
-  - {key: handler_includes_static, section: defaults}
-  type: boolean
-  deprecated:
-    why: include itself is deprecated and this setting will not matter in the future
-    version: "2.12"
-    alternatives: none as its already built into the decision between include_tasks and import_tasks
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
@@ -1095,20 +1082,6 @@ DEFAULT_SYSLOG_FACILITY:
   env: [{name: ANSIBLE_SYSLOG_FACILITY}]
   ini:
   - {key: syslog_facility, section: defaults}
-DEFAULT_TASK_INCLUDES_STATIC:
-  name: Task include static
-  default: False
-  description:
-    - The `include` tasks can be static or dynamic, this toggles the default expected behaviour if autodetection fails and it is not explicitly set in task.
-  env: [{name: ANSIBLE_TASK_INCLUDES_STATIC}]
-  ini:
-  - {key: task_includes_static, section: defaults}
-  type: boolean
-  version_added: "2.1"
-  deprecated:
-    why: include itself is deprecated and this setting will not matter in the future
-    version: "2.12"
-    alternatives: None, as its already built into the decision between include_tasks and import_tasks
 DEFAULT_TERMINAL_PLUGIN_PATH:
   name: Terminal Plugins Path
   default: ~/.ansible/plugins/terminal:/usr/share/ansible/plugins/terminal

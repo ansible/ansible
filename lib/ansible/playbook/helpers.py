@@ -155,9 +155,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 elif action in C._ACTION_IMPORT_TASKS:
                     is_static = True
                 else:
-                    is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                        (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                        (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks instead', "2.16")
+                    is_static = not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop
 
                 if is_static:
                     if t.loop is not None:
