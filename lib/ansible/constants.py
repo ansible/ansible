@@ -45,8 +45,8 @@ def set_constant(name, value, export=vars()):
     ''' sets constants and returns resolved options dict '''
     export[name] = value
 
-# CONSTANTS ### yes, actual ones
 
+# CONSTANTS ### yes, actual ones
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
