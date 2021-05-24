@@ -25,7 +25,7 @@ No notable changes
 Command Line
 ============
 
-* ``ansible-vault`` no longer supports ``PyCrypto`` and requires ``cryptograhpy``.
+* ``ansible-vault`` no longer supports ``PyCrypto`` and requires ``cryptography``.
 
 
 Deprecated
