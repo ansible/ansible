@@ -348,8 +348,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         data = None
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            # Valid extensions and ordering for roles is hard-coded to maintain portability
-            extensions = ['.yml', '.yaml', '.json']  # same as default for YAML_FILENAME_EXTENSIONS
+            # Valid extensions and ordering for roles is hard-coded, from default, to maintain portability
+            config = C.config.get_configuration_definition('YAML_FILENAME_EXTENSIONS')
+            extensions = config.default
 
             # look for files w/o extensions before/after bare name depending on it being set or not
             # keep 'main' as original to figure out errors if no files found
@@ -360,7 +361,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 _main = main
                 extensions.insert(0, '')
 
-            # not really 'find_vars_files' but find_files_with_extensions_default_to_yaml_filename_extensions
+            # use common find_vars_files
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
                 for found in found_files:
