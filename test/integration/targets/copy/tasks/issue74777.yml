@@ -19,18 +19,38 @@
     dest: "{{ output_dir }}/src/symlink"
     state: link
 
+- name: stat the original link
+  stat:
+      path: "{{ output_dir }}/src/symlink"
+  register: orig_st
+
+- debug: var=orig_st
+
 - name: Try to copy the symlink to dest dir as a symlink
   copy:
     remote_src: true
     local_follow: false
+    mode: preserve
+    owner: "{{ remote_unprivileged_user }}"
     src: "{{ output_dir }}/src/symlink"
     dest: "{{ output_dir }}/dest/symlink"
+  register: copy_result
+
+- debug: var=copy_result
 
 - name: get stat info
   stat:
     path: "{{ output_dir }}/dest/symlink"
-  register: st
+  register: new_st
 
-- name: assert we have a link
+- debug: var=new_st
+
+- name: assert that we have a link with proper owner/perms/etc
   assert:
-    that: st.stat.islnk is defined and st.stat.islnk
+    that:
+        - copy_result.changed
+        - new_st.stat.islnk is defined and new_st.stat.islnk
+        - new_st.stat.pw_name == remote_unprivileged_user
+        - new_st.stat.mode == orig_st.stat.mode
+        - new_st.stat.lnk_source == orig_st.stat.lnk_source
+

@@ -675,65 +675,78 @@ def main():
                     if rc != 0:
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
                 b_mysrc = b_src
-                if remote_src and os.path.isfile(b_src):
-                    _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
-                    shutil.copyfile(b_src, b_mysrc)
+                # If we are explicitly copying a symlink, make sure it stays a symlink if asked to keep it so.
+                if remote_src and os.path.islink(b_src) and not local_follow:
+                    shutil.copyfile(b_src, b_dest, follow_symlinks=False)
                     try:
-                        shutil.copystat(b_src, b_mysrc)
+                        shutil.copystat(b_src, b_dest)
                     except OSError as err:
                         if err.errno == errno.ENOSYS and mode == "preserve":
                             module.warn("Unable to copy stats {0}".format(to_native(b_src)))
                         else:
                             raise
 
-                # might be needed below
-                if PY3 and hasattr(os, 'listxattr'):
-                    try:
-                        src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
-                    except Exception as e:
-                        # assume unwanted ACLs by default
-                        src_has_acls = True
+                else:
+                    if remote_src and os.path.isfile(b_src):
+                        _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
-                module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
-
-                if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
-                    # atomic_move used above to copy src into dest might, in some cases,
-                    # use shutil.copy2 which in turn uses shutil.copystat.
-                    # Since Python 3.3, shutil.copystat copies file extended attributes:
-                    # https://docs.python.org/3/library/shutil.html#shutil.copystat
-                    # os.listxattr (along with others) was added to handle the operation.
-
-                    # This means that on Python 3 we are copying the extended attributes which includes
-                    # the ACLs on some systems - further limited to Linux as the documentation above claims
-                    # that the extended attributes are copied only on Linux. Also, os.listxattr is only
-                    # available on Linux.
-
-                    # If not remote_src, then the file was copied from the controller. In that
-                    # case, any filesystem ACLs are artifacts of the copy rather than preservation
-                    # of existing attributes. Get rid of them:
-
-                    if src_has_acls:
-                        # FIXME If dest has any default ACLs, there are not applied to src now because
-                        # they were overridden by copystat. Should/can we do anything about this?
-                        # 'system.posix_acl_default' in os.listxattr(os.path.dirname(b_dest))
-
+                        shutil.copyfile(b_src, b_mysrc)
                         try:
-                            clear_facls(dest)
-                        except ValueError as e:
-                            if 'setfacl' in to_native(e):
-                                # No setfacl so we're okay.  The controller couldn't have set a facl
-                                # without the setfacl command
-                                pass
+                            shutil.copystat(b_src, b_mysrc)
+                        except OSError as err:
+                            if err.errno == errno.ENOSYS and mode == "preserve":
+                                module.warn("Unable to copy stats {0}".format(to_native(b_src)))
                             else:
                                 raise
-                        except RuntimeError as e:
-                            # setfacl failed.
-                            if 'Operation not supported' in to_native(e):
-                                # The file system does not support ACLs.
-                                pass
-                            else:
-                                raise
+
+                    # might be needed below
+                    if PY3 and hasattr(os, 'listxattr'):
+                        try:
+                            src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
+                        except Exception as e:
+                            # assume unwanted ACLs by default
+                            src_has_acls = True
+
+                    module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
+
+                    if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
+                        # atomic_move used above to copy src into dest might, in some cases,
+                        # use shutil.copy2 which in turn uses shutil.copystat.
+                        # Since Python 3.3, shutil.copystat copies file extended attributes:
+                        # https://docs.python.org/3/library/shutil.html#shutil.copystat
+                        # os.listxattr (along with others) was added to handle the operation.
+
+                        # This means that on Python 3 we are copying the extended attributes which includes
+                        # the ACLs on some systems - further limited to Linux as the documentation above claims
+                        # that the extended attributes are copied only on Linux. Also, os.listxattr is only
+                        # available on Linux.
+
+                        # If not remote_src, then the file was copied from the controller. In that
+                        # case, any filesystem ACLs are artifacts of the copy rather than preservation
+                        # of existing attributes. Get rid of them:
+
+                        if src_has_acls:
+                            # FIXME If dest has any default ACLs, there are not applied to src now because
+                            # they were overridden by copystat. Should/can we do anything about this?
+                            # 'system.posix_acl_default' in os.listxattr(os.path.dirname(b_dest))
+
+                            try:
+                                clear_facls(dest)
+                            except ValueError as e:
+                                if 'setfacl' in to_native(e):
+                                    # No setfacl so we're okay.  The controller couldn't have set a facl
+                                    # without the setfacl command
+                                    pass
+                                else:
+                                    raise
+                            except RuntimeError as e:
+                                # setfacl failed.
+                                if 'Operation not supported' in to_native(e):
+                                    # The file system does not support ACLs.
+                                    pass
+                                else:
+                                    raise
 
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
