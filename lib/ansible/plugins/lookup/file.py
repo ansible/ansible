@@ -25,20 +25,25 @@ DOCUMENTATION = """
         type: bool
         required: False
         default: False
+      raw:
+        description:
+            - Whether or not to automatically use vault and/or variable loading
+        type: bool
+        required: False
+        default: False
+        version_added: '2.12'
     notes:
-      - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
-      - this lookup does not understand 'globing', use the fileglob lookup instead.
+      - By default, if read in variable context, the file can be interpreted as YAML or JSON if the content is valid to the parser
+      - This lookup does not understand 'globing', use the fileglob lookup instead
+      - There is no support for binary content, everything read will be transformed to Python unicode text internally
 """
 
 EXAMPLES = """
 - debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
 
 - name: display multiple file contents
-  debug: var=item
-  with_file:
-    - "/path/to/foo.txt"
-    - "bar.txt"  # will be looked in files/ dir relative to play or in role
-    - "/path/to/biz.txt"
+  debug:
+    msg: '{{ lookup("file", "/path/to/foo.txt", "bar.txt", "/path/to/biz.txt") }}'
 """
 
 RETURN = """
@@ -51,7 +56,7 @@ RETURN = """
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.utils.display import Display
 
 display = Display()
@@ -72,7 +77,15 @@ class LookupModule(LookupBase):
             display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
-                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                    if self.get_option('raw'):
+                        try:
+                            with open(lookupfile, 'rb') as f:
+                                b_contents = f.read()
+                        except (IOError, OSError) as e:
+                            raise AnsibleError("Unable to read file (%s) contents: %s" % (lookupfile, to_native(e)))
+                    else:
+                        b_contents, show_data = self._loader._get_file_contents(lookupfile)
+
                     contents = to_text(b_contents, errors='surrogate_or_strict')
                     if self.get_option('lstrip'):
                         contents = contents.lstrip()
