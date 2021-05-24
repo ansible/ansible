@@ -26,6 +26,8 @@ options:
         You can also pass a url or a local path to a rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
       - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
+      - You can also pass an absolute path for a binary which is provided by the package to install.
+        See examples for more information.
     required: true
     aliases:
         - pkg
@@ -293,6 +295,11 @@ EXAMPLES = '''
 - name: Install nginx rpm from a local file
   dnf:
     name: /usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm
+    state: present
+
+- name: Install Package based upon the file it provides
+  dnf:
+    name: /usr/bin/cowsay
     state: present
 
 - name: Install the 'Development tools' package group
@@ -810,8 +817,12 @@ class DnfModule(YumDnf):
                 }
 
     def _whatprovides(self, filepath):
+        self.base.read_all_repos()
         available = self.base.sack.query().available()
-        pkg_spec = available.filter(provides=filepath).run()
+        # Search in file
+        files_filter = available.filter(file=filepath)
+        # And Search in provides
+        pkg_spec = files_filter.union(available.filter(provides=filepath)).run()
 
         if pkg_spec:
             return pkg_spec[0].name
@@ -826,14 +837,13 @@ class DnfModule(YumDnf):
                 filenames.append(name)
             elif name.endswith(".rpm"):
                 filenames.append(name)
-            elif name.startswith("@") or ('/' in name):
+            elif name.startswith('/'):
                 # like "dnf install /usr/bin/vi"
-                if '/' in name:
-                    pkg_spec = self._whatprovides(name)
-                    if pkg_spec:
-                        pkg_specs.append(pkg_spec)
-                        continue
-
+                pkg_spec = self._whatprovides(name)
+                if pkg_spec:
+                    pkg_specs.append(pkg_spec)
+                    continue
+            elif name.startswith("@") or ('/' in name):
                 if not already_loaded_comps:
                     self.base.read_comps()
                     already_loaded_comps = True
