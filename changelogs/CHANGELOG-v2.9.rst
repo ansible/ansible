@@ -5,15 +5,20 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
-v2.9.22rc1
-==========
+v2.9.22
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-05-17
+| Release Date: 2021-05-24
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
+
+Minor Changes
+-------------
+
+- ansible-test - cap websocket-client on python 2 because 1.0.0 stops supporting it.
 
 Bugfixes
 --------
