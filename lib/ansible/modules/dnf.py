@@ -26,7 +26,7 @@ options:
         You can also pass a url or a local path to a rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
       - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
-      - You can also pass absolute path for binary which is provided by the package to install.
+      - You can also pass an absolute path for a binary which is provided by the package to install.
         See examples for more information.
     required: true
     aliases:
