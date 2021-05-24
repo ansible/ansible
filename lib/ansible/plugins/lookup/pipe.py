@@ -57,7 +57,7 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             '''
-            https://docs.python.org/3.8/library/subprocess.html#popen-constructor
+            https://docs.python.org/3/library/subprocess.html#popen-constructor
 
             The shell argument (which defaults to False) specifies whether to use the
             shell as the program to execute. If shell is True, it is recommended to pass

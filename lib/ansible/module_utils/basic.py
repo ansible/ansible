@@ -1110,7 +1110,7 @@ class AnsibleModule(object):
         rev_umask = umask ^ PERM_BITS
 
         # Permission bits constants documented at:
-        # https://docs.python.org/3.8/library/stat.html#stat.S_ISUID
+        # https://docs.python.org/3/library/stat.html#stat.S_ISUID
         if apply_X_permission:
             X_perms = {
                 'u': {'X': stat.S_IXUSR},
