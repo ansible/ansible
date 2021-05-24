@@ -47,7 +47,7 @@ options:
       - Absolute path of where temporary file is downloaded to.
       - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
       - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
-      - U(https://docs.python.org/2/library/tempfile.html#tempfile.tempdir)
+      - U(https://docs.python.org/3/library/tempfile.html#tempfile.tempdir)
     type: path
     version_added: '2.1'
   force:

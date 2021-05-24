@@ -1250,7 +1250,7 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
     </rpc-reply>
 
 .. note::
-  For more information on supported XPath expressions, see `XPath Support <https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
+  For more information on supported XPath expressions, see `XPath Support <https://docs.python.org/3/library/xml.etree.elementtree.html#xpath-support>`_.
 
 Network VLAN filters
 --------------------

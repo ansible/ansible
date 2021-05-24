@@ -81,7 +81,7 @@ of size 8.
 
 .. versionadded:: 2.7
 
-If you do not have Passlib installed, Ansible uses the `crypt <https://docs.python.org/2/library/crypt.html>`_ library as a fallback. Ansible supports at most four crypt schemes, depending on your platform at most the following crypt schemes are supported:
+If you do not have Passlib installed, Ansible uses the `crypt <https://docs.python.org/3/library/crypt.html>`_ library as a fallback. Ansible supports at most four crypt schemes, depending on your platform at most the following crypt schemes are supported:
 
 - *bcrypt* - BCrypt
 - *md5_crypt* - MD5 Crypt
