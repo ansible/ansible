@@ -535,7 +535,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 2,
         'sched_getaffinity': set([0, 1]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-1core-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2socket-1core-1cpu-cpuinfo')).readlines(),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
@@ -552,7 +552,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-2core-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2socket-2core-2cpu-cpuinfo')).readlines(),
         'expected_result': {
             'processor': [
                 '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
@@ -571,7 +571,7 @@ CPU_INFO_TEST_SCENARIOS = [
         'architecture': 'x86_64',
         'nproc_out': 4,
         'sched_getaffinity': set([0, 1, 2, 3]),
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-4core-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-1socket-4core-8cpu-cpuinfo')).readlines(),
         'expected_result': {
             'processor': [
                 '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
@@ -591,7 +591,7 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
     {
-        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-1core-cpuinfo')).readlines(),
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-1socket-1core-8cpu-cpuinfo')).readlines(),
         'architecture': 'x86_64',
         'nproc_out': 8,
         'sched_getaffinity': set([0, 1, 2, 3, 4, 5, 6, 7]),
