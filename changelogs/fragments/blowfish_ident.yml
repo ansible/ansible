@@ -1,0 +1,3 @@
+minor_changes:
+- encrypt - add new parameter ``ident`` to specify version of BCrypt algorithm to be used (https://github.com/ansible/ansible/issues/74571).
+- password - add new parameter ``ident`` to specify version of BCrypt algorithm to be used (https://github.com/ansible/ansible/issues/74571).
