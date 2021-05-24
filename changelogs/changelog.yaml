@@ -1663,6 +1663,17 @@ releases:
     - fix-for-workerprocess-stdout-deadlock-fix.yml
     - v2.11.0rc2_summary.yaml
     release_date: '2021-04-06'
+  2.11.1:
+    changes:
+      release_summary: '| Release Date: 2021-05-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - v2.11.1_summary.yaml
+    release_date: '2021-05-24'
   2.11.1rc1:
     changes:
       bugfixes:
