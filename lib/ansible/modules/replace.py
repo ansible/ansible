@@ -35,7 +35,7 @@ options:
     description:
       - The regular expression to look for in the contents of the file.
       - Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        U(https://docs.python.org/3/library/re.html).
       - Uses MULTILINE mode, which means C(^) and C($) match the beginning
         and end of the file, as well as the beginning and end respectively
         of I(each line) of the file.
@@ -60,7 +60,7 @@ options:
       - If specified, only content after this match will be replaced/removed.
       - Can be used in combination with C(before).
       - Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        U(https://docs.python.org/3/library/re.html).
       - Uses DOTALL, which means the C(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
@@ -69,7 +69,7 @@ options:
       - If specified, only content before this match will be replaced/removed.
       - Can be used in combination with C(after).
       - Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        U(https://docs.python.org/3/library/re.html).
       - Uses DOTALL, which means the C(.) special character I(can match newlines).
     type: str
     version_added: "2.4"

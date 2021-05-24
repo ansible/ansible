@@ -373,7 +373,10 @@ Python 2.6.  Always remember to put numbers into the placeholders so the code
 is compatible with Python 2.6.
 
 .. seealso::
-    Python documentation on `format strings <https://docs.python.org/2/library/string.html#formatstrings>`_
+    Python documentation on format strings:
+    
+    - `format strings in 2.6 <https://docs.python.org/2.6/library/string.html#formatstrings>`_
+    - `format strings in 3.x <https://docs.python.org/3/library/string.html#formatstrings>`_
 
 Use percent format with byte strings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -394,7 +397,7 @@ does have support for the older, percent-formatting.
     Upgrade to Python 3.5 to test.
 
 .. seealso::
-    Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
+    Python documentation on `percent formatting <https://docs.python.org/3/library/stdtypes.html#string-formatting>`_
 
 .. _testing_modules_python_3:
 
