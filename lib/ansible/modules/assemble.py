@@ -59,7 +59,7 @@ options:
     - Assemble files only if C(regex) matches the filename.
     - If not set, all files are assembled.
     - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
-    - Uses L(Python regular expressions,http://docs.python.org/2/library/re.html).
+    - Uses L(Python regular expressions,https://docs.python.org/3/library/re.html).
     type: str
   ignore_hidden:
     description:
