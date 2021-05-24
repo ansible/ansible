@@ -1,0 +1,2 @@
+bugfixes:
+    - copy - fix for explicit copying of symlinks (https://github.com/ansible/ansible/issues/74777).
