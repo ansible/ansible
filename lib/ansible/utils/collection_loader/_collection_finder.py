@@ -49,7 +49,6 @@ try:
 except ImportError:
     _meta_yml_to_dict = None
 
-ANSIBLE_FILE_EXT = ('.yml', '.yaml')  # copy here due to test choking, though it should really use centralized in constants.py
 
 if not hasattr(__builtins__, 'ModuleNotFoundError'):
     # this was introduced in Python 3.6
@@ -69,6 +68,9 @@ except AttributeError:  # Python 2
         """Determine whether the given string is a Python identifier."""
         # Ref: https://stackoverflow.com/a/55802320/595220
         return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, tested_str))
+
+
+PB_EXTENSIONS = ('.yml', '.yaml')
 
 
 class _AnsibleCollectionFinder:
@@ -794,7 +796,7 @@ class AnsibleCollectionRef:
         ref_type = to_text(ref_type, errors='strict')
         ext = ''
 
-        if ref_type == u'playbook' and ref.endswith(ANSIBLE_FILE_EXT):
+        if ref_type == u'playbook' and ref.endswith(PB_EXTENSIONS):
             resource_splitname = ref.rsplit(u'.', 2)
             package_remnant = resource_splitname[0]
             resource = resource_splitname[1]
@@ -906,8 +908,8 @@ def _get_collection_playbook_path(playbook):
             path = os.path.join(cpath, to_native(acr.resource))
             if os.path.exists(to_bytes(path)):
                 return acr.resource, path, acr.collection
-            elif not acr.resource.endswith(ANSIBLE_FILE_EXT):
-                for ext in ANSIBLE_FILE_EXT:
+            elif not acr.resource.endswith(PB_EXTENSIONS):
+                for ext in PB_EXTENSIONS:
                     path = os.path.join(cpath, to_native(acr.resource + ext))
                     if os.path.exists(to_bytes(path)):
                         return acr.resource, path, acr.collection
