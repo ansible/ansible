@@ -1,0 +1,2 @@
+minor_changes:
+  - filter plugin - Changes the default behaviour in case of an invalid datetime value as an input it will return false to the user (https://github.com/ansible/ansible/pull/61291)
