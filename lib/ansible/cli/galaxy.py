@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import getpass
 import json
 import os.path
 import re
@@ -161,9 +162,14 @@ class GalaxyCLI(CLI):
         # Common arguments that apply to more than 1 action
         common = opt_help.argparse.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
-        common.add_argument('--token', '--api-key', dest='api_key',
-                            help='The Ansible Galaxy API key which can be found at '
-                                 'https://galaxy.ansible.com/me/preferences.')
+        command_group = common.add_mutually_exclusive_group()
+
+        command_group.add_argument('--token', '--api-key', dest='api_key',
+                                   help='The Ansible Galaxy API key which can be found at '
+                                        'https://galaxy.ansible.com/me/preferences.')
+        command_group.add_argument('--stdin-token', '--stdin-api-key', dest='stdin_api_key',
+                                   action='store_true', default=False,
+                                   help='Read Ansible Galaxy API key from stdin')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs',
                             default=C.GALAXY_IGNORE_CERTS, help='Ignore SSL certificate validation errors.')
         opt_help.add_verbosity_options(common)
@@ -525,7 +531,18 @@ class GalaxyCLI(CLI):
             ))
 
         cmd_server = context.CLIARGS['api_server']
-        cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
+        stdin_api_key = context.CLIARGS['stdin_api_key']
+        api_key = context.CLIARGS['api_key']
+        if api_key:
+            display.warning("Using '--token' or '--api-key' via the cli is insecure. "
+                            "Please consider using '--stdin-token' or '--stdin-api-key'")
+        if stdin_api_key:
+            try:
+                api_key = getpass.getpass(prompt="Galaxy Token:")
+            except EOFError:
+                pass
+
+        cmd_token = GalaxyToken(token=api_key)
         if cmd_server:
             # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
             # entry, otherwise create a new API entry for the server specified.
