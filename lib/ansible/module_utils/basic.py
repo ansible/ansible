@@ -1863,7 +1863,7 @@ class AnsibleModule(object):
         :kw prompt_regex: Regex string (not a compiled regex) which can be
             used to detect prompts in the stdout which would otherwise cause
             the execution to hang (especially if no input data is specified)
-        :kw environ_update: dictionary to *update* os.environ with
+        :kw environ_update: dictionary to *update* environ variables with
         :kw umask: Umask to be used when running the command. Default None
         :kw encoding: Since we return native strings, on python3 we need to
             know the encoding to use to transform from bytes to text.  If you
@@ -1958,23 +1958,16 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Manipulate the environ we'll send to the new process
-        old_env_vals = {}
+        env = os.environ.copy()
         # We can set this from both an attribute and per call
-        for key, val in self.run_command_environ_update.items():
-            old_env_vals[key] = os.environ.get(key, None)
-            os.environ[key] = val
-        if environ_update:
-            for key, val in environ_update.items():
-                old_env_vals[key] = os.environ.get(key, None)
-                os.environ[key] = val
+        env.update(self.run_command_environ_update or {})
+        env.update(environ_update or {})
         if path_prefix:
-            path = os.environ.get('PATH', '')
-            old_env_vals['PATH'] = path
+            path = env.get('PATH', '')
             if path:
-                os.environ['PATH'] = "%s:%s" % (path_prefix, path)
+                env['PATH'] = "%s:%s" % (path_prefix, path)
             else:
-                os.environ['PATH'] = path_prefix
+                env['PATH'] = path_prefix
 
         # If using test-module.py and explode, the remote lib path will resemble:
         #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
@@ -1982,17 +1975,21 @@ class AnsibleModule(object):
         #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
 
         # Clean out python paths set by ansiballz
-        if 'PYTHONPATH' in os.environ:
-            pypaths = os.environ['PYTHONPATH'].split(':')
-            pypaths = [x for x in pypaths
-                       if not x.endswith('/ansible_modlib.zip') and
+        if 'PYTHONPATH' in env:
+            pypaths = [x for x in env['PYTHONPATH'].split(':')
+                       if x and
+                       not x.endswith('/ansible_modlib.zip') and
                        not x.endswith('/debug_dir')]
-            os.environ['PYTHONPATH'] = ':'.join(pypaths)
-            if not os.environ['PYTHONPATH']:
-                del os.environ['PYTHONPATH']
+            if pypaths and any(pypaths):
+                env['PYTHONPATH'] = ':'.join(pypaths)
 
         if data:
             st_in = subprocess.PIPE
+
+        def preexec():
+            self._restore_signal_handlers()
+            if umask:
+                os.umask(umask)
 
         kwargs = dict(
             executable=executable,
@@ -2001,32 +1998,21 @@ class AnsibleModule(object):
             stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            preexec_fn=self._restore_signal_handlers,
+            preexec_fn=preexec,
+            env=env,
         )
         if PY3 and pass_fds:
             kwargs["pass_fds"] = pass_fds
         elif PY2 and pass_fds:
             kwargs['close_fds'] = False
 
-        # store the pwd
-        prev_dir = os.getcwd()
-
         # make sure we're in the right working directory
         if cwd:
+            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
             if os.path.isdir(cwd):
-                cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
                 kwargs['cwd'] = cwd
-                try:
-                    os.chdir(cwd)
-                except (OSError, IOError) as e:
-                    self.fail_json(rc=e.errno, msg="Could not chdir to %s, %s" % (cwd, to_native(e)),
-                                   exception=traceback.format_exc())
             elif not ignore_invalid_cwd:
                 self.fail_json(msg="Provided cwd is not a valid directory: %s" % cwd)
-
-        old_umask = None
-        if umask:
-            old_umask = os.umask(umask)
 
         try:
             if self._debug:
@@ -2103,22 +2089,9 @@ class AnsibleModule(object):
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
             self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
 
-        # Restore env settings
-        for key, val in old_env_vals.items():
-            if val is None:
-                del os.environ[key]
-            else:
-                os.environ[key] = val
-
-        if old_umask:
-            os.umask(old_umask)
-
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
             self.fail_json(cmd=self._clean_args(args), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
-
-        # reset the pwd
-        os.chdir(prev_dir)
 
         if encoding is not None:
             return (rc, to_native(stdout, encoding=encoding, errors=errors),
