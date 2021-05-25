@@ -216,6 +216,16 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 
 The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website. The command waits until the import process completes before reporting the status back. If you want to continue without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
+Alternately, you can publish to Galaxy without configuring the token in :file:`ansible.cfg`.  Use the ``--token`` argument directly on the command line.
+
+.. code-block:: bash
+
+     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz --token abcdefghijklmnopqrtuvwxyz
+     
+.. note::
+
+	Using the ``--token`` argument is not recommended because passing secrets on the command line may lead to exposing them to others on the system
+	
 
 .. _upload_collection_galaxy:
 
