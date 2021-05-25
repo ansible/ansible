@@ -230,6 +230,14 @@ class CLI(with_metaclass(ABCMeta, object)):
         return vault_secrets
 
     @staticmethod
+    def _get_secret(prompt):
+
+        secret = getpass.getpass(prompt=prompt)
+        if secret:
+            secret = to_unsafe_text(secret)
+        return secret
+
+    @staticmethod
     def ask_passwords():
         ''' prompt for connection and become passwords if needed '''
 
@@ -243,13 +251,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         try:
             become_prompt = "%s password: " % become_prompt_method
             if op['ask_pass']:
-                sshpass = getpass.getpass(prompt="SSH password: ")
+                sshpass = self._get_secret("SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
             elif op['connection_password_file']:
                 sshpass = CLI.get_password_from_file(op['connection_password_file'])
 
             if op['become_ask_pass']:
-                becomepass = getpass.getpass(prompt=become_prompt)
+                becomepass = self._get_secret(become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
             elif op['become_password_file']:
@@ -257,13 +265,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         except EOFError:
             pass
-
-        # we 'wrap' the passwords to prevent templating as
-        # they can contain special chars and trigger it incorrectly
-        if sshpass:
-            sshpass = to_unsafe_text(sshpass)
-        if becomepass:
-            becomepass = to_unsafe_text(becomepass)
 
         return (sshpass, becomepass)
 
@@ -540,4 +541,4 @@ class CLI(with_metaclass(ABCMeta, object)):
         if not secret:
             raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
 
-        return secret
+        return to_unsafe_text(secret)
