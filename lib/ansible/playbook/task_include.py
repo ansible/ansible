@@ -46,11 +46,6 @@ class TaskInclude(Task):
                                         'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'timeout', 'vars',
                                         'when'))
 
-    # =================================================================================
-    # ATTRIBUTES
-
-    _static = FieldAttribute(isa='bool', default=None)
-
     def __init__(self, block=None, role=None, task_include=None):
         super(TaskInclude, self).__init__(block=block, role=role, task_include=task_include)
         self.statically_loaded = False

@@ -193,8 +193,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertEqual(len(res), 0)
 
     def test_one_bogus_include_static(self):
-        ds = [{'include': 'somefile.yml',
-               'static': 'true'}]
+        ds = [{'import_tasks': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
@@ -241,28 +240,6 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIn('test_one_parent_include_tags_tag1', res[0].tags)
         self.assertIn('and_another_tag2', res[0].tags)
 
-    # It would be useful to be able to tell what kind of deprecation we encountered and where we encountered it.
-    def test_one_include_tags_deprecated_mixed(self):
-        ds = [{'include': "/dev/null/includes/other_test_include.yml",
-               'vars': {'tags': "['tag_on_include1', 'tag_on_include2']"},
-               'tags': 'mixed_tag1, mixed_tag2'
-               }]
-        self.assertRaisesRegexp(errors.AnsibleParserError, 'Mixing styles',
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
-
-    def test_one_include_tags_deprecated_include(self):
-        ds = [{'include': '/dev/null/includes/other_test_include.yml',
-               'vars': {'tags': ['include_tag1_deprecated', 'and_another_tagB_deprecated']}
-               }]
-        res = helpers.load_list_of_tasks(ds, play=self.mock_play,
-                                         variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
-        self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
-        self.assertIn('include_tag1_deprecated', res[0].tags)
-        self.assertIn('and_another_tagB_deprecated', res[0].tags)
-
     def test_one_include_use_handlers(self):
         ds = [{'include': '/dev/null/includes/other_test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
@@ -286,11 +263,10 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     #  figure out how to get the non-static errors to be raised, this seems to just ignore everything
     def test_one_include_not_static(self):
         ds = [{
-            'include': '/dev/null/includes/static_test_include.yml',
-            'static': False
+            'include_tasks': '/dev/null/includes/static_test_include.yml',
         }]
         # a_block = Block()
-        ti_ds = {'include': '/dev/null/includes/ssdftatic_test_include.yml'}
+        ti_ds = {'include_tasks': '/dev/null/includes/ssdftatic_test_include.yml'}
         a_task_include = TaskInclude()
         ti = a_task_include.load(ti_ds)
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
