@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: items
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: items
+    author: Michael DeHaan
     version_added: historical
     short_description: list of items
     description:
@@ -24,7 +24,7 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: "loop through list"
   debug:
-    msg: "An item: {{item}}"
+    msg: "An item: {{ item }}"
   with_items:
     - 1
     - 2
@@ -41,7 +41,7 @@ EXAMPLES = """
 
 - name: "loop through list from a variable"
   debug:
-    msg: "An item: {{item}}"
+    msg: "An item: {{ item }}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users

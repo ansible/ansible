@@ -1,0 +1,13 @@
+shippable/posix/incidental
+skip/aix
+skip/power/centos
+skip/osx
+skip/macos
+skip/freebsd
+destructive
+skip/docker  # The tests sometimes make docker daemon unstable; hence,
+             # we skip all docker-based CI runs to avoid disrupting
+             # the whole CI system. On VMs, we restart docker daemon
+             # after finishing the tests to minimize potential effects
+             # on other tests.
+needs/root

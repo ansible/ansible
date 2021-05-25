@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - When upgrading, every architecture of a package is now included in the module results, instead of just one (https://github.com/ansible/ansible/issues/73284).

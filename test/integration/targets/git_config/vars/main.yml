@@ -1,6 +1,0 @@
----
-git_version_supporting_includes: 1.7.10
-option_name: http.proxy
-option_value: 'foo'
-option_scope: global
-...

@@ -7,7 +7,7 @@ Basic rules
 
 Use standard American English
 -----------------------------
-Ansible uses Standard American English. Watch for common words that are spelled differently in American English (color vs colour, organize vs organise, etc.).
+Ansible uses Standard American English. Watch for common words that are spelled differently in American English (color vs colour, organize vs organise, and so on).
 
 Write for a global audience
 ---------------------------
@@ -54,14 +54,14 @@ Highlight menu items and commands
 ---------------------------------
 When documenting menus or commands, it helps to **bold** what is important.
 
-For menu procedures, bold the menu names, button names, etc to help the user find them on the GUI:
+For menu procedures, bold the menu names, button names, and so on to help the user find them on the GUI:
 
 1. On the **File** menu, click **Open**.
 2. Type a name in the **User Name** field.
 3. In the **Open** dialog box, click **Save**.
 4. On the toolbar, click the **Open File** icon.
 
-For code or command snippets, use the RST `code-block directive <http://www.sphinx-doc.org/en/1.5/markup/code.html#directive-code-block>`_::
+For code or command snippets, use the RST `code-block directive <https://www.sphinx-doc.org/en/1.5/markup/code.html#directive-code-block>`_::
 
    .. code-block:: bash
 

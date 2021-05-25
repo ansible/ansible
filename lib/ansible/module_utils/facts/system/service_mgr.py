@@ -32,7 +32,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # that don't belong on production boxes.  Since our Solaris code doesn't
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
-    from distutils.version import LooseVersion
+    from ansible.module_utils.compat.version import LooseVersion
 
 
 class ServiceMgrFactCollector(BaseFactCollector):
@@ -50,6 +50,16 @@ class ServiceMgrFactCollector(BaseFactCollector):
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
                     return True
+        return False
+
+    @staticmethod
+    def is_systemd_managed_offline(module):
+        # tools must be installed
+        if module.get_bin_path('systemctl'):
+            # check if /sbin/init is a symlink to systemd
+            # on SUSE, /sbin/init may be missing if systemd-sysvinit package is not installed.
+            if os.path.islink('/sbin/init') and os.path.basename(os.readlink('/sbin/init')) == 'systemd':
+                return True
         return False
 
     def collect(self, module=None, collected_facts=None):
@@ -129,6 +139,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
                 service_mgr_name = 'upstart'
             elif os.path.exists('/sbin/openrc'):
                 service_mgr_name = 'openrc'
+            elif self.is_systemd_managed_offline(module=module):
+                service_mgr_name = 'systemd'
             elif os.path.exists('/etc/init.d/'):
                 service_mgr_name = 'sysvinit'
 

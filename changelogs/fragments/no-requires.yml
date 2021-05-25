@@ -1,0 +1,2 @@
+minor_changes:
+- CLI - Remove ``__requires__`` attribute for ``pkg_resources``

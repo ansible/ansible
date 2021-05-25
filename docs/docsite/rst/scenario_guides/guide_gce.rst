@@ -157,11 +157,11 @@ Create an instance
 The full range of GCP modules provide the ability to create a wide variety of
 GCP resources with the full support of the entire GCP API.
 
-The following playbook creates a GCE Instance. This instance relies on a GCP
-network and a Disk. By creating the Disk and Network separately, we can give as
-much detail as necessary about how we want the disk and network formatted. By
-registering a Disk/Network to a variable, we can simply insert the variable
-into the instance task. The gcp_compute_instance module will figure out the
+The following playbook creates a GCE Instance. This instance relies on other GCP
+resources like Disk. By creating other resources separately, we can give as
+much detail as necessary about how we want to configure the other resources, for example
+formatting of the Disk. By registering it to a variable, we can simply insert the 
+variable into the instance task. The gcp_compute_instance module will figure out the
 rest.
 
 .. code-block:: yaml
@@ -190,16 +190,6 @@ rest.
               - https://www.googleapis.com/auth/compute
             state: present
         register: disk
-      - name: create a network
-        gcp_compute_network:
-            name: 'network-instance'
-            project: "{{ gcp_project }}"
-            auth_kind: "{{ gcp_cred_kind }}"
-            service_account_file: "{{ gcp_cred_file }}"
-            scopes:
-              - https://www.googleapis.com/auth/compute
-            state: present
-        register: network
       - name: create a address
         gcp_compute_address:
             name: 'address-instance'
@@ -221,7 +211,7 @@ rest.
                 boot: true
                 source: "{{ disk }}"
             network_interfaces:
-                - network: "{{ network }}"
+                - network: null # use default
                   access_configs:
                     - name: 'External NAT'
                       nat_ip: "{{ address }}"
@@ -234,17 +224,17 @@ rest.
               - https://www.googleapis.com/auth/compute
         register: instance
 
-       - name: Wait for SSH to come up
-         wait_for: host={{ address.address }} port=22 delay=10 timeout=60
+      - name: Wait for SSH to come up
+        wait_for: host={{ address.address }} port=22 delay=10 timeout=60
 
-       - name: Add host to groupname
-         add_host: hostname={{ address.address }} groupname=new_instances
+      - name: Add host to groupname
+        add_host: hostname={{ address.address }} groupname=new_instances
 
 
    - name: Manage new instances
      hosts: new_instances
      connection: ssh
-     sudo: True
+     become: True
      roles:
        - base_configuration
        - production_server
@@ -307,6 +297,6 @@ An example playbook is below:
       auth_kind: "service_account_file"
       service_account_file: "~/my_account.json"
       state: present
-  with_items:
+  loop:
     - instance-1
     - instance-2

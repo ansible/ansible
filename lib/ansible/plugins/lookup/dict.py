@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: dict
+    name: dict
     version_added: "1.5"
     short_description: returns key/value pair items from dictionaries
     description:
@@ -62,7 +62,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        # FIXME: can remove once with_ special case is removed
+        # NOTE: can remove if with_ is removed
         if not isinstance(terms, list):
             terms = [terms]
 

@@ -1,0 +1,3 @@
+shippable/posix/group4
+skip/python2.6
+skip/aix

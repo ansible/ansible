@@ -34,11 +34,12 @@ def test_check_mutually_exclusive_found(mutually_exclusive_terms):
         'fox': 'red',
         'socks': 'blue',
     }
-    expected = "TypeError('parameters are mutually exclusive: string1|string2, box|fox|socks',)"
+    expected = "parameters are mutually exclusive: string1|string2, box|fox|socks"
 
     with pytest.raises(TypeError) as e:
         check_mutually_exclusive(mutually_exclusive_terms, params)
-        assert e.value == expected
+
+    assert to_native(e.value) == expected
 
 
 def test_check_mutually_exclusive_none():
@@ -53,4 +54,4 @@ def test_check_mutually_exclusive_none():
 def test_check_mutually_exclusive_no_params(mutually_exclusive_terms):
     with pytest.raises(TypeError) as te:
         check_mutually_exclusive(mutually_exclusive_terms, None)
-        assert "TypeError: 'NoneType' object is not iterable" in to_native(te.error)
+    assert "'NoneType' object is not iterable" in to_native(te.value)

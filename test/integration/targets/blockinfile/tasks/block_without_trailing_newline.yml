@@ -1,0 +1,30 @@
+- name: Add block without trailing line separator
+  blockinfile:
+    path: "{{ output_dir_test }}/chomped_block_test.txt"
+    create: yes
+    content: |-
+      one
+      two
+      three
+  register: chomptest1
+
+- name: Add block without trailing line separator again
+  blockinfile:
+    path: "{{ output_dir_test }}/chomped_block_test.txt"
+    content: |-
+      one
+      two
+      three
+  register: chomptest2
+
+- name: Check output file
+  stat:
+    path: "{{ output_dir_test }}/chomped_block_test.txt"
+  register: chomptest_file
+
+- name: Ensure chomptest results are correct
+  assert:
+    that:
+      - chomptest1 is changed
+      - chomptest2 is not changed
+      - chomptest_file.stat.checksum == '50d49f528a5f7147c7029ed6220c326b1ee2c4ae'

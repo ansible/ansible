@@ -83,6 +83,9 @@ class TestTaggable(unittest.TestCase):
     def test_evaluate_tags_special_all_in_only_tags(self):
         self.assert_evaluate_equal(True, ['tag'], ['all'], ['untagged'])
 
+    def test_evaluate_tags_special_all_in_only_tags_and_object_untagged(self):
+        self.assert_evaluate_equal(True, [], ['all'], [])
+
     def test_evaluate_tags_special_all_in_skip_tags(self):
         self.assert_evaluate_equal(False, ['tag'], ['tag'], ['all'])
 

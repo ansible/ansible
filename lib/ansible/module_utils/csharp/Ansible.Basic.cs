@@ -20,12 +20,11 @@ using System.Web.Script.Serialization;
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
 //NoWarn -Name CS1702 -CLR Core
 
-//AssemblyReference -Name Newtonsoft.Json.dll -CLR Core
-//AssemblyReference -Name System.ComponentModel.Primitives.dll -CLR Core
-//AssemblyReference -Name System.Diagnostics.EventLog.dll -CLR Core
-//AssemblyReference -Name System.IO.FileSystem.AccessControl.dll -CLR Core
-//AssemblyReference -Name System.Security.Principal.Windows.dll -CLR Core
-//AssemblyReference -Name System.Security.AccessControl.dll -CLR Core
+//AssemblyReference -Type Newtonsoft.Json.JsonConvert -CLR Core
+//AssemblyReference -Type System.Diagnostics.EventLog -CLR Core
+//AssemblyReference -Type System.Security.AccessControl.NativeObjectSecurity -CLR Core
+//AssemblyReference -Type System.Security.AccessControl.DirectorySecurity -CLR Core
+//AssemblyReference -Type System.Security.Principal.IdentityReference -CLR Core
 
 //AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
 
@@ -38,6 +37,8 @@ namespace Ansible.Basic
 
         public delegate void WriteLineHandler(string line);
         public static WriteLineHandler WriteLine = new WriteLineHandler(WriteLineModule);
+
+        public static bool _DebugArgSpec = false;
 
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
@@ -78,16 +79,19 @@ namespace Ansible.Basic
             { "aliases", new List<object>() { typeof(List<string>), typeof(List<string>) } },
             { "choices", new List<object>() { typeof(List<object>), typeof(List<object>) } },
             { "default", new List<object>() { null, null } },
+            { "deprecated_aliases", new List<object>() { typeof(List<Hashtable>), typeof(List<Hashtable>) } },
             { "elements", new List<object>() { null, null } },
-            { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), null } },
+            { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), typeof(List<object>) } },
             { "no_log", new List<object>() { false, typeof(bool) } },
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
+            { "removed_at_date", new List<object>() { null, typeof(DateTime) } },
+            { "removed_from_collection", new List<object>() { null, typeof(string) } },
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
-            { "required_if", new List<object>() { typeof(List<List<object>>), null } },
-            { "required_one_of", new List<object>() { typeof(List<List<string>>), null } },
-            { "required_together", new List<object>() { typeof(List<List<string>>), null } },
+            { "required_if", new List<object>() { typeof(List<List<object>>), typeof(List<object>) } },
+            { "required_one_of", new List<object>() { typeof(List<List<string>>), typeof(List<object>) } },
+            { "required_together", new List<object>() { typeof(List<List<string>>), typeof(List<object>) } },
             { "supports_check_mode", new List<object>() { false, typeof(bool) } },
             { "type", new List<object>() { "str", null } },
         };
@@ -184,7 +188,7 @@ namespace Ansible.Basic
             }
         }
 
-        public AnsibleModule(string[] args, IDictionary argumentSpec)
+        public AnsibleModule(string[] args, IDictionary argumentSpec, IDictionary[] fragments = null)
         {
             // NoLog is not set yet, we cannot rely on FailJson to sanitize the output
             // Do the minimum amount to get this running before we actually parse the params
@@ -192,12 +196,40 @@ namespace Ansible.Basic
             try
             {
                 ValidateArgumentSpec(argumentSpec);
+
+                // Merge the fragments if present into the main arg spec.
+                if (fragments != null)
+                {
+                    foreach (IDictionary fragment in fragments)
+                    {
+                        ValidateArgumentSpec(fragment);
+                        MergeFragmentSpec(argumentSpec, fragment);
+                    }
+                }
+
+                // Used by ansible-test to retrieve the module argument spec, not designed for public use.
+                if (_DebugArgSpec)
+                {
+                    // Cannot call exit here because it will be caught with the catch (Exception e) below. Instead
+                    // just throw a new exception with a specific message and the exception block will handle it.
+                    ScriptBlock.Create("Set-Variable -Name ansibleTestArgSpec -Value $args[0] -Scope Global"
+                        ).Invoke(argumentSpec);
+                    throw new Exception("ansible-test validate-modules check");
+                }
+
+                // Now make sure all the metadata keys are set to their defaults, this must be done after we've
+                // potentially output the arg spec for ansible-test.
+                SetArgumentSpecDefaults(argumentSpec);
+
                 Params = GetParams(args);
                 aliases = GetAliases(argumentSpec, Params);
                 SetNoLogValues(argumentSpec, Params);
             }
             catch (Exception e)
             {
+                if (e.Message == "ansible-test validate-modules check")
+                    Exit(0);
+
                 Dictionary<string, object> result = new Dictionary<string, object>
                 {
                     { "failed", true },
@@ -231,9 +263,9 @@ namespace Ansible.Basic
                 LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
         }
 
-        public static AnsibleModule Create(string[] args, IDictionary argumentSpec)
+        public static AnsibleModule Create(string[] args, IDictionary argumentSpec, IDictionary[] fragments = null)
         {
-            return new AnsibleModule(args, argumentSpec);
+            return new AnsibleModule(args, argumentSpec, fragments);
         }
 
         public void Debug(string message)
@@ -244,8 +276,27 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, string version)
         {
-            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
+            Deprecate(message, version, null);
+        }
+
+        public void Deprecate(string message, string version, string collectionName)
+        {
+            deprecations.Add(new Dictionary<string, string>() {
+                { "msg", message }, { "version", version }, { "collection_name", collectionName } });
             LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+        }
+
+        public void Deprecate(string message, DateTime date)
+        {
+            Deprecate(message, date, null);
+        }
+
+        public void Deprecate(string message, DateTime date, string collectionName)
+        {
+            string isoDate = date.ToString("yyyy-MM-dd");
+            deprecations.Add(new Dictionary<string, string>() {
+                { "msg", message }, { "date", isoDate }, { "collection_name", collectionName } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, isoDate));
         }
 
         public void ExitJson()
@@ -580,13 +631,19 @@ namespace Ansible.Basic
                     {
                         // verify the actual type is not just a single value of the list type
                         Type entryType = optionType.GetGenericArguments()[0];
+                        object[] arrayElementTypes = new object[]
+                        {
+                            null,  // ArrayList does not have an ElementType
+                            entryType,
+                            typeof(object),  // Hope the object is actually entryType or it can at least be casted.
+                        };
 
-                        bool isArray = actualType.IsArray && (actualType.GetElementType() == entryType || actualType.GetElementType() == typeof(object));
+                        bool isArray = entry.Value is IList && arrayElementTypes.Contains(actualType.GetElementType());
                         if (actualType == entryType || isArray)
                         {
-                            object[] rawArray;
+                            object rawArray;
                             if (isArray)
-                                rawArray = (object[])entry.Value;
+                                rawArray = entry.Value;
                             else
                                 rawArray = new object[1] { entry.Value };
 
@@ -649,8 +706,36 @@ namespace Ansible.Basic
             // Outside of the spec iterator, change the values that were casted above
             foreach (KeyValuePair<string, object> changedValue in changedValues)
                 argumentSpec[changedValue.Key] = changedValue.Value;
+        }
 
-            // Now make sure all the metadata keys are set to their defaults
+        private void MergeFragmentSpec(IDictionary argumentSpec, IDictionary fragment)
+        {
+            foreach (DictionaryEntry fragmentEntry in fragment)
+            {
+                string fragmentKey = fragmentEntry.Key.ToString();
+
+                if (argumentSpec.Contains(fragmentKey))
+                {
+                    // We only want to add new list entries and merge dictionary new keys and values. Leave the other
+                    // values as is in the argument spec as that takes priority over the fragment.
+                    if (fragmentEntry.Value is IDictionary)
+                    {
+                        MergeFragmentSpec((IDictionary)argumentSpec[fragmentKey], (IDictionary)fragmentEntry.Value);
+                    }
+                    else if (fragmentEntry.Value is IList)
+                    {
+                        IList specValue = (IList)argumentSpec[fragmentKey];
+                        foreach (object fragmentValue in (IList)fragmentEntry.Value)
+                            specValue.Add(fragmentValue);
+                    }
+                }
+                else
+                    argumentSpec[fragmentKey] = fragmentEntry.Value;
+            }
+        }
+
+        private void SetArgumentSpecDefaults(IDictionary argumentSpec)
+        {
             foreach (KeyValuePair<string, List<object>> metadataEntry in specDefaults)
             {
                 List<object> defaults = metadataEntry.Value;
@@ -660,6 +745,22 @@ namespace Ansible.Basic
 
                 if (!argumentSpec.Contains(metadataEntry.Key))
                     argumentSpec[metadataEntry.Key] = defaultValue;
+            }
+
+            // Recursively set the defaults for any inner options.
+            foreach (DictionaryEntry entry in argumentSpec)
+            {
+                if (entry.Value == null || entry.Key.ToString() != "options")
+                    continue;
+
+                IDictionary optionsSpec = (IDictionary)entry.Value;
+                foreach (DictionaryEntry optionEntry in optionsSpec)
+                {
+                    optionsContext.Add((string)optionEntry.Key);
+                    IDictionary optionMeta = (IDictionary)optionEntry.Value;
+                    SetArgumentSpecDefaults(optionMeta);
+                    optionsContext.RemoveAt(optionsContext.Count - 1);
+                }
             }
         }
 
@@ -685,6 +786,55 @@ namespace Ansible.Basic
                     if (parameters.Contains(alias))
                         parameters[k] = parameters[alias];
                 }
+
+                List<Hashtable> deprecatedAliases = (List<Hashtable>)v["deprecated_aliases"];
+                foreach (Hashtable depInfo in deprecatedAliases)
+                {
+                    foreach (string keyName in new List<string> { "name" })
+                    {
+                        if (!depInfo.ContainsKey(keyName))
+                        {
+                            string msg = String.Format("{0} is required in a deprecated_aliases entry", keyName);
+                            throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                        }
+                    }
+                    if (!depInfo.ContainsKey("version") && !depInfo.ContainsKey("date"))
+                    {
+                        string msg = "One of version or date is required in a deprecated_aliases entry";
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                    }
+                    if (depInfo.ContainsKey("version") && depInfo.ContainsKey("date"))
+                    {
+                        string msg = "Only one of version or date is allowed in a deprecated_aliases entry";
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                    }
+                    if (depInfo.ContainsKey("date") && depInfo["date"].GetType() != typeof(DateTime))
+                    {
+                        string msg = "A deprecated_aliases date must be a DateTime object";
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                    }
+                    string collectionName = null;
+                    if (depInfo.ContainsKey("collection_name"))
+                    {
+                        collectionName = (string)depInfo["collection_name"];
+                    }
+                    string aliasName = (string)depInfo["name"];
+
+                    if (parameters.Contains(aliasName))
+                    {
+                        string msg = String.Format("Alias '{0}' is deprecated. See the module docs for more information", aliasName);
+                        if (depInfo.ContainsKey("version"))
+                        {
+                            string depVersion = (string)depInfo["version"];
+                            Deprecate(FormatOptionsContext(msg, " - "), depVersion, collectionName);
+                        }
+                        if (depInfo.ContainsKey("date"))
+                        {
+                            DateTime depDate = (DateTime)depInfo["date"];
+                            Deprecate(FormatOptionsContext(msg, " - "), depDate, collectionName);
+                        }
+                    }
+                }
             }
 
             return aliasResults;
@@ -700,13 +850,25 @@ namespace Ansible.Basic
                 if ((bool)v["no_log"])
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
-                    if (noLogObject != null)
-                        noLogValues.Add(noLogObject.ToString());
+                    string noLogString = noLogObject == null ? "" : noLogObject.ToString();
+                    if (!String.IsNullOrEmpty(noLogString))
+                        noLogValues.Add(noLogString);
+                }
+                string collectionName = null;
+                if (v.ContainsKey("removed_from_collection"))
+                {
+                    collectionName = (string)v["removed_from_collection"];
                 }
 
                 object removedInVersion = v["removed_in_version"];
                 if (removedInVersion != null && parameters.Contains(k))
-                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedInVersion.ToString());
+                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k),
+                              removedInVersion.ToString(), collectionName);
+
+                object removedAtDate = v["removed_at_date"];
+                if (removedAtDate != null && parameters.Contains(k))
+                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k),
+                              (DateTime)removedAtDate, collectionName);
             }
         }
 
@@ -1045,7 +1207,7 @@ namespace Ansible.Basic
 
                 if (missing.Count > 0)
                 {
-                    string msg =  String.Format("missing parameter(s) required by '{0}': {1}", key, String.Join(", ", missing));
+                    string msg = String.Format("missing parameter(s) required by '{0}': {1}", key, String.Join(", ", missing));
                     FailJson(FormatOptionsContext(msg));
                 }
             }
@@ -1312,4 +1474,3 @@ namespace Ansible.Basic
         }
     }
 }
-

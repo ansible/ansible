@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  collections:
+    - kubernetes.core
+  tasks:
+  - name: Create a pod
+    k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: "utilitypod-1"
+          namespace: default
+          labels:
+            app: galaxy
+        spec:
+          containers:
+          - name: utilitypod
+            image: busybox

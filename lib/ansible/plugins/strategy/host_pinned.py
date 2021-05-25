@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: host_pinned
+    name: host_pinned
     short_description: Executes tasks on each host without interruption
     description:
         - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).

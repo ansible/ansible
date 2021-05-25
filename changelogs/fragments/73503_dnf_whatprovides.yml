@@ -1,0 +1,2 @@
+bugfixes:
+- dnf - refactor code to use `dnf whatprovides` API (https://github.com/ansible/ansible/issues/73503).

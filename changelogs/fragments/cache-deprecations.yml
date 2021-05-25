@@ -1,0 +1,4 @@
+minor_changes:
+  - inventory plugins - Remove the deprecated cache interface. Set top level keys in the inventory plugin's `_cache` attribute (a dictionary) instead.
+  - fact cache - Remove the deprecated location for FactCache. Import FactCache from `ansible.vars.fact_cache` instead.
+  - fact cache - Remove deprecated backwards compatibility shim for the FactCache `update` method to accept multiple arguments.

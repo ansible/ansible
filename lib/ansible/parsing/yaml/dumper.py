@@ -21,18 +21,18 @@ __metaclass__ = type
 
 import yaml
 
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
-class AnsibleDumper(yaml.SafeDumper):
+class AnsibleDumper(SafeDumper):
     '''
     A simple stub class that allows us to add representers
     for our overridden object types.
     '''
-    pass
 
 
 def represent_hostvars(self, data):
@@ -45,9 +45,18 @@ def represent_vault_encrypted_unicode(self, data):
 
 
 if PY3:
-    represent_unicode = yaml.representer.SafeRepresenter.represent_str
+    def represent_unicode(self, data):
+        return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
+
+    def represent_binary(self, data):
+        return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
 else:
-    represent_unicode = yaml.representer.SafeRepresenter.represent_unicode
+    def represent_unicode(self, data):
+        return yaml.representer.SafeRepresenter.represent_unicode(self, text_type(data))
+
+    def represent_binary(self, data):
+        return yaml.representer.SafeRepresenter.represent_str(self, binary_type(data))
+
 
 AnsibleDumper.add_representer(
     AnsibleUnicode,
@@ -57,6 +66,11 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     AnsibleUnsafeText,
     represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleUnsafeBytes,
+    represent_binary,
 )
 
 AnsibleDumper.add_representer(

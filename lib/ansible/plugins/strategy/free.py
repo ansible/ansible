@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: free
+    name: free
     short_description: Executes tasks without waiting for all hosts
     description:
         - Task execution is as fast as possible per batch as defined by C(serial) (default all).
@@ -46,6 +46,14 @@ display = Display()
 
 
 class StrategyModule(StrategyBase):
+
+    # This strategy manages throttling on its own, so we don't want it done in queue_task
+    ALLOW_BASE_THROTTLING = False
+
+    def _filter_notified_failed_hosts(self, iterator, notified_hosts):
+
+        # If --force-handlers is used we may act on hosts that have failed
+        return [host for host in notified_hosts if iterator.is_failed(host)]
 
     def _filter_notified_hosts(self, notified_hosts):
         '''
@@ -84,6 +92,9 @@ class StrategyModule(StrategyBase):
 
         self._set_hosts_cache(iterator._play)
 
+        if iterator._play.max_fail_percentage is not None:
+            display.warning("Using max_fail_percentage with the free strategy is not supported, as tasks are executed independently on each host")
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
@@ -118,17 +129,7 @@ class StrategyModule(StrategyBase):
                     display.debug("this host has work to do", host=host_name)
 
                     # check to see if this host is blocked (still executing a previous task)
-                    if host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]:
-                        # pop the task, mark the host blocked, and queue it
-                        self._blocked_hosts[host_name] = True
-                        (state, task) = iterator.get_next_task_for_host(host)
-
-                        try:
-                            action = action_loader.get(task.action, class_only=True)
-                        except KeyError:
-                            # we don't care here, because the action may simply not have a
-                            # corresponding action plugin
-                            action = None
+                    if (host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]):
 
                         display.debug("getting variables", host=host_name)
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
@@ -137,6 +138,32 @@ class StrategyModule(StrategyBase):
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables", host=host_name)
+
+                        try:
+                            throttle = int(templar.template(task.throttle))
+                        except Exception as e:
+                            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+
+                        if throttle > 0:
+                            same_tasks = 0
+                            for worker in self._workers:
+                                if worker and worker.is_alive() and worker._task._uuid == task._uuid:
+                                    same_tasks += 1
+
+                            display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
+                            if same_tasks >= throttle:
+                                break
+
+                        # pop the task, mark the host blocked, and queue it
+                        self._blocked_hosts[host_name] = True
+                        (state, task) = iterator.get_next_task_for_host(host)
+
+                        try:
+                            action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
+                        except KeyError:
+                            # we don't care here, because the action may simply not have a
+                            # corresponding action plugin
+                            action = None
 
                         try:
                             task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
@@ -165,7 +192,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action == 'meta':
+                        if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
@@ -235,7 +262,7 @@ class StrategyModule(StrategyBase):
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent,
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
                                                                     _hosts=self._hosts_cache,
                                                                     _hosts_all=self._hosts_cache_all)
                         final_block = new_block.filter_tagged_tasks(task_vars)

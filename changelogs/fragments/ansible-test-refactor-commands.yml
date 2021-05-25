@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Reorganize code for individual commands.

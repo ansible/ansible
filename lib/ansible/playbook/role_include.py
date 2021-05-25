@@ -20,6 +20,7 @@ __metaclass__ = type
 
 from os.path import basename
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
@@ -27,6 +28,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
+from ansible.module_utils.six import string_types
 
 __all__ = ['IncludeRole']
 
@@ -42,7 +44,7 @@ class IncludeRole(TaskInclude):
 
     BASE = ('name', 'role')  # directly assigned
     FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
-    OTHER_ARGS = ('apply', 'public', 'allow_duplicates')  # assigned to matching property
+    OTHER_ARGS = ('apply', 'public', 'allow_duplicates', 'rolespec_validate')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================
@@ -51,6 +53,7 @@ class IncludeRole(TaskInclude):
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
     _public = FieldAttribute(isa='bool', default=False, private=True)
+    _rolespec_validate = FieldAttribute(isa='bool', default=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -78,7 +81,7 @@ class IncludeRole(TaskInclude):
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files,
-                                from_include=True)
+                                from_include=True, validate=self.rolespec_validate)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
         if self.statically_loaded or self.public:
@@ -126,7 +129,7 @@ class IncludeRole(TaskInclude):
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
 
-        if 'public' in ir.args and ir.action != 'include_role':
+        if 'public' in ir.args and ir.action not in C._ACTION_INCLUDE_ROLE:
             raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
@@ -137,10 +140,13 @@ class IncludeRole(TaskInclude):
         # build options for role includes
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
             from_key = key.replace('_from', '')
-            ir._from_files[from_key] = basename(ir.args.get(key))
+            args_value = ir.args.get(key)
+            if not isinstance(args_value, string_types):
+                raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
+            ir._from_files[from_key] = basename(args_value)
 
         apply_attrs = ir.args.get('apply', {})
-        if apply_attrs and ir.action != 'include_role':
+        if apply_attrs and ir.action not in C._ACTION_INCLUDE_ROLE:
             raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
         elif not isinstance(apply_attrs, dict):
             raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)

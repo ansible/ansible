@@ -9,6 +9,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common.network import (
+    to_bits,
     to_masklen,
     to_netmask,
     to_subnet,
@@ -66,3 +67,13 @@ def test_to_ipv6_network():
     assert '2001:db8::' == to_ipv6_network('2001:db8::')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0:0:8a2e:0370:7334')
+
+
+def test_to_bits():
+    assert to_bits('0') == '00000000'
+    assert to_bits('1') == '00000001'
+    assert to_bits('2') == '00000010'
+    assert to_bits('1337') == '10100111001'
+    assert to_bits('127.0.0.1') == '01111111000000000000000000000001'
+    assert to_bits('255.255.255.255') == '11111111111111111111111111111111'
+    assert to_bits('255.255.255.0') == '11111111111111111111111100000000'

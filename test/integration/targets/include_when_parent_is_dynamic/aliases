@@ -1,0 +1,2 @@
+shippable/posix/group3
+skip/python2.6  # include is controller only, and we no longer support Python 2.6 on the controller

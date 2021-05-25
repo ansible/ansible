@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_login - report change on successful logout (https://github.com/ansible/ansible/issues/59232)"

@@ -1,0 +1,9 @@
+---
+- name: call module with CommandUtil tests
+  command_util_test:
+    exe: '{{ win_printargv_path }}'
+  register: command_util
+
+- assert:
+    that:
+    - command_util.data == 'success'

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - aws_eks_cluster - Ansible may now wait until an EKS cluster is fully removed before moving on.

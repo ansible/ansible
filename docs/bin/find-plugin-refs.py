@@ -8,6 +8,8 @@
 # For my listing of what needs to be changed after running this script, see the comment at the end
 # of the file
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import glob
 import os

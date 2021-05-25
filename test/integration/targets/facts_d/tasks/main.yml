@@ -1,35 +1,36 @@
-# Test code for facts.d and setup filters
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- name: prep for local facts tests
+  block:
+    - name: set factdir var
+      set_fact: fact_dir={{output_dir}}/facts.d
 
-- set_fact: fact_dir={{output_dir}}/facts.d
+    - name: create fact dir
+      file: path={{ fact_dir }} state=directory
 
-- file: path={{ fact_dir }} state=directory
-- shell: echo "[general]" > {{ fact_dir }}/preferences.fact
-- shell: echo "bar=loaded" >> {{ fact_dir }}/preferences.fact
+    - name: copy local facts test files
+      copy: src={{ item['name'] }}.fact dest={{ fact_dir }}/ mode={{ item['mode']|default(omit) }}
+      loop:
+        - name: preferences
+        - name: basdscript
+          mode: '0775'
+        - name: goodscript
+          mode: '0775'
+        - name: unreadable
+          mode: '0000'
 
-- setup:
+- name: force fact gather to get ansible_local
+  setup:
     fact_path: "{{ fact_dir | expanduser }}"
     filter: "*local*"
   register: setup_result
 
-- debug: var=setup_result
+- name: show gathering results if rerun with -vvv
+  debug: var=setup_result verbosity=3
 
-- assert:
+- name: check for expected results from local facts
+  assert:
     that:
         - "'ansible_facts' in setup_result"
         - "'ansible_local' in setup_result.ansible_facts"
@@ -39,3 +40,6 @@
         - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
         - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
         - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
+        - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
+        - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
+        - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')

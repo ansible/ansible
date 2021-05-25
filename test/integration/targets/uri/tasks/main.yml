@@ -131,6 +131,48 @@
       - "stat_result.stat.exists == true"
       - "result.changed == true"
 
+- name: "get ca certificate {{ self_signed_host }}"
+  get_url:
+    url: "http://{{ httpbin_host }}/ca2cert.pem"
+    dest: "{{ remote_tmp_dir }}/ca2cert.pem"
+
+- name: test https fetch to a site with self signed certificate using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ output_dir }}/self-signed_using_ca_path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
+    validate_certs: yes
+  register: result
+
+- stat:
+    path: "{{ output_dir }}/self-signed_using_ca_path.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - "stat_result.stat.exists == true"
+      - "result.changed == true"
+
+- name: test https fetch to a site with self signed certificate without using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+    validate_certs: yes
+  register: result
+  ignore_errors: true
+
+- stat:
+    path: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+  register: stat_result
+
+- name: Assure that https access to a host with self-signed certificate without providing ca_path fails
+  assert:
+    that:
+      - "stat_result.stat.exists == false"
+      - result is failed
+      - "'certificate verify failed' in result.msg"
+
 - name: test redirect without follow_redirects
   uri:
     url: 'https://{{ httpbin_host }}/redirect/2'
@@ -406,6 +448,43 @@
     - result is failure
     - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
 
+- name: multipart/form-data
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      file1:
+        filename: formdata.txt
+      file2:
+        content: text based file content
+        filename: fake.txt
+        mime_type: text/plain
+      text_form_field1: value1
+      text_form_field2:
+        content: value2
+        mime_type: text/plain
+  register: multipart
+
+- name: Assert multipart/form-data
+  assert:
+    that:
+      - multipart.json.files.file1 == '_multipart/form-data_\n'
+      - multipart.json.files.file2 == 'text based file content'
+      - multipart.json.form.text_form_field1 == 'value1'
+      - multipart.json.form.text_form_field2 == 'value2'
+
+# https://github.com/ansible/ansible/issues/74276 - verifies we don't have a traceback
+- name: multipart/form-data with invalid value
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      integer_value: 1
+  register: multipart_invalid
+  failed_when: 'multipart_invalid.msg != "failed to parse body as form-multipart: value must be a string, or mapping, cannot be type int"'
+
 - name: Validate invalid method
   uri:
     url: https://{{ httpbin_host }}/anything
@@ -517,6 +596,18 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Make request that includes password in JSON keys
+  uri:
+    url: "https://{{ httpbin_host}}/get?key-password=value-password"
+    user: admin
+    password: password
+  register: sanitize_keys
+
+- name: assert that keys were sanitized
+  assert:
+    that:
+      - sanitize_keys.json.args['key-********'] == 'value-********'
+
 - name: Create a testing file
   copy:
     content: "content"
@@ -556,3 +647,15 @@
 
 - name: Check unexpected failures
   import_tasks: unexpected-failures.yml
+
+- name: Check return-content
+  import_tasks: return-content.yml
+
+- name: Test use_gssapi=True
+  include_tasks:
+    file: use_gssapi.yml
+    apply:
+      environment:
+        KRB5_CONFIG: '{{ krb5_config }}'
+        KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+  when: krb5_config is defined

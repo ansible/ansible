@@ -1,2 +1,0 @@
-bugfixes:
-  - dnsmadeeasy - force the date to be rendered with C (POSIX system default) locale as English short date names are required by API

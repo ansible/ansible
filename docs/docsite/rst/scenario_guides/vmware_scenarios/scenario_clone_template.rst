@@ -4,14 +4,15 @@
 Deploy a virtual machine from a template
 ****************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
 
 This guide will show you how to utilize Ansible to clone a virtual machine from already existing VMware template or existing VMware guest.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 * Software
@@ -45,8 +46,8 @@ Scenario Requirements
         - ``VirtualMachine.Provisioning.Customize`` on the virtual machine or virtual machine folder if you are customizing the guest operating system
         - ``VirtualMachine.Provisioning.DeployTemplate`` on the template you are using
         - ``VirtualMachine.Provisioning.ReadCustSpecs`` on the root vCenter Server if you are customizing the guest operating system
-        
-        Depending on your requirements, you could also need one or more of the following privileges: 
+
+        Depending on your requirements, you could also need one or more of the following privileges:
 
         - ``VirtualMachine.Config.CPUCount`` on the datacenter or virtual machine folder
         - ``VirtualMachine.Config.Memory`` on the datacenter or virtual machine folder
@@ -76,7 +77,7 @@ Caveats
 - In order to utilize Guest Customization, VMware Tools must be installed on the template. For Linux, the ``open-vm-tools`` package is recommended, and it requires that ``Perl`` be installed.
 
 
-Example Description
+Example description
 ===================
 
 In this use case / example, we will be selecting a virtual machine template and cloning it into a specific folder in our Datacenter / Cluster.  The following Ansible playbook showcases the basic parameters that are needed for this.

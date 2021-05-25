@@ -1,0 +1,67 @@
+{
+    "changed": true,
+    "method": "create",
+    "result": {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+            "creationTimestamp": "2020-10-03T15:36:25Z",
+            "labels": {
+                "app": "galaxy"
+            },
+            "name": "utilitypod-1",
+            "namespace": "default",
+            "resourceVersion": "4511073",
+            "selfLink": "/api/v1/namespaces/default/pods/utilitypod-1",
+            "uid": "c7dec819-09df-4efd-9d78-67cf010b4f4e"
+        },
+        "spec": {
+            "containers": [{
+                "image": "busybox",
+                "imagePullPolicy": "Always",
+                "name": "utilitypod",
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "volumeMounts": [{
+                    "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                    "name": "default-token-6j842",
+                    "readOnly": true
+                }]
+            }],
+            "dnsPolicy": "ClusterFirst",
+            "enableServiceLinks": true,
+            "priority": 0,
+            "restartPolicy": "Always",
+            "schedulerName": "default-scheduler",
+            "securityContext": {},
+            "serviceAccount": "default",
+            "serviceAccountName": "default",
+            "terminationGracePeriodSeconds": 30,
+            "tolerations": [{
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/not-ready",
+                    "operator": "Exists",
+                    "tolerationSeconds": 300
+                },
+                {
+                    "effect": "NoExecute",
+                    "key": "node.kubernetes.io/unreachable",
+                    "operator": "Exists",
+                    "tolerationSeconds": 300
+                }
+            ],
+            "volumes": [{
+                "name": "default-token-6j842",
+                "secret": {
+                    "defaultMode": 420,
+                    "secretName": "default-token-6j842"
+                }
+            }]
+        },
+        "status": {
+            "phase": "Pending",
+            "qosClass": "BestEffort"
+        }
+    }
+}

@@ -1,0 +1,2 @@
+debian/tmp/usr/bin/ansible-test usr/bin
+debian/tmp/usr/lib/python3/dist-packages/ansible_test usr/lib/python3/dist-packages

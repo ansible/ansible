@@ -1,3 +1,0 @@
----
-bugfixes:
-  - ce_snmp_location - fixed an out of array index error.

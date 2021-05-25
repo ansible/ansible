@@ -7,8 +7,8 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils.six import with_metaclass
-from ansible.module_utils.basic import get_all_subclasses
 from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common._utils import get_all_subclasses
 
 
 def get_all_pkg_managers():
@@ -17,8 +17,6 @@ def get_all_pkg_managers():
 
 
 class PkgMgr(with_metaclass(ABCMeta, object)):
-
-    warnings = []
 
     @abstractmethod
     def is_available(self):
@@ -81,5 +79,8 @@ class CLIMgr(PkgMgr):
         super(CLIMgr, self).__init__()
 
     def is_available(self):
-        self._cli = get_bin_path(self.CLI, False)
-        return bool(self._cli)
+        try:
+            self._cli = get_bin_path(self.CLI)
+        except ValueError:
+            return False
+        return True

@@ -31,7 +31,7 @@ summary:
 
 .PHONY: changelog
 changelog:
-	changelogs/changelog.py release -vv && changelogs/changelog.py generate -vv
+	antsibull-changelog release -vv --use-ansible-doc && antsibull-changelog generate -vv --use-ansible-doc
 	ansible-test sanity changelogs/
 
 .PHONY: commit-release

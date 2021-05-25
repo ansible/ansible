@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: ini
+    name: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
     description:
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
         - Anything found outside a section is considered an 'ungrouped' host.
         - Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared within your inventory.
         - When declared inline with the host, INI values are processed by Python's ast.literal_eval function
-          (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures
+          (U(https://docs.python.org/3/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures
           (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple C(key=value) parameters per line.
           Therefore they need a way to indicate that a space is part of a value rather than a separator.
         - When declared in a C(:vars) section, INI values are interpreted as strings. For example C(var=FALSE) would create a string equal to C(FALSE).
@@ -29,49 +29,47 @@ DOCUMENTATION = '''
           The YAML inventory plugin processes variable values consistently and correctly.
 '''
 
-EXAMPLES = '''
-  example1: |
-      # example cfg file
-      [web]
-      host1
-      host2 ansible_port=222 # defined inline, interpreted as an integer
+EXAMPLES = '''# fmt: ini
+# Example 1
+[web]
+host1
+host2 ansible_port=222 # defined inline, interpreted as an integer
 
-      [web:vars]
-      http_port=8080 # all members of 'web' will inherit these
-      myvar=23 # defined in a :vars section, interpreted as a string
+[web:vars]
+http_port=8080 # all members of 'web' will inherit these
+myvar=23 # defined in a :vars section, interpreted as a string
 
-      [web:children] # child groups will automatically add their hosts to parent group
-      apache
-      nginx
+[web:children] # child groups will automatically add their hosts to parent group
+apache
+nginx
 
-      [apache]
-      tomcat1
-      tomcat2 myvar=34 # host specific vars override group vars
-      tomcat3 mysecret="'03#pa33w0rd'" # proper quoting to prevent value changes
+[apache]
+tomcat1
+tomcat2 myvar=34 # host specific vars override group vars
+tomcat3 mysecret="'03#pa33w0rd'" # proper quoting to prevent value changes
 
-      [nginx]
-      jenkins1
+[nginx]
+jenkins1
 
-      [nginx:vars]
-      has_java = True # vars in child groups override same in parent
+[nginx:vars]
+has_java = True # vars in child groups override same in parent
 
-      [all:vars]
-      has_java = False # 'all' is 'top' parent
+[all:vars]
+has_java = False # 'all' is 'top' parent
 
-  example2: |
-      # other example config
-      host1 # this is 'ungrouped'
+# Example 2
+host1 # this is 'ungrouped'
 
-      # both hosts have same IP but diff ports, also 'ungrouped'
-      host2 ansible_host=127.0.0.1 ansible_port=44
-      host3 ansible_host=127.0.0.1 ansible_port=45
+# both hosts have same IP but diff ports, also 'ungrouped'
+host2 ansible_host=127.0.0.1 ansible_port=44
+host3 ansible_host=127.0.0.1 ansible_port=45
 
-      [g1]
-      host4
+[g1]
+host4
 
-      [g2]
-      host4 # same host as above, but member of 2 groups, will inherit vars from both
-            # inventory hostnames are unique
+[g2]
+host4 # same host as above, but member of 2 groups, will inherit vars from both
+      # inventory hostnames are unique
 '''
 
 import ast
@@ -203,7 +201,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
                 continue
             elif line.startswith('[') and line.endswith(']'):
-                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line +
+                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line + " " +
                                   "in the section entry, and that there are no other invalid characters")
 
             # It's not a section, so the current state tells us what kind of

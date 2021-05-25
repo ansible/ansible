@@ -1,0 +1,10 @@
+- name: Test pause in a background task
+  hosts: localhost
+  gather_facts: no
+  become: no
+
+  tasks:
+    - pause:
+
+    - pause:
+        seconds: 1

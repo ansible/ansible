@@ -1,0 +1,2 @@
+pyyaml  # not frozen due to usage outside sanity tests
+voluptuous == 0.12.1

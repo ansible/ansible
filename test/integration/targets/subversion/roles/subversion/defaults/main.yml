@@ -1,0 +1,11 @@
+---
+apache_port: 11386  # cannot use 80 as httptester overrides this
+output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+subversion_test_dir: '{{ output_dir }}/svn-test'
+subversion_server_dir: /tmp/ansible-svn  # cannot use a path in the home dir without userdir or granting exec permission to the apache user
+subversion_repo_name: ansible-test-repo
+subversion_repo_url: http://127.0.0.1:{{ apache_port }}/svn/{{ subversion_repo_name }}
+subversion_repo_auth_url: http://127.0.0.1:{{ apache_port }}/svnauth/{{ subversion_repo_name }}
+subversion_username: subsvn_user'''
+subversion_password: Password123!
+subversion_external_repo_url: https://github.com/ansible/ansible-base-test-container  # GitHub serves SVN

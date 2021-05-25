@@ -46,3 +46,16 @@
     that:
       - git_result is changed
   when: github_ssh_private_key is defined
+
+- name: MISSING-HOSTEKY | Remove github.com hostkey from known_hosts
+  lineinfile:
+    dest: '{{ output_dir }}/known_hosts'
+    regexp: "github.com"
+    state: absent
+  when: github_ssh_private_key is defined
+
+- name: MISSING-HOSTKEY | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+  when: github_ssh_private_key is defined

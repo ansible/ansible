@@ -32,19 +32,27 @@ class SunOSVirtual(Virtual):
 
     def get_virtual_facts(self):
         virtual_facts = {}
-        # Check if it's a zone
+        host_tech = set()
+        guest_tech = set()
 
+        # Check if it's a zone
         zonename = self.module.get_bin_path('zonename')
         if zonename:
             rc, out, err = self.module.run_command(zonename)
-            if rc == 0 and out.rstrip() != "global":
-                virtual_facts['container'] = 'zone'
+            if rc == 0:
+                if out.rstrip() == "global":
+                    host_tech.add('zone')
+                else:
+                    guest_tech.add('zone')
+                    virtual_facts['container'] = 'zone'
+
         # Check if it's a branded zone (i.e. Solaris 8/9 zone)
         if os.path.isdir('/.SUNWnative'):
+            guest_tech.add('zone')
             virtual_facts['container'] = 'zone'
+
         # If it's a zone check if we can detect if our global zone is itself virtualized.
         # Relies on the "guest tools" (e.g. vmware tools) to be installed
-
         if 'container' in virtual_facts and virtual_facts['container'] == 'zone':
             modinfo = self.module.get_bin_path('modinfo')
             if modinfo:
@@ -52,13 +60,16 @@ class SunOSVirtual(Virtual):
                 if rc == 0:
                     for line in out.splitlines():
                         if 'VMware' in line:
+                            guest_tech.add('vmware')
                             virtual_facts['virtualization_type'] = 'vmware'
                             virtual_facts['virtualization_role'] = 'guest'
                         if 'VirtualBox' in line:
+                            guest_tech.add('virtualbox')
                             virtual_facts['virtualization_type'] = 'virtualbox'
                             virtual_facts['virtualization_role'] = 'guest'
 
         if os.path.exists('/proc/vz'):
+            guest_tech.add('virtuozzo')
             virtual_facts['virtualization_type'] = 'virtuozzo'
             virtual_facts['virtualization_role'] = 'guest'
 
@@ -77,6 +88,7 @@ class SunOSVirtual(Virtual):
                     for line in out.splitlines():
                         fields = line.split('|')
                         if fields[0] == 'DOMAINROLE' and fields[1] == 'impl=LDoms':
+                            guest_tech.add('ldom')
                             virtual_facts['virtualization_type'] = 'ldom'
                             virtual_facts['virtualization_role'] = 'guest'
                             hostfeatures = []
@@ -97,21 +109,28 @@ class SunOSVirtual(Virtual):
             if rc == 0:
                 for line in out.splitlines():
                     if 'VMware' in line:
+                        guest_tech.add('vmware')
                         virtual_facts['virtualization_type'] = 'vmware'
                         virtual_facts['virtualization_role'] = 'guest'
                     elif 'Parallels' in line:
+                        guest_tech.add('parallels')
                         virtual_facts['virtualization_type'] = 'parallels'
                         virtual_facts['virtualization_role'] = 'guest'
                     elif 'VirtualBox' in line:
+                        guest_tech.add('virtualbox')
                         virtual_facts['virtualization_type'] = 'virtualbox'
                         virtual_facts['virtualization_role'] = 'guest'
                     elif 'HVM domU' in line:
+                        guest_tech.add('xen')
                         virtual_facts['virtualization_type'] = 'xen'
                         virtual_facts['virtualization_role'] = 'guest'
                     elif 'KVM' in line:
+                        guest_tech.add('kvm')
                         virtual_facts['virtualization_type'] = 'kvm'
                         virtual_facts['virtualization_role'] = 'guest'
 
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 

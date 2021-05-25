@@ -1,0 +1,29 @@
+# Test creating ssh key with passphrase
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user with ssh key
+  user:
+    name: ansibulluser
+    state: present
+    generate_ssh_key: yes
+    force: yes
+    ssh_key_file: "{{ output_dir }}/test_id_rsa"
+    ssh_key_passphrase: secret_passphrase
+
+- name: Unlock ssh key
+  command: "ssh-keygen -y -f {{ output_dir }}/test_id_rsa -P secret_passphrase"
+  register: result
+
+- name: Check that ssh key was unlocked successfully
+  assert:
+    that:
+      - result.rc == 0
+
+- name: Clean ssh key
+  file:
+    path: "{{ output_dir }}/test_id_rsa"
+    state: absent
+  when: ansible_os_family == 'FreeBSD'

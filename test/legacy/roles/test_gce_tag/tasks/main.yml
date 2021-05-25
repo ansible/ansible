@@ -1,5 +1,0 @@
----
-# test role for gce_tag
-- include: setup.yml
-- include: test.yml
-- include: teardown.yml

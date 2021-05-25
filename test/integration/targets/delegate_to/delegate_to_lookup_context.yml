@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - delegate_to_lookup_context

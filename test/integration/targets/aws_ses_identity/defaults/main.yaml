@@ -1,4 +1,0 @@
----
-email_identity: "{{ resource_prefix }}@example.com"
-domain_identity: "{{ resource_prefix }}.example.com"
-notification_queue_name: "{{ resource_prefix }}-notification-queue"

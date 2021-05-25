@@ -1,0 +1,28 @@
+{
+    "platform.dist": [
+        "openeuler",
+        "20.03",
+        "LTS"
+    ],
+    "input": {
+        "/etc/os-release": "NAME=\"openEuler\"\nVERSION=\"20.03 (LTS)\"\nID=\"openEuler\"\nVERSION_ID=\"20.03\"\nPRETTY_NAME=\"openEuler 20.03 (LTS)\"\nANSI_COLOR=\"0;31\"\n\n",
+        "/etc/system-release": "openEuler release 20.03 (LTS)\n"
+    },
+    "result": {
+        "distribution_release": "LTS",
+        "distribution": "openEuler",
+        "distribution_major_version": "20",
+        "os_family": "RedHat",
+        "distribution_version": "20.03"
+    },
+    "name": "openEuler 20.03",
+    "distro": {
+        "codename": "LTS",
+        "version": "20.03",
+        "id": "openeuler",
+        "version_best": "20.03",
+        "name": "openEuler",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    }
+}

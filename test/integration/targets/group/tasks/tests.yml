@@ -138,11 +138,19 @@
         state: present
       register: create_group_gid_non_unique
 
+    - name: validate gid required with non_unique
+      group:
+        name: foo
+        non_unique: true
+      register: missing_gid
+      ignore_errors: true
+
     - name: assert create group with a non unique gid
       assert:
-          that:
+        that:
           - create_group_gid_non_unique is changed
           - create_group_gid_non_unique.gid | int == gid.stdout_lines[0] | int
+          - missing_gid is failed
   when: ansible_facts.distribution not in ['MacOSX', 'Alpine']
 
 ##
@@ -192,6 +200,21 @@
   assert:
     that:
     - not delete_group_again is changed
+
+- name: Ensure lgroupadd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux'] and ansible_distribution != 'Alpine'
+  tags:
+    - user_test_local_mode
+
+- name: Ensure lgroupadd is present - Alpine
+  command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+  when: ansible_distribution == 'Alpine'
+  tags:
+    - user_test_local_mode
 
 # https://github.com/ansible/ansible/issues/56481
 - block:
@@ -252,9 +275,69 @@
         - not create_local_group_gid_again is changed
         - create_local_group_gid_again.gid | int == 1337 | int
   always:
-    - name: Cleanup create local group with a gid 
+    - name: Cleanup create local group with a gid
       group:
         name: group1_local_test
         state: absent
   # only applicable to Linux, limit further to CentOS where 'luseradd' is installed
   when: ansible_distribution == 'CentOS'
+
+# https://github.com/ansible/ansible/pull/59772
+- block:
+  - name: create group with a gid
+    group:
+      name: group1_test
+      gid: 1337
+      local: no
+      state: present
+    register: create_group_gid
+
+  - name: get gid of created group
+    command: "{{ ansible_python_interpreter | quote }} -c \"import grp; print(grp.getgrnam('group1_test').gr_gid)\""
+    register: create_group_gid_actual
+
+  - name: assert create group with a gid
+    assert:
+        that:
+        - create_group_gid is changed
+        - create_group_gid.gid | int == 1337 | int
+        - create_group_gid_actual.stdout | trim | int == 1337 | int
+
+  - name: create local group with the same gid
+    group:
+      name: group1_test
+      gid: 1337
+      local: yes
+      state: present
+    register: create_local_group_gid
+
+  - name: assert create local group with a gid
+    assert:
+        that:
+        - create_local_group_gid.gid | int == 1337 | int
+  always:
+    - name: Cleanup create group with a gid
+      group:
+        name: group1_test
+        local: no
+        state: absent
+    - name: Cleanup create local group with the same gid
+      group:
+        name: group1_test
+        local: yes
+        state: absent
+  # only applicable to Linux, limit further to CentOS where 'lgroupadd' is installed
+  when: ansible_distribution == 'CentOS'
+
+# create system group
+
+- name: remove group
+  group:
+    name: ansibullgroup
+    state: absent
+
+- name: create system group
+  group:
+    name: ansibullgroup
+    state: present
+    system: yes

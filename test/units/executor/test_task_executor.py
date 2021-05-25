@@ -19,23 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import mock
+
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.module_utils.six import text_type
 
 from units.mock.loader import DictDataLoader
 
 
 class TestTaskExecutor(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_task_executor_init(self):
         fake_loader = DictDataLoader({})
@@ -98,6 +96,28 @@ class TestTaskExecutor(unittest.TestCase):
         te._get_loop_items = MagicMock(side_effect=AnsibleError(""))
         res = te.run()
         self.assertIn("failed", res)
+
+    def test_task_executor_run_clean_res(self):
+        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None)
+        te._get_loop_items = MagicMock(return_value=[1])
+        te._run_loop = MagicMock(
+            return_value=[
+                {
+                    'unsafe_bytes': AnsibleUnsafeBytes(b'{{ $bar }}'),
+                    'unsafe_text': AnsibleUnsafeText(u'{{ $bar }}'),
+                    'bytes': b'bytes',
+                    'text': u'text',
+                    'int': 1,
+                }
+            ]
+        )
+        res = te.run()
+        data = res['results'][0]
+        self.assertIsInstance(data['unsafe_bytes'], AnsibleUnsafeText)
+        self.assertIsInstance(data['unsafe_text'], AnsibleUnsafeText)
+        self.assertIsInstance(data['bytes'], text_type)
+        self.assertIsInstance(data['text'], text_type)
+        self.assertIsInstance(data['int'], int)
 
     def test_task_executor_get_loop_items(self):
         fake_loader = DictDataLoader({})
@@ -167,193 +187,114 @@ class TestTaskExecutor(unittest.TestCase):
         def _execute(variables):
             return dict(item=variables.get('item'))
 
-        te._squash_items = MagicMock(return_value=items)
         te._execute = MagicMock(side_effect=_execute)
 
         res = te._run_loop(items)
         self.assertEqual(len(res), 3)
 
-    def test_task_executor_squash_items(self):
-        items = ['a', 'b', 'c']
-
-        fake_loader = DictDataLoader({})
-
-        mock_host = MagicMock()
-
-        loop_var = 'item'
-
-        def _evaluate_conditional(templar, variables):
-            item = variables.get(loop_var)
-            if item == 'b':
-                return False
-            return True
-
-        mock_task = MagicMock()
-        mock_task.evaluate_conditional.side_effect = _evaluate_conditional
-
-        mock_play_context = MagicMock()
-
-        mock_shared_loader = None
-        mock_queue = MagicMock()
-
-        new_stdin = None
-        job_vars = dict(pkg_mgr='yum')
-
+    def test_task_executor_get_action_handler(self):
         te = TaskExecutor(
-            host=mock_host,
-            task=mock_task,
-            job_vars=job_vars,
-            play_context=mock_play_context,
-            new_stdin=new_stdin,
-            loader=fake_loader,
-            shared_loader_obj=mock_shared_loader,
-            final_q=mock_queue,
+            host=MagicMock(),
+            task=MagicMock(),
+            job_vars={},
+            play_context=MagicMock(),
+            new_stdin=None,
+            loader=DictDataLoader({}),
+            shared_loader_obj=MagicMock(),
+            final_q=MagicMock(),
         )
 
-        # No replacement
-        mock_task.action = 'yum'
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
-        self.assertIsInstance(mock_task.args, MagicMock)
+        action_loader = te._shared_loader_obj.action_loader
+        action_loader.has_plugin.return_value = True
+        action_loader.get.return_value = mock.sentinel.handler
 
-        mock_task.action = 'foo'
-        mock_task.args = {'name': '{{item}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
-        self.assertEqual(mock_task.args, {'name': '{{item}}'})
+        mock_connection = MagicMock()
+        mock_templar = MagicMock()
+        action = 'namespace.prefix_suffix'
+        te._task.action = action
 
-        mock_task.action = 'yum'
-        mock_task.args = {'name': 'static'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
-        self.assertEqual(mock_task.args, {'name': 'static'})
+        handler = te._get_action_handler(mock_connection, mock_templar)
 
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{pkg_mgr}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
-        self.assertEqual(mock_task.args, {'name': '{{pkg_mgr}}'})
+        self.assertIs(mock.sentinel.handler, handler)
 
-        mock_task.action = '{{unknown}}'
-        mock_task.args = {'name': '{{item}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, ['a', 'b', 'c'])
-        self.assertEqual(mock_task.args, {'name': '{{item}}'})
+        action_loader.has_plugin.assert_called_once_with(
+            action, collection_list=te._task.collections)
 
-        # Could do something like this to recover from bad deps in a package
-        job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
-        items = ['absent', 'latest']
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ packages }}', 'state': '{{ item }}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{ packages }}', 'state': '{{ item }}'})
+        action_loader.get.assert_called_once_with(
+            te._task.action, task=te._task, connection=mock_connection,
+            play_context=te._play_context, loader=te._loader,
+            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            collection_list=te._task.collections)
 
-        # Maybe should raise an error in this case.  The user would have to specify:
-        # - yum: name="{{ packages[item] }}"
-        #   with_items:
-        #     - ['a', 'b']
-        #     - ['foo', 'bar']
-        # you can't use a list as a dict key so that would probably throw
-        # an error later.  If so, we can throw it now instead.
-        # Squashing in this case would not be intuitive as the user is being
-        # explicit in using each list entry as a key.
-        job_vars = dict(pkg_mgr='yum', packages={"a": "foo", "b": "bar", "foo": "baz", "bar": "quux"})
-        items = [['a', 'b'], ['foo', 'bar']]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ packages[item] }}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{ packages[item] }}'})
+    def test_task_executor_get_handler_prefix(self):
+        te = TaskExecutor(
+            host=MagicMock(),
+            task=MagicMock(),
+            job_vars={},
+            play_context=MagicMock(),
+            new_stdin=None,
+            loader=DictDataLoader({}),
+            shared_loader_obj=MagicMock(),
+            final_q=MagicMock(),
+        )
 
-        # Replaces
-        items = ['a', 'b', 'c']
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{item}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, [['a', 'c']])
-        self.assertEqual(mock_task.args, {'name': ['a', 'c']})
+        action_loader = te._shared_loader_obj.action_loader
+        action_loader.has_plugin.side_effect = [False, True]
+        action_loader.get.return_value = mock.sentinel.handler
+        action_loader.__contains__.return_value = True
 
-        mock_task.action = '{{pkg_mgr}}'
-        mock_task.args = {'name': '{{item}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, [['a', 'c']])
-        self.assertEqual(mock_task.args, {'name': ['a', 'c']})
+        mock_connection = MagicMock()
+        mock_templar = MagicMock()
+        action = 'namespace.netconf_suffix'
+        module_prefix = action.split('_')[0]
+        te._task.action = action
 
-        # New loop_var
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{a_loop_var_item}}'}
-        mock_task.loop_control = {'loop_var': 'a_loop_var_item'}
-        loop_var = 'a_loop_var_item'
-        new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
-        self.assertEqual(new_items, [['a', 'c']])
-        self.assertEqual(mock_task.args, {'name': ['a', 'c']})
-        loop_var = 'item'
+        handler = te._get_action_handler(mock_connection, mock_templar)
 
-        #
-        # These are presently not optimized but could be in the future.
-        # Expected output if they were optimized is given as a comment
-        # Please move these to a different section if they are optimized
-        #
+        self.assertIs(mock.sentinel.handler, handler)
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
+                                                   mock.call(module_prefix, collection_list=te._task.collections)])
 
-        # Squashing lists
-        job_vars = dict(pkg_mgr='yum')
-        items = [['a', 'b'], ['foo', 'bar']]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ item }}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        # self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
-        # self.assertEqual(mock_task.args, {'name': ['a', 'b', 'foo', 'bar']})
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{ item }}'})
+        action_loader.get.assert_called_once_with(
+            module_prefix, task=te._task, connection=mock_connection,
+            play_context=te._play_context, loader=te._loader,
+            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            collection_list=te._task.collections)
 
-        # Retrieving from a dict
-        items = ['a', 'b', 'foo']
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ packages[item] }}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        # self.assertEqual(new_items, [['foo', 'baz']])
-        # self.assertEqual(mock_task.args, {'name': ['foo', 'baz']})
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{ packages[item] }}'})
+    def test_task_executor_get_handler_normal(self):
+        te = TaskExecutor(
+            host=MagicMock(),
+            task=MagicMock(),
+            job_vars={},
+            play_context=MagicMock(),
+            new_stdin=None,
+            loader=DictDataLoader({}),
+            shared_loader_obj=MagicMock(),
+            final_q=MagicMock(),
+        )
 
-        # Another way to retrieve from a dict
-        job_vars = dict(pkg_mgr='yum')
-        items = [{'package': 'foo'}, {'package': 'bar'}]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ item["package"] }}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        # self.assertEqual(new_items, [['foo', 'bar']])
-        # self.assertEqual(mock_task.args, {'name': ['foo', 'bar']})
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{ item["package"] }}'})
+        action_loader = te._shared_loader_obj.action_loader
+        action_loader.has_plugin.return_value = False
+        action_loader.get.return_value = mock.sentinel.handler
+        action_loader.__contains__.return_value = False
 
-        items = [
-            dict(name='a', state='present'),
-            dict(name='b', state='present'),
-            dict(name='c', state='present'),
-        ]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{item.name}}', 'state': '{{item.state}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        # self.assertEqual(new_items, [dict(name=['a', 'b', 'c'], state='present')])
-        # self.assertEqual(mock_task.args, {'name': ['a', 'b', 'c'], 'state': 'present'})
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
+        mock_connection = MagicMock()
+        mock_templar = MagicMock()
+        action = 'namespace.prefix_suffix'
+        module_prefix = action.split('_')[0]
+        te._task.action = action
+        handler = te._get_action_handler(mock_connection, mock_templar)
 
-        items = [
-            dict(name='a', state='present'),
-            dict(name='b', state='present'),
-            dict(name='c', state='absent'),
-        ]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{item.name}}', 'state': '{{item.state}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        # self.assertEqual(new_items, [dict(name=['a', 'b'], state='present'),
-        #         dict(name='c', state='absent')])
-        # self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
-        self.assertEqual(new_items, items)
-        self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
+        self.assertIs(mock.sentinel.handler, handler)
+
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
+                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+
+        action_loader.get.assert_called_once_with(
+            'ansible.legacy.normal', task=te._task, connection=mock_connection,
+            play_context=te._play_context, loader=te._loader,
+            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            collection_list=None)
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})

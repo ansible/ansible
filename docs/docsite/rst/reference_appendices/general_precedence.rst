@@ -3,7 +3,7 @@
 Controlling how Ansible behaves: precedence rules
 =================================================
 
-To give you maximum flexibility in managing your environments, Ansible supports many ways to control how Ansible behaves: how it connects to managed nodes, how it works once it has connected.
+To give you maximum flexibility in managing your environments, Ansible offers many ways to control how Ansible behaves: how it connects to managed nodes, how it works once it has connected.
 If you use Ansible to manage a large number of servers, network devices, and cloud resources, you may define Ansible behavior in several different places and pass that information to Ansible in several different ways.
 This flexibility is convenient, but it can backfire if you do not understand the precedence rules.
 
@@ -15,7 +15,7 @@ These precedence rules apply to any setting that can be defined in multiple ways
 Precedence categories
 ---------------------
 
-Ansible supports four sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
+Ansible offers four sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
 
  * Configuration settings
  * Command-line options
@@ -47,7 +47,7 @@ When you type something directly at the command line, you may feel that your han
 
 You can override all other settings from all other sources in all other precedence categories at the command line by  :ref:`general_precedence_extra_vars`, but that is not a command-line option, it is a way of passing a :ref:`variable<general_precedence_variables>`.
 
-At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad-hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
+At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
 
       ansible -u mike -m ping myhost -u carol
 

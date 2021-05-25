@@ -1,3 +1,4 @@
+
 .. _porting_2.3_guide:
 
 *************************
@@ -18,15 +19,15 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-Restructued async to work with action plugins
----------------------------------------------
+Restructured async to work with action plugins
+----------------------------------------------
 
 In Ansible 2.2 (and possibly earlier) the `async:` keyword could not be used in conjunction with the action plugins such as `service`. This limitation has been removed in Ansible 2.3
 
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: guess
+.. code-block:: yaml
 
     - name: Install nginx asynchronously
       service:
@@ -43,7 +44,7 @@ The `ansible_distribution_release` and `ansible_distribution_version` facts on O
 **OLD** In Ansible 2.2 (and earlier)
 
 
-.. code-block:: guess
+.. code-block:: bash
 
     "ansible_distribution": "OpenBSD"
     "ansible_distribution_release": "6.0",
@@ -52,7 +53,7 @@ The `ansible_distribution_release` and `ansible_distribution_version` facts on O
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: guess
+.. code-block:: bash
 
     "ansible_distribution": "OpenBSD",
     "ansible_distribution_release": "release",
@@ -68,7 +69,7 @@ Blocks can now have names, this allows you to avoid the ugly `# this block is fo
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: guess
+.. code-block:: yaml
 
     - name: Block test case
       hosts: localhost
@@ -184,7 +185,7 @@ Deprecation of top-level connection arguments
 
 **OLD** In Ansible 2.2:
 
-.. code-block:: guess
+.. code-block:: yaml
 
     - name: example of using top-level options for connection properties
       ios_command:
@@ -197,7 +198,7 @@ Deprecation of top-level connection arguments
 
 Will result in:
 
-.. code-block:: guess
+.. code-block:: bash
 
    [WARNING]: argument username has been deprecated and will be removed in a future version
    [WARNING]: argument host has been deprecated and will be removed in a future version
@@ -207,7 +208,7 @@ Will result in:
 **NEW** In Ansible 2.3:
 
 
-.. code-block:: guess
+.. code-block:: yaml
 
    - name: Gather facts
      eos_facts:

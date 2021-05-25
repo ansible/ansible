@@ -3,6 +3,9 @@
 
 # General networking tools that may be used by all modules
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import re
 from struct import pack
 from socket import inet_ntoa
@@ -143,7 +146,7 @@ def to_bits(val):
     bits = ''
     for octet in val.split('.'):
         bits += bin(int(octet))[2:].zfill(8)
-    return str
+    return bits
 
 
 def is_mac(mac_address):

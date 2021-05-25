@@ -45,7 +45,7 @@ After stepping through the tutorial you will have:
 * Your Client ID, which is found in the "client id" box in the "Configure" page of your application in the Azure portal
 * Your Secret key, generated when you created the application. You cannot show the key after creation.
   If you lost the key, you must create a new one in the "Configure" page of your application.
-* And finally, a tenant ID. It's a UUID (e.g. ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
+* And finally, a tenant ID. It's a UUID (for example, ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
   application. You will find it in the URL from within the Azure portal, or in the "view endpoints" of any given URL.
 
 
@@ -84,6 +84,7 @@ To pass Active Directory username/password via the environment, define the follo
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
+* AZURE_SUBSCRIPTION_ID
 
 To pass Active Directory username/password in ADFS via the environment, define the following variables:
 
@@ -129,8 +130,9 @@ Or, pass the following parameters for Active Directory username/password:
 
 * ad_user
 * password
+* subscription_id
 
-Or, pass the following parameters for ADFS username/pasword:
+Or, pass the following parameters for ADFS username/password:
 
 * ad_user
 * password
@@ -144,9 +146,9 @@ Or, pass the following parameters for ADFS username/pasword:
 Other Cloud Environments
 ------------------------
 
-To use an Azure Cloud other than the default public cloud (eg, Azure China Cloud, Azure US Government Cloud, Azure Stack),
+To use an Azure Cloud other than the default public cloud (for example, Azure China Cloud, Azure US Government Cloud, Azure Stack),
 pass the "cloud_environment" argument to modules, configure it in a credential profile, or set the "AZURE_CLOUD_ENVIRONMENT"
-environment variable. The value is either a cloud name as defined by the Azure Python SDK (eg, "AzureChinaCloud",
+environment variable. The value is either a cloud name as defined by the Azure Python SDK (for example, "AzureChinaCloud",
 "AzureUSGovernment"; defaults to "AzureCloud") or an Azure metadata discovery URL (for Azure Stack).
 
 Creating Virtual Machines
@@ -161,37 +163,37 @@ Creating Individual Components
 
 An Azure module is available to help you create a storage account, virtual network, subnet, network interface,
 security group and public IP. Here is a full example of creating each of these and passing the names to the
-azure_rm_virtualmachine module at the end:
+``azure.azcollection.azure_rm_virtualmachine`` module at the end:
 
 .. code-block:: yaml
 
     - name: Create storage account
-      azure_rm_storageaccount:
+      azure.azcollection.azure_rm_storageaccount:
         resource_group: Testing
         name: testaccount001
         account_type: Standard_LRS
 
     - name: Create virtual network
-      azure_rm_virtualnetwork:
+      azure.azcollection.azure_rm_virtualnetwork:
         resource_group: Testing
         name: testvn001
         address_prefixes: "10.10.0.0/16"
 
     - name: Add subnet
-      azure_rm_subnet:
+      azure.azcollection.azure_rm_subnet:
         resource_group: Testing
         name: subnet001
         address_prefix: "10.10.0.0/24"
         virtual_network: testvn001
 
     - name: Create public ip
-      azure_rm_publicipaddress:
+      azure.azcollection.azure_rm_publicipaddress:
         resource_group: Testing
         allocation_method: Static
         name: publicip001
 
     - name: Create security group that allows SSH
-      azure_rm_securitygroup:
+      azure.azcollection.azure_rm_securitygroup:
         resource_group: Testing
         name: secgroup001
         rules:
@@ -203,7 +205,7 @@ azure_rm_virtualmachine module at the end:
             direction: Inbound
 
     - name: Create NIC
-      azure_rm_networkinterface:
+      azure.azcollection.azure_rm_networkinterface:
         resource_group: Testing
         name: testnic001
         virtual_network: testvn001
@@ -212,7 +214,7 @@ azure_rm_virtualmachine module at the end:
         security_group: secgroup001
 
     - name: Create virtual machine
-      azure_rm_virtualmachine:
+      azure.azcollection.azure_rm_virtualmachine:
         resource_group: Testing
         name: testvm001
         vm_size: Standard_D1
@@ -241,7 +243,7 @@ virtual network already with an existing subnet, you can run the following to cr
 
 .. code-block:: yaml
 
-    azure_rm_virtualmachine:
+    azure.azcollection.azure_rm_virtualmachine:
       resource_group: Testing
       name: testvm10
       vm_size: Standard_D1
@@ -255,19 +257,44 @@ virtual network already with an existing subnet, you can run the following to cr
         version: latest
 
 
+Creating a Virtual Machine in Availability Zones
+..................................................
+
+If you want to create a VM in an availability zone,
+consider the following:
+
+* Both OS disk and data disk must be a 'managed disk', not an 'unmanaged disk'.
+* When creating a VM with the ``azure.azcollection.azure_rm_virtualmachine`` module,
+  you need to explicitly set the ``managed_disk_type`` parameter
+  to change the OS disk to a managed disk.
+  Otherwise, the OS disk becomes an unmanaged disk.
+* When you create a data disk with the ``azure.azcollection.azure_rm_manageddisk`` module,
+  you need to explicitly specify the ``storage_account_type`` parameter
+  to make it a managed disk.
+  Otherwise, the data disk will be an unmanaged disk.
+* A managed disk does not require a storage account or a storage container,
+  unlike an unmanaged disk.
+  In particular, note that once a VM is created on an unmanaged disk,
+  an unnecessary storage container named "vhds" is automatically created.
+* When you create an IP address with the ``azure.azcollection.azure_rm_publicipaddress`` module,
+  you must set the  ``sku`` parameter to ``standard``.
+  Otherwise, the IP address cannot be used in an availability zone.
+
+
 Dynamic Inventory Script
 ------------------------
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
-The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
+The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
 create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash
 
-    $ ./ansible/contrib/inventory/azure_rm.py --help
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py
+    $ ./azure_rm.py --help
 
 As with all dynamic inventory scripts, the script can be executed directly, passed as a parameter to the ansible command,
 or passed directly to ansible-playbook using the -i option. No matter how it is executed the script produces JSON representing
@@ -337,7 +364,7 @@ azure_rm.ini file in your current working directory.
 
 NOTE: An .ini file will take precedence over environment variables.
 
-NOTE: The name of the .ini file is the basename of the inventory script (i.e. 'azure_rm') with a '.ini'
+NOTE: The name of the .ini file is the basename of the inventory script (in other words, 'azure_rm') with a '.ini'
 extension. This allows you to copy, rename and customize the inventory script and have matching .ini files all in
 the same directory.
 
@@ -369,8 +396,9 @@ If you don't need the powerstate, you can improve performance by turning off pow
 
 * AZURE_INCLUDE_POWERSTATE=no
 
-A sample azure_rm.ini file is included along with the inventory script in contrib/inventory. An .ini
-file will contain the following:
+A sample azure_rm.ini file is included along with the inventory script in
+`here <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.ini>`_.
+An .ini file will contain the following:
 
 .. code-block:: ini
 
@@ -403,20 +431,23 @@ Here are some examples using the inventory script:
 
 .. code-block:: bash
 
+    # Download inventory script
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py
+
     # Execute /bin/uname on all instances in the Testing resource group
     $ ansible -i azure_rm.py Testing -m shell -a "/bin/uname -a"
 
     # Execute win_ping on all Windows instances
     $ ansible -i azure_rm.py windows -m win_ping
 
-    # Execute win_ping on all Windows instances
-    $ ansible -i azure_rm.py winux -m ping
+    # Execute ping on all Linux instances
+    $ ansible -i azure_rm.py linux -m ping
 
     # Use the inventory script to print instance specific information
-    $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty
+    $ ./azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty
 
     # Use the inventory script with ansible-playbook
-    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm.py test_playbook.yml
+    $ ansible-playbook -i ./azure_rm.py test_playbook.yml
 
 Here is a simple playbook to exercise the Azure inventory script:
 
@@ -427,13 +458,14 @@ Here is a simple playbook to exercise the Azure inventory script:
       connection: local
       gather_facts: no
       tasks:
-        - debug: msg="{{ inventory_hostname }} has powerstate {{ powerstate }}"
+        - debug:
+            msg: "{{ inventory_hostname }} has powerstate {{ powerstate }}"
 
 You can execute the playbook with something like:
 
 .. code-block:: bash
 
-    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm.py test_azure_inventory.yml
+    $ ansible-playbook -i ./azure_rm.py test_azure_inventory.yml
 
 
 Disabling certificate validation on Azure endpoints

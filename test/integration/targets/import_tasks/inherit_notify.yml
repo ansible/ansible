@@ -1,0 +1,15 @@
+- hosts: localhost
+  gather_facts: false
+  pre_tasks:
+  - import_tasks: tasks/trigger_change.yml
+    notify: hello
+
+  handlers:
+    - name: hello
+      set_fact: hello=world
+
+  tasks:
+    - name: ensure handler ran
+      assert:
+        that:
+          - "hello is defined and hello == 'world'"

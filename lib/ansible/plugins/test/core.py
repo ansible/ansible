@@ -21,12 +21,14 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
-from distutils.version import LooseVersion, StrictVersion
+from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
+from ansible.utils.version import SemanticVersion
 
 display = Display()
 
@@ -127,6 +129,14 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     return bool(getattr(_re, match_type, 'search')(value))
 
 
+def vault_encrypted(value):
+    """Evaulate whether a variable is a single vault encrypted value
+
+    .. versionadded:: 2.10
+    """
+    return getattr(value, '__ENCRYPTED__', False) and value.is_encrypted()
+
+
 def match(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.match` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'match')
@@ -137,7 +147,7 @@ def search(value, pattern='', ignorecase=False, multiline=False):
     return regex(value, pattern, ignorecase, multiline, 'search')
 
 
-def version_compare(value, version, operator='eq', strict=False):
+def version_compare(value, version, operator='eq', strict=None, version_type=None):
     ''' Perform a version comparison on a value '''
     op_map = {
         '==': 'eq', '=': 'eq', 'eq': 'eq',
@@ -148,21 +158,73 @@ def version_compare(value, version, operator='eq', strict=False):
         '!=': 'ne', '<>': 'ne', 'ne': 'ne'
     }
 
+    type_map = {
+        'loose': LooseVersion,
+        'strict': StrictVersion,
+        'semver': SemanticVersion,
+        'semantic': SemanticVersion,
+    }
+
+    if strict is not None and version_type is not None:
+        raise errors.AnsibleFilterError("Cannot specify both 'strict' and 'version_type'")
+
+    if not value:
+        raise errors.AnsibleFilterError("Input version value cannot be empty")
+
+    if not version:
+        raise errors.AnsibleFilterError("Version parameter to compare against cannot be empty")
+
+    Version = LooseVersion
     if strict:
         Version = StrictVersion
-    else:
-        Version = LooseVersion
+    elif version_type:
+        try:
+            Version = type_map[version_type]
+        except KeyError:
+            raise errors.AnsibleFilterError(
+                "Invalid version type (%s). Must be one of %s" % (version_type, ', '.join(map(repr, type_map)))
+            )
 
     if operator in op_map:
         operator = op_map[operator]
     else:
-        raise errors.AnsibleFilterError('Invalid operator type')
+        raise errors.AnsibleFilterError(
+            'Invalid operator type (%s). Must be one of %s' % (operator, ', '.join(map(repr, op_map)))
+        )
 
     try:
         method = getattr(py_operator, operator)
-        return method(Version(str(value)), Version(str(version)))
+        return method(Version(to_text(value)), Version(to_text(version)))
     except Exception as e:
-        raise errors.AnsibleFilterError('Version comparison: %s' % e)
+        raise errors.AnsibleFilterError('Version comparison failed: %s' % to_native(e))
+
+
+def truthy(value, convert_bool=False):
+    """Evaluate as value for truthiness using python ``bool``
+
+    Optionally, attempt to do a conversion to bool from boolean like values
+    such as ``"false"``, ``"true"``, ``"yes"``, ``"no"``, ``"on"``, ``"off"``, etc.
+
+    .. versionadded:: 2.10
+    """
+    if convert_bool:
+        try:
+            value = boolean(value)
+        except TypeError:
+            pass
+
+    return bool(value)
+
+
+def falsy(value, convert_bool=False):
+    """Evaluate as value for falsiness using python ``bool``
+
+    Optionally, attempt to do a conversion to bool from boolean like values
+    such as ``"false"``, ``"true"``, ``"yes"``, ``"no"``, ``"on"``, ``"off"``, etc.
+
+    .. versionadded:: 2.10
+    """
+    return not truthy(value, convert_bool=convert_bool)
 
 
 class TestModule(object):
@@ -203,4 +265,11 @@ class TestModule(object):
             # lists
             'any': any,
             'all': all,
+
+            # truthiness
+            'truthy': truthy,
+            'falsy': falsy,
+
+            # vault
+            'vault_encrypted': vault_encrypted,
         }

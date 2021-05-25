@@ -1,0 +1,3 @@
+collections:
+  - name: file://{{ galaxy_dir }}/development/amazon.aws/.git
+    type: git

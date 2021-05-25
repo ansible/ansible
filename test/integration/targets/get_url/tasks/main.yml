@@ -221,7 +221,7 @@
       - result is changed
       - "stat_result.stat.mode == '0707'"
 
-- name: Test that setting file modes on an already downlaoded file work
+- name: Test that setting file modes on an already downloaded file work
   get_url:
     url: 'https://{{ httpbin_host }}/'
     dest: '{{ remote_tmp_dir }}/test'
@@ -238,12 +238,25 @@
       - result is changed
       - "stat_result.stat.mode == '0070'"
 
+# https://github.com/ansible/ansible/pull/65307/
+- name: Test that on http status 304, we get a status_code field.
+  get_url:
+    url: 'https://{{ httpbin_host }}/status/304'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we get the appropriate status_code
+  assert:
+    that:
+      - "'status_code' in result"
+      - "result.status_code == 304"
+
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/base64/cHR1eA=='
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.'
     mode: '0775'
   register: result
 
@@ -257,22 +270,11 @@
       - result is changed
       - "stat_result.stat.mode == '0775'"
 
-- name: Get a file that already exists
-  get_url:
-    url: 'https://{{ httpbin_host }}/get'
-    dest: '{{ remote_tmp_dir }}/test'
-  register: result
-
-- name: Assert that we didn't re-download unnecessarily
-  assert:
-    that:
-      - result is not changed
-
 - name: test checksum match in check mode
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/base64/cHR1eA=='
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.'
   check_mode: True
   register: result
 
@@ -280,6 +282,41 @@
   assert:
     that:
       - result is not changed
+
+- name: Get a file that already exists with a checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+    checksum: 'sha1:{{ stat_result.stat.checksum }}'
+  register: result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - result.msg == 'file already exists'
+
+- name: Get a file that already exists
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we didn't re-download unnecessarily
+  assert:
+    that:
+      - result is not changed
+      - "'304' in result.msg"
+
+- name: get a file that doesn't respond to If-Modified-Since without checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we downloaded the file
+  assert:
+    that:
+      - result is changed
 
 # https://github.com/ansible/ansible/issues/27617
 
@@ -298,11 +335,17 @@
     dest: '{{ files_dir }}/27617.txt'
     content: "ptux"
 
+- name: create duplicate src file
+  copy:
+    dest: '{{ files_dir }}/71420.txt'
+    content: "ptux"
+
 - name: create sha1 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha1sum.txt'
     content: |
       a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba  71420.txt
       3911340502960ca33aece01129234460bfeb2791  not_target1.txt
       1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
 
@@ -311,6 +354,7 @@
     dest: '{{ files_dir }}/sha256sum.txt'
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  71420.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
 
@@ -319,8 +363,18 @@
     dest: '{{ files_dir }}/sha256sum_with_dot.txt'
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./71420.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt
+
+- name: create sha256 checksum file of src with a * leading path
+  copy:
+    dest: '{{ files_dir }}/sha256sum_with_asterisk.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *71420.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892 *not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b *not_target2.txt
 
 - copy:
     src: "testserver.py"
@@ -330,6 +384,20 @@
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
   async: 90
   poll: 0
+
+- name: Wait for SimpleHTTPServer to come up online
+  wait_for:
+    host: 'localhost'
+    port: '{{ http_port }}'
+    state: started
+
+- name: download src with sha1 checksum url in check mode
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_check_mode
+  check_mode: True
 
 - name: download src with sha1 checksum url
   get_url:
@@ -364,48 +432,113 @@
     path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
   register: stat_result_sha256_with_dot
 
+- name: download src with sha256 checksum url with asterisk leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_asterisk.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_asterisk.txt'
+  register: result_sha256_with_asterisk
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617sha256_with_asterisk.txt"
+  register: stat_result_sha256_with_asterisk
+
+- name: download src with sha256 checksum url with file scheme
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_file_scheme.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum.txt'
+  register: result_sha256_with_file_scheme
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
+  register: stat_result_sha256_with_file_scheme
+
+- name: download 71420.txt with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420.txt"
+  register: stat_result_sha1_71420
+
+- name: download 71420.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420.txt"
+  register: stat_result_sha256_71420
+
+- name: download 71420.txt with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot_71420
+
+- name: download 71420.txt with sha256 checksum url with asterisk leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_asterisk.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_asterisk.txt'
+  register: result_sha256_with_asterisk_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_asterisk.txt"
+  register: stat_result_sha256_with_asterisk_71420
+
+- name: download 71420.txt with sha256 checksum url with file scheme
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_file_scheme.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum.txt'
+  register: result_sha256_with_file_scheme_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
+  register: stat_result_sha256_with_file_scheme_71420
+
 - name: Assert that the file was downloaded
   assert:
     that:
+      - result_sha1_check_mode is changed
       - result_sha1 is changed
       - result_sha256 is changed
       - result_sha256_with_dot is changed
+      - result_sha256_with_asterisk is changed
+      - result_sha256_with_file_scheme is changed
       - "stat_result_sha1.stat.exists == true"
       - "stat_result_sha256.stat.exists == true"
       - "stat_result_sha256_with_dot.stat.exists == true"
+      - "stat_result_sha256_with_asterisk.stat.exists == true"
+      - "stat_result_sha256_with_file_scheme.stat.exists == true"
+      - result_sha1_71420 is changed
+      - result_sha256_71420 is changed
+      - result_sha256_with_dot_71420 is changed
+      - result_sha256_with_asterisk_71420 is changed
+      - result_sha256_with_file_scheme_71420 is changed
+      - "stat_result_sha1_71420.stat.exists == true"
+      - "stat_result_sha256_71420.stat.exists == true"
+      - "stat_result_sha256_with_dot_71420.stat.exists == true"
+      - "stat_result_sha256_with_asterisk_71420.stat.exists == true"
+      - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
   get_url:
     url: https://{{ httpbin_host }}
     dest: "{{ remote_tmp_dir }}"
-
-- name: Test headers string
-  get_url:
-    url: https://{{ httpbin_host }}/headers
-    headers: Foo:bar,Baz:qux
-    dest: "{{ remote_tmp_dir }}/headers_string.json"
-
-- name: Get downloaded file
-  slurp:
-    src: "{{ remote_tmp_dir }}/headers_string.json"
-  register: result
-
-- name: Test headers string
-  assert:
-    that:
-      - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
-      - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
-
-- name: Test headers string invalid format
-  get_url:
-    url: https://{{ httpbin_host }}/headers
-    headers: Foo
-    dest: "{{ remote_tmp_dir }}/headers_string_invalid.json"
-  register: invalid_string_headers
-  failed_when:
-    - invalid_string_headers is successful
-    - invalid_string_headers.msg != "The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed."
 
 - name: Test headers dict
   get_url:
@@ -438,9 +571,19 @@
   slurp:
     src: "{{ remote_tmp_dir }}/ssl_client_verify"
   register: result
+  when: has_httptester
 
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:
     that:
       - '(result.content | b64decode) == "ansible.http.tests:SUCCESS"'
   when: has_httptester
+
+- name: Test use_gssapi=True
+  include_tasks:
+    file: use_gssapi.yml
+    apply:
+      environment:
+        KRB5_CONFIG: '{{ krb5_config }}'
+        KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+  when: krb5_config is defined

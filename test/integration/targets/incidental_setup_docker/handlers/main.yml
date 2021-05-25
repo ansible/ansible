@@ -1,0 +1,14 @@
+- name: remove pip packages
+  pip:
+    state: absent
+    name: "{{ docker_pip_packages | union(docker_pip_extra_packages) | difference(docker_pip_never_remove) }}"
+  listen: cleanup docker
+  when: not docker_skip_cleanup | bool
+
+- name: remove docker packages
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: "{{ docker_cleanup_packages }}"
+    state: absent
+  listen: cleanup docker
+  when: not docker_skip_cleanup | bool

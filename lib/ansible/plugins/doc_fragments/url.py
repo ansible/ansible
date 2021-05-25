@@ -2,6 +2,8 @@
 
 # Copyright: (c) 2018, John Barker <gundalow@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 class ModuleDocFragment(object):
@@ -16,6 +18,7 @@ options:
   force:
     description:
       - If C(yes) do not get a cached copy.
+      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
     aliases: [ thirsty ]
@@ -60,4 +63,15 @@ options:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
       - If C(client_cert) contains both the certificate and key, this option is not required.
     type: path
+  use_gssapi:
+    description:
+      - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
+        authentication.
+      - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
+      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+      - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
+    type: bool
+    default: no
+    version_added: '2.11'
 '''

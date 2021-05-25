@@ -1,0 +1,5 @@
+- name: remove unwanted packages
+  package:
+    name: git
+    state: absent
+  when: git_install.changed

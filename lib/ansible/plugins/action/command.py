@@ -17,11 +17,13 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Command module has a special config option to turn off the command nanny warnings
-        if 'warn' not in self._task.args:
+        if 'warn' not in self._task.args and C.COMMAND_WARNINGS:
             self._task.args['warn'] = C.COMMAND_WARNINGS
 
         wrap_async = self._task.async_val and not self._connection.has_native_async
-        results = merge_hash(results, self._execute_module(task_vars=task_vars, wrap_async=wrap_async))
+        # explicitly call `ansible.legacy.command` for backcompat to allow library/ override of `command` while not allowing
+        # collections search for an unqualified `command` module
+        results = merge_hash(results, self._execute_module(module_name='ansible.legacy.command', task_vars=task_vars, wrap_async=wrap_async))
 
         if not wrap_async:
             # remove a temporary path we created

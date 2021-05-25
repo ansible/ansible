@@ -18,9 +18,9 @@ What's covered in this section:
 
 Introduction
 ============
-Ansible already ships with a large collection of Cisco ACI modules, however the ACI object model is huge and covering all possible functionality would easily cover more than 1500 individual modules.
+The `cisco.aci collection <https://galaxy.ansible.com/cisco/aci>`_ already includes a large number of Cisco ACI modules, however the ACI object model is huge and covering all possible functionality would easily cover more than 1500 individual modules.
 
-If you are in need of specific functionality, you have 2 options:
+If you need specific functionality, you have 2 options:
 
 - Learn the ACI object model and use the low-level APIC REST API using the :ref:`aci_rest <aci_rest_module>` module
 - Write your own dedicated modules, which is actually quite easy
@@ -151,13 +151,13 @@ The ``construct_url()`` method takes 2 required arguments:
 * **self** - passed automatically with the class instance
 * **root_class** - A dictionary consisting of ``aci_class``, ``aci_rn``, ``target_filter``, and ``module_object`` keys
 
-  + **aci_class**: The name of the class used by the APIC, e.g. ``fvTenant``
+  + **aci_class**: The name of the class used by the APIC, for example ``fvTenant``
 
-  + **aci_rn**: The relative name of the object, e.g. ``tn-ACME``
+  + **aci_rn**: The relative name of the object, for example ``tn-ACME``
 
-  + **target_filter**: A dictionary with key-value pairs that make up the query string for selecting a subset of entries, e.g. ``{'name': 'ACME'}``
+  + **target_filter**: A dictionary with key-value pairs that make up the query string for selecting a subset of entries, for example ``{'name': 'ACME'}``
 
-  + **module_object**: The particular object for this class, e.g. ``ACME``
+  + **module_object**: The particular object for this class, for example ``ACME``
 
 Example:
 
@@ -220,7 +220,7 @@ The ``aci.payload()`` method is used to build a dictionary of the proposed objec
 
 The ``aci.payload()`` method takes two required arguments and 1 optional argument, depending on if the module manages child objects.
 
-* ``aci_class`` is the APIC name for the object's class, e.g. ``aci_class='fvBD'``
+* ``aci_class`` is the APIC name for the object's class, for example ``aci_class='fvBD'``
 * ``class_config`` is the appropriate dictionary to be used as the payload for the POST request
 
   + The keys should match the names used by the APIC.
@@ -263,7 +263,7 @@ Example: ``aci.post_config()``
 
 Example code
 """"""""""""
-.. code-block:: guess
+.. code-block:: text
 
     if state == 'present':
         aci.payload(
@@ -295,7 +295,7 @@ When state is absent
 ^^^^^^^^^^^^^^^^^^^^
 If the task sets the state to absent, then the ``delete_config()`` method is all that is needed. This method does not take any arguments, and handles check mode.
 
-.. code-block:: guess
+.. code-block:: text
 
         elif state == 'absent':
             aci.delete_config()
@@ -305,7 +305,7 @@ Exiting the module
 ^^^^^^^^^^^^^^^^^^
 To have the module exit, call the ACIModule method ``exit_json()``. This method automatically takes care of returning the common return values for you.
 
-.. code-block:: guess
+.. code-block:: text
 
         aci.exit_json()
 
@@ -319,13 +319,13 @@ Testing ACI library functions
 =============================
 You can test your ``construct_url()`` and ``payload()`` arguments without accessing APIC hardware by using the following python script:
 
-.. code-block:: guess
+.. code-block:: text
 
     #!/usr/bin/python
     import json
     from ansible.module_utils.network.aci.aci import ACIModule
 
-    # Just another class mimicking a bare AnsibleModule class for construct_url() and payload() methods
+    # Just another class mimicing a bare AnsibleModule class for construct_url() and payload() methods
     class AltModule():
         params = dict(
             host='dummy',

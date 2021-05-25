@@ -1,0 +1,2 @@
+bugfixes:
+ - "WorkerProcess - Python 3.5 fix for workaround for stdout deadlock in multiprocessing shutdown to avoid process hangs. (https://github.com/ansible/ansible/issues/74149)"

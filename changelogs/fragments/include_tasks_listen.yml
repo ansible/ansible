@@ -1,3 +1,0 @@
-bugfixes:
-- include_tasks - whitelist ``listen`` as a valid keyword
-  (https://github.com/ansible/ansible/issues/56580)

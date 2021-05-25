@@ -10,11 +10,11 @@
 
 - name: SETUP | install git
   package:
-    name: git
-  when: ansible_distribution != "MacOSX"
+    name: '{{ item }}'
+  when: ansible_distribution not in ["MacOSX", "Alpine"]
   notify:
-    - remove git
-    - remove git from FreeBSD
+    - cleanup
+  with_items: "{{ git_required_packages[ansible_os_family | default('default') ] | default(git_required_packages.default) }}"
 
 - name: SETUP | verify that git is installed so this test can continue
   shell: which git

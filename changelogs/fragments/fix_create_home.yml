@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+     user - properly create home path on Linux when ``local: yes`` and parent directories 
+     specified in ``home`` do not exist (https://github.com/ansible/ansible/pull/71952/)

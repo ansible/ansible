@@ -22,6 +22,7 @@ __metaclass__ = type
 
 import os
 import tempfile
+from io import BytesIO, StringIO
 
 import pytest
 
@@ -32,6 +33,7 @@ from ansible import errors
 from ansible.parsing import vault
 from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
 
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_bytes, to_text
 
 from units.mock.vault_helper import TextVaultSecret
@@ -112,6 +114,21 @@ class TestVaultEditor(unittest.TestCase):
         b_ciphertext = ve._edit_file_helper(src_file_path, self.vault_secret)
 
         self.assertNotEqual(src_contents, b_ciphertext)
+
+    def test_stdin_binary(self):
+        stdin_data = '\0'
+
+        if PY3:
+            fake_stream = StringIO(stdin_data)
+            fake_stream.buffer = BytesIO(to_bytes(stdin_data))
+        else:
+            fake_stream = BytesIO(to_bytes(stdin_data))
+
+        with patch('sys.stdin', fake_stream):
+            ve = self._vault_editor()
+            data = ve.read_data('-')
+
+        self.assertEqual(data, b'\0')
 
     @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_call_exception(self, mock_sp_call):
@@ -502,16 +519,3 @@ class TestVaultEditor(unittest.TestCase):
 
         res = ve._real_path(file_link_path)
         self.assertEqual(res, file_path)
-
-
-@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
-                    reason="Skipping pycrypto tests because pycrypto is not installed")
-class TestVaultEditorPyCrypto(unittest.TestCase):
-    def setUp(self):
-        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
-        vault.HAS_CRYPTOGRAPHY = False
-        super(TestVaultEditorPyCrypto, self).setUp()
-
-    def tearDown(self):
-        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
-        super(TestVaultEditorPyCrypto, self).tearDown()

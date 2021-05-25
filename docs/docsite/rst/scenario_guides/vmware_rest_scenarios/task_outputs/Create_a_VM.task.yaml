@@ -1,0 +1,14 @@
+- name: Create a VM
+  vmware.vmware_rest.vcenter_vm:
+    placement:
+      cluster: "{{ my_cluster_info.id }}"
+      datastore: "{{ my_datastore.datastore }}"
+      folder: "{{ my_virtual_machine_folder.folder }}"
+      resource_pool: "{{ my_cluster_info.value.resource_pool }}"
+    name: test_vm1
+    guest_OS: DEBIAN_8_64
+    hardware_version: VMX_11
+    memory:
+      hot_add_enabled: true
+      size_MiB: 1024
+  register: _result

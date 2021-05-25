@@ -1,0 +1,31 @@
+- name: Rerun installing a collection with a dep
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/'
+  register: installed
+
+- name: SCM collections don't have a concrete artifact version so the collection should always be reinstalled
+  assert:
+    that:
+      - "'Created collection for ansible_test.collection_1' in installed.stdout"
+      - "'Created collection for ansible_test.collection_2' in installed.stdout"
+
+- name: The collection should also be reinstalled when --force flag is used
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/ --force'
+  register: installed
+
+- assert:
+    that:
+      - "'Created collection for ansible_test.collection_1' in installed.stdout"
+      # The dependency is also an SCM collection, so it should also be reinstalled
+      - "'Created collection for ansible_test.collection_2' in installed.stdout"
+
+- name: The collection should also be reinstalled when --force-with-deps is used
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/ --force-with-deps'
+  register: installed
+
+- assert:
+    that:
+      - "'Created collection for ansible_test.collection_1' in installed.stdout"
+      - "'Created collection for ansible_test.collection_2' in installed.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup

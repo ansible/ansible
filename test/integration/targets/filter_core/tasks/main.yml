@@ -1,0 +1,631 @@
+# test code for filters
+# Copyright: (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Note: |groupby is already tested by the `groupby_filter` target.
+
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+- name: a dummy task to test the changed and success filters
+  shell: echo hi
+  register: some_registered_var
+
+- debug:
+    var: some_registered_var
+
+- name: Verify that we workaround a py26 json bug
+  template:
+    src: py26json.j2
+    dest: "{{ output_dir }}/py26json.templated"
+    mode: 0644
+
+- name: 9851 - Verify that we don't trigger https://github.com/ansible/ansible/issues/9851
+  copy:
+    content: " [{{ item | to_nice_json }}]"
+    dest: "{{ output_dir }}/9851.out"
+  with_items:
+  - {"k": "Quotes \"'\n"}
+
+- name: 9851 - copy known good output into place
+  copy:
+    src: 9851.txt
+    dest: "{{ output_dir }}/9851.txt"
+
+- name: 9851 - Compare generated json to known good
+  shell: diff -w {{ output_dir }}/9851.out {{ output_dir }}/9851.txt
+  register: diff_result_9851
+
+- name: 9851 - verify generated file matches known good
+  assert:
+    that:
+        - 'diff_result_9851.stdout == ""'
+
+- name: fill in a basic template
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/foo.templated"
+    mode: 0644
+  register: template_result
+
+- name: copy known good into place
+  copy:
+    src: foo.txt
+    dest: "{{ output_dir }}/foo.txt"
+
+- name: compare templated file to known good
+  shell: diff -w {{ output_dir }}/foo.templated {{ output_dir }}/foo.txt
+  register: diff_result
+
+- name: verify templated file matches known good
+  assert:
+    that:
+      - 'diff_result.stdout == ""'
+
+- name: Test extract
+  assert:
+    that:
+      - '"c" == 2 | extract(["a", "b", "c"])'
+      - '"b" == 1 | extract(["a", "b", "c"])'
+      - '"a" == 0 | extract(["a", "b", "c"])'
+
+- name: Container lookups with extract
+  assert:
+    that:
+      - "'x' == [0]|map('extract',['x','y'])|list|first"
+      - "'y' == [1]|map('extract',['x','y'])|list|first"
+      - "42 == ['x']|map('extract',{'x':42,'y':31})|list|first"
+      - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
+      - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
+      - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
+  # map was added to jinja2 in version 2.7
+  when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
+
+- name: Test extract filter with defaults
+  vars:
+    container:
+      key:
+        subkey: value
+  assert:
+    that:
+      - "'key' | extract(badcontainer) | default('a') == 'a'"
+      - "'key' | extract(badcontainer, 'subkey') | default('a') == 'a'"
+      - "('key' | extract(badcontainer)).subkey | default('a') == 'a'"
+      - "'badkey' | extract(container) | default('a') == 'a'"
+      - "'badkey' | extract(container, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(container)).subsubkey | default('a') == 'a'"
+      - "'key' | extract(container, 'badsubkey') | default('a') == 'a'"
+      - "'key' | extract(container, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('key' | extract(container, 'badsubkey')).subsubkey | default('a') == 'a'"
+      - "'badkey' | extract(hostvars) | default('a') == 'a'"
+      - "'badkey' | extract(hostvars, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(hostvars)).subsubkey | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, 'badsubkey') | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('localhost' | extract(hostvars, 'badsubkey')).subsubkey | default('a') == 'a'"
+
+- name: Test hash filter
+  assert:
+    that:
+      - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
+      - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
+
+- name: Test unsupported hash type
+  debug:
+    msg: "{{ 'hash' | hash('unsupported_hash_type') }}"
+  ignore_errors: yes
+  register: unsupported_hash_type_res
+
+- assert:
+    that:
+      - "unsupported_hash_type_res is failed"
+      - "'unsupported hash type' in unsupported_hash_type_res.msg"
+
+- name: Flatten tests
+  tags: flatten
+  block:
+    - name: use flatten
+      set_fact:
+        flat_full: '{{orig_list|flatten}}'
+        flat_one: '{{orig_list|flatten(levels=1)}}'
+        flat_two: '{{orig_list|flatten(levels=2)}}'
+        flat_tuples: '{{ [1,3] | zip([2,4]) | list | flatten }}'
+        flat_full_null: '{{list_with_nulls|flatten(skip_nulls=False)}}'
+        flat_one_null: '{{list_with_nulls|flatten(levels=1, skip_nulls=False)}}'
+        flat_two_null: '{{list_with_nulls|flatten(levels=2, skip_nulls=False)}}'
+        flat_full_nonull: '{{list_with_nulls|flatten(skip_nulls=True)}}'
+        flat_one_nonull: '{{list_with_nulls|flatten(levels=1, skip_nulls=True)}}'
+        flat_two_nonull: '{{list_with_nulls|flatten(levels=2, skip_nulls=True)}}'
+
+    - name: Verify flatten filter works as expected
+      assert:
+        that:
+          - flat_full == [1, 2, 3, 4, 5, 6, 7]
+          - flat_one == [1, 2, 3, [4, [5]], 6, 7]
+          - flat_two == [1, 2, 3, 4, [5], 6, 7]
+          - flat_tuples == [1, 2, 3, 4]
+          - flat_full_null == [1, 'None', 3, 4, 5, 6, 7]
+          - flat_one_null == [1, 'None', 3, [4, [5]], 6, 7]
+          - flat_two_null == [1, 'None', 3, 4, [5], 6, 7]
+          - flat_full_nonull == [1, 3, 4, 5, 6, 7]
+          - flat_one_nonull == [1, 3, [4, [5]], 6, 7]
+          - flat_two_nonull == [1, 3, 4, [5], 6, 7]
+          - list_with_subnulls|flatten(skip_nulls=False) ==  [1, 2, 'None', 4, 5, 6, 7]
+          - list_with_subnulls|flatten(skip_nulls=True) ==  [1, 2, 4, 5, 6, 7]
+  vars:
+    orig_list: [1, 2, [3, [4, [5]], 6], 7]
+    list_with_nulls: [1, None, [3, [4, [5]], 6], 7]
+    list_with_subnulls: [1, 2, [None, [4, [5]], 6], 7]
+
+- name: Test base64 filter
+  assert:
+    that:
+    - "'Ansible - くらとみ\n' | b64encode == 'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo='"
+    - "'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo=' | b64decode == 'Ansible - くらとみ\n'"
+    - "'Ansible - くらとみ\n' | b64encode(encoding='utf-16-le') == 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA'"
+    - "'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA' | b64decode(encoding='utf-16-le') == 'Ansible - くらとみ\n'"
+
+- set_fact:
+    x:
+      x: x
+      key: x
+    y:
+      y: y
+      key: y
+    z:
+      z: z
+      key: z
+
+    # Most complicated combine dicts from the documentation
+    default:
+      a:
+        a':
+          x: default_value
+          y: default_value
+          list:
+            - default_value
+      b:
+        - 1
+        - 1
+        - 2
+        - 3
+    patch:
+      a:
+        a':
+          y: patch_value
+          z: patch_value
+          list:
+            - patch_value
+      b:
+        - 3
+        - 4
+        - 4
+        - key: value
+    result:
+      a:
+        a':
+          x: default_value
+          y: patch_value
+          z: patch_value
+          list:
+            - default_value
+            - patch_value
+      b:
+        - 1
+        - 1
+        - 2
+        - 3
+        - 4
+        - 4
+        - key: value
+
+- name: Verify combine fails with extra kwargs
+  set_fact:
+    foo: "{{[1] | combine(foo='bar')}}"
+  ignore_errors: yes
+  register: combine_fail
+
+- name: Verify combine filter
+  assert:
+    that:
+      - "([x] | combine) == x"
+      - "(x | combine(y)) == {'x': 'x', 'y': 'y', 'key': 'y'}"
+      - "(x | combine(y, z)) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      - "([x, y, z] | combine) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      - "([x, y] | combine(z)) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      - "None|combine == {}"
+      # more advanced dict combination tests are done in the "merge_hash" function unit tests
+      # but even though it's redundant with those unit tests, we do at least the most complicated example of the documentation here
+      - "(default | combine(patch, recursive=True, list_merge='append_rp')) == result"
+      - combine_fail is failed
+      - "combine_fail.msg == \"'recursive' and 'list_merge' are the only valid keyword arguments\""
+
+- set_fact:
+    combine: "{{[x, [y]] | combine(z)}}"
+  ignore_errors: yes
+  register: result
+
+- name: Ensure combining objects which aren't dictionaries throws an error
+  assert:
+    that:
+      - "result.msg.startswith(\"failed to combine variables, expected dicts but got\")"
+
+- name: Ensure combining two dictionaries containing undefined variables provides a helpful error
+  block:
+    - set_fact:
+        foo:
+          key1: value1
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': undef_variable}) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+- name: regex_search
+  set_fact:
+    match_case: "{{ 'hello' | regex_search('HELLO', ignorecase=false) }}"
+    ignore_case: "{{ 'hello' | regex_search('HELLO', ignorecase=true) }}"
+    single_line: "{{ 'hello\nworld' | regex_search('^world', multiline=false) }}"
+    multi_line: "{{ 'hello\nworld' | regex_search('^world', multiline=true) }}"
+    named_groups: "{{ 'goodbye' | regex_search('(?P<first>good)(?P<second>bye)', '\\g<second>', '\\g<first>') }}"
+    numbered_groups: "{{ 'goodbye' | regex_search('(good)(bye)', '\\2', '\\1') }}"
+
+- name: regex_search unknown argument (failure expected)
+  set_fact:
+    unknown_arg: "{{ 'hello' | regex_search('hello', 'unknown') }}"
+  ignore_errors: yes
+  register: failure
+
+- name: regex_search check
+  assert:
+    that:
+      - match_case == ''
+      - ignore_case == 'hello'
+      - single_line == ''
+      - multi_line == 'world'
+      - named_groups == ['bye', 'good']
+      - numbered_groups == ['bye', 'good']
+      - failure is failed
+
+- name: Verify to_bool
+  assert:
+    that:
+      - 'None|bool == None'
+      - 'False|bool == False'
+      - '"TrUe"|bool == True'
+      - '"FalSe"|bool == False'
+      - '7|bool == False'
+
+- name: Verify to_datetime
+  assert:
+    that:
+      - '"1993-03-26 01:23:45"|to_datetime < "1994-03-26 01:23:45"|to_datetime'
+
+- name: strftime invalid argument (failure expected)
+  set_fact:
+    foo: "{{ '%Y' | strftime('foo') }}"
+  ignore_errors: yes
+  register: strftime_fail
+
+- name: Verify strftime
+  assert:
+    that:
+      - '"%Y-%m-%d"|strftime(1585247522) == "2020-03-26"'
+      - '"%Y-%m-%d"|strftime("1585247522.0") == "2020-03-26"'
+      - '("%Y"|strftime(None)).startswith("20")' # Current date, can't check much there.
+      - strftime_fail is failed
+      - '"Invalid value for epoch value" in strftime_fail.msg'
+
+- name: Verify case-insensitive regex_replace
+  assert:
+    that:
+      - '"hElLo there"|regex_replace("hello", "hi", ignorecase=True) == "hi there"'
+
+- name: Verify case-insensitive regex_findall
+  assert:
+    that:
+      - '"hEllo there heLlo haha HELLO there"|regex_findall("h.... ", ignorecase=True)|length == 3'
+
+- name: Verify ternary
+  assert:
+    that:
+      - 'True|ternary("seven", "eight") == "seven"'
+      - 'None|ternary("seven", "eight") == "eight"'
+      - 'None|ternary("seven", "eight", "nine") == "nine"'
+      - 'False|ternary("seven", "eight") == "eight"'
+      - '123|ternary("seven", "eight") == "seven"'
+      - '"haha"|ternary("seven", "eight") == "seven"'
+
+- name: Verify regex_escape raises on posix_extended (failure expected)
+  set_fact:
+    foo: '{{"]]^"|regex_escape(re_type="posix_extended")}}'
+  ignore_errors: yes
+  register: regex_escape_fail_1
+
+- name: Verify regex_escape raises on other re_type (failure expected)
+  set_fact:
+    foo: '{{"]]^"|regex_escape(re_type="haha")}}'
+  ignore_errors: yes
+  register: regex_escape_fail_2
+
+- name: Verify regex_escape with re_type other than 'python'
+  assert:
+    that:
+      - '"]]^"|regex_escape(re_type="posix_basic") == "\\]\\]\\^"'
+      - regex_escape_fail_1 is failed
+      - 'regex_escape_fail_1.msg == "Regex type (posix_extended) not yet implemented"'
+      - regex_escape_fail_2 is failed
+      - 'regex_escape_fail_2.msg == "Invalid regex type (haha)"'
+
+- name: Verify from_yaml and from_yaml_all
+  assert:
+    that:
+      - "'---\nbananas: yellow\napples: red'|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
+      - "2|from_yaml == 2"
+      - "'---\nbananas: yellow\n---\napples: red'|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
+      - "2|from_yaml_all == 2"
+      - "unsafe_fruit|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
+      - "unsafe_fruit_all|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
+  vars:
+    unsafe_fruit: !unsafe |
+      ---
+      bananas: yellow
+      apples: red
+    unsafe_fruit_all: !unsafe |
+      ---
+      bananas: yellow
+      ---
+      apples: red
+
+- name: Verify random raises on non-iterable input (failure expected)
+  set_fact:
+    foo: '{{None|random}}'
+  ignore_errors: yes
+  register: random_fail_1
+
+- name: Verify random raises on iterable input with start (failure expected)
+  set_fact:
+    foo: '{{[1,2,3]|random(start=2)}}'
+  ignore_errors: yes
+  register: random_fail_2
+
+- name: Verify random raises on iterable input with step (failure expected)
+  set_fact:
+    foo: '{{[1,2,3]|random(step=2)}}'
+  ignore_errors: yes
+  register: random_fail_3
+
+- name: Verify random
+  assert:
+    that:
+      - '2|random in [0,1]'
+      - '2|random(seed=1337) in [0,1]'
+      - '["a", "b"]|random in ["a", "b"]'
+      - '20|random(start=10) in range(10, 20)'
+      - '20|random(start=10, step=2) % 2 == 0'
+      - random_fail_1 is failure
+      - '"random can only be used on" in random_fail_1.msg'
+      - random_fail_2 is failure
+      - '"start and step can only be used" in random_fail_2.msg'
+      - random_fail_3 is failure
+      - '"start and step can only be used" in random_fail_3.msg'
+
+# It's hard to actually verify much here since the result is, well, random.
+- name: Verify randomize_list
+  assert:
+    that:
+      - '[1,3,5,7,9]|shuffle|length == 5'
+      - '[1,3,5,7,9]|shuffle(seed=1337)|length == 5'
+      - '22|shuffle == 22'
+
+- name: Verify password_hash throws on weird salt_size type
+  set_fact:
+    foo: '{{"hey"|password_hash(salt_size=[999])}}'
+  ignore_errors: yes
+  register: password_hash_1
+
+- name: Verify password_hash throws on weird hashtype
+  set_fact:
+    foo: '{{"hey"|password_hash(hashtype="supersecurehashtype")}}'
+  ignore_errors: yes
+  register: password_hash_2
+
+- name: Verify password_hash
+  assert:
+    that:
+      - "'what in the WORLD is up?'|password_hash|length == 106"
+      # This throws a vastly different error on py2 vs py3, so we just check
+      # that it's a failure, not a substring of the exception.
+      - password_hash_1 is failed
+      - password_hash_2 is failed
+      - "'not support' in password_hash_2.msg"
+
+- name: Verify to_uuid throws on weird namespace
+  set_fact:
+    foo: '{{"hey"|to_uuid(namespace=22)}}'
+  ignore_errors: yes
+  register: to_uuid_1
+
+- name: Verify to_uuid
+  assert:
+    that:
+      - '"monkeys"|to_uuid == "0d03a178-da0f-5b51-934e-cda9c76578c3"'
+      - to_uuid_1 is failed
+      - '"Invalid value" in to_uuid_1.msg'
+
+- name: Verify mandatory throws on undefined variable
+  set_fact:
+    foo: '{{hey|mandatory}}'
+  ignore_errors: yes
+  register: mandatory_1
+
+- name: Verify mandatory throws on undefined variable with custom message
+  set_fact:
+    foo: '{{hey|mandatory("You did not give me a variable. I am a sad wolf.")}}'
+  ignore_errors: yes
+  register: mandatory_2
+
+- name: Set a variable
+  set_fact:
+    mandatory_demo: 123
+
+- name: Verify mandatory
+  assert:
+    that:
+      - '{{mandatory_demo|mandatory}} == 123'
+      - mandatory_1 is failed
+      - "mandatory_1.msg == \"Mandatory variable 'hey'  not defined.\""
+      - mandatory_2 is failed
+      - "mandatory_2.msg == 'You did not give me a variable. I am a sad wolf.'"
+
+- name: Verify comment
+  assert:
+    that:
+      - '"boo!"|comment == "#\n# boo!\n#"'
+      - '"boo!"|comment(decoration="-- ") == "--\n-- boo!\n--"'
+      - '"boo!"|comment(style="cblock") == "/*\n *\n * boo!\n *\n */"'
+      - '"boo!"|comment(decoration="") == "boo!\n"'
+      - '"boo!"|comment(prefix="\n", prefix_count=20) == "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n# boo!\n#"'
+
+- name: Verify subelements throws on invalid obj
+  set_fact:
+    foo: '{{True|subelements("foo")}}'
+  ignore_errors: yes
+  register: subelements_1
+
+- name: Verify subelements throws on invalid subelements arg
+  set_fact:
+    foo: '{{{}|subelements(17)}}'
+  ignore_errors: yes
+  register: subelements_2
+
+- name: Set demo data for subelements
+  set_fact:
+    subelements_demo: '{{ [{"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}] }}'
+
+- name: Verify subelements throws on bad key
+  set_fact:
+    foo: '{{subelements_demo | subelements("does not compute")}}'
+  ignore_errors: yes
+  register: subelements_3
+
+- name: Verify subelements throws on key pointing to bad value
+  set_fact:
+    foo: '{{subelements_demo | subelements("name")}}'
+  ignore_errors: yes
+  register: subelements_4
+
+- name: Verify subelements throws on list of keys ultimately pointing to bad value
+  set_fact:
+    foo: '{{subelements_demo | subelements(["groups", "authorized"])}}'
+  ignore_errors: yes
+  register: subelements_5
+
+- name: Verify subelements
+  assert:
+    that:
+      - subelements_1 is failed
+      - 'subelements_1.msg == "obj must be a list of dicts or a nested dict"'
+      - subelements_2 is failed
+      - '"subelements must be a list or a string" in subelements_2.msg'
+      - 'subelements_demo|subelements("does not compute", skip_missing=True) == []'
+      - subelements_3 is failed
+      - '"could not find" in subelements_3.msg'
+      - subelements_4 is failed
+      - '"should point to a list" in subelements_4.msg'
+      - subelements_5 is failed
+      - '"should point to a dictionary" in subelements_5.msg'
+      - 'subelements_demo|subelements("groups") == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
+      - 'subelements_demo|subelements(["groups"]) == [({"name": "alice", "groups": ["wheel"], "authorized": ["/tmp/alice/onekey.pub"]}, "wheel")]'
+
+
+- name: Verify dict2items throws on non-Mapping
+  set_fact:
+    foo: '{{True|dict2items}}'
+  ignore_errors: yes
+  register: dict2items_fail
+
+- name: Verify dict2items
+  assert:
+    that:
+      - '{"foo": "bar", "banana": "fruit"}|dict2items == [{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]'
+      - dict2items_fail is failed
+      - '"dict2items requires a dictionary" in dict2items_fail.msg'
+
+- name: Verify items2dict throws on non-Mapping
+  set_fact:
+    foo: '{{True|items2dict}}'
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - '[{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]|items2dict == {"foo": "bar", "banana": "fruit"}'
+      - items2dict_fail is failed
+      - '"items2dict requires a list" in items2dict_fail.msg'
+
+- name: Verify path_join throws on non-string and non-sequence
+  set_fact:
+    foo: '{{True|path_join}}'
+  ignore_errors: yes
+  register: path_join_fail
+
+- name: Verify path_join
+  assert:
+    that:
+      - '"foo"|path_join == "foo"'
+      - '["foo", "bar"]|path_join in ["foo/bar", "foo\bar"]'
+      - path_join_fail is failed
+      - '"expects string or sequence" in path_join_fail.msg'
+
+- name: Verify type_debug
+  assert:
+    that:
+      - '"foo"|type_debug == "str"'
+
+- name: Assert that a jinja2 filter that produces a map is auto unrolled
+  assert:
+    that:
+      - thing|map(attribute="bar")|first == 123
+      - thing_result|first == 123
+      - thing_items|first|last == 123
+      - thing_range == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  vars:
+    thing:
+      - bar: 123
+    thing_result: '{{ thing|map(attribute="bar") }}'
+    thing_dict:
+      bar: 123
+    thing_items: '{{ thing_dict.items() }}'
+    thing_range: '{{ range(10) }}'
+
+- name: Assert that quote works on None
+  assert:
+    that:
+      - thing|quote == "''"
+  vars:
+    thing: null
+
+- name: split filter
+  assert:
+    that:
+      - splitty|map('split', ',')|flatten|map('int') == [1, 2, 3, 4, 5, 6]
+  vars:
+    splitty:
+      - "1,2,3"
+      - "4,5,6"

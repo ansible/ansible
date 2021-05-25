@@ -1,2 +1,0 @@
-bugfixes:
-  - docker_container - correct variable used in warning message about default IP

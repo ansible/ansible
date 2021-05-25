@@ -1,6 +1,0 @@
- Interface name          : Ethernet 0/4
- Switchport mode         : trunk
- Ingress filter          : enable
- Acceptable frame types  : vlan-tagged only
- Native Vlan             : 1
- Active Vlans            : 1,22,200

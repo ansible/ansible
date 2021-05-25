@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix the issue that disk is not activated after its creation (https://github.com/ansible/ansible/issues/57412)

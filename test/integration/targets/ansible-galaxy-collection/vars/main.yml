@@ -1,0 +1,150 @@
+galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
+
+pulp_repositories:
+  - published
+  - secondary
+
+publish_namespaces:
+  - ansible_test
+
+collection_list:
+  # Scenario to test out pre-release being ignored unless explicitly set and version pagination.
+  - namespace: namespace1
+    name: name1
+    version: 0.0.1
+  - namespace: namespace1
+    name: name1
+    version: 0.0.2
+  - namespace: namespace1
+    name: name1
+    version: 0.0.3
+  - namespace: namespace1
+    name: name1
+    version: 0.0.4
+  - namespace: namespace1
+    name: name1
+    version: 0.0.5
+  - namespace: namespace1
+    name: name1
+    version: 0.0.6
+  - namespace: namespace1
+    name: name1
+    version: 0.0.7
+  - namespace: namespace1
+    name: name1
+    version: 0.0.8
+  - namespace: namespace1
+    name: name1
+    version: 0.0.9
+  - namespace: namespace1
+    name: name1
+    version: 0.0.10
+  - namespace: namespace1
+    name: name1
+    version: 0.1.0
+  - namespace: namespace1
+    name: name1
+    version: 1.0.0
+  - namespace: namespace1
+    name: name1
+    version: 1.0.9
+  - namespace: namespace1
+    name: name1
+    version: 1.1.0-beta.1
+
+  # Pad out number of namespaces for pagination testing
+  - namespace: namespace2
+    name: name
+  - namespace: namespace3
+    name: name
+  - namespace: namespace4
+    name: name
+  - namespace: namespace5
+    name: name
+  - namespace: namespace6
+    name: name
+  - namespace: namespace7
+    name: name
+  - namespace: namespace8
+    name: name
+  - namespace: namespace9
+    name: name
+
+  # Complex dependency resolution
+  - namespace: parent_dep
+    name: parent_collection
+    version: 0.0.1
+    dependencies:
+      child_dep.child_collection: '<0.5.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.0.0
+    dependencies:
+      child_dep.child_collection: '>=0.5.0,<1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.1.0
+    dependencies:
+      child_dep.child_collection: '>=0.9.9,<=1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 2.0.0
+    dependencies:
+      child_dep.child_collection: '>=1.0.0'
+  - namespace: parent_dep2
+    name: parent_collection
+    dependencies:
+      child_dep.child_collection: '0.5.0'
+  - namespace: child_dep
+    name: child_collection
+    version: 0.4.0
+  - namespace: child_dep
+    name: child_collection
+    version: 0.5.0
+  - namespace: child_dep
+    name: child_collection
+    version: 0.9.9
+    dependencies:
+      child_dep.child_dep2: '!=1.2.3'
+  - namespace: child_dep
+    name: child_collection
+    version: 1.0.0
+    dependencies:
+      child_dep.child_dep2: '!=1.2.3'
+  - namespace: child_dep
+    name: child_dep2
+    version: 1.2.2
+  - namespace: child_dep
+    name: child_dep2
+    version: 1.2.3
+
+  # Dep resolution failure
+  - namespace: fail_namespace
+    name: fail_collection
+    version: 2.1.2
+    dependencies:
+      fail_dep.name: '0.0.5'
+      fail_dep2.name: '<0.0.5'
+  - namespace: fail_dep
+    name: name
+    version: '0.0.5'
+    dependencies:
+      fail_dep2.name: '>0.0.5'
+  - namespace: fail_dep2
+    name: name
+
+  # Symlink tests
+  - namespace: symlink
+    name: symlink
+    use_symlink: yes
+
+  # Caching update tests
+  - namespace: cache
+    name: cache
+    version: 1.0.0
+
+  # Dep with beta version
+  - namespace: dep_with_beta
+    name: parent
+    dependencies:
+      namespace1.name1: '*'

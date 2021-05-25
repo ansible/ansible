@@ -21,33 +21,23 @@ def assemble_files_to_ship(complete_file_list):
     # All files which are in the repository except these:
     ignore_patterns = (
         # Developer-only tools
+        '.azure-pipelines/*',
         '.github/*',
         '.github/*/*',
         'changelogs/fragments/*',
-        'hacking/aws_config/*',
-        'hacking/aws_config/*/*',
+        'hacking/backport/*',
+        'hacking/azp/*',
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
-        'test/legacy/*',
-        'test/legacy/*/*',
-        'test/legacy/*/*/*',
-        'test/legacy/*/*/*/*',
-        'test/legacy/*/*/*/*/*',
-        'test/legacy/*/*/*/*/*/*',
         'test/sanity/code-smell/botmeta.*',
         'test/utils/*',
         'test/utils/*/*',
         'test/utils/*/*/*',
         '.git*',
-        # Consciously left out
-        'examples/playbooks/*',
-        # Possibly should be included
-        'contrib/vault/*',
     )
     ignore_files = frozenset((
         # Developer-only tools
         'changelogs/config.yaml',
-        'changelogs/.changes.yaml',
         'hacking/README.md',
         'hacking/ansible-profile',
         'hacking/cgroup_perf_recap_graph.py',
@@ -60,20 +50,26 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/return_skeleton_generator.py',
         'hacking/test-module',
         'hacking/test-module.py',
+        'test/support/README.md',
         '.cherry_picker.toml',
         '.mailmap',
+        # Generated as part of a build step
+        'docs/docsite/rst/conf.py',
+        'docs/docsite/rst/index.rst',
         # Possibly should be included
         'examples/scripts/uptime.py',
+        'examples/scripts/my_test.py',
+        'examples/scripts/my_test_info.py',
+        'examples/scripts/my_test_facts.py',
         'examples/DOCUMENTATION.yml',
+        'examples/play.yml',
         'examples/hosts.yaml',
         'examples/hosts.yml',
         'examples/inventory_script_schema.json',
         'examples/plugin_filters.yml',
         'hacking/env-setup',
         'hacking/env-setup.fish',
-        'CODING_GUIDELINES.md',
         'MANIFEST',
-        'MODULE_GUIDELINES.md',
     ))
 
     # These files are generated and then intentionally added to the sdist

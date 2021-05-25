@@ -11,14 +11,13 @@ import os.path
 import pathlib
 
 import yaml
-from jinja2 import Environment, FileSystemLoader
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
+from antsibull.jinja2.environment import doc_environment
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
-from ..jinja2.filters import documented_type, rst_ify  # pylint: disable=relative-beyond-top-level
 
 
 DEFAULT_TEMPLATE_FILE = 'collections_galaxy_meta.rst.j2'
@@ -42,7 +41,7 @@ class DocumentCollectionMeta(Command):
                             default=DEFAULT_TEMPLATE_FILE,
                             help="Jinja2 template to use for the config")
         parser.add_argument("-T", "--template-dir", action="store", dest="template_dir",
-                            default=DEFAULT_TEMPLATE_DIR,
+                            default=str(DEFAULT_TEMPLATE_DIR),
                             help="directory containing Jinja2 templates")
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/',
                             help="Output directory for rst files")
@@ -61,12 +60,7 @@ class DocumentCollectionMeta(Command):
 
         normalize_options(options)
 
-        env = Environment(loader=FileSystemLoader(template_dir),
-                          variable_start_string="@{",
-                          variable_end_string="}@",
-                          trim_blocks=True)
-        env.filters['documented_type'] = documented_type
-        env.filters['rst_ify'] = rst_ify
+        env = doc_environment(template_dir)
 
         template = env.get_template(template_file)
         output_name = os.path.join(output_dir, template_file.replace('.j2', ''))

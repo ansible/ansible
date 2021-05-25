@@ -1,0 +1,4 @@
+---
+# handlers file for do_handlers
+- name: My Handler
+  shell: sleep 5

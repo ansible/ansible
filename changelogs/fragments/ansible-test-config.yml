@@ -1,0 +1,9 @@
+minor_changes:
+  - ansible-test - Add support for an ansible-test configuration file in collections under ``tests/config.yml``.
+  - ansible-test - Collections can limit the Python versions used for testing their remote-only code (modules/module_utils and related tests).
+  - ansible-test - Collections can declare their remote-only code (modules/module_utils and related tests) as controller-only.
+  - ansible-test - Sanity test warnings relating to Python version support have been improved.
+major_changes:
+  - ansible-test - The ``import`` and ``compile`` sanity tests limit remote-only Python version checks to remote-only code.
+  - ansible-test - The ``future-import-boilerplate`` and ``metaclass-boilerplate`` sanity tests are limited to remote-only code.
+                   Additionally, they are skipped for collections which declare no support for Python 2.x.

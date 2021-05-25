@@ -1,100 +1,104 @@
-Error Handling In Playbooks
-===========================
+.. _playbooks_error_handling:
 
-.. contents:: Topics
+***************************
+Error handling in playbooks
+***************************
 
-Ansible normally has defaults that make sure to check the return codes of commands and modules and
-it fails fast -- forcing an error to be dealt with unless you decide otherwise.
+When Ansible receives a non-zero return code from a command or a failure from a module, by default it stops executing on that host and continues on other hosts. However, in some circumstances you may want different behavior. Sometimes a non-zero return code indicates success. Sometimes you want a failure on one host to stop execution on all hosts. Ansible provides tools and settings to handle these situations and help you get the behavior, output, and reporting you want.
 
-Sometimes a command that returns different than 0 isn't an error.  Sometimes a command might not always
-need to report that it 'changed' the remote system.  This section describes how to change
-the default behavior of Ansible for certain tasks so output and error handling behavior is
-as desired.
+.. contents::
+   :local:
 
 .. _ignoring_failed_commands:
 
-Ignoring Failed Commands
-````````````````````````
+Ignoring failed commands
+========================
 
-Generally playbooks will stop executing any more steps on a host that has a task fail.
-Sometimes, though, you want to continue on.  To do so, write a task that looks like this::
+By default Ansible stops executing tasks on a host when a task fails on that host. You can use ``ignore_errors`` to continue on in spite of the failure::
 
-    - name: this will not be counted as a failure
-      command: /bin/false
+    - name: Do not count this as a failure
+      ansible.builtin.command: /bin/false
       ignore_errors: yes
 
-Note that the above system only governs the return value of failure of the particular task,
-so if you have an undefined variable used or a syntax error, it will still raise an error that users will need to address.
-Note that this will not prevent failures on connection or execution issues.
-This feature only works when the task must be able to run and return a value of 'failed'.
+The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, connection failures, execution issues (for example, missing packages), or syntax errors.
+
+Ignoring unreachable host errors
+================================
+
+.. versionadded:: 2.7
+
+You can ignore a task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword. Ansible ignores the task errors, but continues to execute future tasks against the unreachable host. For example, at the task level::
+
+    - name: This executes, fails, and the failure is ignored
+      ansible.builtin.command: /bin/true
+      ignore_unreachable: yes
+
+    - name: This executes, fails, and ends the play for this host
+      ansible.builtin.command: /bin/true
+
+And at the playbook level::
+
+    - hosts: all
+      ignore_unreachable: yes
+      tasks:
+      - name: This executes, fails, and the failure is ignored
+        ansible.builtin.command: /bin/true
+
+      - name: This executes, fails, and ends the play for this host
+        ansible.builtin.command: /bin/true
+        ignore_unreachable: no
 
 .. _resetting_unreachable:
 
-Resetting Unreachable Hosts
-```````````````````````````
+Resetting unreachable hosts
+===========================
 
-.. versionadded:: 2.2
-
-Connection failures set hosts as 'UNREACHABLE', which will remove them from the list of active hosts for the run.
-To recover from these issues you can use `meta: clear_host_errors` to have all currently flagged hosts reactivated,
-so subsequent tasks can try to use them again.
+If Ansible cannot connect to a host, it marks that host as 'UNREACHABLE' and removes it from the list of active hosts for the run. You can use `meta: clear_host_errors` to reactivate all hosts, so subsequent tasks can try to reach them again.
 
 
 .. _handlers_and_failure:
 
-Handlers and Failure
-````````````````````
+Handlers and failure
+====================
 
-When a task fails on a host, handlers which were previously notified
-will *not* be run on that host. This can lead to cases where an unrelated failure
-can leave a host in an unexpected state. For example, a task could update
+Ansible runs :ref:`handlers <handlers>` at the end of each play. If a task notifies a handler but
+another task fails later in the play, by default the handler does *not* run on that host,
+which may leave the host in an unexpected state. For example, a task could update
 a configuration file and notify a handler to restart some service. If a
-task later on in the same play fails, the service will not be restarted despite
-the configuration change.
+task later in the same play fails, the configuration file might be changed but
+the service will not be restarted.
 
 You can change this behavior with the ``--force-handlers`` command-line option,
-or by including ``force_handlers: True`` in a play, or ``force_handlers = True``
-in ansible.cfg. When handlers are forced, they will run when notified even
-if a task fails on that host. (Note that certain errors could still prevent
+by including ``force_handlers: True`` in a play, or by adding ``force_handlers = True``
+to ansible.cfg. When handlers are forced, Ansible will run all notified handlers on
+all hosts, even hosts with failed tasks. (Note that certain errors could still prevent
 the handler from running, such as a host becoming unreachable.)
 
 .. _controlling_what_defines_failure:
 
-Controlling What Defines Failure
-````````````````````````````````
+Defining failure
+================
 
 Ansible lets you define what "failure" means in each task using the ``failed_when`` conditional. As with all conditionals in Ansible, lists of multiple ``failed_when`` conditions are joined with an implicit ``and``, meaning the task only fails when *all* conditions are met. If you want to trigger a failure when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator.
 
 You may check for failure by searching for a word or phrase in the output of a command::
 
     - name: Fail task when the command error output prints FAILED
-      command: /usr/bin/example-command -x -y -z
+      ansible.builtin.command: /usr/bin/example-command -x -y -z
       register: command_result
       failed_when: "'FAILED' in command_result.stderr"
 
 or based on the return code::
 
     - name: Fail task when both files are identical
-      raw: diff foo/file1 bar/file2
+      ansible.builtin.raw: diff foo/file1 bar/file2
       register: diff_cmd
       failed_when: diff_cmd.rc == 0 or diff_cmd.rc >= 2
-
-In previous version of Ansible, this can still be accomplished as follows::
-
-    - name: this command prints FAILED when it fails
-      command: /usr/bin/example-command -x -y -z
-      register: command_result
-      ignore_errors: True
-
-    - name: fail the play if the previous command did not succeed
-      fail:
-        msg: "the command failed"
-      when: "'FAILED' in command_result.stderr"
 
 You can also combine multiple conditions for failure. This task will fail if both conditions are true::
 
     - name: Check if a file exists in temp and fail task if it does
-      command: ls /tmp/this_should_not_be_here
+      ansible.builtin.command: ls /tmp/this_should_not_be_here
       register: result
       failed_when:
         - result.rc == 0
@@ -106,9 +110,8 @@ If you want the task to fail when only one condition is satisfied, change the ``
 
 If you have too many conditions to fit neatly into one line, you can split it into a multi-line yaml value with ``>``::
 
-
     - name: example of many failed_when conditions with OR
-      shell: "./myBinary"
+      ansible.builtin.shell: "./myBinary"
       register: ret
       failed_when: >
         ("No such file or directory" in ret.stdout) or
@@ -117,79 +120,121 @@ If you have too many conditions to fit neatly into one line, you can split it in
 
 .. _override_the_changed_result:
 
-Overriding The Changed Result
-`````````````````````````````
+Defining "changed"
+==================
 
-When a shell/command or other module runs it will typically report
-"changed" status based on whether it thinks it affected machine state.
-
-Sometimes you will know, based on the return code
-or output that it did not make any changes, and wish to override
-the "changed" result such that it does not appear in report output or
-does not cause handlers to fire::
+Ansible lets you define when a particular task has "changed" a remote node using the ``changed_when`` conditional. This lets you determine, based on return codes or output, whether a change should be reported in Ansible statistics and whether a handler should be triggered or not. As with all conditionals in Ansible, lists of multiple ``changed_when`` conditions are joined with an implicit ``and``, meaning the task only reports a change when *all* conditions are met. If you want to report a change when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator. For example::
 
     tasks:
 
-      - shell: /usr/bin/billybass --mode="take me to the river"
+      - name: Report 'changed' when the return code is not equal to 2 
+        ansible.builtin.shell: /usr/bin/billybass --mode="take me to the river"
         register: bass_result
         changed_when: "bass_result.rc != 2"
 
-      # this will never report 'changed' status
-      - shell: wall 'beep'
+      - name: This will never report 'changed' status
+        ansible.builtin.shell: wall 'beep'
         changed_when: False
 
 You can also combine multiple conditions to override "changed" result::
 
-    - command: /bin/fake_command
+    - name: Combine multiple conditions to override 'changed' result
+      ansible.builtin.command: /bin/fake_command
       register: result
       ignore_errors: True
       changed_when:
         - '"ERROR" in result.stderr'
         - result.rc == 2
 
-Aborting the play
-`````````````````
+See :ref:`controlling_what_defines_failure` for more conditional syntax examples.
 
-Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
+Ensuring success for command and shell
+======================================
 
-The ``any_errors_fatal`` play option will end the play when any tasks results in an error and stop execution of the play::
+The :ref:`command <command_module>` and :ref:`shell <shell_module>` modules care about return codes, so if you have a command whose successful exit code is not zero, you can do this::
+
+    tasks:
+      - name: Run this command and ignore the result
+        ansible.builtin.shell: /usr/bin/somecommand || /bin/true
+
+
+Aborting a play on all hosts
+============================
+
+Sometimes you want a failure on a single host, or failures on a certain percentage of hosts, to abort the entire play on all hosts. You can stop play execution after the first failure happens with ``any_errors_fatal``. For finer-grained control, you can use ``max_fail_percentage`` to abort the run after a given percentage of hosts has failed.
+
+Aborting on the first error: any_errors_fatal
+---------------------------------------------
+
+If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes the fatal task on all hosts in the current batch, then stops executing the play on all hosts. Subsequent tasks and plays are not executed. You can recover from fatal errors by adding a :ref:`rescue section <block_error_handling>` to the block. You can set ``any_errors_fatal`` at the play or block level::
 
      - hosts: somehosts
        any_errors_fatal: true
        roles:
          - myrole
 
-for finer-grained control ``max_fail_percentage`` can be used to abort the run after a given percentage of hosts has failed.
+     - hosts: somehosts
+       tasks:
+         - block:
+             - include_tasks: mytasks.yml
+           any_errors_fatal: true
 
-Using blocks
-````````````
+You can use this feature when all tasks must be 100% successful to continue playbook execution. For example, if you run a service on machines in multiple data centers with load balancers to pass traffic from users to the service, you want all load balancers to be disabled before you stop the service for maintenance. To ensure that any failure in the task that disables the load balancers will stop all other tasks::
 
-Most of what you can apply to a single task (with the exception of loops) can be applied at the :ref:`playbooks_blocks` level, which also makes it much easier to set data or directives common to the tasks.
-Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
-Blocks only deal with 'failed' status of a task. A bad task definition or an unreachable host are not 'rescuable' errors::
+    ---
+    - hosts: load_balancers_dc_a
+      any_errors_fatal: true
 
-    tasks:
-    - name: Handle the error
-      block:
-        - debug:
-            msg: 'I execute normally'
-        - name: i force a failure
-          command: /bin/false
-        - debug:
-            msg: 'I never execute, due to the above task failing, :-('
-      rescue:
-        - debug:
-            msg: 'I caught an error, can do stuff here to fix it, :-)'
+      tasks:
+        - name: Shut down datacenter 'A'
+          ansible.builtin.command: /usr/bin/disable-dc
 
-This will 'revert' the failed status of the outer ``block`` task for the run and the play will continue as if it had succeeded.
-See :ref:`block_error_handling` for more examples.
+    - hosts: frontends_dc_a
+
+      tasks:
+        - name: Stop service
+          ansible.builtin.command: /usr/bin/stop-software
+
+        - name: Update software
+          ansible.builtin.command: /usr/bin/upgrade-software
+
+    - hosts: load_balancers_dc_a
+
+      tasks:
+        - name: Start datacenter 'A'
+          ansible.builtin.command: /usr/bin/enable-dc
+
+In this example Ansible starts the software upgrade on the front ends only if all of the load balancers are successfully disabled.
+
+.. _maximum_failure_percentage:
+
+Setting a maximum failure percentage
+------------------------------------
+
+By default, Ansible continues to execute tasks as long as there are hosts that have not yet failed. In some situations, such as when executing a rolling update, you may want to abort the play when a certain threshold of failures has been reached. To achieve this, you can set a maximum failure percentage on a play::
+
+    ---
+    - hosts: webservers
+      max_fail_percentage: 30
+      serial: 10
+
+The ``max_fail_percentage`` setting applies to each batch when you use it with :ref:`serial <rolling_update_batch_size>`. In the example above, if more than 3 of the 10 servers in the first (or any) batch of servers failed, the rest of the play would be aborted.
+
+.. note::
+
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort the play when 2 of the systems failed, set the max_fail_percentage at 49 rather than 50.
+
+Controlling errors in blocks
+============================
+
+You can also use blocks to define responses to task errors. This approach is similar to exception handling in many programming languages. See :ref:`block_error_handling` for details and examples.
 
 .. seealso::
 
    :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks
    :ref:`playbooks_variables`

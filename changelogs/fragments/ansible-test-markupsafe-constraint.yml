@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible_test - add constraint for ``MarkupSafe`` (https://github.com/ansible/ansible/pull/74666)

@@ -1,0 +1,25 @@
+[galaxy]
+# Ensures subsequent unstable reruns don't use the cached information causing another failure
+cache_dir={{ remote_tmp_dir }}/galaxy_cache
+server_list=pulp_v2,pulp_v3,galaxy_ng,secondary
+
+[galaxy_server.pulp_v2]
+url={{ pulp_server }}published/api/
+username={{ pulp_user }}
+password={{ pulp_password }}
+
+[galaxy_server.pulp_v3]
+url={{ pulp_server }}published/api/
+v3=true
+username={{ pulp_user }}
+password={{ pulp_password }}
+
+[galaxy_server.galaxy_ng]
+url={{ galaxy_ng_server }}
+token={{ galaxy_ng_token.json.token }}
+
+[galaxy_server.secondary]
+url={{ pulp_server }}secondary/api/
+v3=true
+username={{ pulp_user }}
+password={{ pulp_password }}

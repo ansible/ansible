@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - The ``default`` test container has been updated to version 3.4.0 and now uses Python 3.9 by default instead of Python 3.6.

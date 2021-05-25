@@ -1,0 +1,2 @@
+shippable/posix/group4
+skip/python2.6  # build uses tarfile with features not available until 2.7

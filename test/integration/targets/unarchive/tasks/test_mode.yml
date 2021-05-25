@@ -1,0 +1,151 @@
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: unarchive and set mode to 0600, directories 0700
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    remote_src: yes
+    mode: "u+rwX,g-rwx,o-rwx"
+    list_files: True
+  register: unarchive06
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive06_stat
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "unarchive06.changed == true"
+      - "unarchive06_stat.stat.mode == '0600'"
+      # Verify that file list is generated
+      - "'files' in unarchive06"
+      - "{{unarchive06['files']| length}} == 1"
+      - "'foo-unarchive.txt' in unarchive06['files']"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+    state: absent
+
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: unarchive over existing extraction and set mode to 0644
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    remote_src: yes
+    mode: "u+rwX,g-wx,o-wx,g+r,o+r"
+  register: unarchive06_2
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive06_2_stat
+
+- debug:
+    var: unarchive06_2_stat.stat.mode
+
+- name: Test that the files were changed
+  assert:
+    that:
+      - "unarchive06_2.changed == true"
+      - "unarchive06_2_stat.stat.mode == '0644'"
+
+- name: Repeat the last request to verify no changes
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    remote_src: yes
+    mode: "u+rwX-x,g-wx,o-wx,g+r,o+r"
+    list_files: True
+  register: unarchive07
+
+- name: Test that the files were not changed
+  assert:
+    that:
+      - "unarchive07.changed == false"
+      # Verify that file list is generated
+      - "'files' in unarchive07"
+      - "{{unarchive07['files']| length}} == 1"
+      - "'foo-unarchive.txt' in unarchive07['files']"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+    state: absent
+
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-zip'
+    state: directory
+
+- name: unarchive and set mode to 0601, directories 0700
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.zip"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-zip"
+    remote_src: yes
+    mode: "u+rwX-x,g-rwx,o=x"
+    list_files: True
+  register: unarchive08
+
+- name: Test that the file modes were changed
+  stat:
+    path: "{{ remote_tmp_dir }}/test-unarchive-zip/foo-unarchive.txt"
+  register: unarchive08_stat
+
+- name: Test that the file modes were changed
+  assert:
+    that:
+      - "unarchive08.changed == true"
+      - "unarchive08_stat.stat.mode == '0601'"
+      # Verify that file list is generated
+      - "'files' in unarchive08"
+      - "{{unarchive08['files']| length}} == 3"
+      - "'foo-unarchive.txt' in unarchive08['files']"
+      - "'foo-unarchive-777.txt' in unarchive08['files']"
+      - "'FOO-UNAR.TXT' in unarchive08['files']"
+
+- name: unarchive zipfile a second time and set mode to 0601, directories 0700
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.zip"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-zip"
+    remote_src: yes
+    mode: "u+rwX-x,g-rwx,o=x"
+    list_files: True
+  register: unarchive08
+
+- name: Test that the file modes were not changed
+  stat:
+    path: "{{ remote_tmp_dir }}/test-unarchive-zip/foo-unarchive.txt"
+  register: unarchive08_stat
+
+- debug:
+    var: unarchive08
+
+- debug:
+    var: unarchive08_stat
+
+- name: Test that the files did not change
+  assert:
+    that:
+      - "unarchive08.changed == false"
+      - "unarchive08_stat.stat.mode == '0601'"
+      # Verify that file list is generated
+      - "'files' in unarchive08"
+      - "{{unarchive08['files']| length}} == 3"
+      - "'foo-unarchive.txt' in unarchive08['files']"
+      - "'foo-unarchive-777.txt' in unarchive08['files']"
+      - "'FOO-UNAR.TXT' in unarchive08['files']"
+
+- name: remove our zip unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-zip'
+    state: absent

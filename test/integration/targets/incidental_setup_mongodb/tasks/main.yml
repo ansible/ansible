@@ -1,0 +1,168 @@
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+# https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+# Support for Ubuntu 14.04 has been removed from MongoDB 4.0.10+, 3.6.13+, and 3.4.21+.
+# CentOS6 has python version issues
+# Ubuntu 20.04 does not yet have the required packages
+- meta: end_play
+  when: (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04')
+    or (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '20.04')
+    or (ansible_os_family == "RedHat" and ansible_distribution_major_version == '6')
+    or ansible_os_family == "Suse"
+    or ansible_distribution == 'Fedora'
+    or (ansible_facts['distribution'] == "CentOS")
+
+# Ubuntu
+- name: Import MongoDB public GPG Key
+  apt_key:
+    keyserver: "{{ apt.keyserver }}"
+    id: "{{ apt.keyserver_id }}"
+  when:
+    - ansible_distribution_version in ["16.04", "18.04"]
+    - ansible_distribution == 'Ubuntu'
+
+- name: Add MongoDB repository into sources list
+  apt_repository:
+    repo: "{{ apt.repo }}"
+    state: present
+    update_cache: yes
+  when:
+    - ansible_distribution_version in ["16.04", "18.04"]
+    - ansible_distribution == 'Ubuntu'
+
+# Need to handle various platforms here. Package name will not always be the same
+- name: Ensure mongod package is installed
+  apt:
+    name: "{{ mongodb_packages.mongod }}"
+    state: present
+    force: yes
+  when:
+    - ansible_distribution == 'Ubuntu'
+
+- name: Ensure mongos package is installed
+  apt:
+    name: "{{ mongodb_packages.mongos }}"
+    state: present
+    force: yes
+  when:
+    - ansible_distribution == 'Ubuntu'
+
+- name: Ensure mongo client is installed
+  apt:
+    name: "{{ mongodb_packages.mongo }}"
+    state: present
+    force: yes
+  when:
+    - ansible_distribution == 'Ubuntu'
+# EOF Ubuntu
+
+# Redhat
+- name: Add MongopDB repo
+  yum_repository:
+    name: "{{ yum.name }}"
+    description: "{{ yum.description }}"
+    baseurl: "{{ yum.baseurl }}"
+    gpgcheck: "{{ yum.gpgcheck }}"
+    gpgkey: "{{ yum.gpgkey }}"
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_version.split('.')[0]|int <= 7
+    - not ansible_distribution == "Fedora"
+
+
+- name: RedHat 8 repo not yet available so use 7 url
+  yum_repository:
+    name: "{{ yum.name }}"
+    description: "{{ yum.description }}"
+    baseurl: "{{ yum.redhat8url }}"
+    gpgcheck: "{{ yum.gpgcheck }}"
+    gpgkey: "{{ yum.gpgkey }}"
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_version.split('.')[0]|int == 8
+    - not ansible_distribution == "Fedora"
+
+- name: Another url for Fedora based systems
+  yum_repository:
+    name: "{{ yum.name }}"
+    description: "{{ yum.description }}"
+    baseurl: "{{ yum.fedoraurl }}"
+    gpgcheck: "{{ yum.gpgcheck }}"
+    gpgkey: "{{ yum.gpgkey }}"
+  when:
+    - ansible_distribution == "Fedora"
+
+- name: Ensure mongod package is installed
+  yum:
+    name: "{{ mongodb_packages.mongod }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure mongos package is installed
+  yum:
+    name: "{{ mongodb_packages.mongos }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure mongo client is installed
+  yum:
+    name: "{{ mongodb_packages.mongo }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+# EOF Redhat
+
+- name: Install debian_packages
+  apt:
+    name: "{{ debian_packages_py2 }}"
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_distribution_version == "16.04"
+  notify: Remove debian_packages_py2
+
+- name: Install debian_packages
+  apt:
+    name: "{{ debian_packages_py36 }}"
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_distribution_version == "18.04"
+  notify: Remove debian_packages_py36
+
+- name: Install redhat_packages_py2
+  yum:
+    name: "{{ redhat_packages_py2 }}"
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_version|float < 8
+    - not (ansible_os_family == "RedHat" and ansible_distribution_version|float < 8)
+  notify: Remove redhat_packages_py2
+
+- name: Install redhat_packages_py3
+  yum:
+    name: "{{ redhat_packages_py3 }}"
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_version|float >= 8
+  notify: Remove redhat_packages_py3
+
+- name: Install pip packages
+  pip:
+    name: "{{ pip_packages }}"
+    state: present
+  notify: remove mongodb pip packages

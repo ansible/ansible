@@ -1,0 +1,4 @@
+minor_changes:
+  - >-
+    `ansible.plugins.callback.CallbackBase.host_label()` has been factored out
+    as a static method (https://github.com/ansible/ansible/pull/73814).

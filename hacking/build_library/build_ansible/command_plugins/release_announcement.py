@@ -9,7 +9,7 @@ __metaclass__ = type
 
 import sys
 from collections import UserString
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..commands import Command  # pylint: disable=relative-beyond-top-level

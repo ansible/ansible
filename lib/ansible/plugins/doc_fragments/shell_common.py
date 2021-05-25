@@ -1,5 +1,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 class ModuleDocFragment(object):
@@ -17,11 +19,26 @@ options:
         key: remote_tmp
     vars:
       - name: ansible_remote_tmp
+  common_remote_group:
+    name: Enables changing the group ownership of temporary files and directories
+    default: null
+    description:
+      - Checked when Ansible needs to execute a module as a different user.
+      - If setfacl and chown both fail and do not let the different user access the module's files, they will be chgrp'd to this group.
+      - In order for this to work, the remote_user and become_user must share a common group and this setting must be set to that group.
+    env: [{name: ANSIBLE_COMMON_REMOTE_GROUP}]
+    vars:
+      - name: ansible_common_remote_group
+    ini:
+    - {key: common_remote_group, section: defaults}
+    version_added: "2.10"
   system_tmpdirs:
     description:
-       - "List of valid system temporary directories for Ansible to choose when it cannot use
-         ``remote_tmp``, normally due to permission issues.  These must be world readable, writable,
-         and executable."
+       - "List of valid system temporary directories on the managed machine for Ansible to choose
+         when it cannot use ``remote_tmp``, normally due to permission issues.  These must be world
+         readable, writable, and executable. This list should only contain directories which the
+         system administrator has pre-created with the proper ownership and permissions otherwise
+         security issues can arise."
     default: [ /var/tmp, /tmp ]
     type: list
     env: [{name: ANSIBLE_SYSTEM_TMPDIRS}]
@@ -41,10 +58,10 @@ options:
     vars:
       - name: ansible_async_dir
   environment:
-    type: dict
-    default: {}
+    type: list
+    default: [{}]
     description:
-      - dictionary of environment variables and their values to use when executing commands.
+      - List of dictionaries of environment variables and their values to use when executing commands.
   admin_users:
     type: list
     default: ['root', 'toor']
@@ -58,4 +75,17 @@ options:
         key: admin_users
     vars:
       - name: ansible_admin_users
+  world_readable_temp:
+    version_added: '2.10'
+    default: False
+    description:
+      - This makes the temporary files created on the machine world-readable and will issue a warning instead of failing the task.
+      - It is useful when becoming an unprivileged user.
+    env:
+      - name: ANSIBLE_SHELL_ALLOW_WORLD_READABLE_TEMP
+    vars:
+      - name: ansible_shell_allow_world_readable_temp
+    ini:
+    - {key: allow_world_readable_tmpfiles, section: defaults}
+    type: boolean
 """

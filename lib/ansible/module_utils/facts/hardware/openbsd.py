@@ -17,6 +17,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import time
 
 from ansible.module_utils._text import to_text
 
@@ -38,6 +39,7 @@ class OpenBSDHardware(Hardware):
     - processor_cores
     - processor_count
     - processor_speed
+    - uptime_seconds
 
     In addition, it also defines number of DMI facts and device facts.
     """
@@ -47,23 +49,17 @@ class OpenBSDHardware(Hardware):
         hardware_facts = {}
         self.sysctl = get_sysctl(self.module, ['hw'])
 
-        # TODO: change name
-        cpu_facts = self.get_processor_facts()
-        memory_facts = self.get_memory_facts()
-        device_facts = self.get_device_facts()
-        dmi_facts = self.get_dmi_facts()
+        hardware_facts.update(self.get_processor_facts())
+        hardware_facts.update(self.get_memory_facts())
+        hardware_facts.update(self.get_device_facts())
+        hardware_facts.update(self.get_dmi_facts())
+        hardware_facts.update(self.get_uptime_facts())
 
-        mount_facts = {}
+        # storage devices notorioslly prone to hang/block so they are under a timeout
         try:
-            mount_facts = self.get_mount_facts()
+            hardware_facts.update(self.get_mount_facts())
         except timeout.TimeoutError:
             pass
-
-        hardware_facts.update(cpu_facts)
-        hardware_facts.update(memory_facts)
-        hardware_facts.update(dmi_facts)
-        hardware_facts.update(device_facts)
-        hardware_facts.update(mount_facts)
 
         return hardware_facts
 
@@ -115,10 +111,28 @@ class OpenBSDHardware(Hardware):
 
         return memory_facts
 
+    def get_uptime_facts(self):
+        # On openbsd, we need to call it with -n to get this value as an int.
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd, '-n', 'kern.boottime']
+
+        rc, out, err = self.module.run_command(cmd)
+
+        if rc != 0:
+            return {}
+
+        kern_boottime = out.strip()
+        if not kern_boottime.isdigit():
+            return {}
+
+        return {
+            'uptime_seconds': int(time.time() - int(kern_boottime)),
+        }
+
     def get_processor_facts(self):
         cpu_facts = {}
         processor = []
-        for i in range(int(self.sysctl['hw.ncpu'])):
+        for i in range(int(self.sysctl['hw.ncpuonline'])):
             processor.append(self.sysctl['hw.model'])
 
         cpu_facts['processor'] = processor
@@ -129,8 +143,8 @@ class OpenBSDHardware(Hardware):
         # dmesg, however even those have proven to be unreliable.
         # So take a shortcut and report the logical number of processors in
         # 'processor_count' and 'processor_cores' and leave it at that.
-        cpu_facts['processor_count'] = self.sysctl['hw.ncpu']
-        cpu_facts['processor_cores'] = self.sysctl['hw.ncpu']
+        cpu_facts['processor_count'] = self.sysctl['hw.ncpuonline']
+        cpu_facts['processor_cores'] = self.sysctl['hw.ncpuonline']
 
         return cpu_facts
 

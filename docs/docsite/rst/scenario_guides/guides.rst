@@ -41,3 +41,4 @@ platforms, products, and technologies. They explore particular use cases in grea
    guide_kubernetes
    guide_vagrant
    guide_vmware
+   guide_vmware_rest

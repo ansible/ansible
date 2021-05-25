@@ -1,3 +1,0 @@
-gitlab_user: ansible_test_user
-gitlab_user_pass: Secr3tPassw00rd
-gitlab_user_email: root@localhost

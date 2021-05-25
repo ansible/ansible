@@ -3,23 +3,23 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import json
-import os
+import re
 
 from . import types as t
 
 from .util import (
     display,
-    make_dirs,
-    to_bytes,
+    get_ansible_version,
+)
+
+from .util_common import (
+    write_text_test_results,
+    write_json_test_results,
+    ResultType,
 )
 
 from .config import (
     TestConfig,
-)
-
-from .data import (
-    data_context,
 )
 
 
@@ -118,23 +118,22 @@ class TestResult:
         :type args: TestConfig
         """
 
-    def create_path(self, directory, extension):
+    def create_result_name(self, extension):
         """
-        :type directory: str
         :type extension: str
         :rtype: str
         """
-        path = os.path.join(data_context().results, directory, 'ansible-test-%s' % self.command)
+        name = 'ansible-test-%s' % self.command
 
         if self.test:
-            path += '-%s' % self.test
+            name += '-%s' % self.test
 
         if self.python_version:
-            path += '-python-%s' % self.python_version
+            name += '-python-%s' % self.python_version
 
-        path += extension
+        name += extension
 
-        return path
+        return name
 
     def save_junit(self, args, test_case, properties=None):
         """
@@ -143,8 +142,6 @@ class TestResult:
         :type properties: dict[str, str] | None
         :rtype: str | None
         """
-        path = self.create_path('junit', '.xml')
-
         test_suites = [
             self.junit.TestSuite(
                 name='ansible-test',
@@ -154,13 +151,21 @@ class TestResult:
             ),
         ]
 
-        report = self.junit.TestSuite.to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
+        # the junit_xml API is changing in version 2.0.0
+        # TestSuite.to_xml_string is being replaced with to_xml_report_string
+        # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
+        try:
+            to_xml_string = self.junit.to_xml_report_string
+        except AttributeError:
+            # noinspection PyDeprecation
+            to_xml_string = self.junit.TestSuite.to_xml_string
+
+        report = to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
 
         if args.explain:
             return
 
-        with open(path, 'wb') as xml:
-            xml.write(to_bytes(report))
+        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), report)
 
 
 class TestTimeout(TestResult):
@@ -195,7 +200,7 @@ One or more of the following situations may be responsible:
 
         timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
 
-        # hack to avoid requiring junit-xml, which isn't pre-installed on Shippable outside our test containers
+        # hack to avoid requiring junit-xml, which may not be pre-installed outside our test containers
         xml = '''
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">
@@ -207,10 +212,7 @@ One or more of the following situations may be responsible:
 </testsuites>
 ''' % (timestamp, message, output)
 
-        path = self.create_path('junit', '.xml')
-
-        with open(path, 'w') as junit_fd:
-            junit_fd.write(xml.lstrip())
+        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), xml.lstrip())
 
 
 class TestSuccess(TestResult):
@@ -226,16 +228,29 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
+    def __init__(self, command, test, python_version=None):
+        """
+        :type command: str
+        :type test: str
+        :type python_version: str
+        """
+        super(TestSkipped, self).__init__(command, test, python_version)
+
+        self.reason = None  # type: t.Optional[str]
+
     def write_console(self):
         """Write results to console."""
-        display.info('No tests applicable.', verbosity=1)
+        if self.reason:
+            display.warning(self.reason)
+        else:
+            display.info('No tests applicable.', verbosity=1)
 
     def write_junit(self, args):
         """
         :type args: TestConfig
         """
         test_case = self.junit.TestCase(classname=self.command, name=self.name)
-        test_case.add_skipped_info('No tests applicable.')
+        test_case.add_skipped_info(self.reason or 'No tests applicable.')
 
         self.save_junit(args, test_case)
 
@@ -283,6 +298,10 @@ class TestFailure(TestResult):
 
             for message in self.messages:
                 display.error(message.format(show_confidence=True))
+
+            doc_url = self.find_docs()
+            if doc_url:
+                display.info('See documentation for help: %s' % doc_url)
 
     def write_lint(self):
         """Write lint results to stdout."""
@@ -335,16 +354,10 @@ class TestFailure(TestResult):
             ],
         )
 
-        path = self.create_path('bot', '.json')
-
         if args.explain:
             return
 
-        make_dirs(os.path.dirname(path))
-
-        with open(path, 'w') as bot_fd:
-            json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
-            bot_fd.write('\n')
+        write_json_test_results(ResultType.BOT, self.create_result_name('.json'), bot_data)
 
     def populate_confidence(self, metadata):
         """
@@ -372,20 +385,24 @@ class TestFailure(TestResult):
         """
         :rtype: str
         """
-        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
-        testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
+        if self.command != 'sanity':
+            return None  # only sanity tests have docs links
+
+        # Use the major.minor version for the URL only if this a release that
+        # matches the pattern 2.4.0, otherwise, use 'devel'
+        ansible_version = get_ansible_version()
+        url_version = 'devel'
+        if re.search(r'^[0-9.]+$', ansible_version):
+            url_version = '.'.join(ansible_version.split('.')[:2])
+
+        testing_docs_url = 'https://docs.ansible.com/ansible/%s/dev_guide/testing' % url_version
 
         url = '%s/%s/' % (testing_docs_url, self.command)
-        path = os.path.join(testing_docs_dir, self.command)
 
         if self.test:
             url += '%s.html' % self.test
-            path = os.path.join(path, '%s.rst' % self.test)
 
-        if os.path.exists(path):
-            return url
-
-        return None
+        return url
 
     def format_title(self, help_link=None):
         """
@@ -511,7 +528,7 @@ class TestMessage:
         :rtype: str
         """
         if self.__code:
-            msg = '%s %s' % (self.__code, self.__message)
+            msg = '%s: %s' % (self.__code, self.__message)
         else:
             msg = self.__message
 

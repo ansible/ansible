@@ -1,0 +1,5 @@
+passlib
+pywinrm
+pytz
+unittest2 ; python_version < '2.7'
+pexpect

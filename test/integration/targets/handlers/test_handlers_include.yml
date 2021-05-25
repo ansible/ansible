@@ -6,7 +6,7 @@
       notify: test handler
       tags: ['playbook_include_handlers']
   handlers:
-    - include: handlers.yml
+    - import_tasks: handlers.yml
 
 - name: verify that role can include handler
   hosts: testhost

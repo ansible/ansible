@@ -42,6 +42,25 @@
         - async_result.finished == 1
         - async_result is finished
 
+- name: assert temp async directory exists
+  stat:
+    path: "~/.ansible_async"
+  register: dir_st
+
+- assert:
+    that:
+      - dir_st.stat.isdir is defined and dir_st.stat.isdir
+
+- name: stat temp async status file
+  stat:
+    path: "~/.ansible_async/{{ async_result.ansible_job_id }}"
+  register: tmp_async_file_st
+
+- name: validate automatic cleanup of temp async status file on completed run
+  assert:
+    that:
+      - not tmp_async_file_st.stat.exists
+
 - name: test async without polling
   command: sleep 5
   async: 30
@@ -165,6 +184,18 @@
     - async_result is successful
     - async_result.warnings[0] is search('trailing junk after module output')
 
+- name: test stderr handling
+  async_test:
+    fail_mode: stderr
+  async: 30
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - async_result.stderr == "printed to stderr\n"
+
 # NOTE: This should report a warning that cannot be tested
 - name: test async properties on non-async task
   command: sleep 1
@@ -286,3 +317,12 @@
     {{ ansible_python_interpreter|default('/usr/bin/python') }} -c 'import os; os.fdopen(os.dup(0), "r")'
   async: 1
   poll: 1
+
+- name: run async poll callback test playbook
+  command: ansible-playbook {{ role_path }}/callback_test.yml
+  delegate_to: localhost
+  register: callback_output
+
+- assert:
+    that:
+      - '"ASYNC POLL on localhost" in callback_output.stdout'

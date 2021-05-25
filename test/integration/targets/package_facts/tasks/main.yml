@@ -73,3 +73,43 @@
 - name: check for ansible_facts.packages exists
   assert:
     that: ansible_facts.packages is defined
+
+- name: Run package_fact tests - FreeBSD
+  block:
+    - name: Gather package facts
+      package_facts:
+        manager: pkg
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that: ansible_facts.packages is defined
+
+    - name: check there is at least one package not flagged vital nor automatic
+      command: pkg query -e "%a = 0 && %V = 0" %n
+      register: not_vital_nor_automatic
+      failed_when: not not_vital_nor_automatic.stdout
+
+    - vars:
+        pkg_name: "{{ not_vital_nor_automatic.stdout_lines[0].strip() }}"
+      block:
+        - name: check the selected package is not vital
+          assert:
+            that:
+              - 'not ansible_facts.packages[pkg_name][0].vital'
+              - 'not ansible_facts.packages[pkg_name][0].automatic'
+
+        - name: flag the selected package as vital and automatic
+          command: 'pkg set --yes -v 1 -A 1 {{ pkg_name }}'
+
+        - name: Gather package facts (again)
+          package_facts:
+
+        - name: check the selected package is flagged vital and automatic
+          assert:
+            that:
+              - 'ansible_facts.packages[pkg_name][0].vital|bool'
+              - 'ansible_facts.packages[pkg_name][0].automatic|bool'
+      always:
+        - name: restore previous flags for the selected package
+          command: 'pkg set --yes -v 0 -A 0 {{ pkg_name }}'
+  when: ansible_os_family == "FreeBSD"

@@ -23,7 +23,6 @@ import random
 import re
 import time
 
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
@@ -76,6 +75,10 @@ class ShellBase(AnsiblePlugin):
         except KeyError:
             pass
 
+    @staticmethod
+    def _generate_temp_dir_name():
+        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
+
     def env_prefix(self, **kwargs):
         return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items()])
 
@@ -104,6 +107,13 @@ class ShellBase(AnsiblePlugin):
 
         return ' '.join(cmd)
 
+    def chgrp(self, paths, group):
+        cmd = ['chgrp', group]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
+
+        return ' '.join(cmd)
+
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
@@ -125,7 +135,7 @@ class ShellBase(AnsiblePlugin):
 
     def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
         if not basefile:
-            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
+            basefile = self.__class__._generate_temp_dir_name()
 
         # When system is specified we have to create this in a directory where
         # other users can read and access the tmp directory.
@@ -137,7 +147,8 @@ class ShellBase(AnsiblePlugin):
         # passed in tmpdir if it is valid or the first one from the setting if not.
 
         if system:
-            tmpdir = tmpdir.rstrip('/')
+            if tmpdir:
+                tmpdir = tmpdir.rstrip('/')
 
             if tmpdir in self.get_option('system_tmpdirs'):
                 basetmpdir = tmpdir
@@ -151,7 +162,9 @@ class ShellBase(AnsiblePlugin):
 
         basetmp = self.join_path(basetmpdir, basefile)
 
-        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        # use mkdir -p to ensure parents exist, but mkdir fullpath to ensure last one is created by us
+        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmpdir, self._SHELL_SUB_RIGHT)
+        cmd += '%s mkdir %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
         cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 
         # change the umask in a subshell to achieve the desired mode
@@ -170,7 +183,7 @@ class ShellBase(AnsiblePlugin):
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_426
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
 
-            Falls back to 'current workind directory' as we assume 'home is where the remote user ends up'
+            Falls back to 'current working directory' as we assume 'home is where the remote user ends up'
         '''
 
         # Check that the user_path to expand is safe

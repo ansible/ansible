@@ -1,2 +1,0 @@
-minor_changes:
-  - vmware_host_facts now supports tag facts (https://github.com/ansible/ansible/issues/46461).

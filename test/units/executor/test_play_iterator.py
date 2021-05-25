@@ -32,14 +32,8 @@ from units.mock.path import mock_unfrackpath_noop
 
 class TestPlayIterator(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_host_state(self):
-        hs = HostState(blocks=[x for x in range(0, 10)])
+        hs = HostState(blocks=list(range(0, 10)))
         hs.tasks_child_state = HostState(blocks=[0])
         hs.rescue_child_state = HostState(blocks=[1])
         hs.always_child_state = HostState(blocks=[2])
@@ -228,6 +222,11 @@ class TestPlayIterator(unittest.TestCase):
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.name, "end of role nested block 2")
+        self.assertIsNotNone(task._role)
+        # implicit meta: role_complete
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'meta')
         self.assertIsNotNone(task._role)
         # regular play task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])

@@ -1,0 +1,5 @@
+yum_repository_test_package: dinginessentail
+yum_repository_test_repo:
+  name: fakerepo
+  description: Fake Repo
+  baseurl: "file://{{ repodir }}"

@@ -35,16 +35,23 @@ class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
 
     def get_virtual_facts(self):
         virtual_facts = {}
+        host_tech = set()
+        guest_tech = set()
 
         # Set empty values as default
         virtual_facts['virtualization_type'] = ''
         virtual_facts['virtualization_role'] = ''
 
         virtual_product_facts = self.detect_virt_product('hw.product')
+        guest_tech.update(virtual_product_facts['virtualization_tech_guest'])
+        host_tech.update(virtual_product_facts['virtualization_tech_host'])
         virtual_facts.update(virtual_product_facts)
 
+        virtual_vendor_facts = self.detect_virt_vendor('hw.vendor')
+        guest_tech.update(virtual_vendor_facts['virtualization_tech_guest'])
+        host_tech.update(virtual_vendor_facts['virtualization_tech_host'])
+
         if virtual_facts['virtualization_type'] == '':
-            virtual_vendor_facts = self.detect_virt_vendor('hw.vendor')
             virtual_facts.update(virtual_vendor_facts)
 
         # Check the dmesg if vmm(4) attached, indicating the host is
@@ -53,9 +60,12 @@ class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         for line in dmesg_boot.splitlines():
             match = re.match('^vmm0 at mainbus0: (SVM/RVI|VMX/EPT)$', line)
             if match:
+                host_tech.add('vmm')
                 virtual_facts['virtualization_type'] = 'vmm'
                 virtual_facts['virtualization_role'] = 'host'
 
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 

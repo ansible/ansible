@@ -21,9 +21,7 @@ __metaclass__ = type
 
 import difflib
 import json
-import os
 import sys
-import warnings
 
 from copy import deepcopy
 
@@ -74,6 +72,7 @@ class CallbackBase(AnsiblePlugin):
             self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, sys.modules[self.__module__].__file__))
 
         self.disabled = False
+        self.wants_implicit_tasks = False
 
         self._plugin_options = {}
         if options is not None:
@@ -97,6 +96,21 @@ class CallbackBase(AnsiblePlugin):
 
         # load from config
         self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+
+    @staticmethod
+    def host_label(result):
+        """Return label for the hostname (& delegated hostname) of a task
+        result.
+        """
+        label = "%s" % result._host.get_name()
+        if result._task.delegate_to and result._task.delegate_to != result._host.get_name():
+            # show delegated host
+            label += " -> %s" % result._task.delegate_to
+            # in case we have 'extra resolution'
+            ahost = result._result.get('_ansible_delegated_vars', {}).get('ansible_host', result._task.delegate_to)
+            if result._task.delegate_to != ahost:
+                label += "(%s)" % ahost
+        return label
 
     def _run_is_verbose(self, result, verbosity=0):
         return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
@@ -184,6 +198,8 @@ class CallbackBase(AnsiblePlugin):
                 for x in ['before', 'after']:
                     if isinstance(diff[x], MutableMapping):
                         diff[x] = self._serialize_diff(diff[x])
+                    elif diff[x] is None:
+                        diff[x] = ''
                 if 'before_header' in diff:
                     before_header = u"before: %s" % diff['before_header']
                 else:
@@ -237,12 +253,6 @@ class CallbackBase(AnsiblePlugin):
             item = result.get('_ansible_item_label', result.get('item'))
         return item
 
-    def _get_item(self, result):
-        ''' here for backwards compat, really should have always been named: _get_item_label'''
-        cback = getattr(self, 'NAME', os.path.basename(__file__))
-        self._display.deprecated("The %s callback plugin should be updated to use the _get_item_label method instead" % cback, version="2.11")
-        return self._get_item_label(result)
-
     def _process_items(self, result):
         # just remove them as now they get handled by individual callbacks
         del result._result['results']
@@ -251,7 +261,7 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name == 'debug':
+        if task_name in C._ACTION_DEBUG:
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):
@@ -261,6 +271,11 @@ class CallbackBase(AnsiblePlugin):
                 # 'var' value as field, so eliminate others and what is left should be varname
                 for hidme in self._hide_in_debug:
                     result.pop(hidme, None)
+
+    def _print_task_path(self, task, color=C.COLOR_DEBUG):
+        path = task.get_path()
+        if path:
+            self._display.display(u"task path: %s" % path, color=color)
 
     def set_play_context(self, play_context):
         pass

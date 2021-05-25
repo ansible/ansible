@@ -1,0 +1,2 @@
+bugfixes:
+  - paramiko_ssh - mark connection as connected when ``_connect()`` is called (https://github.com/ansible/ansible/issues/74081)

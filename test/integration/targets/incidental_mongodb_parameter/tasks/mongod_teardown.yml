@@ -1,0 +1,25 @@
+- name: Kill all mongod processes
+  command: pkill  -{{ kill_signal }} mongod
+  ignore_errors: true
+
+- name: Getting pids for mongod
+  pids:
+      name: mongod
+  register: pids_of_mongod
+
+- name: Wait for all mongod processes to exit
+  wait_for:
+    path: "/proc/{{ item }}/status"
+    state: absent
+    delay: 1
+  with_items: "{{ pids_of_mongod }}"
+
+- name: Remove all mongod folders
+  file:
+    path: "{{ remote_tmp_dir }}/{{ item }}"
+    state: absent
+  with_items:
+    - mongod3001
+
+- name: Remove all mongod sock files
+  shell: rm -Rf /tmp/mongodb*.sock

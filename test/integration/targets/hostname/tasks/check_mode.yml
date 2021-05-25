@@ -1,0 +1,20 @@
+# These are less useful (check_mode only) but run even in containers
+- block:
+    - name: Get current hostname
+      command: hostname
+      register: original
+
+    - name: Change hostname (check_mode)
+      hostname:
+        name: crocodile.ansible.test.doesthiswork.net.example.com
+      check_mode: true
+      register: hn
+
+    - name: Get current hostname again
+      command: hostname
+      register: after_hn
+
+    - assert:
+        that:
+          - hn is changed
+          - original.stdout == after_hn.stdout

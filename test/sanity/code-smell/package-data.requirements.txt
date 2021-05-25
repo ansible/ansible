@@ -1,0 +1,9 @@
+docutils
+jinja2
+packaging
+pyyaml  # ansible-core requirement
+resolvelib  # ansible-core requirement
+rstcheck
+setuptools
+straight.plugin
+antsibull-changelog == 0.9.0

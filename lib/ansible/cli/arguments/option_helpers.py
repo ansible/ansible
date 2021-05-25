@@ -11,11 +11,13 @@ import os
 import os.path
 import sys
 import time
-import yaml
+
+from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
@@ -34,6 +36,15 @@ class AnsibleVersion(argparse.Action):
         ansible_version = to_native(version(getattr(parser, 'prog')))
         print(ansible_version)
         parser.exit()
+
+
+class UnrecognizedArgument(argparse.Action):
+    def __init__(self, option_strings, dest, const=True, default=None, required=False, help=None, metavar=None, nargs=0):
+        super(UnrecognizedArgument, self).__init__(option_strings=option_strings, dest=dest, nargs=nargs, const=const,
+                                                   default=default, required=required, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.error('unrecognized arguments: %s' % option_string)
 
 
 class PrependListAction(argparse.Action):
@@ -96,7 +107,8 @@ def _git_repo_info(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+                with open(repo_path) as f:
+                    gitdir = yaml_load(f).get('gitdir')
                 # There is a possibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
@@ -132,46 +144,34 @@ def _git_repo_info(repo_path):
 
 
 def _gitinfo():
-    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    basedir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
     repo_path = os.path.join(basedir, '.git')
-    result = _git_repo_info(repo_path)
-    submodules = os.path.join(basedir, '.gitmodules')
-
-    if not os.path.exists(submodules):
-        return result
-
-    with open(submodules) as f:
-        for line in f:
-            tokens = line.strip().split(' ')
-            if tokens[0] == 'path':
-                submodule_path = tokens[2]
-                submodule_info = _git_repo_info(os.path.join(basedir, submodule_path, '.git'))
-                if not submodule_info:
-                    submodule_info = ' not found - use git submodule update --init ' + submodule_path
-                result += "\n  {0}: {1}".format(submodule_path, submodule_info)
-    return result
+    return _git_repo_info(repo_path)
 
 
 def version(prog=None):
     """ return ansible version """
     if prog:
-        result = " ".join((prog, __version__))
+        result = ["{0} [core {1}] ".format(prog, __version__)]
     else:
-        result = __version__
+        result = [__version__]
 
     gitinfo = _gitinfo()
     if gitinfo:
-        result = result + " {0}".format(gitinfo)
-    result += "\n  config file = %s" % C.CONFIG_FILE
+        result[0] = "{0} {1}".format(result[0], gitinfo)
+    result.append("  config file = %s" % C.CONFIG_FILE)
     if C.DEFAULT_MODULE_PATH is None:
         cpath = "Default w/o overrides"
     else:
         cpath = C.DEFAULT_MODULE_PATH
-    result = result + "\n  configured module search path = %s" % cpath
-    result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
-    result = result + "\n  executable location = %s" % sys.argv[0]
-    result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
-    return result
+    result.append("  configured module search path = %s" % cpath)
+    result.append("  ansible python module location = %s" % ':'.join(ansible.__path__))
+    result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
+    result.append("  executable location = %s" % sys.argv[0])
+    result.append("  python version = %s" % ''.join(sys.version.splitlines()))
+    result.append("  jinja version = %s" % j2_version)
+    result.append("  libyaml = %s" % HAS_LIBYAML)
+    return "\n".join(result)
 
 
 #
@@ -214,9 +214,10 @@ def add_async_options(parser):
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=None, dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory."
-                             "This sets the relative path for many features including roles/ group_vars/ etc.")
+                             "This sets the relative path for many features including roles/ group_vars/ etc.",
+                        type=unfrack_path())
 
 
 def add_check_options(parser):
@@ -244,6 +245,8 @@ def add_connect_options(parser):
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
     connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
                                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+
+    # ssh only
     connect_group.add_argument('--ssh-common-args', default='', dest='ssh_common_args',
                                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
     connect_group.add_argument('--sftp-extra-args', default='', dest='sftp_extra_args',
@@ -309,8 +312,8 @@ def add_runas_options(parser):
     runas_group.add_argument("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
                              help="run operations with become (does not imply password prompting)")
     runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD,
-                             help="privilege escalation method to use (default=%(default)s), use "
-                                  "`ansible-doc -t become -l` to list valid choices.")
+                             help='privilege escalation method to use (default=%s)' % C.DEFAULT_BECOME_METHOD +
+                                  ', use `ansible-doc -t become -l` to list valid choices.')
     runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
                              help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
@@ -341,6 +344,12 @@ def add_runtask_options(parser):
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
 
 
+def add_tasknoplay_options(parser):
+    """Add options for commands that run a task w/o a defined play"""
+    parser.add_argument('--task-timeout', type=int, dest="task_timeout", action="store", default=C.TASK_TIMEOUT,
+                        help="set task timeout limit in seconds, must be positive integer.")
+
+
 def add_subset_options(parser):
     """Add options for commands which can run a subset of tasks"""
     parser.add_argument('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
@@ -354,7 +363,7 @@ def add_vault_options(parser):
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
-    base_group.add_argument('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
-    base_group.add_argument('--vault-password-file', default=[], dest='vault_password_files',
+    base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
                             help="vault password file", type=unfrack_path(), action='append')

@@ -1,0 +1,157 @@
+{
+    "testns.testcol.notjsonfile": {
+        "doc": {
+            "author": "Ansible Core (@ansible-core)",
+            "cache": "notjsonfile",
+            "collection": "testns.testcol",
+            "description": [
+                "This cache uses JSON formatted, per host, files saved to the filesystem."
+            ],
+            "filename": "./collections/ansible_collections/testns/testcol/plugins/cache/notjsonfile.py",
+            "options": {
+                "_prefix": {
+                    "deprecated": {
+                        "alternative": "none",
+                        "collection_name": "testns.testcol",
+                        "removed_at_date": "2050-01-01",
+                        "why": "Another test deprecation"
+                    },
+                    "description": "User defined prefix to use when creating the JSON files",
+                    "env": [
+                        {
+                            "name": "ANSIBLE_CACHE_PLUGIN_PREFIX",
+                            "version_added": "1.1.0",
+                            "version_added_collection": "testns.testcol"
+                        }
+                    ],
+                    "ini": [
+                        {
+                            "key": "fact_caching_prefix",
+                            "section": "defaults"
+                        }
+                    ]
+                },
+                "_timeout": {
+                    "default": 86400,
+                    "description": "Expiration timeout for the cache plugin data",
+                    "env": [
+                        {
+                            "name": "ANSIBLE_CACHE_PLUGIN_TIMEOUT"
+                        }
+                    ],
+                    "ini": [
+                        {
+                            "key": "fact_caching_timeout",
+                            "section": "defaults"
+                        }
+                    ],
+                    "type": "integer",
+                    "vars": [
+                        {
+                            "deprecated": {
+                                "alternative": "do not use a variable",
+                                "collection_name": "testns.testcol",
+                                "version": "3.0.0",
+                                "why": "Test deprecation"
+                            },
+                            "name": "notsjonfile_fact_caching_timeout",
+                            "version_added": "1.5.0",
+                            "version_added_collection": "testns.testcol"
+                        }
+                    ]
+                },
+                "_uri": {
+                    "description": [
+                        "Path in which the cache plugin will save the JSON files"
+                    ],
+                    "env": [
+                        {
+                            "name": "ANSIBLE_CACHE_PLUGIN_CONNECTION",
+                            "version_added": "1.2.0",
+                            "version_added_collection": "testns.testcol"
+                        }
+                    ],
+                    "ini": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol",
+                                "version": "2.0.0",
+                                "why": "Test deprecation"
+                            },
+                            "key": "fact_caching_connection",
+                            "section": "defaults"
+                        }
+                    ],
+                    "required": true
+                },
+                "testcol2depr": {
+                    "deprecated": {
+                        "alternative": "none",
+                        "collection_name": "testns.testcol2",
+                        "version": "2.0.0",
+                        "why": "Test option deprecation"
+                    },
+                    "description": [
+                        "A plugin option taken from testcol2 that is deprecated"
+                    ],
+                    "type": "str"
+                },
+                "testcol2option": {
+                    "description": [
+                        "A plugin option taken from testcol2"
+                    ],
+                    "env": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol2",
+                                "removed_at_date": "2020-01-31",
+                                "why": "Test deprecation"
+                            },
+                            "name": "FOO_BAR",
+                            "version_added": "1.2.0",
+                            "version_added_collection": "testns.testcol2"
+                        }
+                    ],
+                    "ini": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol2",
+                                "version": "3.0.0",
+                                "why": "Test deprecation"
+                            },
+                            "key": "foo",
+                            "section": "bar",
+                            "version_added": "1.1.0",
+                            "version_added_collection": "testns.testcol2"
+                        }
+                    ],
+                    "type": "str",
+                    "vars": [
+                        {
+                            "deprecated": {
+                                "alternative": "none",
+                                "collection_name": "testns.testcol2",
+                                "removed_at_date": "2040-12-31",
+                                "why": "Test deprecation"
+                            },
+                            "name": "foobar",
+                            "version_added": "1.3.0",
+                            "version_added_collection": "testns.testcol2"
+                        }
+                    ],
+                    "version_added": "1.0.0",
+                    "version_added_collection": "testns.testcol2"
+                }
+            },
+            "short_description": "JSON formatted files.",
+            "version_added": "0.7.0",
+            "version_added_collection": "testns.testcol"
+        },
+        "examples": null,
+        "metadata": null,
+        "return": null
+    }
+}

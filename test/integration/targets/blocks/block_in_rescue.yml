@@ -1,0 +1,33 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+        - name: "EXPECTED FAILURE"
+          fail:
+            msg: "fail to test single level block in rescue"
+      rescue:
+        - block:
+          - debug:
+              msg: Rescued!
+
+    - block:
+        - name: "EXPECTED FAILURE"
+          fail:
+            msg: "fail to test multi-level block in rescue"
+      rescue:
+        - block:
+          - block:
+            - debug:
+                msg: Rescued!
+
+    - name: "Outer block"
+      block:
+        - name: "Inner block"
+          block:
+            - name: "EXPECTED FAILURE"
+              fail:
+                msg: "fail to test multi-level block"
+          rescue:
+            - name: "Rescue block"
+              block:
+                - debug: msg="Inner block rescue"

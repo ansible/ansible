@@ -1,7 +1,7 @@
 # file module tests for dealing with symlinks (state=link)
 
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
 
 #
 # Basic absolute symlink to a file
@@ -115,6 +115,88 @@
   assert:
     that:
       - "file6a_result.changed == false"
+
+# In order for a symlink in a sticky world writable directory to be followed, it must
+# either be owned by the follower,
+# or the directory and symlink must have the same owner.
+- name: symlink in sticky directory
+  block:
+    - name: Create remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+      register: user
+
+    - name: Create a local temporary directory
+      tempfile:
+        state: directory
+      register: tempdir
+
+    - name: Set sticky bit
+      file:
+        path: '{{ tempdir.path }}'
+        mode: o=rwXt
+
+    - name: 'Check mode: force creation soft link in sticky directory owned by another user (mode is used)'
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: true
+        follow: false
+      check_mode: true
+      register: missing_dst_no_follow_enable_force_use_mode1
+
+    - name: force creation soft link in sticky directory owned by another user (mode is used)
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: true
+        follow: false
+      register: missing_dst_no_follow_enable_force_use_mode2
+
+    - name: Get stat info for the link
+      stat:
+        path: '{{ tempdir.path }}/soft3.txt'
+        follow: false
+      register: soft3_result
+
+    - name: 'Idempotence: force creation soft link in sticky directory owned by another user (mode is used)'
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: yes
+        follow: false
+      register: missing_dst_no_follow_enable_force_use_mode3
+  always:
+    - name: Delete remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+        state: absent
+
+    - name: Delete unprivileged user home and tempdir
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '{{ tempdir.path }}'
+        - '{{ user.home }}'
+
+- name: verify that link was created
+  assert:
+    that:
+      - "missing_dst_no_follow_enable_force_use_mode1 is changed"
+      - "missing_dst_no_follow_enable_force_use_mode2 is changed"
+      - "missing_dst_no_follow_enable_force_use_mode3 is not changed"
+      - "soft3_result['stat'].islnk"
+      - "soft3_result['stat'].lnk_target == '{{ user.home }}/nonexistent'"
 
 #
 # Test creating a link to a directory https://github.com/ansible/ansible/issues/1369
@@ -306,7 +388,6 @@
 - name: assert that the link target was unmodified
   assert:
     that:
-      - 'file10_result is changed'
       - 'file10_target_stat["stat"]["mode"] == "0644"'
 
 
@@ -345,3 +426,61 @@
         - "{{ output_dir }}/test_follow1_link"
 
 # END #56928
+
+
+# Test failure with src and no state parameter
+- name: Specify src without state
+  file:
+    src: "{{ output_file }}"
+    dest: "{{ output_dir }}/link.txt"
+  ignore_errors: yes
+  register: src_state
+
+- name: Ensure src without state failed
+  assert:
+    that:
+      - src_state is failed
+      - "'src option requires state to be' in src_state.msg"
+
+# Test creating a symlink when the destination exists and is a file
+- name: create a test file
+  copy:
+    dest: '{{ output_dir }}/file.txt'
+    content: 'this is a test file\n'
+    mode: 0666
+
+- name: Create a symlink with dest already a file
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/file.txt'
+    state: link
+  ignore_errors: true
+  register: dest_is_existing_file_fail
+
+- name: Stat to make sure the symlink was not created
+  stat:
+    path: '{{ output_dir }}/file.txt'
+    follow: false
+  register: dest_is_existing_file_fail_stat
+
+- name: Forcefully a symlink with dest already a file
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/file.txt'
+    state: link
+    force: true
+  register: dest_is_existing_file_force
+
+- name: Stat to make sure the symlink was created
+  stat:
+    path: '{{ output_dir }}/file.txt'
+    follow: false
+  register: dest_is_existing_file_force_stat
+
+- assert:
+    that:
+    - dest_is_existing_file_fail is failed
+    - not dest_is_existing_file_fail_stat.stat.islnk
+    - dest_is_existing_file_force is changed
+    - dest_is_existing_file_force_stat.stat.exists
+    - dest_is_existing_file_force_stat.stat.islnk

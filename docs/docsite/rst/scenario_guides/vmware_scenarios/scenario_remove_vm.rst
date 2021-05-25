@@ -4,14 +4,15 @@
 Remove an existing VMware virtual machine
 *****************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
 
 This guide will show you how to utilize Ansible to remove an existing VMware virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 * Software
@@ -41,13 +42,13 @@ Caveats
 
 - All variable names and VMware object names are case sensitive.
 - You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
-- ``vmware_guest`` module tries to mimick VMware Web UI and workflow, so the virtual machine must be in powered off state in order to remove it from the VMware inventory.
+- ``vmware_guest`` module tries to mimic VMware Web UI and workflow, so the virtual machine must be in powered off state in order to remove it from the VMware inventory.
 
 .. warning::
 
    The removal VMware virtual machine using ``vmware_guest`` module is destructive operation and can not be reverted, so it is strongly recommended to take the backup of virtual machine and related files (vmx and vmdk files) before proceeding.
 
-Example Description
+Example description
 ===================
 
 In this use case / example, user will be removing a virtual machine using name. The following Ansible playbook showcases the basic parameters that are needed for this.

@@ -27,17 +27,16 @@ import datetime
 import os
 import tarfile
 import tempfile
-import yaml
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from shutil import rmtree
 
-import ansible.constants as C
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.galaxy.api import GalaxyAPI
 from ansible.utils.display import Display
 
 display = Display()
@@ -48,33 +47,44 @@ class GalaxyRole(object):
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = (os.path.join('meta', 'main.yml'), os.path.join('meta', 'main.yaml'))
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
+    META_REQUIREMENTS = (os.path.join('meta', 'requirements.yml'), os.path.join('meta', 'requirements.yaml'))
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
+        self._requirements = None
         self._install_info = None
         self._validate_certs = not context.CLIARGS['ignore_certs']
 
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.galaxy = galaxy
+        self.api = api
 
         self.name = name
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.paths = [os.path.join(x, self.name) for x in galaxy.roles_paths]
 
         if path is not None:
-            if self.name not in path:
+            if not path.endswith(os.path.join(os.path.sep, self.name)):
                 path = os.path.join(path, self.name)
+            else:
+                # Look for a meta/main.ya?ml inside the potential role dir in case
+                #  the role name is the same as parent directory of the role.
+                #
+                # Example:
+                #   ./roles/testing/testing/meta/main.yml
+                for meta_main in self.META_MAIN:
+                    if os.path.exists(os.path.join(path, name, meta_main)):
+                        path = os.path.join(path, self.name)
+                        break
             self.path = path
         else:
             # use the first path by default
             self.path = os.path.join(galaxy.roles_paths[0], self.name)
-            # create list of possible paths
-            self.paths = [x for x in galaxy.roles_paths]
-            self.paths = [os.path.join(x, self.name) for x in self.paths]
 
     def __repr__(self):
         """
@@ -95,17 +105,17 @@ class GalaxyRole(object):
         Returns role metadata
         """
         if self._metadata is None:
-            for meta_main in self.META_MAIN:
-                meta_path = os.path.join(self.path, meta_main)
-                if os.path.isfile(meta_path):
-                    try:
-                        f = open(meta_path, 'r')
-                        self._metadata = yaml.safe_load(f)
-                    except Exception:
-                        display.vvvvv("Unable to load metadata for %s" % self.name)
-                        return False
-                    finally:
-                        f.close()
+            for path in self.paths:
+                for meta_main in self.META_MAIN:
+                    meta_path = os.path.join(path, meta_main)
+                    if os.path.isfile(meta_path):
+                        try:
+                            with open(meta_path, 'r') as f:
+                                self._metadata = yaml_load(f)
+                        except Exception:
+                            display.vvvvv("Unable to load metadata for %s" % self.name)
+                            return False
+                        break
 
         return self._metadata
 
@@ -120,13 +130,21 @@ class GalaxyRole(object):
             if os.path.isfile(info_path):
                 try:
                     f = open(info_path, 'r')
-                    self._install_info = yaml.safe_load(f)
+                    self._install_info = yaml_load(f)
                 except Exception:
                     display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
                 finally:
                     f.close()
         return self._install_info
+
+    @property
+    def _exists(self):
+        for path in self.paths:
+            if os.path.isdir(path):
+                return True
+
+        return False
 
     def _write_galaxy_install_info(self):
         """
@@ -144,7 +162,7 @@ class GalaxyRole(object):
         info_path = os.path.join(self.path, self.META_INSTALL)
         with open(info_path, 'w+') as f:
             try:
-                self._install_info = yaml.safe_dump(info, f)
+                self._install_info = yaml_dump(info, f)
             except Exception:
                 return False
 
@@ -180,7 +198,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs)
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -205,17 +223,16 @@ class GalaxyRole(object):
                 role_data = self.src
                 tmp_file = self.fetch(role_data)
             else:
-                api = GalaxyAPI(self.galaxy, 'role_default', C.GALAXY_SERVER)
-                role_data = api.lookup_role_by_name(self.src)
+                role_data = self.api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
+                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.api.api_server))
 
                 if role_data.get('role_type') == 'APP':
                     # Container Role
                     display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
-                role_versions = api.fetch_role_related('versions', role_data['id'])
+                role_versions = self.api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
@@ -282,7 +299,7 @@ class GalaxyRole(object):
                     raise AnsibleError("this role does not appear to have a meta/main.yml file.")
                 else:
                     try:
-                        self._metadata = yaml.safe_load(role_tar_file.extractfile(meta_file))
+                        self._metadata = yaml_load(role_tar_file.extractfile(meta_file))
                     except Exception:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
@@ -312,13 +329,19 @@ class GalaxyRole(object):
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
                             if member.isreg() or member.issym():
-                                parts = member.name.replace(archive_parent_dir, "", 1).split(os.sep)
-                                final_parts = []
-                                for part in parts:
-                                    if part != '..' and '~' not in part and '$' not in part:
-                                        final_parts.append(part)
-                                member.name = os.path.join(*final_parts)
-                                role_tar_file.extract(member, self.path)
+                                n_member_name = to_native(member.name)
+                                n_archive_parent_dir = to_native(archive_parent_dir)
+                                n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
+                                n_final_parts = []
+                                for n_part in n_parts:
+                                    # TODO if the condition triggers it produces a broken installation.
+                                    # It will create the parent directory as an empty file and will
+                                    # explode if the directory contains valid files.
+                                    # Leaving this as is since the whole module needs a rewrite.
+                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
+                                        n_final_parts.append(n_part)
+                                member.name = os.path.join(*n_final_parts)
+                                role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
@@ -356,3 +379,25 @@ class GalaxyRole(object):
         }
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+
+    @property
+    def requirements(self):
+        """
+        Returns role requirements
+        """
+        if self._requirements is None:
+            self._requirements = []
+            for meta_requirements in self.META_REQUIREMENTS:
+                meta_path = os.path.join(self.path, meta_requirements)
+                if os.path.isfile(meta_path):
+                    try:
+                        f = open(meta_path, 'r')
+                        self._requirements = yaml_load(f)
+                    except Exception:
+                        display.vvvvv("Unable to load requirements for %s" % self.name)
+                    finally:
+                        f.close()
+
+                    break
+
+        return self._requirements

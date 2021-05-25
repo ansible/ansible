@@ -12,16 +12,17 @@ from .init import (
     CURRENT_RLIMIT_NOFILE,
 )
 
+from . import types as t
+
 from .util import (
     ApplicationError,
     display,
     raw_command,
-    get_docker_completion,
-    get_remote_completion,
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
     ANSIBLE_TEST_DATA_ROOT,
+    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from .delegation import (
@@ -30,19 +31,29 @@ from .delegation import (
 )
 
 from .executor import (
-    command_posix_integration,
-    command_network_integration,
-    command_windows_integration,
-    command_shell,
-    SUPPORTED_PYTHON_VERSIONS,
     ApplicationWarning,
     Delegate,
     generate_pip_install,
-    check_startup,
+    configure_pypi_proxy,
+)
+
+from .commands.integration.posix import (
+    command_posix_integration,
+)
+
+from .commands.integration.network import (
+    command_network_integration,
+)
+
+from .commands.integration.windows import (
+    command_windows_integration,
+)
+
+from .commands.shell import (
+    command_shell,
 )
 
 from .config import (
-    IntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
@@ -51,19 +62,19 @@ from .config import (
     ShellConfig,
 )
 
-from .env import (
+from .commands.env import (
     EnvConfig,
     command_env,
     configure_timeout,
 )
 
-from .sanity import (
+from .commands.sanity import (
     command_sanity,
     sanity_init,
     sanity_get_tests,
 )
 
-from .units import (
+from .commands.units import (
     command_units,
 )
 
@@ -76,12 +87,12 @@ from .target import (
     walk_sanity_targets,
 )
 
-from .core_ci import (
-    AWS_ENDPOINTS,
+from .commands.integration.cloud import (
+    initialize_cloud_plugins,
 )
 
-from .cloud import (
-    initialize_cloud_plugins,
+from .core_ci import (
+    AnsibleCoreCI,
 )
 
 from .data import (
@@ -89,19 +100,68 @@ from .data import (
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_completion,
+    get_remote_completion,
     CommonConfig,
 )
 
-from .cover import (
+from .commands.coverage.combine import (
     command_coverage_combine,
+    CoverageCombineConfig,
+)
+
+from .commands.coverage.erase import (
     command_coverage_erase,
+    CoverageEraseConfig,
+)
+
+from .commands.coverage.html import (
     command_coverage_html,
+    CoverageHtmlConfig,
+)
+
+from .commands.coverage.report import (
     command_coverage_report,
-    command_coverage_xml,
-    COVERAGE_GROUPS,
-    CoverageConfig,
     CoverageReportConfig,
 )
+
+from .commands.coverage.xml import (
+    command_coverage_xml,
+    CoverageXmlConfig,
+)
+
+from .commands.coverage.analyze.targets.generate import (
+    command_coverage_analyze_targets_generate,
+    CoverageAnalyzeTargetsGenerateConfig,
+)
+
+from .commands.coverage.analyze.targets.expand import (
+    command_coverage_analyze_targets_expand,
+    CoverageAnalyzeTargetsExpandConfig,
+)
+
+from .commands.coverage.analyze.targets.filter import (
+    command_coverage_analyze_targets_filter,
+    CoverageAnalyzeTargetsFilterConfig,
+)
+
+from .commands.coverage.analyze.targets.combine import (
+    command_coverage_analyze_targets_combine,
+    CoverageAnalyzeTargetsCombineConfig,
+)
+
+from .commands.coverage.analyze.targets.missing import (
+    command_coverage_analyze_targets_missing,
+    CoverageAnalyzeTargetsMissingConfig,
+)
+
+from .commands.coverage import (
+    COVERAGE_GROUPS,
+)
+
+if t.TYPE_CHECKING:
+    import argparse as argparse_module
 
 
 def main():
@@ -116,8 +176,7 @@ def main():
         display.truncate = config.truncate
         display.redact = config.redact
         display.color = config.color
-        display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
-        check_startup()
+        display.info_stderr = config.info_stderr
         check_delegation_args(config)
         configure_timeout(config)
 
@@ -125,27 +184,29 @@ def main():
         display.info('MAXFD: %d' % MAXFD, verbosity=2)
 
         try:
+            configure_pypi_proxy(config)
             args.func(config)
             delegate_args = None
         except Delegate as ex:
             # save delegation args for use once we exit the exception handler
-            delegate_args = (ex.exclude, ex.require, ex.integration_targets)
+            delegate_args = (ex.exclude, ex.require)
 
         if delegate_args:
+            # noinspection PyTypeChecker
             delegate(config, *delegate_args)
 
         display.review_warnings()
     except ApplicationWarning as ex:
         display.warning(u'%s' % ex)
-        exit(0)
+        sys.exit(0)
     except ApplicationError as ex:
         display.error(u'%s' % ex)
-        exit(1)
+        sys.exit(1)
     except KeyboardInterrupt:
-        exit(2)
+        sys.exit(2)
     except IOError as ex:
         if ex.errno == errno.EPIPE:
-            exit(3)
+            sys.exit(3)
         raise
 
 
@@ -156,7 +217,10 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'ansible-test'))
+        # install argparse without using constraints since pip may be too old to support them
+        # not using the ansible-test requirements file since this install is for sys.executable rather than the delegated python (which may be different)
+        # argparse has no special requirements, so upgrading pip is not required here
+        raw_command(generate_pip_install(generate_pip_command(sys.executable), '', packages=['argparse'], use_constraints=False))
         import argparse
 
     try:
@@ -168,6 +232,10 @@ def parse_args():
         epilog = 'Tab completion available using the "argcomplete" python package.'
     else:
         epilog = 'Install the "argcomplete" python package to enable tab completion.'
+
+    def key_value_type(value):  # type: (str) -> t.Tuple[str, str]
+        """Wrapper around key_value."""
+        return key_value(argparse, value)
 
     parser = argparse.ArgumentParser(epilog=epilog)
 
@@ -182,6 +250,15 @@ def parse_args():
                         action='count',
                         default=0,
                         help='display more output')
+
+    common.add_argument('--pypi-proxy',
+                        action='store_true',
+                        help=argparse.SUPPRESS)  # internal use only
+
+    common.add_argument('--pypi-endpoint',
+                        metavar='URI',
+                        default=None,
+                        help=argparse.SUPPRESS)  # internal use only
 
     common.add_argument('--color',
                         metavar='COLOR',
@@ -206,7 +283,14 @@ def parse_args():
     common.add_argument('--redact',
                         dest='redact',
                         action='store_true',
+                        default=True,
                         help='redact sensitive values in output')
+
+    common.add_argument('--no-redact',
+                        dest='redact',
+                        action='store_false',
+                        default=False,
+                        help='show sensitive values in output')
 
     common.add_argument('--check-python',
                         choices=SUPPORTED_PYTHON_VERSIONS,
@@ -249,8 +333,11 @@ def parse_args():
     test.add_argument('--metadata',
                       help=argparse.SUPPRESS)
 
+    test.add_argument('--base-branch',
+                      help='base branch used for change detection')
+
     add_changes(test, argparse)
-    add_environments(test)
+    add_environments(test, argparse)
 
     integration = argparse.ArgumentParser(add_help=False, parents=[test])
 
@@ -281,7 +368,7 @@ def parse_args():
 
     integration.add_argument('--allow-destructive',
                              action='store_true',
-                             help='allow destructive tests (--local and --tox only)')
+                             help='allow destructive tests')
 
     integration.add_argument('--allow-root',
                              action='store_true',
@@ -349,7 +436,6 @@ def parse_args():
                                    config=PosixIntegrationConfig)
 
     add_extra_docker_options(posix_integration)
-    add_httptester_options(posix_integration, argparse)
 
     network_integration = subparsers.add_parser('network-integration',
                                                 parents=[integration],
@@ -365,6 +451,18 @@ def parse_args():
                                      metavar='PLATFORM',
                                      action='append',
                                      help='network platform/version').completer = complete_network_platform
+
+    network_integration.add_argument('--platform-collection',
+                                     type=key_value_type,
+                                     metavar='PLATFORM=COLLECTION',
+                                     action='append',
+                                     help='collection used to test platform').completer = complete_network_platform_collection
+
+    network_integration.add_argument('--platform-connection',
+                                     type=key_value_type,
+                                     metavar='PLATFORM=CONNECTION',
+                                     action='append',
+                                     help='connection used to test platform').completer = complete_network_platform_connection
 
     network_integration.add_argument('--inventory',
                                      metavar='PATH',
@@ -383,7 +481,6 @@ def parse_args():
                                      config=WindowsIntegrationConfig)
 
     add_extra_docker_options(windows_integration, integration=False)
-    add_httptester_options(windows_integration, argparse)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -455,8 +552,9 @@ def parse_args():
                         choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
-    sanity.add_argument('--base-branch',
-                        help=argparse.SUPPRESS)
+    sanity.add_argument('--enable-optional-errors',
+                        action='store_true',
+                        help='enable optional errors')
 
     add_lint(sanity)
     add_extra_docker_options(sanity, integration=False)
@@ -477,13 +575,16 @@ def parse_args():
                        action='store_true',
                        help='direct to shell with no setup')
 
-    add_environments(shell, tox_version=True)
+    add_environments(shell, argparse)
     add_extra_docker_options(shell)
-    add_httptester_options(shell, argparse)
 
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[common])
 
-    add_environments(coverage_common, tox_version=True, tox_only=True)
+    add_environments(coverage_common, argparse, isolated_delegation=False)
+
+    coverage_common_isolated_delegation = argparse.ArgumentParser(add_help=False, parents=[common])
+
+    add_environments(coverage_common_isolated_delegation, argparse)
 
     coverage = subparsers.add_parser('coverage',
                                      help='code coverage management and reporting')
@@ -491,12 +592,17 @@ def parse_args():
     coverage_subparsers = coverage.add_subparsers(metavar='COMMAND')
     coverage_subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
+    add_coverage_analyze(coverage_subparsers, coverage_common)
+
     coverage_combine = coverage_subparsers.add_parser('combine',
-                                                      parents=[coverage_common],
+                                                      parents=[coverage_common_isolated_delegation],
                                                       help='combine coverage data and rewrite remote paths')
 
     coverage_combine.set_defaults(func=command_coverage_combine,
-                                  config=CoverageConfig)
+                                  config=CoverageCombineConfig)
+
+    coverage_combine.add_argument('--export',
+                                  help='directory to export combined coverage files to')
 
     add_extra_coverage_options(coverage_combine)
 
@@ -505,10 +611,10 @@ def parse_args():
                                                     help='erase coverage data files')
 
     coverage_erase.set_defaults(func=command_coverage_erase,
-                                config=CoverageConfig)
+                                config=CoverageEraseConfig)
 
     coverage_report = coverage_subparsers.add_parser('report',
-                                                     parents=[coverage_common],
+                                                     parents=[coverage_common_isolated_delegation],
                                                      help='generate console coverage report')
 
     coverage_report.set_defaults(func=command_coverage_report,
@@ -530,20 +636,20 @@ def parse_args():
     add_extra_coverage_options(coverage_report)
 
     coverage_html = coverage_subparsers.add_parser('html',
-                                                   parents=[coverage_common],
+                                                   parents=[coverage_common_isolated_delegation],
                                                    help='generate html coverage report')
 
     coverage_html.set_defaults(func=command_coverage_html,
-                               config=CoverageConfig)
+                               config=CoverageHtmlConfig)
 
     add_extra_coverage_options(coverage_html)
 
     coverage_xml = coverage_subparsers.add_parser('xml',
-                                                  parents=[coverage_common],
+                                                  parents=[coverage_common_isolated_delegation],
                                                   help='generate xml coverage report')
 
     coverage_xml.set_defaults(func=command_coverage_xml,
-                              config=CoverageConfig)
+                              config=CoverageXmlConfig)
 
     add_extra_coverage_options(coverage_xml)
 
@@ -561,6 +667,10 @@ def parse_args():
     env.add_argument('--dump',
                      action='store_true',
                      help='dump environment to disk')
+
+    env.add_argument('--list-files',
+                     action='store_true',
+                     help='list files on stdout')
 
     # noinspection PyTypeChecker
     env.add_argument('--timeout',
@@ -584,6 +694,184 @@ def parse_args():
         args.color = sys.stdout.isatty()
 
     return args
+
+
+def key_value(argparse, value):  # type: (argparse_module, str) -> t.Tuple[str, str]
+    """Type parsing and validation for argparse key/value pairs separated by an '=' character."""
+    parts = value.split('=')
+
+    if len(parts) != 2:
+        raise argparse.ArgumentTypeError('"%s" must be in the format "key=value"' % value)
+
+    return parts[0], parts[1]
+
+
+# noinspection PyProtectedMember,PyUnresolvedReferences
+def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argparse_module._SubParsersAction, argparse_module.ArgumentParser) -> None
+    """Add the `coverage analyze` subcommand."""
+    analyze = coverage_subparsers.add_parser(
+        'analyze',
+        help='analyze collected coverage data',
+    )
+
+    analyze_subparsers = analyze.add_subparsers(metavar='COMMAND')
+    analyze_subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
+
+    targets = analyze_subparsers.add_parser(
+        'targets',
+        help='analyze integration test target coverage',
+    )
+
+    targets_subparsers = targets.add_subparsers(metavar='COMMAND')
+    targets_subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
+
+    targets_generate = targets_subparsers.add_parser(
+        'generate',
+        parents=[coverage_common],
+        help='aggregate coverage by integration test target',
+    )
+
+    targets_generate.set_defaults(
+        func=command_coverage_analyze_targets_generate,
+        config=CoverageAnalyzeTargetsGenerateConfig,
+    )
+
+    targets_generate.add_argument(
+        'input_dir',
+        nargs='?',
+        help='directory to read coverage from',
+    )
+
+    targets_generate.add_argument(
+        'output_file',
+        help='output file for aggregated coverage',
+    )
+
+    targets_expand = targets_subparsers.add_parser(
+        'expand',
+        parents=[coverage_common],
+        help='expand target names from integers in aggregated coverage',
+    )
+
+    targets_expand.set_defaults(
+        func=command_coverage_analyze_targets_expand,
+        config=CoverageAnalyzeTargetsExpandConfig,
+    )
+
+    targets_expand.add_argument(
+        'input_file',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_expand.add_argument(
+        'output_file',
+        help='output file to write expanded coverage to',
+    )
+
+    targets_filter = targets_subparsers.add_parser(
+        'filter',
+        parents=[coverage_common],
+        help='filter aggregated coverage data',
+    )
+
+    targets_filter.set_defaults(
+        func=command_coverage_analyze_targets_filter,
+        config=CoverageAnalyzeTargetsFilterConfig,
+    )
+
+    targets_filter.add_argument(
+        'input_file',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_filter.add_argument(
+        'output_file',
+        help='output file to write expanded coverage to',
+    )
+
+    targets_filter.add_argument(
+        '--include-target',
+        dest='include_targets',
+        action='append',
+        help='include the specified targets',
+    )
+
+    targets_filter.add_argument(
+        '--exclude-target',
+        dest='exclude_targets',
+        action='append',
+        help='exclude the specified targets',
+    )
+
+    targets_filter.add_argument(
+        '--include-path',
+        help='include paths matching the given regex',
+    )
+
+    targets_filter.add_argument(
+        '--exclude-path',
+        help='exclude paths matching the given regex',
+    )
+
+    targets_combine = targets_subparsers.add_parser(
+        'combine',
+        parents=[coverage_common],
+        help='combine multiple aggregated coverage files',
+    )
+
+    targets_combine.set_defaults(
+        func=command_coverage_analyze_targets_combine,
+        config=CoverageAnalyzeTargetsCombineConfig,
+    )
+
+    targets_combine.add_argument(
+        'input_file',
+        nargs='+',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_combine.add_argument(
+        'output_file',
+        help='output file to write aggregated coverage to',
+    )
+
+    targets_missing = targets_subparsers.add_parser(
+        'missing',
+        parents=[coverage_common],
+        help='identify coverage in one file missing in another',
+    )
+
+    targets_missing.set_defaults(
+        func=command_coverage_analyze_targets_missing,
+        config=CoverageAnalyzeTargetsMissingConfig,
+    )
+
+    targets_missing.add_argument(
+        'from_file',
+        help='input file containing aggregated coverage',
+    )
+
+    targets_missing.add_argument(
+        'to_file',
+        help='input file containing aggregated coverage',
+    )
+
+    targets_missing.add_argument(
+        'output_file',
+        help='output file to write aggregated coverage to',
+    )
+
+    targets_missing.add_argument(
+        '--only-gaps',
+        action='store_true',
+        help='report only arcs/lines not hit by any target',
+    )
+
+    targets_missing.add_argument(
+        '--only-exists',
+        action='store_true',
+        help='limit results to files that exist',
+    )
 
 
 def add_lint(parser):
@@ -622,11 +910,11 @@ def add_changes(parser, argparse):
     changes.add_argument('--changed-path', metavar='PATH', action='append', help=argparse.SUPPRESS)
 
 
-def add_environments(parser, tox_version=False, tox_only=False):
+def add_environments(parser, argparse, isolated_delegation=True):
     """
     :type parser: argparse.ArgumentParser
-    :type tox_version: bool
-    :type tox_only: bool
+    :type argparse: argparse
+    :type isolated_delegation: bool
     """
     parser.add_argument('--requirements',
                         action='store_true',
@@ -637,49 +925,44 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         default=None,
                         help='path to the docker or remote python interpreter')
 
+    parser.add_argument('--no-pip-check',
+                        dest='pip_check',
+                        default=True,
+                        action='store_false',
+                        help='do not run "pip check" to verify requirements')
+
     environments = parser.add_mutually_exclusive_group()
 
     environments.add_argument('--local',
                               action='store_true',
                               help='run from the local environment')
 
-    if data_context().content.is_ansible:
-        if tox_version:
-            environments.add_argument('--tox',
-                                      metavar='VERSION',
-                                      nargs='?',
-                                      default=None,
-                                      const='.'.join(str(i) for i in sys.version_info[:2]),
-                                      choices=SUPPORTED_PYTHON_VERSIONS,
-                                      help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
-        else:
-            environments.add_argument('--tox',
-                                      action='store_true',
-                                      help='run from a tox virtualenv')
+    environments.add_argument('--venv',
+                              action='store_true',
+                              help='run from ansible-test managed virtual environments')
 
-        tox = parser.add_argument_group(title='tox arguments')
+    venv = parser.add_argument_group(title='venv arguments')
 
-        tox.add_argument('--tox-sitepackages',
-                         action='store_true',
-                         help='allow access to globally installed packages')
-    else:
+    venv.add_argument('--venv-system-site-packages',
+                      action='store_true',
+                      help='enable system site packages')
+
+    if not isolated_delegation:
         environments.set_defaults(
-            tox=None,
-            tox_sitepackages=False,
-        )
-
-    if tox_only:
-        environments.set_defaults(
+            containers=None,
             docker=None,
             remote=None,
             remote_stage=None,
             remote_provider=None,
-            remote_aws_region=None,
             remote_terminate=None,
+            remote_endpoint=None,
             python_interpreter=None,
         )
 
         return
+
+    parser.add_argument('--containers',
+                        help=argparse.SUPPRESS)  # internal use only
 
     environments.add_argument('--docker',
                               metavar='IMAGE',
@@ -697,20 +980,18 @@ def add_environments(parser, tox_version=False, tox_only=False):
 
     remote.add_argument('--remote-stage',
                         metavar='STAGE',
-                        help='remote stage to use: %(choices)s',
-                        choices=['prod', 'dev'],
-                        default='prod')
+                        help='remote stage to use: prod, dev',
+                        default='prod').completer = complete_remote_stage
 
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
-                        choices=['default', 'aws', 'azure', 'parallels'],
+                        choices=['default'] + sorted(AnsibleCoreCI.PROVIDERS.keys()),
                         default='default')
 
-    remote.add_argument('--remote-aws-region',
-                        metavar='REGION',
-                        help='remote aws region to use: %(choices)s (default: auto)',
-                        choices=sorted(AWS_ENDPOINTS),
+    remote.add_argument('--remote-endpoint',
+                        metavar='ENDPOINT',
+                        help='remote provisioning endpoint to use (default: auto)',
                         default=None)
 
     remote.add_argument('--remote-terminate',
@@ -732,34 +1013,11 @@ def add_extra_coverage_options(parser):
 
     parser.add_argument('--all',
                         action='store_true',
-                        help='include all python source files')
+                        help='include all python/powershell source files')
 
     parser.add_argument('--stub',
                         action='store_true',
-                        help='generate empty report of all python source files')
-
-
-def add_httptester_options(parser, argparse):
-    """
-    :type parser: argparse.ArgumentParser
-    :type argparse: argparse
-    """
-    group = parser.add_mutually_exclusive_group()
-
-    group.add_argument('--httptester',
-                       metavar='IMAGE',
-                       default='quay.io/ansible/http-test-container:1.0.0',
-                       help='docker image to use for the httptester container')
-
-    group.add_argument('--disable-httptester',
-                       dest='httptester',
-                       action='store_const',
-                       const='',
-                       help='do not use the httptester container')
-
-    parser.add_argument('--inject-httptester',
-                        action='store_true',
-                        help=argparse.SUPPRESS)  # internal use only
+                        help='generate empty report of all python/powershell source files')
 
 
 def add_extra_docker_options(parser, integration=True):
@@ -789,6 +1047,12 @@ def add_extra_docker_options(parser, integration=True):
                         default=None,
                         help='set seccomp confinement for the test container: %(choices)s')
 
+    docker.add_argument('--docker-terminate',
+                        metavar='WHEN',
+                        help='terminate docker container: %(choices)s (default: %(default)s)',
+                        choices=['never', 'always', 'success'],
+                        default='always')
+
     if not integration:
         return
 
@@ -796,9 +1060,22 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    docker.add_argument('--docker-network',
+                        help='run using the specified docker network')
+
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
+
+
+# noinspection PyUnusedLocal
+def complete_remote_stage(prefix, parsed_args, **_):  # pylint: disable=unused-argument
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    return [stage for stage in ('prod', 'dev') if stage.startswith(prefix)]
 
 
 def complete_target(prefix, parsed_args, **_):
@@ -810,6 +1087,7 @@ def complete_target(prefix, parsed_args, **_):
     return find_target_completion(parsed_args.targets, prefix)
 
 
+# noinspection PyUnusedLocal
 def complete_remote(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -823,6 +1101,7 @@ def complete_remote(prefix, parsed_args, **_):
     return [i for i in images if i.startswith(prefix)]
 
 
+# noinspection PyUnusedLocal
 def complete_remote_shell(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -833,13 +1112,13 @@ def complete_remote_shell(prefix, parsed_args, **_):
 
     images = sorted(get_remote_completion().keys())
 
-    # 2008 doesn't support SSH so we do not add to the list of valid images
     windows_completion_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'windows.txt')
-    images.extend(["windows/%s" % i for i in read_lines_without_comments(windows_completion_path, remove_blank_lines=True) if i != '2008'])
+    images.extend(["windows/%s" % i for i in read_lines_without_comments(windows_completion_path, remove_blank_lines=True)])
 
     return [i for i in images if i.startswith(prefix)]
 
 
+# noinspection PyUnusedLocal
 def complete_docker(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -870,9 +1149,33 @@ def complete_network_platform(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', 'network.txt'), remove_blank_lines=True)
+    images = sorted(get_network_completion())
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_network_platform_collection(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    left = prefix.split('=')[0]
+    images = sorted(set(image.split('/')[0] for image in get_network_completion()))
+
+    return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_collection or i not in [x[0] for x in parsed_args.platform_collection])]
+
+
+def complete_network_platform_connection(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    left = prefix.split('=')[0]
+    images = sorted(set(image.split('/')[0] for image in get_network_completion()))
+
+    return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_connection or i not in [x[0] for x in parsed_args.platform_connection])]
 
 
 def complete_network_testcase(prefix, parsed_args, **_):
@@ -888,7 +1191,7 @@ def complete_network_testcase(prefix, parsed_args, **_):
     if len(parsed_args.include) != 1:
         return []
 
-    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    test_dir = os.path.join(data_context().content.integration_targets_path, parsed_args.include[0], 'tests')
     connection_dirs = data_context().content.get_dirs(test_dir)
 
     for connection_dir in connection_dirs:
@@ -899,6 +1202,7 @@ def complete_network_testcase(prefix, parsed_args, **_):
     return testcases
 
 
+# noinspection PyUnusedLocal
 def complete_sanity_test(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -907,6 +1211,6 @@ def complete_sanity_test(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    tests = sorted(t.name for t in sanity_get_tests())
+    tests = sorted(test.name for test in sanity_get_tests())
 
     return [i for i in tests if i.startswith(prefix)]

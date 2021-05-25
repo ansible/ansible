@@ -12,9 +12,9 @@ Host Requirements
 For Ansible to communicate to a Windows host and use Windows modules, the
 Windows host must meet these requirements:
 
-* Ansible's supported Windows versions generally match those under current
-  and extended support from Microsoft. Supported desktop OSs include
-  Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008,
+* Ansible can generally manage Windows versions under current
+  and extended support from Microsoft. Ansible can manage desktop OSs including
+  Windows 7, 8.1, and 10, and server OSs including Windows Server 2008,
   2008 R2, 2012, 2012 R2, 2016, and 2019.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
@@ -37,6 +37,7 @@ This is an example of how to run this script from PowerShell:
 
 .. code-block:: powershell
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
     $file = "$env:temp\Upgrade-PowerShell.ps1"
     $username = "Administrator"
@@ -49,13 +50,13 @@ This is an example of how to run this script from PowerShell:
     &$file -Version 5.1 -Username $username -Password $password -Verbose
 
 Once completed, you will need to remove auto logon
-and set the execution policy back to the default of ``Restricted``. You can
+and set the execution policy back to the default (``Restricted `` for Windows clients, or ``RemoteSigned`` for Windows servers). You can
 do this with the following PowerShell commands:
 
 .. code-block:: powershell
 
     # This isn't needed but is a good security practice to complete
-    Set-ExecutionPolicy -ExecutionPolicy Restricted -Force
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
 
     $reg_winlogon_path = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
     Set-ItemProperty -Path $reg_winlogon_path -Name AutoAdminLogon -Value 0
@@ -88,13 +89,14 @@ WinRM Memory Hotfix
 When running on PowerShell v3.0, there is a bug with the WinRM service that
 limits the amount of memory available to WinRM. Without this hotfix installed,
 Ansible will fail to execute certain commands on the Windows host. These
-hotfixes should installed as part of the system bootstrapping or
+hotfixes should be installed as part of the system bootstrapping or
 imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ can be used to install the hotfix on affected hosts.
 
 The following PowerShell command will install the hotfix:
 
 .. code-block:: powershell
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
     $file = "$env:temp\Install-WMF3Hotfix.ps1"
 
@@ -120,6 +122,7 @@ To use this script, run the following in PowerShell:
 
 .. code-block:: powershell
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
     $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
 
@@ -302,7 +305,7 @@ options are:
 
 * ``Service\AllowUnencrypted``: This option defines whether WinRM will allow
   traffic that is run over HTTP without message encryption. Message level
-  encryption is only supported when ``ansible_winrm_transport`` is ``ntlm``,
+  encryption is only possible when ``ansible_winrm_transport`` is ``ntlm``,
   ``kerberos`` or ``credssp``. By default this is ``false`` and should only be
   set to ``true`` when debugging WinRM messages.
 
@@ -313,9 +316,7 @@ options are:
 * ``Service\Auth\CbtHardeningLevel``: Specifies whether channel binding tokens are
   not verified (None), verified but not required (Relaxed), or verified and
   required (Strict). CBT is only used when connecting with NTLM or Kerberos
-  over HTTPS. The downstream libraries that Ansible currently uses only support
-  passing the CBT with NTLM authentication. Using Kerberos with
-  ``CbtHardeningLevel = Strict`` will result in a ``404`` error.
+  over HTTPS.
 
 * ``Service\CertificateThumbprint``: This is the thumbprint of the certificate
   used to encrypt the TLS channel used with CredSSP authentication. By default
@@ -438,10 +439,23 @@ Sometimes an installer may restart the WinRM or HTTP service and cause this erro
 best way to deal with this is to use ``win_psexec`` from another
 Windows host.
 
+Failure to Load Builtin Modules
++++++++++++++++++++++++++++++++
+If powershell fails with an error message similar to ``The 'Out-String' command was found in the module 'Microsoft.PowerShell.Utility', but the module could not be loaded.``
+then there could be a problem trying to access all the paths specified by the ``PSModulePath`` environment variable.
+A common cause of this issue is that the ``PSModulePath`` environment variable contains a UNC path to a file share and
+because of the double hop/credential delegation issue the Ansible process cannot access these folders. The way around
+this problems is to either:
+
+* Remove the UNC path from the ``PSModulePath`` environment variable, or
+* Use an authentication option that supports credential delegation like ``credssp`` or ``kerberos`` with credential delegation enabled
+
+See `KB4076842 <https://support.microsoft.com/en-us/help/4076842>`_ for more information on this problem.
+
+
 Windows SSH Setup
 `````````````````
-Ansible 2.8 has added experimental support for using SSH to connect to a
-Windows host.
+Ansible 2.8 has added an experimental SSH connection for Windows managed nodes.
 
 .. warning::
     Use this feature at your own risk!
@@ -449,16 +463,27 @@ Windows host.
     backwards incompatible changes in feature releases. The server side
     components can be unreliable depending on the version that is installed.
 
+Installing OpenSSH using Windows Settings
+-----------------------------------------
+OpenSSH can be used to connect Window 10 clients to Windows Server 2019.
+OpenSSH Client is available to install on Windows 10 build 1809 and later, while OpenSSH Server is available to install on Windows Server 2019 and later.
+
+Please refer `this guide <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>`_.
+
 Installing Win32-OpenSSH
 ------------------------
 The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
 service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows
 capability but currently the version that is installed through this process is
 too old to work with Ansible. To install ``Win32-OpenSSH`` for use with
-Ansible, select one of these three installation options:
+Ansible, select one of these installation options:
 
 * Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
   from Microsoft.
+
+* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey::
+
+    choco install --package-parameters=/SSHServerFeature openssh
 
 * Use ``win_chocolatey`` to install the service::
 
@@ -549,7 +574,7 @@ Here are the known ones:
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
-       Best practices advice
+       Tips and tricks for playbooks
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_

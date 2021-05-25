@@ -1,0 +1,9 @@
+docker_prereq_packages:
+  - yum-utils
+  - device-mapper-persistent-data
+  - lvm2
+  - libseccomp
+
+docker_packages:
+  - docker-ce-19.03.13
+  - docker-ce-cli-19.03.13

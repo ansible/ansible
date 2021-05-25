@@ -1,3 +1,0 @@
----
-bugfixes:
-- redfish_command - make power commands idempotent (https://github.com/ansible/ansible/issues/55869)

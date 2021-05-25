@@ -16,7 +16,7 @@
 #
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # for testing
@@ -324,7 +324,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE',
                     'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_compound_fact(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -334,7 +334,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_needed_fact(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -344,7 +344,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_compound_gather_compound(self):
         _mock_module = mock_module(gather_subset=['!all', '!any', 'compound_fact'],
@@ -354,7 +354,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_no_match(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -363,7 +363,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = self._collect(_mock_module)
 
         expected = {}
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_concat_collector(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'])
@@ -480,6 +480,26 @@ class TestPkgMgrFacts(TestCollectedFacts):
         "ansible_distribution_major_version": "28",
         "ansible_os_family": "RedHat"
     }
+
+
+class TestPkgMgrOSTreeFacts(TestPkgMgrFacts):
+    @patch(
+        'ansible.module_utils.facts.system.pkg_mgr.os.path.exists',
+        side_effect=lambda x: x == '/run/ostree-booted')
+    def _recollect_facts(self, distribution, version, mock_exists):
+        self.collected_facts['ansible_distribution'] = distribution
+        self.collected_facts['ansible_distribution_major_version'] = \
+            str(version)
+        # Recollect facts
+        self.setUp()
+        self.assertIn('pkg_mgr', self.facts)
+        self.assertEqual(self.facts['pkg_mgr'], 'atomic_container')
+
+    def test_is_rhel_edge_ostree(self):
+        self._recollect_facts('RedHat', 8)
+
+    def test_is_fedora_ostree(self):
+        self._recollect_facts('Fedora', 33)
 
 
 class TestOpenBSDPkgMgrFacts(TestPkgMgrFacts):

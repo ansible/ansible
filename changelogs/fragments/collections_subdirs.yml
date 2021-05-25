@@ -1,2 +1,0 @@
-minor_changes:
-  - roles and plugins in collections may now be stored in subdirectories under the roles or plugin-type dirs (https://github.com/ansible/ansible/pull/60682)

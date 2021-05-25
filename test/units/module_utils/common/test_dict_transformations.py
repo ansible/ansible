@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from units.compat import unittest
 from ansible.module_utils.common.dict_transformations import _camel_to_snake, _snake_to_camel, camel_dict_to_snake_dict, dict_merge
 
@@ -114,3 +117,19 @@ class DictMergeTestCase(unittest.TestCase):
         self.assertTrue('b2' in result)
         self.assertTrue(result['b3'])
         self.assertTrue(result['b4'])
+
+
+class AzureIncidentalTestCase(unittest.TestCase):
+
+    def test_dict_merge_invalid_dict(self):
+        ''' if b is not a dict, return b '''
+        res = dict_merge({}, None)
+        self.assertEqual(res, None)
+
+    def test_merge_sub_dicts(self):
+        '''merge sub dicts '''
+        a = {'a': {'a1': 1}}
+        b = {'a': {'b1': 2}}
+        c = {'a': {'a1': 1, 'b1': 2}}
+        res = dict_merge(a, b)
+        self.assertEqual(res, c)

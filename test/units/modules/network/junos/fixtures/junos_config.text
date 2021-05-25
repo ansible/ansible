@@ -1,8 +1,0 @@
-
-interfaces {
-    ae11 {
-        unit 0 {
-            description Test
-            }
-        }
-    }

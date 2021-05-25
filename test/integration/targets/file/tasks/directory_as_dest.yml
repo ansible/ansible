@@ -1,6 +1,6 @@
 # File module tests for overwriting directories
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
 
 # We need to make this more consistent:
 # https://github.com/ansible/proposals/issues/111
@@ -241,6 +241,10 @@
     path: '{{ output_dir }}/sub1'
     follow: False
   register: file8_initial_dir_stat
+
+- name: Pause to ensure stat times are not the exact same
+  pause:
+    seconds: 1
 
 - name: Use touch with directory as dest
   file:

@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -37,7 +38,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     _rescue = FieldAttribute(isa='list', default=list, inherit=False)
     _always = FieldAttribute(isa='list', default=list, inherit=False)
 
-    # other fields
+    # other fields for task compat
+    _notify = FieldAttribute(isa='list')
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
 
@@ -52,9 +54,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         self._dep_chain = None
         self._use_handlers = use_handlers
         self._implicit = implicit
-
-        # end of role flag
-        self._eor = False
 
         if task_include:
             self._parent = task_include
@@ -202,7 +201,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         new_me = super(Block, self).copy()
         new_me._play = self._play
         new_me._use_handlers = self._use_handlers
-        new_me._eor = self._eor
 
         if self._dep_chain is not None:
             new_me._dep_chain = self._dep_chain[:]
@@ -235,7 +233,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                 data[attr] = getattr(self, attr)
 
         data['dep_chain'] = self.get_dep_chain()
-        data['eor'] = self._eor
 
         if self._role is not None:
             data['role'] = self._role.serialize()
@@ -262,7 +259,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                 setattr(self, attr, data.get(attr))
 
         self._dep_chain = data.get('dep_chain', None)
-        self._eor = data.get('eor', False)
 
         # if there was a serialized role, unpack it too
         role_data = data.get('role')
@@ -371,15 +367,18 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             tmp_list = []
             for task in target:
                 if isinstance(task, Block):
-                    tmp_list.append(evaluate_block(task))
-                elif (task.action == 'meta' or
-                        (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
+                    filtered_block = evaluate_block(task)
+                    if filtered_block.has_tasks():
+                        tmp_list.append(filtered_block)
+                elif ((task.action in C._ACTION_META and task.implicit) or
+                        (task.action in C._ACTION_INCLUDE and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
                         task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 
         def evaluate_block(block):
-            new_block = self.copy(exclude_tasks=True)
+            new_block = block.copy(exclude_parent=True, exclude_tasks=True)
+            new_block._parent = block._parent
             new_block.block = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)

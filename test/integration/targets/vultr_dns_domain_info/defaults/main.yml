@@ -1,4 +1,0 @@
----
-vultr_resource_prefix: "vultr-test-prefix"
-dns_domain_name: "{{ vultr_resource_prefix }}-example-ansible.com"
-dns_domain_server_ip: 104.24.16.59

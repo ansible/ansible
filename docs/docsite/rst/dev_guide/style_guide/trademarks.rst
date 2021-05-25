@@ -12,7 +12,7 @@ General Rules:
 
 Trademarks should be used on 1st references on a page or within a section.
 
-Use Red Hat® Ansible Tower® or Ansible®, on first reference when referring to products.
+Use Red Hat® Ansible® Automation Platform or Ansible®, on first reference when referring to products.
  
 Use "Ansible" alone as the company name, as in "Ansible announced quarterly results," which is not marked.
 
@@ -38,7 +38,7 @@ Always use proper trademark form and spelling.
 Never use a trademark as a noun. Always use a trademark as an adjective modifying the noun.
 
     Correct:
-    Red Hat® Ansible Tower® system performance is incredible.
+    Red Hat® Ansible® Automation Platform system performance is incredible.
 
     Incorrect:
     Ansible's performance is incredible.
@@ -46,7 +46,7 @@ Never use a trademark as a noun. Always use a trademark as an adjective modifyin
 Never use a trademark as a verb. Trademarks are products or services, never actions.
 
     Correct:
-    "Orchestrate your entire network using Red Hat® Ansible Tower®."
+    "Orchestrate your entire network using Red Hat® Ansible® Automation Platform."
     
     Incorrect:
     "Ansible your entire network."
@@ -54,7 +54,7 @@ Never use a trademark as a verb. Trademarks are products or services, never acti
 Never modify a trademark to a plural form. Instead, change the generic word from the singular to the plural.
 
     Correct:
-    "Corporate demand for Red Hat® Ansible Tower® configuration software is surging."
+    "Corporate demand for Red Hat® Ansible® Automation Platform software is surging."
 
     Incorrect:
     "Corporate demand for Ansible is surging."
@@ -81,7 +81,6 @@ The mark consists of the letter "A" in a shaded circle. As of 5/11/15, this was 
 Common Ansible Trademarks
 +++++++++++++++++++++++++++++++++++++++
 * Ansible®
-* Ansible Tower®
 
 Other Common Trademarks and Resource Sites:
 ++++++++++++++++++++++++++++++++++++++++++++++++

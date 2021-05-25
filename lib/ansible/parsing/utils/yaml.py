@@ -22,7 +22,7 @@ from ansible.parsing.ajson import AnsibleJSONDecoder
 __all__ = ('from_yaml',)
 
 
-def _handle_error(yaml_exc, file_name, show_content):
+def _handle_error(json_exc, yaml_exc, file_name, show_content):
     '''
     Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
     file name/position where a YAML exception occurred, and raises an AnsibleParserError
@@ -36,9 +36,11 @@ def _handle_error(yaml_exc, file_name, show_content):
         err_obj = AnsibleBaseYAMLObject()
         err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
-    err_msg = getattr(yaml_exc, 'problem', '')
+    n_yaml_syntax_error = YAML_SYNTAX_ERROR % to_native(getattr(yaml_exc, 'problem', u''))
+    n_err_msg = 'We were unable to read either as JSON nor YAML, these are the errors we got from each:\n' \
+                'JSON: %s\n\n%s' % (to_native(json_exc), n_yaml_syntax_error)
 
-    raise AnsibleParserError(YAML_SYNTAX_ERROR % to_native(err_msg), obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
+    raise AnsibleParserError(n_err_msg, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
 
 def _safe_load(stream, file_name=None, vault_secrets=None):
@@ -54,7 +56,7 @@ def _safe_load(stream, file_name=None, vault_secrets=None):
             pass  # older versions of yaml don't have dispose function, ignore
 
 
-def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None):
+def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None, json_only=False):
     '''
     Creates a python datastructure from the given data, which can be either
     a JSON or YAML string.
@@ -68,11 +70,15 @@ def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None)
         # we first try to load this data as JSON.
         # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
         new_data = json.loads(data, cls=AnsibleJSONDecoder)
-    except Exception:
+    except Exception as json_exc:
+
+        if json_only:
+            raise AnsibleParserError(to_native(json_exc), orig_exc=json_exc)
+
         # must not be JSON, let the rest try
         try:
             new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
         except YAMLError as yaml_exc:
-            _handle_error(yaml_exc, file_name, show_content)
+            _handle_error(json_exc, yaml_exc, file_name, show_content)
 
     return new_data

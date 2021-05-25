@@ -1,2 +1,0 @@
-minor_changes:
-- postgresql_user - Add the new parameter ``groups`` (https://github.com/ansible/ansible/pull/60638).

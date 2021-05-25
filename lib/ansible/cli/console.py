@@ -6,17 +6,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
-# ansible-console is an interactive REPL shell for ansible
-# with built-in tab completion for all the documented modules
-#
-# Available commands:
-#  cd - change host/group (you can use host patterns eg.: app*.dc*:!app01*)
-#  list - list available hosts in the current path
-#  forks - change fork
-#  become - become
-#  ! - forces shell module instead of the ansible module (!yum update -y)
-
 import atexit
 import cmd
 import getpass
@@ -42,7 +31,30 @@ display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
-    ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
+    '''
+       A REPL that allows for running ad-hoc tasks against a chosen inventory
+       from a nice shell with built-in tab completion (based on dominis'
+       ansible-shell).
+
+       It supports several commands, and you can modify its configuration at
+       runtime:
+
+       - `cd [pattern]`: change host/group (you can use host patterns eg.: app*.dc*:!app01*)
+       - `list`: list available hosts in the current path
+       - `list groups`: list groups included in the current path
+       - `become`: toggle the become flag
+       - `!`: forces shell module instead of the ansible module (!yum update -y)
+       - `verbosity [num]`: set the verbosity level
+       - `forks [num]`: set the number of forks
+       - `become_user [user]`: set the become_user
+       - `remote_user [user]`: set the remote_user
+       - `become_method [method]`: set the privilege escalation method
+       - `check [bool]`: toggle check mode
+       - `diff [bool]`: toggle diff mode
+       - `timeout [integer]`: set the timeout of tasks in seconds (0 to disable)
+       - `help [command/module]`: display documentation for the command or module
+       - `exit`: exit ansible-console
+    '''
 
     modules = []
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
@@ -55,7 +67,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         super(ConsoleCLI, self).__init__(args)
 
-        self.intro = 'Welcome to the ansible console.\nType help or ? to list commands.\n'
+        self.intro = 'Welcome to the ansible console. Type help or ? to list commands.\n'
 
         self.groups = []
         self.hosts = []
@@ -75,13 +87,14 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.check_mode = None
         self.diff = None
         self.forks = None
+        self.task_timeout = None
 
         cmd.Cmd.__init__(self)
 
     def init_parser(self):
         super(ConsoleCLI, self).init_parser(
             desc="REPL console for executing Ansible tasks.",
-            epilog="This is not a live session/connection, each task executes in the background and returns it's results."
+            epilog="This is not a live session/connection: each task is executed in the background and returns its results."
         )
         opt_help.add_runas_options(self.parser)
         opt_help.add_inventory_options(self.parser)
@@ -91,6 +104,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         opt_help.add_fork_options(self.parser)
         opt_help.add_module_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
+        opt_help.add_tasknoplay_options(self.parser)
 
         # options unique to shell
         self.parser.add_argument('pattern', help='host pattern', metavar='pattern', default='all', nargs='?')
@@ -109,7 +124,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def cmdloop(self):
         try:
             cmd.Cmd.cmdloop(self)
+
         except KeyboardInterrupt:
+            self.cmdloop()
+
+        except EOFError:
+            self.display("[Ansible-console was exited]")
             self.do_exit(self)
 
     def set_prompt(self):
@@ -122,7 +142,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             prompt += "$ "
             color = self.NORMAL_PROMPT
-        self.prompt = stringc(prompt, color)
+        self.prompt = stringc(prompt, color, wrap_nonvisible_chars=True)
 
     def list_modules(self):
         modules = set()
@@ -147,7 +167,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     self._find_modules_in_path(module)
                 elif module.startswith('__'):
                     continue
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
+                elif any(module.endswith(x) for x in C.REJECT_EXTS):
                     continue
                 elif module in C.IGNORE_FILES:
                     continue
@@ -182,12 +202,13 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
-            check_raw = module in ('command', 'shell', 'script', 'raw')
+            check_raw = module in C._ACTION_ALLOWS_RAW_ARGS
+            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,
                 gather_facts='no',
-                tasks=[dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))],
+                tasks=[task],
                 remote_user=self.remote_user,
                 become=self.become,
                 become_user=self.become_user,
@@ -272,8 +293,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if not arg:
             display.display('Usage: verbosity <number>')
         else:
-            display.verbosity = int(arg)
-            display.v('verbosity level set to %s' % arg)
+            try:
+                display.verbosity = int(arg)
+                display.v('verbosity level set to %s' % arg)
+            except (TypeError, ValueError) as e:
+                display.error('The verbosity must be a valid integer: %s' % to_text(e))
 
     def do_cd(self, arg):
         """
@@ -337,26 +361,43 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.v("become_method changed to %s" % self.become_method)
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
+            display.v("Current become_method is %s" % self.become_method)
 
     def do_check(self, arg):
         """Toggle whether plays run with check mode"""
         if arg:
             self.check_mode = boolean(arg, strict=False)
-            display.v("check mode changed to %s" % self.check_mode)
+            display.display("check mode changed to %s" % self.check_mode)
         else:
             display.display("Please specify check mode value, e.g. `check yes`")
+            display.v("check mode is currently %s." % self.check_mode)
 
     def do_diff(self, arg):
         """Toggle whether plays run with diff"""
         if arg:
             self.diff = boolean(arg, strict=False)
-            display.v("diff mode changed to %s" % self.diff)
+            display.display("diff mode changed to %s" % self.diff)
         else:
             display.display("Please specify a diff value , e.g. `diff yes`")
+            display.v("diff mode is currently %s" % self.diff)
+
+    def do_timeout(self, arg):
+        """Set the timeout"""
+        if arg:
+            try:
+                timeout = int(arg)
+                if timeout < 0:
+                    display.error('The timeout must be greater than or equal to 1, use 0 to disable')
+                else:
+                    self.task_timeout = timeout
+            except (TypeError, ValueError) as e:
+                display.error('The timeout must be a valid positive integer, or 0 to disable: %s' % to_text(e))
+        else:
+            display.display('Usage: timeout <seconds>')
 
     def do_exit(self, args):
         """Exits from the console"""
-        sys.stdout.write('\n')
+        sys.stdout.write('\nAnsible-console was exited.\n')
         return -1
 
     do_EOF = do_exit
@@ -397,7 +438,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
+        oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
         return list(oc['options'].keys())
 
     def run(self):
@@ -419,6 +460,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.check_mode = context.CLIARGS['check']
         self.diff = context.CLIARGS['diff']
         self.forks = context.CLIARGS['forks']
+        self.task_timeout = context.CLIARGS['task_timeout']
 
         # dynamically add modules as commands
         self.modules = self.list_modules()

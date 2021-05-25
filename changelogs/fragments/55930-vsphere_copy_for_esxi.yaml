@@ -1,4 +1,0 @@
-minor_changes:
-- vsphere_copy - The module can now also be used with standalone ESXi.
-- vsphere_copy - The ``host`` and ``login`` parameters are deprecated, use `hostname` and ``username``
-  like for the other VMware modules.

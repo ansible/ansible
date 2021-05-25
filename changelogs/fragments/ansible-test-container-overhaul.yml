@@ -1,0 +1,40 @@
+major_changes:
+  - ansible-test - SSH port forwarding and redirection is now used exclusively to make container ports available on non-container hosts.
+                   When testing on POSIX systems this requires SSH login as root.
+                   Previously SSH port forwarding was combined with firewall rules or other port redirection methods, with some platforms being unsupported.
+  - ansible-test - All "cloud" plugins which use containers can now be used with all POSIX and Windows hosts.
+                   Previously the plugins did not work with Windows at all, and support for hosts created with the ``--remote`` option was inconsistent.
+  - ansible-test - Most container features are now supported under Podman.
+                   Previously a symbolic link for ``docker`` pointing to ``podman`` was required.
+minor_changes:
+  - ansible-test - All "cloud" plugins have been refactored for more consistency.
+                   For those that use docker containers, management of the containers has been standardized.
+  - ansible-test - All "cloud" plugins now use fixed hostnames and ports in tests.
+                   Previously some tests used IP addresses and/or randomly assigned ports.
+  - ansible-test - The HTTP Tester has been converted to a "cloud" plugin and can now be requested using the ``cloud/httptester`` alias.
+                   The original ``needs/httptester`` alias is still supported for backwards compatibility.
+  - ansible-test - The HTTP Tester can now be used without the ``--docker`` or `--remote`` options.
+                   It still requires use of the ``docker`` command to run the container.
+  - ansible-test - The ``docker run`` option ``--link`` is no longer used to connect test containers.
+                   As a result, changes are made to the ``/etc/hosts`` file as needed on all test containers.
+                   Previously containers which were used with the ``--link`` option did not require changes to the ``/etc/hosts`` file.
+  - ansible-test - Changes made to the ``hosts`` file on test systems are now done using an Ansible playbook for both POSIX and Windows systems.
+                   Changes are applied before a test target runs and are reverted after the test target finishes.
+  - ansible-test - Environment variables exposed by "cloud" plugins are now available to the controller for role based tests.
+                   Previously only script based tests had access to the exposed environment variables.
+breaking_changes:
+  - ansible-test - The ``--httptester`` option is no longer available.
+                   To override the container used for HTTP Tester tests, set the ``ANSIBLE_HTTP_TEST_CONTAINER`` environment variable instead.
+  - ansible-test - The ``--disable-httptester`` option is no longer available.
+                   The HTTP Tester is no longer optional for tests that specify it.
+  - ansible-test - The HTTP Tester is no longer available with the ``ansible-test shell`` command.
+                   Only the ``integration`` and ``windows-integration`` commands provide HTTP Tester.
+bugfixes:
+  - ansible-test - Running tests in a single test run with multiple "cloud" plugins no longer results in port conflicts.
+                   Previously two or more containers with overlapping ports could not be used in the same test run.
+  - ansible-test - Random port selection is no longer handled by ``ansible-test``, avoiding possible port conflicts.
+                   Previously ``ansible-test`` would, under some circumstances, use one host's available ports to determine those of another host.
+  - ansible-test - The ``docker inspect`` command is now used to check for existing images instead of the ``docker images`` command.
+                   This resolves an issue where a ``docker pull`` would be unnecessarily executed for an image referenced by checksum.
+  - ansible-test - Failure to download test results from a remote host no longer hide test failures.
+                   If a download failure occurs after tests fail, a warning will be issued instead.

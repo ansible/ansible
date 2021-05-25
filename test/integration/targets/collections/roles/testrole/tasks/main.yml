@@ -17,6 +17,9 @@
     msg: '{{ test_role_input | default("(undefined)") }}'
   register: test_role_output
 
+- set_fact:
+    testrole_source: legacy roles dir
+
 - assert:
     that:
     - coll_module_out.source == 'user'

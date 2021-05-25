@@ -1,2 +1,0 @@
-bugfixes:
-    - Fix strategy functions that update inventory and back 'add_host' and 'group_by' actions.

@@ -1,2 +1,0 @@
-bugfixes:
-- "win_firewall_rule - Fix program var not expanding %SystemRoot% type vars (https://github.com/ansible/ansible/issues/44450)"

@@ -1,1 +1,0 @@
-digital_ocean_snapshot_info.py

@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    foo: bar
+    foo: baz  # yamllint disable rule:key-duplicates

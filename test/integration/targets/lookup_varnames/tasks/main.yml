@@ -1,0 +1,38 @@
+# Example copied from docs
+- name: Set some variables
+  set_fact:
+    qz_1: hello
+    qz_2: world
+    qa_1: "I won't show"
+    qz_: "I won't show either"
+
+- name: Try various regexes and make sure they work
+  assert:
+    that:
+      - lookup('varnames', '^qz_.+', wantlist=True) == ['qz_1', 'qz_2']
+      - lookup('varnames', '^qz_.+', '^qa.*', wantlist=True) == ['qz_1', 'qz_2', 'qa_1']
+      - "'ansible_python_interpreter' in lookup('varnames', '^ansible_.*', wantlist=True)"
+      - lookup('varnames', '^doesnotexist.*', wantlist=True) == []
+      - lookup('varnames', '^doesnotexist.*', '.*python_inter.*', wantlist=True) == ['ansible_python_interpreter']
+      - lookup('varnames', '^q.*_\d', wantlist=True) == ['qz_1', 'qz_2', 'qa_1']
+      - lookup('varnames', '^q.*_\d') == 'qz_1,qz_2,qa_1'
+
+- name: Make sure it fails successfully
+  set_fact:
+    fail1: "{{ lookup('varnames', True, wantlist=True) }}"
+  register: fail1res
+  ignore_errors: yes
+
+- name: Make sure it fails successfully
+  set_fact:
+    fail2: "{{ lookup('varnames', '*', wantlist=True) }}"
+  register: fail2res
+  ignore_errors: yes
+
+- assert:
+    that:
+      - fail1res is failed
+      - "'Invalid setting identifier' in fail1res.msg"
+      - fail2res is failed
+      - "'Unable to use' in fail2res.msg"
+      - "'nothing to repeat' in fail2res.msg"

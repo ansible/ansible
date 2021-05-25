@@ -13,6 +13,7 @@ from .util import (
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     ANSIBLE_SOURCE_ROOT,
+    display,
 )
 
 from .provider import (
@@ -39,15 +40,6 @@ from .provider.layout import (
 )
 
 
-class UnexpectedSourceRoot(ApplicationError):
-    """Exception generated when a source root is found below a layout root."""
-    def __init__(self, source_root, layout_root):  # type: (str, str) -> None
-        super(UnexpectedSourceRoot, self).__init__('Source root "%s" cannot be below layout root "%s".' % (source_root, layout_root))
-
-        self.source_root = source_root
-        self.layout_root = layout_root
-
-
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
     def __init__(self):
@@ -57,6 +49,7 @@ class DataContext:
         layout_providers = get_path_provider_classes(LayoutProvider)
         source_providers = get_path_provider_classes(SourceProvider)
 
+        self.__layout_providers = layout_providers
         self.__source_providers = source_providers
         self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
 
@@ -70,7 +63,44 @@ class DataContext:
             content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
         self.content = content  # type: ContentLayout
-        self.results = os.path.join(self.content.root, 'test', 'results')
+
+    def create_collection_layouts(self):  # type: () -> t.List[ContentLayout]
+        """
+        Return a list of collection layouts, one for each collection in the same collection root as the current collection layout.
+        An empty list is returned if the current content layout is not a collection layout.
+        """
+        layout = self.content
+        collection = layout.collection
+
+        if not collection:
+            return []
+
+        root_path = os.path.join(collection.root, 'ansible_collections')
+        display.info('Scanning collection root: %s' % root_path, verbosity=1)
+        namespace_names = sorted(name for name in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, name)))
+        collections = []
+
+        for namespace_name in namespace_names:
+            namespace_path = os.path.join(root_path, namespace_name)
+            collection_names = sorted(name for name in os.listdir(namespace_path) if os.path.isdir(os.path.join(namespace_path, name)))
+
+            for collection_name in collection_names:
+                collection_path = os.path.join(namespace_path, collection_name)
+
+                if collection_path == os.path.join(collection.root, collection.directory):
+                    collection_layout = layout
+                else:
+                    collection_layout = self.__create_content_layout(self.__layout_providers, self.__source_providers, collection_path, False)
+
+                file_count = len(collection_layout.all_files())
+
+                if not file_count:
+                    continue
+
+                display.info('Including collection: %s (%d files)' % (collection_layout.collection.full_name, file_count), verbosity=1)
+                collections.append(collection_layout)
+
+        return collections
 
     @staticmethod
     def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
@@ -82,12 +112,13 @@ class DataContext:
         layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
 
         try:
-            source_provider = find_path_provider(SourceProvider, source_providers, root, walk)
+            # Begin the search for the source provider at the layout provider root.
+            # This intentionally ignores version control within subdirectories of the layout root, a condition which was previously an error.
+            # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
+            # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
+            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(layout_provider.root)
-
-        if source_provider.root != layout_provider.root and is_subdir(source_provider.root, layout_provider.root):
-            raise UnexpectedSourceRoot(source_provider.root, layout_provider.root)
 
         layout = layout_provider.create(layout_provider.root, source_provider.get_paths(layout_provider.root))
 

@@ -1,4 +1,0 @@
----
-scaleway_region: nl-ams
-endpoint: s3.nl-ams.scw.cloud
-s3_url: https://s3.nl-ams.scw.cloud

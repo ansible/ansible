@@ -1,2 +1,0 @@
-bugfixes:
-- "acme_certificate - Only return challenges in ``challenge_data`` and ``challenge_data_dns`` which are not yet valid."

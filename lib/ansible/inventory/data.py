@@ -41,7 +41,6 @@ class InventoryData(object):
 
     def __init__(self):
 
-        # the inventory object holds a list of groups
         self.groups = {}
         self.hosts = {}
 
@@ -52,6 +51,7 @@ class InventoryData(object):
         self.localhost = None
 
         self.current_source = None
+        self.processed_sources = []
 
         # Always create the 'all' and 'ungrouped' groups,
         for group in ('all', 'ungrouped'):
@@ -65,6 +65,7 @@ class InventoryData(object):
             'hosts': self.hosts,
             'local': self.localhost,
             'source': self.current_source,
+            'processed_sources': self.processed_sources
         }
         return data
 
@@ -74,6 +75,7 @@ class InventoryData(object):
         self.groups = data.get('groups')
         self.localhost = data.get('local')
         self.current_source = data.get('source')
+        self.processed_sources = data.get('processed_sources')
 
     def _create_implicit_localhost(self, pattern):
 
@@ -255,19 +257,20 @@ class InventoryData(object):
 
     def add_child(self, group, child):
         ''' Add host or group to group '''
-
+        added = False
         if group in self.groups:
             g = self.groups[group]
             if child in self.groups:
-                g.add_child_group(self.groups[child])
+                added = g.add_child_group(self.groups[child])
             elif child in self.hosts:
-                g.add_host(self.hosts[child])
+                added = g.add_host(self.hosts[child])
             else:
                 raise AnsibleError("%s is not a known host nor group" % child)
             self._groups_dict_cache = {}
             display.debug('Group %s now contains %s' % (group, child))
         else:
             raise AnsibleError("%s is not a known group" % group)
+        return added
 
     def get_groups_dict(self):
         """

@@ -19,39 +19,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+import shutil
+import tempfile
+
 from units.compat import unittest, mock
 from ansible.errors import AnsibleError
-from ansible.plugins.cache import FactCache, CachePluginAdjudicator
+from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 from ansible.plugins.loader import cache_loader
-
-HAVE_MEMCACHED = True
-try:
-    import memcache
-except ImportError:
-    HAVE_MEMCACHED = False
-else:
-    # Use an else so that the only reason we skip this is for lack of
-    # memcached, not errors importing the plugin
-    from ansible.plugins.cache.memcached import CacheModule as MemcachedCache
-
-HAVE_REDIS = True
-try:
-    import redis
-except ImportError:
-    HAVE_REDIS = False
-else:
-    from ansible.plugins.cache.redis import CacheModule as RedisCache
+from ansible.vars.fact_cache import FactCache
 
 import pytest
 
 
-class TestCachePluginAdjudicator:
-    # memory plugin cache
-    cache = CachePluginAdjudicator()
-    cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
-    cache['cache_key_2'] = {'key': 'value'}
+class TestCachePluginAdjudicator(unittest.TestCase):
+    def setUp(self):
+        # memory plugin cache
+        self.cache = CachePluginAdjudicator()
+        self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
+        self.cache['cache_key_2'] = {'key': 'value'}
 
     def test___setitem__(self):
         self.cache['new_cache_key'] = {'new_key1': ['new_value1', 'new_value2']}
@@ -76,14 +64,14 @@ class TestCachePluginAdjudicator:
         assert self.cache.get('foo') is None
 
     def test___getitem__(self):
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError):
             self.cache['foo']
 
     def test_pop_with_default(self):
         assert self.cache.pop('foo', 'bar') == 'bar'
 
     def test_pop_without_default(self):
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError):
             assert self.cache.pop('foo')
 
     def test_pop(self):
@@ -95,9 +83,87 @@ class TestCachePluginAdjudicator:
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
+    def test_update_cache_if_changed(self):
+        # Changes are stored in the CachePluginAdjudicator and will be
+        # persisted to the plugin when calling update_cache_if_changed()
+        # The exception is flush which flushes the plugin immediately.
+        assert len(self.cache.keys()) == 2
+        assert len(self.cache._plugin.keys()) == 0
+        self.cache.update_cache_if_changed()
+        assert len(self.cache._plugin.keys()) == 2
+
+    def test_flush(self):
+        # Fake that the cache already has some data in it but the adjudicator
+        # hasn't loaded it in.
+        self.cache._plugin.set('monkey', 'animal')
+        self.cache._plugin.set('wolf', 'animal')
+        self.cache._plugin.set('another wolf', 'another animal')
+
+        # The adjudicator does't know about the new entries
+        assert len(self.cache.keys()) == 2
+        # But the cache itself does
+        assert len(self.cache._plugin.keys()) == 3
+
+        # If we call flush, both the adjudicator and the cache should flush
+        self.cache.flush()
+        assert len(self.cache.keys()) == 0
+        assert len(self.cache._plugin.keys()) == 0
+
+
+class TestJsonFileCache(TestCachePluginAdjudicator):
+    cache_prefix = ''
+
+    def setUp(self):
+        self.cache_dir = tempfile.mkdtemp(prefix='ansible-plugins-cache-')
+        self.cache = CachePluginAdjudicator(
+            plugin_name='jsonfile', _uri=self.cache_dir,
+            _prefix=self.cache_prefix)
+        self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
+        self.cache['cache_key_2'] = {'key': 'value'}
+
+    def test_keys(self):
+        # A cache without a prefix will consider all files in the cache
+        # directory as valid cache entries.
+        self.cache._plugin._dump(
+            'no prefix', os.path.join(self.cache_dir, 'no_prefix'))
+        self.cache._plugin._dump(
+            'special cache', os.path.join(self.cache_dir, 'special_test'))
+
+        # The plugin does not know the CachePluginAdjudicator entries.
+        assert sorted(self.cache._plugin.keys()) == [
+            'no_prefix', 'special_test']
+
+        assert 'no_prefix' in self.cache
+        assert 'special_test' in self.cache
+        assert 'test' not in self.cache
+        assert self.cache['no_prefix'] == 'no prefix'
+        assert self.cache['special_test'] == 'special cache'
+
+    def tearDown(self):
+        shutil.rmtree(self.cache_dir)
+
+
+class TestJsonFileCachePrefix(TestJsonFileCache):
+    cache_prefix = 'special_'
+
+    def test_keys(self):
+        # For caches with a prefix only files that match the prefix are
+        # considered. The prefix is removed from the key name.
+        self.cache._plugin._dump(
+            'no prefix', os.path.join(self.cache_dir, 'no_prefix'))
+        self.cache._plugin._dump(
+            'special cache', os.path.join(self.cache_dir, 'special_test'))
+
+        # The plugin does not know the CachePluginAdjudicator entries.
+        assert sorted(self.cache._plugin.keys()) == ['test']
+
+        assert 'no_prefix' not in self.cache
+        assert 'special_test' not in self.cache
+        assert 'test' in self.cache
+        assert self.cache['test'] == 'special cache'
+
 
 class TestFactCache(unittest.TestCase):
-
     def setUp(self):
         with mock.patch('ansible.constants.CACHE_PLUGIN', 'memory'):
             self.cache = FactCache()
@@ -108,6 +174,12 @@ class TestFactCache(unittest.TestCase):
         a_copy = self.cache.copy()
         self.assertEqual(type(a_copy), dict)
         self.assertEqual(a_copy, dict(avocado='fruit', daisy='flower'))
+
+    def test_flush(self):
+        self.cache['motorcycle'] = 'vehicle'
+        self.cache['sock'] = 'clothing'
+        self.cache.flush()
+        assert len(self.cache.keys()) == 0
 
     def test_plugin_load_failure(self):
         # See https://github.com/ansible/ansible/issues/18751
@@ -120,16 +192,6 @@ class TestFactCache(unittest.TestCase):
     def test_update(self):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
-
-    def test_update_legacy(self):
-        self.cache.update('cache_key', {'key2': 'updatedvalue'})
-        assert self.cache['cache_key']['key2'] == 'updatedvalue'
-
-    def test_update_legacy_key_exists(self):
-        self.cache['cache_key'] = {'key': 'value', 'key2': 'value2'}
-        self.cache.update('cache_key', {'key': 'updatedvalue'})
-        assert self.cache['cache_key']['key'] == 'updatedvalue'
-        assert self.cache['cache_key']['key2'] == 'value2'
 
 
 class TestAbstractClass(unittest.TestCase):
@@ -178,25 +240,8 @@ class TestAbstractClass(unittest.TestCase):
 
         self.assertIsInstance(CacheModule3(), CacheModule3)
 
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
-    def test_memcached_cachemodule(self):
-        self.assertIsInstance(MemcachedCache(), MemcachedCache)
-
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
-    def test_memcached_cachemodule_with_loader(self):
-        self.assertIsInstance(cache_loader.get('memcached'), MemcachedCache)
-
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
     def test_memory_cachemodule_with_loader(self):
         self.assertIsInstance(cache_loader.get('memory'), MemoryCache)
-
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
-    def test_redis_cachemodule(self):
-        self.assertIsInstance(RedisCache(), RedisCache)
-
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
-    def test_redis_cachemodule_with_loader(self):
-        # The _uri option is required for the redis plugin
-        self.assertIsInstance(cache_loader.get('redis', **{'_uri': '127.0.0.1:6379:1'}), RedisCache)

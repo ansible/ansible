@@ -1,0 +1,40 @@
+---
+- set_fact:
+    AnsibleVhdx: '{{ remote_tmp_dir }}\AnsiblePart.vhdx'
+
+- name: Install FS-Data-Deduplication
+  win_feature:
+    name: FS-Data-Deduplication
+    include_sub_features: true
+    state: present
+  register: data_dedup_feat_reg
+
+- name: Reboot windows after the feature has been installed
+  win_reboot:
+    reboot_timeout: 3600
+  when:
+    - data_dedup_feat_reg.success
+    - data_dedup_feat_reg.reboot_required
+
+- name: Copy VHDX scripts
+  win_template:
+    src: "{{ item.src }}"
+    dest: '{{ remote_tmp_dir }}\{{ item.dest }}'
+  loop:
+    - { src: partition_creation_script.j2, dest: partition_creation_script.txt }
+    - { src: partition_deletion_script.j2, dest: partition_deletion_script.txt }
+
+- name: Create partition
+  win_command: diskpart.exe /s {{ remote_tmp_dir }}\partition_creation_script.txt
+
+- name: Format T with NTFS
+  win_format:
+    drive_letter: T
+    file_system: ntfs
+
+- name: Run tests
+  block:
+    - import_tasks: tests.yml
+  always:
+    - name: Detach disk
+      win_command: diskpart.exe /s {{ remote_tmp_dir }}\partition_deletion_script.txt

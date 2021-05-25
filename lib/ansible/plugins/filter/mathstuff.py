@@ -28,7 +28,7 @@ import math
 
 from jinja2.filters import environmentfilter
 
-from ansible.errors import AnsibleFilterError
+from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
@@ -42,25 +42,29 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
+try:
+    from jinja2.filters import do_max, do_min
+    HAS_MIN_MAX = True
+except ImportError:
+    HAS_MIN_MAX = False
+
 display = Display()
 
 
 @environmentfilter
-def unique(environment, a, case_sensitive=False, attribute=None):
+# Use case_sensitive=None as a sentinel value, so we raise an error only when
+# explicitly set and cannot be handle (by Jinja2 w/o 'unique' or fallback version)
+def unique(environment, a, case_sensitive=None, attribute=None):
 
     def _do_fail(e):
-        if case_sensitive or attribute:
+        if case_sensitive is False or attribute:
             raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
                                      "as it does not support the parameters supplied", orig_exc=e)
 
     error = e = None
     try:
         if HAS_UNIQUE:
-            c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
-            if isinstance(a, Hashable):
-                c = set(c)
-            else:
-                c = list(c)
+            c = list(do_unique(environment, a, case_sensitive=bool(case_sensitive), attribute=attribute))
     except TypeError as e:
         error = e
         _do_fail(e)
@@ -72,17 +76,15 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     if not HAS_UNIQUE or error:
 
         # handle Jinja2 specific attributes when using Ansible's version
-        if case_sensitive or attribute:
-            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
+        if case_sensitive is False or attribute:
+            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
-        if isinstance(a, Hashable):
-            c = set(a)
-        else:
-            c = []
-            for x in a:
-                if x not in c:
-                    c.append(x)
+        c = []
+        for x in a:
+            if x not in c:
+                c.append(x)
+
     return c
 
 
@@ -91,7 +93,7 @@ def intersect(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     else:
-        c = unique(environment, [x for x in a if x in b])
+        c = unique(environment, [x for x in a if x in b], True)
     return c
 
 
@@ -100,7 +102,7 @@ def difference(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     else:
-        c = unique(environment, [x for x in a if x not in b])
+        c = unique(environment, [x for x in a if x not in b], True)
     return c
 
 
@@ -119,18 +121,32 @@ def union(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     else:
-        c = unique(environment, a + b)
+        c = unique(environment, a + b, True)
     return c
 
 
-def min(a):
-    _min = __builtins__.get('min')
-    return _min(a)
+@environmentfilter
+def min(environment, a, **kwargs):
+    if HAS_MIN_MAX:
+        return do_min(environment, a, **kwargs)
+    else:
+        if kwargs:
+            raise AnsibleFilterError("Ansible's min filter does not support any keyword arguments. "
+                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
+        _min = __builtins__.get('min')
+        return _min(a)
 
 
-def max(a):
-    _max = __builtins__.get('max')
-    return _max(a)
+@environmentfilter
+def max(environment, a, **kwargs):
+    if HAS_MIN_MAX:
+        return do_max(environment, a, **kwargs)
+    else:
+        if kwargs:
+            raise AnsibleFilterError("Ansible's max filter does not support any keyword arguments. "
+                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
+        _max = __builtins__.get('max')
+        return _max(a)
 
 
 def logarithm(x, base=math.e):
@@ -140,14 +156,14 @@ def logarithm(x, base=math.e):
         else:
             return math.log(x, base)
     except TypeError as e:
-        raise AnsibleFilterError('log() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError('log() can only be used on numbers: %s' % to_native(e))
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
     except TypeError as e:
-        raise AnsibleFilterError('pow() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError('pow() can only be used on numbers: %s' % to_native(e))
 
 
 def inversepower(x, base=2):
@@ -157,13 +173,15 @@ def inversepower(x, base=2):
         else:
             return math.pow(x, 1.0 / float(base))
     except (ValueError, TypeError) as e:
-        raise AnsibleFilterError('root() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError('root() can only be used on numbers: %s' % to_native(e))
 
 
 def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
         return formatters.bytes_to_human(size, isbits, unit)
+    except TypeError as e:
+        raise AnsibleFilterTypeError("human_readable() failed on bad input: %s" % to_native(e))
     except Exception:
         raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
@@ -172,6 +190,8 @@ def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
+    except TypeError as e:
+        raise AnsibleFilterTypeError("human_to_bytes() failed on bad input: %s" % to_native(e))
     except Exception:
         raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
@@ -195,21 +215,23 @@ def rekey_on_member(data, key, duplicates='error'):
     elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
         iterate_over = data
     else:
-        raise AnsibleFilterError("Type is not a valid list, set, or dict")
+        raise AnsibleFilterTypeError("Type is not a valid list, set, or dict")
 
     for item in iterate_over:
         if not isinstance(item, Mapping):
-            raise AnsibleFilterError("List item is not a valid dict")
+            raise AnsibleFilterTypeError("List item is not a valid dict")
 
         try:
             key_elem = item[key]
         except KeyError:
             raise AnsibleFilterError("Key {0} was not found".format(key))
+        except TypeError as e:
+            raise AnsibleFilterTypeError(to_native(e))
         except Exception as e:
             raise AnsibleFilterError(to_native(e))
 
         # Note: if new_obj[key_elem] exists it will always be a non-empty dict (it will at
-        # minimun contain {key: key_elem}
+        # minimum contain {key: key_elem}
         if new_obj.get(key_elem, None):
             if duplicates == 'error':
                 raise AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))

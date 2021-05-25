@@ -19,10 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from jinja2.runtime import Undefined
-
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.template import Templar
+from ansible.template import Templar, AnsibleUndefined
 
 STATIC_VARS = [
     'ansible_version',
@@ -51,7 +49,6 @@ class HostVars(Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, inventory, variable_manager, loader):
-        self._lookup = dict()
         self._inventory = inventory
         self._loader = loader
         self._variable_manager = variable_manager
@@ -75,13 +72,26 @@ class HostVars(Mapping):
         '''
         host = self._find_host(host_name)
         if host is None:
-            return Undefined(name="hostvars['%s']" % host_name)
+            return AnsibleUndefined(name="hostvars['%s']" % host_name)
 
         return self._variable_manager.get_vars(host=host, include_hostvars=False)
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        # Methods __getstate__ and __setstate__ of VariableManager do not
+        # preserve _loader and _hostvars attributes to improve pickle
+        # performance and memory utilization. Since HostVars holds values
+        # of those attributes already, assign them if needed.
+        if self._variable_manager._loader is None:
+            self._variable_manager._loader = self._loader
+
+        if self._variable_manager._hostvars is None:
+            self._variable_manager._hostvars = self
+
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        if isinstance(data, Undefined):
+        if isinstance(data, AnsibleUndefined):
             return data
         return HostVarsVars(data, loader=self._loader)
 
@@ -111,6 +121,12 @@ class HostVars(Mapping):
             out[host] = self.get(host)
         return repr(out)
 
+    def __deepcopy__(self, memo):
+        # We do not need to deepcopy because HostVars is immutable,
+        # however we have to implement the method so we can deepcopy
+        # variables' dicts that contain HostVars.
+        return self
+
 
 class HostVarsVars(Mapping):
 
@@ -134,4 +150,5 @@ class HostVarsVars(Mapping):
         return len(self._vars.keys())
 
     def __repr__(self):
-        return repr(self._vars)
+        templar = Templar(variables=self._vars, loader=self._loader)
+        return repr(templar.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))

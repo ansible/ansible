@@ -4,27 +4,9 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2015 Brian Ccoa, <bcoca@ansible.com>
+# Copyright: (c) 2015, Brian Coca, <bcoca@ansible.com>
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 """
 This module adds shared support for generic api modules
 
@@ -41,6 +23,12 @@ The 'api' module provides the following common argument specs:
         - retries: number of attempts
         - retry_pause: delay between attempts in seconds
 """
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import functools
+import random
+import sys
 import time
 
 
@@ -88,12 +76,16 @@ def rate_limit(rate=None, rate_limit=None):
         last = [0.0]
 
         def ratelimited(*args, **kwargs):
+            if sys.version_info >= (3, 8):
+                real_time = time.process_time
+            else:
+                real_time = time.clock
             if minrate is not None:
-                elapsed = time.clock() - last[0]
+                elapsed = real_time() - last[0]
                 left = minrate - elapsed
                 if left > 0:
                     time.sleep(left)
-                last[0] = time.clock()
+                last[0] = real_time()
             ret = f(*args, **kwargs)
             return ret
 
@@ -104,14 +96,13 @@ def rate_limit(rate=None, rate_limit=None):
 def retry(retries=None, retry_pause=1):
     """Retry decorator"""
     def wrapper(f):
-        retry_count = 0
 
         def retried(*args, **kwargs):
+            retry_count = 0
             if retries is not None:
                 ret = None
                 while True:
-                    # pylint doesn't understand this is a closure
-                    retry_count += 1  # pylint: disable=undefined-variable
+                    retry_count += 1
                     if retry_count >= retries:
                         raise Exception("Retry limit exceeded: %d" % retries)
                     try:
@@ -125,3 +116,51 @@ def retry(retries=None, retry_pause=1):
 
         return retried
     return wrapper
+
+
+def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
+    """The "Full Jitter" backoff strategy.
+
+    Ref: https://www.awsarchitectureblog.com/2015/03/backoff.html
+
+    :param retries: The number of delays to generate.
+    :param delay_base: The base time in seconds used to calculate the exponential backoff.
+    :param delay_threshold: The maximum time in seconds for any delay.
+    """
+    for retry in range(0, retries):
+        yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
+
+
+def retry_never(exception_or_result):
+    return False
+
+
+def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
+    """Generic retry decorator.
+
+    :param backoff_iterator: An iterable of delays in seconds.
+    :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
+    """
+    if should_retry_error is None:
+        should_retry_error = retry_never
+
+    def function_wrapper(function):
+        @functools.wraps(function)
+        def run_function(*args, **kwargs):
+            """This assumes the function has not already been called.
+            If backoff_iterator is empty, we should still run the function a single time with no delay.
+            """
+            call_retryable_function = functools.partial(function, *args, **kwargs)
+
+            for delay in backoff_iterator:
+                try:
+                    return call_retryable_function()
+                except Exception as e:
+                    if not should_retry_error(e):
+                        raise
+                time.sleep(delay)
+
+            # Only or final attempt
+            return call_retryable_function()
+        return run_function
+    return function_wrapper

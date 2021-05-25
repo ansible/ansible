@@ -18,7 +18,7 @@
 
 - name: concatenate int and string
   set_fact:
-      string_sum: "{{ [(i_one|to_text), s_two]|join('') }}"
+      string_sum: "'{{ [i_one, s_two]|join('') }}'"
 
 - assert:
     that:

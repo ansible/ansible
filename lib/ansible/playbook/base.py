@@ -15,6 +15,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -179,6 +180,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
+    @property
+    def finalized(self):
+        return self._finalized
+
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
         if depth == 0:
@@ -254,7 +259,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
     def get_variable_manager(self):
         return self._variable_manager
 
-    def _validate_debugger(self, attr, name, value):
+    def _post_validate_debugger(self, attr, value, templar):
+        value = templar.template(value)
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
         if value and isinstance(value, string_types) and value not in valid_values:
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
@@ -314,7 +320,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         Create a copy of this object and return it.
         '''
 
-        new_me = self.__class__()
+        try:
+            new_me = self.__class__()
+        except RuntimeError as e:
+            raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion", orig_exc=e)
 
         for name in self._valid_attrs.keys():
             if name in self._alias_attrs:
@@ -342,7 +351,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         elif attribute.isa == 'float':
             value = float(value)
         elif attribute.isa == 'bool':
-            value = boolean(value, strict=False)
+            value = boolean(value, strict=True)
         elif attribute.isa == 'percent':
             # special value, which may be an integer or float
             # with an optional '%' at the end
@@ -507,8 +516,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # Due to where _extend_value may run for some attributes
         # it is possible to end up with Sentinel in the list of values
         # ensure we strip them
-        value[:] = [v for v in value if v is not Sentinel]
-        new_value[:] = [v for v in new_value if v is not Sentinel]
+        value = [v for v in value if v is not Sentinel]
+        new_value = [v for v in new_value if v is not Sentinel]
 
         if prepend:
             combined = new_value + value
@@ -543,6 +552,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     setattr(self, attr, obj)
                 else:
                     setattr(self, attr, value)
+
+        # from_attrs is only used to create a finalized task
+        # from attrs from the Worker/TaskExecutor
+        # Those attrs are finalized and squashed in the TE
+        # and controller side use needs to reflect that
+        self._finalized = True
+        self._squashed = True
 
     def serialize(self):
         '''
@@ -612,6 +628,8 @@ class Base(FieldAttributeBase):
     _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
     _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
+    _throttle = FieldAttribute(isa='int', default=0)
+    _timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT)
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')

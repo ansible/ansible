@@ -1,2 +1,0 @@
-bugfixes:
-  - podman_image_facts - do not fail if invalid or non-existant image name is provided (https://github.com/ansible/ansible/issues/57899)

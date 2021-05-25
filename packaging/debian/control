@@ -1,16 +1,29 @@
-Source: ansible
+Source: ansible-core
 Section: admin
 Priority: optional
 Standards-Version: 3.9.3
 Maintainer: Ansible, Inc. <info@ansible.com>
-Build-Depends: cdbs, debhelper (>= 5.0.0), python-docutils, python, dh-python | python-support, python-setuptools, lsb-release
+Build-Depends: cdbs, debhelper (>= 5.0.0), python3-docutils, python3, dh-python | python-support, python3-setuptools, lsb-release, python3-straight.plugin, python3-packaging, python3-jinja2
 Homepage: https://github.com/ansible/ansible/
 
-Package: ansible
+Package: ansible-core
 Architecture: all
-Depends: python-jinja2, python-yaml, python-paramiko, python-httplib2, python-six, python-crypto (>= 2.6), python-setuptools, sshpass, ${misc:Depends}, ${python:Depends}
+Depends: python3-jinja2, python3-yaml, python3-paramiko, python3-cryptography, sshpass, ${misc:Depends}, ${python:Depends}
 Description: Ansible IT Automation
- A radically simple IT automation platform that makes your applications and
- systems easier to deploy. Avoid writing scripts or custom code to deploy and
- update your applications— automate in a language that approaches plain English,
- using SSH, with no agents to install on remote systems.
+ Ansible is a radically simple model-driven configuration management,
+ multi-node deployment, and remote task execution system. Ansible works
+ over SSH and does not require any software or daemons to be installed
+ on remote nodes. Extension modules can be written in any language and
+ are transferred to managed machines automatically.
+
+Package: ansible-test
+Architecture: all
+Depends: ansible-core (= ${binary:Version}), python3-venv, ${misc:Depends}
+Description: Ansible IT Automation
+ Ansible is a radically simple model-driven configuration management,
+ multi-node deployment, and remote task execution system. Ansible works
+ over SSH and does not require any software or daemons to be installed
+ on remote nodes. Extension modules can be written in any language and
+ are transferred to managed machines automatically.
+ This package installs the ansible-test command for testing modules and
+ plugins developed for ansible.

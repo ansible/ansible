@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: yaml
+    name: yaml
     version_added: "2.4"
     short_description: Uses a specific YAML file as an inventory source.
     description:

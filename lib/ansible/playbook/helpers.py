@@ -117,21 +117,18 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            collection_list = task_ds.get('collections')
-            if collection_list is None and block is not None and block.collections:
-                collection_list = block.collections
-            args_parser = ModuleArgsParser(task_ds, collection_list=collection_list)
+            args_parser = ModuleArgsParser(task_ds)
             try:
-                (action, args, delegate_to) = args_parser.parse()
+                (action, args, delegate_to) = args_parser.parse(skip_action_validation=True)
             except AnsibleParserError as e:
                 # if the raises exception was created with obj=ds args, then it includes the detail
                 # so we dont need to add it so we can just re raise.
-                if e._obj:
+                if e.obj:
                     raise
                 # But if it wasn't, we can add the yaml object now to get more detail
                 raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
 
-            if action in ('include', 'import_tasks', 'include_tasks'):
+            if action in C._ACTION_ALL_INCLUDE_IMPORT_TASKS:
 
                 if use_handlers:
                     include_class = HandlerTaskInclude
@@ -153,13 +150,14 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                if action == 'include_tasks':
+                if action in C._ACTION_INCLUDE_TASKS:
                     is_static = False
-                elif action == 'import_tasks':
+                elif action in C._ACTION_IMPORT_TASKS:
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
-                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion", version='2.12')
+                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion",
+                                       version='2.12', collection_name='ansible.builtin')
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -168,7 +166,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if t.loop is not None:
-                        if action == 'import_tasks':
+                        if action in C._ACTION_IMPORT_TASKS:
                             raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
@@ -238,7 +236,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     try:
                         data = loader.load_from_file(include_file)
-                        if data is None:
+                        if not data:
                             display.warning('file %s is empty and had no tasks to include' % include_file)
                             continue
                         elif not isinstance(data, list):
@@ -250,7 +248,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # nested includes, and we want the include order printed correctly
                         display.vv("statically imported: %s" % include_file)
                     except AnsibleFileNotFound:
-                        if action != 'include' or t.static or \
+                        if action not in C._ACTION_INCLUDE or t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
                            C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
                             raise
@@ -260,7 +258,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             "later. In the future, this will be an error unless 'static: no' is used "
                             "on the include task. If you do not want missing includes to be considered "
                             "dynamic, use 'static: yes' on the include or set the global ansible.cfg "
-                            "options to make all includes static for tasks and/or handlers" % include_file, version="2.12"
+                            "options to make all includes static for tasks and/or handlers" % include_file,
+                            version="2.12", collection_name='ansible.builtin'
                         )
                         task_list.append(t)
                         continue
@@ -287,7 +286,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
-                        if action in ('include_tasks', 'import_tasks'):
+                        if action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS:
                             raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
@@ -297,7 +296,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 suppress_extended_error=True,
                             )
                         display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                           version="2.12")
+                                           version="2.12", collection_name='ansible.builtin')
                     else:
                         tags = ti_copy.tags[:]
 
@@ -317,7 +316,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     t.is_static = False
                     task_list.append(t)
 
-            elif action in ('include_role', 'import_role'):
+            elif action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES:
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,
@@ -330,17 +329,18 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
                 is_static = False
-                if action == 'import_role':
+                if action in C._ACTION_IMPORT_ROLE:
                     is_static = True
 
                 elif ir.static is not None:
                     display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
-                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion", version='2.12')
+                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion",
+                                       version='2.12', collection_name='ansible.builtin')
                     is_static = ir.static
 
                 if is_static:
                     if ir.loop is not None:
-                        if action == 'import_role':
+                        if action in C._ACTION_IMPORT_ROLE:
                             raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)
@@ -370,12 +370,17 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     return task_list
 
 
-def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None):
-    '''
-    Loads and returns a list of RoleInclude objects from the datastructure
-    list of role definitions
-    '''
-
+def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None):
+    """
+    Loads and returns a list of RoleInclude objects from the ds list of role definitions
+    :param ds: list of roles to load
+    :param play: calling Play object
+    :param current_role_path: path of the owning role, if any
+    :param variable_manager: varmgr to use for templating
+    :param loader: loader to use for DS parsing/services
+    :param collection_search_list: list of collections to search for unqualified role names
+    :return:
+    """
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
@@ -385,7 +390,7 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     roles = []
     for role_def in ds:
         i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
-                             loader=loader, collection_list=play.collections)
+                             loader=loader, collection_list=collection_search_list)
         roles.append(i)
 
     return roles

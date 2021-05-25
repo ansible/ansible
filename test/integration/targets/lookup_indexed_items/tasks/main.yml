@@ -1,0 +1,32 @@
+- name: create unindexed list
+  shell: for i in $(seq 1 5); do echo "x" ; done;
+  register: list_data
+
+- name: create indexed list
+  set_fact: "{{ item[1] + item[0]|string }}=set"
+  with_indexed_items: "{{list_data.stdout_lines}}"
+
+- name: verify with_indexed_items result
+  assert:
+    that:
+        - "x0 == 'set'"
+        - "x1 == 'set'"
+        - "x2 == 'set'"
+        - "x3 == 'set'"
+        - "x4 == 'set'"
+
+- block:
+    - name: "EXPECTED FAILURE - test not a list"
+      debug:
+        msg: "{{ item.0 }} is {{ item.1 }}"
+      with_indexed_items:
+        "a": 1
+
+    - fail:
+        msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test not a list"
+          - ansible_failed_result.msg == "with_indexed_items expects a list"

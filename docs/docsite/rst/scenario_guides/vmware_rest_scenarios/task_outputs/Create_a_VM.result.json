@@ -1,0 +1,77 @@
+{
+    "value": {
+        "instant_clone_frozen": false,
+        "cdroms": [],
+        "memory": {
+            "size_MiB": 1024,
+            "hot_add_enabled": true
+        },
+        "disks": [
+            {
+                "value": {
+                    "scsi": {
+                        "bus": 0,
+                        "unit": 0
+                    },
+                    "backing": {
+                        "vmdk_file": "[local] test_vm1_8/test_vm1.vmdk",
+                        "type": "VMDK_FILE"
+                    },
+                    "label": "Hard disk 1",
+                    "type": "SCSI",
+                    "capacity": 17179869184
+                },
+                "key": "2000"
+            }
+        ],
+        "parallel_ports": [],
+        "sata_adapters": [],
+        "cpu": {
+            "hot_remove_enabled": false,
+            "count": 1,
+            "hot_add_enabled": false,
+            "cores_per_socket": 1
+        },
+        "scsi_adapters": [
+            {
+                "value": {
+                    "scsi": {
+                        "bus": 0,
+                        "unit": 7
+                    },
+                    "label": "SCSI controller 0",
+                    "sharing": "NONE",
+                    "type": "PVSCSI"
+                },
+                "key": "1000"
+            }
+        ],
+        "power_state": "POWERED_OFF",
+        "floppies": [],
+        "identity": {
+            "name": "test_vm1",
+            "instance_uuid": "5033c296-6954-64df-faca-d001de53763d",
+            "bios_uuid": "42330d17-e603-d925-fa4b-18827dbc1409"
+        },
+        "nvme_adapters": [],
+        "name": "test_vm1",
+        "nics": [],
+        "boot": {
+            "delay": 0,
+            "retry_delay": 10000,
+            "enter_setup_mode": false,
+            "type": "BIOS",
+            "retry": false
+        },
+        "serial_ports": [],
+        "boot_devices": [],
+        "guest_OS": "DEBIAN_8_64",
+        "hardware": {
+            "upgrade_policy": "NEVER",
+            "upgrade_status": "NONE",
+            "version": "VMX_11"
+        }
+    },
+    "id": "vm-1650",
+    "changed": true
+}

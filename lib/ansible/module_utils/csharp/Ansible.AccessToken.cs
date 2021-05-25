@@ -134,6 +134,9 @@ namespace Ansible.AccessToken
     public enum LogonProvider
     {
         Default,
+        WinNT35,
+        WinNT40,
+        WinNT50,
     }
 
     public enum LogonType

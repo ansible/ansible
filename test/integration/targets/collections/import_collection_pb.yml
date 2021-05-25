@@ -1,0 +1,17 @@
+- import_playbook: testns.testcoll.default_collection_playbook.yml
+- import_playbook: testns.testcoll.default_collection_playbook
+
+# test subdirs
+- import_playbook: "testns.testcoll.play"
+- import_playbook: "testns.testcoll.type.play"
+- import_playbook: "testns.testcoll.type.subtype.play"
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: check values from imports
+      assert:
+        that:
+          - play is defined
+          - play_type is defined
+          - play_type_subtype is defined

@@ -1,0 +1,171 @@
+---
+- name: create test download dir
+  file:
+    path: '{{ galaxy_dir }}/download'
+    state: directory
+
+- name: download collection with multiple dependencies with --no-deps
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 --no-deps -s pulp_v2 {{ galaxy_verbosity }}
+  register: download_collection
+  args:
+    chdir: '{{ galaxy_dir }}/download'
+
+- name: get result of download collection with multiple dependencies
+  find:
+    path: '{{ galaxy_dir }}/download/collections'
+    file_type: file
+  register: download_collection_actual
+
+- name: assert download collection with multiple dependencies --no-deps
+  assert:
+    that:
+    - >-
+      "Downloading collection 'parent_dep.parent_collection:1.0.0' to '/tmp/"
+      in download_collection.stdout
+    - >-
+      "Downloading collection 'child_dep.child_collection"
+      not in download_collection.stdout
+    - >-
+      "Downloading collection 'child_dep.child_dep2"
+      not in download_collection.stdout
+    - download_collection_actual.examined == 2
+    - download_collection_actual.matched == 2
+    - (download_collection_actual.files[0].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
+    - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
+
+- name: download collection with multiple dependencies
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 -s pulp_v2 {{ galaxy_verbosity }}
+  register: download_collection
+  args:
+    chdir: '{{ galaxy_dir }}/download'
+
+- name: get result of download collection with multiple dependencies
+  find:
+    path: '{{ galaxy_dir }}/download/collections'
+    file_type: file
+  register: download_collection_actual
+
+- name: assert download collection with multiple dependencies
+  assert:
+    that:
+    - '"Downloading collection ''parent_dep.parent_collection:1.0.0'' to" in download_collection.stdout'
+    - '"Downloading collection ''child_dep.child_collection:0.9.9'' to" in download_collection.stdout'
+    - '"Downloading collection ''child_dep.child_dep2:1.2.2'' to" in download_collection.stdout'
+    - download_collection_actual.examined == 4
+    - download_collection_actual.matched == 4
+    - (download_collection_actual.files[0].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
+    - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
+    - (download_collection_actual.files[2].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
+    - (download_collection_actual.files[3].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
+
+- name: test install of download requirements file
+  command: ansible-galaxy collection install -r requirements.yml -p '{{ galaxy_dir }}/download' {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}/download/collections'
+  register: install_download
+
+- name: get result of test install of download requirements file
+  slurp:
+    path: '{{ galaxy_dir }}/download/ansible_collections/{{ collection.namespace }}/{{ collection.name }}/MANIFEST.json'
+  register: install_download_actual
+  loop_control:
+    loop_var: collection
+  loop:
+  - namespace: parent_dep
+    name: parent_collection
+  - namespace: child_dep
+    name: child_collection
+  - namespace: child_dep
+    name: child_dep2
+
+- name: assert test install of download requirements file
+  assert:
+    that:
+    - '"Installing ''parent_dep.parent_collection:1.0.0'' to" in install_download.stdout'
+    - '"Installing ''child_dep.child_collection:0.9.9'' to" in install_download.stdout'
+    - '"Installing ''child_dep.child_dep2:1.2.2'' to" in install_download.stdout'
+    - (install_download_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
+    - (install_download_actual.results[1].content | b64decode | from_json).collection_info.version == '0.9.9'
+    - (install_download_actual.results[2].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+- name: create test requirements file for download
+  copy:
+    content: |
+      collections:
+      - name: namespace1.name1
+        version: 1.1.0-beta.1
+
+    dest: '{{ galaxy_dir }}/download/download.yml'
+
+- name: download collection with req to custom dir
+  command: ansible-galaxy collection download -r '{{ galaxy_dir }}/download/download.yml' -s galaxy_ng -p '{{ galaxy_dir }}/download/collections-custom' {{ galaxy_verbosity }}
+  register: download_req_custom_path
+
+- name: get result of download collection with req to custom dir
+  find:
+    path: '{{ galaxy_dir }}/download/collections-custom'
+    file_type: file
+  register: download_req_custom_path_actual
+
+- name: assert download collection with multiple dependencies
+  assert:
+    that:
+    - '"Downloading collection ''namespace1.name1:1.1.0-beta.1'' to" in download_req_custom_path.stdout'
+    - download_req_custom_path_actual.examined == 2
+    - download_req_custom_path_actual.matched == 2
+    - (download_req_custom_path_actual.files[0].path | basename) in ['requirements.yml', 'namespace1-name1-1.1.0-beta.1.tar.gz']
+    - (download_req_custom_path_actual.files[1].path | basename) in ['requirements.yml', 'namespace1-name1-1.1.0-beta.1.tar.gz']
+
+# https://github.com/ansible/ansible/issues/68186
+- name: create test requirements file without roles and collections
+  copy:
+    content: |
+      collections:
+      roles:
+
+    dest: '{{ galaxy_dir }}/download/no_roles_no_collections.yml'
+
+- name: install collection with requirements
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/download/no_roles_no_collections.yml' {{ galaxy_verbosity }}
+  register: install_no_requirements
+
+- name: assert install collection with no roles and no collections in requirements
+  assert:
+    that:
+      - '"Skipping install, no requirements found" in install_no_requirements.stdout'
+
+- name: Test downloading a tar.gz collection artifact
+  block:
+
+    - name: get result of build basic collection on current directory
+      stat:
+        path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+      register: result
+
+    - name: create default skeleton
+      command: ansible-galaxy collection init ansible_test.my_collection {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      when: not result.stat.exists
+
+    - name: build the tar.gz
+      command:  ansible-galaxy collection build {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
+      when: not result.stat.exists
+
+    - name: download a tar.gz file
+      command: ansible-galaxy collection download '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+      args:
+        chdir: '{{ galaxy_dir }}/download'
+      register: download_collection
+
+    - name: get result of downloaded tar.gz
+      stat:
+        path: '{{ galaxy_dir }}/download/collections/ansible_test-my_collection-1.0.0.tar.gz'
+      register: download_collection_actual
+
+    - assert:
+        that:
+        - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection.stdout'
+        - download_collection_actual.stat.exists

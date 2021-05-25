@@ -1,5 +1,0 @@
----
-test_acl_path: '{{ win_output_dir }}\win_acl .ÅÑŚÌβŁÈ [$!@^&test(;)]'
-test_acl_network_path: \\localhost\{{ test_acl_path[0:1] }}$\{{ test_acl_path[3:] }}
-# Use HKU as that path is not automatically loaded in the PSProvider making our test more complex
-test_acl_reg_path: HKU:\.DEFAULT\Ansible Test .ÅÑŚÌβŁÈ [$!@^&test(;)]

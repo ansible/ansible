@@ -1,7 +1,0 @@
-- hosts: localhost
-  connection: local
-
-  roles:
-  - "git-ansible-galaxy"
-  - "http-role"
-  - "hg-ansible-galaxy"

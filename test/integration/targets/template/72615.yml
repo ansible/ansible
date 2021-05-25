@@ -1,0 +1,26 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    foo: "top-level-foo"
+  tasks:
+    - set_fact:
+        template_result: "{{ lookup('template', '72615.j2') }}"
+
+    - assert:
+        that:
+          - "'template-level-bar' in template_result"
+          - "'template-nested-level-bar' in template_result"
+
+    - assert:
+        that:
+          - "'top-level-foo' not in template_result"
+          - "'template-level-foo' in template_result"
+          - "'template-nested-level-foo' in template_result"
+      when: lookup('pipe', ansible_python_interpreter ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.9', '>=')
+
+    - assert:
+        that:
+          - "'top-level-foo' in template_result"
+          - "'template-level-foo' not in template_result"
+          - "'template-nested-level-foo' not in template_result"
+      when: lookup('pipe', ansible_python_interpreter ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.9', '<')

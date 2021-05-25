@@ -1,15 +1,21 @@
 .. _playbooks_environment:
 
-Setting the Environment (and Working With Proxies)
-==================================================
+Setting the remote environment
+==============================
 
 .. versionadded:: 1.1
 
-It is quite possible that you may need to get package updates through a proxy, or even get some package
-updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to
-call may also need certain environment variables set to run properly.
+You can use the ``environment`` keyword at the play, block, or task level to set an environment variable for an action on a remote host. With this keyword, you can enable using a proxy for a task that does http requests, set the required environment variables for language-specific version managers, and more.
 
-Ansible makes it easy for you to configure the remote execution environment by using the 'environment' keyword.  Here is an example::
+When you set a value with ``environment:`` at the play or block level, it is available only to tasks within the play or block that are executed by the same user. The ``environment:`` keyword does not affect Ansible itself, Ansible configuration settings, the environment for other users, or the execution of other plugins like lookups and filters. Variables set with ``environment:`` do not automatically become Ansible facts, even when you set them at the play level. You must include an explicit ``gather_facts`` task in your playbook and set the ``environment`` keyword on that task to turn these values into Ansible facts.
+
+.. contents::
+   :local:
+
+Setting the remote environment in a task
+----------------------------------------
+
+You can set the environment directly at the task level::
 
     - hosts: all
       remote_user: root
@@ -17,18 +23,18 @@ Ansible makes it easy for you to configure the remote execution environment by u
       tasks:
 
         - name: Install cobbler
-          package:
+          ansible.builtin.package:
             name: cobbler
             state: present
           environment:
             http_proxy: http://proxy.example.com:8080
 
-The environment can also be stored in a variable, and accessed like so::
+You can re-use environment settings by defining them as variables in your play and accessing them in a task as you would access any stored Ansible variable::
 
     - hosts: all
       remote_user: root
 
-      # here we make a variable named "proxy_env" that is a dictionary
+      # create a variable named "proxy_env" that is a dictionary
       vars:
         proxy_env:
           http_proxy: http://proxy.example.com:8080
@@ -36,24 +42,12 @@ The environment can also be stored in a variable, and accessed like so::
       tasks:
 
         - name: Install cobbler
-          package:
+          ansible.builtin.package:
             name: cobbler
             state: present
-          environment: "{{proxy_env}}"
+          environment: "{{ proxy_env }}"
 
-You can also use it at a play level::
-
-    - hosts: testhost
-
-      roles:
-         - php
-         - nginx
-
-      environment:
-        http_proxy: http://proxy.example.com:8080
-
-While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
-to define an environment hash might be a group_vars file, like so::
+You can store environment settings for re-use in multiple playbooks by defining them in a group_vars file::
 
     ---
     # file: group_vars/boston
@@ -64,11 +58,23 @@ to define an environment hash might be a group_vars file, like so::
       http_proxy: http://proxy.bos.example.com:8080
       https_proxy: http://proxy.bos.example.com:8080
 
+You can set the remote environment at the play level::
 
-Working With Language-Specific Version Managers
+    - hosts: testing
+
+      roles:
+         - php
+         - nginx
+
+      environment:
+        http_proxy: http://proxy.example.com:8080
+
+These examples show proxy settings, but you can provide any number of settings this way.
+
+Working with language-specific version managers
 ===============================================
 
-Some language-specific version managers (such as rbenv and nvm) require environment variables be set while these tools are in use. When using these tools manually, they usually require sourcing some environment variables via a script or lines added to your shell configuration file. In Ansible, you can instead use the environment directive::
+Some language-specific version managers (such as rbenv and nvm) require you to set environment variables while these tools are in use. When using these tools manually, you usually source some environment variables from a script or from lines added to your shell configuration file. In Ansible, you can do this with the environment keyword at the play level::
 
     ---
     ### A playbook demonstrating a common npm workflow:
@@ -88,27 +94,33 @@ Some language-specific version managers (such as rbenv and nvm) require environm
         PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_env.PATH }}
 
       tasks:
-      - name: check for package.json
-        stat:
+      - name: Check for package.json
+        ansible.builtin.stat:
           path: '{{ node_app_dir }}/package.json'
         register: packagejson
 
-      - name: npm prune
-        command: npm prune
+      - name: Run npm prune
+        ansible.builtin.command: npm prune
         args:
           chdir: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
-      - name: npm install
-        npm:
+      - name: Run npm install
+        community.general.npm:
           path: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
-You might also want to simply specify the environment for a single task::
+.. note::
+   The example above uses ``ansible_env`` as part of the PATH. Basing variables on ``ansible_env`` is risky. Ansible populates ``ansible_env`` values by gathering facts, so the value of the variables depends on the remote_user or become_user Ansible used when gathering those facts. If you change remote_user/become_user the values in ``ansible-env`` may not be the ones you expect.
+
+.. warning::
+    Environment variables are normally passed in clear text (shell plugin dependent) so they are not a recommended way of passing secrets to the module being executed.
+
+You can also specify the environment at the task level::
 
     ---
-    - name: install ruby 2.3.1
-      command: rbenv install {{ rbenv_ruby_version }}
+    - name: Install ruby 2.3.1
+      ansible.builtin.command: rbenv install {{ rbenv_ruby_version }}
       args:
         creates: '{{ rbenv_root }}/versions/{{ rbenv_ruby_version }}/bin/ruby'
       vars:
@@ -118,9 +130,6 @@ You might also want to simply specify the environment for a single task::
         CONFIGURE_OPTS: '--disable-install-doc'
         RBENV_ROOT: '{{ rbenv_root }}'
         PATH: '{{ rbenv_root }}/bin:{{ rbenv_root }}/shims:{{ rbenv_plugins }}/ruby-build/bin:{{ ansible_env.PATH }}'
-
-.. note::
-   ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and this does not include Ansible's own configuration settings.
 
 .. seealso::
 

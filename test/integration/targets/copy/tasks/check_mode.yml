@@ -1,0 +1,126 @@
+- block:
+
+  - name: check_mode - Create another clean copy of 'subdir' not messed with by previous tests (check_mode)
+    copy:
+      src: subdir
+      dest: 'checkmode_subdir/'
+      directory_mode: 0700
+      local_follow: False
+    check_mode: true
+    register: check_mode_subdir_first
+
+  - name: check_mode - Stat the new dir to make sure it really doesn't exist
+    stat:
+      path: 'checkmode_subdir/'
+    register: check_mode_subdir_first_stat
+
+  - name: check_mode - Actually do it
+    copy:
+      src: subdir
+      dest: 'checkmode_subdir/'
+      directory_mode: 0700
+      local_follow: False
+    register: check_mode_subdir_real
+
+  - name: check_mode - Stat the new dir to make sure it really exists
+    stat:
+      path: 'checkmode_subdir/'
+    register: check_mode_subdir_real_stat
+
+  # Quick sanity before we move on
+  - assert:
+      that:
+      - check_mode_subdir_first is changed
+      - not check_mode_subdir_first_stat.stat.exists
+      - check_mode_subdir_real is changed
+      - check_mode_subdir_real_stat.stat.exists
+
+  # Do some finagling here. First, use check_mode to ensure it never gets
+  # created. Then actualy create it, and use check_mode to ensure that doing
+  # the same copy gets marked as no change.
+  #
+  # This same pattern repeats for several other src/dest combinations.
+  - name: check_mode - Ensure dest with trailing / never gets created but would be without check_mode
+    copy:
+      remote_src: true
+      src: 'checkmode_subdir/'
+      dest: 'destdir_should_never_exist_because_of_check_mode/'
+      follow: true
+    check_mode: true
+    register: check_mode_trailing_slash_first
+
+  - name: check_mode - Stat the new dir to make sure it really doesn't exist
+    stat:
+      path: 'destdir_should_never_exist_because_of_check_mode/'
+    register: check_mode_trailing_slash_first_stat
+
+  - name: check_mode - Create the above copy for real now (without check_mode)
+    copy:
+      remote_src: true
+      src: 'checkmode_subdir/'
+      dest: 'destdir_should_never_exist_because_of_check_mode/'
+    register: check_mode_trailing_slash_real
+
+  - name: check_mode - Stat the new dir to make sure it really exists
+    stat:
+      path: 'destdir_should_never_exist_because_of_check_mode/'
+    register: check_mode_trailing_slash_real_stat
+
+  - name: check_mode - Do the same copy yet again (with check_mode this time) to ensure it's marked unchanged
+    copy:
+      remote_src: true
+      src: 'checkmode_subdir/'
+      dest: 'destdir_should_never_exist_because_of_check_mode/'
+    check_mode: true
+    register: check_mode_trailing_slash_second
+
+  # Repeat the same basic pattern here.
+
+  - name: check_mode - Do another basic copy (with check_mode)
+    copy:
+      src: foo.txt
+      dest: "{{ remote_dir }}/foo-check_mode.txt"
+      mode: 0444
+    check_mode: true
+    register: check_mode_foo_first
+
+  - name: check_mode - Stat the new file to make sure it really doesn't exist
+    stat:
+      path: "{{ remote_dir }}/foo-check_mode.txt"
+    register: check_mode_foo_first_stat
+
+  - name: check_mode - Do the same basic copy (without check_mode)
+    copy:
+      src: foo.txt
+      dest: "{{ remote_dir }}/foo-check_mode.txt"
+      mode: 0444
+    register: check_mode_foo_real
+
+  - name: check_mode - Stat the new file to make sure it really exists
+    stat:
+      path: "{{ remote_dir }}/foo-check_mode.txt"
+    register: check_mode_foo_real_stat
+
+  - name: check_mode - And again (with check_mode)
+    copy:
+      src: foo.txt
+      dest: "{{ remote_dir }}/foo-check_mode.txt"
+      mode: 0444
+    register: check_mode_foo_second
+
+  - assert:
+      that:
+      - check_mode_subdir_first is changed
+
+      - check_mode_trailing_slash_first is changed
+      # TODO: This is a legitimate bug
+      #- not check_mode_trailing_slash_first_stat.stat.exists
+      - check_mode_trailing_slash_real is changed
+      - check_mode_trailing_slash_real_stat.stat.exists
+      - check_mode_trailing_slash_second is not changed
+
+      - check_mode_foo_first is changed
+      - not check_mode_foo_first_stat.stat.exists
+      - check_mode_foo_real is changed
+      - check_mode_foo_real_stat.stat.exists
+      - check_mode_foo_second is not changed

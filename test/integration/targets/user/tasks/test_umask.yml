@@ -1,0 +1,57 @@
+---
+- name: remove comments of /etc/login.defs
+  command: sed -e '/^[ \t]*#/d' /etc/login.defs
+  register: logindefs
+
+- block:
+    - name: Create user with 000 umask
+      user:
+        name: umaskuser_test_1
+        umask: "000"
+      register: umaskuser_test_1
+
+    - name: Create user with 077 umask
+      user:
+        name: umaskuser_test_2
+        umask: "077"
+      register: umaskuser_test_2
+
+    - name: check permissions on created home folder
+      stat:
+        path: "{{ user_home_prefix[ansible_facts.system] }}/umaskuser_test_1"
+      register: umaskuser_test_1_path
+
+    - name: check permissions on created home folder
+      stat:
+        path: "{{ user_home_prefix[ansible_facts.system] }}/umaskuser_test_2"
+      register: umaskuser_test_2_path
+
+    - name: remove created users
+      user:
+        name: "{{ item }}"
+        state: absent
+      register: umaskuser_test_remove
+      loop:
+        - umaskuser_test_1
+        - umaskuser_test_2
+
+    - name: Ensure correct umask has been set on created users
+      assert:
+        that:
+          - umaskuser_test_1_path.stat.mode == "0777"
+          - umaskuser_test_2_path.stat.mode == "0700"
+          - umaskuser_test_remove is changed
+  when: logindefs.stdout_lines is not search ("HOME_MODE")
+
+- name: Create user with setting both umask and local
+  user:
+    name: umaskuser_test_3
+    umask: "077"
+    local: true
+  register: umaskuser_test_3
+  ignore_errors: true
+
+- name: Ensure task has been failed
+  assert:
+    that:
+      - umaskuser_test_3 is failed

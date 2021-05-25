@@ -1,2 +1,0 @@
-minor_changes:
-    - vmware - reduces the memory usage during the object lookup

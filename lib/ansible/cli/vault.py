@@ -71,7 +71,7 @@ class VaultCLI(CLI):
         vault_id = opt_help.argparse.ArgumentParser(add_help=False)
         vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                               action='store', type=str,
-                              help='the vault id used to encrypt (required if more than vault-id is provided)')
+                              help='the vault id used to encrypt (required if more than one vault-id is provided)')
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
@@ -99,6 +99,8 @@ class VaultCLI(CLI):
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
                                     action='store_true',
                                     help="Prompt for the string to encrypt")
+        enc_str_parser.add_argument('--show-input', dest='show_string_input', default=False, action='store_true',
+                                    help='Do not hide input when prompted for the string to encrypt')
         enc_str_parser.add_argument('-n', '--name', dest='encrypt_string_names',
                                     action='append',
                                     help="Specify the variable name")
@@ -300,8 +302,13 @@ class VaultCLI(CLI):
 
             # TODO: could prompt for which vault_id to use for each plaintext string
             #       currently, it will just be the default
-            # could use private=True for shadowed input if useful
-            prompt_response = display.prompt(msg)
+            hide_input = not context.CLIARGS['show_string_input']
+            if hide_input:
+                msg = "String to encrypt (hidden): "
+            else:
+                msg = "String to encrypt:"
+
+            prompt_response = display.prompt(msg, private=hide_input)
 
             if prompt_response == '':
                 raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
@@ -312,11 +319,14 @@ class VaultCLI(CLI):
         # read from stdin
         if self.encrypt_string_read_stdin:
             if sys.stdout.isatty():
-                display.display("Reading plaintext input from stdin. (ctrl-d to end input)", stderr=True)
+                display.display("Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a newline)", stderr=True)
 
             stdin_text = sys.stdin.read()
             if stdin_text == '':
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
+
+            if sys.stdout.isatty() and not stdin_text.endswith("\n"):
+                display.display("\n")
 
             b_plaintext = to_bytes(stdin_text)
 
@@ -421,7 +431,7 @@ class VaultCLI(CLI):
     def execute_create(self):
         ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
 
-        if len(context.CLIARGS['args']) > 1:
+        if len(context.CLIARGS['args']) != 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
         self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,

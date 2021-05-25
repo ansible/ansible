@@ -1,0 +1,4 @@
+plugin_routing:
+  modules:
+    ping:
+      redirect: testns.testcoll.ping

@@ -1,8 +1,0 @@
----
-testcase: "*"
-nuage_auth:
-  api_username: csproot
-  api_password: csproot
-  api_enterprise: csp
-  api_url: http://localhost:5000
-  api_version: v5_0

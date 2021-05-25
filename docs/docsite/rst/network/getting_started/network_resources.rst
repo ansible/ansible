@@ -32,9 +32,8 @@ Ansible hosts module code, examples, demonstrations, and other content on GitHub
 
 - `Network-Automation <https://github.com/network-automation>`_ is an open community for all things network automation. Have an idea, some playbooks, or roles to share? Email ansible-network@redhat.com and we will add you as a contributor to the repository.
 
-- `Ansible <https://github.com/ansible/ansible>`_ is the main codebase, including code for network modules
+- `Ansible collections <https://github.com/ansible-collections>`_ is the main repository for Ansible-maintained and community collections, including collections for network devices.
 
-- `ansible-network <https://github.com/ansible-network>`_ is the main codebase for the Ansible network team roles
 
 
 IRC and Slack
@@ -44,4 +43,4 @@ Join us on:
 
 * Freenode IRC - ``#ansible-network`` Freenode channel
 
-* Slack - `<http://ansiblenetwork.slack.com>`_
+* `Join Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - Network & Security Automation Slack community.  Check out the #devel channel for discussions on module and plugin development.

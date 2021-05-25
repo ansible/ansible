@@ -25,25 +25,29 @@
 - set_fact:
     remote_file_expanded: '{{ echo.stdout }}'
 
-# Include the tests
+# Import the test tasks
 - name: Run tests for state=link
-  include: state_link.yml
+  import_tasks: state_link.yml
 
 - name: Run tests for directory as dest
-  include: directory_as_dest.yml
+  import_tasks: directory_as_dest.yml
 
 - name: Run tests for unicode
-  include: unicode_path.yml
+  import_tasks: unicode_path.yml
   environment:
     LC_ALL: C
     LANG: C
 
 - name: decide to include or not include selinux tests
-  include: selinux_tests.yml
+  include_tasks: selinux_tests.yml
   when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
 
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
+
+- name: Test _diff_peek
+  import_tasks: diff_peek.yml
+
 
 # These tests need to be organized by state parameter into separate files later
 
@@ -56,6 +60,25 @@
     that:
       - "file_result.changed == false"
       - "file_result.state == 'file'"
+
+- name: Make sure file does not exist
+  file:
+    path: /tmp/ghost
+    state: absent
+
+- name: Target a file that does not exist
+  file:
+    path: /tmp/ghost
+  ignore_errors: yes
+  register: ghost_file_result
+
+- name: Validate ghost file results
+  assert:
+    that:
+      - ghost_file_result is failed
+      - ghost_file_result is not changed
+      - ghost_file_result.state == 'absent'
+      - "'cannot continue' in ghost_file_result.msg"
 
 - name: verify that we are checking an absent file
   file: path={{output_dir}}/bar.txt state=absent
@@ -88,10 +111,46 @@
       - "file4_result.changed == true"
       - "file4_result.mode == '0600'"
 
+- name: define file to verify chattr/lsattr with
+  set_fact:
+    attributes_file: "{{ output_dir }}/attributes.txt"
+    attributes_supported: no
+
+- name: create file to verify chattr/lsattr with
+  command: touch "{{ attributes_file }}"
+
+- name: add "A" attribute to file
+  command: chattr +A "{{ attributes_file }}"
+  ignore_errors: yes
+
+- name: get attributes from file
+  command: lsattr -d "{{ attributes_file }}"
+  register: attribute_A_set
+  ignore_errors: yes
+
+- name: remove "A" attribute from file
+  command: chattr -A "{{ attributes_file }}"
+  ignore_errors: yes
+
+- name: get attributes from file
+  command: lsattr -d "{{ attributes_file }}"
+  register: attribute_A_unset
+  ignore_errors: yes
+
+- name: determine if chattr/lsattr is supported
+  set_fact:
+    attributes_supported: yes
+  when:
+    - attribute_A_set is success
+    - "'A' in attribute_A_set.stdout_lines[0].split()[0]"
+    - attribute_A_unset is success
+    - "'A' not in attribute_A_unset.stdout_lines[0].split()[0]"
+
 - name: explicitly set file attribute "A"
   file: path={{output_dir}}/baz.txt attributes=A
   register: file_attributes_result
   ignore_errors: True
+  when: attributes_supported
 
 - name: add file attribute "A"
   file: path={{output_dir}}/baz.txt attributes=+A
@@ -119,6 +178,16 @@
     that:
       - "file_attributes_result_4 is not changed"
   when: file_attributes_result_4 is changed
+
+- name: create user
+  user:
+    name: test1
+    uid: 1234
+
+- name: create group
+  group:
+    name: test1
+    gid: 1234
 
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
@@ -265,7 +334,7 @@
   copy: src=foobar dest={{output_dir}}
 
 - name: check what would be removed if folder state was absent and diff is enabled
-  file: 
+  file:
     path: "{{ item }}"
     state: absent
   check_mode: yes
@@ -306,6 +375,11 @@
   assert:
     that:
       - "file9_result.uid != 1234"
+
+- name: create user
+  user:
+    name: test2
+    uid: 1235
 
 - name: change the ownership of a directory with recurse=yes
   file: path={{output_dir}}/foobar owner=1235 recurse=yes
@@ -515,6 +589,110 @@
   assert:
     that:
     - result.mode == '0444'
+
+# https://github.com/ansible/ansible/issues/67307
+# Test the module fails in check_mode when directory and owner/group do not exist
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner does not exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    owner: nonexistent
+  check_mode: yes
+  register: owner_no_exist
+  ignore_errors: yes
+
+- name: create owner
+  user:
+    name: nonexistent
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    owner: nonexistent
+  check_mode: yes
+  register: owner_exists
+  ignore_errors: yes
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner does not exist in check_mode, using uid
+  file:
+    path: '/tmp/nonexistent'
+    owner: '111111'
+  check_mode: yes
+  ignore_errors: yes
+  register: owner_uid_no_exist
+
+- name: create owner using uid
+  user:
+    name: test_uid
+    uid: 111111
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner exists in check_mode, using uid
+  file:
+    path: '/tmp/nonexistent'
+    owner: '111111'
+    state: touch
+  check_mode: yes
+  ignore_errors: yes
+  register: owner_uid_exists
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group does not exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    group: nonexistent1
+  check_mode: yes
+  register: group_no_exist
+  ignore_errors: yes
+
+- name: create group
+  group:
+    name: nonexistent1
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group exists in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    group: nonexistent1
+  check_mode: yes
+  register: group_exists
+  ignore_errors: yes
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group does not exist in check_mode, using gid
+  file:
+    path: '/tmp/nonexistent'
+    group: '111112'
+  check_mode: yes
+  register: group_gid_no_exist
+  ignore_errors: yes
+
+- name: create group with gid
+  group:
+    name: test_gid
+    gid: 111112
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group exists in check_mode, using gid
+  file:
+    path: '/tmp/nonexistent'
+    group: '111112'
+  check_mode: yes
+  register: group_gid_exists
+  ignore_errors: yes
+
+- assert:
+    that:
+    - owner_no_exist.warnings[0] is search('failed to look up user')
+    - owner_uid_no_exist.warnings[0] is search('failed to look up user with uid')
+    - group_no_exist.warnings[0] is search('failed to look up group')
+    - group_gid_no_exist.warnings[0] is search('failed to look up group with gid')
+    - owner_exists.warnings is not defined
+    - owner_uid_exists.warnings is not defined
+    - group_exists.warnings is not defined
+    - group_gid_exists.warnings is not defined
 
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access output_dir at all

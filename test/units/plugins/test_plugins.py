@@ -25,16 +25,10 @@ import os
 from units.compat import unittest
 from units.compat.builtins import BUILTINS
 from units.compat.mock import patch, MagicMock
-from ansible.plugins.loader import PluginLoader
+from ansible.plugins.loader import PluginLoader, PluginPathContext
 
 
 class TestErrors(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     @patch.object(PluginLoader, '_get_paths')
     def test_print_paths(self, mock_method):
@@ -65,7 +59,8 @@ class TestErrors(unittest.TestCase):
 
     def test_plugins__get_paths(self):
         pl = PluginLoader('test', '', 'test', 'test_plugin')
-        pl._paths = ['/path/one', '/path/two']
+        pl._paths = [PluginPathContext('/path/one', False),
+                     PluginPathContext('/path/two', True)]
         self.assertEqual(pl._get_paths(), ['/path/one', '/path/two'])
 
         # NOT YET WORKING

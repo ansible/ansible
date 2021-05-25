@@ -39,6 +39,8 @@ from ansible.plugins.loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
+from ansible.vars.plugins import get_vars_from_inventory_sources
 
 display = Display()
 
@@ -102,7 +104,9 @@ def split_host_pattern(pattern):
     """
 
     if isinstance(pattern, list):
-        return list(itertools.chain(*map(split_host_pattern, pattern)))
+        results = (split_host_pattern(p) for p in pattern)
+        # flatten the results
+        return list(itertools.chain.from_iterable(results))
     elif not isinstance(pattern, string_types):
         pattern = to_text(pattern, errors='surrogate_or_strict')
 
@@ -130,13 +134,13 @@ def split_host_pattern(pattern):
                 '''), pattern, re.X
             )
 
-    return [p.strip() for p in patterns]
+    return [p.strip() for p in patterns if p.strip()]
 
 
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
-    def __init__(self, loader, sources=None):
+    def __init__(self, loader, sources=None, parse=True):
 
         # base objects
         self._loader = loader
@@ -159,7 +163,8 @@ class InventoryManager(object):
             self._sources = sources
 
         # get to work!
-        self.parse_sources(cache=True)
+        if parse:
+            self.parse_sources(cache=True)
 
     @property
     def localhost(self):
@@ -230,10 +235,16 @@ class InventoryManager(object):
             else:
                 display.warning("No inventory was parsed, only implicit localhost is available")
 
+        for group in self.groups.values():
+            group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(self._loader, self._sources, [group], 'inventory'))
+        for host in self.hosts.values():
+            host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
+
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
 
         parsed = False
+        failures = []
         display.debug(u'Examining possible inventory source: %s' % source)
 
         # use binary for path functions
@@ -262,7 +273,6 @@ class InventoryManager(object):
             self._inventory.current_source = source
 
             # try source with each plugin
-            failures = []
             for plugin in self._fetch_inventory_plugins():
 
                 plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
@@ -296,19 +306,26 @@ class InventoryManager(object):
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
-            else:
-                if not parsed and failures:
+
+        if parsed:
+            self._inventory.processed_sources.append(self._inventory.current_source)
+        else:
+            # only warn/error if NOT using the default or using it and the file is present
+            # TODO: handle 'non file' inventory and detect vs hardcode default
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+
+                if failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
                         display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
                         if 'tb' in fail:
                             display.vvv(to_text(fail['tb']))
-                    if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
-        if not parsed:
-            if source != '/etc/ansible/hosts' or os.path.exists(source):
-                # only warn if NOT using the default and if using it, only if the file is present
-                display.warning("Unable to parse %s as an inventory source" % source)
+
+                # final error/warning on inventory source failure
+                if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
+                    raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+                else:
+                    display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
@@ -374,27 +391,27 @@ class InventoryManager(object):
             if pattern_hash not in self._hosts_patterns_cache:
 
                 patterns = split_host_pattern(pattern)
-                hosts[:] = self._evaluate_patterns(patterns)
+                hosts = self._evaluate_patterns(patterns)
 
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
                     subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
-                    hosts[:] = [h for h in hosts if h._uuid in subset_uuids]
+                    hosts = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
-                    hosts[:] = [h for h in hosts if h.name in self._restriction]
+                    hosts = [h for h in hosts if h.name in self._restriction]
 
                 self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
-                hosts[:] = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
             elif order == 'reverse_inventory':
-                hosts[:] = self._hosts_patterns_cache[pattern_hash][::-1]
+                hosts = self._hosts_patterns_cache[pattern_hash][::-1]
             else:
-                hosts[:] = self._hosts_patterns_cache[pattern_hash][:]
+                hosts = self._hosts_patterns_cache[pattern_hash][:]
                 if order == 'shuffle':
                     shuffle(hosts)
                 elif order not in [None, 'inventory']:
@@ -573,7 +590,7 @@ class InventoryManager(object):
     def list_hosts(self, pattern="all"):
         """ return a list of hostnames for a pattern """
         # FIXME: cache?
-        result = [h for h in self.get_hosts(pattern)]
+        result = self.get_hosts(pattern)
 
         # allow implicit localhost if pattern matches and no other results
         if len(result) == 0 and pattern in C.LOCALHOST:
@@ -583,7 +600,7 @@ class InventoryManager(object):
 
     def list_groups(self):
         # FIXME: cache?
-        return sorted(self._inventory.groups.keys(), key=lambda x: x)
+        return sorted(self._inventory.groups.keys())
 
     def restrict_to_hosts(self, restriction):
         """
@@ -611,10 +628,17 @@ class InventoryManager(object):
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:
+                if not x:
+                    continue
+
                 if x[0] == "@":
-                    fd = open(x[1:])
-                    results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
-                    fd.close()
+                    b_limit_file = to_bytes(x[1:])
+                    if not os.path.exists(b_limit_file):
+                        raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                    if not os.path.isfile(b_limit_file):
+                        raise AnsibleError(u'Limit starting with "@" must be a file, not a directory: %s' % b_limit_file)
+                    with open(b_limit_file) as fd:
+                        results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
                 else:
                     results.append(to_text(x))
             self._subset = results

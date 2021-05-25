@@ -1,3 +1,0 @@
-dependencies:
-  # Prepare nxos tests is not required for this test.
-  #- prepare_nxos_tests

@@ -80,16 +80,8 @@
 
 - name: now put it back in case someone wanted it (like us!)
   pip:
-    name: "{{ item }}"
+    name: "{{ pip_test_packages  }}"
     state: present
-  with_items: "{{ pip_test_packages }}"
-  register: squash_param
-
-- name: check that list has been condensed
-  assert:
-    that:
-      - squash_param.results|length == 1
-      - squash_param.results[0].name|sort == pip_test_packages|sort
 
 # Test virtualenv installations
 
@@ -108,7 +100,7 @@
 - name: create a requirement file with an vcs url
   copy:
     dest: "{{ output_dir }}/pipreq.txt"
-    content: "-e git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
+    content: "-e git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601"
 
 - name: install the requirement file in a virtualenv
   pip:
@@ -134,7 +126,7 @@
 
 - name: install the same module from url
   pip:
-    name: "git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
+    name: "git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601"
     virtualenv: "{{ output_dir }}/pipenv"
     editable: True
   register: url_installed
@@ -318,18 +310,51 @@
       - "not (pip_install_empty is changed)"
 
 # https://github.com/ansible/ansible/issues/41043
-- name: do not consider an empty string as a version
-  pip:
-    name: q
-    state: present
-    version: ""
-    virtualenv: "{{ output_dir }}/pipenv"
-  register: pip_install_empty_version_string
+- block:
+    - name: Ensure previous virtualenv no longer exists
+      file:
+        state: absent
+        name: "{{ output_dir }}/pipenv"
 
-- name: ensure that task installation did not fail
-  assert:
-    that:
-      - pip_install_empty_version_string is successful
+    - name: do not consider an empty string as a version
+      pip:
+        name: q
+        state: present
+        version: ""
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_empty_version_string
+
+    - name: test idempotency with empty string
+      pip:
+        name: q
+        state: present
+        version: ""
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_empty_version_string_idempotency
+
+    - name: test idempotency without empty string
+      pip:
+        name: q
+        state: present
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_no_empty_version_string_idempotency
+
+      # 'present' and version=="" is analogous to latest when first installed
+    - name: ensure we installed the latest version
+      pip:
+        name: q
+        state: latest
+        virtualenv: "{{ output_dir }}/pipenv"
+      register: pip_empty_version_idempotency
+
+    - name: ensure that installation worked and is idempotent
+      assert:
+        that:
+          - pip_empty_version_string is changed
+          - pip_empty_version_string is successful
+          - pip_empty_version_idempotency is not changed
+          - pip_no_empty_version_string_idempotency is not changed
+          - pip_empty_version_string_idempotency is not changed
 
 # test version specifiers
 - name: make sure no test_package installed now
@@ -472,7 +497,7 @@
 - name: test module can parse the combination of multi-packages one line and git url
   pip:
     name:
-      - git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601
+      - git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601
       - "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
 
 - name: test the invalid package name
@@ -487,7 +512,8 @@
 
 - name: try install package with setuptools extras
   pip:
-    name: "{{pip_test_package}}[dev,test]"
+    name:
+      - "{{pip_test_package}}[test]"
 
 - name: clean up
   pip:
@@ -504,7 +530,11 @@
 
   - name: install distribute in the virtualenv
     pip:
-      name: distribute
+      # using -c for constraints is not supported as long as tests are executed using the centos6 container
+      # since the pip version in the venv is not upgraded and is too old (6.0.8)
+      name:
+        - distribute
+        - setuptools<45  # setuptools 45 and later require python 3.5 or later
       virtualenv: "{{ output_dir }}/pipenv"
       state: present
 
@@ -520,3 +550,64 @@
     assert:
       that: "'distribute' in remove_distribute.cmd"
   when: ansible_python.version.major == 2
+
+### test virtualenv_command begin ###
+
+- name: Test virtualenv command with arguments
+  when: ansible_python.version.major == 2
+  block:
+    - name: make sure the virtualenv does not exist
+      file:
+        state: absent
+        name: "{{ output_dir }}/pipenv"
+
+    # ref: https://github.com/ansible/ansible/issues/52275
+    - name: install using virtualenv_command with arguments
+      pip:
+        name: "{{ pip_test_package }}"
+        virtualenv: "{{ output_dir }}/pipenv"
+        virtualenv_command: "{{ command.stdout_lines[0] | basename }} --verbose"
+        state: present
+      register: version13
+
+    - name: ensure install using virtualenv_command with arguments was successful
+      assert:
+        that:
+          - "version13 is success"
+
+### test virtualenv_command end ###
+
+# https://github.com/ansible/ansible/issues/68592
+# Handle pre-release version numbers in check_mode for already-installed
+# packages.
+# TODO: Limiting to py3 test boxes for now so the example of 'black' installs,
+# we should probably find another package to use with a similar versioning
+# scheme or make a small one and enable this test for py2 as well.
+- block:
+  - name: Install a beta version of a package
+    pip:
+      name: black
+      version: 19.10b0
+      state: present
+
+  - name: Use check_mode and ensure that the package is shown as installed
+    check_mode: true
+    pip:
+      name: black
+      state: present
+    register: pip_prereleases
+
+  - name: Uninstall the beta package if we need to
+    pip:
+      name: black
+      version: 19.10b0
+      state: absent
+    when: pip_prereleases is changed
+
+  - assert:
+      that:
+        - pip_prereleases is successful
+        - pip_prereleases is not changed
+        - '"black==19.10b0" in pip_prereleases.stdout_lines'
+
+  when: ansible_python.version.major == 3

@@ -7,13 +7,15 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     author: Ansible Core Team
-    connection: winrm
+    name: winrm
     short_description: Run tasks over Microsoft's WinRM
     description:
         - Run commands or put/fetch on a target via WinRM
         - This plugin allows extra arguments to be passed that are supported by the protocol but not explicitly defined here.
           They should take the form of variables declared with the following pattern `ansible_winrm_<option>`.
     version_added: "2.0"
+    extends_documentation_fragment:
+        - connection_pipelining
     requirements:
         - pywinrm (python library)
     options:
@@ -25,15 +27,23 @@ DOCUMENTATION = """
         vars:
             - name: ansible_host
             - name: ansible_winrm_host
+        type: str
       remote_user:
-        keywords:
-          - name: user
-          - name: remote_user
         description:
             - The user to log in as to the Windows machine
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+        type: str
+      remote_password:
+        description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+        vars:
+            - name: ansible_password
+            - name: ansible_winrm_pass
+            - name: ansible_winrm_password
+        type: str
+        aliases:
+        - password  # Needed for --ask-pass to come through on delegation
       port:
         description:
             - port for winrm to connect on remote target
@@ -42,8 +52,6 @@ DOCUMENTATION = """
           - name: ansible_port
           - name: ansible_winrm_port
         default: 5986
-        keywords:
-          - name: port
         type: integer
       scheme:
         description:
@@ -53,16 +61,18 @@ DOCUMENTATION = """
         choices: [http, https]
         vars:
           - name: ansible_winrm_scheme
+        type: str
       path:
         description: URI path to connect to
         default: '/wsman'
         vars:
           - name: ansible_winrm_path
+        type: str
       transport:
         description:
-           - List of winrm transports to attempt to to use (ssl, plaintext, kerberos, etc)
+           - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
            - If None (the default) the plugin will try to automatically guess the correct list
-           - The choices avialable depend on your version of pywinrm
+           - The choices available depend on your version of pywinrm
         type: list
         vars:
           - name: ansible_winrm_transport
@@ -71,6 +81,17 @@ DOCUMENTATION = """
         default: kinit
         vars:
           - name: ansible_winrm_kinit_cmd
+        type: str
+      kinit_args:
+        description:
+        - Extra arguments to pass to C(kinit) when getting the Kerberos authentication ticket.
+        - By default no extra arguments are passed into C(kinit) unless I(ansible_winrm_kerberos_delegation) is also
+          set. In that case C(-f) is added to the C(kinit) args so a forwardable ticket is retrieved.
+        - If set, the args will overwrite any existing defaults for C(kinit), including C(-f) for a delegated ticket.
+        type: str
+        vars:
+          - name: ansible_winrm_kinit_args
+        version_added: '2.11'
       kerberos_mode:
         description:
             - kerberos usage mode.
@@ -83,6 +104,7 @@ DOCUMENTATION = """
         choices: [managed, manual]
         vars:
           - name: ansible_winrm_kinit_mode
+        type: str
       connection_timeout:
         description:
             - Sets the operation and read timeout settings for the WinRM
@@ -94,6 +116,7 @@ DOCUMENTATION = """
               pywinrm.
         vars:
           - name: ansible_winrm_connection_timeout
+        type: int
 """
 
 import base64
@@ -103,6 +126,7 @@ import re
 import traceback
 import json
 import tempfile
+import shlex
 import subprocess
 
 HAVE_KERBEROS = False
@@ -205,7 +229,7 @@ class Connection(ConnectionBase):
         # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
-        self._winrm_pass = self._play_context.password
+        self._winrm_pass = self.get_option('remote_password')
 
         self._winrm_port = self.get_option('port')
 
@@ -282,14 +306,17 @@ class Connection(ConnectionBase):
         os.environ["KRB5CCNAME"] = krb5ccname
         krb5env = dict(KRB5CCNAME=krb5ccname)
 
-        # stores various flags to call with kinit, we currently only use this
-        # to set -f so we can get a forward-able ticket (cred delegation)
-        kinit_flags = []
-        if boolean(self.get_option('_extras').get('ansible_winrm_kerberos_delegation', False)):
-            kinit_flags.append('-f')
-
+        # Stores various flags to call with kinit, these could be explicit args set by 'ansible_winrm_kinit_args' OR
+        # '-f' if kerberos delegation is requested (ansible_winrm_kerberos_delegation).
         kinit_cmdline = [self._kinit_cmd]
-        kinit_cmdline.extend(kinit_flags)
+        kinit_args = self.get_option('kinit_args')
+        if kinit_args:
+            kinit_args = [to_text(a) for a in shlex.split(kinit_args) if a.strip()]
+            kinit_cmdline.extend(kinit_args)
+
+        elif boolean(self.get_option('_extras').get('ansible_winrm_kerberos_delegation', False)):
+            kinit_cmdline.append('-f')
+
         kinit_cmdline.append(principal)
 
         # pexpect runs the process in its own pty so it can correctly send
@@ -509,6 +536,8 @@ class Connection(ConnectionBase):
         return self
 
     def reset(self):
+        if not self._connected:
+            return
         self.protocol = None
         self.shell_id = None
         self._connect()
@@ -607,9 +636,16 @@ class Connection(ConnectionBase):
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 
-        put_output = json.loads(result.std_out)
-        remote_sha1 = put_output.get("sha1")
+        try:
+            put_output = json.loads(result.std_out)
+        except ValueError:
+            # stdout does not contain a valid response
+            stderr = to_bytes(result.std_err, encoding='utf-8')
+            if stderr.startswith(b"#< CLIXML"):
+                stderr = _parse_clixml(stderr)
+            raise AnsibleError('winrm put_file failed; \nstdout: %s\nstderr %s' % (to_native(result.std_out), to_native(stderr)))
 
+        remote_sha1 = put_output.get("sha1")
         if not remote_sha1:
             raise AnsibleError("Remote sha1 was not returned")
 
@@ -631,7 +667,7 @@ class Connection(ConnectionBase):
             while True:
                 try:
                     script = '''
-                        $path = "%(path)s"
+                        $path = '%(path)s'
                         If (Test-Path -Path $path -PathType Leaf)
                         {
                             $buffer_size = %(buffer_size)d

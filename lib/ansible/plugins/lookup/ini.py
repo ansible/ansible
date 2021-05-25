@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: ini
-    author: Yannig Perre <yannig.perre(at)gmail.com>
+    name: ini
+    author: Yannig Perre (!UNKNOWN) <yannig.perre(at)gmail.com>
     version_added: "2.0"
     short_description: read data from a ini file
     description:
@@ -15,7 +15,7 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: The key(s) to look up
+        description: The key(s) to look up.
         required: True
       type:
         description: Type of the file. 'properties' refers to the Java properties files.
@@ -23,7 +23,7 @@ DOCUMENTATION = """
         choices: ['ini', 'properties']
       file:
         description: Name of the file to load.
-        default: ansible.ini
+        default: 'ansible.ini'
       section:
         default: global
         description: Section where to lookup the key.
@@ -37,57 +37,75 @@ DOCUMENTATION = """
       default:
         description: Return value if the key is not in the ini file.
         default: ''
+      case_sensitive:
+        description:
+          Whether key names read from C(file) should be case sensitive. This prevents
+          duplicate key errors if keys only differ in case.
+        default: False
+        version_added: '2.12'
 """
 
 EXAMPLES = """
-- debug: msg="User in integration is {{ lookup('ini', 'user section=integration file=users.ini') }}"
+- debug: msg="User in integration is {{ lookup('ini', 'user', section='integration', file='users.ini') }}"
 
-- debug: msg="User in production  is {{ lookup('ini', 'user section=production  file=users.ini') }}"
+- debug: msg="User in production  is {{ lookup('ini', 'user', section='production',  file='users.ini') }}"
 
-- debug: msg="user.name is {{ lookup('ini', 'user.name type=properties file=user.properties') }}"
+- debug: msg="user.name is {{ lookup('ini', 'user.name', type='properties', file='user.properties') }}"
 
 - debug:
     msg: "{{ item }}"
-  with_ini:
-    - '.* section=section1 file=test.ini re=True'
+  loop: "{{q('ini', '.*', section='section1', file='test.ini', re=True)}}"
 """
 
 RETURN = """
 _raw:
   description:
     - value(s) of the key(s) in the ini file
+  type: list
+  elements: str
 """
+
 import os
 import re
-from io import StringIO
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from io import StringIO
+from collections import defaultdict
+
+from ansible.errors import AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
 
-def _parse_params(term):
+def _parse_params(term, paramvals):
     '''Safely split parameter term to preserve spaces'''
 
-    keys = ['key', 'type', 'section', 'file', 're', 'default', 'encoding']
-    params = {}
-    for k in keys:
-        params[k] = ''
+    # TODO: deprecate this method
+    valid_keys = paramvals.keys()
+    params = defaultdict(lambda: '')
 
-    thiskey = 'key'
+    # TODO: check kv_parser to see if it can handle spaces this same way
+    keys = []
+    thiskey = 'key'  # initialize for 'lookup item'
     for idp, phrase in enumerate(term.split()):
-        for k in keys:
-            if ('%s=' % k) in phrase:
-                thiskey = k
+
+        # update current key if used
+        if '=' in phrase:
+            for k in valid_keys:
+                if ('%s=' % k) in phrase:
+                    thiskey = k
+
+        # if first term or key does not exist
         if idp == 0 or not params[thiskey]:
             params[thiskey] = phrase
+            keys.append(thiskey)
         else:
+            # append to existing key
             params[thiskey] += ' ' + phrase
 
-    rparams = [params[x] for x in keys if params[x]]
-    return rparams
+    # return list of values
+    return [params[x] for x in keys]
 
 
 class LookupModule(LookupBase):
@@ -106,36 +124,43 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
+        self.set_options(var_options=variables, direct=kwargs)
+        paramvals = self.get_options()
+
         self.cp = configparser.ConfigParser()
+        if paramvals['case_sensitive']:
+            self.cp.optionxform = to_native
 
         ret = []
         for term in terms:
-            params = _parse_params(term)
-            key = params[0]
 
-            paramvals = {
-                'file': 'ansible.ini',
-                're': False,
-                'default': None,
-                'section': "global",
-                'type': "ini",
-                'encoding': 'utf-8',
-            }
-
+            key = term
             # parameters specified?
-            try:
-                for param in params[1:]:
-                    name, value = param.split('=')
-                    if name not in paramvals:
-                        raise AnsibleAssertionError('%s not in paramvals' %
-                                                    name)
-                    paramvals[name] = value
-            except (ValueError, AssertionError) as e:
-                raise AnsibleError(e)
+            if '=' in term or ' ' in term.strip():
+                self._deprecate_inline_kv()
+                params = _parse_params(term, paramvals)
+                try:
+                    updated_key = False
+                    for param in params:
+                        if '=' in param:
+                            name, value = param.split('=')
+                            if name not in paramvals:
+                                raise AnsibleLookupError('%s is not a valid option.' % name)
+                            paramvals[name] = value
+                        elif key == term:
+                            # only take first, this format never supported multiple keys inline
+                            key = param
+                            updated_key = True
+                except ValueError as e:
+                    # bad params passed
+                    raise AnsibleLookupError("Could not use '%s' from '%s': %s" % (param, params, to_native(e)), orig_exc=e)
+                if not updated_key:
+                    raise AnsibleOptionsError("No key to lookup was provided as first term with in string inline options: %s" % term)
+                    # only passed options in inline string
 
+            # TODO: look to use cache to avoid redoing this for every term if they use same file
             # Retrieve file path
-            path = self.find_file_in_search_path(variables, 'files',
-                                                 paramvals['file'])
+            path = self.find_file_in_search_path(variables, 'files', paramvals['file'])
 
             # Create StringIO later used to parse ini
             config = StringIO()
@@ -146,14 +171,19 @@ class LookupModule(LookupBase):
 
             # Open file using encoding
             contents, show_data = self._loader._get_file_contents(path)
-            contents = to_text(contents, errors='surrogate_or_strict',
-                               encoding=paramvals['encoding'])
+            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
-            self.cp.readfp(config)
-            var = self.get_value(key, paramvals['section'],
-                                 paramvals['default'], paramvals['re'])
+            try:
+                self.cp.readfp(config)
+            except configparser.DuplicateOptionError as doe:
+                raise AnsibleLookupError("Duplicate option in '{file}': {error}".format(file=paramvals['file'], error=to_native(doe)))
+
+            try:
+                var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            except configparser.NoSectionError:
+                raise AnsibleLookupError("No section '{section}' in {file}".format(section=paramvals['section'], file=paramvals['file']))
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

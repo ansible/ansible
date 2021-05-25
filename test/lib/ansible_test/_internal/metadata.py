@@ -2,13 +2,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from . import types as t
 
 from .util import (
     display,
-    is_shippable,
+)
+
+from .io import (
+    write_json_file,
+    read_json_file,
 )
 
 from .diff import (
@@ -25,11 +27,7 @@ class Metadata:
         self.cloud_config = None  # type: t.Optional[t.Dict[str, str]]
         self.instance_config = None  # type: t.Optional[t.List[t.Dict[str, str]]]
         self.change_description = None  # type: t.Optional[ChangeDescription]
-
-        if is_shippable():
-            self.ci_provider = 'shippable'
-        else:
-            self.ci_provider = ''
+        self.ci_provider = None  # type: t.Optional[str]
 
     def populate_changes(self, diff):
         """
@@ -72,8 +70,7 @@ class Metadata:
 
         display.info('>>> Metadata: %s\n%s' % (path, data), verbosity=3)
 
-        with open(path, 'w') as data_fd:
-            json.dump(data, data_fd, sort_keys=True, indent=4)
+        write_json_file(path, data)
 
     @staticmethod
     def from_file(path):
@@ -81,9 +78,7 @@ class Metadata:
         :type path: str
         :rtype: Metadata
         """
-        with open(path, 'r') as data_fd:
-            data = json.load(data_fd)
-
+        data = read_json_file(path)
         return Metadata.from_dict(data)
 
     @staticmethod

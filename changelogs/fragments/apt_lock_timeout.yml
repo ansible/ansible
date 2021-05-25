@@ -1,0 +1,2 @@
+minor_changes:
+  - apt, added a 'lock_timeout' to be more resilient when encountering the apt db already locked and handle it w/o haveing to rerun task.

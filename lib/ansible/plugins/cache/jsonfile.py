@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    cache: jsonfile
+    name: jsonfile
     short_description: JSON formatted files.
     description:
         - This cache uses JSON formatted, per host, files saved to the filesystem.
@@ -23,6 +23,7 @@ DOCUMENTATION = '''
         ini:
           - key: fact_caching_connection
             section: defaults
+        type: path
       _prefix:
         description: User defined prefix to use when creating the JSON files
         env:

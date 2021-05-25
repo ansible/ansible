@@ -48,6 +48,20 @@
         - "not dnf_result.changed"
 
 # INSTALL
+- name: install sos (check_mode)
+  dnf:
+    name: sos
+    state: present
+    update_cache: True
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - dnf_result.results|length > 0
+      - "dnf_result.results[0].startswith('Installed: ')"
+
 - name: install sos
   dnf:
     name: sos
@@ -74,6 +88,18 @@
         - "'results' in dnf_result"
 
 # INSTALL AGAIN
+- name: install sos again (check_mode)
+  dnf:
+    name: sos
+    state: present
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is not changed
+      - dnf_result.results|length == 0
+
 - name: install sos again
   dnf:
     name: sos
@@ -86,8 +112,8 @@
         - "not dnf_result.changed"
 
 # Multiple packages
-- name: uninstall sos and pciutils
-  dnf: name=sos,pciutils state=removed
+- name: uninstall sos and dos2unix
+  dnf: name=sos,dos2unix state=removed
   register: dnf_result
 
 - name: check sos with rpm
@@ -95,19 +121,19 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check pciutils with rpm
-  shell: rpm -q pciutils
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
     that:
         - "rpm_sos_result.rc != 0"
-        - "rpm_pciutils_result.rc != 0"
+        - "rpm_dos2unix_result.rc != 0"
 
-- name: install sos and pciutils as comma separated
-  dnf: name=sos,pciutils state=present
+- name: install sos and dos2unix as comma separated
+  dnf: name=sos,dos2unix state=present
   register: dnf_result
 
 - name: check sos with rpm
@@ -115,10 +141,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check pciutils with rpm
-  shell: rpm -q pciutils
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
@@ -126,17 +152,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_pciutils_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
 
-- name: uninstall sos and pciutils
-  dnf: name=sos,pciutils state=removed
+- name: uninstall sos and dos2unix
+  dnf: name=sos,dos2unix state=removed
   register: dnf_result
 
-- name: install sos and pciutils as list
+- name: install sos and dos2unix as list
   dnf:
     name:
       - sos
-      - pciutils
+      - dos2unix
     state: present
   register: dnf_result
 
@@ -145,10 +171,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check pciutils with rpm
-  shell: rpm -q pciutils
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
@@ -156,17 +182,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_pciutils_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
 
-- name: uninstall sos and pciutils
+- name: uninstall sos and dos2unix
   dnf:
-    name: "sos,pciutils"
+    name: "sos,dos2unix"
     state: removed
   register: dnf_result
 
-- name: install sos and pciutils as comma separated with spaces
+- name: install sos and dos2unix as comma separated with spaces
   dnf:
-    name: "sos, pciutils"
+    name: "sos, dos2unix"
     state: present
   register: dnf_result
 
@@ -176,9 +202,9 @@
   register: rpm_sos_result
 
 - name: check sos with rpm
-  shell: rpm -q pciutils
+  shell: rpm -q dos2unix
   failed_when: False
-  register: rpm_pciutils_result
+  register: rpm_dos2unix_result
 
 - name: verify packages installed
   assert:
@@ -186,20 +212,39 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_pciutils_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
 
-- name: uninstall sos and pciutils
+- name: uninstall sos and dos2unix (check_mode)
   dnf:
     name:
       - sos
-      - pciutils
+      - dos2unix
     state: removed
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - dnf_result.results|length == 2
+      - "dnf_result.results[0].startswith('Removed: ')"
+      - "dnf_result.results[1].startswith('Removed: ')"
+
+- name: uninstall sos and dos2unix
+  dnf:
+    name:
+      - sos
+      - dos2unix
+    state: removed
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is changed
 
 - name: install non-existent rpm
   dnf:
-    name: "{{ item }}"
-  with_items:
-    - does-not-exist
+    name: does-not-exist
   register: non_existent_rpm
   ignore_errors: True
 
@@ -239,6 +284,19 @@
   dnf:
     name: sos
     state: absent
+
+- name: Test download_only (check_mode)
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+  check_mode: true
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - "dnf_result.results[0].startswith('Downloaded: ')"
 
 - name: Test download_only
   dnf:
@@ -430,7 +488,7 @@
 
 - name: try to install from non existing url
   dnf:
-    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: dnf_result
   ignore_errors: yes
@@ -525,7 +583,7 @@
 
 - name: try to install not compatible arch rpm, should fail
   dnf:
-    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/banner-1.3.4-3.el7.ppc64le.rpm
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/dnf/banner-1.3.4-3.el7.ppc64le.rpm
     state: present
   register: dnf_result
   ignore_errors: True
@@ -536,29 +594,24 @@
         - "not dnf_result is changed"
         - "dnf_result is failed"
 
-# setup for testing installing an RPM from url
+# setup for testing installing an RPM from local file
 
 - set_fact:
-    pkg_name: fpaste
+    pkg_name: noarchfake
+    pkg_path: '{{ repodir }}/noarchfake-1.0-1.noarch.rpm'
 
 - name: cleanup
   dnf:
     name: "{{ pkg_name }}"
     state: absent
 
-- set_fact:
-    pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/fpaste-0.3.9.1-1.fc27.noarch.rpm
 # setup end
 
-- name: download an rpm
-  get_url:
-    url: "{{ pkg_url }}"
-    dest: "/tmp/{{ pkg_name }}.rpm"
-
-- name: install the downloaded rpm
+- name: install a local noarch rpm from file
   dnf:
-    name: "/tmp/{{ pkg_name }}.rpm"
+    name: "{{ pkg_path }}"
     state: present
+    disable_gpg_check: true
   register: dnf_result
 
 - name: verify installation
@@ -569,7 +622,7 @@
 
 - name: install the downloaded rpm again
   dnf:
-    name: "/tmp/{{ pkg_name }}.rpm"
+    name: "{{ pkg_path }}"
     state: present
   register: dnf_result
 
@@ -586,8 +639,9 @@
 
 - name: install from url
   dnf:
-    name: "{{ pkg_url }}"
+    name: "file://{{ pkg_path }}"
     state: present
+    disable_gpg_check: true
   register: dnf_result
 
 - name: verify installation
@@ -701,3 +755,64 @@
           - "'vim-minimal' in rpm_output.stdout"
   when:
     - ansible_distribution == 'Fedora'
+
+- name: Remove wildcard package that isn't installed
+  dnf:
+    name: firefox*
+    state: absent
+  register: wildcard_absent
+
+- assert:
+    that:
+      - wildcard_absent is successful
+      - wildcard_absent is not changed
+
+- name: Test removing with various package specs
+  block:
+    - name: Ensure sos is installed
+      dnf:
+        name: sos
+        state: present
+
+    - name: Determine version of sos
+      command: rpm -q --queryformat=%{version} sos
+      register: sos_version_command
+
+    - name: Determine release of sos
+      command: rpm -q --queryformat=%{release} sos
+      register: sos_release_command
+
+    - name: Determine arch of sos
+      command: rpm -q --queryformat=%{arch} sos
+      register: sos_arch_command
+
+    - set_fact:
+        sos_version: "{{ sos_version_command.stdout | trim }}"
+        sos_release: "{{ sos_release_command.stdout | trim }}"
+        sos_arch: "{{ sos_arch_command.stdout | trim }}"
+
+    # We are just trying to remove the package by specifying its spec in a
+    # bunch of different ways. Each "item" here is a test (a name passed, to make
+    # sure it matches, with how we call Hawkey in the dnf module).
+    - include_tasks: test_sos_removal.yml
+      with_items:
+        - sos
+        - sos-{{ sos_version }}
+        - sos-{{ sos_version }}-{{ sos_release }}
+        - sos-{{ sos_version }}-{{ sos_release }}.{{ sos_arch }}
+        - sos-*-{{ sos_release }}
+        - sos-{{ sos_version[0] }}*
+        - sos-{{ sos_version[0] }}*-{{ sos_release }}
+        - sos-{{ sos_version[0] }}*{{ sos_arch }}
+
+    - name: Ensure deleting a non-existing package fails correctly
+      dnf:
+        name: a-non-existent-package
+        state: absent
+      ignore_errors: true
+      register: nonexisting
+
+    - assert:
+        that:
+          - nonexisting is success
+          - nonexisting.msg == 'Nothing to do'

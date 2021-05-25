@@ -1,20 +1,8 @@
 Arch Packaging Files
 --------------------
 
-The PKGBUILD in this directory is here for reference.
-
-You can install [ansible-git][1] from the Arch User Repository (AUR), using the [AUR helper][2] of your choice.
-
-With `yaourt`:
-
-    yaourt -S ansible-git
-
-With `pikaur`:
-
-    pikaur -S ansible-git
-
-You can also install the stable version of [ansible][3] as an AUR package.
+You can find the source files for [ansible-git][1] in the [Arch User Repository][2] and for the stable version [ansible][3] you can do so in \[community\].
 
   [1]: https://aur.archlinux.org/packages/ansible-git/
-  [2]: https://wiki.archlinux.org/index.php/AUR_helpers
-  [3]: https://aur.archlinux.org/packages/ansible/
+  [2]: https://wiki.archlinux.org/index.php/Arch_User_Repository
+  [3]: https://www.archlinux.org/packages/community/any/ansible/

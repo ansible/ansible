@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name:
+      debug:
+        msg: foo
+    - name: "task 2"
+      debug:
+        msg: bar

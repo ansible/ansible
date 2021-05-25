@@ -5,11 +5,11 @@
   when: ansible_system != 'Win32NT'
 
 - name: win_ping
-  win_ping:
+  action: win_ping
   when: ansible_system == 'Win32NT'
 
 - name: Hello, World!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   register: hello_world
 
 - assert:
@@ -17,7 +17,7 @@
       - 'hello_world.msg == "Hello, World!"'
 
 - name: Hello, Ansible!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   args:
     name: Ansible
   register: hello_ansible
@@ -27,7 +27,7 @@
       - 'hello_ansible.msg == "Hello, Ansible!"'
 
 - name: Async Hello, World!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   async: 10
   poll: 1
   when: ansible_system != 'Win32NT'
@@ -39,7 +39,7 @@
   when: async_hello_world is not skipped
 
 - name: Async Hello, Ansible!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   args:
     name: Ansible
   async: 10

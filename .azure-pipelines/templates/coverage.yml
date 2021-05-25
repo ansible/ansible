@@ -1,0 +1,42 @@
+# This template adds a job for processing code coverage data.
+# It will upload results to Azure Pipelines and codecov.io.
+# Use it from a job stage that completes after all other jobs have completed.
+# This can be done by placing it in a separate summary stage that runs after the test stage(s) have completed.
+
+jobs:
+  - job: Coverage
+    displayName: Code Coverage
+    container: default
+    workspace:
+      clean: all
+    steps:
+      - checkout: self
+        fetchDepth: $(fetchDepth)
+        path: $(checkoutPath)
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Coverage Data
+        inputs:
+          path: coverage/
+          patterns: "Coverage */*=coverage.combined"
+      - bash: .azure-pipelines/scripts/combine-coverage.py coverage/
+        displayName: Combine Coverage Data
+      - bash: .azure-pipelines/scripts/report-coverage.sh
+        displayName: Generate Coverage Report
+        condition: gt(variables.coverageFileCount, 0)
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: Cobertura
+          # Azure Pipelines only accepts a single coverage data file.
+          # That means only Python or PowerShell coverage can be uploaded, but not both.
+          # Set the "pipelinesCoverage" variable to determine which type is uploaded.
+          # Use "coverage" for Python and "coverage-powershell" for PowerShell.
+          summaryFileLocation: "$(outputPath)/reports/$(pipelinesCoverage).xml"
+          # Override the root (sources) path specified in the coverage XML files.
+          # This allows coverage to be reported in Azure Pipelines even if the report was generated in a container.
+          pathToSources: "$(Agent.BuildDirectory)/$(checkoutPath)"
+        displayName: Publish to Azure Pipelines
+        condition: gt(variables.coverageFileCount, 0)
+      - bash: .azure-pipelines/scripts/publish-codecov.sh "$(outputPath)"
+        displayName: Publish to codecov.io
+        condition: gt(variables.coverageFileCount, 0)
+        continueOnError: true

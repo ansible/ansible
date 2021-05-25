@@ -6,7 +6,7 @@ Contributing to the Ansible Documentation
 
 Ansible has a lot of documentation and a small team of writers. Community support helps us keep up with new features, fixes, and changes.
 
-Improving the documentation is an easy way to make your first contribution to the Ansible project. You don't have to be a programmer, since our documentation is written in YAML (module documentation) or `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ (rST). If you're using Ansible, you already use YAML in your playbooks. And rST is mostly just text. You don't even need git experience, if you use the ``Edit on GitHub`` option.
+Improving the documentation is an easy way to make your first contribution to the Ansible project. You do not have to be a programmer, since most of our documentation is written in YAML (module documentation) or `reStructuredText <https://docutils.sourceforge.io/rst.html>`_ (rST). Some collection-level documentation is written in a subset of `Markdown <https://github.com/ansible/ansible/issues/68119#issuecomment-596723053>`_. If you are using Ansible, you already use YAML in your playbooks. rST and Markdown are mostly just text. You do not even need git experience, if you use the ``Edit on GitHub`` option.
 
 If you find a typo, a broken example, a missing topic, or any other error or omission on this documentation website, let us know. Here are some ways to support Ansible documentation:
 
@@ -16,7 +16,11 @@ If you find a typo, a broken example, a missing topic, or any other error or omi
 Editing docs directly on GitHub
 ===============================
 
-For typos and other quick fixes, you can edit the documentation right from the site. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on every page in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way.
+For typos and other quick fixes, you can edit most of the documentation right from the site. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on all the guide pages in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way.
+
+.. note::
+
+	The source files for individual collection plugins exist in their respective repositories. Follow the link to the collection on Galaxy to find where the repository is located and any guidelines on how to contribute to that collection.
 
 To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 
@@ -43,41 +47,65 @@ You can also contribute by reviewing open documentation `issues <https://github.
 Opening a new issue and/or PR
 =============================
 
-If the problem you've noticed is too complex to fix with the ``Edit on GitHub`` option, and no open issue or PR already documents the problem, please open an issue and/or a PR on the ``ansible/ansible`` repo.
+If the problem you have noticed is too complex to fix with the ``Edit on GitHub`` option, and no open issue or PR already documents the problem, please open an issue and/or a PR on the correct underlying repo - ``ansible/ansible`` for most pages that are not plugin or module documentation. If the documentation page has no ``Edit on GitHub`` option, check if the page is for a module within a collection. If so, follow the link to the collection on Galaxy and select the ``repo`` button in the upper right corner to find the source repository for that collection and module. The Collection README file should contain information on how to contribute to that collection, or report issues.
 
 A great documentation GitHub issue or PR includes:
 
 - a specific title
 - a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change unless we know what problem it's meant to solve)
-- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, etc.)
+- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, and so on)
 
-Before you open a complex documentation PR
-==========================================
 
-If you make multiple changes to the documentation, or add more than a line to it, before you open a pull request, please:
+Verifying your documentation PR
+================================
+
+If you make multiple changes to the documentation on ``ansible/ansible``, or add more than a line to it, before you open a pull request, please:
 
 #. Check that your text follows our :ref:`style_guide`.
 #. Test your changes for rST errors.
 #. Build the page, and preferably the entire documentation site, locally.
 
+.. note::
+
+	The following sections apply to documentation sourced from the ``ansible/ansible`` repo and does not apply to documentation from an individual collection. See the collection README file for details on how to contribute to that collection.
+
+Setting up your environment to build documentation locally
+----------------------------------------------------------
+
+To build documentation locally, ensure you have a working :ref:`development environment <environment_setup>`.
+
 To work with documentation on your local machine, you need to have python-3.5 or greater and the
 following packages installed:
 
-- gcc
-- jinja2
-- libyaml
-- Pygments >= 2.4.0
-- pyparsing
-- PyYAML
-- rstcheck
-- six
-- sphinx
-- sphinx-notfound-page
-- straight.plugin
+    - ``gcc``
+    - ``jinja2``
+    - ``libyaml``
+    - ``make``
+    - ``Pygments``
+    - ``pyparsing``
+    - ``PyYAML``
+    - ``rstcheck``
+    - ``six``
+    - ``sphinx``
+    - ``sphinx-notfound-page``
+    - ``straight.plugin``
+
+These required packages are listed in two :file:`requirements.txt` files to make installation easier:
+
+.. code-block:: bash
+
+    pip install --user -r requirements.txt
+    pip install --user -r docs/docsite/requirements.txt
+
+You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
 
 .. note::
 
-    On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work wth ``sphinx``.
+    On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``.
+
+.. note::
+
+  	After checking out ``ansible/ansible``, make sure the ``docs/docsite/rst`` directory has strict enough permissions. It should only be writable by the owner's account. If your default ``umask`` is not 022, you can use ``chmod go-w docs/docsite/rst`` to set the permissions correctly in your new branch.  Optionally, you can set your ``umask`` to 022 to make all newly created files on your system (including those created by ``git clone``) have the correct permissions.
 
 .. _testing_documentation_locally:
 
@@ -94,6 +122,12 @@ Building the documentation locally
 ----------------------------------
 
 Building the documentation is the best way to check for errors and review your changes. Once `rstcheck` runs with no errors, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review.
+
+ .. note::
+
+    If building on macOS with Python 3.8 or later, you must use Sphinx >= 2.2.2. See `#6803 <https://github.com/sphinx-doc/sphinx/pull/6879>`_ for details.
+
+
 
 Building a single rST page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -132,7 +166,7 @@ To build all the rST files without any module documentation:
 Building module docs and rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To build documentation for a few modules plus all the rST files, use a comma-separated list:
+To build documentation for a few modules included in ``ansible/ansible`` plus all the rST files, use a comma-separated list:
 
 .. code-block:: bash
 
@@ -179,8 +213,9 @@ Unfortunately, leftover rST-files from previous document-generating can occasion
 Joining the documentation working group
 =======================================
 
-The Documentation Working Group is just getting started, please visit the `community repo <https://github.com/ansible/community>`_ for more information.
+The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on freenode IRC. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_.
 
 .. seealso::
    :ref:`More about testing module documentation <testing_module_documentation>`
+
    :ref:`More about documenting modules <module_documenting>`

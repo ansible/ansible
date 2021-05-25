@@ -20,7 +20,7 @@ The ``strategy`` plugin tells Ansible how to order multiple tasks on multiple ho
 
 The default strategy is ``linear``. With strategy set to ``linear``, Ansible waits until the current task has run on all hosts before starting the next task on any host. Ansible may have forks free, but will not use them until all hosts have completed the current task. If each task in your playbook must succeed on all hosts before you run the next task, use the ``linear`` strategy.
 
-Using the ``free`` strategy, Ansible uses available forks to execute tasks on each host as quickly as possible. Even if an earlier task is still running on one host, Ansible executes later tasks on other hosts. The ``free`` strategy uses available forks more efficiently. If your playbook stalls on each task, waiting for one slow host, consider using ``strategy: free`` to boost overall performance. 
+Using the ``free`` strategy, Ansible uses available forks to execute tasks on each host as quickly as possible. Even if an earlier task is still running on one host, Ansible executes later tasks on other hosts. The ``free`` strategy uses available forks more efficiently. If your playbook stalls on each task, waiting for one slow host, consider using ``strategy: free`` to boost overall performance.
 
 .. _network_faq_limit_show_running:
 
@@ -41,7 +41,7 @@ Network modules support the use of a :ref:`proxy or jump host<network_delegate_t
 Set ``--forks`` to match your needs
 ---------------------------------------------------------------------------------
 
-Every time Ansible runs a task, it forks its own process. The ``--forks`` parameter defines the number of concurrent tasks - if you retain the default setting, which is ``--forks=5``, and you are running a playbook on 10 hosts, five of those hosts will have to wait until a fork is available. Of course, the more forks you allow, the more memory and processing power Ansible will use. Since most network tasks are run on the control host, this means your laptop can quickly become cpu- or memory-bound. 
+Every time Ansible runs a task, it forks its own process. The ``--forks`` parameter defines the number of concurrent tasks - if you retain the default setting, which is ``--forks=5``, and you are running a playbook on 10 hosts, five of those hosts will have to wait until a fork is available. Of course, the more forks you allow, the more memory and processing power Ansible will use. Since most network tasks are run on the control host, this means your laptop can quickly become cpu- or memory-bound.
 
 .. _network_faq_redacted_output:
 
@@ -70,7 +70,7 @@ To avoid this problem, use long-form commands with the ``*_config`` modules:
    - hosts: all
      gather_facts: no
      tasks:
-       - ios_config:
+       - cisco.ios.ios_config:
            lines:
              - shutdown
            parents: interface GigabitEthernet1/0/11

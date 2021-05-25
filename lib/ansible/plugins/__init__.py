@@ -61,6 +61,13 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
             self.set_option(option, option_value)
         return self._options.get(option)
 
+    def get_options(self, hostvars=None):
+        options = {}
+        defs = C.config.get_configuration_definitions(plugin_type=get_plugin_class(self), name=self._load_name)
+        for option in defs:
+            options[option] = self.get_option(option, hostvars=hostvars)
+        return options
+
     def set_option(self, option, value):
         self._options[option] = value
 
@@ -78,6 +85,11 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
+
+    def has_option(self, option):
+        if not self._options:
+            self.set_options()
+        return option in self._options
 
     def _check_required(self):
         # FIXME: standardize required check based on config

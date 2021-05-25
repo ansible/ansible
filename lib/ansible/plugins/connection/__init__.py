@@ -229,39 +229,6 @@ class ConnectionBase(AnsiblePlugin):
     def reset(self):
         display.warning("Reset is not implemented for this connection")
 
-    # NOTE: these password functions are all become specific, the name is
-    # confusing as it does not handle 'protocol passwords'
-    # DEPRECATED:
-    # These are kept for backwards compatiblity
-    # Use the methods provided by the become plugins instead
-    def check_become_success(self, b_output):
-        display.deprecated(
-            "Connection.check_become_success is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_success(b_output)
-
-    def check_password_prompt(self, b_output):
-        display.deprecated(
-            "Connection.check_password_prompt is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_password_prompt(b_output)
-
-    def check_incorrect_password(self, b_output):
-        display.deprecated(
-            "Connection.check_incorrect_password is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_incorrect_password(b_output)
-
-    def check_missing_password(self, b_output):
-        display.deprecated(
-            "Connection.check_missing_password is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_missing_password(b_output)
-
 
 class NetworkConnectionBase(ConnectionBase):
     """
@@ -275,6 +242,7 @@ class NetworkConnectionBase(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._messages = []
+        self._conn_closed = False
 
         self._network_os = self._play_context.network_os
 
@@ -335,6 +303,7 @@ class NetworkConnectionBase(ConnectionBase):
         self.queue_message('vvvv', 'reset call on connection instance')
 
     def close(self):
+        self._conn_closed = True
         if self._connected:
             self._connected = False
 

@@ -1,0 +1,2 @@
+- debug: msg="I trigger changed!"
+  changed_when: true

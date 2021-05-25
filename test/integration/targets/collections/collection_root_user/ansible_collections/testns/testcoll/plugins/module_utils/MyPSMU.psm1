@@ -1,4 +1,4 @@
-Function CallMe-FromUserPSMU {
+Function Invoke-FromUserPSMU {
     <#
     .SYNOPSIS
     Test function
@@ -6,4 +6,4 @@ Function CallMe-FromUserPSMU {
     return "from user_mu"
 }
 
-Export-ModuleMember -Function CallMe-FromUserPSMU
+Export-ModuleMember -Function Invoke-FromUserPSMU

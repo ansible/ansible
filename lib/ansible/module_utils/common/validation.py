@@ -8,13 +8,13 @@ __metaclass__ = type
 import os
 import re
 
-from ansible.module_utils._text import to_native, to_text
+from ast import literal_eval
+from ansible.module_utils._text import to_native
 from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.pycompat24 import literal_eval
 from ansible.module_utils.six import (
     binary_type,
     integer_types,
@@ -23,11 +23,11 @@ from ansible.module_utils.six import (
 )
 
 
-def count_terms(terms, module_parameters):
+def count_terms(terms, parameters):
     """Count the number of occurrences of a key in a given dictionary
 
     :arg terms: String or iterable of values to check
-    :arg module_parameters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
 
     :returns: An integer that is the number of occurrences of the terms values
         in the provided dictionary.
@@ -36,19 +36,47 @@ def count_terms(terms, module_parameters):
     if not is_iterable(terms):
         terms = [terms]
 
-    return len(set(terms).intersection(module_parameters))
+    return len(set(terms).intersection(parameters))
 
 
-def check_mutually_exclusive(terms, module_parameters):
+def safe_eval(value, locals=None, include_exceptions=False):
+    # do not allow method calls to modules
+    if not isinstance(value, string_types):
+        # already templated to a datavaluestructure, perhaps?
+        if include_exceptions:
+            return (value, None)
+        return value
+    if re.search(r'\w\.\w+\(', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    # do not allow imports
+    if re.search(r'import \w+', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    try:
+        result = literal_eval(value)
+        if include_exceptions:
+            return (result, None)
+        else:
+            return result
+    except Exception as e:
+        if include_exceptions:
+            return (value, e)
+        return value
+
+
+def check_mutually_exclusive(terms, parameters, options_context=None):
     """Check mutually exclusive terms against argument parameters
 
     Accepts a single list or list of lists that are groups of terms that should be
     mutually exclusive with one another
 
-    :arg terms: List of mutually exclusive module parameters
-    :arg module_parameters: Dictionary of module parameters
+    :arg terms: List of mutually exclusive parameters
+    :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     results = []
@@ -56,19 +84,21 @@ def check_mutually_exclusive(terms, module_parameters):
         return results
 
     for check in terms:
-        count = count_terms(check, module_parameters)
+        count = count_terms(check, parameters)
         if count > 1:
             results.append(check)
 
     if results:
         full_list = ['|'.join(check) for check in results]
         msg = "parameters are mutually exclusive: %s" % ', '.join(full_list)
+        if options_context:
+            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
         raise TypeError(to_native(msg))
 
     return results
 
 
-def check_required_one_of(terms, module_parameters):
+def check_required_one_of(terms, parameters, options_context=None):
     """Check each list of terms to ensure at least one exists in the given module
     parameters
 
@@ -76,9 +106,11 @@ def check_required_one_of(terms, module_parameters):
 
     :arg terms: List of lists of terms to check. For each list of terms, at
         least one is required.
-    :arg module_parameters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
+    :kwarg options_context: List of strings of parent key names if ``terms`` are
+        in a sub spec.
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     results = []
@@ -86,30 +118,32 @@ def check_required_one_of(terms, module_parameters):
         return results
 
     for term in terms:
-        count = count_terms(term, module_parameters)
+        count = count_terms(term, parameters)
         if count == 0:
             results.append(term)
 
     if results:
         for term in results:
             msg = "one of the following is required: %s" % ', '.join(term)
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
 
     return results
 
 
-def check_required_together(terms, module_parameters):
+def check_required_together(terms, parameters, options_context=None):
     """Check each list of terms to ensure every parameter in each list exists
-    in the given module parameters
+    in the given parameters.
 
-    Accepts a list of lists or tuples
+    Accepts a list of lists or tuples.
 
     :arg terms: List of lists of terms to check. Each list should include
         parameters that are all required when at least one is specified
-        in the module_parameters.
-    :arg module_parameters: Dictionary of module parameters
+        in the parameters.
+    :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     results = []
@@ -117,7 +151,7 @@ def check_required_together(terms, module_parameters):
         return results
 
     for term in terms:
-        counts = [count_terms(field, module_parameters) for field in term]
+        counts = [count_terms(field, parameters) for field in term]
         non_zero = [c for c in counts if c > 0]
         if len(non_zero) > 0:
             if 0 in counts:
@@ -125,21 +159,23 @@ def check_required_together(terms, module_parameters):
     if results:
         for term in results:
             msg = "parameters are required together: %s" % ', '.join(term)
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
 
     return results
 
 
-def check_required_by(requirements, module_parameters):
+def check_required_by(requirements, parameters, options_context=None):
     """For each key in requirements, check the corresponding list to see if they
-    exist in module_parameters
+    exist in parameters.
 
-    Accepts a single string or list of values for each key
+    Accepts a single string or list of values for each key.
 
     :arg requirements: Dictionary of requirements
-    :arg module_parameters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
 
-    :returns: Empty dictionary or raises TypeError if the
+    :returns: Empty dictionary or raises :class:`TypeError` if the
     """
 
     result = {}
@@ -147,36 +183,38 @@ def check_required_by(requirements, module_parameters):
         return result
 
     for (key, value) in requirements.items():
-        if key not in module_parameters or module_parameters[key] is None:
+        if key not in parameters or parameters[key] is None:
             continue
         result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
         for required in value:
-            if required not in module_parameters or module_parameters[required] is None:
+            if required not in parameters or parameters[required] is None:
                 result[key].append(required)
 
     if result:
         for key, missing in result.items():
             if len(missing) > 0:
                 msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
+                if options_context:
+                    msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                 raise TypeError(to_native(msg))
 
     return result
 
 
-def check_required_arguments(argument_spec, module_parameters):
-    """Check all paramaters in argument_spec and return a list of parameters
-    that are required but not present in module_parameters
+def check_required_arguments(argument_spec, parameters, options_context=None):
+    """Check all parameters in argument_spec and return a list of parameters
+    that are required but not present in parameters.
 
-    Raises TypeError if the check fails
+    Raises :class:`TypeError` if the check fails
 
-    :arg argument_spec: Argument spec dicitionary containing all parameters
+    :arg argument_spec: Argument spec dictionary containing all parameters
         and their specification
-    :arg module_paramaters: Dictionary of module parameters
+    :arg parameters: Dictionary of parameters
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
 
     missing = []
@@ -185,45 +223,53 @@ def check_required_arguments(argument_spec, module_parameters):
 
     for (k, v) in argument_spec.items():
         required = v.get('required', False)
-        if required and k not in module_parameters:
+        if required and k not in parameters:
             missing.append(k)
 
     if missing:
-        msg = "missing required arguments: %s" % ", ".join(missing)
+        msg = "missing required arguments: %s" % ", ".join(sorted(missing))
+        if options_context:
+            msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
         raise TypeError(to_native(msg))
 
     return missing
 
 
-def check_required_if(requirements, module_parameters):
+def check_required_if(requirements, parameters, options_context=None):
     """Check parameters that are conditionally required
 
-    Raises TypeError if the check fails
+    Raises :class:`TypeError` if the check fails
 
     :arg requirements: List of lists specifying a parameter, value, parameters
         required when the given parameter is the specified value, and optionally
         a boolean indicating any or all parameters are required.
 
-        Example:
-            required_if=[
-                ['state', 'present', ('path',), True],
-                ['someint', 99, ('bool_param', 'string_param')],
-            ]
+    :Example:
 
-    :arg module_paramaters: Dictionary of module parameters
+    .. code-block:: python
 
-    :returns: Empty list or raises TypeError if the check fails.
+        required_if=[
+            ['state', 'present', ('path',), True],
+            ['someint', 99, ('bool_param', 'string_param')],
+        ]
+
+    :arg parameters: Dictionary of parameters
+
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
         The results attribute of the exception contains a list of dictionaries.
-        Each dictionary is the result of evaluting each item in requirements.
+        Each dictionary is the result of evaluating each item in requirements.
         Each return dictionary contains the following keys:
 
             :key missing: List of parameters that are required but missing
             :key requires: 'any' or 'all'
-            :key paramater: Parameter name that has the requirement
-            :key value: Original value of the paramater
+            :key parameter: Parameter name that has the requirement
+            :key value: Original value of the parameter
             :key requirements: Original required parameters
 
-        Example:
+        :Example:
+
+        .. code-block:: python
+
             [
                 {
                     'parameter': 'someint',
@@ -257,9 +303,9 @@ def check_required_if(requirements, module_parameters):
         else:
             missing['requires'] = 'all'
 
-        if key in module_parameters and module_parameters[key] == val:
+        if key in parameters and parameters[key] == val:
             for check in requirements:
-                count = count_terms(check, module_parameters)
+                count = count_terms(check, parameters)
                 if count == 0:
                     missing['missing'].append(check)
         if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
@@ -272,29 +318,30 @@ def check_required_if(requirements, module_parameters):
         for missing in results:
             msg = "%s is %s but %s of the following are missing: %s" % (
                 missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+            if options_context:
+                msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
 
     return results
 
 
-def check_missing_parameters(module_parameters, required_parameters=None):
+def check_missing_parameters(parameters, required_parameters=None):
     """This is for checking for required params when we can not check via
     argspec because we need more information than is simply given in the argspec.
 
-    Raises TypeError if any required parameters are missing
+    Raises :class:`TypeError` if any required parameters are missing
 
-    :arg module_paramaters: Dictionary of module parameters
-    :arg required_parameters: List of parameters to look for in the given module
-        parameters
+    :arg parameters: Dictionary of parameters
+    :arg required_parameters: List of parameters to look for in the given parameters.
 
-    :returns: Empty list or raises TypeError if the check fails.
+    :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
     missing_params = []
     if required_parameters is None:
         return missing_params
 
     for param in required_parameters:
-        if not module_parameters.get(param):
+        if not parameters.get(param):
             missing_params.append(param)
 
     if missing_params:
@@ -304,35 +351,10 @@ def check_missing_parameters(module_parameters, required_parameters=None):
     return missing_params
 
 
-def safe_eval(value, locals=None, include_exceptions=False):
-    # do not allow method calls to modules
-    if not isinstance(value, string_types):
-        # already templated to a datavaluestructure, perhaps?
-        if include_exceptions:
-            return (value, None)
-        return value
-    if re.search(r'\w\.\w+\(', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    # do not allow imports
-    if re.search(r'import \w+', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    try:
-        result = literal_eval(value)
-        if include_exceptions:
-            return (result, None)
-        else:
-            return result
-    except Exception as e:
-        if include_exceptions:
-            return (value, e)
-        return value
-
-
-def check_type_str(value, allow_conversion=True):
+# FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
+#        which is using those for the warning messaged based on string conversion warning settings.
+#        Not sure how to deal with that here since we don't have config state to query.
+def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,
@@ -359,13 +381,13 @@ def check_type_str(value, allow_conversion=True):
 def check_type_list(value):
     """Verify that the value is a list or convert to a list
 
-    A comma separated string will be split into a list. Rases a TypeError if
-    unable to convert to a list.
+    A comma separated string will be split into a list. Raises a :class:`TypeError`
+    if unable to convert to a list.
 
     :arg value: Value to validate or convert to a list
 
     :returns: Original value if it is already a list, single item list if a
-        float, int or string without commas, or a multi-item list if a
+        float, int, or string without commas, or a multi-item list if a
         comma-delimited string.
     """
     if isinstance(value, list):
@@ -382,9 +404,9 @@ def check_type_list(value):
 def check_type_dict(value):
     """Verify that value is a dict or convert it to a dict and return it.
 
-    Raises TypeError if unable to convert to a dict
+    Raises :class:`TypeError` if unable to convert to a dict
 
-    :arg value: Dict or string to convert to a dict. Accepts 'k1=v2, k2=v2'.
+    :arg value: Dict or string to convert to a dict. Accepts ``k1=v2, k2=v2``.
 
     :returns: value converted to a dictionary
     """
@@ -436,7 +458,7 @@ def check_type_dict(value):
 def check_type_bool(value):
     """Verify that the value is a bool or convert it to a bool and return it.
 
-    Raises TypeError if unable to convert to a bool
+    Raises :class:`TypeError` if unable to convert to a bool
 
     :arg value: String, int, or float to convert to bool. Valid booleans include:
          '1', 'on', 1, '0', 0, 'n', 'f', 'false', 'true', 'y', 't', 'yes', 'no', 'off'
@@ -456,11 +478,11 @@ def check_type_int(value):
     """Verify that the value is an integer and return it or convert the value
     to an integer and return it
 
-    Raises TypeError if unable to convert to an int
+    Raises :class:`TypeError` if unable to convert to an int
 
     :arg value: String or int to convert of verify
 
-    :return: Int of given value
+    :return: int of given value
     """
     if isinstance(value, integer_types):
         return value
@@ -477,11 +499,11 @@ def check_type_int(value):
 def check_type_float(value):
     """Verify that value is a float or convert it to a float and return it
 
-    Raises TypeError if unable to convert to a float
+    Raises :class:`TypeError` if unable to convert to a float
 
-    :arg value: Float, int, str, or bytes to verify or convert and return.
+    :arg value: float, int, str, or bytes to verify or convert and return.
 
-    :returns: Float of given value.
+    :returns: float of given value.
     """
     if isinstance(value, float):
         return value
@@ -504,15 +526,14 @@ def check_type_path(value,):
 
 
 def check_type_raw(value):
-    """Returns the raw value
-    """
+    """Returns the raw value"""
     return value
 
 
 def check_type_bytes(value):
     """Convert a human-readable string value to bytes
 
-    Raises TypeError if unable to covert the value
+    Raises :class:`TypeError` if unable to covert the value
     """
     try:
         return human_to_bytes(value)
@@ -523,9 +544,9 @@ def check_type_bytes(value):
 def check_type_bits(value):
     """Convert a human-readable string bits value to bits in integer.
 
-    Example: check_type_bits('1Mb') returns integer 1048576.
+    Example: ``check_type_bits('1Mb')`` returns integer 1048576.
 
-    Raises TypeError if unable to covert the value.
+    Raises :class:`TypeError` if unable to covert the value.
     """
     try:
         return human_to_bytes(value, isbits=True)
@@ -537,7 +558,7 @@ def check_type_jsonarg(value):
     """Return a jsonified string. Sometimes the controller turns a json string
     into a dict/list so transform it back into json here
 
-    Raises TypeError if unable to covert the value
+    Raises :class:`TypeError` if unable to covert the value
 
     """
     if isinstance(value, (text_type, binary_type)):

@@ -1,0 +1,9 @@
+docker_packages:
+  - docker-ce=5:19.03.0*
+  - docker-ce-cli=5:19.03.0*
+
+docker_prereq_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common

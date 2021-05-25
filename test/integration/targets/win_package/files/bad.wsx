@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="223D9A13-653B-4231-A365-EDDC30B4F228" UpgradeCode="575580C0-AFA1-4C17-8A9C-3CB0CEDC6A06" Name="Bovine University" Manufacturer="Ansible" Version="1.0.0" Language="1033" Codepage="1252">
-        <Package InstallerVersion="200" Compressed="yes" Comments="When I grow up I want to go to Bovine University" />
-        <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
-    </Product>
-</Wix>

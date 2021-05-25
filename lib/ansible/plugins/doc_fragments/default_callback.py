@@ -2,6 +2,8 @@
 
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 class ModuleDocFragment(object):
@@ -66,4 +68,31 @@ class ModuleDocFragment(object):
           - key: show_per_host_start
             section: defaults
         version_added: '2.9'
+      check_mode_markers:
+        name: Show markers when running in check mode
+        description:
+        - Toggle to control displaying markers when running in check mode.
+        - "The markers are C(DRY RUN) at the beggining and ending of playbook execution (when calling C(ansible-playbook --check))
+        and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
+        type: bool
+        default: no
+        version_added: '2.9'
+        env:
+          - name: ANSIBLE_CHECK_MODE_MARKERS
+        ini:
+          - key: check_mode_markers
+            section: defaults
+      show_task_path_on_failure:
+        name: Show file path on failed tasks
+        description:
+          When a task fails, display the path to the file containing the failed task and the line number.
+          This information is displayed automatically for every task when running with C(-vv) or greater verbosity.
+        type: bool
+        default: no
+        env:
+          - name: ANSIBLE_SHOW_TASK_PATH_ON_FAILURE
+        ini:
+          - key: show_task_path_on_failure
+            section: defaults
+        version_added: '2.11'
 '''

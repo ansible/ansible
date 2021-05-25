@@ -1,5 +1,5 @@
 destructive
 shippable/posix/group1
-skip/freebsd
+skip/aix
 skip/osx
-systemd
+skip/macos

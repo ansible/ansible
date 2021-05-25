@@ -2,4 +2,4 @@
 
 set -ux
 
-ansible-playbook -i ../../inventory playbook.yml -v "$@"
+ansible-playbook -i ../../inventory playbook.yml -e "output_dir=${OUTPUT_DIR}" -v "$@"

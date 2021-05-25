@@ -1,7 +1,0 @@
----
-# defaults file for test_gcp_healthcheck
-service_account_email: "{{ gce_service_account_email }}"
-credentials_file: "{{ gce_pem_file }}"
-project_id: "{{ gce_project_id }}"
-http_healthcheck: "ans-int-healthcheck-http-{{ resource_prefix|lower }}"
-https_healthcheck: "ans-int-healthcheck-https-{{ resource_prefix|lower }}"

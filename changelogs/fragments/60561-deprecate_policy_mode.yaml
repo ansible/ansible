@@ -1,2 +1,0 @@
-deprecated_features:
-- aws_kms - Deprecate mode, role_name, role_arn, grant_types and policy_clean_invalid_entries in favour of policy

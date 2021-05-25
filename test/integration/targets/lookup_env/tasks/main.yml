@@ -1,0 +1,15 @@
+- name: get HOME environment var value
+  shell: "echo $HOME"
+  register: home_var_value
+
+- name: use env lookup to get HOME var
+  set_fact:
+    test_val: "{{ lookup('env', 'HOME') }}"
+
+- debug: var=home_var_value.stdout
+- debug: var=test_val
+
+- name: compare values
+  assert:
+    that:
+        - "test_val == home_var_value.stdout"

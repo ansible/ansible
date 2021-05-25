@@ -27,7 +27,13 @@ import types
 from units.compat import unittest
 from units.compat.mock import MagicMock
 
+from ansible.executor.task_result import TaskResult
+from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
+
+
+mock_task = MagicMock()
+mock_task.delegate_to = None
 
 
 class TestCallback(unittest.TestCase):
@@ -47,42 +53,40 @@ class TestCallback(unittest.TestCase):
         cb = CallbackBase(display=display_mock)
         self.assertIs(cb._display, display_mock)
 
+    def test_host_label(self):
+        result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
+
+        self.assertEquals(CallbackBase.host_label(result), 'host1')
+
+    def test_host_label_delegated(self):
+        mock_task.delegate_to = 'host2'
+        result = TaskResult(
+            host=Host('host1'),
+            task=mock_task,
+            return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
+        )
+        self.assertEquals(CallbackBase.host_label(result), 'host1 -> host2')
+
     # TODO: import callback module so we can patch callback.cli/callback.C
 
 
 class TestCallbackResults(unittest.TestCase):
 
-    def test_get_item(self):
-        cb = CallbackBase()
-        results = {'item': 'some_item'}
-        res = cb._get_item(results)
-        self.assertEquals(res, 'some_item')
-
-    def test_get_item_no_log(self):
-        cb = CallbackBase()
-        results = {'item': 'some_item', '_ansible_no_log': True}
-        res = cb._get_item(results)
-        self.assertEquals(res, "(censored due to no_log)")
-
-        results = {'item': 'some_item', '_ansible_no_log': False}
-        res = cb._get_item(results)
-        self.assertEquals(res, "some_item")
-
     def test_get_item_label(self):
         cb = CallbackBase()
         results = {'item': 'some_item'}
         res = cb._get_item_label(results)
-        self.assertEquals(res, 'some_item')
+        self.assertEqual(res, 'some_item')
 
     def test_get_item_label_no_log(self):
         cb = CallbackBase()
         results = {'item': 'some_item', '_ansible_no_log': True}
         res = cb._get_item_label(results)
-        self.assertEquals(res, "(censored due to no_log)")
+        self.assertEqual(res, "(censored due to no_log)")
 
         results = {'item': 'some_item', '_ansible_no_log': False}
         res = cb._get_item_label(results)
-        self.assertEquals(res, "some_item")
+        self.assertEqual(res, "some_item")
 
     def test_clean_results_debug_task(self):
         cb = CallbackBase()
@@ -362,6 +366,34 @@ class TestCallbackDiff(unittest.TestCase):
                 -    "two": 2
                 +    "three": 3
                  }
+
+            '''))
+
+    def test_diff_before_none(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before': None,
+                'after': 'one line\n',
+            })),
+            textwrap.dedent('''\
+                --- before
+                +++ after
+                @@ -0,0 +1 @@
+                +one line
+
+            '''))
+
+    def test_diff_after_none(self):
+        self.assertMultiLineEqual(
+            self._strip_color(self.cb._get_diff({
+                'before': 'one line\n',
+                'after': None,
+            })),
+            textwrap.dedent('''\
+                --- before
+                +++ after
+                @@ -1 +0,0 @@
+                -one line
 
             '''))
 

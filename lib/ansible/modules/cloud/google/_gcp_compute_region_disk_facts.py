@@ -1,1 +1,0 @@
-gcp_compute_region_disk_info.py

@@ -1,2 +1,0 @@
-bugfixes:
-  - constructed - Add a warning for the change in behavior in the sanitization of the groups option.

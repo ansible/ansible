@@ -1,8 +1,0 @@
-postgresql_packages:
-  - "postgresql"
-  - "postgresql-common"
-  - "python-psycopg2"
-
-pg_hba_location: "/etc/postgresql/9.3/main/pg_hba.conf"
-pg_dir: "/var/lib/postgresql/9.3/main"
-pg_ver: 9.3

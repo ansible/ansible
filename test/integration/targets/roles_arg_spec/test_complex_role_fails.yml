@@ -1,0 +1,150 @@
+---
+- name: "Running include_role test1"
+  hosts: localhost
+  gather_facts: false
+  vars:
+      unicode_type_match: "<type 'unicode'>"
+      string_type_match: "<type 'str'>"
+      float_type_match: "<type 'float'>"
+      unicode_class_match: "<class 'unicode'>"
+      string_class_match: "<class 'str'>"
+      bytes_class_match: "<class 'bytes'>"
+      float_class_match: "<class 'float'>"
+      expected:
+          test1_1:
+              argument_errors: [
+                  "argument 'tidy_expected' is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
+                  "argument 'bust_some_stuff' is of type <class 'str'> and we were unable to convert to int: <class 'str'> cannot be converted to an int",
+                  "argument 'some_list' is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
+                  "argument 'some_dict' is of type <class 'ansible.parsing.yaml.objects.AnsibleSequence'> and we were unable to convert to dict: <class 'ansible.parsing.yaml.objects.AnsibleSequence'> cannot be converted to a dict",
+                  "argument 'some_int' is of type <class 'float'> and we were unable to convert to int: <class 'float'> cannot be converted to an int",
+                  "argument 'some_float' is of type <class 'str'> and we were unable to convert to float: <class 'str'> cannot be converted to a float",
+                  "argument 'some_bytes' is of type <class 'bytes'> and we were unable to convert to bytes: <class 'bytes'> cannot be converted to a Byte value",
+                  "argument 'some_bits' is of type <class 'str'> and we were unable to convert to bits: <class 'str'> cannot be converted to a Bit value",
+                  "value of test1_choices must be one of: this paddle game, the astray, this remote control, the chair, got: My dog",
+                  "value of some_choices must be one of: choice1, choice2, got: choice4",
+                  "argument 'some_second_level' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.  ",
+                  "argument 'third_level' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'multi_level_option -> second_level'. and we were unable to convert to int: <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> cannot be converted to an int"
+                  ]
+
+  tasks:
+      # This test play requires jinja >= 2.7
+      - name: get the jinja2 version
+        shell: python -c 'import jinja2; print(jinja2.__version__)'
+        register: jinja2_version
+        delegate_to: localhost
+        changed_when: false
+
+      - debug:
+          msg: "Jinja version: {{ jinja2_version.stdout }}"
+
+      - name: include_role test1 since it has a arg_spec.yml
+        block:
+            - include_role:
+                name: test1
+              vars:
+                tidy_expected:
+                    some_key: some_value
+                test1_var1: 37.4
+                test1_choices: "My dog"
+                bust_some_stuff: "some_string_that_is_not_an_int"
+                some_choices: "choice4"
+                some_str: 37.5
+                some_list: {'a': false}
+                some_dict:
+                    - "foo"
+                    - "bar"
+                some_int: 37.
+                some_float: "notafloatisit"
+                some_path: "anything_is_a_valid_path"
+                some_raw: {"anything_can_be": "a_raw_type"}
+                # not sure what would be an invalid jsonarg
+                # some_jsonarg: "not sure what this does yet"
+                some_json: |
+                    '{[1, 3, 3] 345345|45v<#!}'
+                some_jsonarg: |
+                    {"foo": [1, 3, 3]}
+                # not sure we can load binary in safe_load
+                some_bytes: !!binary |
+                    R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5
+                    OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/+
+                    +f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLC
+                    AgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+                some_bits: "foo"
+                # some_str_nicknames: []
+                # some_str_akas: {}
+                some_str_removed_in: "foo"
+                some_dict_options:
+                  some_second_level: "not-a-bool"
+                multi_level_option:
+                  second_level:
+                    third_level: "should_be_int"
+
+            - fail:
+                msg: "Should not get here"
+
+        rescue:
+            - debug:
+                var: ansible_failed_result
+
+            - name: replace py version specific types with generic names so tests work on py2 and py3
+              set_fact:
+                  # We want to compare if the actual failure messages and the expected failure messages
+                  # are the same. But to compare and do set differences, we have to handle some
+                  # differences between py2/py3.
+                  # The validation failure messages include python type and class reprs, which are
+                  # different between py2 and py3. For ex, "<type 'str'>" vs "<class 'str'>". Plus
+                  # the usual py2/py3 unicode/str/bytes type shenanigans. The 'THE_FLOAT_REPR' is
+                  # because py3 quotes the value in the error while py2 does not, so we just ignore
+                  # the rest of the line.
+                  actual_generic: "{{ ansible_failed_result.argument_errors|
+                                      map('replace', unicode_type_match, 'STR')|
+                                      map('replace', string_type_match, 'STR')|
+                                      map('replace', float_type_match, 'FLOAT')|
+                                      map('replace', unicode_class_match, 'STR')|
+                                      map('replace', string_class_match, 'STR')|
+                                      map('replace', bytes_class_match, 'STR')|
+                                      map('replace', float_class_match, 'FLOAT')|
+                                      map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
+                                      map('regex_replace', 'Valid booleans include.*$', '')|
+                                      list }}"
+                  expected_generic: "{{ expected.test1_1.argument_errors|
+                                        map('replace', unicode_type_match, 'STR')|
+                                        map('replace', string_type_match, 'STR')|
+                                        map('replace', float_type_match, 'FLOAT')|
+                                        map('replace', unicode_class_match, 'STR')|
+                                        map('replace', string_class_match, 'STR')|
+                                        map('replace', bytes_class_match, 'STR')|
+                                        map('replace', float_class_match, 'FLOAT')|
+                                        map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
+                                        map('regex_replace', 'Valid booleans include.*$', '')|
+                                        list }}"
+
+            - name: figure out the difference between expected and actual validate_argument_spec failures
+              set_fact:
+                  actual_not_in_expected: "{{ actual_generic| difference(expected_generic) | sort() }}"
+                  expected_not_in_actual: "{{ expected_generic | difference(actual_generic) | sort() }}"
+
+            - name: assert that all actual validate_argument_spec failures were in expected
+              assert:
+                  that:
+                      - actual_not_in_expected | length == 0
+                  msg: "Actual validate_argument_spec failures that were not expected: {{ actual_not_in_expected }}"
+
+            - name: assert that all expected validate_argument_spec failures were in expected
+              assert:
+                  that:
+                      - expected_not_in_actual | length == 0
+                  msg: "Expected validate_argument_spec failures that were not in actual results: {{ expected_not_in_actual }}"
+
+            - name: assert that `validate_args_context` return value has what we expect
+              assert:
+                that:
+                  - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                  - ansible_failed_result.validate_args_context.name == "test1"
+                  - ansible_failed_result.validate_args_context.type == "role"
+                  - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/test1')"
+
+        # skip this task if jinja isnt >= 2.7, aka centos6
+        when:
+            - jinja2_version.stdout is version('2.7', '>=')

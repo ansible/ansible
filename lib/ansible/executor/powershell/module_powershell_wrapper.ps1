@@ -32,16 +32,32 @@ if ($csharp_utils.Count -gt 0) {
     Add-CSharpType -References $csharp_utils -TempPath $new_tmp -IncludeDebugInfo
 }
 
-# get the common module_wrapper code and invoke that to run the module
-$variables = [System.Collections.ArrayList]@(@{ Name = "complex_args"; Value = $Payload.module_args; Scope = "Global" })
-$module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.module_entry))
-$entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($payload.module_wrapper))
+if ($Payload.ContainsKey("coverage") -and $null -ne $host.Runspace -and $null -ne $host.Runspace.Debugger) {
+    $entrypoint = $payload.coverage_wrapper
+
+    $params = @{
+        Payload = $Payload
+    }
+} else {
+    # get the common module_wrapper code and invoke that to run the module
+    $module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.module_entry))
+    $variables = [System.Collections.ArrayList]@(@{ Name = "complex_args"; Value = $Payload.module_args; Scope = "Global" })
+    $entrypoint = $Payload.module_wrapper
+
+    $params = @{
+        Scripts = @($script:common_functions, $module)
+        Variables = $variables
+        Environment = $Payload.environment
+        Modules = $Payload.powershell_modules
+        ModuleName = $module_name
+    }
+}
+
+$entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
 $entrypoint = [ScriptBlock]::Create($entrypoint)
 
 try {
-    &$entrypoint -Scripts $script:common_functions, $module -Variables $variables `
-        -Environment $Payload.environment -Modules $Payload.powershell_modules `
-        -ModuleName $module_name
+    &$entrypoint @params
 } catch {
     # failed to invoke the PowerShell module, capture the exception and
     # output a pretty error for Ansible to parse

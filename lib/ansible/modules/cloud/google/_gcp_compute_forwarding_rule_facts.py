@@ -1,1 +1,0 @@
-gcp_compute_forwarding_rule_info.py

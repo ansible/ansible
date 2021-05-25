@@ -1,0 +1,4 @@
+- name: Uninstall Paramiko for Python 2 on FreeBSD 13
+  pip:
+    name: paramiko
+    state: absent

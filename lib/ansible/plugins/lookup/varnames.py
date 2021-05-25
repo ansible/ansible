@@ -4,8 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: varnames
-    author: Ansible Core
+    name: varnames
+    author: Ansible Core Team
     version_added: "2.8"
     short_description: Lookup matching variable names
     description:
@@ -58,15 +58,14 @@ class LookupModule(LookupBase):
         if variables is None:
             raise AnsibleError('No variables available to search')
 
-        # no options, yet
-        # self.set_options(direct=kwargs)
+        self.set_options(var_options=variables, direct=kwargs)
 
         ret = []
         variable_names = list(variables.keys())
         for term in terms:
 
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleError('Invalid setting identifier, "%s" is not a string, it is a %s' % (term, type(term)))
 
             try:
                 name = re.compile(term)

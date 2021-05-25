@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: test connection receives -k from play_context when delegating
+    delegation_action:
+    delegate_to: my_host
+    register: result
+
+  - assert:
+      that:
+      - result.remote_password == 'my_password'
+
+  - name: ensure vars set for that host take precedence over -k
+    delegation_action:
+    delegate_to: my_host
+    vars:
+      ansible_password: other_password
+    register: result
+
+  - assert:
+      that:
+      - result.remote_password == 'other_password'

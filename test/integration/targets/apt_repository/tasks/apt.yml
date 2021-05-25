@@ -35,7 +35,7 @@
 #
 # TEST: apt_repository: repo=<name>
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -67,7 +67,7 @@
 #
 # TEST: apt_repository: repo=<name> update_cache=no
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -98,7 +98,7 @@
 #
 # TEST: apt_repository: repo=<name> update_cache=yes
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -129,7 +129,7 @@
 #
 # TEST: apt_repository: repo=<spec>
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -142,11 +142,17 @@
   apt_repository: repo='{{test_ppa_spec}}' state=present
   register: result
 
+- name: update the cache
+  apt:
+    update_cache: true
+  register: result_cache
+
 - assert:
     that:
       - 'result.changed'
       - 'result.state == "present"'
       - 'result.repo == "{{test_ppa_spec}}"'
+      - result_cache is not changed
 
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -157,6 +163,10 @@
     that:
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
+- name: remove repo by spec
+  apt_repository: repo='{{test_ppa_spec}}' state=absent
+  register: result
+
 # When installing a repo with the spec, the key is *NOT* added
 - name: 'ensure ppa key is absent (expect: pass)'
   apt_key: id='{{test_ppa_key}}' state=absent
@@ -164,7 +174,7 @@
 #
 # TEST: apt_repository: repo=<spec> filename=<filename>
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -230,4 +240,4 @@
 #
 # TEARDOWN
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'

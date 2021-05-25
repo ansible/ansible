@@ -1,0 +1,2 @@
+bugfixes:
+  - advanced_host_list inventory plugin - Fixed variable referenced before assignment when hostname/range could not be parsed.

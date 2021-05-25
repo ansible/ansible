@@ -1,0 +1,24 @@
+{
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "arch",
+        "name": "Arch Linux",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",
+        "/etc/arch-release": ""
+    },
+    "name": "Arch Linux NA",
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "Archlinux",
+        "distribution_major_version": "NA",
+        "os_family": "Archlinux",
+        "distribution_version": "NA"
+    }
+}

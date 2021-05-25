@@ -10,8 +10,8 @@ Httpapi Plugins
 Httpapi plugins tell Ansible how to interact with a remote device's HTTP-based API and execute tasks on the
 device.
 
-Each plugin represents a particular dialect of API. Some are platform-specific (Arista eAPI, Cisco NXAPI), while
-others might be usable on a variety of platforms (RESTCONF).
+Each plugin represents a particular dialect of API. Some are platform-specific (Arista eAPI, Cisco NXAPI), while others might be usable on a variety of platforms (RESTCONF). Ansible loads the appropriate httpapi plugin automatically based on the ``ansible_network_os`` variable.
+
 
 .. _enabling_httpapi:
 
@@ -32,20 +32,33 @@ Most httpapi plugins can operate without configuration. Additional options may b
 Plugins are self-documenting. Each plugin should document its configuration options.
 
 
+The following sample playbook shows the httpapi plugin for an Arista network device, assuming an inventory variable set as ``ansible_network_os=eos`` for the httpapi plugin to trigger off:
+
+.. code-block:: yaml
+
+  - hosts: leaf01
+    connection: httpapi
+    gather_facts: false
+    tasks:
+
+      - name: type a simple arista command
+        eos_command:
+          commands:
+            - show version | json
+        register: command_output
+
+      - name: print command output to terminal window
+        debug:
+          var: command_output.stdout[0]["version"]
+
+See the full working example `on GitHub <https://github.com/network-automation/httpapi>`_.
+
 .. _httpapi_plugin_list:
 
-Plugin List
------------
+Viewing httpapi plugins
+-----------------------
 
-You can use ``ansible-doc -t httpapi -l`` to see the list of available plugins.
-Use ``ansible-doc -t httpapi <plugin name>`` to see detailed documentation and examples.
-
-
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    httpapi/*
-
+These plugins have migrated to collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. If you installed Ansible version 2.10 or later using ``pip``, you have access to several httpapi plugins. To list all available httpapi plugins on your control node, type ``ansible-doc -t httpapi -l``. To view plugin-specific documentation and examples, use ``ansible-doc -t httpapi``.
 
 .. seealso::
 

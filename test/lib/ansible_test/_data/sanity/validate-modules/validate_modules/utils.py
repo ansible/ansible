@@ -19,7 +19,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import datetime
 import os
+import re
 import sys
 
 from io import BytesIO, TextIOWrapper
@@ -29,6 +31,9 @@ import yaml.reader
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.yaml import SafeLoader
+from ansible.module_utils.six import string_types
+from ansible.parsing.yaml.loader import AnsibleLoader
 
 
 class AnsibleTextIOWrapper(TextIOWrapper):
@@ -115,18 +120,38 @@ class CaptureStd():
         return self.stdout.buffer.getvalue(), self.stderr.buffer.getvalue()
 
 
-def parse_yaml(value, lineno, module, name, load_all=False):
+def get_module_name_from_filename(filename, collection):
+    # Calculate the module's name so that relative imports work correctly
+    if collection:
+        # collection is a relative path, example: ansible_collections/my_namespace/my_collection
+        # filename is a relative path, example: plugins/modules/my_module.py
+        path = os.path.join(collection, filename)
+    else:
+        # filename is a relative path, example: lib/ansible/modules/system/ping.py
+        path = os.path.relpath(filename, 'lib')
+
+    name = os.path.splitext(path)[0].replace(os.path.sep, '.')
+
+    return name
+
+
+def parse_yaml(value, lineno, module, name, load_all=False, ansible_loader=False):
     traces = []
     errors = []
     data = None
 
     if load_all:
-        loader = yaml.safe_load_all
+        yaml_load = yaml.load_all
     else:
-        loader = yaml.safe_load
+        yaml_load = yaml.load
+
+    if ansible_loader:
+        loader = AnsibleLoader
+    else:
+        loader = SafeLoader
 
     try:
-        data = loader(value)
+        data = yaml_load(value, Loader=loader)
         if load_all:
             data = list(data)
     except yaml.MarkedYAMLError as e:
@@ -179,3 +204,22 @@ class NoArgsAnsibleModule(AnsibleModule):
     """
     def _load_params(self):
         self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}
+
+
+def parse_isodate(v, allow_date):
+    if allow_date:
+        if isinstance(v, datetime.date):
+            return v
+        msg = 'Expected ISO 8601 date string (YYYY-MM-DD) or YAML date'
+    else:
+        msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
+    if not isinstance(v, string_types):
+        raise ValueError(msg)
+    # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
+    # we have to do things manually.
+    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', v):
+        raise ValueError(msg)
+    try:
+        return datetime.datetime.strptime(v, '%Y-%m-%d').date()
+    except ValueError:
+        raise ValueError(msg)

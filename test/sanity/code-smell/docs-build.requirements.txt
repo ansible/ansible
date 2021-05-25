@@ -1,0 +1,7 @@
+jinja2
+pyyaml
+resolvelib
+sphinx
+sphinx-notfound-page
+straight.plugin
+antsibull == 0.26.0

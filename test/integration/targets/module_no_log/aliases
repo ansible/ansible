@@ -1,0 +1,5 @@
+shippable/posix/group1
+skip/aix  # not configured to log user.info to /var/log/syslog
+skip/freebsd  # not configured to log user.info to /var/log/syslog
+skip/osx  # not configured to log user.info to /var/log/syslog
+skip/macos # not configured to log user.info to /var/log/syslog

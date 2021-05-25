@@ -2,7 +2,8 @@
 # PYTHON_ARGCOMPLETE_OK
 """A tool to aggregate data about Ansible source and testing into a sqlite DB for reporting."""
 
-from __future__ import (absolute_import, print_function)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import argparse
 import json
@@ -22,7 +23,7 @@ if ANSIBLE_TEST_PATH not in sys.path:
     sys.path.insert(0, ANSIBLE_TEST_PATH)
 
 from ansible.module_utils.urls import open_url
-from ansible.parsing.metadata import extract_metadata
+from ansible.parsing.plugin_docs import read_docstring
 
 from ansible_test._internal.target import walk_integration_targets
 
@@ -80,7 +81,6 @@ def populate_modules():
     module_dir = os.path.join(BASE_PATH, 'lib/ansible/modules/')
 
     modules_rows = []
-    module_statuses_rows = []
 
     for root, dir_names, file_names in os.walk(module_dir):
         for file_name in file_names:
@@ -96,31 +96,16 @@ def populate_modules():
 
             path = os.path.join(root, file_name)
 
-            with open(path, 'rb') as module_fd:
-                module_data = module_fd.read()
+            result = read_docstring(path)
 
-            result = extract_metadata(module_data=module_data)
-
-            metadata = result[0]
-
-            if not metadata:
-                if module == 'async_wrapper':
-                    continue
-
-                raise Exception('no metadata for: %s' % path)
+            doc = result['doc']
 
             modules_rows.append(dict(
                 module=module,
                 namespace=namespace,
                 path=path.replace(BASE_PATH, ''),
-                supported_by=metadata['supported_by'],
+                version_added=str(doc.get('version_added', '')) if doc else '',
             ))
-
-            for status in metadata['status']:
-                module_statuses_rows.append(dict(
-                    module=module,
-                    status=status,
-                ))
 
     populate_data(dict(
         modules=dict(
@@ -129,13 +114,7 @@ def populate_modules():
                 ('module', 'TEXT'),
                 ('namespace', 'TEXT'),
                 ('path', 'TEXT'),
-                ('supported_by', 'TEXT'),
-            )),
-        module_statuses=dict(
-            rows=module_statuses_rows,
-            schema=(
-                ('module', 'TEXT'),
-                ('status', 'TEXT'),
+                ('version_added', 'TEXT'),
             )),
     ))
 

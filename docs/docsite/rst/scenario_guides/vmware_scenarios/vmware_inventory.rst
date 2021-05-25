@@ -4,7 +4,8 @@
 Using VMware dynamic inventory plugin
 *************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 VMware Dynamic Inventory Plugin
 ===============================

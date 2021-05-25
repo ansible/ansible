@@ -1,0 +1,5 @@
+collections:
+  # should not work: source is expected to be a galaxy server name or URL
+  - source: git+file://{{ galaxy_dir }}/development/amazon.aws/.git
+    name: ansible.nope
+    type: git

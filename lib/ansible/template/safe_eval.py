@@ -22,7 +22,8 @@ import ast
 import sys
 
 from ansible import constants as C
-from ansible.module_utils.six import string_types
+from ansible.module_utils.common.text.converters import container_to_text, to_native
+from ansible.module_utils.six import string_types, PY2
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import filter_loader, test_loader
 
@@ -105,13 +106,21 @@ def safe_eval(expr, locals=None, include_exceptions=False):
 
     filter_list = []
     for filter_ in filter_loader.all():
-        filter_list.extend(filter_.filters().keys())
+        try:
+            filter_list.extend(filter_.filters().keys())
+        except Exception:
+            # This is handled and displayed in JinjaPluginIntercept._load_ansible_plugins
+            continue
 
     test_list = []
     for test in test_loader.all():
-        test_list.extend(test.tests().keys())
+        try:
+            test_list.extend(test.tests().keys())
+        except Exception:
+            # This is handled and displayed in JinjaPluginIntercept._load_ansible_plugins
+            continue
 
-    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list + test_list
+    CALL_ENABLED = C.CALLABLE_ACCEPT_LIST + filter_list + test_list
 
     class CleansingNodeVisitor(ast.NodeVisitor):
         def generic_visit(self, node, inside_call=False):
@@ -123,7 +132,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
                 # Disallow calls to builtin functions that we have not vetted
                 # as safe.  Other functions are excluded by setting locals in
                 # the call to eval() later on
-                if hasattr(builtins, node.id) and node.id not in CALL_WHITELIST:
+                if hasattr(builtins, node.id) and node.id not in CALL_ENABLED:
                     raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
             for child_node in ast.iter_child_nodes(node):
@@ -139,11 +148,15 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     try:
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
-        compiled = compile(parsed_tree, expr, 'eval')
+        compiled = compile(parsed_tree, '<expr %s>' % to_native(expr), 'eval')
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of builtins done in CleansingNodeVisitor
         result = eval(compiled, OUR_GLOBALS, dict(locals))
+        if PY2:
+            # On Python 2 u"{'key': 'value'}" is evaluated to {'key': 'value'},
+            # ensure it is converted to {u'key': u'value'}.
+            result = container_to_text(result)
 
         if include_exceptions:
             return (result, None)

@@ -7,10 +7,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import argparse
-import os.path
-import sys
-
 from jinja2 import Environment, DictLoader
 
 # Pylint doesn't understand Python3 namespace modules.
@@ -20,9 +16,9 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 PORTING_GUIDE_TEMPLATE = """
 .. _porting_{{ ver }}_guide:
 
-*************************
+**************************
 Ansible {{ ver }} Porting Guide
-*************************
+**************************
 
 This section discusses the behavioral changes between Ansible {{ prev_ver }} and Ansible {{ ver }}.
 

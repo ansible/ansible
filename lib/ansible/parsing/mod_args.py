@@ -19,26 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
+from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
-FREEFORM_ACTIONS = frozenset((
-    'command',
-    'win_command',
-    'shell',
-    'win_shell',
-    'script',
-    'raw'
-))
+FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
 
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
+RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
     'include',
     'include_vars',
     'include_tasks',
@@ -49,16 +44,16 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'group_by',
     'set_fact',
     'meta',
-))
+)))
 
-BUILTIN_TASKS = frozenset((
+BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
     'include',
     'include_tasks',
     'include_role',
     'import_tasks',
     'import_role'
-))
+)))
 
 
 class ModuleArgsParser:
@@ -121,9 +116,11 @@ class ModuleArgsParser:
         # store the valid Task/Handler attrs for quick access
         self._task_attrs = set(Task._valid_attrs.keys())
         self._task_attrs.update(set(Handler._valid_attrs.keys()))
-        # HACK: why is static not a FieldAttribute on task with a post-validate to bomb if not include/import?
-        self._task_attrs.add('static')
+        # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
+        self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
+
+        self.internal_redirect_list = []
 
     def _split_module_string(self, module_string):
         '''
@@ -135,9 +132,9 @@ class ModuleArgsParser:
 
         tokens = split_args(module_string)
         if len(tokens) > 1:
-            return (tokens[0], " ".join(tokens[1:]))
+            return (tokens[0].strip(), " ".join(tokens[1:]))
         else:
-            return (tokens[0], "")
+            return (tokens[0].strip(), "")
 
     def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
@@ -259,7 +256,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self):
+    def parse(self, skip_action_validation=False):
         '''
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
@@ -271,6 +268,8 @@ class ModuleArgsParser:
         action = None
         delegate_to = self._task_ds.get('delegate_to', Sentinel)
         args = dict()
+
+        self.internal_redirect_list = []
 
         # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
@@ -300,8 +299,24 @@ class ModuleArgsParser:
 
         # walk the filtered input dictionary to see if we recognize a module name
         for item, value in iteritems(non_task_ds):
-            if item in BUILTIN_TASKS or action_loader.has_plugin(item, collection_list=self._collection_list) or \
-                    module_loader.has_plugin(item, collection_list=self._collection_list):
+            is_action_candidate = False
+            if item in BUILTIN_TASKS:
+                is_action_candidate = True
+            elif skip_action_validation:
+                is_action_candidate = True
+            else:
+                # If the plugin is resolved and redirected smuggle the list of candidate names via the task attribute 'internal_redirect_list'
+                context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                if not context.resolved:
+                    context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                    if context.resolved and context.redirect_list:
+                        self.internal_redirect_list = context.redirect_list
+                elif context.redirect_list:
+                    self.internal_redirect_list = context.redirect_list
+
+                is_action_candidate = bool(self.internal_redirect_list)
+
+            if is_action_candidate:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)

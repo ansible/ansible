@@ -23,31 +23,35 @@ structure of the tests matches that of ``lib/ansible/``.
 Running Tests
 =============
 
+.. note::
+   To run unit tests using docker, always use the default docker image
+   by passing the ``--docker`` or ``--docker default`` argument.
+
 The Ansible unit tests can be run across the whole code base by doing:
 
 .. code:: shell
 
     cd /path/to/ansible/source
     source hacking/env-setup
-    ansible-test units --tox
+    ansible-test units --docker -v
 
 Against a single file by doing:
 
 .. code:: shell
 
-   ansible-test units --tox apt
+   ansible-test units --docker -v apt
 
 Or against a specific Python version by doing:
 
 .. code:: shell
 
-   ansible-test units --tox --python 2.7 apt
+   ansible-test units --docker -v --python 2.7 apt
 
 If you are running unit tests against things other than modules, such as module utilities, specify the whole file path:
 
 .. code:: shell
 
-   ansible-test units --tox test/units/module_utils/basic/test_imports.py
+   ansible-test units --docker -v test/units/module_utils/basic/test_imports.py
 
 For advanced usage see the online help::
 
@@ -61,26 +65,26 @@ in your pull request.
 Installing dependencies
 =======================
 
-``ansible-test`` has a number of dependencies. For ``units`` tests we suggest using ``tox``.
+If you are running ``ansible-test`` with the ``--docker`` or ``--venv`` option you do not need to install dependencies manually.
 
-The dependencies can be installed using the ``--requirements`` argument, which will
+Otherwise you can install dependencies using the ``--requirements`` option, which will
 install all the required dependencies needed for unit tests. For example:
 
 .. code:: shell
 
-   ansible-test units --tox --python 2.7 --requirements apache2_module
+   ansible-test units --python 2.7 --requirements apache2_module
 
 
-.. note:: tox version requirement
+The list of unit test requirements can be found at `test/units/requirements.txt
+<https://github.com/ansible/ansible/tree/devel/test/units/requirements.txt>`_.
 
-   When using ``ansible-test`` with ``--tox`` requires tox >= 2.5.0
+This does not include the list of unit test requirements for ``ansible-test`` itself,
+which can be found at `test/lib/ansible_test/_data/requirements/units.txt
+<https://github.com/ansible/ansible/tree/devel/test/lib/ansible_test/_data/requirements/units.txt>`_.
 
-
-The full list of requirements can be found at `test/runner/requirements
-<https://github.com/ansible/ansible/tree/devel/test/runner/requirements>`_. Requirements
-files are named after their respective commands. See also the `constraints
-<https://github.com/ansible/ansible/blob/devel/test/runner/requirements/constraints.txt>`_
-applicable to all commands.
+See also the `constraints
+<https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/requirements/constraints.txt>`_
+applicable to all test commands.
 
 
 Extending unit tests
@@ -149,10 +153,8 @@ directory, which is then included directly.
 Module test case common code
 ````````````````````````````
 
-Keep common code as specific as possible within the `test/units/` directory structure. For
-example, if it's specific to testing Amazon modules, it should be in
-`test/units/modules/cloud/amazon/`. Don't import common unit test code from directories
-outside the current or parent directories.
+Keep common code as specific as possible within the `test/units/` directory structure.
+Don't import common unit test code from directories outside the current or parent directories.
 
 Don't import other unit tests from a unit test. Any common code should be in dedicated
 files that aren't themselves tests.
@@ -161,18 +163,13 @@ files that aren't themselves tests.
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices, or provide other complex datastructures that
+To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
-Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
+You can check how `fixtures <https://github.com/ansible/ansible/tree/devel/test/units/module_utils/facts/fixtures/cpuinfo>`_
+are used in `cpuinfo fact tests <https://github.com/ansible/ansible/blob/9f72ff80e3fe173baac83d74748ad87cb6e20e64/test/units/module_utils/facts/hardware/linux_data.py#L384>`_
 
-Data is loaded using the ``load_fixture`` method
-
-See `eos_banner test
-<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
-for a practical example.
-
-If you are simulating APIs you may find that python placebo is useful.  See
+If you are simulating APIs you may find that Python placebo is useful.  See
 :ref:`testing_units_modules` for more information.
 
 

@@ -135,9 +135,9 @@ def get_platform_subclass(cls):
 
         # New
         class User:
-            def __new__(cls, args, kwargs):
+            def __new__(cls, *args, **kwargs):
                 new_cls = get_platform_subclass(User)
-                return super(cls, new_cls).__new__(new_cls, args, kwargs)
+                return super(cls, new_cls).__new__(new_cls)
     '''
 
     this_platform = platform.system()

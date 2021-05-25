@@ -5,19 +5,46 @@ Frequently Asked Questions
 
 Here are some commonly asked questions and their answers.
 
+.. _collections_transition:
+
+Where did all the modules go?
++++++++++++++++++++++++++++++
+
+In July, 2019, we announced that collections would be the `future of Ansible content delivery <https://www.ansible.com/blog/the-future-of-ansible-content-delivery>`_. A collection is a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. In Ansible 2.9 we added support for collections. In Ansible 2.10 we `extracted most modules from the main ansible/ansible repository <https://access.redhat.com/solutions/5295121>`_ and placed them in :ref:`collections <list_of_collections>`. Collections may be maintained by the Ansible team, by the Ansible community, or by Ansible partners. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ now contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core`` (it was briefly called ``ansible-base`` for version 2.10).
+
+* To learn more about using collections, see :ref:`collections`.
+* To learn more about developing collections, see :ref:`developing_collections`.
+* To learn more about contributing to existing collections, see the individual collection repository for guidelines, or see :ref:`contributing_maintained_collections` to contribute to one of the Ansible-maintained collections.
+
+.. _find_my_module:
+
+Where did this specific module go?
+++++++++++++++++++++++++++++++++++
+
+IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`IRC channels <communication_irc>`.
 
 .. _set_environment:
 
-How can I set the PATH or any other environment variable for a task or entire playbook?
+How can I set the PATH or any other environment variable for a task or entire play?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play::
+Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play.
 
+.. code-block:: yaml
+
+    shell:
+      cmd: date
+    environment:
+      LANG=fr_FR.UTF-8
+
+.. code-block:: yaml
+
+    hosts: servers
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
       SOME: value
 
-.. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
+.. note:: starting in 2.0.1 the setup task from ``gather_facts`` also inherits the environment directive from the play, you might need to use the ``|default`` filter to avoid errors if setting this at play level.
 
 .. _faq_setting_users_and_ports:
 
@@ -51,25 +78,24 @@ See the rest of the documentation for more information about how to organize var
 How do I get ansible to reuse connections, enable Kerberized SSH, or have Ansible pay attention to my local SSH config file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Switch your default connection type in the configuration file to 'ssh', or use '-c ssh' to use
-Native OpenSSH for connections instead of the python paramiko library.  In Ansible 1.2.1 and later, 'ssh' will be used
+Switch your default connection type in the configuration file to ``ssh``, or use ``-c ssh`` to use
+Native OpenSSH for connections instead of the python paramiko library. In Ansible 1.2.1 and later, ``ssh`` will be used
 by default if OpenSSH is new enough to support ControlPersist as an option.
 
-Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
-from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
-older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so
+Paramiko is great for starting out, but the OpenSSH type offers many advanced options. You will want to run Ansible
+from a machine new enough to support ControlPersist, if you are using this connection type. You can still manage
+older clients. If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so
 consider managing from a Fedora or openSUSE client even though you are managing older nodes, or just use paramiko.
 
-We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
-for new users.
+We keep paramiko as the default as if you are first installing Ansible on these enterprise operating systems, it offers a better experience for new users.
 
 .. _use_ssh_jump_hosts:
 
 How do I configure a jump host to access servers that I have no direct access to?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-You can set a `ProxyCommand` in the
-`ansible_ssh_common_args` inventory variable. Any arguments specified in
+You can set a ``ProxyCommand`` in the
+``ansible_ssh_common_args`` inventory variable. Any arguments specified in
 this variable are added to the sftp/scp/ssh command line when connecting
 to the relevant host(s). Consider the following inventory group:
 
@@ -84,36 +110,39 @@ You can create `group_vars/gatewayed.yml` with the following contents::
     ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
 
 Ansible will append these arguments to the command line when trying to
-connect to any hosts in the group `gatewayed`. (These arguments are used
-in addition to any `ssh_args` from `ansible.cfg`, so you do not need to
-repeat global `ControlPersist` settings in `ansible_ssh_common_args`.)
+connect to any hosts in the group ``gatewayed``. (These arguments are used
+in addition to any ``ssh_args`` from ``ansible.cfg``, so you do not need to
+repeat global ``ControlPersist`` settings in ``ansible_ssh_common_args``.)
 
-Note that `ssh -W` is available only with OpenSSH 5.4 or later. With
-older versions, it's necessary to execute `nc %h:%p` or some equivalent
+Note that ``ssh -W`` is available only with OpenSSH 5.4 or later. With
+older versions, it's necessary to execute ``nc %h:%p`` or some equivalent
 command on the bastion host.
 
 With earlier versions of Ansible, it was necessary to configure a
-suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
-or globally by setting `ssh_args` in `ansible.cfg`.
+suitable ``ProxyCommand`` for one or more hosts in ``~/.ssh/config``,
+or globally by setting ``ssh_args`` in ``ansible.cfg``.
 
 .. _ssh_serveraliveinterval:
 
 How do I get Ansible to notice a dead target in a timely manner?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option, SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval`` into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that ``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
+You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option,
+SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval``
+into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that
+``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
 
-.. _ec2_cloud_performance:
+.. _cloud_provider_performance:
 
-How do I speed up management inside EC2?
-++++++++++++++++++++++++++++++++++++++++
+How do I speed up run of ansible for servers from cloud providers (EC2, openstack,.. )?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Don't try to manage a fleet of EC2 machines from your laptop.  Connect to a management node inside EC2 first
-and run Ansible from there.
+Don't try to manage a fleet of machines of a cloud provider from your laptop.
+Rather connect to a management node inside this cloud provider first and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle python not having a Python interpreter at /usr/bin/python on a remote machine?
+How do I handle not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While you can write Ansible modules in any language, most Ansible modules are written in Python,
@@ -136,12 +165,12 @@ workaround you can install Python 2 on the managed host and configure Ansible to
 requires Python 2, you can also report a bug on our `bug tracker
 <https://github.com/ansible/ansible/issues>`_ so that the incompatibility can be fixed in a future release.
 
-Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
+Do not replace the shebang lines of your python modules. Ansible will do this for you automatically at deploy time.
 
-Also, this works for ANY interpreter, i.e ruby: `ansible_ruby_interpreter`, perl: `ansible_perl_interpreter`, etc,
+Also, this works for ANY interpreter, for example ruby: ``ansible_ruby_interpreter``, perl: ``ansible_perl_interpreter``, and so on,
 so you can use this for custom modules written in any scripting language and control the interpreter location.
 
-Keep in mind that if you put `env` in your module shebang line (`#!/usr/bin/env <other>`),
+Keep in mind that if you put ``env`` in your module shebang line (``#!/usr/bin/env <other>``),
 this facility will be ignored so you will be at the mercy of the remote `$PATH`.
 
 .. _installation_faqs:
@@ -150,19 +179,19 @@ How do I handle the package dependencies required by Ansible package dependencie
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While installing Ansible, sometimes you may encounter errors such as `No package 'libffi' found` or `fatal error: Python.h: No such file or directory`
-These errors are generally caused by the missing packages which are dependencies of the packages required by Ansible.
+These errors are generally caused by the missing packages, which are dependencies of the packages required by Ansible.
 For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
 
-In order to solve these kinds of dependency issue, you may need to install required packages using the OS native package managers (e.g., `yum`, `dnf` or `apt`) or as mentioned in the package installation guide.
+In order to solve these kinds of dependency issues, you might need to install required packages using
+the OS native package managers, such as `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
 
-Please refer the documentation of the respective package for such dependencies and their installation methods.
+Refer to the documentation of the respective package for such dependencies and their installation methods.
 
 Common Platform Issues
 ++++++++++++++++++++++
 
-What customer platforms does Red Hat Support?
+What customer platforms does Red Hat support?
 ---------------------------------------------
-
 
 A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
 
@@ -186,8 +215,8 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
     $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
-bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
-need to install them into the virtualenv.  There are two methods:
+bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled), then you
+need to install them into the virtualenv. There are two methods:
 
 * When you create the virtualenv, specify ``--system-site-packages`` to make use of any libraries
   installed in the system's Python:
@@ -196,7 +225,7 @@ need to install them into the virtualenv.  There are two methods:
 
       $ virtualenv ansible --system-site-packages
 
-* Copy those files in manually from the system.  For instance, for SELinux bindings you might do:
+* Copy those files in manually from the system. For instance, for SELinux bindings you might do:
 
   .. code-block:: shell
 
@@ -218,8 +247,9 @@ By default, Solaris 10 and earlier run a non-POSIX shell which does not correctl
 tmp directory Ansible uses ( :file:`~/.ansible/tmp`). If you see module failures on Solaris machines, this
 is likely the problem. There are several workarounds:
 
-* You can set ``remote_tmp`` to a path that will expand correctly with the shell you are using (see the plugin documentation for :ref:`C shell<csh_shell>`, :ref:`fish shell<fish_shell>`, and :ref:`Powershell<powershell_shell>`).  For
-  example, in the ansible config file you can set::
+* You can set ``remote_tmp`` to a path that will expand correctly with the shell you are using
+  (see the plugin documentation for :ref:`C shell<csh_shell>`, :ref:`fish shell<fish_shell>`,
+  and :ref:`Powershell<powershell_shell>`). For example, in the ansible config file you can set::
 
     remote_tmp=$HOME/.ansible/tmp
 
@@ -227,7 +257,7 @@ is likely the problem. There are several workarounds:
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 
-* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell.  For
+* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell. For
   instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
   this in inventory like so::
 
@@ -242,12 +272,12 @@ There are a few common errors that one might run into when trying to execute Ans
 
 * Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
 
-  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII. Version 2.7.13 is verified to work.
 
 * When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
   .. error::
-      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
 
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
@@ -265,9 +295,23 @@ There are a few common errors that one might run into when trying to execute Ans
   .. error::
     EE3501S The module libpython2.7.so was not found.
 
-  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+  On z/OS, you must execute python from gnu bash. If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
 
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
+
+
+Running under fakeroot
+----------------------
+
+Some issues arise as ``fakeroot`` does not create a full nor POSIX compliant system by default.
+It is known that it will not correctly expand the default tmp directory Ansible uses (:file:`~/.ansible/tmp`).
+If you see module failures, this is likely the problem.
+The simple workaround is to set ``remote_tmp`` to a path that will expand correctly (see documentation of the shell plugin you are using for specifics).
+
+For example, in the ansible config file (or via environment variable) you can set::
+
+    remote_tmp=$HOME/.ansible/tmp
+
 
 
 .. _use_roles:
@@ -275,7 +319,7 @@ There are a few common errors that one might run into when trying to execute Ans
 What is the best way to make content reusable/redistributable?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-If you have not done so already, read all about "Roles" in the playbooks documentation.  This helps you make playbook content
+If you have not done so already, read all about "Roles" in the playbooks documentation. This helps you make playbook content
 self-contained, and works well with things like git submodules for sharing content with others.
 
 If some of these plugin types look strange to you, see the API documentation for more details about ways Ansible can be extended.
@@ -293,8 +337,9 @@ See :ref:`intro_configuration`.
 How do I disable cowsay?
 ++++++++++++++++++++++++
 
-If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, set ``nocows=1`` in ansible.cfg, or set the :envvar:`ANSIBLE_NOCOWS` environment variable:
+If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks. If you decide
+that you would like to work in a professional cow-free environment, you can either uninstall cowsay, set ``nocows=1``
+in ``ansible.cfg``, or set the :envvar:`ANSIBLE_NOCOWS` environment variable:
 
 .. code-block:: shell-session
 
@@ -305,13 +350,17 @@ that you would like to work in a professional cow-free environment, you can eith
 How do I see a list of all of the ansible\_ variables?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ansible by default gathers "facts" about the machines under management, and these facts can be accessed in Playbooks and in templates. To see a list of all of the facts that are available about a machine, you can run the "setup" module as an ad-hoc action:
+Ansible by default gathers "facts" about the machines under management, and these facts can be accessed in playbooks
+and in templates. To see a list of all of the facts that are available about a machine, you can run the ``setup`` module
+as an ad hoc action:
 
 .. code-block:: shell-session
 
     ansible -m setup hostname
 
-This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.This does NOT include inventory variables or internal 'magic' variables. See the next question if you need more than just 'facts'.
+This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe
+the output to a pager.This does NOT include inventory variables or internal 'magic' variables. See the next question
+if you need more than just 'facts'.
 
 
 .. _browse_inventory_vars:
@@ -354,7 +403,8 @@ file with a list of servers. To do this, you can just access the "$groups" dicti
         {{ host }}
     {% endfor %}
 
-If you need to access facts about these hosts, for instance, the IP address of each hostname, you need to make sure that the facts have been populated. For example, make sure you have a play that talks to db_servers::
+If you need to access facts about these hosts, for instance, the IP address of each hostname,
+you need to make sure that the facts have been populated. For example, make sure you have a play that talks to db_servers::
 
     - hosts:  db_servers
       tasks:
@@ -374,14 +424,20 @@ How do I access a variable name programmatically?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
-via a role parameter or other input.  Variable names can be built by adding strings together, like so:
+via a role parameter or other input. Variable names can be built by adding strings together using "~", like so:
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
+    {{ hostvars[inventory_hostname]['ansible_' ~ which_interface]['ipv4']['address'] }}
 
-The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables. ``inventory_hostname``
 is a magic variable that indicates the current host you are looping over in the host loop.
+
+In the example above, if your interface names have dashes, you must replace them with underscores:
+
+.. code-block:: jinja
+
+    {{ hostvars[inventory_hostname]['ansible_' ~ which_interface | replace('_', '-') ]['ipv4']['address'] }}
 
 Also see dynamic_variables_.
 
@@ -391,7 +447,8 @@ Also see dynamic_variables_.
 How do I access a group variable?
 +++++++++++++++++++++++++++++++++
 
-Technically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
+Technically, you don't, Ansible does not really use groups directly. Groups are labels for host selection and a way to bulk assign variables,
+they are not a first class entity, Ansible only cares about Hosts and Tasks.
 
 That said, you could just access the variable by selecting a host that is part of that group, see first_host_in_a_group_ below for an example.
 
@@ -401,9 +458,9 @@ That said, you could just access the variable by selecting a host that is part o
 How do I access a variable of the first host in a group?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
+What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too. Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable.  (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable. (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -412,10 +469,10 @@ Anyway, here's the trick:
 
     {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
 
-Notice how we're pulling out the hostname of the first machine of the webservers group.  If you are doing this in a template, you
+Notice how we're pulling out the hostname of the first machine of the webservers group. If you are doing this in a template, you
 could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact::
 
-    - set_fact: headnode={{ groups[['webservers'][0]] }}
+    - set_fact: headnode={{ groups['webservers'][0] }}
 
     - debug: msg={{ hostvars[headnode].ansible_eth0.ipv4.address }}
 
@@ -426,14 +483,16 @@ Notice how we interchanged the bracket syntax for dots -- that can be done anywh
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The "copy" module has a recursive parameter.  However, take a look at the "synchronize" module if you want to do something more efficient for a large number of files.  The "synchronize" module wraps rsync.  See the module index for info on both of these modules.
+The ``copy`` module has a recursive parameter. However, take a look at the ``synchronize`` module if you want to do something more efficient
+for a large number of files. The ``synchronize`` module wraps rsync. See the module index for info on both of these modules.
 
 .. _shell_env:
 
 How do I access shell environment variables?
 ++++++++++++++++++++++++++++++++++++++++++++
 
-If you just need to access existing variables ON THE CONTROLLER, use the 'env' lookup plugin.
+
+**On controller machine :** Access existing variables from controller use the ``env`` lookup plugin.
 For example, to access the value of the HOME environment variable on the management machine::
 
    ---
@@ -442,36 +501,39 @@ For example, to access the value of the HOME environment variable on the managem
         local_home: "{{ lookup('env','HOME') }}"
 
 
-For environment variables on the TARGET machines, they are available via facts in the 'ansible_env' variable:
+**On target machines :** Environment variables are available via facts in the ``ansible_env`` variable:
 
 .. code-block:: jinja
 
-   {{ ansible_env.SOME_VARIABLE }}
+   {{ ansible_env.HOME }}
 
-If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
-There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.
-The exact files to edit vary depending on your OS and distribution and local configuration.
+If you need to set environment variables for TASK execution, see :ref:`playbooks_environment`
+in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
+There are several ways to set environment variables on your target machines. You can use the
+:ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>`
+modules to introduce environment variables into files.  The exact files to edit vary depending on your OS
+and distribution and local configuration.
 
 .. _user_passwords:
 
 How do I generate encrypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ansible ad-hoc command is the easiest option:
+Ansible ad hoc command is the easiest option:
 
 .. code-block:: shell-session
 
     ansible all -i localhost, -m debug -a "msg={{ 'mypassword' | password_hash('sha512', 'mysecretsalt') }}"
 
-The mkpasswd utility that is available on most Linux systems is also a great option:
+The ``mkpasswd`` utility that is available on most Linux systems is also a great option:
 
 .. code-block:: shell-session
 
     mkpasswd --method=sha-512
 
 
-If this utility is not installed on your system (e.g. you are using macOS) then you can still easily
-generate these passwords using Python. First, ensure that the `Passlib <https://bitbucket.org/ecollins/passlib/wiki/Home>`_
+If this utility is not installed on your system (for example, you are using macOS) then you can still easily
+generate these passwords using Python. First, ensure that the `Passlib <https://foss.heptapod.net/python-libs/passlib/-/wikis/home>`_
 password hashing library is installed:
 
 .. code-block:: shell-session
@@ -487,16 +549,12 @@ Once the library is ready, SHA512 password values can then be generated as follo
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
 You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :ref:`playbooks_vault` to encrypt sensitive data.
 
-In OpenBSD, a similar option is available in the base system called encrypt(1):
-
-.. code-block:: shell-session
-
-    encrypt
+In OpenBSD, a similar option is available in the base system called ``encrypt (1)``
 
 .. _dot_or_array_notation:
 
-Ansible supports dot notation and array notation for variables. Which notation should I use?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Ansible allows dot notation and array notation for variables. Which notation should I use?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The dot notation comes from Jinja and works fine for variables without special
 characters. If your variable contains dots (.), colons (:), or dashes (-), if
@@ -546,8 +604,11 @@ risky because the parameters and values passed to ``usermod_args`` could
 be overwritten by malicious values in the ``host facts`` on a compromised
 target machine. To mitigate this risk:
 
-* set bulk variables at a level of precedence greater than ``host facts`` in the order of precedence found in :ref:`ansible_variable_precedence` (the example above is safe because play vars take precedence over facts)
-* disable the :ref:`inject_facts_as_vars` configuration setting to prevent fact values from colliding with variables (this will also disable the original warning)
+* set bulk variables at a level of precedence greater than ``host facts`` in the order of precedence
+  found in :ref:`ansible_variable_precedence` (the example above is safe because play vars take
+  precedence over facts)
+* disable the :ref:`inject_facts_as_vars` configuration setting to prevent fact values from colliding
+  with variables (this will also disable the original warning)
 
 
 .. _commercial_support:
@@ -555,25 +616,19 @@ target machine. To mitigate this risk:
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <https://www.ansible.com/products/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes! See our `services page <https://www.ansible.com/products/consulting>`_ for information on our services
+and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
-We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/resources/webinars-training>`_ for more info on upcoming webinars.
+We also offer free web-based training classes on a regular basis. See our
+`webinar page <https://www.ansible.com/resources/webinars-training>`_ for more info on upcoming webinars.
 
 
 .. _web_interface:
 
-Is there a web interface / REST API / etc?
-++++++++++++++++++++++++++++++++++++++++++
+Is there a web interface / REST API / GUI?
+++++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
-
-
-.. _docs_contributions:
-
-How do I submit a change to the documentation?
-++++++++++++++++++++++++++++++++++++++++++++++
-
-Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_.  Thanks!
+Yes! Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
 
 .. _keep_secret_data:
@@ -591,14 +646,14 @@ If you have a task that you don't want to show the results or command given to i
 
 This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
 
-The no_log attribute can also apply to an entire play::
+The ``no_log`` attribute can also apply to an entire play::
 
     - hosts: all
       no_log: True
 
-Though this will make the play somewhat difficult to debug.  It's recommended that this
+Though this will make the play somewhat difficult to debug. It's recommended that this
 be applied to single tasks only, once a playbook is completed. Note that the use of the
-no_log attribute does not prevent data from being shown when debugging Ansible itself via
+``no_log`` attribute does not prevent data from being shown when debugging Ansible itself via
 the :envvar:`ANSIBLE_DEBUG` environment variable.
 
 
@@ -613,7 +668,8 @@ A steadfast rule is 'always use ``{{ }}`` except when ``when:``'.
 Conditionals are always run through Jinja2 as to resolve the expression,
 so ``when:``, ``failed_when:`` and ``changed_when:`` are always templated and you should avoid adding ``{{ }}``.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses), as this made it hard to distinguish between an undefined variable and a string.
+In most other cases you should always use the brackets, even if previously you could use variables without
+specifying (like ``loop`` or ``with_`` clauses), as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:
 
@@ -625,23 +681,23 @@ The above DOES NOT WORK as you expect, if you need to use a dynamic variable use
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
+    {{ hostvars[inventory_hostname]['somevar_' ~ other_var] }}
 
 For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
 .. code-block:: jinja
 
-     {{ lookup('vars', 'somevar_' + other_var) }}
+     {{ lookup('vars', 'somevar_' ~ other_var) }}
 
 
 .. _why_no_wheel:
 
-Why don't you ship in X format?
-+++++++++++++++++++++++++++++++
+Why don't you ship ansible in wheel format (or other packaging format) ?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
-In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
-
+In most cases it has to do with maintainability. There are many ways to ship software and we do not have
+the resources to release Ansible on every platform.
+In some cases there are technical issues. For example, our dependencies are not present on Python Wheels.
 
 .. _ansible_host_delegated:
 
@@ -653,7 +709,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, and so on.
 
 
 .. _scp_protocol_error_filename:
@@ -661,7 +717,8 @@ This works for all overriden connection variables, like ``ansible_user``, ``ansi
 How do I fix 'protocol error: filename does not match request' when fetching a file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Newer releases of OpenSSH have a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_ in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
+Since release ``7.9p1`` of OpenSSH there is a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_
+in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
 
     failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
 
@@ -682,6 +739,29 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 
 .. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
 
+.. _mfa_support:
+
+Does Ansible support multiple factor authentication 2FA/MFA/biometrics/finterprint/usbkey/OTP/...
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+No, Ansible is designed to execute multiple tasks against multiple targets, minimizing user interaction.
+As with most automation tools, it is not compatible with interactive security systems designed to handle human interaction.
+Most of these systems require a secondary prompt per target, which prevents scaling to thousands of targets.  They also
+tend to have very short expiration periods so it requires frequent reauthorization, also an issue with many hosts and/or
+a long set of tasks.
+
+In such environments we recommend securing around Ansible's execution but still allowing it to use an 'automation user' that does not require such measures.
+This is something that Tower/AWX excels at by allowing administrators to set up RBAC access to inventory, along with managing credentials and job execution.
+
+
+.. _docs_contributions:
+
+How do I submit a change to the documentation?
+++++++++++++++++++++++++++++++++++++++++++++++
+
+Documentation for Ansible is kept in the main project git repository, and complete instructions
+for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_. Thanks!
+
 .. _i_dont_see_my_question:
 
 I don't see my question here
@@ -694,7 +774,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
    :ref:`working_with_playbooks`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
-       Best practices advice
+       Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
