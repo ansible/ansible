@@ -52,7 +52,7 @@ EXAMPLES = '''
 - name: Set a hostname specifying strategy
   ansible.builtin.hostname:
     name: web01
-    strategy: systemd
+    use: systemd
 '''
 
 import os
