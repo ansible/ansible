@@ -10,18 +10,6 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
     options:
-      cache:
-        deprecated:
-          why: This option has never been in use. External scripts must implement their own caching.
-          version: "2.12"
-        description:
-          - This option has no effect. The plugin will not cache results because external inventory scripts
-            are responsible for their own caching. This option will be removed in 2.12.
-        ini:
-           - section: inventory_plugin_script
-             key: cache
-        env:
-           - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_CACHE
       always_show_stderr:
         description: Toggle display of stderr even when script was successful
         version_added: "2.5.1"
@@ -50,13 +38,13 @@ from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.utils.display import Display
 
 display = Display()
 
 
-class InventoryModule(BaseInventoryPlugin, Cacheable):
+class InventoryModule(BaseInventoryPlugin):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
     NAME = 'script'
@@ -92,13 +80,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
-
-        if self.get_option('cache') is not None:
-            display.deprecated(
-                msg="The 'cache' option is deprecated for the script inventory plugin. "
-                "External scripts implement their own caching and this option has never been used",
-                version="2.12", collection_name='ansible.builtin'
-            )
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
