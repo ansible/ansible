@@ -1,0 +1,2 @@
+minor_changes:
+- service - add description how service module works internally (https://github.com/ansible/ansible/issues/74507).
