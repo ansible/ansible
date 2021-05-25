@@ -154,15 +154,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     is_static = False
                 elif action in C._ACTION_IMPORT_TASKS:
                     is_static = True
-                elif t.static is not None:
-                    display.deprecated("The use of 'static' has been deprecated. "
-                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion",
-                                       version='2.12', collection_name='ansible.builtin')
-                    is_static = t.static
                 else:
-                    is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                        (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                        (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks instead', "2.16")
+                    is_static = not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop
 
                 if is_static:
                     if t.loop is not None:
@@ -234,35 +228,18 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         else:
                             include_file = loader.path_dwim(include_target)
 
-                    try:
-                        data = loader.load_from_file(include_file)
-                        if not data:
-                            display.warning('file %s is empty and had no tasks to include' % include_file)
-                            continue
-                        elif not isinstance(data, list):
-                            raise AnsibleParserError("included task files must contain a list of tasks", obj=data)
-
-                        # since we can't send callbacks here, we display a message directly in
-                        # the same fashion used by the on_include callback. We also do it here,
-                        # because the recursive nature of helper methods means we may be loading
-                        # nested includes, and we want the include order printed correctly
-                        display.vv("statically imported: %s" % include_file)
-                    except AnsibleFileNotFound:
-                        if action not in C._ACTION_INCLUDE or t.static or \
-                           C.DEFAULT_TASK_INCLUDES_STATIC or \
-                           C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
-                            raise
-                        display.deprecated(
-                            "Included file '%s' not found, however since this include is not "
-                            "explicitly marked as 'static: yes', we will try and include it dynamically "
-                            "later. In the future, this will be an error unless 'static: no' is used "
-                            "on the include task. If you do not want missing includes to be considered "
-                            "dynamic, use 'static: yes' on the include or set the global ansible.cfg "
-                            "options to make all includes static for tasks and/or handlers" % include_file,
-                            version="2.12", collection_name='ansible.builtin'
-                        )
-                        task_list.append(t)
+                    data = loader.load_from_file(include_file)
+                    if not data:
+                        display.warning('file %s is empty and had no tasks to include' % include_file)
                         continue
+                    elif not isinstance(data, list):
+                        raise AnsibleParserError("included task files must contain a list of tasks", obj=data)
+
+                    # since we can't send callbacks here, we display a message directly in
+                    # the same fashion used by the on_include callback. We also do it here,
+                    # because the recursive nature of helper methods means we may be loading
+                    # nested includes, and we want the include order printed correctly
+                    display.vv("statically imported: %s" % include_file)
 
                     ti_copy = t.copy(exclude_parent=True)
                     ti_copy._parent = block
@@ -277,28 +254,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         variable_manager=variable_manager,
                     )
 
-                    # FIXME: remove once 'include' is removed
-                    # pop tags out of the include args, if they were specified there, and assign
-                    # them to the include. If the include already had tags specified, we raise an
-                    # error so that users know not to specify them both ways
-                    tags = ti_copy.vars.pop('tags', [])
-                    if isinstance(tags, string_types):
-                        tags = tags.split(',')
-
-                    if len(tags) > 0:
-                        if action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS:
-                            raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
-                        if len(ti_copy.tags) > 0:
-                            raise AnsibleParserError(
-                                "Include tasks should not specify tags in more than one way (both via args and directly on the task). "
-                                "Mixing styles in which tags are specified is prohibited for whole import hierarchy, not only for single import statement",
-                                obj=task_ds,
-                                suppress_extended_error=True,
-                            )
-                        display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                           version="2.12", collection_name='ansible.builtin')
-                    else:
-                        tags = ti_copy.tags[:]
+                    tags = ti_copy.tags[:]
 
                     # now we extend the tags on each of the included blocks
                     for b in included_blocks:
@@ -331,12 +287,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 is_static = False
                 if action in C._ACTION_IMPORT_ROLE:
                     is_static = True
-
-                elif ir.static is not None:
-                    display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
-                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion",
-                                       version='2.12', collection_name='ansible.builtin')
-                    is_static = ir.static
 
                 if is_static:
                     if ir.loop is not None:

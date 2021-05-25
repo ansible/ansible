@@ -1,0 +1,3 @@
+bugfixes:
+- include - Remove deprecated ``static`` argument for ``include``
+  (https://github.com/ansible/ansible/issues/74135)

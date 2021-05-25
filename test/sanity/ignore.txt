@@ -114,7 +114,6 @@ lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
-lib/ansible/playbook/helpers.py pylint:ansible-deprecated-version
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
