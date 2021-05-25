@@ -105,3 +105,11 @@ class BecomeBase(AnsiblePlugin):
             if self._check_password_error(b_output, errstring):
                 return True
         return False
+
+    def check_become_error(self, b_output):
+        error = False
+        if self.check_missing_password(b_output):
+            error = 'Required become password not supplied'
+        elif self.check_incorrect_password(b_output):
+            error = 'Incorrect become password supplied'
+        return error
