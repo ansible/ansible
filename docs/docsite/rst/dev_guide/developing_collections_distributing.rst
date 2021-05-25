@@ -221,7 +221,11 @@ Alternatively, it is also possible to publish to Galaxy without configuring the 
 .. code-block:: bash
 
      ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz --token abcdefghijklmnopqrtuvwxyz
+     
+.. note::
 
+	Using the ``--token`` argument is not recommended because passing secrets on the command line may lead to exposing them to others on the system
+	
 
 .. _upload_collection_galaxy:
 
