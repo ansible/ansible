@@ -33,6 +33,7 @@ def _warning(msg):
 
 def _deprecated(msg, version):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+
     try:
         from ansible.utils.display import Display
         Display().deprecated(msg, version=version)
@@ -173,7 +174,7 @@ def __getattr__(name):
     else:
         setting = config.data.get_setting(name)
         for dep in config.DEPRECATED:
-            _deprecated(dep[0], dep[1])
+            _deprecated(dep[0], dep[1]['version'])
         for warn in config.WARNINGS:
             _warning(warn)
         if setting:
