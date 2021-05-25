@@ -34,7 +34,7 @@ DOCUMENTATION = """
         version_added: '2.12'
     notes:
       - By default, if read in variable context, the file can be interpreted as YAML or JSON if the content is valid to the parser
-      - This lookup does not understand 'globing', use the fileglob lookup instead
+      - This lookup does not understand 'globing', use the ``fileglob`` lookup instead.
       - There is no support for binary content, everything read will be transformed to Python unicode text internally
 """
 
