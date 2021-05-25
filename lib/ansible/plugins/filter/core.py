@@ -104,13 +104,11 @@ def strftime(string_format, second=None):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    if a is None:
-        a = u''
-    return shlex_quote(to_text(a))
-
-
-def fileglob(pathname):
-    ''' return list of matched regular files for glob '''
+    try:
+        return datetime.datetime.strptime(string, format)
+    except ValueError:
+        if fail_on_error:
+            return AnsibleFilterError('Invalid value for conversion (%s)' % string)
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
