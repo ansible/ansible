@@ -1,0 +1,5 @@
+bugfixes:
+  - >
+    ``AnsibleModule.run_command`` - Address thread safety issues, concerning mutating the environment,
+    current working directory, and umask.
+    (https://github.com/ansible/ansible/issues/74783)
