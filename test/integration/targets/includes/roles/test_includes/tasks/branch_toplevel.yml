@@ -1,9 +1,11 @@
 # 'canary2' used instead of 'canary', otherwise a "recursive loop detected in
 # template string" occurs when both includes use static=yes
-- include: 'leaf_sublevel.yml canary2={{ canary }}'
-  static: yes
+- import_tasks: leaf_sublevel.yml
+  vars:
+    canary2: '{{ canary }}'
   when: 'nested_include_static|bool' # value for 'static' can not be a variable, hence use 'when'
 
-- include: 'leaf_sublevel.yml canary2={{ canary }}'
-  static: no
+- include_tasks: leaf_sublevel.yml
+  vars:
+    canary2: '{{ canary }}'
   when: 'not nested_include_static|bool'

@@ -118,8 +118,6 @@ class IncludedFile:
 
                     if original_task.action in C._ACTION_ALL_INCLUDE_TASKS:
                         include_file = None
-                        if original_task.static:
-                            continue
 
                         if original_task._parent:
                             # handle relative includes by walking up the list of parent include
