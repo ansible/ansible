@@ -163,27 +163,22 @@ class TestRunCommandArgs:
 class TestRunCommandCwd:
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd(self, mocker, rc_am):
-        rc_am._os.getcwd.return_value = '/old'
         rc_am.run_command('/bin/ls', cwd='/new')
-        assert rc_am._os.chdir.mock_calls == [mocker.call(b'/new'), mocker.call('/old'), ]
+        assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/new'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_relative_path(self, mocker, rc_am):
-        rc_am._os.getcwd.return_value = '/old'
         rc_am.run_command('/bin/ls', cwd='sub-dir')
-        assert rc_am._os.chdir.mock_calls == [mocker.call(b'/old/sub-dir'), mocker.call('/old'), ]
+        assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/home/foo/sub-dir'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_not_a_dir(self, mocker, rc_am):
-        rc_am._os.getcwd.return_value = '/old'
-        rc_am._os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
         rc_am.run_command('/bin/ls', cwd='/not-a-dir')
-        assert rc_am._os.chdir.mock_calls == [mocker.call('/old'), ]
+        assert rc_am._subprocess.Popen.mock_calls[0][2]['cwd'] == b'/not-a-dir'
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_not_a_dir_noignore(self, rc_am):
-        rc_am._os.getcwd.return_value = '/old'
-        rc_am._os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
+        rc_am._os.path.isdir.side_effect = lambda d: d != b'/not-a-dir'
         with pytest.raises(SystemExit):
             rc_am.run_command('/bin/ls', cwd='/not-a-dir', ignore_invalid_cwd=False)
         assert rc_am.fail_json.called
