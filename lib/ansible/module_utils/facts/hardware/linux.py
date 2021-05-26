@@ -159,10 +159,14 @@ class LinuxHardware(Hardware):
         return memory_facts
 
     def get_cpu_facts(self, collected_facts=None):
-        def _default():
+
+        def _core():
+            return {'processors': []}
+
+        def _dd_socket():
             return {
-                'core_ids': [],
-                'cores': 1,
+                'cores': collections.defaultdict(_core),
+                'core_count': 1,
                 'siblings': 1,
             }
 
@@ -175,7 +179,8 @@ class LinuxHardware(Hardware):
         processor_occurrence = 0
         physid = 0
         coreid = 0
-        sockets = collections.defaultdict(_default)
+        processorid = 0
+        sockets = collections.defaultdict(_dd_socket)
 
         xen = False
         xen_paravirt = False
@@ -225,16 +230,16 @@ class LinuxHardware(Hardware):
                 if key == 'model name':
                     model_name_occurrence += 1
                 if key == 'processor':
+                    processorid = int(val)
                     processor_occurrence += 1
                 i += 1
             elif key == 'physical id':
                 physid = int(val)
-                sockets[physid]
             elif key == 'core id':
                 coreid = int(val)
-                sockets[physid]['core_ids'].append(coreid)
+                sockets[physid]['cores'][coreid]['processors'].append(processorid)
             elif key == 'cpu cores':
-                sockets[physid]['cores'] = int(val)
+                sockets[physid]['core_count'] = int(val)
             elif key == 'siblings':
                 sockets[physid]['siblings'] = int(val)
             elif key == '# processors':
@@ -264,16 +269,20 @@ class LinuxHardware(Hardware):
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
-                    cpu_facts['processor_vcpus'] = sum([len(s['core_ids']) for s in sockets.values()])
+                    cpu_facts['processor_vcpus'] = 0
+                    for socket in sockets.values():
+                        for core in socket['cores'].values():
+                            cpu_facts['processor_vcpus'] += len(core['processors'])
+
                 else:
                     cpu_facts['processor_count'] = i
                     cpu_facts['processor_vcpus'] = i
 
                 # This call to sockets[0] must happen before calling sockets.values()
                 # so that the default values for the dict can be properly initialized.
-                # Otherwise, 'processor_cores' will be 0.
+                # Otherwise, 'processor_cores' may be 0.
                 cpu_facts['processor_threads_per_core'] = sockets[0]['siblings']
-                cpu_facts['processor_cores'] = sum(s['cores'] for s in sockets.values())
+                cpu_facts['processor_cores'] = sum(s['core_count'] for s in sockets.values())
 
                 # if the number of processors available to the module's
                 # thread cannot be determined, the processor count

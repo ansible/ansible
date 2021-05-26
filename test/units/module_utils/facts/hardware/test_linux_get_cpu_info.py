@@ -17,7 +17,7 @@ def test_get_cpu_info(mocker, test):
     module = mocker.Mock()
     inst = linux.LinuxHardware(module)
 
-    # mocker.patch('os.path.exists', return_value=False)
+    mocker.patch('os.path.exists', return_value=False)
     mocker.patch('os.access', return_value=True)
     mocker.patch('ansible.module_utils.facts.hardware.linux.get_file_lines', side_effect=[[], test['cpuinfo']])
     mocker.patch('os.sched_getaffinity', create=True, return_value=test['sched_getaffinity'])
