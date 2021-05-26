@@ -5,7 +5,7 @@
     - name: gather 'bad' facts
       action: bogus_facts
 
-    - name: ensure that the 'bad' facts didn't polute what they are not supposed to
+    - name: ensure that the 'bad' facts didn't pollute what they are not supposed to
       assert:
         that:
             - "'touch' not in discovered_interpreter_python|default('')"
