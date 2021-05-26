@@ -1052,7 +1052,7 @@ class Connection(ConnectionBase):
                         display.vvv(u'Privilege escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
-                        raise AnsibleError('Become plugin (%s) error: %s' % (self.become.name, self._flags['become_error'])
+                        raise AnsibleError('Become plugin (%s) error: %s' % (self.become.name, self._flags['become_error']))
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
