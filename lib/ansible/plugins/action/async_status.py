@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import json
 import tempfile
+import time
 
 from ansible.constants import config
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleConnectionFailure, AnsibleFileNotFound
@@ -42,39 +43,52 @@ class ActionModule(ActionBase):
         # local tempfile to copy job file to, using local tmp which is auto cleaned on exit
         fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=config.get_config_value('DEFAULT_LOCAL_TMP'))
 
-        try:
-            self._connection.fetch_file(log_path, tmpfile)
-        except AnsibleConnectionFailure:
-            raise
-        except AnsibleFileNotFound as e:
-            raise AnsibleActionFail("could not find job")
-        except AnsibleError as e:
-            raise AnsibleActionFail("failed to fetch the job file: %s" % to_native(e), orig_exc=e)
+        attempts = 0
+        while True:
+            try:
+                self._connection.fetch_file(log_path, tmpfile)
+            except AnsibleConnectionFailure:
+                raise
+            except AnsibleFileNotFound as e:
+                if attempts > 3:
+                    raise AnsibleActionFail("Could not find job file on remote: %s" % to_native(e), orig_exc=e, result=results)
+            except AnsibleError as e:
+                if attempts > 3:
+                    raise AnsibleActionFail("Could not fetch the job file from remote: %s" % to_native(e), orig_exc=e, result=results)
 
-        try:
-            with open(tmpfile) as f:
-                file_data = f.read()
-                data = json.loads(file_data)
+            try:
+                with open(tmpfile) as f:
+                    file_data = f.read()
+            except (IOError,OSError):
+                pass
 
-            if 'started' not in data:
-                data['finished'] = 1
-                data['ansible_job_id'] = jid
-            elif 'finished' not in data:
-                data['finished'] = 0
-
-            results.update(dict([(to_native(k), v) for k, v in iteritems(data)]))
-
-        except Exception:
             if file_data:
-                results['finished'] = 1
-                results['failed'] = True
-                results['msg'] = "Could not parse job output: %s" % to_native(file_data, errors='surrogate_or_strict')
+                break
+            elif attempts > 3:
+                raise AnsibleActionFail("Unable to fetch a usable job file", result=results)
+
+            attempts += 1
+            time.sleep(attempts * 0.2)
+
+        try:
+            data = json.loads(file_data)
+        except Exception:
+            results['finished'] = 1
+            results['failed'] = True
+            results['msg'] = "Could not parse job output: %s" % to_native(file_data, errors='surrogate_or_strict')
+
+        if 'started' not in data:
+            data['finished'] = 1
+            data['ansible_job_id'] = jid
+
+        results.update(dict([(to_native(k), v) for k, v in iteritems(data)]))
 
     def run(self, tmp=None, task_vars=None):
 
         results = super(ActionModule, self).run(tmp, task_vars)
 
-        # always needed
+        # initialize response
+        results['started'] = results['finished'] = 0
         results['stdout'] = results['stderr'] = ''
         results['stdout_lines'] = results['stderr_lines'] = []
 
@@ -82,7 +96,7 @@ class ActionModule(ActionBase):
         try:
             jid = self._task.args["jid"]
         except KeyError:
-            raise AnsibleActionFail("jid is required")
+            raise AnsibleActionFail("jid is required", result=results)
 
         mode = self._task.args.get("mode", "status")
 
@@ -93,7 +107,6 @@ class ActionModule(ActionBase):
         if mode != 'cleanup':
             results['results_file'] = log_path
             results['started'] = 1
-            results['finished'] = 0
 
             if getattr(self._connection._shell, '_IS_WINDOWS', False):
                 # TODO: eventually fix so we can get remote user (%USERPROFILE%) like we get ~/ for posix
