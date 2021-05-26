@@ -3254,8 +3254,8 @@ def main():
         mail_spool_file = user.get_mail_spool_file_name()
         create_mail_spool = user.default_useradd.get('CREATE_MAIL_SPOOL')
         if mail_spool_file is not None and not os.path.exists(mail_spool_file) \
-            and user.create_home and (user.local or \
-            (create_mail_spool is not None and create_mail_spool.lower() == 'yes')):
+            and user.create_home and (user.local or
+               (create_mail_spool is not None and create_mail_spool.lower() == 'yes')):
             if not module.check_mode:
                 user.create_mail_spool_file()
                 user.chown_mail_spool_file(info[2])
