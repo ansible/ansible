@@ -66,12 +66,24 @@ ansible_job_id:
   sample: '360874038559.4169'
 finished:
   description: Whether the asynchronous job has finished (C(1)) or not (C(0))
-  returned: success
+  returned: always
   type: int
   sample: 1
 started:
   description: Whether the asynchronous job has started (C(1)) or not (C(0))
-  returned: success
+  returned: always
   type: int
   sample: 1
+stdout:
+  description: Any output returned by async_wrapper
+  returned: always
+  type: string
+stderr:
+  description: Any errors returned by async_wrapper
+  returned: always
+  type: string
+erased:
+  description: Path to erased job file
+  returned: when file is erased
+  type: path
 '''
