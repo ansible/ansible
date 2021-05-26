@@ -1336,13 +1336,13 @@ class User(object):
     def default_useradd(self):
          if self._default_useradd:
              return self._default_useradd
-        if os.path.exists(self.DEFAULT_USERADD_FILE):
-            with open(self.DEFAULT_USERADD_FILE, 'r') as f:
-                for line in f:
-                    m = re.match(r'^([A-Z_]+)\s*=\s*(\w+)$', line)
-                    if m:
-                        self._default_useradd[m.group(1)] = m.group(2)
-        return self._default_useradd
+         if os.path.exists(self.DEFAULT_USERADD_FILE):
+             with open(self.DEFAULT_USERADD_FILE, 'r') as f:
+                 for line in f:
+                     m = re.match(r'^([A-Z_]+)\s*=\s*(\w+)$', line)
+                     if m:
+                         self._default_useradd[m.group(1)] = m.group(2)
+         return self._default_useradd
 
 
 # ===========================================
