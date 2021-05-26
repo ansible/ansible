@@ -795,29 +795,29 @@ class Connection(ConnectionBase):
             display_line = to_text(b_line).rstrip('\r\n')
             suppress_output = False
 
-            if sudoable:
-                display.debug("Become testing of line (source=%s, state=%s): '%s'" % (source, state, display_line))
-                if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
-                    display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
-                    self._flags['become_prompt'] = True
-                    suppress_output = True
-                elif self.become.success and self.become.check_success(b_line):
-                    display.debug(u"become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
-                    self._flags['become_success'] = True
-                    suppress_output = True
+            # TODO: find out if why we need any become testing when not sudoable
+            display.debug("Become testing of line (source=%s, state=%s): '%s'" % (source, state, display_line))
+            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
+                display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                self._flags['become_prompt'] = True
+                suppress_output = True
+            elif self.become.success and self.become.check_success(b_line):
+                display.debug(u"become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                self._flags['become_success'] = True
+                suppress_output = True
+            elif sudoable:
+                if hasattr(self.become, 'check_become_error'):
+                    self._flags['become_error'] = self.become.check_become_error(b_line)
+                    if self._flags['become_error']:
+                        display.debug(u"become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 else:
-                    if hasattr(self.become, 'check_become_error'):
-                        self._flags['become_error'] = self.become.check_become_error(b_line)
-                        if self._flags['become_error']:
-                            display.debug(u"become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
-                    else:
-                        # TODO: deprecate this path
-                        if self.become.check_incorrect_password(b_line):
-                            self._flags['become_error'] = 'Incorrect password'
-                            display.debug(u"become_incorrect_password: (source=%s, state=%s): '%s'" % (source, state, display_line))
-                        elif self.become.check_missing_password(b_line):
-                            self._flags['become_error'] = 'Missing required password'
-                            display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                    # TODO: deprecate this path
+                    if self.become.check_incorrect_password(b_line):
+                        self._flags['become_error'] = 'Incorrect password'
+                        display.debug(u"become_incorrect_password: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                    elif self.become.check_missing_password(b_line):
+                        self._flags['become_error'] = 'Missing required password'
+                        display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
 
             if not suppress_output:
                 output.append(b_line)

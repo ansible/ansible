@@ -215,8 +215,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
-        self.assertFalse(conn._flags['become_error'])
-        self.assertTrue(conn._flags['become_nopasswd_error'])
+        self.assertEqual(conn._flags['become_error'], 'Required become password not supplied')
 
     @patch('time.sleep')
     @patch('os.path.exists')
