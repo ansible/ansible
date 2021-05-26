@@ -150,7 +150,7 @@ options:
 
     single_branch:
         description:
-            - Clone only the history leading to the tip of the specified I(branch).
+            - Clone only the history leading to the tip of the specified revision.
         type: bool
         default: 'no'
         version_added: '2.11'
@@ -268,8 +268,10 @@ EXAMPLES = '''
 
 - name: Example clone of a single branch
   ansible.builtin.git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
     single_branch: yes
-    branch: master
+    version: master
 
 - name: Avoid hanging when http(s) password is missing
   ansible.builtin.git:
