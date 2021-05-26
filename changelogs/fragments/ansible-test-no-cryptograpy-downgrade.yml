@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Installation of ``cryptography`` no longer occurs when it is already installed. This avoids downgrading existing OS packages.
