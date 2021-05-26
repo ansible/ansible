@@ -545,7 +545,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
-        self.login_defs_config = {}
+        self._login_defs = {}
         self._default_useradd = {}
 
         if self.umask is not None and self.local:
@@ -1255,8 +1255,7 @@ class User(object):
             if self.umask is not None:
                 umask_string = self.umask
             else:
-                self.read_login_defs()
-                umask_string = self.login_defs_config.get('UMASK')
+                umask_string = self.login_defs.get('UMASK')
             # set correct home mode if we have a umask
             if umask_string is not None:
                 umask = int(umask_string, 8)
@@ -1279,12 +1278,11 @@ class User(object):
 
     def get_mail_spool_file_name(self):
         mail_spool_file = None
-        self.read_login_defs()
-        mail_dir = self.login_defs_config.get('MAIL_DIR')
+        mail_dir = self.login_defs.get('MAIL_DIR')
         if mail_dir is not None:
             mail_spool_file = "%s/%s" % (mail_dir, self.name)
         else:
-            mail_file = self.login_defs_config.get('MAIL_FILE')
+            mail_file = self.login_defs.get('MAIL_FILE')
             if mail_file is not None:
                 mail_spool_file = "%s/%s" % (self.default_home_dir, mail_file)
         return mail_spool_file
@@ -1315,16 +1313,17 @@ class User(object):
             except OSError as e:
                 self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
-    def read_login_defs(self):
-        if self.login_defs_config:
-            return self.login_defs_config
+    @property
+    def login_defs(self):
+        if self._login_defs:
+            return self._login_defs
         if os.path.exists(self.LOGIN_DEFS):
             with open(self.LOGIN_DEFS, 'r') as f:
                 for line in f:
                     m = re.match(r'^([A-Z_]+)\s+(\w+)$', line)
                     if m:
-                        self.login_defs_config[m.group(1)] = m.group(2)
-        return self.login_defs_config
+                        self._login_defs[m.group(1)] = m.group(2)
+        return self._login_defs
 
     @property
     def default_home_dir(self):
