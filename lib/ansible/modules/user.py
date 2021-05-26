@@ -1327,7 +1327,10 @@ class User(object):
 
     @property
     def default_home_dir(self):
-        return "%s/%s" % (self.HOME_PREFIX, self.name)
+        home_prefix = self.default_useradd.get('HOME')
+        if home_prefix is None:
+            home_prefix = self.HOME_PREFIX
+        return "%s/%s" % (home_prefix, self.name)
 
     @property
     def default_useradd(self):
