@@ -544,7 +544,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
-        self.login_defs_dict = {}
+        self.login_defs_config = {}
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -1253,8 +1253,8 @@ class User(object):
             if self.umask is not None:
                 umask_string = self.umask
             else:
-                login_defs_dict = self.read_login_defs()
-                umask_string = login_defs_dict.get('UMASK')
+                login_defs_config = self.read_login_defs()
+                umask_string = login_defs_config.get('UMASK')
             # set correct home mode if we have a umask
             if umask_string is not None:
                 umask = int(umask_string, 8)
@@ -1277,8 +1277,8 @@ class User(object):
 
     def get_mail_spool_file_name(self):
         mail_spool_file = None
-        login_defs_dict = self.read_login_defs()
-        mail_dir = login_defs_dict.get('MAIL_DIR')
+        login_defs_config = self.read_login_defs()
+        mail_dir = login_defs_config.get('MAIL_DIR')
         if mail_dir is not None:
             mail_spool_file = "%s/%s" % (mail_dir, self.name)
         return mail_spool_file
@@ -1310,15 +1310,15 @@ class User(object):
                 self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def read_login_defs(self):
-        if self.login_defs_dict:
-            return self.login_defs_dict
+        if self.login_defs_config:
+            return self.login_defs_config
         if os.path.exists(self.LOGIN_DEFS):
             with open(self.LOGIN_DEFS, 'r') as f:
                 for line in f:
                     m = re.match(r'^([A-Z_]+)\s+(\w+)$', line)
                     if m:
-                        self.login_defs_dict[m.group(1)] = m.group(2)
-        return self.login_defs_dict
+                        self.login_defs_config[m.group(1)] = m.group(2)
+        return self.login_defs_config
 
 
 # ===========================================
