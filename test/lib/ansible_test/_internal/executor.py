@@ -130,6 +130,16 @@ def get_openssl_version(args, python, python_version):  # type: (EnvironmentConf
     return None
 
 
+def is_cryptography_available(python):  # type: (str) -> bool
+    """Return True if cryptography is available for the given python."""
+    try:
+        raw_command([python, '-c', 'import cryptography'], capture=True)
+    except SubprocessError:
+        return False
+
+    return True
+
+
 def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
     """Return the setuptools version for the given python."""
     try:
@@ -152,6 +162,11 @@ def install_cryptography(args, python, python_version, pip):  # type: (Environme
     # make sure setuptools is available before trying to install cryptography
     # the installed version of setuptools affects the version of cryptography to install
     run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
+
+    # skip cryptography install if it is already available
+    # this avoids downgrading cryptography when OS packages provide a newer version than we are able to install using pip
+    if is_cryptography_available(python):
+        return
 
     # install the latest cryptography version that the current requirements can support
     # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
