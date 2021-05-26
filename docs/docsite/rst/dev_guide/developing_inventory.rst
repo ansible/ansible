@@ -143,9 +143,9 @@ The base class does some minimal assignment for reuse in other methods.
 
        def parse(self, inventory, loader, path, cache=True):
 
-        self.loader = loader
-        self.inventory = inventory
-        self.templar = Templar(loader=loader)
+            self.loader = loader
+            self.inventory = inventory
+            self.templar = Templar(loader=loader)
 
 It is up to the plugin now to parse the provided inventory source and translate it into Ansible inventory.
 To facilitate this, the example below uses a few helper functions:
