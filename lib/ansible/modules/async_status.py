@@ -77,13 +77,13 @@ started:
 stdout:
   description: Any output returned by async_wrapper
   returned: always
-  type: string
+  type: str
 stderr:
   description: Any errors returned by async_wrapper
   returned: always
-  type: string
+  type: str
 erased:
   description: Path to erased job file
   returned: when file is erased
-  type: path
+  type: str
 '''
