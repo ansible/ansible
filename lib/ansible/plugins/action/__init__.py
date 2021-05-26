@@ -440,16 +440,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''Determine if temporary path should be deleted or kept by user request/config'''
         return tmp_path and self._cleanup_remote_tmp and not C.DEFAULT_KEEP_REMOTE_FILES and "-tmp-" in tmp_path
 
-    def _remove_tmp_path(self, tmp_path, force=False):
+    def _remove_tmp_path(self, tmp_path):
         '''Remove a temporary path we created. '''
 
         if tmp_path is None and self._connection._shell.tmpdir:
             tmp_path = self._connection._shell.tmpdir
 
-        if force or self._should_remove_tmp_path(tmp_path):
+        if self._should_remove_tmp_path(tmp_path):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
-            # If we have gotten here we have a working connection configuration.
-            # If the connection breaks we could leave tmp directories out on the remote system.
+            # If we have gotten here we have a working ssh configuration.
+            # If ssh breaks we could leave tmp directories out on the remote system.
             tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
 
             if tmp_rm_res.get('rc', 0) != 0:
