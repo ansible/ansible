@@ -497,6 +497,7 @@ class User(object):
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
+    DEFAULT_USERADD = '/etc/default/useradd'
     DATE_FORMAT = '%Y-%m-%d'
     MAIL_SPOOL_FILE_MODE = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
     MAIL_SPOOL_FILE_MODE_STRICT = stat.S_IRUSR | stat.S_IWUSR
@@ -545,6 +546,7 @@ class User(object):
         self.password_expire_min = module.params['password_expire_min']
         self.umask = module.params['umask']
         self.login_defs_config = {}
+        self._default_useradd = {}
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -1327,6 +1329,18 @@ class User(object):
     @property
     def default_home_dir(self):
         return "%s/%s" % (self.HOME_PREFIX, self.name)
+
+    @property
+    def default_useradd(self):
+         if self._default_useradd:
+             return self._default_useradd
+        if os.path.exists(self.DEFAULT_USERADD):
+            with open(self.DEFAULT_USERADD, 'r') as f:
+                for line in f:
+                    m = re.match(r'^([A-Z_]+)\s*=\s*(\w+)$', line)
+                    if m:
+                        self._default_useradd[m.group(1)] = m.group(2)
+        return self._default_useradd
 
 
 # ===========================================
