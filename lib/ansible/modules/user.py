@@ -1253,8 +1253,8 @@ class User(object):
             if self.umask is not None:
                 umask_string = self.umask
             else:
-                login_defs_config = self.read_login_defs()
-                umask_string = login_defs_config.get('UMASK')
+                self.read_login_defs()
+                umask_string = self.login_defs_config.get('UMASK')
             # set correct home mode if we have a umask
             if umask_string is not None:
                 umask = int(umask_string, 8)
@@ -1277,8 +1277,8 @@ class User(object):
 
     def get_mail_spool_file_name(self):
         mail_spool_file = None
-        login_defs_config = self.read_login_defs()
-        mail_dir = login_defs_config.get('MAIL_DIR')
+        self.read_login_defs()
+        mail_dir = self.login_defs_config.get('MAIL_DIR')
         if mail_dir is not None:
             mail_spool_file = "%s/%s" % (mail_dir, self.name)
         return mail_spool_file
