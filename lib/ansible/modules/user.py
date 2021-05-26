@@ -496,8 +496,8 @@ class User(object):
     PASSWORDFILE = '/etc/passwd'
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
-    LOGIN_DEFS = '/etc/login.defs'
-    DEFAULT_USERADD = '/etc/default/useradd'
+    LOGIN_DEFS_FILE = '/etc/login.defs'
+    DEFAULT_USERADD_FILE = '/etc/default/useradd'
     DATE_FORMAT = '%Y-%m-%d'
     MAIL_SPOOL_FILE_MODE = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
     MAIL_SPOOL_FILE_MODE_STRICT = stat.S_IRUSR | stat.S_IWUSR
@@ -1317,8 +1317,8 @@ class User(object):
     def login_defs(self):
         if self._login_defs:
             return self._login_defs
-        if os.path.exists(self.LOGIN_DEFS):
-            with open(self.LOGIN_DEFS, 'r') as f:
+        if os.path.exists(self.LOGIN_DEFS_FILE):
+            with open(self.LOGIN_DEFS_FILE, 'r') as f:
                 for line in f:
                     m = re.match(r'^([A-Z_]+)\s+(\w+)$', line)
                     if m:
@@ -1333,8 +1333,8 @@ class User(object):
     def default_useradd(self):
          if self._default_useradd:
              return self._default_useradd
-        if os.path.exists(self.DEFAULT_USERADD):
-            with open(self.DEFAULT_USERADD, 'r') as f:
+        if os.path.exists(self.DEFAULT_USERADD_FILE):
+            with open(self.DEFAULT_USERADD_FILE, 'r') as f:
                 for line in f:
                     m = re.match(r'^([A-Z_]+)\s*=\s*(\w+)$', line)
                     if m:
