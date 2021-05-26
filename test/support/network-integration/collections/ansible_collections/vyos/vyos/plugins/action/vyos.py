@@ -103,7 +103,7 @@ class ActionModule(ActionNetworkModule):
                 return {
                     "failed": True,
                     "msg": "unable to open shell. Please see: "
-                    + "https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell",
+                    + "https://docs.ansible.com/ansible/latest/network/user_guide/network_debug_troubleshooting.html#category-unable-to-open-shell",
                 }
 
             task_vars["ansible_socket"] = socket_path
