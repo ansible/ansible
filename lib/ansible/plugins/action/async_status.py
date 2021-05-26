@@ -104,7 +104,10 @@ class ActionModule(ActionBase):
         async_dir = self._get_async_dir()
         log_path = self._connection._shell.join_path(async_dir, jid)
 
-        if mode != 'cleanup':
+        if mode == 'cleanup':
+            self._remove_tmp_path(log_path, force=True)
+            results['erased'] = log_path
+        else:
             results['results_file'] = log_path
             results['started'] = 1
 
@@ -115,9 +118,5 @@ class ActionModule(ActionBase):
             else:
                 # fetch remote file and read locally
                 self._update_results_with_job_file(jid, log_path, results)
-
-        if mode == 'cleanup' or results['finished'] == 1:
-            self._remove_tmp_path(log_path, force=True)
-            results['erased'] = log_path
 
         return results
