@@ -160,13 +160,11 @@ class LinuxHardware(Hardware):
 
     def get_cpu_facts(self, collected_facts=None):
 
-        def _core():
-            return {'processors': []}
-
         def _dd_socket():
             return {
-                'cores': collections.defaultdict(_core),
+                'cores': [],
                 'core_count': 1,
+                'cpus': [],
                 'siblings': 1,
             }
 
@@ -237,7 +235,8 @@ class LinuxHardware(Hardware):
                 physid = int(val)
             elif key == 'core id':
                 coreid = int(val)
-                sockets[physid]['cores'][coreid]['processors'].append(processorid)
+                sockets[physid]['cores'].append(coreid)
+                sockets[physid]['cpus'].append(processorid)
             elif key == 'cpu cores':
                 sockets[physid]['core_count'] = int(val)
             elif key == 'siblings':
@@ -269,18 +268,14 @@ class LinuxHardware(Hardware):
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
-                    cpu_facts['processor_vcpus'] = 0
-                    for socket in sockets.values():
-                        for core in socket['cores'].values():
-                            cpu_facts['processor_vcpus'] += len(core['processors'])
-
+                    cpu_facts['processor_vcpus'] = sum(len(s['cpus']) for s in sockets.values())
                 else:
                     cpu_facts['processor_count'] = i
                     cpu_facts['processor_vcpus'] = i
 
                 # This call to sockets[0] must happen before calling sockets.values()
                 # so that the default values for the dict can be properly initialized.
-                # Otherwise, 'processor_cores' may be 0.
+                # Otherwise core count will be 0.
                 cpu_facts['processor_threads_per_core'] = sockets[0]['siblings']
                 cpu_facts['processor_cores'] = sum(s['core_count'] for s in sockets.values())
 
