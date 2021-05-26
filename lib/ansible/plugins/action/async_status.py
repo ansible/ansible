@@ -59,7 +59,7 @@ class ActionModule(ActionBase):
             try:
                 with open(tmpfile) as f:
                     file_data = f.read()
-            except (IOError,OSError):
+            except (IOError, OSError):
                 pass
 
             if file_data:
