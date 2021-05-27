@@ -77,8 +77,6 @@ DOCUMENTATION = '''
           vars:
               - name: ansible_ssh_args
                 version_added: '2.7'
-          cli:
-              - name: ssh_args
       ssh_common_args:
           description: Common extra args for all ssh CLI tools
           ini:
