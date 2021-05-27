@@ -1,0 +1,2 @@
+bugfixes:
+  - config - use ``callbacks_enabled`` instead ``callback_enabled`` in a deprecated message (https://github.com/ansible/ansible/issues/70028).

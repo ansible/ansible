@@ -574,7 +574,7 @@ CALLBACKS_ENABLED:
     deprecated:
       why: normalizing names to new standard
       version: "2.15"
-      alternatives: 'callback_enabled'
+      alternatives: 'callbacks_enabled'
   - key: callbacks_enabled
     section: defaults
     version_added: '2.11'
