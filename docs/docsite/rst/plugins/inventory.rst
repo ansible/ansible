@@ -24,7 +24,7 @@ In some circumstances, for example, if the inventory plugin does not use a YAML 
    [inventory]
    enable_plugins = host_list, script, auto, yaml, ini, toml
 
-If the plugin is in a collection, and isn't being picked up by the `auto` statement, you can append the fully qualified name:
+If the plugin is in a collection and is not being picked up by the `auto` statement, you can append the fully qualified name:
 
 .. code-block:: ini
 
