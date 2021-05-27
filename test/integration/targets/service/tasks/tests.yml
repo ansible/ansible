@@ -11,6 +11,39 @@
     that:
       - "enable_in_check_mode_result is changed"
 
+- name: (check mode run) test that service defaults are used
+  service:
+  register: enable_in_check_mode_result
+  check_mode: yes
+  module_defaults:
+    service:
+      name: ansible_test
+      enabled: yes
+
+- name: assert that changes reported for check mode run
+  assert:
+    that:
+      - "enable_in_check_mode_result is changed"
+
+- name: (check mode run) test that specific module defaults are used
+  service:
+  register: enable_in_check_mode_result
+  check_mode: yes
+  when: "ansible_service_mgr in ['sysvinit', 'systemd']"
+  module_defaults:
+    sysvinit:
+      name: ansible_test
+      enabled: yes
+    systemd:
+      name: ansible_test
+      enabled: yes
+
+- name: assert that changes reported for check mode run
+  assert:
+    that:
+      - "enable_in_check_mode_result is changed"
+  when: "ansible_service_mgr in ['sysvinit', 'systemd']"
+
 - name: enable the ansible test service
   service: name=ansible_test enabled=yes
   register: enable_result

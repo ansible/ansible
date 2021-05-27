@@ -19,3 +19,7 @@ ansible-playbook prevent_clobbering.yml -v "$@"
 
 # ensure we dont fail module on bad subset
 ansible-playbook verify_subset.yml "$@"
+
+# ensure we can set defaults for the action plugin and facts module
+ansible-playbook  test_module_defaults.yml "$@" --tags default_fact_module
+ANSIBLE_FACTS_MODULES='ansible.legacy.setup' ansible-playbook test_module_defaults.yml "$@" --tags custom_fact_module

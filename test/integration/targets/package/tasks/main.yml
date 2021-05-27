@@ -74,6 +74,38 @@
 ## package
 ##
 
+# Verify module_defaults for package and the underlying module are utilized
+# Validates: https://github.com/ansible/ansible/issues/72918
+- block:
+    # 'name' is required
+    - name: install apt with package defaults
+      package:
+      module_defaults:
+        package:
+          name: apt
+          state: present
+
+    - name: install apt with dnf defaults (auto)
+      package:
+      module_defaults:
+        dnf:
+          name: apt
+          state: present
+
+    - name: install apt with dnf defaults (use dnf)
+      package:
+        use: dnf
+      module_defaults:
+        dnf:
+          name: apt
+          state: present
+  always:
+    - name: remove apt
+      dnf:
+        name: apt
+        state: absent
+  when: ansible_distribution == "Fedora"
+
 - name: define distros to attempt installing at on
   set_fact:
     package_distros:

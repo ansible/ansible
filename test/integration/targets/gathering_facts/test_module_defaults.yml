@@ -1,0 +1,79 @@
+---
+- hosts: localhost
+  # The gather_facts keyword has default values for its
+  # options so module_defaults doesn't have much affect.
+  gather_facts: no
+  tags:
+    - default_fact_module
+  tasks:
+    - name: set defaults for the action plugin
+      gather_facts:
+      module_defaults:
+        gather_facts:
+          gather_subset: min
+
+    - assert:
+        that: "gather_subset == ['min']"
+
+    - name: set defaults for the module
+      gather_facts:
+      module_defaults:
+        setup:
+          gather_subset: '!all'
+
+    - assert:
+        that: "gather_subset == ['!all']"
+
+    # Defaults for the action plugin win because they are
+    # loaded first and options need to be omitted for
+    # defaults to be used.
+    - name: set defaults for the action plugin and module
+      gather_facts:
+      module_defaults:
+        setup:
+          gather_subset: '!all'
+        gather_facts:
+          gather_subset: min
+
+    - assert:
+        that: "gather_subset == ['min']"
+
+    # The gather_facts 'smart' facts module is 'ansible.legacy.setup' by default.
+    # If 'setup' (the unqualified name) is explicitly requested, FQCN module_defaults
+    # would not apply.
+    - name: set defaults for the fqcn module
+      gather_facts:
+      module_defaults:
+        ansible.legacy.setup:
+          gather_subset: '!all'
+
+    - assert:
+        that: "gather_subset == ['!all']"
+
+- hosts: localhost
+  gather_facts: no
+  tags:
+    - custom_fact_module
+  tasks:
+    - name: set defaults for the module
+      gather_facts:
+      module_defaults:
+        ansible.legacy.setup:
+          gather_subset: '!all'
+
+    - assert:
+        that:
+          - "gather_subset == ['!all']"
+
+    # Defaults for the action plugin win.
+    - name: set defaults for the action plugin and module
+      gather_facts:
+      module_defaults:
+        gather_facts:
+          gather_subset: min
+        ansible.legacy.setup:
+          gather_subset: '!all'
+
+    - assert:
+        that:
+          - "gather_subset == ['min']"
