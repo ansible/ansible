@@ -38,8 +38,9 @@
     - assert:
         that: "gather_subset == ['min']"
 
-    # 'ansible.legacy' is not included in redirect lists.
-    # The module_defaults action must match the module.
+    # The gather_facts 'smart' facts module is 'ansible.legacy.setup' by default.
+    # If 'setup' (the unqualified name) is explicitly requested, FQCN module_defaults
+    # would not apply.
     - name: set defaults for the fqcn module
       gather_facts:
       module_defaults:
@@ -47,7 +48,7 @@
           gather_subset: '!all'
 
     - assert:
-        that: "gather_subset != ['!all']"
+        that: "gather_subset == ['!all']"
 
 - hosts: localhost
   gather_facts: no

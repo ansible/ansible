@@ -71,13 +71,9 @@ class ActionModule(ActionBase):
                         del new_module_args['use']
 
                     # get defaults for specific module
-                    if module in self.BUILTIN_PKG_MGR_MODULES:
-                        redirect_list = [module]
-                    else:
-                        context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
-                        redirect_list = context.redirect_list
+                    context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
                     new_module_args = get_action_args_with_defaults(
-                        module, new_module_args, self._task.module_defaults, self._templar, redirect_list
+                        module, new_module_args, self._task.module_defaults, self._templar, context.redirect_list
                     )
 
                     if module in self.BUILTIN_PKG_MGR_MODULES:

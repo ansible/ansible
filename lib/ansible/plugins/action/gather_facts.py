@@ -41,12 +41,9 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        if fact_module == 'ansible.legacy.setup' and self._use_setup_defaults:
-            redirect_list = ['setup']
-        else:
-            redirect_list = self._shared_loader_obj.module_loader.find_plugin_with_context(
-                fact_module, collection_list=self._task.collections
-            ).redirect_list
+        redirect_list = self._shared_loader_obj.module_loader.find_plugin_with_context(
+            fact_module, collection_list=self._task.collections
+        ).redirect_list
 
         mod_args = get_action_args_with_defaults(
             fact_module, mod_args, self._task.module_defaults, self._templar, redirect_list
@@ -67,8 +64,6 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
-        # Support module_defaults: {'setup': {...}} for backwards compatibility when FACTS_MODULES is 'smart'
-        self._use_setup_defaults = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
@@ -80,13 +75,7 @@ class ActionModule(ActionBase):
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-
-            connection_module = connection_map.get(network_os or self._connection._load_name)
-            if not connection_module:
-                self._use_setup_defaults = True
-                connection_module = 'ansible.legacy.setup'
-
-            modules.append(connection_module)
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'ansible.legacy.setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
