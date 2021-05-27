@@ -923,6 +923,12 @@ class RockyHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class RedosHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Redos'
+    strategy_class = SystemdStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(

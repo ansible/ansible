@@ -1,0 +1,3 @@
+---
+minor_changes:
+- hostname - add support RedOS (https://github.com/ansible/ansible/issues/74779).
