@@ -1,0 +1,2 @@
+bugfixes:
+  - connection ssh, no ssh_args cli option, so removed doc entry.
