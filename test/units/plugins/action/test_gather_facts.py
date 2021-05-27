@@ -23,7 +23,7 @@ from units.compat.mock import MagicMock, patch
 
 from ansible import constants as C
 from ansible.playbook.task import Task
-from ansible.plugins.action.gather_facts import ActionModule
+from ansible.plugins.action.gather_facts import ActionModule as GatherFactsAction
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 import ansible.executor.module_common as module_common
@@ -53,7 +53,7 @@ class TestNetworkFacts(unittest.TestCase):
         self.task.async_val = False
         self.task.args = {}
 
-        plugin = ActionModule(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=plugin_loader)
+        plugin = GatherFactsAction(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=None)
         get_module_args = MagicMock()
         plugin._get_module_args = get_module_args
         plugin._execute_module = MagicMock()
@@ -79,7 +79,7 @@ class TestNetworkFacts(unittest.TestCase):
         self.task.async_val = False
         self.task.args = {}
 
-        plugin = ActionModule(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=plugin_loader)
+        plugin = GatherFactsAction(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=None)
         get_module_args = MagicMock()
         plugin._get_module_args = get_module_args
         plugin._execute_module = MagicMock()
@@ -105,7 +105,7 @@ class TestNetworkFacts(unittest.TestCase):
         self.task.args = {'gather_subset': 'min'}
         self.task.module_defaults = [{'ios_facts': {'gather_subset': 'min'}}]
 
-        plugin = ActionModule(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=plugin_loader)
+        plugin = GatherFactsAction(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=plugin_loader)
         plugin._execute_module = MagicMock()
 
         res = plugin.run(task_vars=self.task_vars)
@@ -122,7 +122,7 @@ class TestNetworkFacts(unittest.TestCase):
         self.task.args = {'gather_subset': 'min'}
         self.task.module_defaults = [{'cisco.ios.ios_facts': {'gather_subset': 'min'}}]
 
-        plugin = ActionModule(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=plugin_loader)
+        plugin = GatherFactsAction(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=plugin_loader)
         plugin._execute_module = MagicMock()
 
         res = plugin.run(task_vars=self.fqcn_task_vars)
