@@ -235,7 +235,7 @@ value::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel
-   `irc.freenode.net <https://freenode.net/>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #yaml for YAML specific questions
    `YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
