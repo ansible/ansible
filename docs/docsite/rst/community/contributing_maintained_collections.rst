@@ -70,7 +70,7 @@ The following table shows:
       <td>✓**</td>
       <td>**</td>
       <td>✓</td>
-      <td>Shippable</td>
+      <td>Zuul</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/aws_guidelines.html">AWS guide</a></td>
     </tr>
@@ -92,7 +92,7 @@ The following table shows:
       <td>✓</td>
       <td></td>
       <td></td>
-      <td>Shippable</td>
+      <td>Zuul</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/latest/dev_guide/index.html">Developer guide</a></td>
     </tr>
@@ -103,7 +103,7 @@ The following table shows:
       <td>✓</td>
       <td>✓****</td>
       <td>✓</td>
-      <td>Shippable</td>
+      <td>Azure Pipelines and Zuul</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general_windows.html#developing-modules-general-windows">Windows guide</a></td>
     </tr>
@@ -186,15 +186,25 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/kubernetes/core">kubernetes.core</a></td>
-      <td><a href="https://galaxy.ansible.com/community/kubernetes">community.kubernetes</a></td>
+      <td><a href="https://galaxy.ansible.com/kubernetes/core">kubernetes.core</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Kubernetes">Kubernetes</a></td>
       <td>✓</td>
       <td>✓</td>
       <td>✓</td>
-      <td>Zuul</td>
+      <td>GitHub Actions</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/scenario_guides/guide_kubernetes.html">Kubernetes guide</a></td>
     </tr>
+    <tr>
+      <td><a href="https://cloud.redhat.com/ansible/automation-hub/redhat/openshift">redhat.openshift</a></td>
+      <td><a href="https://galaxy.ansible.com/community/okd">community.okd</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Kubernetes">Kubernetes</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>GitHub Actions</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/scenario_guides/guide_kubernetes.html">Kubernetes guide</a></td>
     <tr>
       <td><a href="https://galaxy.ansible.com/openvswitch/openvswitch">openvswitch.openvswitch</a></td>
       <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
