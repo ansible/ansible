@@ -43,6 +43,13 @@ DOCUMENTATION = """
           duplicate key errors if keys only differ in case.
         default: False
         version_added: '2.12'
+      allow_no_value:
+        description:
+        - Read ini file which contains key without value and without '=' symbol.
+        type: bool
+        default: False
+        aliases: ['allow_none']
+        version_added: '2.12'
 """
 
 EXAMPLES = """
@@ -54,7 +61,11 @@ EXAMPLES = """
 
 - debug:
     msg: "{{ item }}"
-  loop: "{{q('ini', '.*', section='section1', file='test.ini', re=True)}}"
+  loop: "{{ q('ini', '.*', section='section1', file='test.ini', re=True) }}"
+
+- name: Read ini file with allow_no_value
+  debug:
+    msg: "{{ lookup('ini', 'user', file='mysql.ini', section='mysqld', allow_no_value=True) }}"
 """
 
 RETURN = """
@@ -127,7 +138,7 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
         paramvals = self.get_options()
 
-        self.cp = configparser.ConfigParser()
+        self.cp = configparser.ConfigParser(allow_no_value=paramvals.get('allow_no_value', paramvals.get('allow_none')))
         if paramvals['case_sensitive']:
             self.cp.optionxform = to_native
 
