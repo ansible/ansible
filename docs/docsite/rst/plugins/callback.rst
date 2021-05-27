@@ -34,7 +34,7 @@ Most callbacks shipped with Ansible are disabled by default and need to be enabl
 
 .. code-block:: ini
 
-  #callback_enabled = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
+  #callbacks_enabled = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
 
 Setting a callback plugin for ``ansible-playbook``
 --------------------------------------------------
