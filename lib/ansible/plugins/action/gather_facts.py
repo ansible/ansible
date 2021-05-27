@@ -41,7 +41,13 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list)
+        redirect_list = self._shared_loader_obj.module_loader.find_plugin_with_context(
+            fact_module, collection_list=self._task.collections
+        ).redirect_list
+
+        mod_args = get_action_args_with_defaults(
+            fact_module, mod_args, self._task.module_defaults, self._templar, redirect_list
+        )
 
         return mod_args
 
@@ -62,7 +68,9 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
+        # copy the value with list() so we don't mutate the config
+        modules = list(C.config.get_config_value('FACTS_MODULES', variables=task_vars))
+
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)

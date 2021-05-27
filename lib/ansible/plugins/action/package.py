@@ -71,8 +71,9 @@ class ActionModule(ActionBase):
                         del new_module_args['use']
 
                     # get defaults for specific module
+                    context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
                     new_module_args = get_action_args_with_defaults(
-                        module, new_module_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list
+                        module, new_module_args, self._task.module_defaults, self._templar, context.redirect_list
                     )
 
                     if module in self.BUILTIN_PKG_MGR_MODULES:
