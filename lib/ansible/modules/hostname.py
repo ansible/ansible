@@ -713,6 +713,12 @@ class CentOSHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class AnolisOSHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Anolis'
+    strategy_class = RedHatStrategy
+
+
 class ClearLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Clear-linux-os'
