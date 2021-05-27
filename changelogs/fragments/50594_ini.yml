@@ -1,0 +1,2 @@
+minor_changes:
+- ini - added new parameter ``allow_no_value`` to ini lookup plugin (https://github.com/ansible/ansible/issues/50594).
