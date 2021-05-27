@@ -583,9 +583,11 @@ class LinuxHardware(Hardware):
                         done = True
                         results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
                 except Exception as e:
+                    import traceback
                     done = True
                     results[mount]['info'] = 'N/A'
                     self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
+                    self.module.debug(traceback.print_exc())
 
                 if done:
                     # move results outside and make loop only handle pending
