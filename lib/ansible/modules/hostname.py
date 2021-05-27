@@ -67,6 +67,7 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
+from ansible.module_utils.facts.utils import get_file_lines
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import PY3, text_type
 
@@ -244,8 +245,7 @@ class FileStrategy(BaseStrategy):
             return ''
 
         try:
-            with open(self.FILE, 'r') as f:
-                return f.read().strip()
+            return get_file_lines(self.FILE)
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
@@ -278,11 +278,10 @@ class RedHatStrategy(BaseStrategy):
 
     def get_permanent_hostname(self):
         try:
-            with open(self.NETWORK_FILE, 'rb') as f:
-                for line in f.readlines():
-                    if line.startswith('HOSTNAME'):
-                        k, v = line.split('=')
-                        return v.strip()
+            for line in get_file_lines(self.NETWORK_FILE):
+                if line.startswith('HOSTNAME'):
+                    k, v = line.split('=')
+                    return v.strip()
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
@@ -292,13 +291,12 @@ class RedHatStrategy(BaseStrategy):
         try:
             lines = []
             found = False
-            with open(self.NETWORK_FILE, 'rb') as f:
-                for line in f.readlines():
-                    if line.startswith('HOSTNAME'):
-                        lines.append("HOSTNAME=%s\n" % name)
-                        found = True
-                    else:
-                        lines.append(line)
+            for line in get_file_lines(self.NETWORK_FILE):
+                if line.startswith('HOSTNAME'):
+                    lines.append("HOSTNAME=%s\n" % name)
+                    found = True
+                else:
+                    lines.append(line)
             if not found:
                 lines.append("HOSTNAME=%s\n" % name)
             with open(self.NETWORK_FILE, 'w+') as f:
@@ -388,11 +386,10 @@ class OpenRCStrategy(BaseStrategy):
             return ''
 
         try:
-            with open(self.FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('hostname='):
-                        return line[10:].strip('"')
+            for line in get_file_lines(self.FILE):
+                line = line.strip()
+                if line.startswith('hostname='):
+                    return line[10:].strip('"')
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
@@ -400,13 +397,12 @@ class OpenRCStrategy(BaseStrategy):
 
     def set_permanent_hostname(self, name):
         try:
-            with open(self.FILE, 'r') as f:
-                lines = [x.strip() for x in f]
+            lines = [x.strip() for x in get_file_lines(self.FILE)]
 
-                for i, line in enumerate(lines):
-                    if line.startswith('hostname='):
-                        lines[i] = 'hostname="%s"' % name
-                        break
+            for i, line in enumerate(lines):
+                if line.startswith('hostname='):
+                    lines[i] = 'hostname="%s"' % name
+                    break
 
             with open(self.FILE, 'w') as f:
                 f.write('\n'.join(lines) + '\n')
@@ -491,11 +487,10 @@ class FreeBSDStrategy(BaseStrategy):
             return ''
 
         try:
-            with open(self.FILE, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('hostname='):
-                        return line[10:].strip('"')
+            for line in get_file_lines(self.FILE):
+                line = line.strip()
+                if line.startswith('hostname='):
+                    return line[10:].strip('"')
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
@@ -504,13 +499,12 @@ class FreeBSDStrategy(BaseStrategy):
     def set_permanent_hostname(self, name):
         try:
             if os.path.isfile(self.FILE):
-                with open(self.FILE, 'r') as f:
-                    lines = [x.strip() for x in f]
+                lines = [x.strip() for x in get_file_lines(self.FILE)]
 
-                    for i, line in enumerate(lines):
-                        if line.startswith('hostname='):
-                            lines[i] = 'hostname="%s"' % name
-                            break
+                for i, line in enumerate(lines):
+                    if line.startswith('hostname='):
+                        lines[i] = 'hostname="%s"' % name
+                        break
             else:
                 lines = ['hostname="%s"' % name]
 
