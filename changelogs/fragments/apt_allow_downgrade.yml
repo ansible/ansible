@@ -1,0 +1,2 @@
+minor_changes:
+  - apt, added an 'allow_downgrade' option to enable downgrade of packages without using 'force' dangerously which doesn't verify signatures
