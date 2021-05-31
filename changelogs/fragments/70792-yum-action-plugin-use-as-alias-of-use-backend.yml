@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - yum action plugin changes to support 'use' as an alias of 'use_backend' (https://github.com/ansible/ansible/issues/70774).

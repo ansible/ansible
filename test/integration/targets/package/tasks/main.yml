@@ -143,4 +143,108 @@
     - name: verify at command is installed
       shell: which at
 
+    - name: remove at package
+      package:
+        name: at
+        state: absent
+      register: at_install0
+
+    - name: validate package removal
+      assert:
+        that:
+          - "at_install0 is changed"
+
   when: ansible_distribution in package_distros
+
+##
+## yum
+##
+#Validation for new parameter 'use' in yum action plugin which aliases to 'use_backend'
+#Issue: https://github.com/ansible/ansible/issues/70774
+- block:
+    - name: verify if using both the parameters 'use' and 'use_backend' throw error
+      yum:
+        name: at
+        state: present
+        use_backend: yum
+        use: yum
+      ignore_errors: yes
+      register: result
+
+    - name: verify error
+      assert:
+        that:
+          - "'parameters are mutually exclusive' in result.msg"
+          - "not result is changed"
+
+    - name: verify if package installation is successful using 'use' parameter
+      yum:
+        name: at
+        state: present
+        use: dnf
+      register: result
+
+    - name: verify the result
+      assert:
+        that:
+          - "result is changed"
+
+    - name: remove at package
+      yum:
+        name: at
+        state: absent
+        use: dnf
+      register: result
+
+    - name: verify package removal
+      assert:
+        that:
+          - "result is changed"
+
+    - name: verify if package installation is successful using 'use_backend' parameter
+      yum:
+        name: at
+        state: present
+        use_backend: dnf
+      register: result
+
+    - name: verify the result
+      assert:
+        that:
+          - "result is changed"
+
+    - name: remove at package
+      yum:
+        name: at
+        state: absent
+        use_backend: dnf
+      register: result
+
+    - name: verify package removal
+      assert:
+        that:
+          - "result is changed"
+
+    - name: verify if package installation is successful without using 'use_backend' and 'use' parameters
+      yum:
+        name: at
+        state: present
+      register: result
+
+    - name: verify the result
+      assert:
+        that:
+          - "result is changed"
+
+    - name: remove at package
+      yum:
+        name: at
+        state: absent
+      register: result
+
+    - name: verify package removal
+      assert:
+        that:
+          - "result is changed"
+
+  when: ansible_distribution == "Fedora"
