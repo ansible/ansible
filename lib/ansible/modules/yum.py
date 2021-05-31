@@ -1014,7 +1014,7 @@ class YumModule(YumDnf):
                 # most common case is the pkg is already installed
                 envra = self.local_envra(package)
                 if envra is None:
-                    self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
+                    self.module.fail_json(msg="Failed to get envra information from RPM package: %s" % spec)
                 installed_pkgs = self.is_installed(repoq, envra)
                 if installed_pkgs:
                     res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
@@ -1338,7 +1338,7 @@ class YumModule(YumDnf):
                     envra = self.local_envra(spec)
 
                     if envra is None:
-                        self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
+                        self.module.fail_json(msg="Failed to get envra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
                     if self.is_installed(repoq, envra):
@@ -1355,7 +1355,7 @@ class YumModule(YumDnf):
                     envra = self.local_envra(package)
 
                     if envra is None:
-                        self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
+                        self.module.fail_json(msg="Failed to get envra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
                     if self.is_installed(repoq, envra):
