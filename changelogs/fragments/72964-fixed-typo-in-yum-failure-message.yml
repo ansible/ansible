@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - Fixed typo in failure message (https://github.com/ansible/ansible/pull/72964).
