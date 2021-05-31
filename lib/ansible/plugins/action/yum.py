@@ -17,6 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleActionFail
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -47,7 +48,10 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Carry-over concept from the package action plugin
-        module = self._task.args.get('use_backend', "auto")
+        if 'use' in self._task.args and 'use_backend' in self._task.args:
+            raise AnsibleActionFail("parameters are mutually exclusive: ('use', 'use_backend')")
+
+        module = self._task.args.get('use', self._task.args.get('use_backend', 'auto'))
 
         if module == 'auto':
             try:
@@ -90,6 +94,8 @@ class ActionModule(ActionBase):
                 new_module_args = self._task.args.copy()
                 if 'use_backend' in new_module_args:
                     del new_module_args['use_backend']
+                if 'use' in new_module_args:
+                    del new_module_args['use']
 
                 display.vvvv("Running %s as the backend for the yum action plugin" % module)
                 result.update(self._execute_module(
