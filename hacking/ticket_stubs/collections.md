@@ -10,5 +10,5 @@ Thank you once again for this and your interest in Ansible!
 
 If you have further questions please stop by IRC or the mailing list:
 
-   * IRC: #ansible on irc.freenode.net
+   * IRC: #ansible on `irc.libera.chat <https://libera.chat/>`_
    * mailing list: https://groups.google.com/forum/#!forum/ansible-project

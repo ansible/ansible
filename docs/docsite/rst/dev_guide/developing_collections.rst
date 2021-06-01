@@ -44,5 +44,5 @@ For instructions on developing modules, see :ref:`developing_modules_general`.
        Current development status of community collections and FAQ
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat>`_
        #ansible IRC chat channel

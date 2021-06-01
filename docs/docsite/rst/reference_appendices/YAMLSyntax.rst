@@ -233,8 +233,10 @@ value::
        A good guide to YAML syntax
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel and #yaml for YAML specific questions
+   `irc.libera.chat <https://libera.chat/>`_
+       #ansible IRC chat channel
+   `irc.libera.chat <https://libera.chat/>`_
+       #yaml for YAML specific questions
    `YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing

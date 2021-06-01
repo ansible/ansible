@@ -75,5 +75,5 @@ Use ``ansible-doc -t vars <plugin name>`` to see specific plugin-specific docume
        Ansible Strategy plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

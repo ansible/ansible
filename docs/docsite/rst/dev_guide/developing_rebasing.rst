@@ -75,7 +75,7 @@ You should check in on the status of your PR after tests have completed to see i
 Getting help rebasing
 =====================
 
-For help with rebasing your PR, or other development related questions, join us on our #ansible-devel IRC chat channel on `freenode.net <https://freenode.net>`_.
+For help with rebasing your PR, or other development related questions, join us on our #ansible-devel IRC chat channel on `irc.libera.chat <https://libera.chat/>`_.
 
 .. seealso::
 

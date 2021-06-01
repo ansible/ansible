@@ -655,7 +655,7 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
        A detailed guide on how to use Ansible for automating network infrastructure.
    `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
        The Ansible Network community page, includes contact information and meeting information.
-   `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
-       The #ansible-network IRC chat channel on Freenode.net.
+   ``#ansible-network`` on `irc.libera.chat <https://libera.chat/>`_
+       The #ansible-network IRC chat channel on libera.chat.
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

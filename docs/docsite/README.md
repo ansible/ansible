@@ -11,7 +11,7 @@ Contributions to the documentation are welcome.
 
 The Ansible community produces guidance on contributions, building documentation, and submitting pull requests, which you can find in [Contributing to the Ansible Documentation](https://docs.ansible.com/ansible/latest/community/documentation_contributions.html).
 
-You can also join the [Docs Working Group](https://github.com/ansible/community/wiki/Docs) and/or the ``#ansible-docs`` channel on freenode IRC.
+You can also join the [Docs Working Group](https://github.com/ansible/community/wiki/Docs) and/or the ``#ansible-docs`` IRC channel on `irc.libera.chat <https://libera.chat/>`_
 
 Ansible style guide
 ===================

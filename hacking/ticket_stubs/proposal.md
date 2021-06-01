@@ -9,7 +9,7 @@ https://github.com/ansible/proposals/blob/master/proposals_process_proposal.md
 
 If you have any further questions, please let us know by stopping by our devel mailing list, or our devel IRC channel:
 
-   * #ansible-devel on Freenode
+   * #ansible-devel on `irc.libera.chat <https://libera.chat/>`_
    * https://groups.google.com/forum/#!forum/ansible-devel
 
 Thank you!

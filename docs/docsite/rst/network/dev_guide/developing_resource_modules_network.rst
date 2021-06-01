@@ -718,7 +718,8 @@ For more options:
 
   ansible-test network-integration --help
 
-If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode.
+If you need additional help or feedback, reach out in the ``#ansible-network`` IRC channel on the
+`irc.libera.chat <https://libera.chat/>`_ IRC network.
 
 Unit test requirements
 -----------------------

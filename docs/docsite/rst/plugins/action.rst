@@ -52,5 +52,5 @@ Use ``ansible-doc <name>`` to see specific documentation and examples, this shou
        Ansible Vars plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

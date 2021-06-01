@@ -761,7 +761,7 @@ Troubleshooting IAM policies
 - Re-read the AWS documentation, especially the list of `Actions, Resources and Condition Keys <https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html>`_ for the various AWS services.
 - Look at the `cloudonaut <https://iam.cloudonaut.io>`_ documentation as a troubleshooting cross-reference.
 - Use a search engine.
-- Ask in the Ansible IRC channel #ansible-aws (on freenode IRC).
+- Ask in the Ansible IRC channel #ansible-aws (on `irc.libera.chat <https://libera.chat>`_).
 
 Unsupported Integration tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
