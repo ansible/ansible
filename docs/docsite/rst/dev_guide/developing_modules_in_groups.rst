@@ -70,7 +70,7 @@ Your collection should include the following files to be usable:
 
 When you have these files ready, review the :ref:`developing_modules_checklist` again. If you are creating a new collection, you are responsible for all procedures related to your repository, including setting rules for contributions, finding reviewers, and testing and maintaining the code in your collection.
 
-If you need help or advice, consider joining the ``#ansible-devel`` IRC channel (see how in the :ref:`Where to get support <developing_in_groups_support>`_ section).
+If you need help or advice, consider joining the ``#ansible-devel`` IRC channel (see how in the :ref:`Where to get support <developing_in_groups_support>` section).
 
 New to git or GitHub
 ====================
