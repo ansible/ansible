@@ -98,7 +98,7 @@ class LinuxHardware(Hardware):
         try:
             mount_facts = self.get_mount_facts()
         except timeout.TimeoutError:
-            pass
+            self.module.warn("No mount facts were gathered due to timeout.")
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
@@ -564,31 +564,38 @@ class LinuxHardware(Hardware):
 
         # wait for workers and get results
         while results:
-            for mount in results:
+            for mount in list(results):
+                done = False
                 res = results[mount]['extra']
-                if res.ready():
-                    if res.successful():
-                        mount_size, uuid = res.get()
-                        if mount_size:
-                            results[mount]['info'].update(mount_size)
-                        results[mount]['info']['uuid'] = uuid or 'N/A'
-                    else:
-                        # give incomplete data
-                        errmsg = to_text(res.get())
-                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
-                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (errmsg)
+                try:
+                    if res.ready():
+                        done = True
+                        if res.successful():
+                            mount_size, uuid = res.get()
+                            if mount_size:
+                                results[mount]['info'].update(mount_size)
+                            results[mount]['info']['uuid'] = uuid or 'N/A'
+                        else:
+                            # failed, try to find out why, if 'res.successful' we know there are no exceptions
+                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
 
+                    elif time.time() > results[mount]['timelimit']:
+                        done = True
+                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                except Exception as e:
+                    import traceback
+                    done = True
+                    results[mount]['info'] = 'N/A'
+                    self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
+                    self.module.debug(traceback.format_exc())
+
+                if done:
+                    # move results outside and make loop only handle pending
                     mounts.append(results[mount]['info'])
                     del results[mount]
-                    break
-                elif time.time() > results[mount]['timelimit']:
-                    results[mount]['info']['note'] = 'Timed out while attempting to get extra information.'
-                    mounts.append(results[mount]['info'])
-                    del results[mount]
-                    break
-            else:
-                # avoid cpu churn
-                time.sleep(0.1)
+
+            # avoid cpu churn, sleep between retrying for loop with remaining mounts
+            time.sleep(0.1)
 
         return {'mounts': mounts}
 
