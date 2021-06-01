@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Updated the help message for failed tests in the ``azure`` test plugin.
