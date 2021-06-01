@@ -1,3 +1,8 @@
 bugfixes:
   - clear_host_errors - Restore the HostState for failed hosts in the current play.
   - clear_host_errors - Forward unreachable and failed hosts to the task after clear_host_errors.
+breaking_changes:
+  - >-
+    The meta action ``clear_host_errors`` now reinstates failed hosts for the current play.
+    Playbooks relying on the hosts only for subsequent plays should move the ``clear_host_errors``
+    task to the beginning of the subsequent play's pre_tasks or tasks.
