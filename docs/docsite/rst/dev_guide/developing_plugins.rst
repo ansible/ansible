@@ -68,7 +68,7 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
         type: boolean/float/integer/list/none/path/pathlist/pathspec/string/tmppath
         version_added: X.x
 
-To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
+To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For the plugin types (such as 'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', and 'vars') that support embedded documentation, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
