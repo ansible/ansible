@@ -25,9 +25,6 @@ TASK [debug loop] **************************************************************
 changed: [testhost] => (item=debug-1) => {
     "msg": "debug-1"
 }
-failed: [testhost] (item=debug-2) => {
-    "msg": "debug-2"
-}
 ok: [testhost] => (item=debug-3) => {
     "msg": "debug-3"
 }
