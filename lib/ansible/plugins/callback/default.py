@@ -309,7 +309,7 @@ class CallbackModule(CallbackBase):
             self._print_task_banner(result._task)
 
         self._clean_results(result._result, result._task.action)
-        self._handle_exception(result._result)
+        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
 
         msg = "failed: "
         if result._task.delegate_to:
@@ -318,7 +318,11 @@ class CallbackModule(CallbackBase):
             msg += "[%s]" % (result._host.get_name())
 
         self._handle_warnings(result._result)
-        self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
+        self._display.display(
+            msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)),
+            color=C.COLOR_ERROR,
+            stderr=self.display_failed_stderr
+        )
 
     def v2_runner_item_on_skipped(self, result):
         if self.display_skipped_hosts:
