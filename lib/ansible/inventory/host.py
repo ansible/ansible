@@ -66,6 +66,7 @@ class Host:
             uuid=self._uuid,
             groups=groups,
             implicit=self.implicit,
+            restore_state=self.restore_state,
         )
 
     def deserialize(self, data):
@@ -76,6 +77,7 @@ class Host:
         self.address = data.get('address', '')
         self._uuid = data.get('uuid', None)
         self.implicit = data.get('implicit', False)
+        self.restore_state = data.get('restore_state', None)
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -98,6 +100,9 @@ class Host:
         if gen_uuid:
             self._uuid = get_unique_id()
         self.implicit = False
+
+        # The HostState before the host is marked as failed by the PlayIterator
+        self.restore_state = None
 
     def get_name(self):
         return self.name

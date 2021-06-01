@@ -51,7 +51,6 @@ class HostState:
         self.always_child_state = None
         self.did_rescue = False
         self.did_start_at_task = False
-        self._restore_state = None
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -117,7 +116,6 @@ class HostState:
         new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
-        new_state._restore_state = self._restore_state
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
         if self.rescue_child_state is not None:
@@ -460,7 +458,7 @@ class PlayIterator:
         return state
 
     def mark_host_failed(self, host):
-        self._host_states[host.name]._restore_state = self._host_states[host.name].copy()
+        host.restore_state = self._host_states[host.name].copy()
         s = self.get_host_state(host)
         display.debug("marking host %s failed, current state: %s" % (host, s))
         s = self._set_failed_state(s)

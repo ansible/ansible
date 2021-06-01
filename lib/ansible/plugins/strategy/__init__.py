@@ -1148,20 +1148,40 @@ class StrategyBase:
                 skip_reason += ', not clearing facts and fact cache for %s' % target_host.name
         elif meta_action == 'clear_host_errors':
             if _evaluate_conditional(target_host):
+                missing_restore_state = []
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     failed = self._tqm._failed_hosts.pop(host.name, False)
                     unreachable = self._tqm._unreachable_hosts.pop(host.name, False)
+
+                    # TQM exists across plays but resets its failed hosts for every play.
+                    # It passes previously failed hosts off to PlayIterator and then
+                    # reincorporates them after running the Play.
+                    failed |= (iterator._host_states[host.name].fail_state != iterator.FAILED_NONE)
+
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
+
+                    if failed and host.restore_state is None:
+                        # Just in case a third-party strategy plugin is not marking hosts as failed
+                        # via the PlayIterator, keep a list of the hosts that can't be restored to
+                        # provide a helpful message.
+                        missing_restore_state.append(host.name)
+                        continue
+
                     if failed and host.name in self._tqm._stats.rescued and self._tqm._stats.rescued[host.name]:
-                        iterator._host_states[host.name].run_state = iterator._host_states[host.name]._restore_state.run_state
+                        iterator._host_states[host.name].run_state = host.restore_state.run_state
                     elif failed:
-                        iterator._host_states[host.name] = iterator._host_states[host.name]._restore_state
+                        iterator._host_states[host.name] = host.restore_state
+
+                    # Iterate over tasks until we get to clear_host_errors
                     if failed or unreachable:
                         s, t = iterator.get_next_task_for_host(host, peek=False)
                         while t is not None and t.args.get('_raw_params') != 'clear_host_errors':
                             iterator._host_states[host.name].run_state = s.run_state
                             s, t = iterator.get_next_task_for_host(host, peek=False)
                 msg = "cleared host errors"
+                if missing_restore_state:
+                    msg += '\nUnable to restore state for %s. ' % ','.join(missing_restore_state)
+                    msg += 'This is most likely a bug in the strategy plugin. Hosts should be marked as failed via the PlayIterator.'
             else:
                 skipped = True
                 skip_reason += ', not clearing host error state for %s' % target_host.name
