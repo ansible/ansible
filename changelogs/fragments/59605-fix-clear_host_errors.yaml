@@ -1,0 +1,3 @@
+bugfixes:
+  - clear_host_errors - Restore the HostState for failed hosts in the current play.
+  - clear_host_errors - Forward unreachable and failed hosts to the task after clear_host_errors.
