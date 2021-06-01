@@ -381,5 +381,5 @@ See the `content_collector README <https://github.com/ansible/content_collector>
        Learn about how to write Ansible modules
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat>`_
        #ansible IRC chat channel

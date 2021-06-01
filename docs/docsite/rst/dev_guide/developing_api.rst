@@ -43,5 +43,5 @@ command line tools (``lib/ansible/cli/``) is `available on GitHub <https://githu
        How to develop plugins
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat>`_
        #ansible IRC chat channel

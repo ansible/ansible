@@ -53,5 +53,5 @@ Use ``ansible-doc -t cliconf <plugin name>`` to see detailed documentation and e
        An overview of using Ansible to automate networking devices.
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible-network IRC chat channel
