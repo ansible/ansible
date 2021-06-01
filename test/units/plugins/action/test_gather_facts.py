@@ -67,9 +67,8 @@ class TestNetworkFacts(unittest.TestCase):
         # assert the correct module was found
         self.assertEqual(get_module_args.call_count, 1)
 
-        self.assertEqual(
-            get_module_args.call_args.args,
-            ('ansible.legacy.ios_facts', {'ansible_network_os': 'ios'},)
+        get_module_args.assert_called_once_with(
+            'ansible.legacy.ios_facts', {'ansible_network_os': 'ios'},
         )
 
     @patch.object(module_common, '_get_collection_metadata', return_value={})
@@ -93,9 +92,8 @@ class TestNetworkFacts(unittest.TestCase):
         # assert the correct module was found
         self.assertEqual(get_module_args.call_count, 1)
 
-        self.assertEqual(
-            get_module_args.call_args.args,
-            ('cisco.ios.ios_facts', {'ansible_network_os': 'cisco.ios.ios'},)
+        get_module_args.assert_called_once_with(
+            'cisco.ios.ios_facts', {'ansible_network_os': 'cisco.ios.ios'},
         )
 
     def test_network_gather_facts(self):
