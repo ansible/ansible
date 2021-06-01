@@ -690,8 +690,8 @@ idempotent and does not report changes. For example:
 Windows communication and development support
 =============================================
 
-Join the IRC channel ``#ansible-devel`` or ``#ansible-windows`` on freenode for
-discussions about Ansible development for Windows.
+Join the ``#ansible-devel`` or ``#ansible-windows`` irc channels on `irc.libera.chat
+<https://libera.chat/>`_ for discussions about Ansible development for Windows.
 
 For questions and discussions pertaining to using the Ansible product,
 use the ``#ansible`` channel.

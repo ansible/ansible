@@ -194,5 +194,5 @@ also has powerful configuration management and deployment features.
        Labs to provide further knowledge on different topics
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

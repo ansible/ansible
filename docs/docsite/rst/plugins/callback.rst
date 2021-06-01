@@ -97,5 +97,5 @@ Use ``ansible-doc -t callback <plugin name>`` to see specific documents and exam
        Ansible Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `webchat.freenode.net <https://webchat.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

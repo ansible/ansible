@@ -158,5 +158,5 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
        Ansible vars plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

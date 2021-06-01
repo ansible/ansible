@@ -48,5 +48,5 @@ For a list of all available modules, see the :ref:`Collection docs <list_of_coll
        Examples of using modules with the Python API
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

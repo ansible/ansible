@@ -73,5 +73,5 @@ The optional import behavior also applies to module_utils imported from collecti
        Guidelines for contributing to selected collections
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel
