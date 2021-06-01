@@ -19,7 +19,7 @@
       - "'hardware' in result.ansible_facts.ansible_net_gather_subset"
       - "'default' in result.ansible_facts.ansible_net_gather_subset"
       - "'interfaces' in result.ansible_facts.ansible_net_gather_subset"
-      - "result.ansible_facts.ansible_net_model == 'IOS XRv'"
+      - "result.ansible_facts.ansible_net_model == 'IOS-XRv 9000'"
       # Items from those subsets are present
       - "result.ansible_facts.ansible_net_filesystems is defined"
 

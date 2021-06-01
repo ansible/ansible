@@ -1,15 +1,9 @@
 ---
 - name: Populate Config
-  cli_config:
-    config: "{{ lines }}"
   vars:
-    lines: |
-      interface GigabitEthernet 0/0/0/1
-      dot1q native vlan 10
-      l2transport l2protocol cdp forward
-      l2transport propagate remote-status
-      interface GigabitEthernet 0/0/0/4
-      dot1q native vlan 20
-      l2transport l2protocol vtp tunnel
-      interface GigabitEthernet 0/0/0/3.900
-      dot1q vlan 40 60
+    lines: "interface GigabitEthernet 0/0/0/1\nl2transport\
+      \ l2protocol cpsv tunnel\nl2transport propagate remote-status\ninterface GigabitEthernet\
+      \ 0/0/0/4\nl2transport l2protocol cpsv tunnel\ninterface\
+      \ GigabitEthernet 0/0/0/3.900\nencapsulation dot1q 40 second-dot1q 60\n"
+  cli_config:
+    config: '{{ lines }}'

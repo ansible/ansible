@@ -11,10 +11,7 @@
 - name: Set login
   iosxr_banner:
     banner: login
-    text: |
-      this is my login banner
-      that has a multiline
-      string
+    text: "@this is my login banner\nthat has a multiline\nstring\n@"
     provider: "{{ netconf }}"
     state: present
   register: result

@@ -1,29 +1,36 @@
-hostname iosxr01
-line default
- transport input ssh
+hostname iosxr-7.0.2
+username admin
+ group root-lr
+ group cisco-support
+ secret 10 $6$xWjtz/sPyTaz5z/.$2jQ3Ihs8/qvcTn0MT9IxW3egRWRFYJ6Rgk3Q.K7QYgrke7QE5.tUHLc19qCjnKhdgJlVU6SRrjBaO1HP0HkQx1
+!
+username zuul
+ group root-lr
+ group cisco-support
+ password 7 082C555C0C1E101B13191C053938
+!
+tpa
+ vrf default
+  address-family ipv4
+   update-source dataports MgmtEth0/RP0/CPU0/0
+  !
+ !
+!
+call-home
+ service active
+ contact smart-licensing
+ profile CiscoTAC-1
+  active
+  destination transport-method http
+ !
 !
 interface Loopback888
  description test for ansible
  shutdown
 !
-interface MgmtEth0/0/CPU0/0
+interface MgmtEth0/RP0/CPU0/0
  ipv4 address dhcp
 !
-interface GigabitEthernet0/0/0/0
- shutdown
-!
-interface GigabitEthernet0/0/0/1
- shutdown
-!
-router static
- address-family ipv4 unicast
-  0.0.0.0/0 10.0.2.2
- !
-!
-netconf-yang agent
- ssh
-!
 ssh server v2
-ssh server netconf vrf default
-!
+ssh server vrf default
 end
