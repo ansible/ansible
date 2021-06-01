@@ -33,15 +33,15 @@ To subscribe to a group from a non-Google account, you can send an email to the 
 IRC channels
 ============
 
-Ansible has several IRC channels on `Freenode <https://freenode.net/>`_.
+Ansible has several IRC channels on `irc.libera.chat <https://libera.chat/>`_.
 
-Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_ for instructions.
+Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions.
 
-To find all ``ansible`` specific channels on a freenode network, use the following command in your IRC client::
+To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client::
 
    /msg alis LIST #ansible* -min 5
 
-as described in `freenode docs <https://freenode.net/kb/answer/findingchannels>`_.
+as described in the `libera.chat docs <https://libera.chat/guides/findingchannels>`_.
 
 General channels
 ----------------
@@ -56,7 +56,7 @@ General channels
 Working groups
 --------------
 
-Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda.
+Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on libera.chat IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda.
 
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``
 - `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles

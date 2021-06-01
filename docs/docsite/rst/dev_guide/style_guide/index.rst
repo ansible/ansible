@@ -274,5 +274,5 @@ These pages offer more help with grammatical, stylistic, and technical rules for
        How to contribute to the Ansible documentation
    :ref:`testing_documentation_locally`
        How to build the Ansible documentation
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat>`_
        #ansible-docs IRC chat channel
