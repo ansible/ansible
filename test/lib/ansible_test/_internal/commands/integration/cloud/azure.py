@@ -163,8 +163,7 @@ class AzureCloudEnvironment(CloudEnvironment):
     def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
         """Callback to run when an integration target fails."""
         if not tries and self.managed:
-            display.notice('If %s failed due to permissions, the test policy may need to be updated. '
-                           'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
+            display.notice('If %s failed due to permissions, the test policy may need to be updated.' % target.name)
 
 
 def get_config(config_path):    # type: (str) -> t.Dict[str, str]
