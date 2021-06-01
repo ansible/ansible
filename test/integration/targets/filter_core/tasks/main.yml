@@ -572,12 +572,24 @@
   ignore_errors: yes
   register: items2dict_fail
 
+- name: Verify items2dict throws error on KeyError
+  set_fact:
+    foo: "{{ files | dict2items | items2dict(key_name='file', value_name='path') }}"
+  vars:
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+  ignore_errors: yes
+  register: items2dict_fail2
+
 - name: Verify items2dict
   assert:
     that:
       - '[{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]|items2dict == {"foo": "bar", "banana": "fruit"}'
       - items2dict_fail is failed
       - '"items2dict requires a list" in items2dict_fail.msg'
+      - items2dict_fail2 is failed
+      - '"items2dict failed" in items2dict_fail2.msg'
 
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:

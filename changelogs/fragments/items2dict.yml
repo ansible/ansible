@@ -1,0 +1,3 @@
+---
+bugfixes:
+- items2dict - handle exception in items2dict filter.
