@@ -317,23 +317,24 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
 
 
 def list_dict_option_schema(for_collection):
+    subop_schema = {
+        Required('description'): Any(list_string_types, *string_types),
+        'required': bool,
+        'choices': list,
+        'aliases': Any(list_string_types),
+        'version_added': version(for_collection),
+        'version_added_collection': collection_name,
+        'default': json_value,
+        # Note: Types are strings, not literal bools, such as True or False
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # in case of type='list' elements define type of individual item in list
+        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # Recursive suboptions
+        'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
+    }
+    subop_schema.update(argument_spec_modifiers)
     suboption_schema = Schema(
-        {
-            Required('description'): Any(list_string_types, *string_types),
-            'required': bool,
-            'choices': list,
-            'aliases': Any(list_string_types),
-            'version_added': version(for_collection),
-            'version_added_collection': collection_name,
-            'default': json_value,
-            # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # Recursive suboptions
-            'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
-            **argument_spec_modifiers,
-        },
+        subop_schema,
         extra=PREVENT_EXTRA
     )
 
@@ -341,22 +342,23 @@ def list_dict_option_schema(for_collection):
     # for example in Python 3: {str: suboption_schema}
     list_dict_suboption_schema = [{str_type: suboption_schema} for str_type in string_types]
 
+    op_schema = {
+        Required('description'): Any(list_string_types, *string_types),
+        'required': bool,
+        'choices': list,
+        'aliases': Any(list_string_types),
+        'version_added': version(for_collection),
+        'version_added_collection': collection_name,
+        'default': json_value,
+        'suboptions': Any(None, *list_dict_suboption_schema),
+        # Note: Types are strings, not literal bools, such as True or False
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        # in case of type='list' elements define type of individual item in list
+        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+    }
+    op_schema.update(argument_spec_modifiers)
     option_schema = Schema(
-        {
-            Required('description'): Any(list_string_types, *string_types),
-            'required': bool,
-            'choices': list,
-            'aliases': Any(list_string_types),
-            'version_added': version(for_collection),
-            'version_added_collection': collection_name,
-            'default': json_value,
-            'suboptions': Any(None, *list_dict_suboption_schema),
-            # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            **argument_spec_modifiers,
-        },
+        op_schema,
         extra=PREVENT_EXTRA
     )
 
