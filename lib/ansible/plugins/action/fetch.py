@@ -70,11 +70,10 @@ class ActionModule(ActionBase):
             source = self._remote_expand_user(source)
 
             remote_checksum = None
-            error_msg = u''
             if not self._connection.become:
                 # calculate checksum for the remote file, don't bother if using become as slurp will be used
                 # Force remote_checksum to follow symlinks because fetch always follows symlinks
-                remote_checksum, error_msg = self._remote_checksum(source, all_vars=task_vars, follow=True)
+                remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
 
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
@@ -137,13 +136,9 @@ class ActionModule(ActionBase):
                 elif remote_checksum == '3':
                     result['msg'] = "remote file is a directory, fetch cannot work on directories"
                 elif remote_checksum == '4':
-                    result['msg'] = "python isn't present on the system. Unable to compute checksum"
+                    result['msg'] = "python isn't present on the system.  Unable to compute checksum"
                 elif remote_checksum == '5':
                     result['msg'] = "stdlib json was not found on the remote machine. Only the raw module can work without those installed"
-
-                if error_msg:
-                    result['msg'] += f': {error_msg}'
-
                 # Historically, these don't fail because you may want to transfer
                 # a log file that possibly MAY exist but keep going to fetch other
                 # log files. Today, this is better achieved by adding

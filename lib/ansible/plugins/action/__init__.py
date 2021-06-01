@@ -805,7 +805,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         5 = appropriate json module not found
         '''
         x = "0"  # unknown error has occurred
-        errormsg = u''
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
             if remote_stat['exists'] and remote_stat['isdir']:
@@ -821,7 +820,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif 'json' in errormsg:
                 x = "5"  # json module needed
         finally:
-            return x, errormsg  # pylint: disable=lost-exception
+            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
         ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
