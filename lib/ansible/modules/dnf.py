@@ -687,15 +687,25 @@ class DnfModule(YumDnf):
                 rc=1
             )
 
-        filters = []
-        if self.bugfix:
-            key = {'advisory_type__eq': 'bugfix'}
-            filters.append(base.sack.query().upgrades().filter(**key))
-        if self.security:
-            key = {'advisory_type__eq': 'security'}
-            filters.append(base.sack.query().upgrades().filter(**key))
-        if filters:
-            base._update_security_filters = filters
+        add_security_filters = getattr(base, "add_security_filters", None)
+        if callable(add_security_filters):
+            filters = {}
+            if self.bugfix:
+                filters.setdefault('types', []).append('bugfix')
+            if self.security:
+                filters.setdefault('types', []).append('security')
+            if filters:
+                add_security_filters('eq', **filters)
+        else:
+            filters = []
+            if self.bugfix:
+                key = {'advisory_type__eq': 'bugfix'}
+                filters.append(base.sack.query().upgrades().filter(**key))
+            if self.security:
+                key = {'advisory_type__eq': 'security'}
+                filters.append(base.sack.query().upgrades().filter(**key))
+            if filters:
+                base._update_security_filters = filters
 
         return base
 
