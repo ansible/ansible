@@ -124,9 +124,9 @@
     that:
       - '"parent_dep.parent_collection:1.1.0 was installed successfully" in result.stdout_lines'
       - (metadata.results[0].content | b64decode | from_json).collection_info.version == '1.1.0'
-      - "\"Skipping 'child_dep.child_collection:0.9.9' as it is already installed\" in result.stdout_lines"
+      - "\"'child_dep.child_collection:0.9.9' is already installed, skipping.\" in result.stdout_lines"
       - (metadata.results[1].content | b64decode | from_json).collection_info.version == '0.9.9'
-      - "\"Skipping 'child_dep.child_dep2:1.2.2' as it is already installed\" in result.stdout_lines"
+      - "\"'child_dep.child_dep2:1.2.2' is already installed, skipping.\" in result.stdout_lines"
       - (metadata.results[2].content | b64decode | from_json).collection_info.version == '1.2.2'
 
 ##### Updating collections with --upgrade
@@ -187,7 +187,7 @@
   register: result
 
 - assert:
-    that: "\"Skipping 'namespace1.name1:1.1.0-beta.1' as it is already installed\" in result.stdout"
+    that: "\"'namespace1.name1:1.1.0-beta.1' is already installed, skipping.\" in result.stdout"
 
 # With deps
 
