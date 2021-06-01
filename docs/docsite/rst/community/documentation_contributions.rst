@@ -213,7 +213,7 @@ Unfortunately, leftover rST-files from previous document-generating can occasion
 Joining the documentation working group
 =======================================
 
-The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on freenode IRC. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_.
+The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on the `libera.chat IRC network <https://libera.chat/>`_. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_.
 
 .. seealso::
    :ref:`More about testing module documentation <testing_module_documentation>`

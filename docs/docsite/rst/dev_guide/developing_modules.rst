@@ -47,5 +47,5 @@ If your use case isn't covered by an existing module, an action plugin, or a rol
        Browse existing collections, modules, and plugins
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        Development mailing list
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

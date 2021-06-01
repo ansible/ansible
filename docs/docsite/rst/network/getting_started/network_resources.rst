@@ -41,6 +41,6 @@ IRC and Slack
 
 Join us on:
 
-* Freenode IRC - ``#ansible-network`` Freenode channel
+* IRC Channel - ``#ansible-network`` on `irc.libera.chat <https://libera.chat/>`_
 
 * `Join Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - Network & Security Automation Slack community.  Check out the #devel channel for discussions on module and plugin development.

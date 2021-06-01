@@ -261,5 +261,5 @@ Once Galaxy uploads and accepts a collection, you will be redirected to the **My
        Learn how to install and use collections.
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel
