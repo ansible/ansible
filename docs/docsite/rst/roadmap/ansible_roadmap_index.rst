@@ -14,7 +14,7 @@ Each roadmap is published both as an idea of what is upcoming in Ansible, and as
 You can submit feedback on the current roadmap in multiple ways:
 
 - Edit the agenda of an IRC `Ansible Community Meeting <https://github.com/ansible/community/issues/539>`_ (preferred)
-- Post on the ``#ansible-community`` Freenode IRC channel
+- Post on the ``#ansible-community`` IRC channel on `irc.libera.chat <https://libera.chat/>`_.
 
 See :ref:`Ansible communication channels <communication>` for details on how to join and use the IRC channels.
 

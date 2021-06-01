@@ -320,5 +320,5 @@ The ``collections`` keyword merely creates an ordered 'search path' for non-name
        Understand the collections metadata structure.
   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-  `irc.freenode.net <http://irc.freenode.net>`_
+  `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel
