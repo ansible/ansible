@@ -87,7 +87,7 @@ def is_sequence(seq, include_strings=False):
     """Identify whether the input is a sequence.
 
     Strings and bytes are not sequences here,
-    unless ``include_string`` is ``True``.
+    unless ``include_strings`` is ``True``.
 
     Non-indexable things are never of a sequence type.
     """

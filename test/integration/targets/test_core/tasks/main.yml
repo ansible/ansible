@@ -347,3 +347,10 @@
     that:
       - vaulted_value is vault_encrypted
       - inventory_hostname is not vault_encrypted
+
+- name: Assert sequence tests work
+  assert:
+    that:
+      - not ("string" is sequence and "string" is not string)
+      - '["true", "false"] is sequence'
+      - '"string" is sequence'
