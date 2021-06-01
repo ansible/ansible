@@ -380,6 +380,27 @@ The following tasks are illustrative of the tests meant to check the status of t
 
 .. note:: From 2.1, you can also use success, failure, change, and skip so that the grammar matches, for those who need to be strict about it.
 
+.. versionadded:: 2.12
+
+Testing if it is a list
+=======================
+
+You can use ``sequence`` to check if value is list or not.
+
+For example::
+
+    - assert:
+        that:
+          - ['1', '2'] is sequence
+          - not 'string_value' is sequence
+          - 'string_value' is sequence(include_strings=True)
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+
+The ``sequence`` takes a parameter ``include_strings`` if set to ``True`` treats strings and bytes as a sequence.
 
 .. _builtin tests: https://jinja.palletsprojects.com/en/latest/templates/#builtin-tests
 

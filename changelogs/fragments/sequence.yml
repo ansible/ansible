@@ -1,0 +1,3 @@
+---
+minor_changes:
+- sequence - add a new test ``sequence`` for testing list.

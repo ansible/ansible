@@ -25,6 +25,7 @@ from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
@@ -265,6 +266,7 @@ class TestModule(object):
             # lists
             'any': any,
             'all': all,
+            'sequence': is_sequence,
 
             # truthiness
             'truthy': truthy,
