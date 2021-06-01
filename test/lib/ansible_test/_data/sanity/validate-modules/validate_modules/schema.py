@@ -332,6 +332,7 @@ def list_dict_option_schema(for_collection):
             'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
             # Recursive suboptions
             'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
+            **argument_spec_modifiers,
         },
         extra=PREVENT_EXTRA
     )
@@ -354,6 +355,7 @@ def list_dict_option_schema(for_collection):
             'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
             # in case of type='list' elements define type of individual item in list
             'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            **argument_spec_modifiers,
         },
         extra=PREVENT_EXTRA
     )
