@@ -523,14 +523,14 @@ def install_collections(
         for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
-                    "Skipping '{coll!s}' as it is virtual".
+                    "'{coll!s}' is virtual, skipping.".
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
 
             if concrete_coll_pin in preferred_collections:
                 display.display(
-                    "Skipping '{coll!s}' as it is already installed".
+                    "'{coll!s}' is already installed, skipping.".
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
