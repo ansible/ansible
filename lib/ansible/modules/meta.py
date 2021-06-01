@@ -29,7 +29,8 @@ options:
         - C(noop) (added in Ansible 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use.
         - C(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
           including the fact cache.
-        - C(clear_host_errors) (added in Ansible 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts.
+        - C(clear_host_errors) (added in Ansible 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts. The recovered
+          hosts will be available to run tasks following the meta task.
         - C(end_play) (added in Ansible 2.2) causes the play to end without failing the host(s). Note that this affects all hosts.
         - C(reset_connection) (added in Ansible 2.3) interrupts a persistent connection (i.e. ssh + control persist)
         - C(end_host) (added in Ansible 2.8) is a per-host variation of C(end_play). Causes the play to end for the current host without failing it.
