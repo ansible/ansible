@@ -108,7 +108,7 @@ In a directory of your choice you can create your first playbook in a file calle
 .. code-block:: yaml
 
     ---
-    - name: My task
+    - name: My playbook
       hosts: all
       tasks:
          - name: Leaving a mark
@@ -125,7 +125,7 @@ and may see output like this:
 .. code-block:: ansible-output
 
 
-   PLAY [My task] **************************************************************************************************************************
+   PLAY [My playbook] **********************************************************************************************************************
    
    TASK [Gathering Facts] ******************************************************************************************************************
    ok: [aserver.example.org]
