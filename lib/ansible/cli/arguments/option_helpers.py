@@ -33,8 +33,16 @@ class SortingHelpFormatter(argparse.HelpFormatter):
 
 class AnsibleVersion(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        ansible_version = to_native(version(getattr(parser, 'prog')))
-        print(ansible_version)
+        is_json = '--json' in sys.argv
+        if is_json:
+            from ansible.cli import CLI
+            import json
+            print(json.dumps(CLI.version_info()))
+        else:
+            ansible_version = to_native(version(getattr(parser, 'prog')))
+            print(ansible_version)
+
+        # do nothing else when version is requested
         parser.exit()
 
 
