@@ -117,7 +117,7 @@ class HostState:
         new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
-        new_state._restore_state = self
+        new_state._restore_state = self._restore_state
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
         if self.rescue_child_state is not None:
