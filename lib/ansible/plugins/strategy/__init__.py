@@ -1149,9 +1149,18 @@ class StrategyBase:
         elif meta_action == 'clear_host_errors':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    self._tqm._failed_hosts.pop(host.name, False)
-                    self._tqm._unreachable_hosts.pop(host.name, False)
+                    failed = self._tqm._failed_hosts.pop(host.name, False)
+                    unreachable = self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
+                    if failed and host.name in self._tqm._stats.rescued and self._tqm._stats.rescued[host.name]:
+                        iterator._host_states[host.name].run_state = iterator._host_states[host.name]._restore_state.run_state
+                    elif failed:
+                        iterator._host_states[host.name] = iterator._host_states[host.name]._restore_state
+                    if failed or unreachable:
+                        s, t = iterator.get_next_task_for_host(host, peek=False)
+                        while t is not None and t.args.get('_raw_params') != 'clear_host_errors':
+                            iterator._host_states[host.name].run_state = s.run_state
+                            s, t = iterator.get_next_task_for_host(host, peek=False)
                 msg = "cleared host errors"
             else:
                 skipped = True
