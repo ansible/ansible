@@ -413,7 +413,7 @@ class Connection(ConnectionBase):
             display.vvvvv("PSRP: Reset Connection", host=self._psrp_host)
             self.runspace = None
             self._connect()
-        return
+        return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data,
