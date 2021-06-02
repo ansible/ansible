@@ -238,7 +238,6 @@ from zipfile import ZipFile, BadZipfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_file
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common.process import get_bin_path
 
 try:  # python 3.3+
     from shlex import quote
@@ -290,14 +289,8 @@ class ZipArchive(object):
         self.excludes = module.params['exclude']
         self.includes = []
         self.include_files = self.module.params['include']
-        try:
-            self.cmd_path = get_bin_path('unzip')
-        except ValueError:
-            self.module.fail_json(msg="Unable to find required 'unzip' binary in the path")
-        try:
-            self.zipinfocmd_path = get_bin_path('zipinfo')
-        except ValueError:
-            self.module.fail_json(msg="Unable to find required 'zipinfo' binary in the path")
+        self.cmd_path = self.module.get_bin_path('unzip')
+        self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
         self._files_in_archive = []
         self._infodict = dict()
 
@@ -709,7 +702,9 @@ class ZipArchive(object):
 
     def can_handle_archive(self):
         if not self.cmd_path:
-            return False, 'Command "unzip" not found.'
+            return False, 'Command "unzip" not found in the path.'
+        if not self.zipinfocmd_path:
+            return False, 'Command "zipinfo" not found in the path.'
         cmd = [self.cmd_path, '-l', self.src]
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
@@ -730,14 +725,9 @@ class TgzArchive(object):
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
         self.include_files = self.module.params['include']
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
-        try:
-            self.cmd_path = get_bin_path('gtar')
-        except ValueError:
-            # Fallback to tar
-            try:
-                self.cmd_path = get_bin_path('tar')
-            except ValueError:
-                self.module.fail_json(msg="Unable to find required 'gtar' or 'tar' binary in the path")
+        self.cmd_path = self.module.get_bin_path('gtar')
+        if not self.cmd_path:
+            self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = '-z'
         self._files_in_archive = []
 
@@ -873,6 +863,9 @@ class TgzArchive(object):
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
+        if not self.cmd_path:
+            return False, 'Command "gtar" or "tar" not found in the path.'
+
         if self.tar_type != 'gnu':
             return False, 'Command "%s" detected as tar type %s. GNU tar required.' % (self.cmd_path, self.tar_type)
 
