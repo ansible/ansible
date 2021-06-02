@@ -714,7 +714,7 @@ class ZipArchive(object):
                 missing.append(b[0])
 
         if missing:
-            return False, "Command '{missing}' not found.".format(missing=', '.join(missing))
+            return False, "Unable to find required '{missing}' binary in the path.".format(missing="' or '".join(missing))
 
         cmd = [self.cmd_path, '-l', self.src]
         rc, out, err = self.module.run_command(cmd)
