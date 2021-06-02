@@ -56,7 +56,9 @@ DOCUMENTATION = '''
               - name: ansible_ssh_pass
               - name: ansible_ssh_password
       sshpass_prompt:
-          description: Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+          description:
+              - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+              - Defaults to ``Enter PIN for`` when pkcs11_provider is set.
           default: ''
           ini:
               - section: 'ssh_connection'
@@ -322,6 +324,17 @@ DOCUMENTATION = '''
         cli:
           - name: timeout
         type: integer
+      pkcs11_provider:
+        version_added: '2.12'
+        default: ""
+        description:
+          - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
+          - Requires sshpass version 1.06+, sshpass must support the -P option
+        env: [{name: ANSIBLE_PKCS11_PROVIDER}]
+        ini:
+          - {key: pkcs11_provider, section: ssh_connection}
+        vars:
+          - name: ansible_ssh_pkcs11_provider
 '''
 
 import errno
@@ -622,15 +635,21 @@ class Connection(ConnectionBase):
 
         # If we want to use password authentication, we have to set up a pipe to
         # write the password to sshpass.
-
-        if conn_password:
+        pkcs11_provider = self.get_option("pkcs11_provider")
+        if conn_password or pkcs11_provider:
             if not self._sshpass_available():
-                raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
+                raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
+            if not conn_password and pkcs11_provider:
+                raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
 
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
             password_prompt = self.get_option('sshpass_prompt')
+            if not password_prompt and pkcs11_provider:
+                # Set default password prompt for pkcs11_provider to make it clear its a PIN
+                password_prompt = 'Enter PIN for '
+
             if password_prompt:
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
 
@@ -639,6 +658,15 @@ class Connection(ConnectionBase):
         #
         # Next, additional arguments based on the configuration.
         #
+
+        # pkcs11 mode allows the use of Smartcards or Yubikey devices
+        if conn_password and pkcs11_provider:
+            self._add_args(b_command,
+                           (b"-o", b"KbdInteractiveAuthentication=no",
+                            b"-o", b"PreferredAuthentications=publickey",
+                            b"-o", b"PasswordAuthentication=no",
+                            b'-o', to_bytes(u'PKCS11Provider=%s' % pkcs11_provider)),
+                           u'Enable pkcs11')
 
         # sftp batch mode allows us to correctly catch failed transfers, but can
         # be disabled if the client side doesn't support the option. However,

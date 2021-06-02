@@ -1,0 +1,3 @@
+minor_changes:
+  - ssh - added pkcs11 support by adding the pkcs11_provider option in the
+    ssh connection module. (https://www.github.com/ansible/ansible/pull/32829)
