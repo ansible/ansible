@@ -1,0 +1,2 @@
+bugfixes:
+- unarchive - fail when zipinfo binary is not found in executable paths (https://github.com/ansible/ansible/issues/39029).
