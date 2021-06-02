@@ -63,7 +63,9 @@ class _DeprecatedSequenceConstant(Sequence):
 # CONSTANTS ### yes, actual ones
 
 # The following are hard-coded action names
+_ACTION_COPY = add_internal_fqcns(('copy', ))
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
+_ACTION_FILE = add_internal_fqcns(('file', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
 _ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
 _ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
@@ -74,6 +76,8 @@ _ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
 _ACTION_META = add_internal_fqcns(('meta', ))
 _ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
 _ACTION_SETUP = add_internal_fqcns(('setup', ))
+_ACTION_SLURP = add_internal_fqcns(('slurp', ))
+_ACTION_STAT = add_internal_fqcns(('stat', ))
 _ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
 _ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
 _ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE

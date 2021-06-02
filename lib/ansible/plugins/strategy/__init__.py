@@ -345,7 +345,7 @@ class StrategyBase:
 
         if task.action not in action_write_locks.action_write_locks:
             display.debug('Creating lock for %s' % task.action)
-            action_write_locks.action_write_locks[task.action] = Lock()
+            action_write_locks.action_write_locks[task.action] = action_write_locks.action_lock()
 
         # create a templar and template things we need later for the queuing process
         templar = Templar(loader=self._loader, variables=task_vars)

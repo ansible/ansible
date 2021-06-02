@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    action_write_locks - use a manager dictionary object allowing resources to
+    be shared across processes.
