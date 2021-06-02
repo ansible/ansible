@@ -1170,6 +1170,7 @@ class StrategyBase:
 
                     if failed:
                         iterator._host_states[host.name] = host.restore_state
+                        host.restore_state = None
 
                     # Iterate over tasks until we get to clear_host_errors
                     s, t = iterator.get_next_task_for_host(host, peek=False)
