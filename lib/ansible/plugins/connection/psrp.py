@@ -411,11 +411,11 @@ class Connection(ConnectionBase):
     def reset(self):
         if self._connected:
             return self
-            super(Connection, self)._connect()
-            self._build_kwargs()
-            display.vvvvv("PSRP: Reset Connection", host=self._psrp_host)
-            self.runspace = None
-            self._connect()
+        super(Connection, self)._connect()
+        self._build_kwargs()
+        display.vvvvv("PSRP: Reset Connection", host=self._psrp_host)
+        self.runspace = None
+        self._connect()
         return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
