@@ -15,6 +15,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from copy import deepcopy
+from distutils.version import LooseVersion
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.iosxr.facts.facts import Facts
@@ -34,7 +35,9 @@ from ansible.module_utils.network.iosxr.utils.utils \
         dict_delete,
         normalize_interface
     )
-
+from ansible.module_utils.network.iosxr.iosxr import (
+    get_os_version,
+)
 
 class Lag_interfaces(ConfigBase):
     """
@@ -372,7 +375,9 @@ class Lag_interfaces(ConfigBase):
             cmd = "lacp mode {0}".format(value)
 
         elif key == "load_balancing_hash":
-            cmd = "bundle load-balancing hash {0}".format(value)
+            os_version = get_os_version(self._module)
+            if os_version and LooseVersion(os_version) < LooseVersion("7.0.0"):
+                cmd = "bundle load-balancing hash {0}".format(value)
 
         elif key == "max_active":
             cmd = "bundle maximum-active links {0}".format(value)

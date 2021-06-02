@@ -56,7 +56,8 @@ NS_DICT = {
     'BASE_NSMAP': {"xc": "urn:ietf:params:xml:ns:netconf:base:1.0"},
     'BANNERS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg"},
     'INTERFACES_NSMAP': {None: "http://openconfig.net/yang/interfaces"},
-    'INSTALL_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-installmgr-admin-oper"},
+    'INSTALL_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-spirit-install-instmgr-oper"},
+    "INSTALL_OLD_NSMAP": {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-installmgr-admin-oper"},
     'HOST-NAMES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-shellutil-cfg"},
     'M:TYPE_NSMAP': {"idx": "urn:ietf:params:xml:ns:yang:iana-if-type"},
     'ETHERNET_NSMAP': {None: "http://openconfig.net/yang/interfaces/ethernet"},
@@ -232,7 +233,7 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
         return sub_root
 
 
-def build_xml(container, xmap=None, params=None, opcode=None):
+def build_xml(container, xmap=None, params=None, opcode=None, namespace=None):
     """
     Builds netconf xml rpc document from meta-data
 
@@ -274,12 +275,14 @@ def build_xml(container, xmap=None, params=None, opcode=None):
             </config>
     :returns: xml rpc document as a string
     """
+    if not namespace:
+        namespace = container
     if opcode == 'filter':
         root = etree.Element("filter", type="subtree")
     elif opcode in ('delete', 'merge'):
         root = etree.Element("config", nsmap=NS_DICT['BASE_NSMAP'])
 
-    container_ele = etree.SubElement(root, container, nsmap=NS_DICT[container.upper() + "_NSMAP"])
+    container_ele = etree.SubElement(root, container, nsmap=NS_DICT[namespace.upper() + "_NSMAP"])
 
     if xmap is not None:
         if params is None:

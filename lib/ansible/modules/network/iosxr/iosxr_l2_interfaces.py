@@ -92,6 +92,24 @@ options:
             - VLAN Trunk Protocol (VTP) tunneling and data unit parameters.
             choices: ['drop','forward', 'tunnel']
             type: str
+          cpsv:
+            description:
+              - CDP, PVST+, STP, and VTP protocols.
+            choices:
+            - drop
+            - reverse-tunnel
+            - tunnel
+            type: str
+      encapsulation:
+        description: Specify which packets will be matched by this sub-interface.
+        type: dict
+        suboptions:
+          dot1q:
+            type: int
+            description: IEEE 802.1Q VLAN-tagged packets.
+          second_dot1q:
+            type: int
+            description: IEEE 802.1Q VLAN-tagged packets.
       q_vlan:
         description:
         - 802.1Q VLAN configuration. Note that it can accept either 2 VLAN IDs when configuring Q-in-Q VLAN,

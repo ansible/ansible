@@ -60,7 +60,11 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_image'] = match.group(1)
 
-        model_search_strs = [r'^[Cc]isco (.+) \(revision', r'^[Cc]isco (\S+ \S+).+bytes of .*memory']
+        model_search_strs = [
+                r"^[Cc]isco (.+) \(\) processor",
+                r"^[Cc]isco (.+) \(revision",
+                r"^[Cc]isco (\S+ \S+).+bytes of .*memory",
+            ]
         for item in model_search_strs:
             match = re.search(item, data, re.M)
             if match:
@@ -128,7 +132,18 @@ class Cliconf(CliconfBase):
         resp['show_commit_config_diff'] = self.get('show commit changes diff')
 
         if commit:
-            self.commit(comment=comment, label=label, replace=replace)
+            try:
+                self.commit(comment=comment, label=label, replace=replace)
+            except AnsibleConnectionFailure as exc:
+                error_msg = to_text(exc, errors="surrogate_or_strict").strip()
+                if (
+                    "Invalid input detected" in error_msg
+                    and "comment" in error_msg
+                ):
+                    comment = None
+                    self.commit(comment=comment, label=label, replace=replace)
+                else:
+                    raise ConnectionError(error_msg)
         else:
             self.discard_changes()
 

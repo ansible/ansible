@@ -207,12 +207,13 @@ import os
 from functools import partial
 from copy import deepcopy
 import collections
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, is_netconf, is_cliconf
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall, get_capabilities
 
 try:
     from base64 import b64decode
@@ -521,37 +522,192 @@ class NCConfiguration(ConfigBase):
         cmd = "openssl passwd -salt `openssl rand -base64 3` -1 "
         return os.popen(cmd + arg).readlines()[0].strip()
 
-    def map_obj_to_xml_rpc(self):
-        self._locald_meta.update([
-            ('aaa_locald', {'xpath': 'aaa/usernames', 'tag': True, 'ns': True}),
-            ('username', {'xpath': 'aaa/usernames/username', 'tag': True, 'attrib': "operation"}),
-            ('a:name', {'xpath': 'aaa/usernames/username/name'}),
-            ('a:configured_password', {'xpath': 'aaa/usernames/username/secret', 'operation': 'edit'}),
-        ])
+    def map_obj_to_xml_rpc(self, os_version):
+        if os_version and LooseVersion(os_version) > LooseVersion("7.0"):
+            self._locald_meta.update(
+                [
+                    (
+                        "aaa_locald",
+                        {"xpath": "aaa/usernames", "tag": True, "ns": True},
+                    ),
+                    (
+                        "username",
+                        {
+                            "xpath": "aaa/usernames/username",
+                            "tag": True,
+                            "attrib": "operation",
+                        },
+                    ),
+                    ("a:name", {"xpath": "aaa/usernames/username/name"}),
+                    (
+                        "a:ordering_index",
+                        {"xpath": "aaa/usernames/username/ordering-index"},
+                    ),
+                    (
+                        "secret",
+                        {
+                            "xpath": "aaa/usernames/username/secret",
+                            "tag": True,
+                            "operation": "edit",
+                        },
+                    ),
+                    (
+                        "a:type",
+                        {
+                            "xpath": "aaa/usernames/username/secret/type",
+                            "value": "type5",
+                        },
+                    ),
+                    (
+                        "a:configured_password",
+                        {
+                            "xpath": "aaa/usernames/username/secret/secret5",
+                            "operation": "edit",
+                        },
+                    ),
+                ]
+            )
+            self._locald_group_meta.update(
+                [
+                    (
+                        "aaa_locald",
+                        {"xpath": "aaa/usernames", "tag": True, "ns": True},
+                    ),
+                    (
+                        "username",
+                        {
+                            "xpath": "aaa/usernames/username",
+                            "tag": True,
+                            "attrib": "operation",
+                        },
+                    ),
+                    ("a:name", {"xpath": "aaa/usernames/username/name"}),
+                    (
+                        "a:ordering_index",
+                        {"xpath": "aaa/usernames/username/ordering-index"},
+                    ),
+                    (
+                        "usergroups",
+                        {
+                            "xpath": "aaa/usernames/username/usergroup-under-usernames",
+                            "tag": True,
+                            "operation": "edit",
+                        },
+                    ),
+                    (
+                        "usergroup",
+                        {
+                            "xpath": "aaa/usernames/username/usergroup-under-usernames/usergroup-under-username",
+                            "tag": True,
+                            "operation": "edit",
+                        },
+                    ),
+                    (
+                        "a:group",
+                        {
+                            "xpath": "aaa/usernames/username/usergroup-under-usernames/usergroup-under-username/name",
+                            "operation": "edit",
+                        },
+                    ),
+                ]
+            )
+        else:
+            self._locald_meta.update(
+                [
+                    (
+                        "aaa_locald",
+                        {"xpath": "aaa/usernames", "tag": True, "ns": True},
+                    ),
+                    (
+                        "username",
+                        {
+                            "xpath": "aaa/usernames/username",
+                            "tag": True,
+                            "attrib": "operation",
+                        },
+                    ),
+                    ("a:name", {"xpath": "aaa/usernames/username/name"}),
+                    (
+                        "a:configured_password",
+                        {
+                            "xpath": "aaa/usernames/username/secret",
+                            "operation": "edit",
+                        },
+                    ),
+                ]
+            )
+            self._locald_group_meta.update(
+                [
+                    (
+                        "aaa_locald",
+                        {"xpath": "aaa/usernames", "tag": True, "ns": True},
+                    ),
+                    (
+                        "username",
+                        {
+                            "xpath": "aaa/usernames/username",
+                            "tag": True,
+                            "attrib": "operation",
+                        },
+                    ),
+                    ("a:name", {"xpath": "aaa/usernames/username/name"}),
+                    (
+                        "usergroups",
+                        {
+                            "xpath": "aaa/usernames/username/usergroup-under-usernames",
+                            "tag": True,
+                            "operation": "edit",
+                        },
+                    ),
+                    (
+                        "usergroup",
+                        {
+                            "xpath": "aaa/usernames/username/usergroup-under-usernames/usergroup-under-username",
+                            "tag": True,
+                            "operation": "edit",
+                        },
+                    ),
+                    (
+                        "a:group",
+                        {
+                            "xpath": "aaa/usernames/username/usergroup-under-usernames/usergroup-under-username/name",
+                            "operation": "edit",
+                        },
+                    ),
+                ]
+            )
 
-        self._locald_group_meta.update([
-            ('aaa_locald', {'xpath': 'aaa/usernames', 'tag': True, 'ns': True}),
-            ('username', {'xpath': 'aaa/usernames/username', 'tag': True, 'attrib': "operation"}),
-            ('a:name', {'xpath': 'aaa/usernames/username/name'}),
-            ('usergroups', {'xpath': 'aaa/usernames/username/usergroup-under-usernames', 'tag': True, 'operation': 'edit'}),
-            ('usergroup', {'xpath': 'aaa/usernames/username/usergroup-under-usernames/usergroup-under-username', 'tag': True, 'operation': 'edit'}),
-            ('a:group', {'xpath': 'aaa/usernames/username/usergroup-under-usernames/usergroup-under-username/name', 'operation': 'edit'}),
-        ])
+        state = self._module.params["state"]
+        _get_filter = build_xml("aaa", opcode="filter")
+        running = get_config(
+            self._module, source="running", config_filter=_get_filter
+        )
 
-        state = self._module.params['state']
-        _get_filter = build_xml('aaa', opcode="filter")
-        running = get_config(self._module, source='running', config_filter=_get_filter)
-
-        elements = etree_findall(running, 'username')
+        elements = etree_findall(running, "username")
         users = list()
         for element in elements:
-            name_list = etree_findall(element, 'name')
+            name_list = etree_findall(element, "name")
             users.append(name_list[0].text)
             list_size = len(name_list)
+            ordering_index = etree_findall(element, "ordering-index")
             if list_size == 1:
-                self._have.append({'name': name_list[0].text, 'group': None, 'groups': None})
+                self._have.append(
+                    {
+                        "name": name_list[0].text,
+                        "group": None,
+                        "groups": None,
+                        "ordering_index": ordering_index[0].text,
+                    }
+                )
             elif list_size == 2:
-                self._have.append({'name': name_list[0].text, 'group': name_list[1].text, 'groups': None})
+                self._have.append(
+                    {
+                        "ordering_index": ordering_index[0].text,
+                        "name": name_list[0].text,
+                        "group": name_list[1].text,
+                        "groups": None,
+                    }
+                )
             elif list_size > 2:
                 name_iter = iter(name_list)
                 next(name_iter)
@@ -559,85 +715,159 @@ class NCConfiguration(ConfigBase):
                 for name in name_iter:
                     tmp_list.append(name.text)
 
-                self._have.append({'name': name_list[0].text, 'group': None, 'groups': tmp_list})
+                self._have.append(
+                    {
+                        "name": name_list[0].text,
+                        "ordering_index": ordering_index[0].text,
+                        "group": None,
+                        "groups": tmp_list,
+                    }
+                )
 
         locald_params = list()
         locald_group_params = list()
         opcode = None
+        ordering_index_list = [
+            int(user.get("ordering_index")) for user in self._have
+        ]
 
-        if state == 'absent':
+        if state == "absent":
             opcode = "delete"
             for want_item in self._want:
-                if want_item['name'] in users:
-                    want_item['configured_password'] = None
+                if want_item["name"] in users:
+                    obj_in_have = search_obj_in_list(
+                        want_item["name"], self._have
+                    )
+                    want_item["ordering_index"] = obj_in_have["ordering_index"]
+                    want_item["configured_password"] = None
                     locald_params.append(want_item)
-        elif state == 'present':
+        elif state == "present":
             opcode = "merge"
             for want_item in self._want:
-                if want_item['name'] not in users:
-                    want_item['configured_password'] = self.generate_md5_hash(want_item['configured_password'])
+                obj_in_have = search_obj_in_list(want_item["name"], self._have)
+                if want_item["name"] not in users:
+                    if os_version and LooseVersion(os_version) > LooseVersion(
+                        "7.0"
+                    ):
+                        want_item[
+                            "configured_password"
+                        ] = self.generate_md5_hash(
+                            want_item["configured_password"]
+                        )
+                        new_ordering_index = ordering_index_list[-1] + 1
+                        want_item["ordering_index"] = str(new_ordering_index)
+                        ordering_index_list.append(new_ordering_index)
+                        want_item["type"] = "type5"
+                    want_item["configured_password"] = self.generate_md5_hash(
+                        want_item["configured_password"]
+                    )
                     locald_params.append(want_item)
-
-                    if want_item['group'] is not None:
+                    if want_item["group"] is not None:
                         locald_group_params.append(want_item)
-                    if want_item['groups'] is not None:
-                        for group in want_item['groups']:
-                            want_item['group'] = group
+                    if want_item["groups"] is not None:
+                        for group in want_item["groups"]:
+                            want_item["group"] = group
                             locald_group_params.append(want_item.copy())
                 else:
-                    if self._module.params['update_password'] == 'always' and want_item['configured_password'] is not None:
-                        want_item['configured_password'] = self.generate_md5_hash(want_item['configured_password'])
+                    if os_version and LooseVersion(os_version) > LooseVersion(
+                        "7.0"
+                    ):
+                        if obj_in_have:
+                            # Add iosxr 7.0 > specific parameters
+                            want_item["type"] = "type5"
+                            want_item["ordering_index"] = obj_in_have[
+                                "ordering_index"
+                            ]
+                    if (
+                        self._module.params["update_password"] == "always"
+                        and want_item["configured_password"] is not None
+                    ):
+
+                        want_item[
+                            "configured_password"
+                        ] = self.generate_md5_hash(
+                            want_item["configured_password"]
+                        )
                         locald_params.append(want_item)
                     else:
-                        want_item['configured_password'] = None
+                        want_item["configured_password"] = None
 
-                    obj_in_have = search_obj_in_list(want_item['name'], self._have)
-                    if want_item['group'] is not None and want_item['group'] != obj_in_have['group']:
+                    if (
+                        want_item["group"] is not None
+                        and want_item["group"] != obj_in_have["group"]
+                    ):
                         locald_group_params.append(want_item)
-                    elif want_item['groups'] is not None:
-                        for group in want_item['groups']:
-                            want_item['group'] = group
+                    elif want_item["groups"] is not None:
+                        for group in want_item["groups"]:
+                            want_item["group"] = group
                             locald_group_params.append(want_item.copy())
 
         purge_params = list()
-        if self._module.params['purge']:
-            want_users = [x['name'] for x in self._want]
-            have_users = [x['name'] for x in self._have]
+        if self._module.params["purge"]:
+            want_users = [x["name"] for x in self._want]
+            have_users = [x["name"] for x in self._have]
             for item in set(have_users).difference(set(want_users)):
-                if item != 'admin':
-                    purge_params.append({'name': item})
+                if item != "admin":
+                    purge_params.append({"name": item})
 
-        self._result['xml'] = []
+        self._result["xml"] = []
         _edit_filter_list = list()
         if opcode is not None:
             if locald_params:
-                _edit_filter_list.append(build_xml('aaa', xmap=self._locald_meta,
-                                                   params=locald_params, opcode=opcode))
+                _edit_filter_list.append(
+                    build_xml(
+                        "aaa",
+                        xmap=self._locald_meta,
+                        params=locald_params,
+                        opcode=opcode,
+                    )
+                )
 
             if locald_group_params:
-                _edit_filter_list.append(build_xml('aaa', xmap=self._locald_group_meta,
-                                                   params=locald_group_params, opcode=opcode))
+                _edit_filter_list.append(
+                    build_xml(
+                        "aaa",
+                        xmap=self._locald_group_meta,
+                        params=locald_group_params,
+                        opcode=opcode,
+                    )
+                )
 
             if purge_params:
-                _edit_filter_list.append(build_xml('aaa', xmap=self._locald_meta,
-                                                   params=purge_params, opcode="delete"))
-
+                _edit_filter_list.append(
+                    build_xml(
+                        "aaa",
+                        xmap=self._locald_meta,
+                        params=purge_params,
+                        opcode="delete",
+                    )
+                )
         diff = None
         if _edit_filter_list:
             commit = not self._module.check_mode
-            diff = load_config(self._module, _edit_filter_list, commit=commit, running=running,
-                               nc_get_filter=_get_filter)
+            diff = load_config(
+                self._module,
+                _edit_filter_list,
+                commit=commit,
+                running=running,
+                nc_get_filter=_get_filter,
+            )
 
         if diff:
             if self._module._diff:
-                self._result['diff'] = dict(prepared=diff)
+                self._result["diff"] = dict(prepared=diff)
 
-            self._result['xml'] = _edit_filter_list
-            self._result['changed'] = True
+            self._result["xml"] = _edit_filter_list
+            self._result["changed"] = True
 
     def run(self):
+        os_version = (
+            get_capabilities(self._module)
+                .get("device_info")
+                .get("network_os_version")
+        )
         self.map_params_to_obj()
-        self.map_obj_to_xml_rpc()
+        self.map_obj_to_xml_rpc(os_version)
 
         return self._result
 

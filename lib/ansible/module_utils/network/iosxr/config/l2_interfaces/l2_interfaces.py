@@ -13,13 +13,16 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+from distutils.version import LooseVersion
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.iosxr.facts.facts import Facts
-from ansible.module_utils.network.iosxr.utils.utils import normalize_interface, dict_to_set
+from ansible.module_utils.network.iosxr.utils.utils import normalize_interface, dict_diff
 from ansible.module_utils.network.iosxr.utils.utils import remove_command_from_config_list, add_command_to_config_list
 from ansible.module_utils.network.iosxr.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
-
+from ansible.module_utils.network.iosxr.iosxr import (
+    get_os_version,
+)
 
 class L2_Interfaces(ConfigBase):
     """
@@ -227,12 +230,8 @@ class L2_Interfaces(ConfigBase):
         commands = []
         interface = 'interface ' + want['name']
         l2_protocol_bool = False
-
         # Get the diff b/w want and have
-        want_dict = dict_to_set(want)
-        have_dict = dict_to_set(have)
-        diff = want_dict - have_dict
-
+        diff = dict_diff(have, want)
         if diff:
             # For merging with already configured l2protocol
             if have.get('l2protocol') and len(have.get('l2protocol')) > 1:
@@ -248,36 +247,75 @@ class L2_Interfaces(ConfigBase):
             else:
                 l2protocol = {}
 
-            diff = dict(diff)
             wants_native = diff.get('native_vlan')
             l2transport = diff.get('l2transport')
             q_vlan = diff.get('q_vlan')
+            encapsulation = diff.get('encapsulation')
             propagate = diff.get('propagate')
             if l2_protocol_bool is False:
                 l2protocol = diff.get('l2protocol')
 
-            if wants_native:
-                cmd = 'dot1q native vlan {0}'.format(wants_native)
-                add_command_to_config_list(interface, cmd, commands)
+            os_version = get_os_version(self._module)
+            if os_version and LooseVersion(os_version) < LooseVersion("7.0.0"):
+                if wants_native:
+                    cmd = "dot1q native vlan {0}".format(wants_native)
+                    add_command_to_config_list(interface, cmd, commands)
+
+                if l2transport or l2protocol:
+                    for each in l2protocol:
+                        each = dict(each)
+                        if (
+                                isinstance(each, dict)
+                                and list(each.keys())[0] != "cpsv"
+                        ):
+                            cmd = "l2transport l2protocol {0} {1}".format(
+                                list(each.keys())[0], list(each.values())[0]
+                            )
+                        add_command_to_config_list(interface, cmd, commands)
+
+                if q_vlan and "." in interface:
+                    q_vlans = " ".join(map(str, want.get('q_vlan')))
+                    if q_vlans != have.get('q_vlan'):
+                        cmd = "dot1q vlan {0}".format(q_vlans)
+                        add_command_to_config_list(interface, cmd, commands)
+            else:
+                if l2transport or l2protocol:
+                    for each in l2protocol:
+                        each = dict(each)
+                        if (
+                                isinstance(each, dict)
+                                and list(each.keys())[0] == "cpsv"
+                        ):
+                            cmd = "l2transport l2protocol {0} {1}".format(
+                                list(each.keys())[0], list(each.values())[0]
+                            )
+                        add_command_to_config_list(interface, cmd, commands)
+                        break
+                if encapsulation:
+                    encapsulation = dict(encapsulation)
+                    if encapsulation.get("dot1q"):
+                        if encapsulation.get("second_dot1q"):
+                            cmd = "encapsulation dot1q {0} second-dot1q {1}".format(
+                                encapsulation.get("dot1q"),
+                                encapsulation.get("second_dot1q"),
+                            )
+                        else:
+                            cmd = "encapsulation dot1q {0}".format(
+                                encapsulation.get("dot1q")
+                            )
+                        add_command_to_config_list(interface, cmd, commands)
 
             if l2transport or l2protocol:
-                for each in l2protocol:
-                    each = dict(each)
-                    if isinstance(each, dict):
-                        cmd = 'l2transport l2protocol {0} {1}'.format(list(each.keys())[0], list(each.values())[0])
-                    add_command_to_config_list(interface, cmd, commands)
                 if propagate and not have.get('propagate'):
                     cmd = 'l2transport propagate remote-status'
                     add_command_to_config_list(interface, cmd, commands)
-            elif want.get('l2transport') is False and (want.get('l2protocol') or want.get('propagate')):
-                module.fail_json(msg='L2transport L2protocol or Propagate can only be configured when '
-                                     'L2transport set to True!')
-
-            if q_vlan and '.' in interface:
-                q_vlans = (" ".join(map(str, want.get('q_vlan'))))
-                if q_vlans != have.get('q_vlan'):
-                    cmd = 'dot1q vlan {0}'.format(q_vlans)
-                    add_command_to_config_list(interface, cmd, commands)
+            elif want.get('l2transport') is False and (
+                    want.get('l2protocol') or want.get('propagate')
+            ):
+                module.fail_json(
+                    msg="L2transport L2protocol or Propagate can only be configured when "
+                        "L2transport set to True!"
+                )
 
         return commands
 
@@ -289,17 +327,35 @@ class L2_Interfaces(ConfigBase):
             interface = 'interface ' + want['name']
         else:
             interface = 'interface ' + have['name']
-        if have.get('native_vlan'):
-            remove_command_from_config_list(interface, 'dot1q native vlan', commands)
+        os_version = get_os_version(self._module)
+        if os_version and LooseVersion(os_version) < LooseVersion("7.0.0"):
+            if have.get("native_vlan"):
+                remove_command_from_config_list(
+                    interface, "dot1q native vlan", commands
+                )
 
-        if have.get('q_vlan'):
-            remove_command_from_config_list(interface, 'encapsulation dot1q', commands)
+            if have.get("q_vlan"):
+                remove_command_from_config_list(
+                    interface, "encapsulation dot1q", commands
+                )
+        else:
+            if have.get("encapsulation"):
+                remove_command_from_config_list(
+                    interface, "encapsulation dot1q", commands
+                )
 
-        if have.get('l2protocol') and (want.get('l2protocol') is None or want.get('propagate') is None):
-            if 'no l2transport' not in commands:
-                remove_command_from_config_list(interface, 'l2transport', commands)
-        elif have.get('l2transport') and have.get('l2transport') != want.get('l2transport'):
-            if 'no l2transport' not in commands:
-                remove_command_from_config_list(interface, 'l2transport', commands)
-
+        if have.get('l2protocol') and (
+                want.get('l2protocol') is None or want.get('propagate') is None
+        ):
+            if "no l2transport" not in commands:
+                remove_command_from_config_list(
+                    interface, "l2transport", commands
+                )
+        elif have.get("l2transport") and have.get("l2transport") != want.get(
+                "l2transport"
+        ):
+            if "no l2transport" not in commands:
+                remove_command_from_config_list(
+                    interface, "l2transport", commands
+                )
         return commands
