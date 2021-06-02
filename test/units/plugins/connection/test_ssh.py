@@ -80,6 +80,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('ssh', pc, new_stdin)
+        conn.get_option = MagicMock()
+        conn.get_option.return_value = ""
         conn._build_command('ssh', 'ssh')
 
     def test_plugins_connection_ssh_exec_command(self):
