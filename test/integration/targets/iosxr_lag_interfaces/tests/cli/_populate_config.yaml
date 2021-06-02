@@ -1,6 +1,6 @@
 ---
 - name: Setup
-  cisco.iosxr.iosxr_lag_interfaces:
+  iosxr_lag_interfaces:
     config:
       - name: Bundle-Ether10
         mode: active

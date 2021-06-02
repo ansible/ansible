@@ -7,40 +7,34 @@
   iosxr_banner:
     banner: motd
     state: absent
-    provider: "{{ netconf }}"
+    provider: '{{ netconf }}'
 
 - name: Set motd
+  register: result
   iosxr_banner:
     banner: motd
-    text: |
-      this is my motd banner
-      that has a multiline
-      string
-    provider: "{{ netconf }}"
+    text: "@this is my motd banner\nthat has a multiline\nstring\n@"
+    provider: '{{ netconf }}'
     state: present
-  register: result
 
 - debug:
-    msg: "{{ result }}"
+    msg: '{{ result }}'
 
 - assert:
     that:
-      - "result.changed == true"
+      - result.changed == true
       - "'this is my motd banner' in result.xml"
       - "'that has a multiline' in result.xml"
 
 - name: Set motd again (idempotent)
+  register: result
   iosxr_banner:
     banner: motd
-    text: |
-      this is my motd banner
-      that has a multiline
-      string
-    provider: "{{ netconf }}"
+    text: "@this is my motd banner\nthat has a multiline\nstring\n@"
+    provider: '{{ netconf }}'
     state: present
-  register: result
 
 - assert:
     that:
-      - "result.changed == false"
-      - "result.xml | length == 0"
+      - result.changed == false
+      - result.xml | length == 0

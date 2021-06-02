@@ -224,6 +224,6 @@
       - '"notice" in result.xml[2]'
       - '"alert" in result.xml[3]'
       - '"4700000" in result.xml[4]'
-      - '"debug" in result.xml[4]'
+      - '"info" in result.xml[4]'
       - '"local3" in result.xml[5]'
       - '"host3" in result.xml[6]'

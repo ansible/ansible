@@ -3,38 +3,38 @@
   pause:
     minutes: 1
 
+---
 - name: Setup
-  iosxr_banner:
+  cisco.iosxr.iosxr_banner:
     banner: login
-    text: |
-      Junk login banner
-      over multiple lines
-    provider: "{{ netconf }}"
+    text: "@Junk login banner\nover multiple lines\n@"
+    provider: '{{ netconf }}'
     state: present
 
 - name: remove login
-  iosxr_banner:
+  register: result
+  cisco.iosxr.iosxr_banner:
     banner: login
     state: absent
-    provider: "{{ netconf }}"
-  register: result
+    provider: '{{ netconf }}'
 
 - debug:
-    msg: "{{ result }}"
+    msg: '{{ result }}'
 
 - assert:
     that:
-      - "result.changed == true"
+      - result.changed == true
       - "'xc:operation=\"delete\"' in result.xml"
 
 - name: remove login (idempotent)
-  iosxr_banner:
+  register: result
+  cisco.iosxr.iosxr_banner:
     banner: login
     state: absent
-    provider: "{{ netconf }}"
-  register: result
+    provider: '{{ netconf }}'
 
 - assert:
     that:
-      - "result.changed == false"
-      - "result.xml | length == 0"
+      - result.changed == false
+      - result.xml | length == 0
+
