@@ -634,6 +634,9 @@ class Base(FieldAttributeBase):
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
 
+    # verbosity
+    _verbosity = FieldAttribute(isa='int', default=context.cliargs_deferred_get('verbosity'))
+
     # Privilege escalation
     _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
     _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))

@@ -137,6 +137,9 @@ class PlaybookExecutor:
                     templar = Templar(loader=self._loader, variables=all_vars)
                     setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
 
+                    # update verbosity
+                    display.verbosity = play.verbosity
+
                     # FIXME: this should be a play 'sub object' like loop_control
                     if play.vars_prompt:
                         for var in play.vars_prompt:
@@ -216,6 +219,9 @@ class PlaybookExecutor:
                             break
 
                     i = i + 1  # per play
+
+                # restore global verbosity
+                display.verbosity = context.CLIARGS['verbosity']
 
                 if entry:
                     entrylist.append(entry)  # per playbook

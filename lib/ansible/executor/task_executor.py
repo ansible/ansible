@@ -15,6 +15,7 @@ import termios
 import traceback
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
@@ -155,7 +156,10 @@ class TaskExecutor:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
                 display.debug("calling self._execute()")
-                res = self._execute()
+                try:
+                    res = self._execute()
+                finally:
+                    display.verbosity = context.CLIARGS['verbosity']
                 display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
@@ -351,7 +355,10 @@ class TaskExecutor:
             # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
-            res = self._execute(variables=task_vars)
+            try:
+                res = self._execute(variables=task_vars)
+            finally:
+                display.verbosity = context.CLIARGS['verbosity']
             task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
@@ -506,6 +513,9 @@ class TaskExecutor:
             raise
         except Exception:
             return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
+
+        display.verbosity = self._task.verbosity
+
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
