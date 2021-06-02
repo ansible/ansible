@@ -1,0 +1,5 @@
+---
+minor_changes:
+      - Add new keys for iosxr_l2_interface, iosxr_logging.
+      - Fix integration tests for iosxr_config, iosxr_smoke,iosxr_facts,iosxr_l2_interfaces,iosxr_lag_interfaces,
+        iosxr_logging,iosxr_user.
