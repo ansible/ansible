@@ -64,16 +64,19 @@ for test_strategy in linear free; do
         grep -q "second post-failure and pre-recovery for $host_left" <<< "$out"
         grep -q "block post-failure and pre-recovery for $host_left" <<< "$out"
         grep -q "second in block post-failure and pre-recovery for $host_left" <<< "$out"
+	grep -q "next play pre-recovery for $host_left" <<< "$out"
     done
 
     grep -qv "post-failure and pre-recovery for testhost2" <<< "$out"
     grep -qv "second post-failure and pre-recovery for testhost2" <<< "$out"
     grep -qv "block post-failure and pre-recovery for testhost2" <<< "$out"
     grep -qv "second in block post-failure and pre-recovery for testhost2" <<< "$out"
+    grep -qv "next play pre-recovery for testhost2" <<< "$out"
 
     for host in testhost testhost2 testhost3; do
         grep -q "$host in block" <<< "$out"
         grep -q "post-recovery for $host" <<< "$out"
         grep -q "second post-recovery for $host" <<< "$out"
+	grep -q "next play post-recovery for $host" <<< "$out"
     done
 done

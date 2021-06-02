@@ -1,4 +1,4 @@
-- name: "Testing end_host with strategy={{ test_strategy | default('linear') }}"
+- name: "Testing clear_host_errors with strategy={{ test_strategy | default('linear') }}"
   hosts:
     - testhost
     - testhost2
@@ -44,3 +44,21 @@
         - debug: msg='third in block post-recovery {{ inventory_hostname }}'
 
     - debug: msg='second post-recovery for {{ inventory_hostname }}'
+
+    - name: fail testhost2 (EXPECTED FAILURE)
+      fail:
+      when: "host_var_role_name == 'role2'"
+
+- name: "Testing clear_host_errors across plays with strategy={{ test_strategy | default('linear') }}"
+  hosts:
+    - testhost
+    - testhost2
+    - testhost3
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  pre_tasks:
+    - debug: msg="next play pre-recovery for {{ inventory_hostname }}"
+
+    - meta: clear_host_errors
+
+    - debug: msg="next play post-recovery for {{ inventory_hostname }}"
