@@ -1296,8 +1296,6 @@ def _do_yaml_snippet(text, doc):
 
 def _do_ini_snippet(text, doc):
 
-    #text.append("# %s:" % doc.get('plugin', doc.get('name')).upper())
-
     subdent = "# "
     limit = display.columns - 20
 
