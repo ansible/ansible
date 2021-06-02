@@ -635,7 +635,7 @@ class Base(FieldAttributeBase):
     _debugger = FieldAttribute(isa='string')
 
     # verbosity
-    _verbosity = FieldAttribute(isa='int', default=context.cliargs_deferred_get('verbosity'))
+    _verbosity = FieldAttribute(isa='int', default=context.cliargs_deferred_get('verbosity', default=0))
 
     # Privilege escalation
     _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
