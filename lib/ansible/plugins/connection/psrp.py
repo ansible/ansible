@@ -410,6 +410,8 @@ class Connection(ConnectionBase):
 
     def reset(self):
         if not self._connected:
+            super(Connection, self)._connect()
+            self._build_kwargs()
             display.vvvvv("PSRP: Reset Connection", host=self._psrp_host)
             self.runspace = None
             self._connect()
