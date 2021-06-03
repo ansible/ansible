@@ -90,7 +90,7 @@ class CallbackModule(CallbackBase):
             self._process_items(result)
 
         else:
-            if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
+            if getattr(result._task, 'verbosity', self._display.verbosity) < 2 and self.get_option('show_task_path_on_failure'):
                 self._print_task_path(result._task)
             msg = "fatal: [%s]: FAILED! => %s" % (host_label, self._dump_results(result._result))
             self._display.display(msg, color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
@@ -214,7 +214,7 @@ class CallbackModule(CallbackBase):
             checkmsg = ""
         self._display.banner(u"%s [%s%s]%s" % (prefix, task_name, args, checkmsg))
 
-        if self._display.verbosity >= 2:
+        if getattr(task, 'verbosity', self._display.verbosity) >= 2:
             self._print_task_path(task)
 
         self._last_task_banner = task._uuid
@@ -414,5 +414,5 @@ class CallbackModule(CallbackBase):
         )
 
     def v2_playbook_on_notify(self, handler, host):
-        if self._display.verbosity > 1:
+        if getattr(handler, 'verbosity', self._display.verbosity) > 1:
             self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)
