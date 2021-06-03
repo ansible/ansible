@@ -59,3 +59,15 @@
   assert:
     that:
       - groupby is not changed
+
+- name: invalid conditional
+  command: echo foo
+  changed_when: boomboomboom
+  register: invalid_conditional
+  ignore_errors: true
+
+- assert:
+    that:
+      - invalid_conditional is failed
+      - invalid_conditional.stdout is defined
+      - invalid_conditional.changed_when_result is contains('boomboomboom')
