@@ -3,7 +3,6 @@
   pause:
     minutes: 1
 
----
 - name: Setup
   cisco.iosxr.iosxr_banner:
     banner: login
