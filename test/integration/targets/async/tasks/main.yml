@@ -302,7 +302,7 @@
       that:
       - async_fandf_custom_dir is successful
       - async_fandf_custom_dir_fail is failed
-      - async_fandf_custom_dir_fail.msg == "could not find job"
+      - async_fandf_custom_dir_fail.msg.startswith("Could not find job file on remote")
       - async_fandf_custom_dir_result is successful
       - async_fandf_custom_dir_dep_result is successful
 
