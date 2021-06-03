@@ -875,6 +875,10 @@ You can initialize the random number generator from a seed to create random-but-
 
     "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
+.. note::
+
+  If you use the ``seed`` parameter, you will get a different result with Python 3 and Python 2. This may break procedures such as password generation when you upgrade the version of Python used on your Ansible controller.
+
 Shuffling a list
 ----------------
 
@@ -894,6 +898,9 @@ You can initialize the shuffle generator from a seed to generate a random-but-id
 
 The shuffle filter returns a list whenever possible. If you use it with a non 'listable' item, the filter does nothing.
 
+.. note::
+
+  If you use the ``seed`` parameter, you will get a different result with Python 3 and Python 2. This may break procedures such as password generation when you upgrade the version of Python used on your Ansible controller.
 
 .. _list_filters:
 
@@ -1325,6 +1332,10 @@ An idempotent method to generate unique hashes per system is to use a salt that 
 
     {{ 'secretpassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}
     # => "$6$43927$lQxPKz2M2X.NWO.gK.t7phLwOKQMcSq72XxDZQ0XzYV6DlL1OD72h417aj16OnHTGxNzhftXJQBcjbunLEepM0"
+
+.. note::
+
+  If you use the ``seed`` parameter, you will get a different result with Python 3 and Python 2. This may break procedures such as password generation when you upgrade the version of Python used on your Ansible controller.
 
 Hash types available depend on the control system running Ansible, 'hash' depends on `hashlib <https://docs.python.org/3.8/library/hashlib.html>`_, password_hash depends on `passlib <https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html>`_. The `crypt <https://docs.python.org/3.8/library/crypt.html>`_ is used as a fallback if ``passlib`` is not installed.
 
