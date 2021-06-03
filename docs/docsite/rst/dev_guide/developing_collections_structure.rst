@@ -56,7 +56,7 @@ docs directory
 
 Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on.
 
-For certified collections, Automation Hub displays documents written in markdown in the main ``docs`` directory.
+For certified collections, Automation Hub displays documents written in markdown in the main ``docs`` directory with no subdirectories. This will not display on https://docs.ansible.com.
 
 For community collections included in the Ansible PyPI package, docs.ansible.com displays documents written in reStructuredText (.rst) in a docsite/rst/ subdirectory. Define the structure of your extra documentation in ``docs/docsite/extra-docs.yml``:
 
