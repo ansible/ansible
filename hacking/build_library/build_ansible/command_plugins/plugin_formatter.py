@@ -380,6 +380,19 @@ def process_options(module, options, full_key=None):
             if 'version_added' in v and too_old(v['version_added']):
                 del v['version_added']
 
+            # Set default values so that consumers can count on these being present Should really
+            # do this for all of the values that are optional but the template may rely on certain
+            # values being unset rather than falsey.  antsibull sets default values and the
+            # templates were modified to check for falsey rather than existence so 2.10.x will do
+            # this the right way.
+            defaults = {
+                'choices': (),
+            }
+
+            for key, default in defaults.items():
+                if key not in v:
+                    v[key] = default
+
             if 'suboptions' in v and v['suboptions']:
                 if isinstance(v['suboptions'], dict):
                     process_options(module, v['suboptions'], full_key=full_key_k)
