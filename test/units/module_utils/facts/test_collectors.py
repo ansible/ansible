@@ -366,8 +366,8 @@ class TestServiceMgrFacts(BaseFactsTest):
     # TODO: dedupe some of this test code
 
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-    @patch('ansible.module_utils.facts.system.service_mgr.is_systemd_managed', return_value=False)
-    @patch('ansible.module_utils.facts.system.service_mgr.is_systemd_managed_offline', return_value=False)
+    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
+    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
     def test_no_proc1(self, mock_gfc):
         # no /proc/1/comm, ps returns non-0
@@ -391,8 +391,8 @@ class TestServiceMgrFacts(BaseFactsTest):
         self.assertEqual(facts_dict['service_mgr'], 'sys11')
 
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-    @patch('ansible.module_utils.facts.system.service_mgr.is_systemd_managed', return_value=False)
-    @patch('ansible.module_utils.facts.system.service_mgr.is_systemd_managed_offline', return_value=False)
+    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
+    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
     def test_clowncar(self, mock_gfc):
         # no /proc/1/comm, ps fails, distro and system are clowncar
