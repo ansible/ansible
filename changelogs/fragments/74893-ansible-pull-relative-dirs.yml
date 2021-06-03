@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-pull - relative paths now work with the ``--d`` option for the repo destination
+    directory (https://github.com/ansible/ansible/issues/74893).
