@@ -515,7 +515,7 @@ class TaskExecutor:
             return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
 
         display.verbosity = self._task.verbosity
-        play_context.verbosity = self._task.verbosity
+        self._play_context.verbosity = self._task.verbosity
 
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
