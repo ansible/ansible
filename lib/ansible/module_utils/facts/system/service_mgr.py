@@ -98,6 +98,9 @@ class ServiceMgrFactCollector(BaseFactCollector):
         if proc_1 == "COMMAND\n":
             proc_1 = None
 
+        if proc_1 is None and os.path.islink('/sbin/init'):
+            proc_1 = os.readlink('/sbin/init')
+
         # FIXME: empty string proc_1 staus empty string
         if proc_1 is not None:
             proc_1 = os.path.basename(proc_1)
