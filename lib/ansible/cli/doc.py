@@ -840,7 +840,7 @@ class DocCLI(CLI, RoleMixin):
         doc['metadata'] = metadata
 
         if context.CLIARGS['show_snippet']:
-            text = DocCLI.get_snippet_text(plugin_type, doc)
+            text = DocCLI.get_snippet_text(doc, plugin_type)
         else:
             try:
                 text = DocCLI.get_man_text(doc, collection_name, plugin_type)
@@ -958,7 +958,7 @@ class DocCLI(CLI, RoleMixin):
         return os.pathsep.join(ret)
 
     @staticmethod
-    def get_snippet_text(ptype, doc):
+    def get_snippet_text(doc, pytpe='module'):
 
         text = []
 
@@ -1266,7 +1266,7 @@ def _do_yaml_snippet(text, doc):
         text.append("# %s:" % doc.get('plugin', doc.get('name')))
 
     pad = 29
-    subdent = " " * pad + '# '
+    subdent = '# '.rjust(pad + 2)
     limit = display.columns - pad
 
     for o in sorted(doc['options'].keys()):
