@@ -421,7 +421,7 @@ class DocCLI(CLI, RoleMixin):
 
         # modifiers
         exclusive = self.parser.add_mutually_exclusive_group()
-        # TODO: wanr if not used with -t roles
+        # TODO: warn if not used with -t roles
         exclusive.add_argument("-e", "--entry-point", dest="entry_point",
                                help="Select the entry point for role(s).")
 
