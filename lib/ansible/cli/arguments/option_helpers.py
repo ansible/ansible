@@ -152,7 +152,7 @@ def _gitinfo():
 def version(prog=None):
     """ return ansible version """
     if prog:
-        result = ["{0} [core {1}] ".format(prog, __version__)]
+        result = ["{0} [core {1}]".format(prog, __version__)]
     else:
         result = [__version__]
 
