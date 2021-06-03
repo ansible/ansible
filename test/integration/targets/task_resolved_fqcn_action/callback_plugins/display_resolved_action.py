@@ -23,7 +23,7 @@ from ansible.plugins.callback.default import CallbackModule as CallbackBase
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
-    CALLBACK_NAME = 'custom_callback'
+    CALLBACK_NAME = 'display_resolved_action'
 
     def _task_start(self, task, prefix=None):
         # Cache output prefix for task if provided
