@@ -23,7 +23,7 @@ import os
 
 from ansible import constants as C
 from ansible import context
-from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
@@ -186,7 +186,12 @@ class PlaybookExecutor:
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
-                            result = self._tqm.run(play=play)
+                            try:
+                                result = self._tqm.run(play=play)
+                            except AnsibleEndPlay as e:
+                                result = e.result
+                                break_play = True
+                                break
 
                             # break the play if the result equals the special return code
                             if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:

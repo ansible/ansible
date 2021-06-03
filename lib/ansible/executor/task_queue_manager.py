@@ -81,6 +81,11 @@ class FinalQueue(multiprocessing.queues.Queue):
         )
 
 
+class AnsibleEndPlay(Exception):
+    def __init__(self, result):
+        self.result = result
+
+
 class TaskQueueManager:
 
     '''
@@ -322,6 +327,9 @@ class TaskQueueManager:
         # now re-save the hosts that failed from the iterator to our internal list
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
+
+        if iterator.end_play:
+            raise AnsibleEndPlay(play_return)
 
         return play_return
 
