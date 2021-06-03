@@ -877,7 +877,7 @@ You can initialize the random number generator from a seed to create random-but-
 
 .. note::
 
-  While using ``seed`` parameter, the resulting value can be different depending on the version of Python used on the Ansible controller.
+  If you use the ``seed`` parameter, you will get a different result with Python 3 and Python 2. This may break procedures such as password generation when you upgrade the version of Python used on your Ansible controller.
 
 Shuffling a list
 ----------------
@@ -900,7 +900,7 @@ The shuffle filter returns a list whenever possible. If you use it with a non 'l
 
 .. note::
 
-  While using ``seed`` parameter, the resulting value can be different depending on the version of Python used on the Ansible controller.
+  If you use the ``seed`` parameter, you will get a different result with Python 3 and Python 2. This may break procedures such as password generation when you upgrade the version of Python used on your Ansible controller.
 
 .. _list_filters:
 
@@ -1335,7 +1335,7 @@ An idempotent method to generate unique hashes per system is to use a salt that 
 
 .. note::
 
-  While using ``seed`` parameter, the resulting value can be different depending on the version of Python used on the Ansible controller.
+  If you use the ``seed`` parameter, you will get a different result with Python 3 and Python 2. This may break procedures such as password generation when you upgrade the version of Python used on your Ansible controller.
 
 Hash types available depend on the control system running Ansible, 'hash' depends on `hashlib <https://docs.python.org/3.8/library/hashlib.html>`_, password_hash depends on `passlib <https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html>`_. The `crypt <https://docs.python.org/3.8/library/crypt.html>`_ is used as a fallback if ``passlib`` is not installed.
 
