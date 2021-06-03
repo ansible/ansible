@@ -1,4 +1,4 @@
-- name: Ensure zip binaries are present
+- name: Ensure required binaries are present
   package:
     name:
       - zip
