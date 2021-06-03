@@ -1161,6 +1161,9 @@ class StrategyBase:
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
+                        # end_play is used in PlaybookExecutor/TQM to indicate that
+                        # the whole play is supposed to be ended as opposed to just a batch
+                        iterator.end_play = True
                 msg = "ending play"
             else:
                 skipped = True
