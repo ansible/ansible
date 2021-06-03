@@ -309,6 +309,7 @@ class ModuleArgsParser:
                 is_action_candidate = True
             else:
                 # If the plugin is resolved and redirected smuggle the list of candidate names via the task attribute 'internal_redirect_list'
+                # TODO: remove self.internal_redirect_list (and Task._ansible_internal_redirect_list) once TE can use the resolved name for module_defaults
                 context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
                 if not context.resolved:
                     context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
@@ -317,7 +318,7 @@ class ModuleArgsParser:
                 elif context.redirect_list:
                     self.internal_redirect_list = context.redirect_list
 
-                is_action_candidate = bool(self.internal_redirect_list)
+                is_action_candidate = context.resolved and bool(context.redirect_list)
 
             if is_action_candidate:
                 # finding more than one module name is a problem
@@ -325,7 +326,7 @@ class ModuleArgsParser:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
 
                 if context is not None and context.resolved:
-                    resolved = self.internal_redirect_list[-1]
+                    resolved = context.redirect_list[-1]
 
                     if not AnsibleCollectionRef.is_valid_fqcr(resolved) and context.plugin_resolved_collection:
                         resolved = context.plugin_resolved_collection + '.' + resolved
