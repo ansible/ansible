@@ -1,0 +1,11 @@
+- legacy_action:
+  collections:
+    - ansible.legacy
+
+- legacy_module:
+  collections:
+    - ansible.legacy
+
+- custom_module:
+
+- custom_action:

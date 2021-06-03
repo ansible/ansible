@@ -1,0 +1,7 @@
+plugin_routing:
+  modules:
+    redirected_module:
+      redirect: test_ns.test_coll.custom_module
+  action:
+    redirected_action:
+      redirect: test_ns.test_coll.custom_action
