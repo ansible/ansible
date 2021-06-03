@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  ``failed_when``/``changed_when`` - Catch templating errors to prevent masking of module output
+  (https://github.com/ansible/ansible/issues/37187)

@@ -671,8 +671,14 @@ class TaskExecutor:
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
             if 'skipped' not in result:
-                _evaluate_changed_when_result(result)
-                _evaluate_failed_when_result(result)
+                try:
+                    condname = 'changed'
+                    _evaluate_changed_when_result(result)
+                    condname = 'failed'
+                    _evaluate_failed_when_result(result)
+                except AnsibleError as e:
+                    result['failed'] = True
+                    result['%s_when_result' % condname] = to_text(e)
 
             if retries > 1:
                 cond = Conditional(loader=self._loader)
