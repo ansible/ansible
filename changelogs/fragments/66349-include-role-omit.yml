@@ -1,0 +1,4 @@
+minor_changes:
+- >-
+  ``include_role`` - Allow use of ``omit`` in the ``from_*`` arguments
+  (https://github.com/ansible/ansible/issues/66349)

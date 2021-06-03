@@ -23,6 +23,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.executor.task_executor import remove_omit
 from ansible.module_utils._text import to_text
 from ansible.playbook.handler import Handler
 from ansible.playbook.task_include import TaskInclude
@@ -190,6 +191,10 @@ class IncludedFile:
                             if from_arg in include_args:
                                 from_key = from_arg.replace('_from', '')
                                 new_task._from_files[from_key] = templar.template(include_args.pop(from_arg))
+
+                        omit_token = task_vars.get('omit')
+                        if omit_token:
+                            new_task._from_files = remove_omit(new_task._from_files, omit_token)
 
                         inc_file = IncludedFile(role_name, include_args, special_vars, new_task, is_role=True)
 

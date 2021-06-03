@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    include_role_omit: false
+  tasks:
+    - include_role:
+        name: foo
+        tasks_from: '{{ omit }}'
+
+    - assert:
+        that:
+          - include_role_omit is sameas(true)

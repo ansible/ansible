@@ -126,3 +126,5 @@ ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playboo
 
 ansible-playbook test_include_loop.yml "$@"
 ansible-playbook test_include_loop_fqcn.yml "$@"
+
+ansible-playbook include_role_omit/playbook.yml "$@"
