@@ -254,7 +254,7 @@ class PullCLI(CLI):
             raise AnsibleOptionsError("Could not find a playbook to run.")
 
         # Build playbook command
-        cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
+        cmd = '%s/ansible-playbook %s' % (bin_path, base_opts)
         if context.CLIARGS['vault_password_files']:
             for vault_password_file in context.CLIARGS['vault_password_files']:
                 cmd += " --vault-password-file=%s" % vault_password_file
@@ -279,6 +279,18 @@ class PullCLI(CLI):
         if context.CLIARGS['diff']:
             cmd += ' -D'
 
+        # Since we are changing directory to the repo destination directory, we
+        # remove any path info from the playbook if a relative path is being used
+        # as the destination. Otherwise, we won't find the playbook.
+        (dir, pb) = os.path.split(playbook)
+        if not os.path.isabs(dir) and os.path.samefile(context.CLIARGS['dest'], dir):
+            playbook = pb
+        cmd += ' %s' % playbook
+
+        # Save the current working directory so we can come back to it later
+        # if we are purging.
+        previous_dir = os.getcwd()
+
         os.chdir(context.CLIARGS['dest'])
 
         # redo inventory options as new files might exist now
@@ -292,7 +304,7 @@ class PullCLI(CLI):
         rc, b_out, b_err = run_cmd(cmd, live=True)
 
         if context.CLIARGS['purge']:
-            os.chdir('/')
+            os.chdir(previous_dir)
             try:
                 shutil.rmtree(context.CLIARGS['dest'])
             except Exception as e:
