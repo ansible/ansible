@@ -15,7 +15,7 @@ DOCUMENTATION = """
         to the containing locations of role / play / include and so on.
       - The list of files has precedence over the paths searched.
         For example, A task in a role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
-      - Either a list of files C(_terms) or a key `files` with a list of files is required for this plugin to operate.
+      - Either a list of files C(_terms) or a key C(files) with a list of files is required for this plugin to operate.
     notes:
       - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has C(files) and C(paths).
     options:
@@ -32,27 +32,51 @@ DOCUMENTATION = """
       skip:
         type: boolean
         default: False
-        description: Return an empty list if no file is found, instead of an error.
+        description:
+          - When C(True), return an empty list when no files are matched.
+          - This is useful when used with C(with_first_found), as an empty list return to C(with_) calls
+            causes the calling task to be skipped.
+          - When used as a template via C(lookup) or C(query), setting I(skip=True) will *not* cause the task to skip.
+            Tasks must handle the empty list return from the template.
+          - When C(False) and C(lookup) or C(query) specifies  I(errors='ignore') all errors (including no file found,
+            but potentially others) return an empty string or an empty list respectively.
+          - When C(True) and C(lookup) or C(query) specifies I(errors='ignore'), no file found will return an empty
+            list and other potential errors return an empty string or empty list depending on the template call
+            (in other words return values of C(lookup) v C(query)).
 """
 
 EXAMPLES = """
-- name: show first existing file or ignore if none do
-  debug:
-    msg: "{{ lookup('first_found', findme, errors='ignore') }}"
+- name: Set _found_file to the first existing file, raising an error if a file is not found
+  set_fact:
+    _found_file: "{{ lookup('first_found', findme) }}"
   vars:
     findme:
       - /path/to/foo.txt
       - bar.txt  # will be looked in files/ dir relative to role and/or play
       - /path/to/biz.txt
 
-- name: include tasks only if files exist.
-  include_tasks:
-    file: "{{ query('first_found', params) }}"
+- name: Set _found_file to the first existing file, or an empty list if no files found
+  set_fact:
+    _found_file: "{{ lookup('first_found', files, paths=['/extra/path'], skip=True) }}"
   vars:
-    params:
-      files:
-        - path/tasks.yaml
-        - path/other_tasks.yaml
+    files:
+      - /path/to/foo.txt
+      - /path/to/bar.txt
+
+- name: Include tasks only if one of the files exist, otherwise skip the task
+  include_tasks:
+    file: "{{ item }}"
+  with_first_found:
+    files:
+     - path/tasks.yaml
+     - path/other_tasks.yaml
+    skip: True
+
+- name: Include tasks only if one of the files exists, otherwise skip
+  include_tasks: '{{ tasks_file }}'
+  when: tasks_file != ""
+  vars:
+    tasks_file: "{{ lookup('first_found', files=['tasks.yaml', 'other_tasks.yaml'], errors='ignore') }}"
 
 - name: |
         copy first existing file found to /some/file,
@@ -209,4 +233,4 @@ class LookupModule(LookupBase):
         if skip:
             # NOTE: global skip wont matter, only last 'skip' value in dict term
             return []
-        raise AnsibleLookupError("No file was found when using first_found. Use errors='ignore' to allow this task to be skipped if no files are found")
+        raise AnsibleLookupError("No file was found when using first_found.")
