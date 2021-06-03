@@ -401,6 +401,36 @@ class TestServiceMgrFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['service_mgr'], 'service')
 
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='runit-init')
+    @patch('ansible.module_utils.facts.system.service_mgr.os.path.islink', side_effect=lambda x: x == '/sbin/init')
+    @patch('ansible.module_utils.facts.system.service_mgr.os.readlink', side_effect=lambda x: '/sbin/runit-init' if x == '/sbin/init' else '/bin/false')
+    def test_service_mgr_runit(self, mock_gfc, mock_opl, mock_orl):
+        # /proc/1/comm contains 'runit-init', ps fails, service manager is runit
+        # should end up return 'runit'
+        module = self._mock_module()
+        module.run_command = Mock(return_value=(1, '', ''))
+        collected_facts = {'ansible_system': 'Linux'}
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module,
+                                            collected_facts=collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertEqual(facts_dict['service_mgr'], 'runit')
+
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
+    @patch('ansible.module_utils.facts.system.service_mgr.os.path.islink', side_effect=lambda x: x == '/sbin/init')
+    @patch('ansible.module_utils.facts.system.service_mgr.os.readlink', side_effect=lambda x: '/sbin/runit-init' if x == '/sbin/init' else '/bin/false')
+    def test_service_mgr_runit_no_comm(self, mock_gfc, mock_opl, mock_orl):
+        # no /proc/1/comm, ps returns 'COMMAND\n', service manager is runit
+        # should end up return 'runit'
+        module = self._mock_module()
+        module.run_command = Mock(return_value=(1, 'COMMAND\n', ''))
+        collected_facts = {'ansible_system': 'Linux'}
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module,
+                                            collected_facts=collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertEqual(facts_dict['service_mgr'], 'runit')
+
     # TODO: reenable these tests when we can mock more easily
 
 #    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)

@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils - detect symlinked init systems, even if unable to read /proc/1/comm (https://github.com/ansible/ansible/issues/74866).
