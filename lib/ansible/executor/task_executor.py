@@ -586,10 +586,8 @@ class TaskExecutor:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
                 result = self._handler.run(task_vars=variables)
-            except AnsibleActionSkip as e:
-                return dict(skipped=True, msg=to_text(e))
-            except AnsibleActionFail as e:
-                return dict(failed=True, msg=to_text(e))
+            except (AnsibleActionFail, AnsibleActionSkip) as e:
+                return e.result
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
             except TaskTimeoutError as e:
