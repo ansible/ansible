@@ -384,6 +384,39 @@ pushd "${role_testdir}"
 popd # ${role_testdir}
 rm -rf "${role_testdir}"
 
+# Check if the roles are created properly when initializing it using inbuilt skeleton types 'container', 'apb' and 'network'.
+#
+# ansible-galaxy role init role_name --type container
+# ansible-galaxy role init role_name --type apb
+# ansible-galaxy role init role_name --type network
+
+f_ansible_galaxy_status \
+    "Initialize roles based on the inbuilt skeleton types 'container', 'apb' and 'network'."
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    ansible-galaxy role init role_container --type container
+    ansible-galaxy role init role_apb --type apb
+    ansible-galaxy role init role_network --type network
+
+    ansible-galaxy role list -p . | tee out.txt
+    [[ $(grep -ce role_container -e role_apb -e role_network out.txt) -eq 3 ]]
+
+    #Check if Role with skeleton type "conatiner" is created successfully.
+    cat ./role_container/meta/container.yml | tee out1.txt
+    grep "Ansible Container service" out1.txt
+
+    #Check if Role with skeleton type "apb" is created successfully.
+    ls ./role_apb/ | tee out2.txt
+    grep "Dockerfile" out2.txt
+
+    #Check if Role with skeleton type "network" is created successfully.
+    [[ $(ls ./role_network/ | wc -l) -eq 13 ]]
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
+
 #################################
 # ansible-galaxy collection tests
 #################################

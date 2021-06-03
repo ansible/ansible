@@ -298,21 +298,22 @@ class GalaxyCLI(CLI):
         init_parser.add_argument('--init-path', dest='init_path', default='./',
                                  help='The path in which the skeleton {0} will be created. The default is the '
                                       'current working directory.'.format(galaxy_type))
-        init_parser.add_argument('--{0}-skeleton'.format(galaxy_type), dest='{0}_skeleton'.format(galaxy_type),
+
+        init_parser.add_argument('--skeleton', '--{0}-skeleton'.format(galaxy_type), dest='{0}_skeleton'.format(galaxy_type),
                                  default=C.GALAXY_COLLECTION_SKELETON if galaxy_type == 'collection' else C.GALAXY_ROLE_SKELETON,
                                  help='The path to a {0} skeleton that the new {0} should be based '
                                       'upon.'.format(galaxy_type))
+
+        valid_skeleton_type = "'container', 'apb' and 'network'" if galaxy_type == 'role' else "'community'"
+        init_parser.add_argument('--type', dest='{0}_type'.format(galaxy_type), action='store', default='default',
+                                 help="Initialize using an alternate {0} type. Valid types include: {1}.".format(galaxy_type,
+                                      valid_skeleton_type))
 
         obj_name_kwargs = {}
         if galaxy_type == 'collection':
             obj_name_kwargs['type'] = validate_collection_name
         init_parser.add_argument('{0}_name'.format(galaxy_type), help='{0} name'.format(galaxy_type.capitalize()),
                                  **obj_name_kwargs)
-
-        if galaxy_type == 'role':
-            init_parser.add_argument('--type', dest='role_type', action='store', default='default',
-                                     help="Initialize using an alternate role type. Valid types include: 'container', "
-                                          "'apb' and 'network'.")
 
     def add_remove_options(self, parser, parents=None):
         remove_parser = parser.add_parser('remove', parents=parents, help='Delete roles from roles_path.')
@@ -1029,6 +1030,7 @@ class GalaxyCLI(CLI):
             inject_data.update(dict(
                 namespace=namespace,
                 collection_name=collection_name,
+                collection_type=context.CLIARGS['collection_type'],
                 version='1.0.0',
                 readme='README.md',
                 authors=['your name <example@domain.com>'],
@@ -1056,6 +1058,11 @@ class GalaxyCLI(CLI):
 
         if obj_skeleton is not None:
             own_skeleton = False
+            skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
+        elif galaxy_type == 'collection' and inject_data['collection_type'] == 'community':
+            own_skeleton = False
+            obj_skeleton = self.galaxy.default_role_skeleton_path
+            skeleton_ignore_expressions = ['^.*/.git_keep$']
         else:
             own_skeleton = True
             obj_skeleton = self.galaxy.default_role_skeleton_path

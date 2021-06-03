@@ -1,0 +1,188 @@
+# README FIRST
+# 1. If you don't have unit tests remove that section
+# 2. If your collection depends on other collections ensure they are installed, see "Install collection dependencies"
+# If you need help please ask in #ansible-devel on Freenode IRC
+
+name: CI
+on:
+  # Run CI against all pushes (direct commits, also merged PRs), Pull Requests
+  push:
+  pull_request:
+  # Run CI once per day (at 06:00 UTC)
+  # This ensures that even if there haven't been commits that we are still testing against latest version of ansible-test for each ansible-base version
+  schedule:
+    - cron: '0 6 * * *'
+env:
+  NAMESPACE: {{ namespace }}
+  COLLECTION_NAME: {{ collection_name }}
+
+jobs:
+
+###
+# Sanity tests (REQUIRED)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_sanity.html
+
+  sanity:
+    name: Sanity {% raw %}(Ⓐ${{ matrix.ansible }}){% endraw %}
+    strategy:
+      matrix:
+        ansible:
+          # It's important that Sanity is tested against all stable-X.Y branches
+          # Testing against `devel` may fail as new tests are added.
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.10
+          - stable-2.11
+          - devel
+    runs-on: ubuntu-latest
+    steps:
+
+      # ansible-test requires the collection to be in a directory in the form
+      # {% raw %}.../ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}/{% endraw %}
+
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: {% raw %}ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # it is just required to run that once as "ansible-test sanity" in the docker image
+          # will run on all python versions it supports.
+          python-version: 3.8
+
+      # Install the head of the given branch (devel, stable-2.10)
+      - name: Install ansible-base {% raw %}(${{ matrix.ansible }}){% endraw %}
+        run: pip install {% raw %}https://github.com/ansible/ansible/archive/${{ matrix.ansible }}.tar.gz{% endraw %} --disable-pip-version-check
+
+      # run ansible-test sanity inside of Docker.
+      # The docker container has all the pinned dependencies that are required
+      # and all python versions ansible supports.
+      - name: Run sanity tests
+        run: ansible-test sanity --docker -v --color
+        working-directory: {% raw %}./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+###
+# Unit tests (OPTIONAL)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_units.html
+
+  units:
+    runs-on: ubuntu-latest
+    name: Units {% raw %}(Ⓐ${{ matrix.ansible }}){% endraw %}
+    strategy:
+      # As soon as the first unit test fails, cancel the others to free up the CI queue
+      fail-fast: true
+      matrix:
+        ansible:
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.10
+          - stable-2.11
+          - devel
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: {% raw %}ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # it is just required to run that once as "ansible-test units" in the docker image
+          # will run on all python versions it supports.
+          python-version: 3.8
+
+      - name: Install ansible-base {% raw %}(${{ matrix.ansible }}){% endraw %}
+        run: pip install {% raw %}https://github.com/ansible/ansible/archive/${{ matrix.ansible }}.tar.gz{% endraw %} --disable-pip-version-check
+
+      # OPTIONAL If your unit test requires Python libraries from other collections
+      # Install them like this
+      - name: Install collection dependencies
+        run: ansible-galaxy collection install ansible.netcommon ansible.utils -p .
+
+      # Run the unit tests
+      - name: Run unit test
+        run: ansible-test units -v --color --docker --coverage
+        working-directory: {% raw %}./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+        # ansible-test support producing code coverage date
+      - name: Generate coverage report
+        run: ansible-test coverage xml -v --requirements --group-by command --group-by version
+        working-directory: {% raw %}./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+      # See the reports at https://codecov.io/gh/GITHUBORG/REPONAME
+      - uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: false
+
+###
+# Integration tests (RECOMMENDED)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html
+
+
+# If the application you are testing is available as a docker container and you want to test
+# multiple versions see the following for an example:
+# https://github.com/ansible-collections/community.zabbix/tree/master/.github/workflows
+
+  integration:
+    runs-on: ubuntu-latest
+    name: I {% raw %}(Ⓐ${{ matrix.ansible }}+py${{ matrix.python }}){% endraw %}
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible:
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.10
+          - stable-2.11
+          - devel
+        python:
+          - 2.6
+          - 2.7
+          - 3.5
+          - 3.6
+          - 3.7
+          - 3.8
+          - 3.9
+        exclude:
+          # Because ansible-test doesn't support python3.9 for Ansible 2.9
+          - ansible: stable-2.9
+            python: 3.9
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: {% raw %}ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # it is just required to run that once as "ansible-test integration" in the docker image
+          # will run on all python versions it supports.
+          python-version: 3.8
+
+      - name: Install ansible-base {% raw %}(${{ matrix.ansible }}){% endraw %}
+        run: pip install {% raw %}https://github.com/ansible/ansible/archive/${{ matrix.ansible }}.tar.gz{% endraw %} --disable-pip-version-check
+
+      # OPTIONAL If your integration test requires Python libraries or modules from other collections
+      # Install them like this
+      - name: Install collection dependencies
+        run: ansible-galaxy collection install ansible.netcommon -p .
+
+      # Run the integration tests
+      - name: Run integration test
+        run: ansible-test integration -v --color --retry-on-error --continue-on-error --diff --python {% raw %}${{ matrix.python }}{% endraw %} --docker --coverage
+        working-directory: {% raw %}./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+        # ansible-test support producing code coverage date
+      - name: Generate coverage report
+        run: ansible-test coverage xml -v --requirements --group-by command --group-by version
+        working-directory: {% raw %}./ansible_collections/${{env.NAMESPACE}}/${{env.COLLECTION_NAME}}{% endraw %}
+
+      # See the reports at https://codecov.io/gh/GITHUBORG/REPONAME
+      - uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: false
