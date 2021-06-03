@@ -105,7 +105,7 @@ def test_ansible_version(capsys, mocker):
         version_lines = version[0].splitlines()
 
     assert len(version_lines) == 9, 'Incorrect number of lines in "ansible --version" output'
-    assert re.match(r'ansible \[core [0-9.a-z]+\]', version_lines[0]), 'Incorrect ansible version line in "ansible --version" output'
+    assert re.match(r'ansible \[core [0-9.a-z]+\]$', version_lines[0]), 'Incorrect ansible version line in "ansible --version" output'
     assert re.match('  config file = .*$', version_lines[1]), 'Incorrect config file line in "ansible --version" output'
     assert re.match('  configured module search path = .*$', version_lines[2]), 'Incorrect module search path in "ansible --version" output'
     assert re.match('  ansible python module location = .*$', version_lines[3]), 'Incorrect python module location in "ansible --version" output'
