@@ -19,6 +19,11 @@
         document.write('</div>');
 
       } else if (startsWith(current_url_path, "/ansible/latest/") || startsWith(current_url_path, "/ansible/{{ latest_version }}/")) {
+        /* temp banner to advertise GalaxyNG survey */
+        document.write('<div id="banner_id" class="admonition important">');
+        document.write('<br><p>Please take our <a href="https://www.surveymonkey.co.uk/r/2VWVJY3">survey</a> to help us improve support for collections and roles in GalaxyNG.</p><br>');
+        document.write('</div>');
+
         document.write('<div id="banner_id" class="admonition caution">');
         document.write('<p>You are reading the latest community version of the Ansible documentation. Red Hat subscribers, select <b>2.9</b> in the version selection to the left for the most recent Red Hat release.</p>');
         document.write('</div>');
@@ -28,6 +33,10 @@
         document.write('<p>You are reading the latest Red Hat released version of the Ansible documentation. Community users can use this, or select any version in version selection to the left, including <b>latest</b> for the most recent community version.</p>');
         document.write('</div>');
       } else if (startsWith(current_url_path, "/ansible/devel/")) {
+        /* temp banner to advertise GalaxyNG survey */
+        document.write('<div id="banner_id" class="admonition important">');
+        document.write('<br><p>Please take our <a href="https://www.surveymonkey.co.uk/r/2VWVJY3">survey</a> to help us improve support for collections and roles in GalaxyNG.</p><br>');
+        document.write('</div>');
         /* temp banner to advertise survey
         document.write('<div id="banner_id" class="admonition important">');
         document.write('<br><p>Please take our <a href="https://www.surveymonkey.co.uk/r/B9V3CDY">Docs survey</a> before December 31 to help us improve Ansible documentation.</p><br>');
