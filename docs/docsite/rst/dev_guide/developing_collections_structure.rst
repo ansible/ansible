@@ -65,8 +65,8 @@ For community collections included in the Ansible PyPI package, docs.ansible.com
    ---
    sections:
    - title: Scenario Guide
-   toctree:
-     - scenario_guide
+     toctree:
+       - scenario_guide
 
 The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_. 
 
