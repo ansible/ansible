@@ -1,0 +1,13 @@
+- name: Testing end_play with serial 1 and strategy {{ test_strategy | default('linear') }}
+  hosts: testhost:testhost2
+  gather_facts: no
+  serial: 1
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+        msg: "Testing end_play on host {{ inventory_hostname }}"
+
+    - meta: end_play
+
+    - fail:
+        msg: 'Failed to end using end_play'

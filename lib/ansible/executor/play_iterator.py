@@ -216,6 +216,8 @@ class PlayIterator:
             # plays won't try to advance)
             play_context.start_at_task = None
 
+        self.end_play = False
+
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,
         # in the event that a previous host was not in the current inventory
