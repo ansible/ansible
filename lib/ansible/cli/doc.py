@@ -1046,7 +1046,10 @@ class DocCLI(CLI, RoleMixin):
             if 'cli' in opt and opt['cli']:
                 conf['cli'] = []
                 for cli in opt['cli']:
-                    conf['cli'].append({'name': cli['name'], 'option': '--%s' % cli['name'].replace('_', '-')})
+                    if 'option' not in cli:
+                        conf['cli'].append({'name': cli['name'], 'option': '--%s' % cli['name'].replace('_', '-')})
+                    else:
+                        conf['cli'].append(cli)
                 del opt['cli']
 
             if conf:
