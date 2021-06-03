@@ -958,7 +958,7 @@ class DocCLI(CLI, RoleMixin):
         return os.pathsep.join(ret)
 
     @staticmethod
-    def get_snippet_text(doc, pytpe='module'):
+    def get_snippet_text(doc, ptype='module'):
 
         text = []
 
