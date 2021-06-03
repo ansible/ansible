@@ -113,7 +113,7 @@ class CallbackBase(AnsiblePlugin):
         return label
 
     def _run_is_verbose(self, result, verbosity=0):
-        v =  result.get('_task', {}).get('verbosity', self._display.verbosity)
+        v = result.get('_task', {}).get('verbosity', self._display.verbosity)
         return ((v > verbosity or result._result.get('_ansible_verbose_always', False) is True)
                 and result._result.get('_ansible_verbose_override', False) is False)
 
