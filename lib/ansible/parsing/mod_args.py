@@ -329,6 +329,8 @@ class ModuleArgsParser:
 
                     if not AnsibleCollectionRef.is_valid_fqcr(resolved) and context.plugin_resolved_collection:
                         resolved = context.plugin_resolved_collection + '.' + resolved
+                    elif AnsibleCollectionRef.is_valid_fqcr(resolved) and resolved.startswith('ansible.legacy.'):
+                        resolved = resolved.split('ansible.legacy.')[-1]
 
                     self.resolved_action = resolved
 
