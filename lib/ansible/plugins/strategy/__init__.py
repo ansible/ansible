@@ -1156,6 +1156,15 @@ class StrategyBase:
             else:
                 skipped = True
                 skip_reason += ', not clearing host error state for %s' % target_host.name
+        elif meta_action == 'end_batch':
+            if _evaluate_conditional(target_host):
+                for host in self._inventory.get_hosts(iterator._play.hosts):
+                    if host.name not in self._tqm._unreachable_hosts:
+                        iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
+                msg = "ending batch"
+            else:
+                skipped = True
+                skip_reason += ', continuing current batch'
         elif meta_action == 'end_play':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):

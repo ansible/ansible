@@ -33,7 +33,9 @@ options:
         - C(end_play) (added in Ansible 2.2) causes the play to end without failing the host(s). Note that this affects all hosts.
         - C(reset_connection) (added in Ansible 2.3) interrupts a persistent connection (i.e. ssh + control persist)
         - C(end_host) (added in Ansible 2.8) is a per-host variation of C(end_play). Causes the play to end for the current host without failing it.
-    choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection ]
+        - C(end_batch) (added in Ansible 2.12) causes the current batch (see C(serial)) to end without failing the host(s).
+          Note that with C(serial=0) or undefined this behaves the same as C(end_play).
+    choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection, end_batch ]
     required: true
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
