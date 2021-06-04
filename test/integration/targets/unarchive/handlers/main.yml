@@ -1,4 +1,3 @@
 - name: restore packages
   package:
     name: "{{ unarchive_packages }}"
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')

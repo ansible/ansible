@@ -7,7 +7,6 @@
         name:
           - zip
           - unzip
-      when: ansible_facts.pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
       notify: restore packages
 
     - name: create unarchive destinations
@@ -55,4 +54,3 @@
         name:
           - zip
           - unzip
-      when: ansible_facts.pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
