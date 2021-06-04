@@ -369,7 +369,7 @@ class TestServiceMgrFacts(BaseFactsTest):
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
-    def test_no_proc1(self, mock_gfc):
+    def test_service_mgr_runit(self, mock_gfc, mock_ism, mock_ismo, mock_ope):
         # no /proc/1/comm, ps returns non-0
         # should fallback to 'service'
         module = self._mock_module()
@@ -394,7 +394,7 @@ class TestServiceMgrFacts(BaseFactsTest):
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
-    def test_clowncar(self, mock_gfc):
+    def test_service_mgr_runit(self, mock_gfc, mock_ism, mock_ismo, mock_ope):
         # no /proc/1/comm, ps fails, distro and system are clowncar
         # should end up return 'sys11'
         module = self._mock_module()
