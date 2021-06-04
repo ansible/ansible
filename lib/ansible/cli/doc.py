@@ -47,7 +47,7 @@ display = Display()
 TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
 PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
 PB_LOADED = {}
-SNIPPETS = ['module', 'lookup']
+SNIPPETS = ['inventory', 'lookup', 'module']
 
 
 def jdump(text):
@@ -966,7 +966,7 @@ class DocCLI(CLI, RoleMixin):
 
         if ptype == 'lookup':
             _do_lookup_snippet(text, doc)
-        elif ptype == 'module':
+        else:
             _do_yaml_snippet(text, doc)
 
         text.append('')
