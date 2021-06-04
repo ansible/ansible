@@ -244,6 +244,8 @@ class ConfigCLI(CLI):
                         default = ', '.join(default)
                     if isinstance(default, string_types) and not is_quoted(default):
                         default = shlex_quote(default)
+                elif default is None:
+                    default = ''
 
             if subkey in settings[setting] and settings[setting][subkey]:
                 entry = settings[setting][subkey][-1]['name']
