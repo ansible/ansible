@@ -172,7 +172,7 @@ class InventoryCLI(CLI):
         if context.CLIARGS['yaml']:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
-            results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
+            results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True)
         elif context.CLIARGS['toml']:
             from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
             if not HAS_TOML:
@@ -192,9 +192,9 @@ class InventoryCLI(CLI):
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
             try:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
+                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
             except TypeError as e:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True)
+                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
                 display.warning("Could not sort JSON output due to issues while sorting keys: %s" % to_native(e))
 
         return results
