@@ -959,17 +959,19 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def get_snippet_text(doc, ptype='module'):
-
+        ''' return heavily commented text to copy into play or to act as a config file for the plugin '''
         text = []
 
         if ptype == 'lookup':
             _do_lookup_snippet(text, doc)
+            _do_ini_snippet(text, doc)
+            _do_env_snippet(text, doc)
         elif ptype == 'module':
             _do_yaml_snippet(text, doc)
         elif 'options' in doc:
             _do_ini_snippet(text, doc)
+            _do_env_snippet(text, doc)
         else:
-            # TODO: should we show examples?
             text.append('# nothing to set or configure for this plugin')
 
         text.append('')
@@ -1294,49 +1296,10 @@ def _do_yaml_snippet(text, doc):
             text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
 
 
-def _do_ini_snippet(text, doc):
-
-    subdent = "# "
-    limit = display.columns - 20
-
-    sections = {}
-    for o in sorted(doc['options'].keys()):
-        opt = doc['options'][o]
-        if isinstance(opt['description'], string_types):
-            desc = DocCLI.tty_ify(opt['description'])
-        else:
-            desc = DocCLI.tty_ify(" ".join(opt['description']))
-
-        required = opt.get('required', False)
-        if not isinstance(required, bool):
-            raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
-
-        if 'ini' in opt:
-            entry = opt['ini'][-1]
-            if entry['section'] not in sections:
-                sections[entry['section']] = []
-
-            if required:
-                default = '  # <REQUIRED>'
-            else:
-                default = opt.get('default', '')
-
-            key = textwrap.fill('# ' + desc, limit, max_lines=3, subsequent_indent=subdent) + '\n' + '%s=%s' % (entry['key'], default)
-            sections[entry['section']].append(key)
-
-    if sections:
-        for section in sections.keys():
-            text.append('[%s]' % section)
-            for key in sections[section]:
-                text.append(key)
-                text.append('')
-            text.append('')
-    else:
-        text.append('# no ini configuration options available')
-
 
 def _do_lookup_snippet(text, doc):
 
+    text.append('## PLAYBOOK ##')
     snippet = "lookup('%s', " % doc.get('plugin', doc.get('name'))
     comment = ''
     for o in sorted(doc['options'].keys()):
@@ -1366,3 +1329,66 @@ def _do_lookup_snippet(text, doc):
     if comment:
         text.append(comment)
     text.append(snippet)
+
+
+def _do_ini_snippet(text, doc):
+
+    subdent = "# "
+    limit = display.columns - 20
+
+    sections = {}
+    for o in sorted(doc['options'].keys()):
+        opt = doc['options'][o]
+        if isinstance(opt['description'], string_types):
+            desc = DocCLI.tty_ify(opt['description'])
+        else:
+            desc = DocCLI.tty_ify(" ".join(opt['description']))
+
+        if 'ini' in opt:
+            entry = opt['ini'][-1]
+            if entry['section'] not in sections:
+                sections[entry['section']] = []
+
+            default = opt.get('default', '')
+            key = textwrap.fill('# ' + desc, limit, max_lines=3, subsequent_indent=subdent) + '\n' + '%s=%s' % (entry['key'], default)
+            sections[entry['section']].append(key)
+
+    if sections:
+        text.append('')
+        text.append('## INI SETTINGS ##')
+        for section in sections.keys():
+            text.append('[%s]' % section)
+            for key in sections[section]:
+                text.append(key)
+                text.append('')
+            text.append('')
+    else:
+        text.append('# no ini configuration options available for this plugin')
+
+
+def _do_env_snippet(text, doc):
+
+    subdent = "# "
+    limit = display.columns - 20
+
+    profile = []
+    for o in sorted(doc['options'].keys()):
+        opt = doc['options'][o]
+        if isinstance(opt['description'], string_types):
+            desc = DocCLI.tty_ify(opt['description'])
+        else:
+            desc = DocCLI.tty_ify(" ".join(opt['description']))
+
+        default = opt.get('default', '')
+
+        if 'env' in opt:
+            entry = opt['env'][-1]['name']
+            profile.append(textwrap.fill('# ' + desc, limit, max_lines=3, subsequent_indent=subdent))
+            profile.append('='.join([entry, to_text(default)]))
+
+    if profile:
+        text.append('')
+        text.append('## ENVIRONMENT VARIABLES ##')
+        text.extend(profile)
+    else:
+        text.append('# no environment variables available for this plugin')
