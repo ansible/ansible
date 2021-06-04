@@ -50,7 +50,7 @@ old_style_params_data = (
     dict(
         term=u'/path/to/file',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
 
@@ -58,38 +58,39 @@ old_style_params_data = (
     dict(
         term=u'/path/with/embedded spaces and/file',
         filename=u'/path/with/embedded spaces and/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
     dict(
         term=u'/path/with/equals/cn=com.ansible',
         filename=u'/path/with/equals/cn=com.ansible',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
     dict(
         term=u'/path/with/unicode/くらとみ/file',
         filename=u'/path/with/unicode/くらとみ/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
+
     # Mix several special chars
     dict(
         term=u'/path/with/utf 8 and spaces/くらとみ/file',
         filename=u'/path/with/utf 8 and spaces/くらとみ/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
     dict(
         term=u'/path/with/encoding=unicode/くらとみ/file',
         filename=u'/path/with/encoding=unicode/くらとみ/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
     dict(
         term=u'/path/with/encoding=unicode/くらとみ/and spaces file',
         filename=u'/path/with/encoding=unicode/くらとみ/and spaces file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
 
@@ -97,39 +98,48 @@ old_style_params_data = (
     dict(
         term=u'/path/to/file length=42',
         filename=u'/path/to/file',
-        params=dict(length=42, encrypt=None, ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=42, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
     dict(
         term=u'/path/to/file encrypt=pbkdf2_sha256',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt='pbkdf2_sha256', ident=None, chars=DEFAULT_CHARS),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt='pbkdf2_sha256', ident=None, chars=DEFAULT_CHARS, seed=None),
         candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
     dict(
         term=u'/path/to/file chars=abcdefghijklmnop',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'abcdefghijklmnop']),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'abcdefghijklmnop'], seed=None),
         candidate_chars=u'abcdefghijklmnop',
     ),
     dict(
         term=u'/path/to/file chars=digits,abc,def',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'digits', u'abc', u'def'])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'digits', u'abc', u'def']), seed=None),
         candidate_chars=u'abcdef0123456789',
+    ),
+    dict(
+        term=u'/path/to/file seed=1',
+        filename=u'/path/to/file',
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=DEFAULT_CHARS, seed='1'),
+        candidate_chars=DEFAULT_CANDIDATE_CHARS,
     ),
 
     # Including comma in chars
     dict(
         term=u'/path/to/file chars=abcdefghijklmnop,,digits',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'abcdefghijklmnop', u',', u'digits'])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'abcdefghijklmnop', u',', u'digits']), seed=None),
         candidate_chars=u',abcdefghijklmnop0123456789',
     ),
     dict(
         term=u'/path/to/file chars=,,',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u',']),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=[u','], seed=None),
         candidate_chars=u',',
     ),
 
@@ -137,13 +147,15 @@ old_style_params_data = (
     dict(
         term=u'/path/to/file chars=digits,=,,',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'digits', u'=', u','])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'digits', u'=', u',']), seed=None),
         candidate_chars=u',=0123456789',
     ),
     dict(
         term=u'/path/to/file chars=digits,abc=def',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'digits', u'abc=def'])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'digits', u'abc=def']), seed=None),
         candidate_chars=u'abc=def0123456789',
     ),
 
@@ -151,14 +163,16 @@ old_style_params_data = (
     dict(
         term=u'/path/to/file chars=digits,くらとみ,,',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'digits', u'くらとみ', u','])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'digits', u'くらとみ', u',']), seed=None),
         candidate_chars=u',0123456789くらとみ',
     ),
     # Including only unicode in chars
     dict(
         term=u'/path/to/file chars=くらとみ',
         filename=u'/path/to/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'くらとみ'])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'くらとみ']), seed=None),
         candidate_chars=u'くらとみ',
     ),
 
@@ -166,7 +180,8 @@ old_style_params_data = (
     dict(
         term=u'/path/to/file_with:colon chars=ascii_letters,digits',
         filename=u'/path/to/file_with:colon',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=sorted([u'ascii_letters', u'digits'])),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None,
+                    chars=sorted([u'ascii_letters', u'digits']), seed=None),
         candidate_chars=u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     ),
 
@@ -175,19 +190,19 @@ old_style_params_data = (
     dict(
         term=u'/path/with/embedded spaces and/file chars=abc=def',
         filename=u'/path/with/embedded spaces and/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'abc=def']),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'abc=def'], seed=None),
         candidate_chars=u'abc=def',
     ),
     dict(
         term=u'/path/with/equals/cn=com.ansible chars=abc=def',
         filename=u'/path/with/equals/cn=com.ansible',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'abc=def']),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'abc=def'], seed=None),
         candidate_chars=u'abc=def',
     ),
     dict(
         term=u'/path/with/unicode/くらとみ/file chars=くらとみ',
         filename=u'/path/with/unicode/くらとみ/file',
-        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'くらとみ']),
+        params=dict(length=password.DEFAULT_LENGTH, encrypt=None, ident=None, chars=[u'くらとみ'], seed=None),
         candidate_chars=u'くらとみ',
     ),
 )
@@ -279,6 +294,13 @@ class TestRandomPassword(unittest.TestCase):
         res = password.random_password(length=11, chars=u'くらとみ')
         self._assert_valid_chars(res, u'くらとみ')
         self.assertEqual(len(res), 11)
+
+    def test_seed(self):
+        pw1 = password.random_password(seed=1)
+        pw2 = password.random_password(seed=1)
+        pw3 = password.random_password(seed=2)
+        self.assertEqual(pw1, pw2)
+        self.assertNotEqual(pw1, pw3)
 
     def test_gen_password(self):
         for testcase in old_style_params_data:

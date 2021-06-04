@@ -57,6 +57,13 @@ DOCUMENTATION = """
         description: The length of the generated password.
         default: 20
         type: integer
+      seed:
+        version_added: "2.12"
+        description:
+          - A seed to initialize the random number generator.
+          - Identical seeds will yield identical passwords.
+          - Use this for random-but-idempotent password generation.
+        type: str
     notes:
       - A great alternative to the password lookup plugin,
         if you don't need to generate random passwords on a per-host basis,
@@ -100,6 +107,10 @@ EXAMPLES = """
 - name: create lowercase 8 character name for Kubernetes pod name
   set_fact:
     random_pod_name: "web-{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=8') }}"
+
+- name: create random but idempotent password
+  set_fact:
+    password: "{{ lookup('password', '/dev/null', seed=inventory_hostname) }}"
 """
 
 RETURN = """
@@ -125,7 +136,7 @@ from ansible.utils.path import makedirs_safe
 
 
 DEFAULT_LENGTH = 20
-VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident'))
+VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
 
 
 def _parse_parameters(term):
@@ -164,6 +175,7 @@ def _parse_parameters(term):
     params['length'] = int(params.get('length', DEFAULT_LENGTH))
     params['encrypt'] = params.get('encrypt', None)
     params['ident'] = params.get('ident', None)
+    params['seed'] = params.get('seed', None)
 
     params['chars'] = params.get('chars', None)
     if params['chars']:
@@ -338,7 +350,7 @@ class LookupModule(LookupBase):
             content = _read_password_file(b_path)
 
             if content is None or b_path == to_bytes('/dev/null'):
-                plaintext_password = random_password(params['length'], chars)
+                plaintext_password = random_password(params['length'], chars, params['seed'])
                 salt = None
                 changed = True
             else:
