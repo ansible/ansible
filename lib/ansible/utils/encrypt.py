@@ -48,7 +48,7 @@ _LOCK = multiprocessing.Lock()
 DEFAULT_PASSWORD_LENGTH = 20
 
 
-def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
+def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS, seed=None):
     '''Return a random password string of length containing only chars
 
     :kwarg length: The number of characters in the new password.  Defaults to 20.
@@ -58,7 +58,10 @@ def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHA
     if not isinstance(chars, text_type):
         raise AnsibleAssertionError('%s (%s) is not a text_type' % (chars, type(chars)))
 
-    random_generator = random.SystemRandom()
+    if seed is None:
+        random_generator = random.SystemRandom()
+    else:
+        random_generator = random.Random(seed)
     return u''.join(random_generator.choice(chars) for dummy in range(length))
 
 
