@@ -289,6 +289,8 @@ class ConfigCLI(CLI):
                 if opt.get('type', '') == 'list' and not isinstance(default, string_types):
                     # python lists are not valid ini ones
                     default = ', '.join(default)
+                elif default is None:
+                    default = ''
 
                 key = desc + '\n' + '%s=%s' % (entry['key'], default)
                 sections[entry['section']].append(key)
