@@ -48,7 +48,7 @@ class ConfigCLI(CLI):
                             help="path to configuration file, defaults to first file found in precedence.")
         common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
                             help="Filter down to a specific plugin type.")
-        common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='+')
+        common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
@@ -163,13 +163,15 @@ class ConfigCLI(CLI):
         entries = {}
         loader = getattr(plugin_loader, '%s_loader' % ptype)
 
-        if plugins is None:
-            plugin_cs = loader.all(class_only=True)
-        else:
+        # build list
+        if plugins:
             plugin_cs = []
             for plugin in plugins:
                 plugin_cs.append(loader.get(plugin, class_only=True))
+        else:
+            plugin_cs = loader.all(class_only=True)
 
+        # iterate over class instances
         for plugin in plugin_cs:
             finalname = name = plugin._load_name
             if name.startswith('_'):
@@ -201,7 +203,7 @@ class ConfigCLI(CLI):
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
         else:
-            config_entries = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS.get('args', None))
+            config_entries = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
@@ -215,9 +217,9 @@ class ConfigCLI(CLI):
             for o in sorted(doc['options'].keys()):
                 opt = doc['options'][o]
                 if isinstance(opt['description'], string_types):
-                    desc = DocCLI.tty_ify(opt['description'])
+                    desc = opt['description']
                 else:
-                    desc = DocCLI.tty_ify(" ".join(opt['description']))
+                    desc = join(opt['description'])
 
                 default = opt.get('default', '')
 
@@ -293,7 +295,7 @@ class ConfigCLI(CLI):
 
         return self._render_settings(config)
 
-    def _get_plugin_configs(self, ptype):
+    def _get_plugin_configs(self, ptype, plugins):
 
         # prep loading
         loader = getattr(plugin_loader, '%s_loader' % ptype)
@@ -301,8 +303,16 @@ class ConfigCLI(CLI):
         # acumulators
         text = []
         config_entries = {}
-        for plugin in loader.all(class_only=True):
 
+        # build list
+        if plugins:
+            plugin_cs = []
+            for plugin in plugins:
+                plugin_cs.append(loader.get(plugin, class_only=True))
+        else:
+            plugin_cs = loader.all(class_only=True)
+
+        for plugin in plugin_cs:
             # in case of deprecastion they diverge
             finalname = name = plugin._load_name
             if name.startswith('_'):
@@ -358,6 +368,6 @@ class ConfigCLI(CLI):
                 text.extend(self._get_plugin_configs(ptype))
         else:
             # deal with plugins
-            text = self._get_plugin_configs(context.CLIARGS['type'])
+            text = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
