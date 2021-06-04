@@ -581,7 +581,8 @@ class LinuxHardware(Hardware):
 
                     elif time.time() > results[mount]['timelimit']:
                         done = True
-                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                        self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
+                        results[mount]['info']['note'] = 'Could not get extra information due to timeout'
                 except Exception as e:
                     import traceback
                     done = True
