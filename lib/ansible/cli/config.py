@@ -18,6 +18,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
@@ -46,7 +47,8 @@ class ConfigCLI(CLI):
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
         common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                            help="Show configuration for a plugin type, for a specific plugin's options see ansible-doc.")
+                            help="Filter down to a specific plugin type.")
+        common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='+')
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
@@ -62,13 +64,10 @@ class ConfigCLI(CLI):
         view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
 
-        # update_parser = subparsers.add_parser('update', help='Update configuration option')
-        # update_parser.set_defaults(func=self.execute_update)
-        # update_parser.add_argument('-s', '--setting', dest='setting',
-        #                            help="config setting, the section defaults to 'defaults'",
-        #                            metavar='[section.]setting=value')
+        init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
+        init_parser.add_argument('--format', '-f', dest='format', action='store', choices={'ini', 'env', 'vars'}, default='ini')
 
-        # search_parser = subparsers.add_parser('search', help='Search configuration')
+        # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
         # search_parser.add_argument('args', help='Search term', metavar='<search term>')
 
@@ -160,10 +159,18 @@ class ConfigCLI(CLI):
         except Exception as e:
             raise AnsibleError("Failed to open editor: %s" % to_native(e))
 
-    def _list_plugin_settings(self, ptype):
+    def _list_plugin_settings(self, ptype, plugins=None):
         entries = {}
         loader = getattr(plugin_loader, '%s_loader' % ptype)
-        for plugin in loader.all(class_only=True):
+
+        if plugins is None:
+            plugin_cs = loader.all(class_only=True)
+        else:
+            plugin_cs = []
+            for plugin in plugins:
+                plugin_cs.append(loader.get(plugin, class_only=True))
+
+        for plugin in plugin_cs:
             finalname = name = plugin._load_name
             if name.startswith('_'):
                 # alias or deprecated
@@ -194,9 +201,69 @@ class ConfigCLI(CLI):
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
         else:
-            config_entries = self._list_plugin_settings(context.CLIARGS['type'])
+            config_entries = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS.get('args', None))
 
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+
+    def execute_init(self):
+        def _do_env_snippet(text, doc):
+
+            subdent = "# "
+            limit = display.columns - 20
+
+            profile = []
+            for o in sorted(doc['options'].keys()):
+                opt = doc['options'][o]
+                if isinstance(opt['description'], string_types):
+                    desc = DocCLI.tty_ify(opt['description'])
+                else:
+                    desc = DocCLI.tty_ify(" ".join(opt['description']))
+
+                default = opt.get('default', '')
+
+                if 'env' in opt:
+                    entry = opt['env'][-1]['name']
+                    profile.append('# ' + desc)
+                    profile.append('='.join([entry, to_text(default)]))
+
+            if profile:
+                text.extend(profile)
+            else:
+                text.append('# no environment variables available for this plugin')
+
+        def _do_ini_snippet(text, doc):
+
+            subdent = "# "
+            limit = display.columns - 20
+
+            sections = {}
+            for o in sorted(doc['options'].keys()):
+                opt = doc['options'][o]
+                if isinstance(opt['description'], string_types):
+                    desc = DocCLI.tty_ify(opt['description'])
+                else:
+                    desc = DocCLI.tty_ify(" ".join(opt['description']))
+
+                if 'ini' in opt:
+                    entry = opt['ini'][-1]
+                    if entry['section'] not in sections:
+                        sections[entry['section']] = []
+
+                    default = opt.get('default', '')
+                    key = '# ' + desc + '\n' + '%s=%s' % (entry['key'], default)
+                    sections[entry['section']].append(key)
+
+            if sections:
+                text.append('')
+                for section in sections.keys():
+                    text.append('[%s]' % section)
+                    for key in sections[section]:
+                        text.append(key)
+                        text.append('')
+                    text.append('')
+            else:
+                text.append('# no ini configuration options available for this plugin')
+
 
     def _render_settings(self, config):
 
