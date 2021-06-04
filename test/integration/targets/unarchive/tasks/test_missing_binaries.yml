@@ -1,59 +1,58 @@
-- name: Ensure zip binaries are absent
-  package:
-    state: absent
-    name:
-      - zip
-      - unzip
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
-  notify: restore packages
+- name: Test missing binaries
+  when: ansible_facts.system in ('Linux', 'FreeBSD')  # Cannot remove unzip on macOS
+  block:
+    - name: Remove zip binaries
+      package:
+        state: absent
+        name:
+          - zip
+          - unzip
+      when: ansible_facts.pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+      notify: restore packages
 
-- name: Ensure zstd is absent, if available
-  ignore_errors: true
-  package:
-    state: absent
-    name:
-      - zstd
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
-  notify: restore packages
+    - name: create unarchive destinations
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
+        state: directory
+      loop:
+        - zip
+        - tar
 
-- name: create unarchive destinations
-  file:
-    path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
-    state: directory
-  loop:
-    - zip
-    - tar
+    # With the zip binaries absent and tar still present, this task should work
+    - name: unarchive a tar file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.tar'
+        dest: '{{remote_tmp_dir}}/test-unarchive-tar'
+        remote_src: yes
+      register: tar
 
-# With the zip binaries absent and tar still present, this task should work
-- name: unarchive a tar file
-  unarchive:
-    src: '{{remote_tmp_dir}}/test-unarchive.tar'
-    dest: '{{remote_tmp_dir}}/test-unarchive-tar'
-    remote_src: yes
-  register: tar
+    - name: unarchive a zip file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.zip'
+        dest: '{{remote_tmp_dir}}/test-unarchive-zip'
+        list_files: True
+        remote_src: yes
+      register: zip_fail
+      ignore_errors: yes
 
-- name: unarchive a zip file
-  unarchive:
-    src: '{{remote_tmp_dir}}/test-unarchive.zip'
-    dest: '{{remote_tmp_dir}}/test-unarchive-zip'
-    list_files: True
-    remote_src: yes
-  register: zip_fail
-  ignore_errors: yes
+    - name: Ensure tasks worked as expected
+      assert:
+        that:
+          - tar is success
+          - zip_fail is failed
+          - zip_fail.msg is search('Unable to find required')
 
-- name: Ensure tasks did the expected thing
-  assert:
-    that:
-      - tar is success
-      - zip_fail is failed
-      - zip_fail.msg is search('Unable to find required')
+    - name: Remove unarchive destinations
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
+        state: absent
+      loop:
+        - zip
+        - tar
 
-- name: remove unarchive destinations
-  file:
-    path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
-    state: absent
-  loop:
-    - zip
-    - tar
-
-- meta: flush_handlers
+    - name: Reinsntall zip binaries
+      package:
+        name:
+          - zip
+          - unzip
+      when: ansible_facts.pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
