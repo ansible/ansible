@@ -96,3 +96,7 @@
       - "slurp_no_args is failed"
       - "slurp_no_args.msg"
       - "slurp_no_args is not changed"
+
+# Ensure unreadable file and directory handling and error messages
+# https://github.com/ansible/ansible/issues/67340
+- import_tasks: 'test_unreadable.yml'
