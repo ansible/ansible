@@ -68,7 +68,7 @@ class ConfigCLI(CLI):
 
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
-        init_parser.add_argument('--format', '-f', dest='format', action='store', choices={'ini', 'env', 'yaml'}, default='ini')
+        init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'yaml'], default='ini')
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
