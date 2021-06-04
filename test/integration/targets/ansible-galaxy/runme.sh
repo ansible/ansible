@@ -412,7 +412,7 @@ pushd "${role_testdir}"
     grep "Dockerfile" out2.txt
 
     #Check if Role with skeleton type "network" is created successfully.
-    [[ $(find ./role_networ/ | wc -l) -eq 28 ]]
+    [[ $(find ./role_network | wc -l) -eq 28 ]]
 
 popd # ${role_testdir}
 rm -rf "${role_testdir}"
