@@ -77,6 +77,7 @@ source:
 '''
 
 import base64
+import errno
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -91,13 +92,16 @@ def main():
     )
     source = module.params['src']
 
-    if not os.path.exists(source):
-        module.fail_json(msg="file not found: %s" % source)
-    if not os.access(source, os.R_OK):
-        module.fail_json(msg="file is not readable: %s" % source)
+    try:
+        os.stat(source)
+        with open(source, 'rb') as source_fh:
+            source_content = source_fh.read()
+    except (IOError, OSError) as e:
+        if e.errno == errno.ENOENT:
+            module.fail_json(msg="file not found: %s" % source)
+        elif e.errno == errno.EACCES:
+            module.fail_json(msg="file is not readable: %s" % source)
 
-    with open(source, 'rb') as source_fh:
-        source_content = source_fh.read()
     data = base64.b64encode(source_content)
 
     module.exit_json(content=data, source=source, encoding='base64')
