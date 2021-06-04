@@ -171,7 +171,11 @@ class ConfigCLI(CLI):
         if plugins:
             plugin_cs = []
             for plugin in plugins:
-                plugin_cs.append(loader.get(plugin, class_only=True))
+                p = loader.get(plugin, class_only=True)
+                if p is None:
+                    display.warning("Skipping %s as we could not find matching plugin" % plugin)
+                else:
+                    plugin_cs.append(p)
         else:
             plugin_cs = loader.all(class_only=True)
 
@@ -302,7 +306,6 @@ class ConfigCLI(CLI):
     def execute_init(self):
 
         config_entries = self._list_entries_from_args()
-        #print(config_entries)
         if context.CLIARGS['format'] == 'ini':
             data = self._get_settings_ini(config_entries)
         elif context.CLIARGS['format'] in ('env', 'yaml'):
@@ -351,7 +354,11 @@ class ConfigCLI(CLI):
         if plugins:
             plugin_cs = []
             for plugin in plugins:
-                plugin_cs.append(loader.get(plugin, class_only=True))
+                p = loader.get(plugin, class_only=True)
+                if p is None:
+                    display.warning("Skipping %s as we could not find matching plugin" % plugin)
+                else:
+                    plugin_cs.append(loader.get(plugin, class_only=True))
         else:
             plugin_cs = loader.all(class_only=True)
 
