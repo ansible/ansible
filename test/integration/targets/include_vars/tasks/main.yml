@@ -57,6 +57,8 @@
   include_vars:
     dir: vars
     extensions: ['', 'yaml', 'yml', 'json']
+    ignore_files:
+      - no_auto_unsafe.yml
   register: include_every_dir
 
 - name: verify that the correct files have been loaded and overwrite based on alphabetical order
@@ -78,6 +80,7 @@
     ignore_files:
       - webapp.yml
       - file_without_extension
+      - no_auto_unsafe.yml
   register: include_without_webapp
 
 - name: verify that the webapp.yml file was not included
@@ -162,3 +165,11 @@
     that:
       - "'my_custom_service' == service_name_fqcn"
       - "'my_custom_service' == service_name_tmpl_fqcn"
+
+- include_vars:
+    file: no_auto_unsafe.yml
+  register: baz
+
+- assert:
+    that:
+      - baz.ansible_facts.foo|type_debug != "AnsibleUnsafeText"

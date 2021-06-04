@@ -1,0 +1,4 @@
+bugfixes:
+- register - Ensure that ``register`` used on ``set_fact`` or ``include_vars``
+  does not automatically wrap the facts as unsafe.
+  (https://github.com/ansible/ansible/issues/21088)
