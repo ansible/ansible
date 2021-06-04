@@ -1,0 +1,2 @@
+bugfixes:
+  - gather_facts, improved message on timeout.
