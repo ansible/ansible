@@ -65,11 +65,14 @@ class ConfigCLI(CLI):
         view_parser.set_defaults(func=self.execute_view)
 
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
+        init_parser.set_defaults(func=self.execute_init)
         init_parser.add_argument('--format', '-f', dest='format', action='store', choices={'ini', 'env', 'vars'}, default='ini')
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
         # search_parser.add_argument('args', help='Search term', metavar='<search term>')
+
+        context.CLIARGS['func']()
 
     def post_process_args(self, options):
         options = super(ConfigCLI, self).post_process_args(options)
@@ -108,8 +111,6 @@ class ConfigCLI(CLI):
 
         elif context.CLIARGS['action'] == 'view':
             raise AnsibleError('Invalid or no config file was supplied')
-
-        context.CLIARGS['func']()
 
     def execute_update(self):
         '''
@@ -214,96 +215,70 @@ class ConfigCLI(CLI):
         config_entries = self._list_entries_from_args()
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
-    def _get_opt_setting(options, setting):
+    def _get_option_vars(settings, subkey):
+
+        data = []
+        for options in settings:
+            for option in options.keys():
+                default = options[option].get('default', '')
+
+                if subkey in options[option]:
+
+                    entry = options[option][subkey][-1]['name']
+                    if isinstance(options[option]['description'], string_types):
+                        desc = options[option]['description']
+                    else:
+                        desc = join(options[option]['description'])
+                    data.append('# %s(%s): %s' % (option, options[option]['type'], desc))
+
+                    # TODO: might need quoting and value coercion depending on type
+                    if subkey == 'env':
+                        data.append('%s=%s' % (entry, default))
+                    elif subkey == 'vars':
+                        data.append('%s: %s' % (entry, default))
+        return data
 
 
-'''
-url:
-  _terms:
-    description: urls to query
-  ca_path:
-    description: String of file system path to CA cert bundle to use
-    env:
-    - name: ANSIBLE_LOOKUP_URL_CA_PATH
-    ini:
-    - key: ca_path
-      section: url_lookup
-    type: string
-    vars:
-    - name: ansible_lookup_url_ca_path
-    version_added: '2.10'
-'''
+    def _get_option_ini(settings):
 
-    def _format_env(entry):
-        '# '
-        pass
+        data = []
+        sections = {}
+        for o in sorted(settings['options'].keys()):
+            opt = settings['options'][o]
+            if isinstance(opt['description'], string_types):
+                desc = DocCLI.tty_ify(opt['description'])
+            else:
+                desc = DocCLI.tty_ify(" ".join(opt['description']))
 
-    def _format_ini(entry):
-        pass
-    def _format_vars(entry):
-        pass
-
-        def _do_env_snippet(text, doc):
-
-            subdent = "# "
-            limit = display.columns - 20
-
-            profile = []
-            for o in sorted(doc['options'].keys()):
-                opt = doc['options'][o]
-                if isinstance(opt['description'], string_types):
-                    desc = opt['description']
-                else:
-                    desc = join(opt['description'])
+            if 'ini' in opt:
+                entry = opt['ini'][-1]
+                if entry['section'] not in sections:
+                    sections[entry['section']] = []
 
                 default = opt.get('default', '')
+                key = '# ' + desc + '\n' + '%s=%s' % (entry['key'], default)
+                sections[entry['section']].append(key)
 
-                if 'env' in opt:
-                    entry = opt['env'][-1]['name']
-                    profile.append('# ' + desc)
-                    profile.append('='.join([entry, to_text(default)]))
+        if sections:
+            for section in sections.keys():
+                data.append('[%s]' % section)
+                for key in sections[section]:
+                    data.append(key)
+                    data.append('')
+                data.append('')
 
-            if profile:
-                text.extend(profile)
-            else:
-                text.append('# no environment variables available for this plugin')
-
-        def _do_ini_snippet(text, doc):
-
-            subdent = "# "
-            limit = display.columns - 20
-
-            sections = {}
-            for o in sorted(doc['options'].keys()):
-                opt = doc['options'][o]
-                if isinstance(opt['description'], string_types):
-                    desc = DocCLI.tty_ify(opt['description'])
-                else:
-                    desc = DocCLI.tty_ify(" ".join(opt['description']))
-
-                if 'ini' in opt:
-                    entry = opt['ini'][-1]
-                    if entry['section'] not in sections:
-                        sections[entry['section']] = []
-
-                    default = opt.get('default', '')
-                    key = '# ' + desc + '\n' + '%s=%s' % (entry['key'], default)
-                    sections[entry['section']].append(key)
-
-            if sections:
-                text.append('')
-                for section in sections.keys():
-                    text.append('[%s]' % section)
-                    for key in sections[section]:
-                        text.append(key)
-                        text.append('')
-                    text.append('')
-            else:
-                text.append('# no ini configuration options available for this plugin')
+        return data
 
     def execute_init(self):
+        print('hi')
 
         config_entries = self._list_entries_from_args()
+        if context.CLIARGS['format'] == 'ini':
+            data = _get_option_ini(config_entries)
+        elif context.CLIARGS['format'] in ('env', 'vars'):
+            data = _get_option_vars(config_entries)
+
+        self.pager(to_text(yaml.dump(data, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
 
     def _render_settings(self, config):
