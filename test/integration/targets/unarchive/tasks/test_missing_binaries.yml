@@ -1,5 +1,5 @@
 - name: Test missing binaries
-  when: ansible_facts.system in ('Linux', 'FreeBSD')  # Cannot remove unzip on macOS
+  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
   block:
     - name: Remove zip binaries
       package:
