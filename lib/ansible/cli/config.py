@@ -185,11 +185,10 @@ class ConfigCLI(CLI):
 
         return entries
 
-    def execute_list(self):
+    def _list_entries_from_args(self):
         '''
-        list all current configs reading lib/constants.py and shows env and config file setting names
+        build a dic with the list requested configs
         '''
-
         config_entries = {}
         if context.CLIARGS['type'] == 'base':
             # this dumps main/common configs
@@ -205,9 +204,45 @@ class ConfigCLI(CLI):
         else:
             config_entries = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
+        return config_entries
+
+    def execute_list(self):
+        '''
+        list and output available configs
+        '''
+
+        config_entries = self._list_entries_from_args()
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
-    def execute_init(self):
+    def _get_opt_setting(options, setting):
+
+
+'''
+url:
+  _terms:
+    description: urls to query
+  ca_path:
+    description: String of file system path to CA cert bundle to use
+    env:
+    - name: ANSIBLE_LOOKUP_URL_CA_PATH
+    ini:
+    - key: ca_path
+      section: url_lookup
+    type: string
+    vars:
+    - name: ansible_lookup_url_ca_path
+    version_added: '2.10'
+'''
+
+    def _format_env(entry):
+        '# '
+        pass
+
+    def _format_ini(entry):
+        pass
+    def _format_vars(entry):
+        pass
+
         def _do_env_snippet(text, doc):
 
             subdent = "# "
@@ -265,6 +300,10 @@ class ConfigCLI(CLI):
                     text.append('')
             else:
                 text.append('# no ini configuration options available for this plugin')
+
+    def execute_init(self):
+
+        config_entries = self._list_entries_from_args()
 
 
     def _render_settings(self, config):
