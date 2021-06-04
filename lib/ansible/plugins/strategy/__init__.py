@@ -1175,7 +1175,6 @@ class StrategyBase:
                     # Iterate over tasks until we get to clear_host_errors
                     s, t = iterator.get_next_task_for_host(host, peek=False)
                     while t is not None and t.args.get('_raw_params') != 'clear_host_errors':
-                        iterator._host_states[host.name].run_state = s.run_state
                         s, t = iterator.get_next_task_for_host(host, peek=False)
                 msg = "cleared host errors"
                 if missing_restore_state:
