@@ -1676,7 +1676,7 @@ To concatenate a list into a string::
 
     {{ list | join(" ") }}
 
-To split a sting into a list::
+To split a string into a list::
 
     {{ csv_string | split(",") }}
     
