@@ -159,7 +159,7 @@ class TaskExecutor:
                 try:
                     res = self._execute()
                 finally:
-                    display.verbosity = context.CLIARGS.get('verbosity', 0)
+                    display.verbosity = context.CLIARGS.get('verbosity', C.DEFAULT_VERBOSITY)
                 display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
@@ -358,7 +358,7 @@ class TaskExecutor:
             try:
                 res = self._execute(variables=task_vars)
             finally:
-                display.verbosity = context.CLIARGS.get('verbosity', 0)
+                display.verbosity = context.CLIARGS.get('verbosity', C.DEFAULT_VERBOSITY)
             task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
