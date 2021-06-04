@@ -1,4 +1,4 @@
-- name: Include distribution specific variables
+- name: Include system specific variables
   include_vars: "{{ ansible_facts.system }}.yml"
 
 # Need unzip for unarchive module, and zip for archive creation.
