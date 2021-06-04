@@ -1,0 +1,2 @@
+bugfixes:
+- facts, service_mgr, handle issues if ps command fails or returns empty.
