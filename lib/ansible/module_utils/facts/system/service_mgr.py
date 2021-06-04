@@ -85,13 +85,11 @@ class ServiceMgrFactCollector(BaseFactCollector):
         # try various forms of querying pid 1
         proc_1 = get_file_content('/proc/1/comm')
         if proc_1 is None:
-            # FIXME: return code isnt checked
-            # FIXME: if stdout is empty string, odd things
-            # FIXME: other code seems to think we could get proc_1 == None past this point
             rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
-            # If the output of the command starts with what looks like a PID, then the 'ps' command
-            # probably didn't work the way we wanted, probably because it's busybox
-            if re.match(r' *[0-9]+ ', proc_1):
+
+            # if command fails, or stdout is empty string or the output of the command starts with what looks like a PID,
+            # then the 'ps' command probably didn't work the way we wanted, probably because it's busybox
+            if rc != 0 or not proc_1.strip() or re.match(r' *[0-9]+ ', proc_1):
                 proc_1 = None
 
         # The ps command above may return "COMMAND" if the user cannot read /proc, e.g. with grsecurity
@@ -101,7 +99,6 @@ class ServiceMgrFactCollector(BaseFactCollector):
         if proc_1 is None and os.path.islink('/sbin/init'):
             proc_1 = os.readlink('/sbin/init')
 
-        # FIXME: empty string proc_1 staus empty string
         if proc_1 is not None:
             proc_1 = os.path.basename(proc_1)
             proc_1 = to_native(proc_1)
@@ -114,10 +111,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
         # if not init/None it should be an identifiable or custom init, so we are done!
         if proc_1 is not None:
             # Lookup proc_1 value in map and use proc_1 value itself if no match
-            # FIXME: empty string still falls through
             service_mgr_name = proc_1_map.get(proc_1, proc_1)
 
-        # FIXME: replace with a system->service_mgr_name map?
         # start with the easy ones
         elif collected_facts.get('ansible_distribution', None) == 'MacOSX':
             # FIXME: find way to query executable, version matching is not ideal
