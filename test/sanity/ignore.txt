@@ -58,6 +58,8 @@ lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/async_status.py use-argspec-type-path
+lib/ansible/modules/async_status.py validate-modules!skip
 lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
 lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
 lib/ansible/modules/async_wrapper.py use-argspec-type-path
