@@ -1,0 +1,8 @@
+minor_changes:
+  - Added `--skeleton` argument to path to a role or collection
+    skeleton that the new role or collection should be based upon. Else for
+    role, we need to use `--role-skeleton` and `--collection-skeleton` for collection.
+  - Added new collection type `community` which supports [Community Collection
+    Template](https://github.com/ansible-collections/collection_template)
+    as a skeleton to initialize a new collection using `ansible-galaxy`
+    command. Eg: `ansible-galaxy collection init my_namespace.my_collection --type community`

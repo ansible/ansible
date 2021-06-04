@@ -404,15 +404,15 @@ pushd "${role_testdir}"
     [[ $(grep -ce role_container -e role_apb -e role_network out.txt) -eq 3 ]]
 
     #Check if Role with skeleton type "conatiner" is created successfully.
-    cat ./role_container/meta/container.yml | tee out1.txt
-    grep "Ansible Container service" out1.txt
+    find ./role_container | tee out1.txt
+    grep "container.yml" out1.txt
 
     #Check if Role with skeleton type "apb" is created successfully.
-    ls ./role_apb/ | tee out2.txt
+    find ./role_apb -type f | tee out2.txt
     grep "Dockerfile" out2.txt
 
     #Check if Role with skeleton type "network" is created successfully.
-    [[ $(ls ./role_network/ | wc -l) -eq 13 ]]
+    [[ $(find ./role_networ/ | wc -l) -eq 28 ]]
 
 popd # ${role_testdir}
 rm -rf "${role_testdir}"

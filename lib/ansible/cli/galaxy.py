@@ -306,8 +306,7 @@ class GalaxyCLI(CLI):
 
         valid_skeleton_type = "'container', 'apb' and 'network'" if galaxy_type == 'role' else "'community'"
         init_parser.add_argument('--type', dest='{0}_type'.format(galaxy_type), action='store', default='default',
-                                 help="Initialize using an alternate {0} type. Valid types include: {1}.".format(galaxy_type,
-                                      valid_skeleton_type))
+                                 help="Initialize using an alternate {0} type. Valid types include: {1}.".format(galaxy_type, valid_skeleton_type))
 
         obj_name_kwargs = {}
         if galaxy_type == 'collection':
