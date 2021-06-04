@@ -49,6 +49,7 @@ PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
 PB_LOADED = {}
 SNIPPETS = ['module', 'lookup']
 
+
 def jdump(text):
     try:
         display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
