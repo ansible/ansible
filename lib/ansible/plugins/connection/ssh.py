@@ -232,6 +232,7 @@ DOCUMENTATION = '''
             - name: ansible_ssh_private_key_file
           cli:
             - name: private_key_file
+              option: '--private-key'
 
       control_path:
         description:

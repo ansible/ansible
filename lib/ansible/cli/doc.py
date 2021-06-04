@@ -1043,6 +1043,15 @@ class DocCLI(CLI, RoleMixin):
                             if ignore in item:
                                 del item[ignore]
 
+            if 'cli' in opt and opt['cli']:
+                conf['cli'] = []
+                for cli in opt['cli']:
+                    if 'option' not in cli:
+                        conf['cli'].append({'name': cli['name'], 'option': '--%s' % cli['name'].replace('_', '-')})
+                    else:
+                        conf['cli'].append(cli)
+                del opt['cli']
+
             if conf:
                 text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
