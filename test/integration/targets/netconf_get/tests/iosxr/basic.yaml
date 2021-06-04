@@ -49,18 +49,6 @@
       - "'<description>this is test interface Loopback999</description>' in result.stdout"
       - "'<usernames>' not in result.stdout"
 
-- name: Failure scenario, get-config information with lock
-  netconf_get:
-    source: running
-    lock: always
-  register: result
-  ignore_errors: True
-  connection: netconf
-
-- assert:
-    that:
-      - "'<bad-element>running</bad-element>' in result.msg"
-
 - name: Failure scenario, fetch config from startup
   netconf_get:
     source: startup
