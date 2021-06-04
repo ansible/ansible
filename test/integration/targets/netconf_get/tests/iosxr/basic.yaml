@@ -82,17 +82,6 @@
     that:
       - "'<description>this is test interface Loopback999</description>' in result.stdout"
 
-- name: Failure scenario, get information from running with lock
-  netconf_get:
-    lock: always
-  register: result
-  ignore_errors: True
-  connection: netconf
-
-- assert:
-    that:
-      - "'<bad-element>running</bad-element>' in result.msg"
-
 - name: get configuration and state data in json format
   netconf_get:
     source: running
