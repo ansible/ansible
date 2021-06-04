@@ -1301,14 +1301,14 @@ def _do_lookup_snippet(text, doc):
 
     text.append('## PLAYBOOK ##')
     snippet = "lookup('%s', " % doc.get('plugin', doc.get('name'))
-    comment = ''
+    comment = []
     for o in sorted(doc['options'].keys()):
 
         opt = doc['options'][o]
+        comment.append('# %s(%s): %s' % (o, opt.get('type', 'string'), opt.get('description', '')))
         if o in ('_terms', '_raw', '_list'):
             # these are 'list of arguments'
             snippet += '< %s >' % (o)
-            comment = '# %s: %s' % (o, opt.get('description', ''))
             continue
 
         required = opt.get('required', False)
@@ -1327,7 +1327,7 @@ def _do_lookup_snippet(text, doc):
 
     snippet += ")"
     if comment:
-        text.append(comment)
+        text.extend(comment)
     text.append(snippet)
 
 
