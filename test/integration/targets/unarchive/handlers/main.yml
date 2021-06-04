@@ -1,16 +1,4 @@
-- name: Ensure required binaries are present
+- name: restore packages
   package:
-    name:
-      - zip
-      - unzip
-      - tar
+    name: "{{ unarchive_packages }}"
   when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
-  listen: restore packages
-
-- name: Ensure zstd is present, if available
-  ignore_errors: true
-  package:
-    name:
-      - zstd
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
-  listen: restore packages
