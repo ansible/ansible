@@ -19,6 +19,8 @@ from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
@@ -66,13 +68,11 @@ class ConfigCLI(CLI):
 
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
-        init_parser.add_argument('--format', '-f', dest='format', action='store', choices={'ini', 'env', 'vars'}, default='ini')
+        init_parser.add_argument('--format', '-f', dest='format', action='store', choices={'ini', 'env', 'yaml'}, default='ini')
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
         # search_parser.add_argument('args', help='Search term', metavar='<search term>')
-
-        context.CLIARGS['func']()
 
     def post_process_args(self, options):
         options = super(ConfigCLI, self).post_process_args(options)
@@ -111,6 +111,9 @@ class ConfigCLI(CLI):
 
         elif context.CLIARGS['action'] == 'view':
             raise AnsibleError('Invalid or no config file was supplied')
+
+        # run the requested action
+        context.CLIARGS['func']()
 
     def execute_update(self):
         '''
@@ -215,48 +218,75 @@ class ConfigCLI(CLI):
         config_entries = self._list_entries_from_args()
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
-    def _get_option_vars(settings, subkey):
+    def _get_settings_vars(self, settings, subkey):
 
         data = []
-        for options in settings:
-            for option in options.keys():
-                default = options[option].get('default', '')
+        for setting in settings:
 
-                if subkey in options[option]:
+            if not settings[setting].get('description'):
+                continue
 
-                    entry = options[option][subkey][-1]['name']
-                    if isinstance(options[option]['description'], string_types):
-                        desc = options[option]['description']
+            default = settings[setting].get('default', '')
+            if subkey == 'env':
+                stype = settings[setting].get('type', '')
+                if stype == 'boolean':
+                    if default:
+                        default = '1'
                     else:
-                        desc = join(options[option]['description'])
-                    data.append('# %s(%s): %s' % (option, options[option]['type'], desc))
+                        default = '0'
+                elif default:
+                    if stype == 'list' and not isinstance(default, string_types):
+                        # python lists are not valid env ones
+                        default = ', '.join(default)
+                    if isinstance(default, string_types) and not is_quoted(default):
+                        default = shlex_quote(default)
 
-                    # TODO: might need quoting and value coercion depending on type
-                    if subkey == 'env':
-                        data.append('%s=%s' % (entry, default))
-                    elif subkey == 'vars':
-                        data.append('%s: %s' % (entry, default))
+            if subkey in settings[setting] and settings[setting][subkey]:
+                entry = settings[setting][subkey][-1]['name']
+                if isinstance(settings[setting]['description'], string_types):
+                    desc = settings[setting]['description']
+                else:
+                    desc = '\n#'.join(settings[setting]['description'])
+                name = settings[setting].get('name', setting)
+                data.append('# %s(%s): %s' % (name, settings[setting].get('type', 'string'), desc))
+
+                # TODO: might need quoting and value coercion depending on type
+                if subkey == 'env':
+                    data.append('%s=%s' % (entry, default))
+                elif subkey == 'yaml':
+                    data.append(to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+                data.append('')
+
         return data
 
-
-    def _get_option_ini(settings):
+    def _get_settings_ini(self, settings):
 
         data = []
         sections = {}
-        for o in sorted(settings['options'].keys()):
-            opt = settings['options'][o]
-            if isinstance(opt['description'], string_types):
-                desc = DocCLI.tty_ify(opt['description'])
-            else:
-                desc = DocCLI.tty_ify(" ".join(opt['description']))
+        for o in sorted(settings.keys()):
 
-            if 'ini' in opt:
+            opt = settings[o]
+            if not opt.get('description'):
+                # skipping undocumented
+                continue
+
+            if isinstance(opt['description'], string_types):
+                desc = '# %s' % opt['description']
+            else:
+                desc = "# "
+                desc += "\n# ".join(opt['description'])
+
+            if 'ini' in opt and opt['ini']:
                 entry = opt['ini'][-1]
                 if entry['section'] not in sections:
                     sections[entry['section']] = []
 
                 default = opt.get('default', '')
-                key = '# ' + desc + '\n' + '%s=%s' % (entry['key'], default)
+                if opt.get('type', '') == 'list' and not isinstance(default, string_types):
+                    # python lists are not valid ini ones
+                    default = ', '.join(default)
+
+                key = desc + '\n' + '%s=%s' % (entry['key'], default)
                 sections[entry['section']].append(key)
 
         if sections:
@@ -270,16 +300,15 @@ class ConfigCLI(CLI):
         return data
 
     def execute_init(self):
-        print('hi')
 
         config_entries = self._list_entries_from_args()
+        #print(config_entries)
         if context.CLIARGS['format'] == 'ini':
-            data = _get_option_ini(config_entries)
-        elif context.CLIARGS['format'] in ('env', 'vars'):
-            data = _get_option_vars(config_entries)
+            data = self._get_settings_ini(config_entries)
+        elif context.CLIARGS['format'] in ('env', 'yaml'):
+            data = self._get_settings_vars(config_entries, context.CLIARGS['format'])
 
-        self.pager(to_text(yaml.dump(data, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
-
+        self.pager(to_text('\n'.join(data), errors='surrogate_or_strict'))
 
     def _render_settings(self, config):
 
