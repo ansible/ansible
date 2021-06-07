@@ -1,3 +1,0 @@
-minor_changes:
-  - async_status no longer requires a module for non windows targets.
-  - task_executor, Actions using AnsibleActionFail/Skip will now propagate 'results' if given.
