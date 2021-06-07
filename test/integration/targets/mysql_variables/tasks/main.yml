@@ -145,11 +145,11 @@
   register: result
   ignore_errors: true
   when:
-    - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '=='))
+    - not (ansible_facts.os_family == 'RedHat' and ansible_distribution_major_version is version('8', '=='))
 
 - include: assert_fail_msg.yml output={{result}}  msg='Truncated incorrect'
   when:
-    - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '=='))
+    - not (ansible_facts.os_family == 'RedHat' and ansible_distribution_major_version is version('8', '=='))
 
 # ============================================================
 # Verify mysql_variable fails when setting an incorrect value (incorrect type)
