@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import base64
 import json
 import tempfile
 import time
@@ -38,15 +39,14 @@ class ActionModule(ActionBase):
 
         return self._remote_expand_user(async_dir)
 
-    def _update_results_with_job_file(self, jid, log_path, results):
+    def _fetch_file_with_retry(self, src, dest, results):
+        ''' wrap retry over fetch file as it might take time for async_wrapper to setup the log file on remote '''
 
-        # local tempfile to copy job file to, using local tmp which is auto cleaned on exit
-        fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=config.get_config_value('DEFAULT_LOCAL_TMP'))
-
+        file_data = ''
         attempts = 0
         while True:
             try:
-                self._connection.fetch_file(log_path, tmpfile)
+                self._connection.fetch_file(src, dest)
             except AnsibleConnectionFailure:
                 raise
             except AnsibleFileNotFound as e:
@@ -57,7 +57,7 @@ class ActionModule(ActionBase):
                     raise AnsibleActionFail("Could not fetch the job file from remote: %s" % to_native(e), orig_exc=e, result=results)
 
             try:
-                with open(tmpfile) as f:
+                with open(dest) as f:
                     file_data = f.read()
             except (IOError, OSError):
                 pass
@@ -69,6 +69,10 @@ class ActionModule(ActionBase):
 
             attempts += 1
             time.sleep(attempts * 0.2)
+
+        return file_data
+
+    def _update_results_with_job_file(self, file_data, jid, results):
 
         try:
             data = json.loads(file_data)
@@ -116,7 +120,23 @@ class ActionModule(ActionBase):
                 module_args = dict(jid=jid, mode=mode, _async_dir=async_dir)
                 results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=module_args))
             else:
-                # fetch remote file and read locally
-                self._update_results_with_job_file(jid, log_path, results)
+                # local tempfile to copy job file to, using local tmp which is auto cleaned on exit
+                fd, tmpfile = tempfile.mkstemp(prefix='_async_%s' % jid, dir=config.get_config_value('DEFAULT_LOCAL_TMP'))
+
+                data = ''
+                if self._connection.become:
+                    # having privilege escalation forces us to slurp on remote (see fetch action)
+                    module_args = dict(src=log_path)
+                    slurped = merge_hash(results, self._execute_module(module_name='ansible.legacy.slurp', task_vars=task_vars, module_args=module_args))
+                    if slurped.get('failed'):
+                        raise AnsibleActionFail(slurped.get('msg'), result=results)
+
+                    elif slurped['content']:
+                        data = base64.b64decode(slurped['content'])
+                else:
+                    # fetch remote file and read locally
+                    data = self._fetch_file_with_retry(log_path, tmpfile, results)
+
+                self._update_results_with_job_file(data, jid, results)
 
         return results
