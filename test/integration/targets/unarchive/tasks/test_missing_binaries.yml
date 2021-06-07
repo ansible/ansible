@@ -1,0 +1,56 @@
+- name: Test missing binaries
+  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+  block:
+    - name: Remove zip binaries
+      package:
+        state: absent
+        name:
+          - zip
+          - unzip
+      notify: restore packages
+
+    - name: create unarchive destinations
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
+        state: directory
+      loop:
+        - zip
+        - tar
+
+    # With the zip binaries absent and tar still present, this task should work
+    - name: unarchive a tar file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.tar'
+        dest: '{{remote_tmp_dir}}/test-unarchive-tar'
+        remote_src: yes
+      register: tar
+
+    - name: unarchive a zip file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.zip'
+        dest: '{{remote_tmp_dir}}/test-unarchive-zip'
+        list_files: True
+        remote_src: yes
+      register: zip_fail
+      ignore_errors: yes
+
+    - name: Ensure tasks worked as expected
+      assert:
+        that:
+          - tar is success
+          - zip_fail is failed
+          - zip_fail.msg is search('Unable to find required')
+
+    - name: Remove unarchive destinations
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
+        state: absent
+      loop:
+        - zip
+        - tar
+
+    - name: Reinsntall zip binaries
+      package:
+        name:
+          - zip
+          - unzip
