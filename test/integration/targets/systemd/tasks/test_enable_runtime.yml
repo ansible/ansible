@@ -1,0 +1,40 @@
+- name: Copy service file
+  template:
+    src: sleeper@.service
+    dest: /etc/systemd/system/test_enable@.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: remove unit file
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable Service for current boot (enable-runtime)
+  command: systemctl enable --runtime test_enable@100.service
+
+- name: Enable service
+  systemd:
+    name: test_enable@100.service
+    enabled: true
+  register: enable_test_1
+
+- name: Enable service again
+  systemd:
+    name: test_enable@100.service
+    enabled: true
+  register: enable_test_2
+
+- name: Disable service (clean-up)
+  systemd:
+    name: test_enable@100.service
+    enabled: false
+
+- name:
+  assert:
+    that:
+      - enable_test_1 is changed
+      - enable_test_1 is success
+      - enable_test_2 is not changed
+      - enable_test_2 is success

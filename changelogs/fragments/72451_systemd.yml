@@ -1,0 +1,3 @@
+---
+bugfixes:
+- systemd - consider 'enable-runtime' condition while enabling service units (https://github.com/ansible/ansible/issues/72451).

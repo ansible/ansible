@@ -1,4 +1,7 @@
 - name: remove unit file
   file:
-    path: /etc/systemd/system/sleeper@.service
+    path: '{{ item }}'
     state: absent
+  loop:
+    - /etc/systemd/system/test_enable@.service
+    - /etc/systemd/system/sleeper@.service

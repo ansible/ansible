@@ -493,7 +493,11 @@ def main():
 
             # check systemctl result or if it is a init script
             if rc == 0:
-                enabled = True
+                if out.strip() in ('enabled-runtime',):
+                    # enable-runtime is 'enable for only this boot of the system'
+                    enabled = False
+                else:
+                    enabled = True
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
                 if module.params['scope'] == 'system' and \
