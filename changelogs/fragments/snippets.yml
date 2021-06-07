@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-doc snippets option (-s) now supports lookups and inventory plugins.
