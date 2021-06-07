@@ -1,4 +1,5 @@
 - import_tasks: prepare_tests.yml
+- import_tasks: test_missing_binaries.yml
 - import_tasks: test_tar.yml
 - import_tasks: test_tar_gz.yml
 - import_tasks: test_tar_gz_creates.yml
