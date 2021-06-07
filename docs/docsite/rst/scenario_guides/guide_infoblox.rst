@@ -248,9 +248,9 @@ Dynamic inventory script
 
 You can use the Infoblox dynamic inventory script to import your network node inventory with Infoblox NIOS. To gather the inventory from Infoblox, you need two files:
 
-- `infoblox.yaml <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters.
+- `infoblox.yaml <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters.
 
-- `infoblox.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
+- `infoblox.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory.
 
 .. note::
 
