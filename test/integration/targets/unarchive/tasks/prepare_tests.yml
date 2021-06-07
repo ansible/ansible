@@ -1,16 +1,10 @@
-# Need unzip for unarchive module, and zip for archive creation.
-- name: Ensure zip & unzip are present
-  package:
-    name:
-      - zip
-      - unzip
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+- name: Include system specific variables
+  include_vars: "{{ ansible_facts.system }}.yml"
 
-- name: Ensure zstd is present, if available
-  ignore_errors: true
+# Need unzip for unarchive module, and zip for archive creation.
+- name: Ensure required binaries are present
   package:
-    name:
-      - zstd
+    name: "{{ unarchive_packages }}"
   when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
 
 - name: prep our file

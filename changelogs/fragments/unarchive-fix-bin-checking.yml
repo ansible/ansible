@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - move failure for missing binary to ``can_handle_archive()`` rather than ``__init__()``
