@@ -47,6 +47,7 @@ display = Display()
 TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
 PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
 PB_LOADED = {}
+SNIPPETS = ['inventory', 'lookup', 'module']
 
 
 def jdump(text):
@@ -400,32 +401,42 @@ class DocCLI(CLI, RoleMixin):
         opt_help.add_module_options(self.parser)
         opt_help.add_basedir_options(self.parser)
 
+        # targets
         self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
 
         self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
                                  help='Choose which plugin type (defaults to "module"). '
                                       'Available plugin types are : {0}'.format(TARGET_OPTIONS),
                                  choices=TARGET_OPTIONS)
+
+        # formatting
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
 
+        # TODO: warn if not used with -t roles
         # role-specific options
         self.parser.add_argument("-r", "--roles-path", dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                                  type=opt_help.unfrack_path(pathsep=True),
                                  action=opt_help.PrependListAction,
                                  help='The path to the directory containing your roles.')
 
+        # modifiers
         exclusive = self.parser.add_mutually_exclusive_group()
+        # TODO: warn if not used with -t roles
+        exclusive.add_argument("-e", "--entry-point", dest="entry_point",
+                               help="Select the entry point for role(s).")
+
+        # TODO: warn with --json as it is incompatible
+        exclusive.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
+                               help='Show playbook snippet for these plugin types: %s' % ', '.join(SNIPPETS))
+
+        # TODO: warn when arg/plugin is passed
         exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
                                help='Show plugin names and their source files without summaries (implies --list). %s' % coll_filter)
         exclusive.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
                                help='List available plugins. %s' % coll_filter)
-        exclusive.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
-                               help='Show playbook snippet for specified plugin(s)')
         exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
                                help='**For internal testing only** Dump json metadata for all plugins.')
-        exclusive.add_argument("-e", "--entry-point", dest="entry_point",
-                               help="Select the entry point for role(s).")
 
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
@@ -785,7 +796,6 @@ class DocCLI(CLI, RoleMixin):
         result = loader.find_plugin_with_context(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if not result.resolved:
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
-        plugin_name = result.plugin_resolved_name
         filename = result.plugin_resolved_path
         collection_name = result.plugin_resolved_collection
 
@@ -829,8 +839,13 @@ class DocCLI(CLI, RoleMixin):
         doc['returndocs'] = returndocs
         doc['metadata'] = metadata
 
-        if context.CLIARGS['show_snippet'] and plugin_type == 'module':
-            text = DocCLI.get_snippet_text(doc)
+        if context.CLIARGS['show_snippet']:
+            if plugin_type not in SNIPPETS:
+                raise AnsibleError("Snippets are only available for the following plugin types: %s" % ', '.join(SNIPPETS))
+            if plugin_type == 'inventory' and plugin in ('yaml', 'toml'):
+                # not usable as other inventory plugins
+                del doc['options']
+            text = DocCLI.get_snippet_text(doc, plugin_type)
         else:
             try:
                 text = DocCLI.get_man_text(doc, collection_name, plugin_type)
@@ -948,32 +963,16 @@ class DocCLI(CLI, RoleMixin):
         return os.pathsep.join(ret)
 
     @staticmethod
-    def get_snippet_text(doc):
-
+    def get_snippet_text(doc, ptype='module'):
+        ''' return heavily commented plugin use to insert into play '''
         text = []
-        desc = DocCLI.tty_ify(doc['short_description'])
-        text.append("- name: %s" % (desc))
-        text.append("  %s:" % (doc['module']))
-        pad = 31
-        subdent = " " * pad
-        limit = display.columns - pad
 
-        for o in sorted(doc['options'].keys()):
-            opt = doc['options'][o]
-            if isinstance(opt['description'], string_types):
-                desc = DocCLI.tty_ify(opt['description'])
-            else:
-                desc = DocCLI.tty_ify(" ".join(opt['description']))
+        if ptype == 'lookup':
+            _do_lookup_snippet(text, doc)
+        elif 'options' in doc:
+            _do_yaml_snippet(text, doc)
 
-            required = opt.get('required', False)
-            if not isinstance(required, bool):
-                raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
-            if required:
-                desc = "(required) %s" % desc
-            o = '%s:' % o
-            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
         text.append('')
-
         return "\n".join(text)
 
     @staticmethod
@@ -1260,3 +1259,78 @@ class DocCLI(CLI, RoleMixin):
             DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
 
         return "\n".join(text)
+
+
+def _do_yaml_snippet(text, doc):
+
+    mdesc = DocCLI.tty_ify(doc['short_description'])
+    module = doc.get('module')
+    if module:
+        # this is actually a usable task!
+        text.append("- name: %s" % (mdesc))
+        text.append("  %s:" % (module))
+    else:
+        # just a comment, hopefully useful yaml file
+        text.append("# %s:" % doc.get('plugin', doc.get('name')))
+
+    pad = 29
+    subdent = '# '.rjust(pad + 2)
+    limit = display.columns - pad
+
+    for o in sorted(doc['options'].keys()):
+        opt = doc['options'][o]
+        if isinstance(opt['description'], string_types):
+            desc = DocCLI.tty_ify(opt['description'])
+        else:
+            desc = DocCLI.tty_ify(" ".join(opt['description']))
+
+        required = opt.get('required', False)
+        if not isinstance(required, bool):
+            raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+
+        o = '%s:' % o
+        if module:
+            if required:
+                desc = "(required) %s" % desc
+            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+        else:
+            if required:
+                default = '(required)'
+            else:
+                default = opt.get('default', 'None')
+
+            text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
+
+
+def _do_lookup_snippet(text, doc):
+
+    snippet = "lookup('%s', " % doc.get('plugin', doc.get('name'))
+    comment = []
+    for o in sorted(doc['options'].keys()):
+
+        opt = doc['options'][o]
+        comment.append('# %s(%s): %s' % (o, opt.get('type', 'string'), opt.get('description', '')))
+        if o in ('_terms', '_raw', '_list'):
+            # these are 'list of arguments'
+            snippet += '< %s >' % (o)
+            continue
+
+        required = opt.get('required', False)
+        if not isinstance(required, bool):
+            raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+
+        if required:
+            default = '<REQUIRED>'
+        else:
+            default = opt.get('default', 'None')
+
+        if opt.get('type') in ('string', 'str'):
+            snippet += ", %s='%s'" % (o, default)
+        else:
+            snippet += ', %s=%s' % (o, default)
+
+    snippet += ")"
+    if comment:
+        text.extend(comment)
+        text.append('')
+    text.append(snippet)
