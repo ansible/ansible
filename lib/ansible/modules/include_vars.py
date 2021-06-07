@@ -73,7 +73,7 @@ options:
   hash_behaviour:
     description:
       - If set to C(merge), merges existing hash variables instead of overwriting them.
-      - If omitted C(null), the behavior falls back to the global 'hash_behaviour' configuration.
+      - If omitted C(null), the behavior falls back to the global I(hash_behaviour) configuration.
     default: null
     type: str
     choices: ["replace", "merge"]
