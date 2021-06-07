@@ -64,10 +64,10 @@ class AnsibleFactCollector(collector.BaseFactCollector):
         found = []
         for f in filter_spec:
             for x, y in facts_dict.items():
-                if fnmatch.fnmatch(x, f):
+                if not f or fnmatch.fnmatch(x, f):
                     found.append((x, y))
                 elif not f.startswith(('ansible_', 'facter', 'ohai')):
-                    # try to match with ansible_ prefix added
+                    # try to match with ansible_ prefix added when non empty
                     g = 'ansible_%s' % f
                     if fnmatch.fnmatch(x, g):
                         found.append((x, y))
