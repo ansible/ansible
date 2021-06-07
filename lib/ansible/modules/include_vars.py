@@ -75,7 +75,7 @@ options:
       - If set to C(merge), merges existing hash variables instead of overwriting them.
       - If omitted C(null), the behavior falls back to the global 'hash_behaviour' configuration.
     default: null
-    type: string
+    type: str
     choices: ["replace", "merge"]
     version_added: "2.12"
   free-form:
