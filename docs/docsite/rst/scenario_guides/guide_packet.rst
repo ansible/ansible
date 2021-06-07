@@ -208,9 +208,9 @@ Dynamic Inventory Script
 
 The dynamic inventory script queries the Packet API for a list of hosts, and exposes it to Ansible so you can easily identify and act on Packet devices.
 
-You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.py>`_.
+You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.py>`_.
 
-The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.ini>`_.
+The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.ini>`_.
 
 If you want to use the inventory script, you must first export your Packet API token to a PACKET_API_TOKEN environment variable.
 
@@ -218,9 +218,9 @@ You can either copy the inventory and ini config out from the cloned git repo, o
 
 .. code-block:: bash
 
-    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.py
+    $ wget https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.py
     $ chmod +x packet_net.py
-    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.ini
+    $ wget https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.ini
 
 In order to understand what the inventory script gives to Ansible you can run:
 
