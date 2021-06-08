@@ -18,6 +18,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.parsing.quoting import is_quoted
@@ -273,9 +274,12 @@ class ConfigCLI(CLI):
 
             opt = settings[o]
 
+            if not isinstance(opt, Mapping):
+                # recursed into one of the few settings that is a mapping, now hitting it's strings
+                continue
+
             if not opt.get('description'):
                 # its a plugin
-                print(opt)
                 data.extend(self._get_settings_ini(opt))
                 continue
 
