@@ -1,0 +1,17 @@
+.DocSiteProduct-header--core {
+    background-color: #161b1f;
+    border-color: #161b1f;
+}
+
+.wy-nav-top, .wy-side-nav-search {
+    background-color: #161b1f;
+}
+.wy-nav-side {
+    background-color: #999999;
+}
+.wy-menu-vertical header, .wy-menu-vertical p.caption {
+    color: #161b1f;
+}
+.ansibleNav ul li a:hover {
+    color: #161b1f;
+}

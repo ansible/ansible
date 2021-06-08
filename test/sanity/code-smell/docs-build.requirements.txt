@@ -3,5 +3,6 @@ pyyaml
 resolvelib
 sphinx
 sphinx-notfound-page
+sphinx_ansible_theme
 straight.plugin
 antsibull == 0.26.0
