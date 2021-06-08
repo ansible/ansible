@@ -26,6 +26,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
+from ansible.utils.vars import merge_hash
 
 display = Display()
 
@@ -268,7 +269,6 @@ class ConfigCLI(CLI):
 
     def _get_settings_ini(self, settings):
 
-        data = []
         sections = {}
         for o in sorted(settings.keys()):
 
@@ -280,7 +280,7 @@ class ConfigCLI(CLI):
 
             if not opt.get('description'):
                 # its a plugin
-                data.extend(self._get_settings_ini(opt))
+                sections = merge_hash(sections, self._get_settings_ini(opt))
                 continue
 
             if isinstance(opt['description'], string_types):
@@ -304,21 +304,21 @@ class ConfigCLI(CLI):
                 key = desc + '\n' + '%s=%s' % (entry['key'], default)
                 sections[entry['section']].append(key)
 
-        if sections:
-            for section in sections.keys():
-                data.append('[%s]' % section)
-                for key in sections[section]:
-                    data.append(key)
-                    data.append('')
-                data.append('')
-
-        return data
+        return sections
 
     def execute_init(self):
 
+        data = []
         config_entries = self._list_entries_from_args()
         if context.CLIARGS['format'] == 'ini':
-            data = self._get_settings_ini(config_entries)
+            sections = self._get_settings_ini(config_entries)
+            if sections:
+                for section in sections.keys():
+                    data.append('[%s]' % section)
+                    for key in sections[section]:
+                        data.append(key)
+                        data.append('')
+                    data.append('')
         elif context.CLIARGS['format'] in ('env', 'yaml'):
             data = self._get_settings_vars(config_entries, context.CLIARGS['format'])
 
