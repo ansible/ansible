@@ -4,6 +4,34 @@ Ansible basic structures introduction
 =====================================
 =====================================
 
+Introcduction
+=============
+
+To use Ansible you might want to pickup some basic terminology, though you find most terms in the :ref:`glossary`, here we have a quick rundown of the basics.
+
+ * Playbook: a list of plays (sometimes also used to reffer to the file that contains the plays) :ref:``Playbooks``
+ * Play: ties a list of hosts to a list of tasks :ref:``Plays``
+ * Task: an action to execute on a host :ref:``Tasks``
+
+A simple playbook with 1 play and 2 tasks, written in YAML:
+
+.. code-block:: YAML
+
+    - name: Sample playbook
+      hosts: all
+      vars:
+        a_var: I am a variable value
+      tasks:
+        - name: I am a task that executes a command
+          command: echo {{ a _var }}
+          register: result    - name: debug the result
+
+        - name: print result of command to screen
+          debug:
+            var: result.stdout
+
+To understand the structure above you might want to check out the YAML Basics
+
 
 YAML Basics
 ===========
@@ -59,7 +87,7 @@ They can intermix so you can have a list of dictionaries and lists in dictionari
 '---'
 -----
 
-What is the ``---`` we see on top of YAML files? This is a 'document separator', this is an OPTIONAL indicator that a YAML document is starting and not needed for Ansible to function (though some linting programs will complain if it is missing).
+What is the ``---`` we see on top of YAML files? This is a 'document separator', this is an OPTIONAL indicator that a YAML document is starting and not needed for Ansible to function (though some linting programs will complain if it is missing). You may also see a related delimiter ``...``, which is also optional, that means 'end of document'.
 
 
 For more details on YAML you can go here :ref:`yaml_syntax`.
