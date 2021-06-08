@@ -842,8 +842,9 @@ class DocCLI(CLI, RoleMixin):
         if context.CLIARGS['show_snippet']:
             if plugin_type not in SNIPPETS:
                 raise AnsibleError("Snippets are only available for the following plugin types: %s" % ', '.join(SNIPPETS))
-            if plugin_type == 'inventory' and plugin in ('yaml', 'toml'):
-                # not usable as other inventory plugins
+            if plugin_type == 'inventory' and doc.get('options') and not doc['options'].get('plugin'):
+                # these are 'configurable' but not intended for yaml type inventory sources, like ini or script
+                # so we cannot use as source for snippets
                 del doc['options']
             text = DocCLI.get_snippet_text(doc, plugin_type)
         else:
