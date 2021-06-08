@@ -23,15 +23,38 @@
   fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
   register: fetched
 
-- debug: var=fetched
+- name: fetch the test file in check mode
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/fetched"
+  check_mode: yes
+  register: fetch_check_mode
+
+- name: fetch with no parameters
+  fetch:
+  register: fetch_no_params
+  ignore_errors: yes
+
+- name: fetch with incorrect source type
+  fetch:
+    src: [1, 2]
+    dest: "{{ output_dir }}/fetched"
+  register: fetch_incorrect_src
+  ignore_errors: yes
 
 - name: Assert that we fetched correctly
   assert:
     that:
-      - 'fetched["changed"] == True'
-      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
-      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
-      - 'lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"'
+      - fetched is changed
+      - fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"
+      - fetch_check_mode is skipped
+      - fetch_check_mode.msg is search('not \(yet\) supported')
+      - fetch_no_params is failed
+      - fetch_no_params.msg is search('src and dest are required')
+      - fetch_incorrect_src is failed
+      - fetch_incorrect_src.msg is search('Invalid type supplied for source')
 
 # TODO: check the become and non-become forms of fetch because in one form we'll do
 # the get method of the connection plugin and in the become case we'll use the
@@ -139,3 +162,21 @@
     that:
       - "failed_fetch_dest_dir is failed"
       - "failed_fetch_dest_dir.msg"
+
+- name: Create an inaccessible directory
+  file:
+    path: "{{ remote_tmp_dir }}/noaccess"
+    state: directory
+    mode: '644'
+
+- name: Try to fetch a file inside an inaccessible directory
+  fetch:
+    src: "{{ remote_tmp_dir }}/noaccess"
+    dest: "{{ output_dir }}"
+  register: failed_fetch_no_access
+  ignore_errors: yes
+
+- name: Ensure fetch failed
+  assert:
+    that:
+      - failed_fetch_no_access is failed
