@@ -361,8 +361,6 @@ The instructions can be found in :ref:`from_pip`. If you are running macOS versi
 
 .. note::
 
-  .. note::
-
     If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`.
 
 
