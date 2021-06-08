@@ -65,6 +65,7 @@ setup_collection_loader()
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
+from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
@@ -76,7 +77,15 @@ from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
-from .schema import ansible_module_kwargs_schema, doc_schema, return_schema
+from .schema import (
+    ansible_module_kwargs_schema,
+    doc_schema,
+    return_schema,
+    _SEM_OPTION_NAME,
+    _SEM_RET_VALUE,
+    _check_sem_quoting,
+    _parse_prefix,
+)
 
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
@@ -1068,6 +1077,8 @@ class ModuleValidator(Validator):
                     'invalid-documentation',
                 )
 
+            self._validate_all_semantic_markup(doc, returns)
+
             if not self.collection:
                 existing_doc = self._check_for_new_args(doc)
                 self._check_version_added(doc, existing_doc)
@@ -1192,6 +1203,112 @@ class ModuleValidator(Validator):
             # In the future we should error if ANSIBLE_METADATA exists in a collection
 
         return doc_info, doc
+
+    def _check_sem_option(self, directive, content):
+        try:
+            content = _check_sem_quoting(directive, content)
+            plugin_fqcn, plugin_type, option_link, option, value = _parse_prefix(directive, content)
+        except Exception:
+            # Validation errors have already been covered in the schema check
+            return
+        if plugin_fqcn is not None:
+            return
+        if tuple(option_link) not in self._all_options:
+            self.reporter.error(
+                path=self.object_path,
+                code='invalid-documentation-markup',
+                msg='Directive "%s" contains a non-existing option "%s"' % (directive, option)
+            )
+
+    def _check_sem_return_value(self, directive, content):
+        try:
+            content = _check_sem_quoting(directive, content)
+            plugin_fqcn, plugin_type, rv_link, rv, value = _parse_prefix(directive, content)
+        except Exception:
+            # Validation errors have already been covered in the schema check
+            return
+        if plugin_fqcn is not None:
+            return
+        if tuple(rv_link) not in self._all_return_values:
+            self.reporter.error(
+                path=self.object_path,
+                code='invalid-documentation-markup',
+                msg='Directive "%s" contains a non-existing return value "%s"' % (directive, rv)
+            )
+
+    def _validate_semantic_markup(self, object):
+        # Make sure we operate on strings
+        if is_iterable(object):
+            for entry in object:
+                self._validate_semantic_markup(entry)
+            return
+        if not isinstance(object, string_types):
+            return
+
+        for m in _SEM_OPTION_NAME.finditer(object):
+            self._check_sem_option(m.group(0), m.group(1))
+        for m in _SEM_RET_VALUE.finditer(object):
+            self._check_sem_return_value(m.group(0), m.group(1))
+
+    def _validate_semantic_markup_collect(self, destination, sub_key, data, all_paths):
+        if not isinstance(data, dict):
+            return
+        for key, value in data.items():
+            if not isinstance(value, dict):
+                continue
+            keys = {key}
+            if is_iterable(value.get('aliases')):
+                keys.update(value['aliases'])
+            new_paths = [path + [key] for path in all_paths for key in keys]
+            destination.update([tuple(path) for path in new_paths])
+            self._validate_semantic_markup_collect(destination, sub_key, value.get(sub_key), new_paths)
+
+    def _validate_semantic_markup_options(self, options):
+        if not isinstance(options, dict):
+            return
+        for key, value in options.items():
+            self._validate_semantic_markup(value.get('description'))
+            self._validate_semantic_markup_options(value.get('suboptions'))
+
+    def _validate_semantic_markup_return_values(self, return_vars):
+        if not isinstance(return_vars, dict):
+            return
+        for key, value in return_vars.items():
+            self._validate_semantic_markup(value.get('description'))
+            self._validate_semantic_markup(value.get('returned'))
+            self._validate_semantic_markup_return_values(value.get('contains'))
+
+    def _validate_all_semantic_markup(self, docs, return_docs):
+        if not isinstance(docs, dict):
+            docs = {}
+        if not isinstance(return_docs, dict):
+            return_docs = {}
+
+        self._all_options = set()
+        self._all_return_values = set()
+        self._validate_semantic_markup_collect(self._all_options, 'suboptions', docs.get('options'), [[]])
+        self._validate_semantic_markup_collect(self._all_return_values, 'contains', return_docs, [[]])
+
+        for string_keys in ('short_description', 'description', 'notes', 'requirements', 'todo'):
+            self._validate_semantic_markup(docs.get(string_keys))
+
+        if is_iterable(docs.get('seealso')):
+            for entry in docs.get('seealso'):
+                if isinstance(entry, dict):
+                    self._validate_semantic_markup(entry.get('description'))
+
+        if isinstance(docs.get('attributes'), dict):
+            for entry in docs.get('attributes').values():
+                if isinstance(entry, dict):
+                    for key in ('description', 'details'):
+                        self._validate_semantic_markup(entry.get(key))
+
+        if isinstance(docs.get('deprecated'), dict):
+            for key in ('why', 'alternative'):
+                self._validate_semantic_markup(docs.get('deprecated').get(key))
+
+        self._validate_semantic_markup_options(docs.get('options'))
+        self._validate_semantic_markup_return_values(return_docs)
 
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
