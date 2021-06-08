@@ -1,0 +1,45 @@
+{%- extends "!breadcrumbs.html" %}
+{%- block breadcrumbs_aside %}
+  <li class="wy-breadcrumbs-aside">
+    {%- if hasdoc(pagename) and display_vcs_links %}
+      {%- if display_github %}
+        {%- if check_meta and 'github_url' in meta %}
+          <!-- User defined GitHub URL -->
+          <a href="{{ meta['github_url'] }}" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
+        {%- else %}
+          <!-- Ansible-specific additions for modules etc -->
+            {% if check_meta and pagename.endswith((
+                '_module', '_become', '_cache', '_callback',
+                '_connection', '_inventory', '_lookup',
+                '_shell', '_strategy', '_vars',
+               )) %}
+            <!--  <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode or "blob" }}/{{ github_module_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a> -->
+              <br>
+            {% elif check_meta and pagename.startswith('cli') and meta.get('source', None) %}
+              <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode or "blob" }}/{{ github_cli_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
+            {% elif (not 'list_of' in pagename) and (not 'category' in pagename) %}
+              <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode or "blob" }}/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ page_source_suffix }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
+            {% endif %}
+        {%- endif %}
+      {%- elif display_bitbucket %}
+        {%- if check_meta and 'bitbucket_url' in meta %}
+          <!-- User defined Bitbucket URL -->
+          <a href="{{ meta['bitbucket_url'] }}" class="fa fa-bitbucket"> {{ _('Edit on Bitbucket') }}</a>
+        {%- else %}
+          <a href="https://bitbucket.org/{{ bitbucket_user }}/{{ bitbucket_repo }}/src/{{ bitbucket_version}}{{ conf_py_path }}{{ pagename }}{{ page_source_suffix }}?mode={{ theme_vcs_pageview_mode or "view" }}" class="fa fa-bitbucket"> {{ _('Edit on Bitbucket') }}</a>
+        {%- endif %}
+      {%- elif display_gitlab %}
+        {%- if check_meta and 'gitlab_url' in meta %}
+          <!-- User defined GitLab URL -->
+          <a href="{{ meta['gitlab_url'] }}" class="fa fa-gitlab"> {{ _('Edit on GitLab') }}</a>
+        {%- else %}
+          <a href="https://{{ gitlab_host|default("gitlab.com") }}/{{ gitlab_user }}/{{ gitlab_repo }}/{{ theme_vcs_pageview_mode or "blob" }}/{{ gitlab_version }}{{ conf_py_path }}{{ pagename }}{{ page_source_suffix }}" class="fa fa-gitlab"> {{ _('Edit on GitLab') }}</a>
+        {%- endif %}
+      {%- elif show_source and source_url_prefix %}
+        <a href="{{ source_url_prefix }}{{ pagename }}{{ page_source_suffix }}">{{ _('View page source') }}</a>
+      {%- elif show_source and has_source and sourcename %}
+        <a href="{{ pathto('_sources/' + sourcename, true)|e }}" rel="nofollow"> {{ _('View page source') }}</a>
+      {%- endif %}
+    {%- endif %}
+  </li>
+{%- endblock %}
