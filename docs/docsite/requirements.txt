@@ -5,6 +5,7 @@ rstcheck
 sphinx==2.1.2
 sphinx-notfound-page >= 0.6
 sphinx-intl
+sphinx_ansible_theme === 0.6.0
 resolvelib
 Pygments >= 2.4.0
 straight.plugin # Needed for hacking/build-ansible.py which is the backend build script

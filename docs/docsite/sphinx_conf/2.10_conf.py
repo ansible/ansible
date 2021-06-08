@@ -19,17 +19,12 @@ __metaclass__ = type
 import sys
 import os
 
-# pip install sphinx_rtd_theme
-# import sphinx_rtd_theme
-# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 # sys.path.append(os.path.abspath('some/directory'))
 #
 sys.path.insert(0, os.path.join('ansible', 'lib'))
-sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 
 # We want sphinx to document the ansible modules contained in this repository,
 # not those that may happen to be installed in the version
@@ -48,24 +43,24 @@ AUTHOR = 'Ansible, Inc'
 # They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 # TEST: 'sphinxcontrib.fulltoc'
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'pygments_lexer', 'notfound.extension']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'notfound.extension']
 
 # Later on, add 'sphinx.ext.viewcode' to the list if you want to have
 # colorized code generated too for references.
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['.templates']
+templates_path = ['../.templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'index'
+root_doc = master_doc = 'index'  # Sphinx 4+ / 3-
 
 # General substitutions.
 project = 'Ansible'
-copyright = "Ansible project contributors."
+copyright = "Ansible project contributors"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -113,7 +108,7 @@ exclude_patterns = [
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'ansible'
 
 highlight_language = 'YAML+Jinja'
 
@@ -133,18 +128,24 @@ rst_epilog = """
 # Options for HTML output
 # -----------------------
 
-html_theme_path = ['../_themes']
-html_theme = 'sphinx_rtd_theme'
-html_short_title = 'Ansible Documentation'
+html_theme_path = []
+html_theme = 'sphinx_ansible_theme'
 html_show_sphinx = False
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
+    'hubspot_id': '330046',
+    'satellite_tracking': True,
+    'show_extranav': True,
+    'swift_id': 'yABGvz2N8PwcwBxyfzUc',
+    'tag_manager_id': 'GTM-PSB293',
     'vcs_pageview_mode': 'edit'
 }
 
 html_context = {
     'display_github': 'True',
+    'show_sphinx': False,
+    'is_eol': False,
     'github_user': 'ansible',
     'github_repo': 'ansible',
     'github_version': 'devel/docs/docsite/rst/',
@@ -155,9 +156,10 @@ html_context = {
     'latest_version': '2.10',
     # list specifically out of order to make latest work
     'available_versions': ('latest', '2.9', '2.9_ja', '2.8', 'devel'),
-    'css_files': ('_static/ansible.css',  # overrides to the standard theme
-                  ),
 }
+
+# Add extra CSS styles to the resulting HTML pages
+html_css_files = []
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
@@ -169,7 +171,7 @@ html_context = {
 html_title = 'Ansible Documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-# html_short_title = None
+html_short_title = 'Documentation'
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.

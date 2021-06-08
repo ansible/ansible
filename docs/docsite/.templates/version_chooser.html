@@ -1,0 +1,4 @@
+{# https://jinja.palletsprojects.com/en/3.0.x/tricks/#null-default-fallback #}
+{%- if not is_eol %}
+    {%- extends "!version_chooser.html" %}
+{%- endif %}
