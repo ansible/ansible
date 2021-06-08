@@ -272,8 +272,11 @@ class ConfigCLI(CLI):
         for o in sorted(settings.keys()):
 
             opt = settings[o]
+
             if not opt.get('description'):
-                # skipping undocumented
+                # its a plugin
+                print(opt)
+                data.extend(self._get_settings_ini(opt))
                 continue
 
             if isinstance(opt['description'], string_types):
