@@ -1,0 +1,2750 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021 Red Hat, Inc.
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-23 10:50+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/community/code_of_conduct.rst:5
+msgid "Community Code of Conduct"
+msgstr "コミュニティーの行動規範"
+
+#: ../../rst/community/code_of_conduct.rst:7
+#: ../../rst/community/github_admins.rst:7
+#: ../../rst/community/release_managers.rst:7
+msgid "Topics"
+msgstr "トピック"
+
+#: ../../rst/community/code_of_conduct.rst:9
+msgid "Every community can be strengthened by a diverse variety of viewpoints, insights, opinions, skillsets, and skill levels. However, with diversity comes the potential for disagreement and miscommunication. The purpose of this Code of Conduct is to ensure that disagreements and differences of opinion are conducted respectfully and on their own merits, without personal attacks or other behavior that might create an unsafe or unwelcoming environment."
+msgstr "すべてのコミュニティーは、多様な視点、洞察力、意見、スキルセット、スキルレベルの多様性によって強化されます。しかし、多様性には、意見の相違や誤解が生じる可能性があります。この行動規範の目的は、意見の不一致や相違が、個人的な攻撃やその他の不安定な環境や歓迎されない環境を作り出すような行動をせずに、敬意を持って、各自の利点に基づいて行われるようにすることです。"
+
+#: ../../rst/community/code_of_conduct.rst:16
+msgid "These policies are not designed to be a comprehensive set of Things You Cannot Do. We ask that you treat your fellow community members with respect and courtesy, and in general, Don't Be A Jerk. This Code of Conduct is meant to be followed in spirit as much as in letter and is not exhaustive."
+msgstr "これらの方針は、「やってはいけないこと」を網羅したものではありません。コミュニティーメンバーに敬意と礼儀をもって接し、不快な行動はしないことをお願いしています。この行動規範は、心構えをできる限り示すことを目的としており、すべてを網羅しているわけではありません。"
+
+#: ../../rst/community/code_of_conduct.rst:21
+msgid "All Ansible events and participants therein are governed by this Code of Conduct and anti-harassment policy. We expect organizers to enforce these guidelines throughout all events, and we expect attendees, speakers, sponsors, and volunteers to help ensure a safe environment for our whole community. Specifically, this Code of Conduct covers participation in all Ansible-related forums and mailing lists, code and documentation contributions, public IRC channels, private correspondence, and public meetings."
+msgstr "Ansible イベントとその参加者はすべて、この行動規範とハラスメント防止ポリシーに従う必要があります。主催者は、常にこのガイドラインに沿ってイベントを開催することが期待されます。また、参加者、講演者、スポンサー、およびボランティアの皆様には、コミュニティー全体の安全な環境を確保するためにご協力いただくことが期待されます。具体的には、この行動規範は、Ansible 関連のフォーラムやメーリングリストへの参加、コードやドキュメントへの貢献、公開 IRC チャンネルへの参加、プライベートなやり取り、公開会議への参加が対象となります。"
+
+#: ../../rst/community/code_of_conduct.rst:28
+msgid "Ansible community members are..."
+msgstr "Ansible コミュニティーのメンバーには、以下が期待されます。"
+
+#: ../../rst/community/code_of_conduct.rst:30
+msgid "**Considerate**"
+msgstr "**思いやりをもつ**"
+
+#: ../../rst/community/code_of_conduct.rst:32
+msgid "Contributions of every kind have far-ranging consequences. Just as your work depends on the work of others, decisions you make surrounding your contributions to the Ansible community will affect your fellow community members. You are strongly encouraged to take those consequences into account while making decisions."
+msgstr "あらゆる種類の貢献が、広範囲に影響します。自分の仕事が他の人の仕事に依存しているのと同じように、Ansible コミュニティーへの貢献についてあなたが下した決定は、コミュニティーメンバーに影響します。意思決定を行う際には、このような結果を考慮に入れることが強く推奨されます。"
+
+#: ../../rst/community/code_of_conduct.rst:37
+msgid "**Patient**"
+msgstr "**寛大になる**"
+
+#: ../../rst/community/code_of_conduct.rst:39
+msgid "Asynchronous communication can come with its own frustrations, even in the most responsive of communities. Please remember that our community is largely built on volunteered time, and that questions, contributions, and requests for support may take some time to receive a response. Repeated \"bumps\" or \"reminders\" in rapid succession are not good displays of patience. Additionally, it is considered poor manners to ping a specific person with general questions. Pose your question to the community as a whole, and wait patiently for a response."
+msgstr "非同期のコミュニケーションは、どんなに反応の良いコミュニティーであっても、ある程度はフラストレーションが溜まってしまうことがあります。コミュニティーは主にボランティアの時間で成り立っていることを覚えておいてください。質問、貢献、サポートのリクエストには返事が返ってくるまでに時間がかかることがあります。何度も「スレッド作成 (bump)」や「リマインダー」を繰り返すのは、忍耐力を示す優れた方法ではありません。さらに、一般的な質問を特定の人にするのはマナー違反です。コミュニティー全体に向けて質問し、辛抱強く返事を待ちましょう。"
+
+#: ../../rst/community/code_of_conduct.rst:47
+msgid "**Respectful**"
+msgstr "**相手を尊重する**"
+
+#: ../../rst/community/code_of_conduct.rst:49
+msgid "Every community inevitably has disagreements, but remember that it is possible to disagree respectfully and courteously. Disagreements are never an excuse for rudeness, hostility, threatening behavior, abuse (verbal or physical), or personal attacks."
+msgstr "どのようなコミュニティーでも意見の相違は避けられませんが、異議を唱えるときは敬意を持って礼儀正しく行う必要があることを覚えておいてください。意見の相違は、失礼、敵意、脅迫、(言葉によるまたは身体的な) 虐待、または個人的な攻撃の言い訳にはなりません。"
+
+#: ../../rst/community/code_of_conduct.rst:53
+msgid "**Kind**"
+msgstr "**親切にする**"
+
+#: ../../rst/community/code_of_conduct.rst:55
+msgid "Everyone should feel welcome in the Ansible community, regardless of their background. Please be courteous, respectful and polite to fellow community members. Do not make or post offensive comments related to skill level, gender, gender identity or expression, sexual orientation, disability, physical appearance, body size, race, or religion. Sexualized images or imagery, real or implied violence, intimidation, oppression, stalking, sustained disruption of activities, publishing the personal information of others without explicit permission to do so, unwanted physical contact, and unwelcome sexual attention are all strictly prohibited.  Additionally, you are encouraged not to make assumptions about the background or identity of your fellow community members."
+msgstr "Ansible コミュニティーでは、各自の経歴に関係なく誰もが歓迎されていると感じるようにならなければなりません。コミュニティーメンバーに対しては、礼儀正しく、敬意を払って接してください。スキルレベル、性別、性自認、性表現、性的指向、障害、容姿、体格、人種、宗教に関する攻撃的なコメントをしたり、投稿したりしないでください。性的画像、明示的または暗示的な暴力、脅迫、抑圧、ストーカー行為、継続的な活動妨害、明示的な許可なく個人情報の公開、望まれない身体的接触、歓迎されない性的注目は、すべて固く禁じられています。さらに、コミュニティーメンバーの経歴や身元を推測しないようにしてください。"
+
+#: ../../rst/community/code_of_conduct.rst:65
+msgid "**Inquisitive**"
+msgstr "**探求心を持つ**"
+
+#: ../../rst/community/code_of_conduct.rst:67
+msgid "The only stupid question is the one that does not get asked. We encourage our users to ask early and ask often. Rather than asking whether you can ask a question (the answer is always yes!), instead, simply ask your question. You are encouraged to provide as many specifics as possible. Code snippets in the form of Gists or other paste site links are almost always needed in order to get the most helpful answers. Refrain from pasting multiple lines of code directly into the IRC channels - instead use gist.github.com or another paste site to provide code snippets."
+msgstr "取るに足らない質問とは、質問されない質問だけです。コミュニティーメンバーは、早めに、そして頻繁に質問することが推奨されます。質問ができるかどうかを尋ねるのではなく (その答えは常にイエスとなるため)、質問したい内容を尋ねてください。できるだけ具体的な情報を提供することが推奨されます。最も有益な回答を得るには、Gist などのサイトへ抜粋したコードを貼り付け、そのリンクを示してください。つまり、IRC チャンネルに、複数行のコードを直接貼り付けず、代わりに gist.github.com などのサイトに該当のコードを貼り付けて、そのサイトへのリンクを示してください。"
+
+#: ../../rst/community/code_of_conduct.rst:75
+msgid "**Helpful**"
+msgstr "**助けになること**"
+
+#: ../../rst/community/code_of_conduct.rst:77
+msgid "The Ansible community is committed to being a welcoming environment for all users, regardless of skill level. We were all beginners once upon a time, and our community cannot grow without an environment where new users feel safe and comfortable asking questions. It can become frustrating to answer the same questions repeatedly; however, community members are expected to remain courteous and helpful to all users equally, regardless of skill or knowledge level. Avoid providing responses that prioritize snideness and snark over useful information. At the same time, everyone is expected to read the provided documentation thoroughly. We are happy to answer questions, provide strategic guidance, and suggest effective workflows, but we are not here to do your job for you."
+msgstr "Ansible コミュニティーは、スキルレベルに関係なく、誰にとっても歓迎されていると感じる環境であることをお約束します。すべての人は皆、最初は初心者でした。新しいユーザーが安心して質問できる環境でなければコミュニティーは成長しません。同じ質問に何度も答えることにもどかしさを感じることもありますが、スキルや知識のレベルに関係なく、すべてのユーザーに対して平等に礼儀正しく、親切に対応することが求められます。有益な情報よりも、中傷や悪口を優先するような回答は避けてください。同時に、全てのメンバーが、提供された文書を十分に読むことが期待されています。コミュニティーメンバーは、質問に答えたり、戦略的なガイダンスを提供したり、効果的なワークフローを提案したりすることは喜んで行いますが、質問者の代わりに作業をするために存在しているわけではありません。"
+
+#: ../../rst/community/code_of_conduct.rst:88
+msgid "Anti-harassment policy"
+msgstr "ハラスメント防止ポリシー"
+
+#: ../../rst/community/code_of_conduct.rst:90
+msgid "Harassment includes (but is not limited to) all of the following behaviors:"
+msgstr "ハラスメントには、以下のすべての行為が含まれます (ただし、これに限定されません)。"
+
+#: ../../rst/community/code_of_conduct.rst:92
+msgid "Offensive comments related to gender (including gender expression and identity), age, sexual orientation, disability, physical appearance, body size, race, and religion"
+msgstr "性別 (性表現や性自認を含む)、年齢、性的指向、障害、容姿、体格、人種、宗教に関する攻撃的なコメント"
+
+#: ../../rst/community/code_of_conduct.rst:93
+msgid "Derogatory terminology including words commonly known to be slurs"
+msgstr "一般的に中傷であると知られている言葉を含む中傷的な用語"
+
+#: ../../rst/community/code_of_conduct.rst:94
+msgid "Posting sexualized images or imagery in public spaces"
+msgstr "公共の場に性的な画像を投稿すること"
+
+#: ../../rst/community/code_of_conduct.rst:95
+msgid "Deliberate intimidation"
+msgstr "意図的な脅迫"
+
+#: ../../rst/community/code_of_conduct.rst:96
+msgid "Stalking"
+msgstr "ストーカー行為"
+
+#: ../../rst/community/code_of_conduct.rst:97
+msgid "Posting others' personal information without explicit permission"
+msgstr "明示的な許可なく他のユーザーの個人情報を投稿すること"
+
+#: ../../rst/community/code_of_conduct.rst:98
+msgid "Sustained disruption of talks or other events"
+msgstr "会話やその他のイベントの継続的な中断"
+
+#: ../../rst/community/code_of_conduct.rst:99
+msgid "Inappropriate physical contact"
+msgstr "不適切な身体的接触"
+
+#: ../../rst/community/code_of_conduct.rst:100
+msgid "Unwelcome sexual attention"
+msgstr "歓迎されない性的注目"
+
+#: ../../rst/community/code_of_conduct.rst:102
+msgid "Participants asked to stop any harassing behavior are expected to comply immediately. Sponsors are also subject to the anti-harassment policy. In particular, sponsors should not use sexualized images, activities, or other material. Meetup organizing staff and other volunteer organizers should not use sexualized attire or otherwise create a sexualized environment at community events."
+msgstr "ハラスメント行為を止めるように求められた参加者は、直ちにこれに応じることが求められます。スポンサーも、ハラスメント防止ポリシーの対象となります。特に、スポンサーは性的な画像、活動、その他の素材を使用してはなりません。また、Meetup の主催者やボランティアスタッフは、コミュニティーイベントで性的な恰好をしたり、性的な環境を作らないようにする必要があります。"
+
+#: ../../rst/community/code_of_conduct.rst:108
+msgid "In addition to the behaviors outlined above, continuing to behave a certain way after you have been asked to stop also constitutes harassment, even if that behavior is not specifically outlined in this policy. It is considerate and respectful to stop doing something after you have been asked to stop, and all community members are expected to comply with such requests immediately."
+msgstr "上記の行動に加えて、ここで明記されていなくても、やめるように言われた後にそのような行動を続けることも、ハラスメントに該当します。やめるように言われた後に何かをやめることは、思いやりと敬意を表す行動であり、コミュニティーの全メンバーは、そのような要求に直ちに従うことが求められます。"
+
+#: ../../rst/community/code_of_conduct.rst:115
+msgid "Policy violations"
+msgstr "ポリシー違反"
+
+#: ../../rst/community/code_of_conduct.rst:117
+msgid "Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting `codeofconduct@ansible.com <mailto:codeofconduct@ansible.com>`_, to any channel operator in the community IRC channels, or to the local organizers of an event. Meetup organizers are encouraged to prominently display points of contact for reporting unacceptable behavior at local events."
+msgstr "虐待、嫌がらせ、その他の容認できない行為があった場合は、`codeofconduct@ansible.com <mailto:codeofconduct@ansible.com>`_ や、コミュニティーの IRC チャンネルのチャンネル運営者、各地のイベント主催者に連絡してください。Meetup の主催者は、各地のイベントで容認されない行動を報告する連絡先を目立つところに表示することが推奨されます。"
+
+#: ../../rst/community/code_of_conduct.rst:123
+msgid "If a participant engages in harassing behavior, the meetup organizers may take any action they deem appropriate. These actions may include but are not limited to warning the offender, expelling the offender from the event, and barring the offender from future community events."
+msgstr "Meetup 主催者は、参加者が嫌がらせ行為を行った場合、適切と思われる措置を取ることができます。このような措置には、加害者への警告、イベントからの退出を求めること、今後のコミュニティーイベントへの参加禁止などが含まれますが、これらに限定されません。"
+
+#: ../../rst/community/code_of_conduct.rst:128
+msgid "Organizers will be happy to help participants contact security or local law enforcement, provide escorts to an alternate location, or otherwise assist those experiencing harassment to feel safe for the duration of the meetup. We value the safety and well-being of our community members and want everyone to feel welcome at our events, both online and offline."
+msgstr "主催者は、ハラスメントを経験した人が Meetup の間安心して過ごせるように、参加者が警備員や地元の警察に連絡したり、別の場所に案内したりなど支援します。コミュニティーは、コミュニティーメンバーの安全と幸福を大切にし、オンラインとオフラインの両方で開催されるイベントですべての人が歓迎されていると感じてほしいと願っています。"
+
+#: ../../rst/community/code_of_conduct.rst:134
+msgid "We expect all participants, organizers, speakers, and attendees to follow these policies at all of our event venues and event-related social events."
+msgstr "すべての参加者、主催者、講演者、参加者は、コミュニティーのイベント会場およびイベント関連のソーシャルイベントにおいて、これらのポリシーに従うことを期待しています。"
+
+#: ../../rst/community/code_of_conduct.rst:137
+msgid "The Ansible Community Code of Conduct is licensed under the Creative Commons Attribution-Share Alike 3.0 license. Our Code of Conduct was adapted from Codes of Conduct of other open source projects, including:"
+msgstr "Ansible コミュニティー行動規範は、Creative Commons Attribution-Share Alike 3.0 ライセンスの認可を受けています。私たちの行動規範は、以下のような他のオープンソースプロジェクトの行動規範を参考にしています。"
+
+#: ../../rst/community/code_of_conduct.rst:141
+msgid "Contributor Covenant"
+msgstr "Contributor Covenant"
+
+#: ../../rst/community/code_of_conduct.rst:142
+msgid "Elastic"
+msgstr "Elastic"
+
+#: ../../rst/community/code_of_conduct.rst:143
+msgid "The Fedora Project"
+msgstr "The Fedora Project"
+
+#: ../../rst/community/code_of_conduct.rst:144
+msgid "OpenStack"
+msgstr "OpenStack"
+
+#: ../../rst/community/code_of_conduct.rst:145
+msgid "Puppet Labs"
+msgstr "Puppet Labs"
+
+#: ../../rst/community/code_of_conduct.rst:146
+msgid "Ubuntu"
+msgstr "Ubuntu"
+
+#: ../../rst/community/committer_guidelines.rst:5
+msgid "Committers Guidelines"
+msgstr "コミット担当者のガイドライン"
+
+#: ../../rst/community/committer_guidelines.rst:7
+msgid "These are the guidelines for people with commit privileges on the Ansible GitHub repository. Committers are essentially acting as members of the Ansible Core team, although not necessarily as employees of Ansible and Red Hat. Please read the guidelines before you commit."
+msgstr "このページは、Ansible GitHub リポジトリー上でコミット権限を持つユーザーのためのガイドラインです。コミット担当者は、基本的に Ansible Core チームのメンバーとして活動していますが、Ansible および Red Hat の従業員であるとは限りません。コミットする前にこのガイドラインをお読みください。"
+
+#: ../../rst/community/committer_guidelines.rst:9
+msgid "These guidelines apply to everyone. At the same time, this ISN'T a process document. So just use good judgment. You've been given commit access because we trust your judgment."
+msgstr "これらのガイドラインはすべてのユーザーに適用されます。同時に、これはプロセスのドキュメントではありません。したがって、適切な判断が求められます。コミットアクセス権が与えられているのは、そのユーザーの判断を信頼しているからです。"
+
+#: ../../rst/community/committer_guidelines.rst:11
+msgid "That said, use the trust wisely."
+msgstr "そのため、その信頼については慎重に行動してください。"
+
+#: ../../rst/community/committer_guidelines.rst:13
+msgid "If you abuse the trust and break components and builds, and so on, the trust level falls and you may be asked not to commit or you may lose your commit privileges."
+msgstr "信頼を乱用してコンポーネントやビルドなどを壊してしまうと、信頼のレベルが下がり、コミットしないように求められたり、コミット権限を失うことになるかもしれません。"
+
+#: ../../rst/community/committer_guidelines.rst:16
+msgid "Features, high-level design, and roadmap"
+msgstr "機能、高レベル設計、およびロードマップ"
+
+#: ../../rst/community/committer_guidelines.rst:18
+msgid "As a core team member, you are an integral part of the team that develops the :ref:`roadmap <roadmaps>`. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, and so on, for various releases. Red Hat, the company, and the Ansible team must get these changes completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it affects a lot of other parts within Ansible."
+msgstr "コミット担当者は、コアチームメンバーとして、:ref:`ロードマップ <roadmaps>` を作成するチームに不可欠です。積極的に関与し、希望する機能や修正をプッシュしてください。また、Red Hat は企業として、様々なリリースに対して、特定の機能、修正、API などにコミットすることを念頭に置いてください。企業である Red Hat、および Ansible チームは、このようなコミットされた機能 (など) を完成させ、スケジュール通りにリリースしなければなりません。ユーザー、コミュニティー、顧客への義務が最優先されなければなりません。これらの義務があるため、自分で開発したい機能が Ansible 内の他の多くの部分に影響を与える場合は、その機能がリリースに含まれない可能性があります。"
+
+#: ../../rst/community/committer_guidelines.rst:20
+msgid "Any other new features and changes to high level design should go through the proposal process (TBD), to ensure the community and core team have had a chance to review the idea and approve it. The core team has sole responsibility for merging new features based on proposals."
+msgstr "その他の新機能や高レベル設計の変更は、コミュニティーおよび Core チームがアイデアを確認して承認する機会を確実にもてるように、提案プロセス (TBD) を経る必要があります。提案に基づいて新しい機能をマージする責任は Core チームにあります。"
+
+#: ../../rst/community/committer_guidelines.rst:23
+msgid "Our workflow on GitHub"
+msgstr "GitHub でのワークフロー"
+
+#: ../../rst/community/committer_guidelines.rst:25
+msgid "As a committer, you may already know this, but our workflow forms a lot of our team policies. Please ensure you're aware of the following workflow steps:"
+msgstr "コミット担当者として、以下をすでに理解しているかもしれませんが、私たちのワークフローは多くのチームポリシーを形成しています。以下のワークフローの手順を理解しておいてください。"
+
+#: ../../rst/community/committer_guidelines.rst:27
+msgid "Fork the repository upon which you want to do some work to your own personal repository"
+msgstr "作業したいリポジトリーを自身のリポジトリーにフォークします。"
+
+#: ../../rst/community/committer_guidelines.rst:28
+msgid "Work on the specific branch upon which you need to commit"
+msgstr "コミットする必要がある特定のブランチで作業します。"
+
+#: ../../rst/community/committer_guidelines.rst:29
+msgid "Create a Pull Request back to the Ansible repository and tag the people you would like to review; assign someone as the primary \"owner\" of your request"
+msgstr "プル要求を Ansible リポジトリーに作成し、レビューしてほしいユーザーにタグを付けます。そのユーザーを、その要求の主な「所有者」として割り当てます。"
+
+#: ../../rst/community/committer_guidelines.rst:30
+msgid "Adjust code as necessary based on the Comments provided"
+msgstr "提供されたコメントに基づいて、必要に応じてコードを調整します。"
+
+#: ../../rst/community/committer_guidelines.rst:31
+msgid "Ask someone on the Core Team to do a final review and merge"
+msgstr "Core チームに最終確認とマージを依頼します。"
+
+#: ../../rst/community/committer_guidelines.rst:34
+msgid "Addendum to workflow for committers:"
+msgstr "コミット担当者のワークフローへの補足"
+
+#: ../../rst/community/committer_guidelines.rst:36
+msgid "The Core Team is aware that this can be a difficult process at times. Sometimes, the team breaks the rules by making direct commits or merging their own PRs. This section is a set of guidelines. If you're changing a comma in a doc, or making a very minor change, you can use your best judgement. This is another trust thing. The process is critical for any major change, but for little things or getting something done quickly, use your best judgement and make sure people on the team are aware of your work."
+msgstr "Core チームは、これが時に困難なプロセスであることを認識しています。時には、チームが直接コミットしたり、自身のプル要求をマージしたりしてルールを破ってしまうこともあります。ここではガイドラインを示します。ドキュメントでコンマを変更する場合や、ごく些細な変更であれば、各自の裁量で行ってください。これも信頼関係の問題です。大きな変更にはプロセスが重要ですが、ちょっとしたことや迅速に何かを行う場合は、最善の判断を下し、チームの人々に自分の仕事を認識してもらうようにしましょう。"
+
+#: ../../rst/community/committer_guidelines.rst:39
+msgid "Roles on Core"
+msgstr "Core におけるロール"
+
+#: ../../rst/community/committer_guidelines.rst:40
+msgid "Core committers: Fine to do PRs for most things, but we should have a timebox. Hanging PRs may merge on the judgement of these devs."
+msgstr "Core のコミット担当者: ほとんどの場合は、プル要求を実行しても問題ありませんが、タイムボックスが必要です。解決されていないプル要求が存在すると、開発者の判断でマージされます。"
+
+#: ../../rst/community/committer_guidelines.rst:41
+msgid ":ref:`Module maintainers <maintainers>`: Module maintainers own specific modules and have indirect commit access through the current module PR mechanisms."
+msgstr ":ref:`モジュールメンテナー <maintainers>`: モジュールメンテナーは特定のモジュールを所有しており、現在のモジュールのプル要求メカニズムを通じて間接的にコミットにアクセスできます。"
+
+#: ../../rst/community/committer_guidelines.rst:44
+msgid "General rules"
+msgstr "一般的なルール"
+
+#: ../../rst/community/committer_guidelines.rst:45
+msgid "Individuals with direct commit access to ansible/ansible are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement."
+msgstr "ansible/ansible への直接コミットアクセスを持つユーザーには、さまざまなことを実行できる権限が与えられています。おそらく、ここに記載している以上のことが可能になります。ここに示すことは、ルールというよりは、一般的な *ガイドライン* として扱い、この権限を持つユーザーは最善の判断を下すことが期待されています。"
+
+#: ../../rst/community/committer_guidelines.rst:47
+msgid "Don't"
+msgstr "してはいけないこと"
+
+#: ../../rst/community/committer_guidelines.rst:49
+msgid "Commit directly."
+msgstr "直接コミットする。"
+
+#: ../../rst/community/committer_guidelines.rst:50
+msgid "Merge your own PRs. Someone else should have a chance to review and approve the PR merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes."
+msgstr "自身のプル要求をマージする。他の誰かがプル要求のマージを確認して承認する機会を持つべきです。Core のコミット担当者であれば、ごくわずかな変更であれば、各自の裁量で行うことができます。"
+
+#: ../../rst/community/committer_guidelines.rst:51
+msgid "Forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most."
+msgstr "代替環境のことを考えない。代替案を検討してください。ユーザーの中には環境が良くない人もいますが、私たちを最も必要としているのはそのようなユーザーです。"
+
+#: ../../rst/community/committer_guidelines.rst:52
+msgid "Drag your community team members down. Always discuss the technical merits, but you should never address the person's limitations (you can later go for beers and call them idiots, but not in IRC/GitHub/and so on)."
+msgstr "コミュニティーチームのメンバーの足を引っ張る。技術的なメリットについては常に議論するべきですが、一個人の限界については決して言及すべきではありません (IRC、GitHub などでは特に注意してください)。"
+
+#: ../../rst/community/committer_guidelines.rst:53
+msgid "Forget about the maintenance burden. Some things are really cool to have, but they might not be worth shoehorning in if the maintenance burden is too great."
+msgstr "メンテナンスの負担を考えない。その機能が本当に優れていても、メンテナンスの負担が大きすぎる場合は、組み込む価値がないかもしれません。"
+
+#: ../../rst/community/committer_guidelines.rst:54
+msgid "Break playbooks. Always keep backwards compatibility in mind."
+msgstr "Playbook を壊す。常に下位互換性を念頭に置いてください。"
+
+#: ../../rst/community/committer_guidelines.rst:55
+msgid "Forget to keep it simple. Complexity breeds all kinds of problems."
+msgstr "シンプルにすることを考えない。複雑なものは、あらゆる種類の問題を生み出します。"
+
+#: ../../rst/community/committer_guidelines.rst:57
+msgid "Do"
+msgstr "すべきこと"
+
+#: ../../rst/community/committer_guidelines.rst:59
+msgid "Squash, avoid merges whenever possible, use GitHub's squash commits or cherry pick if needed (bisect thanks you)."
+msgstr "squash を使用し、マージはできる限り使用せず、必要に応じて GitHub の Squash コミットを使用するか、入念に選ぶ (cherry-pick)。"
+
+#: ../../rst/community/committer_guidelines.rst:60
+msgid "Be active. Committers who have no activity on the project (through merges, triage, commits, and so on) will have their permissions suspended."
+msgstr "活発に行動する。(マージ、トリアージ、コミットなどを通じて) プロジェクトで活動をしていないコミット担当者は、そのパーミッションが停止します。"
+
+#: ../../rst/community/committer_guidelines.rst:61
+msgid "Consider backwards compatibility (goes back to \"don't break existing playbooks\")."
+msgstr "下位互換性を検討する (既存の Playbook を壊さない)。"
+
+#: ../../rst/community/committer_guidelines.rst:62
+msgid "Write tests. PRs with tests are looked at with more priority than PRs without tests that should have them included. While not all changes require tests, be sure to add them for bug fixes or functionality changes."
+msgstr "テストを作成する。テストが含まれているプル要求は、テストが必要なのに含まれていないプル要求よりも優先して検討されます。すべての変更がテストを必要とするわけではありませんが、バグ修正や機能変更の際には必ずテストを追加しましょう。"
+
+#: ../../rst/community/committer_guidelines.rst:63
+msgid "Discuss with other committers, specially when you are unsure of something."
+msgstr "特に不明な点がある場合は、他のコミット担当者と話し合う。"
+
+#: ../../rst/community/committer_guidelines.rst:64
+msgid "Document! If your PR is a new feature or a change to behavior, make sure you've updated all associated documentation or have notified the right people to do so. It also helps to add the version of ``ansible-base`` against which this documentation is compatible (to avoid confusion between stable and devel docs, for backwards compatibility, and so on)."
+msgstr "文書化する。プル要求が新機能や動作の変更であれば、関連するすべてのドキュメントを更新したか、適切なユーザーに通知したかを確認してください。また、本ドキュメントと互換性がある Core の ``ansible-base`` バージョンを追加するのに便利です (たとえば、安定版と開発版のドキュメントとの混同を避けるため、後方互換性のため)。"
+
+#: ../../rst/community/committer_guidelines.rst:65
+msgid "Consider scope, sometimes a fix can be generalized"
+msgstr "スコープを検討する。時には修正を一般化できる場合があります。"
+
+#: ../../rst/community/committer_guidelines.rst:66
+msgid "Keep it simple, then things are maintainable, debuggable and intelligible."
+msgstr "保守やデバッグが可能で、分かりやすいものになるように、簡潔さを試みる。"
+
+#: ../../rst/community/committer_guidelines.rst:68
+msgid "Committers are expected to continue to follow the same community and contribution guidelines followed by the rest of the Ansible community."
+msgstr "コミット担当者は、その他の Ansible コミュニティーメンバーが従っているコミュニティーおよび貢献に関するガイドラインに従い続けることが期待されています。"
+
+#: ../../rst/community/committer_guidelines.rst:72
+msgid "People"
+msgstr "ユーザー"
+
+#: ../../rst/community/committer_guidelines.rst:74
+msgid "Individuals who've been asked to become a part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names and GitHub IDs to this file, in the section below, through a pull request. Doing so indicates that these individuals agree to act in the ways that their fellow committers trust that they will act."
+msgstr "このグループの一員になることを尋ねられるユーザーは、通常、しばらくの間 Ansible コミュニティーに重要な貢献をしてきたユーザーです。同意したユーザーは、以下のセクションにあるこのファイルに名前と GitHub ID をプル要求で追加してください。この操作は、その他のコミット担当者に信頼してもらえる行動をとることに同意していることを示します。"
+
+#: ../../rst/community/committer_guidelines.rst:77
+msgid "Name"
+msgstr "名前"
+
+#: ../../rst/community/committer_guidelines.rst:77
+msgid "GitHub ID"
+msgstr "GitHub ID"
+
+#: ../../rst/community/committer_guidelines.rst:77
+msgid "IRC Nick"
+msgstr "IRC ニック"
+
+#: ../../rst/community/committer_guidelines.rst:77
+msgid "Other"
+msgstr "その他"
+
+#: ../../rst/community/committer_guidelines.rst:79
+msgid "James Cammarata"
+msgstr "James Cammarata"
+
+#: ../../rst/community/committer_guidelines.rst:79
+msgid "jimi-c"
+msgstr "jimi-c"
+
+#: ../../rst/community/committer_guidelines.rst:79
+msgid "jimi"
+msgstr "jimi"
+
+#: ../../rst/community/committer_guidelines.rst:81
+msgid "Brian Coca"
+msgstr "Brian Coca"
+
+#: ../../rst/community/committer_guidelines.rst:81
+msgid "bcoca"
+msgstr "bcoca"
+
+#: ../../rst/community/committer_guidelines.rst:83
+msgid "Matt Davis"
+msgstr "Matt Davis"
+
+#: ../../rst/community/committer_guidelines.rst:83
+msgid "nitzmahone"
+msgstr "nitzmahone"
+
+#: ../../rst/community/committer_guidelines.rst:85
+msgid "Toshio Kuratomi"
+msgstr "Toshio Kuratomi"
+
+#: ../../rst/community/committer_guidelines.rst:85
+msgid "abadger"
+msgstr "abadger"
+
+#: ../../rst/community/committer_guidelines.rst:85
+msgid "abadger1999"
+msgstr "abadger1999"
+
+#: ../../rst/community/committer_guidelines.rst:87
+msgid "Jason McKerr"
+msgstr "Jason McKerr"
+
+#: ../../rst/community/committer_guidelines.rst:87
+msgid "mckerrj"
+msgstr "mckerrj"
+
+#: ../../rst/community/committer_guidelines.rst:87
+msgid "newtMcKerr"
+msgstr "newtMcKerr"
+
+#: ../../rst/community/committer_guidelines.rst:89
+msgid "Robyn Bergeron"
+msgstr "Robyn Bergeron"
+
+#: ../../rst/community/committer_guidelines.rst:89
+msgid "robynbergeron"
+msgstr "robynbergeron"
+
+#: ../../rst/community/committer_guidelines.rst:89
+msgid "rbergeron"
+msgstr "rbergeron"
+
+#: ../../rst/community/committer_guidelines.rst:91
+msgid "Greg DeKoenigsberg"
+msgstr "Greg DeKoenigsberg"
+
+#: ../../rst/community/committer_guidelines.rst:91
+msgid "gregdek"
+msgstr "gregdek"
+
+#: ../../rst/community/committer_guidelines.rst:93
+msgid "Monty Taylor"
+msgstr "Monty Taylor"
+
+#: ../../rst/community/committer_guidelines.rst:93
+msgid "emonty"
+msgstr "emonty"
+
+#: ../../rst/community/committer_guidelines.rst:93
+msgid "mordred"
+msgstr "mordred"
+
+#: ../../rst/community/committer_guidelines.rst:95
+msgid "Matt Martz"
+msgstr "Matt Martz"
+
+#: ../../rst/community/committer_guidelines.rst:95
+msgid "sivel"
+msgstr "sivel"
+
+#: ../../rst/community/committer_guidelines.rst:97
+msgid "Nate Case"
+msgstr "Nate Case"
+
+#: ../../rst/community/committer_guidelines.rst:97
+msgid "qalthos"
+msgstr "qalthos"
+
+#: ../../rst/community/committer_guidelines.rst:97
+msgid "Qalthos"
+msgstr "Qalthos"
+
+#: ../../rst/community/committer_guidelines.rst:99
+msgid "James Tanner"
+msgstr "James Tanner"
+
+#: ../../rst/community/committer_guidelines.rst:99
+msgid "jctanner"
+msgstr "jctanner"
+
+#: ../../rst/community/committer_guidelines.rst:99
+msgid "jtanner"
+msgstr "jtanner"
+
+#: ../../rst/community/committer_guidelines.rst:101
+msgid "Peter Sprygada"
+msgstr "Peter Sprygada"
+
+#: ../../rst/community/committer_guidelines.rst:101
+msgid "privateip"
+msgstr "privateip"
+
+#: ../../rst/community/committer_guidelines.rst:103
+msgid "Abhijit Menon-Sen"
+msgstr "Abhijit Menon-Sen"
+
+#: ../../rst/community/committer_guidelines.rst:103
+msgid "amenonsen"
+msgstr "amenonsen"
+
+#: ../../rst/community/committer_guidelines.rst:103
+msgid "crab"
+msgstr "crab"
+
+#: ../../rst/community/committer_guidelines.rst:105
+msgid "Michael Scherer"
+msgstr "Michael Scherer"
+
+#: ../../rst/community/committer_guidelines.rst:105
+msgid "mscherer"
+msgstr "mscherer"
+
+#: ../../rst/community/committer_guidelines.rst:105
+msgid "misc"
+msgstr "misc"
+
+#: ../../rst/community/committer_guidelines.rst:107
+msgid "René Moser"
+msgstr "René Moser"
+
+#: ../../rst/community/committer_guidelines.rst:107
+msgid "resmo"
+msgstr "resmo"
+
+#: ../../rst/community/committer_guidelines.rst:109
+msgid "David Shrewsbury"
+msgstr "David Shrewsbury"
+
+#: ../../rst/community/committer_guidelines.rst:109
+msgid "Shrews"
+msgstr "Shrews"
+
+#: ../../rst/community/committer_guidelines.rst:111
+msgid "Sandra Wills"
+msgstr "Sandra Wills"
+
+#: ../../rst/community/committer_guidelines.rst:111
+msgid "docschick"
+msgstr "docschick"
+
+#: ../../rst/community/committer_guidelines.rst:113
+msgid "Graham Mainwaring"
+msgstr "Graham Mainwaring"
+
+#: ../../rst/community/committer_guidelines.rst:113
+msgid "ghjm"
+msgstr "ghjm"
+
+#: ../../rst/community/committer_guidelines.rst:115
+msgid "Chris Houseknecht"
+msgstr "Chris Houseknecht"
+
+#: ../../rst/community/committer_guidelines.rst:115
+msgid "chouseknecht"
+msgstr "chouseknecht"
+
+#: ../../rst/community/committer_guidelines.rst:117
+msgid "Trond Hindenes"
+msgstr "Trond Hindenes"
+
+#: ../../rst/community/committer_guidelines.rst:117
+msgid "trondhindenes"
+msgstr "trondhindenes"
+
+#: ../../rst/community/committer_guidelines.rst:119
+msgid "Jon Hawkesworth"
+msgstr "Jon Hawkesworth"
+
+#: ../../rst/community/committer_guidelines.rst:119
+msgid "jhawkesworth"
+msgstr "jhawkesworth"
+
+#: ../../rst/community/committer_guidelines.rst:121
+msgid "Will Thames"
+msgstr "Will Thames"
+
+#: ../../rst/community/committer_guidelines.rst:121
+msgid "willthames"
+msgstr "willthames"
+
+#: ../../rst/community/committer_guidelines.rst:123
+msgid "Adrian Likins"
+msgstr "Adrian Likins"
+
+#: ../../rst/community/committer_guidelines.rst:123
+msgid "alikins"
+msgstr "alikins"
+
+#: ../../rst/community/committer_guidelines.rst:125
+msgid "Dag Wieers"
+msgstr "Dag Wieers"
+
+#: ../../rst/community/committer_guidelines.rst:125
+msgid "dagwieers"
+msgstr "dagwieers"
+
+#: ../../rst/community/committer_guidelines.rst:125
+msgid "dag@wieers.com"
+msgstr "dag@wieers.com"
+
+#: ../../rst/community/committer_guidelines.rst:127
+msgid "Tim Rupp"
+msgstr "Tim Rupp"
+
+#: ../../rst/community/committer_guidelines.rst:127
+msgid "caphrim007"
+msgstr "caphrim007"
+
+#: ../../rst/community/committer_guidelines.rst:129
+msgid "Sloane Hertel"
+msgstr "Sloane Hertel"
+
+#: ../../rst/community/committer_guidelines.rst:129
+msgid "s-hertel"
+msgstr "s-hertel"
+
+#: ../../rst/community/committer_guidelines.rst:129
+msgid "shertel"
+msgstr "shertel"
+
+#: ../../rst/community/committer_guidelines.rst:131
+msgid "Sam Doran"
+msgstr "Sam Doran"
+
+#: ../../rst/community/committer_guidelines.rst:131
+msgid "samdoran"
+msgstr "samdoran"
+
+#: ../../rst/community/committer_guidelines.rst:133
+msgid "Matt Clay"
+msgstr "Matt Clay"
+
+#: ../../rst/community/committer_guidelines.rst:133
+msgid "mattclay"
+msgstr "mattclay"
+
+#: ../../rst/community/committer_guidelines.rst:135
+msgid "Martin Krizek"
+msgstr "Martin Krizek"
+
+#: ../../rst/community/committer_guidelines.rst:135
+msgid "mkrizek"
+msgstr "mkrizek"
+
+#: ../../rst/community/committer_guidelines.rst:137
+msgid "Ganesh Nalawade"
+msgstr "Ganesh Nalawade"
+
+#: ../../rst/community/committer_guidelines.rst:137
+msgid "ganeshrn"
+msgstr "ganeshrn"
+
+#: ../../rst/community/committer_guidelines.rst:139
+msgid "Trishna Guha"
+msgstr "Trishna Guha"
+
+#: ../../rst/community/committer_guidelines.rst:139
+msgid "trishnaguha"
+msgstr "trishnaguha"
+
+#: ../../rst/community/committer_guidelines.rst:139
+msgid "trishnag"
+msgstr "trishnag"
+
+#: ../../rst/community/committer_guidelines.rst:141
+msgid "Andrew Gaffney"
+msgstr "Andrew Gaffney"
+
+#: ../../rst/community/committer_guidelines.rst:141
+msgid "agaffney"
+msgstr "agaffney"
+
+#: ../../rst/community/committer_guidelines.rst:143
+msgid "Jordan Borean"
+msgstr "Jordan Borean"
+
+#: ../../rst/community/committer_guidelines.rst:143
+msgid "jborean93"
+msgstr "jborean93"
+
+#: ../../rst/community/committer_guidelines.rst:145
+msgid "Abhijeet Kasurde"
+msgstr "Abhijeet Kasurde"
+
+#: ../../rst/community/committer_guidelines.rst:145
+msgid "Akasurde"
+msgstr "Akasurde"
+
+#: ../../rst/community/committer_guidelines.rst:145
+msgid "akasurde"
+msgstr "akasurde"
+
+#: ../../rst/community/committer_guidelines.rst:147
+msgid "Adam Miller"
+msgstr "Adam Miller"
+
+#: ../../rst/community/committer_guidelines.rst:147
+msgid "maxamillion"
+msgstr "maxamillion"
+
+#: ../../rst/community/committer_guidelines.rst:149
+msgid "Sviatoslav Sydorenko"
+msgstr "Sviatoslav Sydorenko"
+
+#: ../../rst/community/committer_guidelines.rst:149
+msgid "webknjaz"
+msgstr "webknjaz"
+
+#: ../../rst/community/committer_guidelines.rst:151
+msgid "Alicia Cozine"
+msgstr "Alicia Cozine"
+
+#: ../../rst/community/committer_guidelines.rst:151
+msgid "acozine"
+msgstr "acozine"
+
+#: ../../rst/community/committer_guidelines.rst:153
+msgid "Sandra McCann"
+msgstr "Sandra McCann"
+
+#: ../../rst/community/committer_guidelines.rst:153
+msgid "samccann"
+msgstr "samccann"
+
+#: ../../rst/community/committer_guidelines.rst:155
+msgid "Felix Fontein"
+msgstr "Felix Fontein"
+
+#: ../../rst/community/committer_guidelines.rst:155
+msgid "felixfontein"
+msgstr "felixfontein"
+
+#: ../../rst/community/committer_guidelines.rst:155
+msgid "felix@fontein.de"
+msgstr "felix@fontein.de"
+
+#: ../../rst/community/communication.rst:5
+msgid "Communicating"
+msgstr "コミュニケーション"
+
+#: ../../rst/community/communication.rst:11
+msgid "Code of Conduct"
+msgstr "行動規範"
+
+#: ../../rst/community/communication.rst:13
+msgid "Please read and understand the :ref:`code_of_conduct`."
+msgstr "「:ref:`code_of_conduct`」を読んで理解してください。"
+
+#: ../../rst/community/communication.rst:16
+msgid "Mailing list information"
+msgstr "メーリングリストの情報"
+
+#: ../../rst/community/communication.rst:18
+msgid "Ansible has several mailing lists.  Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear."
+msgstr "Ansible にはいくつかのメーリングリストがあります。メーリングリストへの最初の投稿は (スパムを減らすため) 調整されます。そのため、最初の投稿が表示されるまで最大 1 日ほどかかります。"
+
+#: ../../rst/community/communication.rst:20
+msgid "`Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_ is a read-only list that shares information about new releases of Ansible, and also rare infrequent event information, such as announcements about an upcoming AnsibleFest, which is our official conference series. Worth subscribing to!"
+msgstr "`Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_ は、Ansible の新規リリースに関する情報を共有する読み取り専用リストです。Ansible の公式カンファレンスシリーズである AnsibleFest に関するアナウンスなど、不定期に開催されるイベント情報を共有しているため、ぜひサブスクライブしてください。"
+
+#: ../../rst/community/communication.rst:21
+msgid "`Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_ the upstream version of `Red Hat Ansible Tower <https://www.ansible.com/products/tower>`_"
+msgstr "`Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ は、`Red Hat Ansible Tower <https://www.ansible.com/products/tower>`_ のアップストリームバージョンである `Ansible AWX <https://github.com/ansible/awx>`_ です。"
+
+#: ../../rst/community/communication.rst:22
+msgid "`Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ is for users and developers of the Ansible Container project."
+msgstr "`Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ は、Ansible Container プロジェクトのユーザーおよび開発者向けです。"
+
+#: ../../rst/community/communication.rst:23
+msgid "`Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for learning how to develop on Ansible, asking about prospective feature design, or discussions about extending ansible or features in progress."
+msgstr "`Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ は、Ansible での開発方法を学ぶため、将来の機能設計について質問するため、あるいは進行中の Ansible または機能の拡張について議論するためのものです。"
+
+#: ../../rst/community/communication.rst:24
+msgid "`Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks."
+msgstr "`Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ は、DISA STIG オートメーションや CIS ベンチマークなど、Ansible Lockdown プロジェクトに関連するものを対象としています。"
+
+#: ../../rst/community/communication.rst:25
+msgid "`Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://ansible.meetup.com/>`_"
+msgstr "`Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ は、Ansible および `Ansible Meetups <https://ansible.meetup.com/>`_ のプロモーションを支援します。"
+
+#: ../../rst/community/communication.rst:26
+msgid "`Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions, and general user discussion."
+msgstr "`Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ は、Ansible のヒントを共有したり、質問に答えたり、一般的なユーザーディスカッションを行うためのものです。"
+
+#: ../../rst/community/communication.rst:27
+msgid "`Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ is designed to aid with the development and testing of Ansible roles with Molecule."
+msgstr "`Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ は、Molecule を使用した Ansible ロールの開発とテストを支援するためのものです。"
+
+#: ../../rst/community/communication.rst:29
+msgid "To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``"
+msgstr "Google 以外のアカウントからグループをサブスクライブするには、サブスクリプションを依頼するメールをサブスクリプションのアドレス (例: ``ansible-devel+subscribe@googlegroups.com``) に送信します。"
+
+#: ../../rst/community/communication.rst:34
+msgid "IRC channels"
+msgstr "IRC チャネル"
+
+#: ../../rst/community/communication.rst:36
+msgid "Ansible has several IRC channels on `Freenode <https://freenode.net/>`_."
+msgstr "Ansible には、`Freenode <https://freenode.net/>`_ に複数の IRC チャンネルがあります。"
+
+#: ../../rst/community/communication.rst:38
+msgid "Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_ for instructions."
+msgstr "この IRC チャネルでは、ニックネームの登録が必要になる場合があります。接続時にエラーが発生する場合は、「`Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_」を参照してください。"
+
+#: ../../rst/community/communication.rst:40
+msgid "To find all ``ansible`` specific channels on a freenode network, use the following command in your IRC client::"
+msgstr "freenode ネットワークですべての ``ansible`` 固有のチャンネルを見つけるには、IRC クライアントで以下のコマンドを使用します。"
+
+#: ../../rst/community/communication.rst:44
+msgid "as described in `freenode docs <https://freenode.net/kb/answer/findingchannels>`_."
+msgstr "`freenode ドキュメント <https://freenode.net/kb/answer/findingchannels>`_ に記載のとおり。"
+
+#: ../../rst/community/communication.rst:47
+msgid "General channels"
+msgstr "一般的なチャンネル"
+
+#: ../../rst/community/communication.rst:49
+msgid "``#ansible`` - For general use questions and support."
+msgstr "``#ansible`` - 一般的な使い方の質問やサポートに使用。"
+
+#: ../../rst/community/communication.rst:50
+msgid "``#ansible-devel`` - For discussions on developer topics and code related to features or bugs."
+msgstr "``#ansible-devel`` - 開発者のトピックや機能やバグに関連するコードについて議論する場。"
+
+#: ../../rst/community/communication.rst:51
+msgid "``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
+msgstr "``#ansible-meeting`` - コミュニティーの公開ミーティング用。通常は、上記のメーリングリストで告知されます。「`ミーティングのスケジュールおよび議題のページ <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
+
+#: ../../rst/community/communication.rst:56
+msgid "Working groups"
+msgstr "ワーキンググループ"
+
+#: ../../rst/community/communication.rst:58
+msgid "Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda."
+msgstr "Ansible コミュニティーの `ワーキンググループ <https://github.com/ansible/community/wiki#working-groups>`_ の多くが、Freenode IRC チャンネルで活動しています。ワーキンググループに参加したい場合は、そのワーキンググループが活動しているチャンネルに参加したり、議題にコメントしたりしてください。"
+
+#: ../../rst/community/communication.rst:60
+msgid "`Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``"
+msgstr "`Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``"
+
+#: ../../rst/community/communication.rst:61
+msgid "`Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles"
+msgstr "`Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- セキュリティー Playbook およびロール"
+
+#: ../../rst/community/communication.rst:62
+msgid "`AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx`` - Upstream for Ansible Tower"
+msgstr "`AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx`` - Ansible Tower のアップストリーム"
+
+#: ../../rst/community/communication.rst:63
+msgid "`Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - ``#ansible-azure``"
+msgstr "`Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - ``#ansible-azure``"
+
+#: ../../rst/community/communication.rst:64
+msgid "`Community Working Group <https://github.com/ansible/community/wiki/Community>`_ - ``#ansible-community`` - Including Meetups"
+msgstr "`Community Working Group <https://github.com/ansible/community/wiki/Community>`_ - ``#ansible-community`` - Meetup を含みます。"
+
+#: ../../rst/community/communication.rst:65
+msgid "`Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``"
+msgstr "`Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``"
+
+#: ../../rst/community/communication.rst:66
+msgid "`Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - ``#ansible-community``"
+msgstr "`Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - ``#ansible-community``"
+
+#: ../../rst/community/communication.rst:67
+msgid "`Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - ``#ansible-devel``"
+msgstr "`Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - ``#ansible-devel``"
+
+#: ../../rst/community/communication.rst:68
+msgid "`Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``"
+msgstr "`Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``"
+
+#: ../../rst/community/communication.rst:69
+msgid "`Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``"
+msgstr "`Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``"
+
+#: ../../rst/community/communication.rst:70
+msgid "`JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - ``#ansible-jboss``"
+msgstr "`JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - ``#ansible-jboss``"
+
+#: ../../rst/community/communication.rst:71
+msgid "`Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - ``#ansible-kubernetes``"
+msgstr "`Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - ``#ansible-kubernetes``"
+
+#: ../../rst/community/communication.rst:72
+msgid "`Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible training"
+msgstr "`Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible トレーニング"
+
+#: ../../rst/community/communication.rst:73
+msgid "`Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - ``#ansible-linode``"
+msgstr "`Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - ``#ansible-linode``"
+
+#: ../../rst/community/communication.rst:74
+msgid "`Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ | `molecule.io <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles"
+msgstr "`Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ | `molecule.io <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - Ansible Playbook およびロール用テストプラットフォーム"
+
+#: ../../rst/community/communication.rst:75
+msgid "`Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - ``#ansible-network``"
+msgstr "`Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - ``#ansible-network``"
+
+#: ../../rst/community/communication.rst:76
+msgid "`Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - ``#ansible-devel``"
+msgstr "`Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - ``#ansible-devel``"
+
+#: ../../rst/community/communication.rst:77
+msgid "`Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - ``#ansible-devel``"
+msgstr "`Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - ``#ansible-devel``"
+
+#: ../../rst/community/communication.rst:78
+msgid "`VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - ``#ansible-vmware``"
+msgstr "`VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - ``#ansible-vmware``"
+
+#: ../../rst/community/communication.rst:79
+msgid "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - ``#ansible-windows``"
+msgstr "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - ``#ansible-windows``"
+
+#: ../../rst/community/communication.rst:81
+msgid "Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?"
+msgstr "`新しいワーキンググループを作りたい <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_ ですか?"
+
+#: ../../rst/community/communication.rst:84
+msgid "Regional and Language-specific channels"
+msgstr "地域および言語固有のチャンネル"
+
+#: ../../rst/community/communication.rst:86
+msgid "``#ansible-es`` - Channel for Spanish speaking Ansible community."
+msgstr "``#ansible-es`` - スペイン語の Ansible コミュニティー向けチャンネル。"
+
+#: ../../rst/community/communication.rst:87
+msgid "``#ansible-eu`` - Channel for the European Ansible Community."
+msgstr "``#ansible-eu`` - ヨーロッパの Ansible コミュニティー向けのチャンネル。"
+
+#: ../../rst/community/communication.rst:88
+msgid "``#ansible-fr`` - Channel for French speaking Ansible community."
+msgstr "``#ansible-fr`` - フランス語の Ansible コミュニティー向けのチャンネル。"
+
+#: ../../rst/community/communication.rst:89
+msgid "``#ansiblezh`` - Channel for Zurich/Swiss Ansible community."
+msgstr "``#ansiblezh`` - チューリッヒ/スイスの Ansible コミュニティー向けのチャンネル。"
+
+#: ../../rst/community/communication.rst:92
+msgid "IRC meetings"
+msgstr "IRC ミーティング"
+
+#: ../../rst/community/communication.rst:94
+msgid "The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
+msgstr "Ansible コミュニティーは、さまざまなトピックに関する定期的な IRC ミーティングを開いており、興味のある人は誰でも参加することができます。Ansible ミーティングの詳細は、「`meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
+
+#: ../../rst/community/communication.rst:98
+msgid "Ansible Tower support questions"
+msgstr "Ansible Tower のサポートに関する質問"
+
+#: ../../rst/community/communication.rst:100
+msgid "Red Hat Ansible `Tower <https://www.ansible.com/products/tower>`_ is a UI, Server, and REST endpoint for Ansible. The Red Hat Ansible Automation subscription contains support for Ansible, Ansible Tower, Ansible Automation for Networking, and more."
+msgstr "Red Hat Ansible `Tower <https://www.ansible.com/products/tower>`_ は、Ansible の UI、サーバー、および REST エンドポイントです。Red Hat Ansible Automation サブスクリプションには、Ansible、Ansible Tower、Ansible Automation for Networking などのサポートが含まれます。"
+
+#: ../../rst/community/communication.rst:103
+msgid "If you have a question about Ansible Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC channel or the general project mailing list."
+msgstr "Ansible Tower に関するご質問は、IRC チャンネルまたは一般的なプロジェクトメーリングリストではなく、`Red Hat サポート <https://access.redhat.com/products/ansible-tower-red-hat/>`_ にお問い合わせください。"
+
+#: ../../rst/community/communication.rst:106
+msgid "The Bullhorn"
+msgstr "The Bullhorn"
+
+#: ../../rst/community/communication.rst:108
+msgid "**The Bullhorn** is our newsletter for the Ansible developer community. If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues."
+msgstr "**The Bullhorn** は、Ansible 開発者コミュニティーのニュースレターです。共有したい質問やコンテンツがある場合は、Red Hat にアクセスしてください (the-bullhorn@redhat.com,)。また、今後発行する版については、`contribute/suggest content <https://github.com/ansible/community/issues/546>`_ に直接お問い合わせください。"
+
+#: ../../rst/community/communication.rst:111
+msgid "Read past issues `here <https://github.com/ansible/community/wiki/News>`_."
+msgstr "これまで発行した版については、`こちら <https://github.com/ansible/community/wiki/News>`_ をお読みください。"
+
+#: ../../rst/community/communication.rst:113
+msgid "`Subscribe <http://eepurl.com/gZmiEP>`_ to receive it."
+msgstr "これを受け取るには、`サブスクライブ <http://eepurl.com/gZmiEP>`_ します。"
+
+#: ../../rst/community/community.rst:4
+msgid "Community Information & Contributing"
+msgstr "コミュニティーの情報および貢献"
+
+#: ../../rst/community/community.rst:6
+msgid "This page is deprecated. Please see the updated :ref:`Ansible Community Guide <ansible_community_guide>`."
+msgstr "このページは非推奨になりました。更新された「:ref:`Ansible コミュニティーガイド <ansible_community_guide>`」を確認してください。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:6
+msgid "Contributing to Ansible-maintained Collections"
+msgstr "Ansible 管理コレクションへの参加"
+
+#: ../../rst/community/contributing_maintained_collections.rst:8
+msgid "The Ansible team welcomes community contributions to the collections maintained by Red Hat Ansible Engineering. This section describes how you can open issues and create PRs with the required testing before your PR can be merged."
+msgstr "Ansible チームは、Red Hat Ansible Engineering が管理するコレクションへのコミュニティーの貢献を歓迎します。このセクションでは、PR をマージする前に、問題を作成し、必要なテストで PR を作成する方法を説明します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:14
+msgid "Ansible-maintained collections"
+msgstr "Ansible で管理されているコレクション"
+
+#: ../../rst/community/contributing_maintained_collections.rst:16
+msgid "The following table shows:"
+msgstr "次の表に示します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:18
+msgid "**Ansible-maintained collection** -  Click the link to the collection on Galaxy, then click the ``repo`` button in Galaxy to find the GitHub repository for this collection."
+msgstr "**Ansible で管理されているコレクション** -  Galaxy のコレクションへのリンクをクリックしてから、Galaxy の ``repo`` ボタンをクリックして、このコレクションの GitHub リポジトリーを検索します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:19
+msgid "**Related community collection** - Collection that holds community-created content (modules, roles, and so on) that may also be of interest to a user of the Ansible-maintained collection. You can, for example, add new modules to the community collection as a technical preview before the content is moved to the Ansible-maintained collection."
+msgstr "**関連するコミュニティーコレクション** - コミュニティーで作成されたコンテンツ (モジュール、ロールなど) を保持するコレクションで、Ansible で管理されているコレクションのユーザーも関心を持つ可能性があります。たとえば、コンテンツが Ansible で管理されているコレクションに移動する前に、テクニカルプレビューとしてコミュニティーコレクションに新しいモジュールを追加できます。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:20
+msgid "**Sponsor** - Working group that manages the collections. You can join the meetings to discuss important proposed changes and enhancements to the collections."
+msgstr "**スポンサー**: コレクションを管理する作業グループ。ミーティングに参加して、コレクションに対する重要な変更および機能強化を検討することができます。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:21
+msgid "**Test requirements** - Testing required for any new or changed content for the Ansible-maintained collection."
+msgstr "**テスト要件**: Ansible が管理するコレクションの新しいコンテンツまたは変更されたコンテンツについてテスト。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:22
+msgid "**Developer details** - Describes whether the Ansible-maintained collection accepts direct community issues and PRs for existing collection content, as well as more specific developer guidelines based on the collection type."
+msgstr "**開発者の詳細**: Ansible が直接コミュニティーの問題と、既存のコレクションコンテンツの PR と、コレクションタイプに基づいてより具体的な開発者ガイドラインを受け入れるかどうかを説明します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:248
+msgid "\\* A ✓  under **Open to PRs** means the collection welcomes GitHub issues and PRs for any changes to existing collection content (plugins, roles, and so on)."
+msgstr "\\* **Open to PRs** の下にある ✓ は、コレクションが GitHub の問題と既存のコレクションコンテンツ (プラグイン、ロールなど) への変更に対する PR を歓迎することを意味します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:250
+msgid "\\*\\* Integration tests are required and unit tests are welcomed but not required for the AWS collections.  An exception to this is made in cases where integration tests are logistically not feasible due to external requirements.  An example of this is AWS Direct Connect, as this service can not be functionally tested without the establishment of network peering connections.  Unit tests are therefore required for modules that interact with AWS Direct Connect.  Exceptions to ``amazon.aws`` must be approved by Red Hat, and exceptions to ``community.aws`` must be approved by the AWS community."
+msgstr "\\*\\* 統合テストは必須であり、単体テストは歓迎されますが、AWS コレクションには必須ではありません。これに対する例外は、外部要件により統合テストが永続的に実行できない場合に生じます。この例として、AWS Direct Connect があります。これは、ネットワークピアリング接続を確立しないと、このサービスを機能的にテストできないためです。したがって、AWS Direct Connect と相互作用するモジュールには単体テストが必要です。``amazon.aws`` への例外は Red Hat によって承認され、``community.aws`` への例外は AWS コミュニティーによって承認される必要があります。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:252
+msgid "\\*\\*\\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the platform collection."
+msgstr "\\*\\*\\* ``ansible.netcommon`` には、多くのネットワークおよびセキュリティーの :ref:`プラットフォーム <platform_options>` コレクションを有効にするための基本コンポーネントが含まれています。これには必要なすべての接続およびフィルタープラグインが含まれ、プラットフォームコレクションのインストール時に依存関係としてインストールされます。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:254
+msgid "\\*\\*\\*\\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection, including Ansible-side plugins."
+msgstr "\\*\\*\\*\\* Windows PowerShell モジュールの単体テストは、テストの例外ですが、単体テストは、Ansible 側のプラグインを含め、コレクションの残りの部分に有効かつ必要になります。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:260
+msgid "Deciding where your contribution belongs"
+msgstr "貢献が所属する場所の決定"
+
+#: ../../rst/community/contributing_maintained_collections.rst:262
+msgid "We welcome contributions to Ansible-maintained collections. Because these collections are part of a downstream supported Red Hat product, the criteria for contribution, testing, and release may be higher than other community collections. The related community collections (such as ``community.general`` and ``community.network``) have less-stringent requirements and are a great place for new functionality that may become part of the Ansible-maintained collection in a future release."
+msgstr "Ansible で管理されているコレクションへの貢献を歓迎します。これらのコレクションは、ダウンストリームでサポートされている Red Hat 製品の一部であるため、貢献、テスト、およびリリースの基準は、他のコミュニティーコレクションよりも高い場合があります。関連するコミュニティーコレクション (``community.general`` および ``community.network`` など) の要件はそれほど厳しくなく、将来のリリースで Ansible が管理するコレクションの一部になる可能性がある新しい機能に最適な場所です。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:264
+msgid "The following scenarios use the ``arista.eos`` to help explain when to contribute to the Ansible-maintained collection, and when to propose your change or idea to the related community collection:"
+msgstr "以下のシナリオでは、``arista.eos`` を使用して Ansible が管理しているコレクションに貢献するタイミングや、関連するコミュニティーコレクションに変更や考えを提案するタイミングを説明しています。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:267
+msgid "You want to fix a problem in the ``arista.eos`` Ansible-maintained collection. Create the PR directly in the `arista.eos collection GitHub repository <https://github.com/ansible-collections/arista.eos>`_. Apply all the :ref:`merge requirements <ansible_collection_merge_requirements>`."
+msgstr "Ansible が管理する ``arista.eos`` コレクションの問題を修正します。PR を `arista.eos コレクションの GitHub リポジトリー <https://github.com/ansible-collections/arista.eos>`_ に直接作成します。:ref:`マージ要件 <ansible_collection_merge_requirements>` をすべて適用します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:269
+msgid "You want to add a new Ansible module for Arista. Your options are one of the following:"
+msgstr "Arista の新しい Ansible モジュールを追加します。オプションは以下のいずれかになります。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:271
+msgid "Propose a new module in the ``arista.eos`` collection (requires approval from Arista and Red Hat)."
+msgstr "``arista.eos`` コレクションで新しいモジュールを実装します (Arista と Red Hat の承認が必要です)。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:272
+msgid "Propose a new collection in the ``arista`` namespace (requires approval from Arista and Red Hat)."
+msgstr "``arista`` 名前空間で新しいコレクションを提案します (Arista および Red Hat の承認が必要です)。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:273
+msgid "Propose a new module in the ``community.network`` collection (requires network community approval)."
+msgstr "``community.network`` コレクションで新しいモジュールを実装します (ネットワークコミュニティーの承認が必要です)。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:274
+msgid "Place your new module in a collection in your own namespace (no approvals required)."
+msgstr "新しいモジュールを独自の名前空間のコレクションに置きます (承認は必要ありません)。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:277
+msgid "Most new content should go into either a related community collection or your own collection first so that is well established in the community before you can propose adding it to the  ``arista`` namespace, where inclusion and maintenance criteria are much higher."
+msgstr "ほとんどの新しいコンテンツは、関連するコミュニティーコレクションに入れるか、独自のコレクションのいずれかに入れる必要があります。これにより、含まれる基準とメンテナンス基準がはるかに高い ``arista`` 名前空間に追加することを提案できます。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:283
+msgid "Requirements to merge your PR"
+msgstr "PR のマージ要件"
+
+#: ../../rst/community/contributing_maintained_collections.rst:285
+msgid "Your PR must meet the following requirements before it can merge into an Ansible-maintained collection:"
+msgstr "Ansible が管理するコレクションにマージする前に、PR が以下の要件を満たす必要があります。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:288
+msgid "The PR is in the intended scope of the collection. Communicate with the appropriate Ansible sponsor listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` for help."
+msgstr "PR はコレクションの範囲にあり、支援を得るために :ref:`Ansible 管理コレクションの表 <ansible-collection-table>` に一覧表示されている適切な Ansible スポンサーに連絡します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:289
+msgid "For network and security domains, the PR follows the :ref:`resource module development principles <developing_resource_modules>`."
+msgstr "ネットワークおよびセキュリティードメインの場合、プル要求は :ref:`リソースモジュール開発の原則 <developing_resource_modules>` に従います。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:290
+msgid "Passes :ref:`sanity tests and tox <tox_resource_modules>`."
+msgstr ":ref:`sanity tests and tox <tox_resource_modules>` を渡します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:291
+msgid "Passes unit, and integration tests, as listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` and described in :ref:`testing_resource_modules`."
+msgstr ":ref:`Ansible 管理コレクションの表 <ansible-collection-table>` に一覧表示されているとおりに、単体テストおよび統合テストを渡します (:ref:`testing_resource_modules` を参照)。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:292
+msgid "Follows Ansible  guidelines. See :ref:`developing_modules`  and :ref:`developing_collections`."
+msgstr "Ansible ガイドラインに準拠します。「:ref:`developing_modules`」および「:ref:`developing_collections`」を参照してください。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:293
+msgid "Addresses all review comments."
+msgstr "すべてのレビューコメントに対応します。"
+
+#: ../../rst/community/contributing_maintained_collections.rst:294
+msgid "Includes an appropriate :ref:`changelog <community_changelogs>`."
+msgstr "これには、適切な :ref:`changelog <community_changelogs>` が含まれます。"
+
+#: ../../rst/community/contributor_license_agreement.rst:5
+msgid "Contributors License Agreement"
+msgstr "貢献者のライセンス契約"
+
+#: ../../rst/community/contributor_license_agreement.rst:7
+msgid "By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable copyright license to all users and developers of the project, present and future, pursuant to the license of the project."
+msgstr "By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable copyright license to all users and developers of the project, present and future, pursuant to the license of the project."
+
+#: ../../rst/community/development_process.rst:5
+msgid "The Ansible Development Cycle"
+msgstr "Ansible 開発ライフサイクル"
+
+#: ../../rst/community/development_process.rst:7
+msgid "Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections."
+msgstr "Ansible 開発者 (コミュニティーの貢献者を含む) は、多くの異なるリポジトリーで新機能を追加し、バグを修正し、コードを更新します。`ansible/ansible リポジトリー <https://github.com/ansible/ansible>`_には、モジュールコードを管理対象ノードにコピーするなど、基本的な機能およびコードが含まれています。このコードは、``ansible-base`` と呼ばれています。他のリポジトリーには、Ansible が特定のタスク (特定のデータベースへのユーザーの追加や特定のネットワークデバイスの設定など) を実行できるようにするプラグインとモジュールが含まれています。これらのリポジトリーには、コレクションのソースコードが含まれています。"
+
+#: ../../rst/community/development_process.rst:9
+msgid "Development on ``ansible-base`` occurs on two levels. At the macro level, the ``ansible-base`` developers and maintainers plan releases and track progress with roadmaps and projects. At the micro level, each PR has its own lifecycle."
+msgstr "``ansible-base`` 開発サイクルは 2 つのレベルで行われます。マクロレベルでは、``ansible-base`` 開発者とメンテナーがリリースを計画を立て、ロードマップおよびプロジェクトを使用して進捗を追跡します。ミクロレベルでは、各プル要求には独自のライフサイクルがあります。"
+
+#: ../../rst/community/development_process.rst:11
+msgid "Development on collections also occurs at the macro and micro levels. Each collection has its own macro development cycle. For more information on the collections development cycle, see :ref:`contributing_maintained_collections`. The micro-level lifecycle of a PR is similar in collections and in ``ansible-base``."
+msgstr "コレクションに関する開発は、マクロレベルおよびミクロレベルでも発生します。各コレクションには独自のマクロ開発サイクルがあります。コレクション開発サイクルの詳細は、:ref:`contributing_maintained_collections` を参照してください。プル要求のマイクロレベルのライフサイクルは、コレクションと ``ansible-base`` で似ています。"
+
+#: ../../rst/community/development_process.rst:17
+msgid "Macro development: ``ansible-base`` roadmaps, releases, and projects"
+msgstr "マクロ開発: ``ansible-base`` のロードマップ、リリース、およびプロジェクト"
+
+#: ../../rst/community/development_process.rst:19
+msgid "If you want to follow the conversation about what features will be added to ``ansible-base`` for upcoming releases and what bugs are being fixed, you can watch these resources:"
+msgstr "今後のリリースに向けて ``ansible-base`` にどのような機能が追加されるのか、どのようなバグが修正されるのかについてのやりとりを見逃さないようにする場合は、これらのリソースをフォローしてください。"
+
+#: ../../rst/community/development_process.rst:21
+msgid "the :ref:`roadmaps`"
+msgstr ":ref:`roadmaps`"
+
+#: ../../rst/community/development_process.rst:22
+msgid "the :ref:`Ansible Release Schedule <release_and_maintenance>`"
+msgstr ":ref:`Ansible リリーススケジュール <release_and_maintenance>`"
+
+#: ../../rst/community/development_process.rst:23
+msgid "various GitHub `projects <https://github.com/ansible/ansible/projects>`_ - for example:"
+msgstr "さまざまな GitHub `プロジェクト <https://github.com/ansible/ansible/projects>`_ - 以下に例を示します。"
+
+#: ../../rst/community/development_process.rst:25
+msgid "the `2.10 release project <https://github.com/ansible/ansible/projects/39>`_"
+msgstr "`2.10 release project <https://github.com/ansible/ansible/projects/39>`_"
+
+#: ../../rst/community/development_process.rst:26
+msgid "the `network bugs project <https://github.com/ansible/ansible/projects/20>`_"
+msgstr "`network bugs project <https://github.com/ansible/ansible/projects/20>`_"
+
+#: ../../rst/community/development_process.rst:27
+msgid "the `core documentation project <https://github.com/ansible/ansible/projects/27>`_"
+msgstr "`core documentation project <https://github.com/ansible/ansible/projects/27>`_"
+
+#: ../../rst/community/development_process.rst:32
+msgid "Micro development: the lifecycle of a PR"
+msgstr "マイクロ開発: プル要求のライフサイクル"
+
+#: ../../rst/community/development_process.rst:34
+msgid "If you want to contribute a feature or fix a bug in ``ansible-base`` or in a collection, you must open a **pull request** (\"PR\" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-base``. Here's an overview of the PR lifecycle:"
+msgstr "``ansible-base`` またはコレクションの機能追加またはバグ修正を行う場合は、**プル要求** (略して「PR」) を作成する必要があります。一般的に `プル要求プロセスの一般的な仕組みについて <https://help.github.com/articles/about-pull-requests/>`_ の概要は、GitHub で確認できます。プル要求の最終目標は、マージされ、コレクションまたは ``ansible-base`` の一部になることです。プル要求ライフサイクルの概要は、以下のようになります。"
+
+#: ../../rst/community/development_process.rst:37
+msgid "Contributor opens a PR"
+msgstr "プル要求を開きます。"
+
+#: ../../rst/community/development_process.rst:38
+msgid "Ansibot reviews the PR"
+msgstr "Ansibot がプル要求をレビューします。"
+
+#: ../../rst/community/development_process.rst:39
+msgid "Ansibot assigns labels"
+msgstr "Ansibot がラベルを割り当てます。"
+
+#: ../../rst/community/development_process.rst:40
+msgid "Ansibot pings maintainers"
+msgstr "Ansibot がメンテナーに通知します。"
+
+#: ../../rst/community/development_process.rst:41
+msgid "Shippable runs the test suite"
+msgstr "Shippable テストスイートを実行します。"
+
+#: ../../rst/community/development_process.rst:42
+msgid "Developers, maintainers, community review the PR"
+msgstr "開発者、メンテナー、コミュニティーがプル要求をレビューします。"
+
+#: ../../rst/community/development_process.rst:43
+msgid "Contributor addresses any feedback from reviewers"
+msgstr "貢献者が、レビューアーからのフィードバックに対処します。"
+
+#: ../../rst/community/development_process.rst:44
+msgid "Developers, maintainers, community re-review"
+msgstr "開発者、メンテナー、コミュニティーが再度レビューします。"
+
+#: ../../rst/community/development_process.rst:45
+msgid "PR merged or closed"
+msgstr "プル要求をマージまたは終了します。"
+
+#: ../../rst/community/development_process.rst:48
+msgid "Automated PR review: ansibullbot"
+msgstr "自動プル要求確認: ansibullbot"
+
+#: ../../rst/community/development_process.rst:50
+msgid "Because Ansible receives many pull requests, and because we love automating things, we have automated several steps of the process of reviewing and merging pull requests with a tool called Ansibullbot, or Ansibot for short."
+msgstr "Ansible は多くのプル要求を受け取るため、またこのコミュニティーは自動化に興味があるため、Ansibullbot (略して Ansibot) と呼ばれるツールを使ってプル要求を確認してマージするプロセスのいくつかのステップを自動化しました。"
+
+#: ../../rst/community/development_process.rst:52
+msgid "`Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ serves many functions:"
+msgstr "`Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ は多くの機能を提供します。"
+
+#: ../../rst/community/development_process.rst:54
+msgid "Responds quickly to PR submitters to thank them for submitting their PR"
+msgstr "プル要求の提出者に迅速に対応し、プル要求提出のお礼を伝えます。"
+
+#: ../../rst/community/development_process.rst:55
+msgid "Identifies the community maintainer responsible for reviewing PRs for any files affected"
+msgstr "影響を受けるファイルのプル要求をレビューするコミュニティーメンテナーを指定します。"
+
+#: ../../rst/community/development_process.rst:56
+msgid "Tracks the current status of PRs"
+msgstr "プル要求の現在の状態を追跡します。"
+
+#: ../../rst/community/development_process.rst:57
+msgid "Pings responsible parties to remind them of any PR actions for which they may be responsible"
+msgstr "責任を負う可能性のあるプル要求の作業を思い出させるために、責任者に通知します。"
+
+#: ../../rst/community/development_process.rst:58
+msgid "Provides maintainers with the ability to move PRs through the workflow"
+msgstr "メンテナーは、ワークフローを通じてプル要求に対応する機能を提供します。"
+
+#: ../../rst/community/development_process.rst:59
+msgid "Identifies PRs abandoned by their submitters so that we can close them"
+msgstr "プル要求は、それを提出したユーザーが中断したり、修了することができるようにします。"
+
+#: ../../rst/community/development_process.rst:60
+msgid "Identifies modules abandoned by their maintainers so that we can find new maintainers"
+msgstr "メンテナーが中断したモジュールを特定し、新しいメンテナーを見つけられるようにします。"
+
+#: ../../rst/community/development_process.rst:63
+msgid "Ansibot workflow"
+msgstr "Ansibot ワークフロー"
+
+#: ../../rst/community/development_process.rst:65
+msgid "Ansibullbot runs continuously. You can generally expect to see changes to your issue or pull request within thirty minutes. Ansibullbot examines every open pull request in the repositories, and enforces state roughly according to the following workflow:"
+msgstr "Ansibullbot は継続的に実行されます。通常、提出した問題やプル要求の内容は、30 分もあれば確認できるようになります。Ansibullbot は、リポジトリー内のすべての未解決のプル要求を調べて、以下のワークフローに従って状態を強制します。"
+
+#: ../../rst/community/development_process.rst:67
+msgid "If a pull request has no workflow labels, it's considered **new**. Files in the pull request are identified, and the maintainers of those files are pinged by the bot, along with instructions on how to review the pull request. (Note: sometimes we strip labels from a pull request to \"reboot\" this process.)"
+msgstr "プル要求にワークフローラベルがない場合は、**new** と見なされます。プル要求に含まれるファイルが特定され、ボットがそのファイルのメンテナーに通知を送り、プル要求を確認する方法が指示されます (注記: 時々、プル要求からラベルを削除して、このプロセスを「再起動」することがあります)。"
+
+#: ../../rst/community/development_process.rst:68
+msgid "If the module maintainer is not ``$team_ansible``, the pull request then goes into the **community_review** state."
+msgstr "モジュールのメンテナーが ``$team_ansible`` でない場合は、プル要求が **community_review** 状態になります。"
+
+#: ../../rst/community/development_process.rst:69
+msgid "If the module maintainer is ``$team_ansible``, the pull request then goes into the **core_review** state (and probably sits for a while)."
+msgstr "モジュールのメンテナーが ``$team_ansible`` の場合、プル要求は **core_review** 状態になります (そして、おそらくしばらくそのままになります)。"
+
+#: ../../rst/community/development_process.rst:70
+msgid "If the pull request is in **community_review** and has received comments from the maintainer:"
+msgstr "プル要求が **community_review** にあり、メンテナーからコメントを受け取った場合は、以下のようになります。"
+
+#: ../../rst/community/development_process.rst:72
+msgid "If the maintainer says ``shipit``, the pull request is labeled **shipit**, whereupon the Core team assesses it for final merge."
+msgstr "メンテナーが ``shipit`` と判断すると、プル要求に **shipit** というラベルが付けられ、Core チームが最終的なマージのためにそれを評価します。"
+
+#: ../../rst/community/development_process.rst:73
+msgid "If the maintainer says ``needs_info``, the pull request is labeled **needs_info** and the submitter is asked for more info."
+msgstr "メンテナーが ``needs_info`` と判断すると、プル要求に **needs_info** というラベルが付けられ、提出したユーザーには詳細情報の提供が求められます。"
+
+#: ../../rst/community/development_process.rst:74
+msgid "If the maintainer says **needs_revision**, the pull request is labeled **needs_revision** and the submitter is asked to fix some things."
+msgstr "メンテナーが **needs_revision** と判断すると、プル要求に **needs_revision** というラベルが付けられ、提出したユーザーは一部修正を求められます。"
+
+#: ../../rst/community/development_process.rst:76
+msgid "If the submitter says ``ready_for_review``, the pull request is put back into **community_review** or **core_review** and the maintainer is notified that the pull request is ready to be reviewed again."
+msgstr "提出したユーザーが ``ready_for_review`` と判断すると、そのプル要求は **community_review** または **core_review** に戻され、プル要求の再レビューの準備ができたことがメンテナーに通知されます。"
+
+#: ../../rst/community/development_process.rst:77
+msgid "If the pull request is labeled **needs_revision** or **needs_info** and the submitter has not responded lately:"
+msgstr "プル要求に **needs_revision** または **needs_info** というラベルが付けられ、提出したユーザーが応答しない場合は、以下のようになります。"
+
+#: ../../rst/community/development_process.rst:79
+msgid "The submitter is first politely pinged after two weeks, pinged again after two more weeks and labeled **pending action**, and the issue or pull request will be closed two weeks after that."
+msgstr "提出したユーザーは 2 週間後に丁寧な通知を受け取り、さらに 2 週間後に再度連絡が入り、**pending action** (保留中) というラベルが付けられ、その 2 週間後に問題またはプル要求がクローズになります。"
+
+#: ../../rst/community/development_process.rst:80
+msgid "If the submitter responds at all, the clock is reset."
+msgstr "提出したユーザーが応答すると、タイマーがリセットされます。"
+
+#: ../../rst/community/development_process.rst:81
+msgid "If the pull request is labeled **community_review** and the reviewer has not responded lately:"
+msgstr "プル要求に **community_review** というラベルが付けられ、レビュー担当者が応答しない場合は、以下のようになります。"
+
+#: ../../rst/community/development_process.rst:83
+msgid "The reviewer is first politely pinged after two weeks, pinged again after two more weeks and labeled **pending_action**, and then may be reassigned to ``$team_ansible`` or labeled **core_review**, or often the submitter of the pull request is asked to step up as a maintainer."
+msgstr "レビューアーは 2 週間後に丁寧な通知を受け取り、さらに 2 週間後に再度通知があり、**pending_action** と表示されます。その後、``$team_ansible`` に再アサインされたり、**core_review** というラベルが付きます。もしくは、プル要求の提出者がメンテナーとしてステップアップするように求められることがよくあります。"
+
+#: ../../rst/community/development_process.rst:84
+msgid "If Shippable tests fail, or if the code is not able to be merged, the pull request is automatically put into **needs_revision** along with a message to the submitter explaining why."
+msgstr "Shippable テストが失敗したり、コードをマージできないと、プル要求は自動的に **needs_revision** に置かれ、その理由を説明するメッセージが提出したユーザーに送られます。"
+
+#: ../../rst/community/development_process.rst:86
+msgid "There are corner cases and frequent refinements, but this is the workflow in general."
+msgstr "めったに発生しない場合や、頻繁に改良される場合がありますが、これは一般的なワークフローです。"
+
+#: ../../rst/community/development_process.rst:89
+msgid "PR labels"
+msgstr "プル要求のラベル"
+
+#: ../../rst/community/development_process.rst:91
+msgid "There are two types of PR Labels generally: **workflow** labels and **information** labels."
+msgstr "一般的に、プル要求には、**ワークフロー** ラベルおよび **情報** ラベルの 2 つのタイプがあります。"
+
+#: ../../rst/community/development_process.rst:94
+msgid "Workflow labels"
+msgstr "ワークフローラベル"
+
+#: ../../rst/community/development_process.rst:96
+msgid "**community_review**: Pull requests for modules that are currently awaiting review by their maintainers in the Ansible community."
+msgstr "**community_review**: Ansible コミュニティーのメンテナーが確認するのを現在待っているモジュールのプル要求。"
+
+#: ../../rst/community/development_process.rst:97
+msgid "**core_review**: Pull requests for modules that are currently awaiting review by their maintainers on the Ansible Core team."
+msgstr "**core_review**: 現在 Ansible Core チームのメンテナーによる確認を待っているモジュールのプル要求。"
+
+#: ../../rst/community/development_process.rst:98
+msgid "**needs_info**: Waiting on info from the submitter."
+msgstr "**needs_info**: 提出したユーザーからの情報を待っています。"
+
+#: ../../rst/community/development_process.rst:99
+msgid "**needs_rebase**: Waiting on the submitter to rebase."
+msgstr "**needs_rebase**: 提出したユーザーがリベースを行うのを待っています。"
+
+#: ../../rst/community/development_process.rst:100
+msgid "**needs_revision**: Waiting on the submitter to make changes."
+msgstr "**needs_revision**: 提出したユーザーが変更を行うのを待っています。"
+
+#: ../../rst/community/development_process.rst:101
+msgid "**shipit**: Waiting for final review by the core team for potential merge."
+msgstr "**shipit**: マージの可能性があるかどうか、Core チームによる最終レビューを待っています。"
+
+#: ../../rst/community/development_process.rst:104
+msgid "Information labels"
+msgstr "情報ラベル"
+
+#: ../../rst/community/development_process.rst:106
+msgid "**backport**: this is applied automatically if the PR is requested against any branch that is not devel. The bot immediately assigns the labels backport and ``core_review``."
+msgstr "**backport**: PR が devel 以外のブランチに対して要求されると自動的に適用されます。ボットは、すぐにラベルバックポートと ``core_review`` を割り当てます。"
+
+#: ../../rst/community/development_process.rst:107
+msgid "**bugfix_pull_request**: applied by the bot based on the templatized description of the PR."
+msgstr "**bugfix_pull_request**: プル要求のテンプレート化された説明に基づいてボットが適用します。"
+
+#: ../../rst/community/development_process.rst:108
+msgid "**cloud**: applied by the bot based on the paths of the modified files."
+msgstr "**cloud**: 変更されたファイルのパスに基づいてボットが適用します。"
+
+#: ../../rst/community/development_process.rst:109
+msgid "**docs_pull_request**: applied by the bot based on the templatized description of the PR."
+msgstr "**docs_pull_request**: プル要求のテンプレート化された説明に基づいてボットが適用します。"
+
+#: ../../rst/community/development_process.rst:110
+msgid "**easyfix**: applied manually, inconsistently used but sometimes useful."
+msgstr "**easyfix**: 手動で適用され、その使用は一貫性はありまあせんが、場合によっては役に立ちます。"
+
+#: ../../rst/community/development_process.rst:111
+msgid "**feature_pull_request**: applied by the bot based on the templatized description of the PR."
+msgstr "**feature_pull_request**: プル要求のテンプレート化された説明に基づいてボットが適用します。"
+
+#: ../../rst/community/development_process.rst:112
+msgid "**networking**: applied by the bot based on the paths of the modified files."
+msgstr "**networking**: 変更されたファイルのパスに基づいてボットが適用します。"
+
+#: ../../rst/community/development_process.rst:113
+msgid "**owner_pr**: largely deprecated. Formerly workflow, now informational. Originally, PRs submitted by the maintainer would automatically go to **shipit** based on this label. If the submitter is also a maintainer, we notify the other maintainers and still require one of the maintainers (including the submitter) to give a **shipit**."
+msgstr "**owner_pr**: 大半が非推奨になりました。以前はワークフローでしたが、現在は情報提供です。元々、メンテナーから提出されたプル要求は、このラベルに基づいて自動的に **shipit** に送られていました。提出したユーザーがメンテナーでもある場合、他のメンテナーに通知しても、(提出したユーザーを含む) メンテナーの一人に **shipit** を提供するように要求するようになりました。"
+
+#: ../../rst/community/development_process.rst:114
+msgid "**pending_action**: applied by the bot to PRs that are not moving. Reviewed every couple of weeks by the community team, who tries to figure out the appropriate action (closure, asking for new maintainers, and so on)."
+msgstr "**pending_action**: ボットにより、変化のないプル要求に適用されます。コミュニティーチームが 2、３ 週間ごとにレビューし、適切なアクション (終了、新しいメンテナーの募集など) を考えます。"
+
+#: ../../rst/community/development_process.rst:118
+msgid "Special Labels"
+msgstr "特殊なラベル"
+
+#: ../../rst/community/development_process.rst:120
+msgid "**new_plugin**: this is for new modules or plugins that are not yet in Ansible."
+msgstr "**new_plugin**: これは Ansible にない新しいモジュールやプラグインのためのものです。"
+
+#: ../../rst/community/development_process.rst:122
+msgid "**Note:** `new_plugin` kicks off a completely separate process, and frankly it doesn't work very well at present. We're working our best to improve this process."
+msgstr "**注記：** `new_plugin` は完全に別のプロセスを起動しますが、率直に言って現在はあまりうまく機能していません。このプロセスを改善するために最善を尽くしています。"
+
+#: ../../rst/community/development_process.rst:125
+msgid "Human PR review"
+msgstr "ユーザーによるプル要求のレビュー"
+
+#: ../../rst/community/development_process.rst:127
+msgid "After Ansibot reviews the PR and applies labels, the PR is ready for human review. The most likely reviewers for any PR are the maintainers for the module that PR modifies."
+msgstr "Ansibot がプル要求をレビューしてラベルを適用したら、ユーザーがプル要求をレビューする準備が整います。いずれのプル要求でも、それをレビューする可能性が高いのは、プル要求が変更するモジュールのメンテナーです。"
+
+#: ../../rst/community/development_process.rst:129
+msgid "Each module has at least one assigned :ref:`maintainer <maintainers>`, listed in the `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ file."
+msgstr "各モジュールには、:ref:`メンテナー <maintainers>` が少なくとも 1 人が割り当てられており、`BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>` ファイルにその一覧があります。"
+
+#: ../../rst/community/development_process.rst:131
+msgid "The maintainer's job is to review PRs that affect that module and decide whether they should be merged (``shipit``) or revised (``needs_revision``). We'd like to have at least one community maintainer for every module. If a module has no community maintainers assigned, the maintainer is listed as ``$team_ansible``."
+msgstr "メンテナーの仕事は、そのモジュールに影響を与えるプル要求をレビューして、マージ (``shipit``) すべきか修正 (``needs_revision``) すべきかを判断することです。すべてのモジュールには少なくともコミュニティーのメンテナーが 1 人必要です。モジュールにコミュニティーメンテナーが割り当てられていないと、そのメンテナーは ``$team_ansible`` として表示されます。"
+
+#: ../../rst/community/development_process.rst:133
+msgid "Once a human applies the ``shipit`` label, the :ref:`committers <community_committer_guidelines>` decide whether the PR is ready to be merged. Not every PR that gets the ``shipit`` label is actually ready to be merged, but the better our reviewers are, and the better our guidelines are, the more likely it will be that a PR that reaches **shipit** will be mergeable."
+msgstr "ユーザーが ``shipit`` ラベルを適用すると、:ref:`コミット担当者 <community_committer_guidelines>` は、プル要求がマージする準備ができているかどうかを判断します。``shipit`` ラベルを取得したすべてのプル要求が実際にマージ可能な状態になるわけではありませんが、レビュー担当者が優秀で、コミュニティーのガイドラインが優れていればいるほど、**shipit** に到達したプル要求がマージされる可能性が高くなります。"
+
+#: ../../rst/community/development_process.rst:137
+msgid "Making your PR merge-worthy"
+msgstr "プル要求を価値あるものにする"
+
+#: ../../rst/community/development_process.rst:139
+msgid "We do not merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy."
+msgstr "すべてのプル要求をマージするわけではありません。ここでは、プル要求を有益で魅力的で、マージする価値のあるものにするためのヒントをいくつかご紹介します。"
+
+#: ../../rst/community/development_process.rst:144
+msgid "Changelogs"
+msgstr "Changelog"
+
+#: ../../rst/community/development_process.rst:146
+msgid "Changelogs help users and developers keep up with changes to Ansible. Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base. You do not have to add a changelog fragment for PRs that add new modules and plugins, because our tooling does that for you automatically."
+msgstr "changelog は、ユーザーや開発者が Ansible の変更情報を確認するのに役に立ちます。Ansible では、リリースごとにフラグメントから changelog を作成します。ansible-base の機能を変更したりバグを修正するプル要求には、changelog のフラグメントを追加する **必要があります**。プル要求が、新しいモジュールやプラグインを追加する場合は、ツールで自動的に行われるため、changelog のフラグメントを追加する必要はありません。"
+
+#: ../../rst/community/development_process.rst:148
+msgid "We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR."
+msgstr "マイナーリリースとメジャーリリースの両方に、短い概要を示した changelog を作成します。バグ修正をバックポートする場合には、バックポートのプル要求に changelog フラグメントを追加してください。"
+
+#: ../../rst/community/development_process.rst:153
+msgid "Creating a changelog fragment"
+msgstr "changelog フラグメントの作成"
+
+#: ../../rst/community/development_process.rst:155
+msgid "A basic changelog fragment is a ``.yaml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it."
+msgstr "基本的な changelog フラグメントは ``changelogs/fragments/`` ディレクトリーにある ``.yaml`` ファイルです。それぞれのファイルには、``bugfixes``、``major_changes`` などのキーを持つ yaml ディクショナリーが含まれており、その後にバグ修正または機能の changelog エントリーの一覧が続きます。それぞれの changelog エントリーは yaml ファイルが組み込まれている rst です。つまり、特定の構成は、yaml ではなく rst で解釈できるようにエスケープする必要があります (yaml と rst の両方にエスケープされていることが望ましい場合は、両方エスケープします)。各プル要求は、既存のものに追加するのではなく、新しいフラグメントファイルを使用する **必要があります**。したがって、変更を加えたプル要求までさかのぼることができます。"
+
+#: ../../rst/community/development_process.rst:157
+msgid "To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``"
+msgstr "changelog エントリーを作成するには、対応するリポジトリーの ``changelogs/fragments/`` ディレクトリーに一意の名前を持つ新しいファイルを作成します。ファイル名には、PR 番号と変更の説明を含める必要があります。拡張子 ``.yaml`` で終了する必要があります。たとえば、``40696-user-backup-shadow-file.yaml`` です。"
+
+#: ../../rst/community/development_process.rst:159
+msgid "A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:"
+msgstr "1 つの changelog フラグメントには複数のセクションが含まれる場合がありますが、ほとんどの場合はセクションが 1 つしか含まれていません。最上位キー (bugfixes、major_changes など) は、`リリースノートツール <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_ の `設定ファイル <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ で定義されています。有効なセクションとその説明を以下に示します。"
+
+#: ../../rst/community/development_process.rst:162
+msgid "**breaking_changes**"
+msgstr "**breaking_changes**"
+
+#: ../../rst/community/development_process.rst:162
+msgid "Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
+msgstr "既存の Playbook またはロールを破損する変更。これには、ユーザーにタスクの更新を強制する既存の動作の変更が含まれます。changelog と :ref:`移植ガイド <porting_guides>` の両方に記載されます。"
+
+#: ../../rst/community/development_process.rst:165
+msgid "**major_changes**"
+msgstr "**major_changes**"
+
+#: ../../rst/community/development_process.rst:165
+msgid "Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
+msgstr "Ansible 自体への大規模な変更。通常、モジュールやプラグインの変更は含まれません。changelog と :ref:`移植ガイド <porting_guides>` の両方に記載されます。"
+
+#: ../../rst/community/development_process.rst:168
+msgid "**minor_changes**"
+msgstr "**minor_changes**"
+
+#: ../../rst/community/development_process.rst:168
+msgid "Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters."
+msgstr "Ansible、モジュール、またはプラグインへの小規模な変更。これには、新機能、モジュールに追加された新しいパラメーター、または既存のパラメーターに対する動作の変更が含まれます。"
+
+#: ../../rst/community/development_process.rst:171
+msgid "**deprecated_features**"
+msgstr "**deprecated_features**"
+
+#: ../../rst/community/development_process.rst:171
+msgid "Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
+msgstr "非推奨となり、今後のリリースで削除される予定です。changelog と :ref:`移植ガイド <porting_guides>` の両方に記載されます。"
+
+#: ../../rst/community/development_process.rst:174
+msgid "**removed_features**"
+msgstr "**removed_features**"
+
+#: ../../rst/community/development_process.rst:174
+msgid "Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
+msgstr "以前非推奨となり、削除された機能。changelogs と :ref:`移植ガイド <porting_guides>` の両方に表示されます。"
+
+#: ../../rst/community/development_process.rst:177
+msgid "**security_fixes**"
+msgstr "**security_fixes**"
+
+#: ../../rst/community/development_process.rst:177
+msgid "Fixes that address CVEs or resolve security concerns. Include links to CVE information."
+msgstr "CVE に対応するか、セキュリティー上の懸念を解決してください。CVE 情報へのリンクが含まれます。"
+
+#: ../../rst/community/development_process.rst:180
+msgid "**bugfixes**"
+msgstr "**bugfixes**"
+
+#: ../../rst/community/development_process.rst:180
+msgid "Fixes that resolve issues."
+msgstr "問題を解決するための修正。"
+
+#: ../../rst/community/development_process.rst:183
+msgid "**known_issues**"
+msgstr "**known_issues**"
+
+#: ../../rst/community/development_process.rst:183
+msgid "Known issues that are currently not fixed or will not be fixed."
+msgstr "現在修正されていない、または修正される予定のない既知の問題。"
+
+#: ../../rst/community/development_process.rst:185
+msgid "Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself."
+msgstr "各 changelog エントリーには、最後に括弧内に、その問題へのリンクが含まれていなければなりません。対応する問題がない場合は、エントリーにプル要求自体へのリンクが含まれている必要があります。"
+
+#: ../../rst/community/development_process.rst:187
+msgid "Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and the following sentence with a lowercase letter."
+msgstr "ほとんどの changelog エントリーは ``bugfixes`` または ``minor_changes`` になります。特定のモジュールに関連する changelog エントリーを作成する場合は、そのエントリーを ``- [module name] -`` で始め、続く文章は小文字で表します。"
+
+#: ../../rst/community/development_process.rst:189
+msgid "Here are some examples:"
+msgstr "以下に例を示します。"
+
+#: ../../rst/community/development_process.rst:209
+msgid "You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.10/changelogs/fragments>`_ for the 2.10 release."
+msgstr "changelog フラグメントの例は、2.10 リリースの `changelog ディレクトリー <https://github.com/ansible/ansible/tree/stable-2.10/changelogs/fragments>`_ もあります。"
+
+#: ../../rst/community/development_process.rst:211
+msgid "After you have written the changelog fragment for your PR, commit the file and include it with the pull request."
+msgstr "プル要求用に changelog フラグメントを作成したら、ファイルをコミットし、プル要求に追加します。"
+
+#: ../../rst/community/development_process.rst:216
+msgid "Backporting merged PRs in ``ansible-base``"
+msgstr "``ansible-base`` にマージされたプル要求のバックポート"
+
+#: ../../rst/community/development_process.rst:218
+msgid "All ``ansible-base`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch."
+msgstr "``ansible-base`` のプル要求はすべて、最初に ``devel`` ブランチにマージする必要があります。プル要求を受け入れて、``devel`` ブランチにマージした後、以下の手順でプル要求を作成して、変更を以前の安定したブランチにバックポートします。"
+
+#: ../../rst/community/development_process.rst:220
+msgid "We do **not** backport features."
+msgstr "機能のバックポートは **行いません**。"
+
+#: ../../rst/community/development_process.rst:224
+msgid "These instructions assume that:"
+msgstr "これらの手順は、以下を前提としています。"
+
+#: ../../rst/community/development_process.rst:226
+msgid "``stable-2.10`` is the targeted release branch for the backport"
+msgstr "``stable-2.10`` は、バックポートのターゲットリリースブランチです。"
+
+#: ../../rst/community/development_process.rst:227
+msgid "``https://github.com/ansible/ansible.git`` is configured as a ``git remote`` named ``upstream``. If you do not use a ``git remote`` named ``upstream``, adjust the instructions accordingly."
+msgstr "``https://github.com/ansible/ansible.git`` は、``upstream`` という名前の ``git remote`` として設定されます。``upstream`` という名前の ``git remote`` を使用しない場合は、適切に手順を調整します。"
+
+#: ../../rst/community/development_process.rst:230
+msgid "``https://github.com/<yourgithubaccount>/ansible.git`` is configured as a ``git remote`` named ``origin``. If you do not use a ``git remote`` named ``origin``, adjust the instructions accordingly."
+msgstr "``https://github.com/<yourgithubaccount>/ansible.git`` は、``origin`` という名前の ``git remote`` として設定されます。``origin`` という名前の ``git remote`` を使用しない場合は、適切に手順を調整します。"
+
+#: ../../rst/community/development_process.rst:234
+msgid "Prepare your devel, stable, and feature branches:"
+msgstr "devel、stable、および feature のブランチを準備します。"
+
+#: ../../rst/community/development_process.rst:241
+msgid "Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:"
+msgstr "devel ブランチから関連するコミットの SHA を自身の feature ブランチに選別して、必要に応じてマージの競合を処理します。"
+
+#: ../../rst/community/development_process.rst:248
+msgid "Add a :ref:`changelog fragment <changelogs_how_to>` for the change, and commit it."
+msgstr "変更には :ref:`changelog フラグメント <changelogs_how_to>` を追加し、コミットします。"
+
+#: ../../rst/community/development_process.rst:250
+msgid "Push your feature branch to your fork on GitHub:"
+msgstr "feature ブランチを GitHub のフォークにプッシュします。"
+
+#: ../../rst/community/development_process.rst:256
+msgid "Submit the pull request for ``backport/2.10/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.10`` branch"
+msgstr "``stable-2.10`` ブランチに、``backport/2.10/[PR_NUMBER_FROM_DEVEL]`` のプル要求を送信します。"
+
+#: ../../rst/community/development_process.rst:259
+msgid "The Release Manager will decide whether to merge the backport PR before the next minor release. There isn't any need to follow up. Just ensure that the automated tests (CI) are green."
+msgstr "次のマイナーリリースまでにバックポートのプル要求をマージするかどうかはリリースマネージャーが判断します。フォローアップの必要はありません。自動テスト (CI) に問題が発生していないことを確認するだけです。"
+
+#: ../../rst/community/development_process.rst:265
+msgid "The choice to use ``backport/2.10/[PR_NUMBER_FROM_DEVEL]`` as the name for the feature branch is somewhat arbitrary, but conveys meaning about the purpose of that branch. It is not required to use this format, but it can be helpful, especially when making multiple backport PRs for multiple stable branches."
+msgstr "feature ブランチの名前に ``backport/2.10/[PR_NUMBER_FROM_DEVEL]`` を使用する選択は任意ですが、そのブランチの目的を伝えています。この形式を使うことは必須ではありませんが、特に複数の安定したブランチに対して、複数のバックポートのプル要求を作成する場合に役立ちます。"
+
+#: ../../rst/community/development_process.rst:273
+msgid "If you prefer, you can use CPython's cherry-picker tool (``pip install --user 'cherry-picker >= 1.3.2'``) to backport commits from devel to stable branches in Ansible. Take a look at the `cherry-picker documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for details on installing, configuring, and using it."
+msgstr "必要に応じて、CPython の cherry-picker ツール (``pip install --user 'cherry-picker >= 1.3.2'``) を使用して、Ansible の devel から安定したブランチへのコミットをバックポートすることができます。インストール、設定、および使用方法の詳細は、「`cherry-picker のドキュメント <https://pypi.org/p/cherry-picker#cherry-picking>`_」を参照してください。"
+
+#: ../../rst/community/documentation_contributions.rst:5
+msgid "Contributing to the Ansible Documentation"
+msgstr "Ansible ドキュメントへの貢献"
+
+#: ../../rst/community/documentation_contributions.rst:7
+msgid "Ansible has a lot of documentation and a small team of writers. Community support helps us keep up with new features, fixes, and changes."
+msgstr "Ansible ではドキュメントが多数提供されていますが、ドキュメントを作成するチームは小規模です。新機能、修正、および変更の情報を常に最新に保つには、コミュニティーによるサポートが重要です。"
+
+#: ../../rst/community/documentation_contributions.rst:9
+msgid "Improving the documentation is an easy way to make your first contribution to the Ansible project. You do not have to be a programmer, since most of our documentation is written in YAML (module documentation) or `reStructuredText <https://docutils.sourceforge.io/rst.html>`_ (rST). Some collection-level documentation is written in a subset of `Markdown <https://github.com/ansible/ansible/issues/68119#issuecomment-596723053>`_. If you are using Ansible, you already use YAML in your playbooks. rST and Markdown are mostly just text. You do not even need git experience, if you use the ``Edit on GitHub`` option."
+msgstr "ドキュメントへの改善は、Ansible プロジェクトへの最初の貢献として適しています。本ガイドの大部分は YAML (モジュールドキュメント) または `reStructuredText <https://docutils.sourceforge.io/rst.html>`_ (rST) で記述されているため、貢献者がプログラマーである必要はありません。コレクションレベルのドキュメントの一部は、`マークダウン <https://github.com/ansible/ansible/issues/68119#issuecomment-596723053>`_ のサブセットに記述されています。Ansible を使用している場合は、Playbook ですでに YAML を使用しています。そして、rST および Markdown はほとんどがテキストです。``Edit on GitHub`` オプションを使用すれば、git の経験も必要ではありません。"
+
+#: ../../rst/community/documentation_contributions.rst:11
+msgid "If you find a typo, a broken example, a missing topic, or any other error or omission on this documentation website, let us know. Here are some ways to support Ansible documentation:"
+msgstr "このドキュメントの Web サイトで、タ誤字や不備のある例、欠落しているトピック、またはその他のエラーや省略を見つけたらご連絡ください。Ansible ドキュメントをサポートする方法は次のとおりです。"
+
+#: ../../rst/community/documentation_contributions.rst:17
+msgid "Editing docs directly on GitHub"
+msgstr "GitHub でドキュメントを直接編集"
+
+#: ../../rst/community/documentation_contributions.rst:19
+msgid "For typos and other quick fixes, you can edit most of the documentation right from the site. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on all the guide pages in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way."
+msgstr "入力ミスやその他の簡単な修正は、サイトから直接ドキュメントを編集できます。このページの右上を見てください。``Edit on GitHub`` リンクは、ドキュメント内のすべてのページで利用できます。GitHub アカウントがある場合は、この方法で迅速かつ簡単なプル要求を送信できます。"
+
+#: ../../rst/community/documentation_contributions.rst:23
+msgid "The source files for individual collection plugins exist in their respective repositories. Follow the link to the collection on Galaxy to find where the repository is located and any guidelines on how to contribute to that collection."
+msgstr "個別のコレクションプラグインのソースファイルがそれぞれのリポジトリーに存在します。Galaxy 上のコレクションへのリンクに従い、リポジトリーの場所と、そのコレクションへの貢献方法を確認してください。"
+
+#: ../../rst/community/documentation_contributions.rst:25
+msgid "To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:"
+msgstr "``Edit on GitHub`` で docs.ansible.com からドキュメント PR を送信するには、以下を行います。"
+
+#: ../../rst/community/documentation_contributions.rst:27
+msgid "Click on ``Edit on GitHub``."
+msgstr "``Edit on GitHub`` をクリックします。"
+
+#: ../../rst/community/documentation_contributions.rst:28
+msgid "If you don't already have a fork of the ansible repo on your GitHub account, you'll be prompted to create one."
+msgstr "GitHub アカウントで ansible リポジトリーのフォークを所有していない場合は、作成するように促されます。"
+
+#: ../../rst/community/documentation_contributions.rst:29
+msgid "Fix the typo, update the example, or make whatever other change you have in mind."
+msgstr "タイプミスを修正したり、例文を更新したり、その他の変更を加えたりします。"
+
+#: ../../rst/community/documentation_contributions.rst:30
+msgid "Enter a commit message in the first rectangle under the heading ``Propose file change`` at the bottom of the GitHub page. The more specific, the better. For example, \"fixes typo in my_module description\". You can put more detail in the second rectangle if you like. Leave the ``+label: docsite_pr`` there."
+msgstr "GitHub ページの一番下にある ``Propose file change`` という見出しの下にある最初の四角い部分にコミットメッセージを入力します。より具体的な方が望ましいです。たとえば「fixes typo in my_module description (my_module の説明にあるタイポを修正)」といった具合です。2 つの目の四角い部分に詳細を記入することもできます。ここで、``+label: docsite_pr`` はそのままにしておきます。"
+
+#: ../../rst/community/documentation_contributions.rst:31
+msgid "Submit the suggested change by clicking on the green \"Propose file change\" button. GitHub will handle branching and committing for you, and open a page with the heading \"Comparing Changes\"."
+msgstr "緑色の「Propose file change」ボタンをクリックして、提案する変更を送信します。GitHub がブランチを作成してコミットを行い、「Comparing Changes」という見出しのページが開きます。"
+
+#: ../../rst/community/documentation_contributions.rst:32
+msgid "Click on ``Create pull request`` to open the PR template."
+msgstr "``Create pull request`` をクリックして PR テンプレートを開きます。"
+
+#: ../../rst/community/documentation_contributions.rst:33
+msgid "Fill out the PR template, including as much detail as appropriate for your change. You can change the title of your PR if you like (by default it's the same as your commit message). In the ``Issue Type`` section, delete all lines except the ``Docs Pull Request`` line."
+msgstr "PR テンプレートには、変更に適した詳細などを記入します。PR のタイトルは、必要に応じて変更できます (デフォルトでは、コミットメッセージと同じタイトルになっています)。``Issue Type`` セクションで、``Docs Pull Request`` 行を除くすべての行を削除します。"
+
+#: ../../rst/community/documentation_contributions.rst:34
+msgid "Submit your change by clicking on ``Create pull request`` button."
+msgstr "``Create pull request`` ボタンをクリックして、変更内容を送信します。"
+
+#: ../../rst/community/documentation_contributions.rst:35
+msgid "Be patient while Ansibot, our automated script, adds labels, pings the docs maintainers, and kicks off a CI testing run."
+msgstr "Ansibot という名前の自動スクリプトがラベルを追加し、ドキュメントのメンテナーに通知を送り、CI テストが開始されるのをお待ちください。"
+
+#: ../../rst/community/documentation_contributions.rst:36
+msgid "Keep an eye on your PR - the docs team may ask you for changes."
+msgstr "送信した PR に注意を払い続けてください。ドキュメントチームから変更を依頼される場合があります。"
+
+#: ../../rst/community/documentation_contributions.rst:39
+msgid "Reviewing open PRs and issues"
+msgstr "PR および問題の確認"
+
+#: ../../rst/community/documentation_contributions.rst:41
+#, python-format
+msgid "You can also contribute by reviewing open documentation `issues <https://github.com/ansible/ansible/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Adocs>`_ and `PRs <https://github.com/ansible/ansible/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3Adocs>`_. To add a helpful review, please:"
+msgstr "開いているドキュメントの `問題 (issue) <https://github.com/ansible/ansible/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Adocs>`_ および `プル要求 <https://github.com/ansible/ansible/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3Adocs>`_ を確認することで貢献することもできます。役に立つレビューを追加するには、以下を参照してください。"
+
+#: ../../rst/community/documentation_contributions.rst:43
+msgid "Include a comment - \"looks good to me\" only helps if we know why."
+msgstr "「looks good to me (私には良さそうに見える)」というコメントは、他の人にもその理由が明らかな場合にのみ使用してください。"
+
+#: ../../rst/community/documentation_contributions.rst:44
+msgid "For issues, reproduce the problem."
+msgstr "問題がある場合は、問題を再現してください。"
+
+#: ../../rst/community/documentation_contributions.rst:45
+msgid "For PRs, test the change."
+msgstr "PR については、変更をテストしてください。"
+
+#: ../../rst/community/documentation_contributions.rst:48
+msgid "Opening a new issue and/or PR"
+msgstr "新しい問題または PR を開く"
+
+#: ../../rst/community/documentation_contributions.rst:50
+msgid "If the problem you have noticed is too complex to fix with the ``Edit on GitHub`` option, and no open issue or PR already documents the problem, please open an issue and/or a PR on the correct underlying repo - ``ansible/ansible`` for most pages that are not plugin or module documentation. If the documentation page has no ``Edit on GitHub`` option, check if the page is for a module within a collection. If so, follow the link to the collection on Galaxy and select the ``repo`` button in the upper right corner to find the source repository for that collection and module. The Collection README file should contain information on how to contribute to that collection, or report issues."
+msgstr "気づいた問題が複雑すぎて ``Edit on GitHub`` オプションでは修正できず、その問題が報告されていなかったり、プル要求が作成されていない場合は、正しい基盤のリポジトリーで問題またはプル要求を作成してください (プラグインやモジュールのドキュメント以外のほとんどのページについては、``ansible/ansible`` で問題またはプル要求を作成してください)。ドキュメントページに ``Edit on GitHub`` オプションがない場合は、そのページがコレクション内のモジュール用であるかどうかを確認します。その場合は、Galaxy のコレクションへのリンクに従い、右上隅の ``repo`` ボタンを選択して、そのコレクションとモジュールのソースリポジトリーを見つけてください。コレクション README ファイルには、そのコレクションへの貢献方法、または問題を報告する方法に関する情報が含まれているはずです。"
+
+#: ../../rst/community/documentation_contributions.rst:52
+msgid "A great documentation GitHub issue or PR includes:"
+msgstr "GitHub の問題や PR には、以下のような内容を追加してください。"
+
+#: ../../rst/community/documentation_contributions.rst:54
+msgid "a specific title"
+msgstr "特定のタイトル"
+
+#: ../../rst/community/documentation_contributions.rst:55
+msgid "a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change unless we know what problem it's meant to solve)"
+msgstr "問題の詳細な説明 (何が問題なのか分からないと変更案の評価が困難になるため、プル要求の場合でも同様)"
+
+#: ../../rst/community/documentation_contributions.rst:56
+msgid "links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, and so on)"
+msgstr "その他の情報 (関連する問題やプル要求、外部ドキュメント、docs.ansible.com のページなど) へのリンク"
+
+#: ../../rst/community/documentation_contributions.rst:60
+msgid "Verifying your documentation PR"
+msgstr "ドキュメントプル要求の確認"
+
+#: ../../rst/community/documentation_contributions.rst:62
+msgid "If you make multiple changes to the documentation on ``ansible/ansible``, or add more than a line to it, before you open a pull request, please:"
+msgstr "``ansible/ansible`` のドキュメントに複数の変更を加えたり、複数の行を追加したりする場合は、プル要求を開始する前に、以下を行います。"
+
+#: ../../rst/community/documentation_contributions.rst:64
+msgid "Check that your text follows our :ref:`style_guide`."
+msgstr "記述した内容が、:ref:`style_guide` に従っていることを確認してください。"
+
+#: ../../rst/community/documentation_contributions.rst:65
+msgid "Test your changes for rST errors."
+msgstr "変更した内容が rST のエラーになっていないかテストしてください。"
+
+#: ../../rst/community/documentation_contributions.rst:66
+msgid "Build the page, and preferably the entire documentation site, locally."
+msgstr "ページ、できればドキュメントサイト全体をローカルでビルドします。"
+
+#: ../../rst/community/documentation_contributions.rst:70
+msgid "The following sections apply to documentation sourced from the ``ansible/ansible`` repo and does not apply to documentation from an individual collection. See the collection README file for details on how to contribute to that collection."
+msgstr "以下のセクションは、``ansible/ansible`` リポジトリーから取得したドキュメントに適用され、個別のコレクションからのドキュメントには適用されません。そのコレクションへの貢献方法は、コレクションの README ファイルを参照してください。"
+
+#: ../../rst/community/documentation_contributions.rst:73
+msgid "Setting up your environment to build documentation locally"
+msgstr "ローカルにドキュメントをビルドするための環境設定"
+
+#: ../../rst/community/documentation_contributions.rst:75
+msgid "To build documentation locally, ensure you have a working :ref:`development environment <environment_setup>`."
+msgstr "ローカルにドキュメントをビルドするには、:ref:`開発環境 <environment_setup>` が有効であることを確認します。"
+
+#: ../../rst/community/documentation_contributions.rst:77
+msgid "To work with documentation on your local machine, you need to have python-3.5 or greater and the following packages installed:"
+msgstr "ローカルマシンでドキュメントを扱うには、python-3.5 以降と、以下のパッケージがインストールされている必要があります。"
+
+#: ../../rst/community/documentation_contributions.rst:80
+msgid "gcc"
+msgstr "gcc"
+
+#: ../../rst/community/documentation_contributions.rst:81
+msgid "jinja2"
+msgstr "jinja2"
+
+#: ../../rst/community/documentation_contributions.rst:82
+msgid "libyaml"
+msgstr "libyaml"
+
+#: ../../rst/community/documentation_contributions.rst:83
+msgid "Pygments >= 2.4.0"
+msgstr "Pygments 2.4.0 以降"
+
+#: ../../rst/community/documentation_contributions.rst:84
+msgid "pyparsing"
+msgstr "pyparsing"
+
+#: ../../rst/community/documentation_contributions.rst:85
+msgid "PyYAML"
+msgstr "PyYAML"
+
+#: ../../rst/community/documentation_contributions.rst:86
+msgid "rstcheck"
+msgstr "rstcheck"
+
+#: ../../rst/community/documentation_contributions.rst:87
+msgid "six"
+msgstr "six"
+
+#: ../../rst/community/documentation_contributions.rst:88
+msgid "sphinx"
+msgstr "sphinx"
+
+#: ../../rst/community/documentation_contributions.rst:89
+msgid "sphinx-notfound-page"
+msgstr "sphinx-notfound-page"
+
+#: ../../rst/community/documentation_contributions.rst:90
+msgid "straight.plugin"
+msgstr "straight.plugin"
+
+#: ../../rst/community/documentation_contributions.rst:92
+msgid "These required packages are listed in two :file:`requirements.txt` files to make installation easier:"
+msgstr "これらの必要なパッケージは、インストールを容易にするために、2 つの :file:`requirements.txt` ファイルに一覧表示されています。"
+
+#: ../../rst/community/documentation_contributions.rst:99
+msgid "You can drop ``--user`` if you have set up a virtual environment (venv/virtenv)."
+msgstr "仮想環境 (venv/virtenv) を設定している場合は、``--user`` を削除することができます。"
+
+#: ../../rst/community/documentation_contributions.rst:103
+msgid "On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``."
+msgstr "Xcode を使用する macOS では、``--ignore-installed`` を使用して ``six`` および ``pyparsing`` をインストールして、``sphinx``. に対応するバージョンを取得しないといけない場合があります。"
+
+#: ../../rst/community/documentation_contributions.rst:107
+msgid "After checking out ``ansible/ansible``, make sure the ``docs/docsite/rst`` directory has strict enough permissions. It should only be writable by the owner's account. If your default ``umask`` is not 022, you can use ``chmod go-w docs/docsite/rst`` to set the permissions correctly in your new branch.  Optionally, you can set your ``umask`` to 022 to make all newly created files on your system (including those created by ``git clone``) have the correct permissions."
+msgstr "``ansible/ansible`` をチェックアウトしたら、``docs/docsite/rst`` ディレクトリーに十分なパーミッションが付与されていることを確認します。所有者のアカウントのみが書き込み可能でなければなりません。デフォルトの ``umask`` が 022 ではない場合は、``chmod go-w docs/docsite/rst`` を使用して新規ブランチにパーミッションを正しく設定することができます。必要に応じて、``umask`` を 022 に設定して、システムで新に作成されるすべてのファイル (``git clone`` が作成したファイルを含む) に正しいパーミッションを設定することができます。"
+
+#: ../../rst/community/documentation_contributions.rst:112
+msgid "Testing the documentation locally"
+msgstr "ドキュメントのローカルでのテスト"
+
+#: ../../rst/community/documentation_contributions.rst:114
+msgid "To test an individual file for rST errors:"
+msgstr "rST エラーに対して個別のファイルをテストするには、以下を行います。"
+
+#: ../../rst/community/documentation_contributions.rst:121
+msgid "Building the documentation locally"
+msgstr "ローカルでのドキュメントのビルド"
+
+#: ../../rst/community/documentation_contributions.rst:123
+msgid "Building the documentation is the best way to check for errors and review your changes. Once `rstcheck` runs with no errors, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review."
+msgstr "ドキュメントのビルドは、エラーと変更を確認するのに最適な方法です。エラーなしで `rstcheck` を実行したら、``ansible/docs/docsite`` に移動し、確認するページをビルドします。"
+
+#: ../../rst/community/documentation_contributions.rst:126
+msgid "Building a single rST page"
+msgstr "単一の rST ページのビルド"
+
+#: ../../rst/community/documentation_contributions.rst:128
+msgid "To build a single rST file with the make utility:"
+msgstr "make ユーティリティーで単一の RST ファイルをビルドするには、以下を実行します。"
+
+#: ../../rst/community/documentation_contributions.rst:134
+#: ../../rst/community/documentation_contributions.rst:187
+msgid "For example:"
+msgstr "例:"
+
+#: ../../rst/community/documentation_contributions.rst:140
+msgid "This process compiles all the links but provides minimal log output. If you're writing a new page or want more detailed log output, refer to the instructions on :ref:`build_with_sphinx-build`"
+msgstr "このプロセスはすべてのリンクをコンパイルしますが、ログ出力は最小限になります。新しいページを作成する場合や、より詳細なログ出力が必要な場合は、「:ref:`build_with_sphinx-build`」の手順を参照してください。"
+
+#: ../../rst/community/documentation_contributions.rst:144
+msgid "``make htmlsingle`` adds ``rst/`` to the beginning of the path you provide in ``rst=``, so you can't type the filename with autocomplete. Here are the error messages you will see if you get this wrong:"
+msgstr "``make htmlsingle`` は、``rst=`` で提供されるパスの先頭に ``rst/`` を追加するため、自動補完でファイル名を入力することができません。これが間違っている場合は、以下のようなエラーメッセージが表示されます。"
+
+#: ../../rst/community/documentation_contributions.rst:146
+msgid "If you run ``make htmlsingle`` from the ``docs/docsite/rst/`` directory: ``make: *** No rule to make target `htmlsingle'.  Stop.``"
+msgstr "``docs/docsite/rst/`` ディレクトリーから ``make htmlsingle`` を実行した場合は、``make: *** No rule to make target `htmlsingle'.  Stop.`` メッセージが表示されます。"
+
+#: ../../rst/community/documentation_contributions.rst:147
+msgid "If you run ``make htmlsingle`` from the ``docs/docsite/`` directory with the full path to your rST document: ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``."
+msgstr "rST ドキュメントへの完全パスを使用して ``docs/docsite/`` ディレクトリーから ``make htmlsingle`` を実行した場合は、``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']`` メッセージが表示されます。"
+
+#: ../../rst/community/documentation_contributions.rst:151
+msgid "Building all the rST pages"
+msgstr "すべての rST ページのビルド"
+
+#: ../../rst/community/documentation_contributions.rst:153
+msgid "To build all the rST files without any module documentation:"
+msgstr "モジュールのドキュメント以外のすべての rST ファイルをビルドするには、以下を実行します。"
+
+#: ../../rst/community/documentation_contributions.rst:160
+msgid "Building module docs and rST pages"
+msgstr "モジュールドキュメントと rST ページのビルド"
+
+#: ../../rst/community/documentation_contributions.rst:162
+msgid "To build documentation for a few modules included in ``ansible/ansible`` plus all the rST files, use a comma-separated list:"
+msgstr "``ansible/ansible`` に含まれるいくつかのモジュールとすべての rST ファイルを使用してドキュメントをビルドするには、コンマ区切りリストを使用します。"
+
+#: ../../rst/community/documentation_contributions.rst:168
+msgid "To build all the module documentation plus all the rST files:"
+msgstr "すべてのモジュールドキュメントとすべての rST ファイルをビルドするには、以下を実行します。"
+
+#: ../../rst/community/documentation_contributions.rst:177
+msgid "Building rST files with ``sphinx-build``"
+msgstr "``sphinx-build`` で rST ファイルのビルド"
+
+#: ../../rst/community/documentation_contributions.rst:179
+msgid "Advanced users can build one or more rST files with the sphinx utility directly. ``sphinx-build`` returns misleading ``undefined label`` warnings if you only build a single page, because it does not create internal links. However, ``sphinx-build`` returns more extensive syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings. This can be useful, especially if you're creating a new page from scratch. To build a page or pages with ``sphinx-build``:"
+msgstr "上級ユーザーは、sphinx ユーティリティーを直接使用して 1 つ以上の rST ファイルをビルドすることができます。``sphinx-build`` は、内部リンクが作成されないため、1 ページのみをビルドする場合は、誤解を招く ``undefined label`` 警告を返します。ただし、``sphinx-build`` は、インデントエラーや ``x-string without end-string`` 警告など、より広範な構文のフィードバックを返します。これは特に、ゼロから新しいページを作成している場合に役に立ちます。``sphinx-build`` でページをビルドするには、以下のようにします。"
+
+#: ../../rst/community/documentation_contributions.rst:185
+msgid "You can specify filenames, or ``–a`` for all files, or omit both to compile only new/changed files."
+msgstr "ファイル名を指定することもできますし、すべてのファイルに ``–a`` を指定することもできます。もしくは、両方を省略して新しいまたは変更されたファイルだけをコンパイルすることもできます。"
+
+#: ../../rst/community/documentation_contributions.rst:194
+msgid "Running the final tests"
+msgstr "最終テストの実行"
+
+#: ../../rst/community/documentation_contributions.rst:196
+msgid "When you submit a documentation pull request, automated tests are run. Those same tests can be run locally. To do so, navigate to the repository's top directory and run:"
+msgstr "ドキュメントのプル要求を送信すると、自動テストが実行します。同じテストをローカルで実行できます。これを行うには、リポジトリーの最上位ディレクトリーに移動し、以下を実行します。"
+
+#: ../../rst/community/documentation_contributions.rst:204
+msgid "Unfortunately, leftover rST-files from previous document-generating can occasionally confuse these tests. It is therefore safest to run them on a clean copy of the repository, which is the purpose of ``make clean``. If you type these three lines one at a time and manually check the success of each, you do not need the ``&&``."
+msgstr "ただし、以前ドキュメントを生成した時の rST ファイルが残っていると、このテストを混乱させることがあります。そのため、リポジトリーのクリーンコピー上で実行するのが最も安全です。これが、``make clean`` の目的でもあります。この 3 つの行を一度に 1 行ずつ入力して、各行が成功したことを手動で確認する場合、``&&`` は必要ありません。"
+
+#: ../../rst/community/documentation_contributions.rst:207
+msgid "Joining the documentation working group"
+msgstr "ドキュメントワーキンググループへの参加"
+
+#: ../../rst/community/documentation_contributions.rst:209
+msgid "The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on freenode IRC. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_."
+msgstr "ドキュメントワーキンググループ (DaWGs)は、freenode IRC 上の #ansible-docs チャンネルで、毎週木曜日に集まっています。議題へのリンクや、カレンダーの招待状などの詳細は、「`コミュニティーレポジトリーのワーキンググループページ <https://github.com/ansible/community/wiki/Docs>`_」をご覧ください。"
+
+#: ../../rst/community/documentation_contributions.rst:212
+msgid ":ref:`More about testing module documentation <testing_module_documentation>`"
+msgstr ":ref:`More about testing module documentation <testing_module_documentation>`"
+
+#: ../../rst/community/documentation_contributions.rst:214
+msgid ":ref:`More about documenting modules <module_documenting>`"
+msgstr ":ref:`More about documenting modules <module_documenting>`"
+
+#: ../../rst/community/github_admins.rst:5
+msgid "GitHub Admins"
+msgstr "GitHub 管理者"
+
+#: ../../rst/community/github_admins.rst:9
+msgid "GitHub Admins have more permissions on GitHub than normal contributors or even committers.  There are a few responsibilities that come with that increased power."
+msgstr "GitHub 管理者には、通常の貢献者や、コミットするユーザーよりも多くの権限が付与されています。このように権限の増加に伴い、いくつかの責任が発生します"
+
+#: ../../rst/community/github_admins.rst:14
+msgid "Adding and removing committers"
+msgstr "コミットを行うユーザーの追加および削除"
+
+#: ../../rst/community/github_admins.rst:16
+msgid "The Ansible Team will periodically review who is actively contributing to Ansible to grant or revoke contributors' ability to commit on their own.  GitHub Admins are the people who have the power to actually manage the GitHub permissions."
+msgstr "Ansible チームは、誰が Ansible に積極的に貢献しているかを定期的に確認して、貢献者のコミット権限を許可したり取り消したりします。GitHub 管理者は、GitHub パーミッションを実際に管理する権限を持つユーザーです。"
+
+#: ../../rst/community/github_admins.rst:22
+msgid "Changing branch permissions for releases"
+msgstr "リリースのブランチパーミッションの変更"
+
+#: ../../rst/community/github_admins.rst:24
+msgid "When we make releases we make people go through a :ref:`release_managers` to push commits to that branch.  The GitHub admins are responsible for setting the branch so only the Release Manager can commit to the branch when the release process reaches that stage and later opening the branch once the release has been made.  The Release manager will let the GitHub Admin know when this needs to be done."
+msgstr "リリースを行う場合は、:ref:`release_managers` に沿って、そのブランチへのコミットをプッシュします。GitHub 管理者には、リリースプロセスがその段階に達したときにリリースマネージャーだけがブランチにコミットできるようにブランチを設定し、リリースが完了した後にブランチを開く責任があります。この設定が必要になると、リリースマネージャーが GitHub 管理者に知らせます。"
+
+#: ../../rst/community/github_admins.rst:30
+msgid "The `GitHub Admin Process Docs <https://docs.google.com/document/d/1gWPtxNX4J39uIzwqQWLIsTZ1dY_AwEZzAd9bJ4XtZso/edit#heading=h.2wezayw9xsqz>`_ for instructions on how to change branch permissions."
+msgstr "ブランチパーミッションを変更する方法は、「`GitHub Admin Process Docs <https://docs.google.com/document/d/1gWPtxNX4J39uIzwqQWLIsTZ1dY_AwEZzAd9bJ4XtZso/edit#heading=h.2wezayw9xsqz>`_」を参照してください。"
+
+#: ../../rst/community/how_can_I_help.rst:5
+msgid "How can I help?"
+msgstr "貢献方法"
+
+#: ../../rst/community/how_can_I_help.rst:10
+msgid "Thanks for being interested in helping the Ansible project!"
+msgstr "Ansible プロジェクトを支援することに関心をお寄せいただきありがとうございます。"
+
+#: ../../rst/community/how_can_I_help.rst:12
+msgid "There are many ways to help the Ansible project...but first, please read and understand the :ref:`code_of_conduct`."
+msgstr "Ansible プロジェクトを支援する方法は多数ありますが、まずは「:ref:`code_of_conduct`」を読んで理解してください。"
+
+#: ../../rst/community/how_can_I_help.rst:15
+msgid "Become a power user"
+msgstr "パワーユーザーになる"
+
+#: ../../rst/community/how_can_I_help.rst:17
+msgid "A great way to help the Ansible project is to become a power user:"
+msgstr "Ansible プロジェクトを支援する素晴らしい方法は、パワーユーザーになることです。"
+
+#: ../../rst/community/how_can_I_help.rst:19
+msgid "Use Ansible everywhere you can"
+msgstr "Ansible をできる限り使用する。"
+
+#: ../../rst/community/how_can_I_help.rst:20
+msgid "Take tutorials and classes"
+msgstr "チュートリアルやクラスを受講する。"
+
+#: ../../rst/community/how_can_I_help.rst:21
+msgid "Read the :ref:`official documentation <ansible_documentation>`"
+msgstr ":ref:`公式ドキュメント <ansible_documentation>` を読む。"
+
+#: ../../rst/community/how_can_I_help.rst:22
+msgid "Study some of the `many excellent books <https://www.amazon.com/s/ref=nb_sb_ss_c_2_7?url=search-alias%3Dstripbooks&field-keywords=ansible&sprefix=ansible%2Caps%2C260>`_ about Ansible"
+msgstr "Ansible に関する `多くの優れた書籍 <https://www.amazon.com/s/ref=nb_sb_ss_c_2_7?url=search-alias%3Dstripbooks&field-keywords=ansible&sprefix=ansible%2Caps%2C260>`_ の中からいくつか選んで勉強する。"
+
+#: ../../rst/community/how_can_I_help.rst:23 ../../rst/community/index.rst:31
+msgid "`Get certified <https://www.ansible.com/products/training-certification>`_."
+msgstr "`認定を受ける <https://www.ansible.com/products/training-certification>`。"
+
+#: ../../rst/community/how_can_I_help.rst:25
+msgid "When you become a power user, your ability and opportunities to help the Ansible project in other ways will multiply quickly."
+msgstr "パワーユーザーになると、Ansible プロジェクトを他の方法で支援する能力と機会が急速に増えます。"
+
+#: ../../rst/community/how_can_I_help.rst:28
+msgid "Ask and answer questions online"
+msgstr "オンラインで質問し、質問に回答"
+
+#: ../../rst/community/how_can_I_help.rst:30
+msgid "There are many forums online where Ansible users ask and answer questions. Reach out and communicate with your fellow Ansible users."
+msgstr "オンラインには、Ansible ユーザーが質問をしたり、質問に答えたりするフォーラムが多数あります。他の Ansible ユーザーに連絡してコミュニケーションを行いましょう。"
+
+#: ../../rst/community/how_can_I_help.rst:32
+msgid "You can find the official :ref:`Ansible communication channels <communication>`."
+msgstr "公式の :ref:`Ansible コミュニケーションチャンネル <communication>` があります。"
+
+#: ../../rst/community/how_can_I_help.rst:35
+msgid "Review, fix, and maintain the documentation"
+msgstr "ドキュメントの確認、修正、および維持"
+
+#: ../../rst/community/how_can_I_help.rst:37
+msgid "Typos are everywhere, even in the Ansible documentation. We work hard to keep the documentation up-to-date, but you may also find outdated examples. We offer easy ways to :ref:`report and/or fix documentation errors <community_documentation_contributions>`."
+msgstr "Ansible ドキュメントに誤字が含まれる場合があります。ドキュメントを最新の状態に保つように努めていますが、古い例が見つかる場合もあります。:ref:`ドキュメントエラーを報告または修正する <community_documentation_contributions>` 簡単な方法を提供しています。"
+
+#: ../../rst/community/how_can_I_help.rst:42
+msgid "Participate in your local meetup"
+msgstr "各地の Meetup に参加"
+
+#: ../../rst/community/how_can_I_help.rst:44
+msgid "There are Ansible meetups `all over the world <https://www.meetup.com/topics/ansible/>`_. Join your local meetup. Attend regularly. Ask good questions. Volunteer to give a presentation about how you use Ansible."
+msgstr "Ansible の Meetup は `世界中 <https://www.meetup.com/topics/ansible/>`_ で開催されています。お住いの地域で開催される Meetup に参加してください。定期的に参加してください。質問をしてください。Ansible の使用方法に関するプレゼンテーションを自発的に行ってください。"
+
+#: ../../rst/community/how_can_I_help.rst:46
+msgid "If there is no meetup near you, we are happy to help you `start one <https://www.ansible.com/community/events/ansible-meetups>`_."
+msgstr "お近くで Meetup が開催されない場合は、`新たに開催する <https://www.ansible.com/community/events/ansible-meetups>`_ ことをお手伝いします。"
+
+#: ../../rst/community/how_can_I_help.rst:49
+msgid "File and verify issues"
+msgstr "問題の報告および確認"
+
+#: ../../rst/community/how_can_I_help.rst:51
+msgid "All software has bugs, and Ansible is no exception. When you find a bug, you can help tremendously by :ref:`telling us about it <reporting_bugs_and_features>`."
+msgstr "すべてのソフトウェアにはバグがあり、Ansible も例外ではありません。バグを見つけた場合は、:ref:`報告 <reporting_bugs_and_features>` していただくと非常に助かります。"
+
+#: ../../rst/community/how_can_I_help.rst:54
+msgid "If the bug you found already exists in an issue, you can help by verifying the behavior of the reported bug with a comment in that issue, or by reporting any additional information."
+msgstr "報告しようとしているバグがすでに報告されている場合は、報告されているバグの動作をその問題のコメントで検証したり、追加情報を報告したりすることが助けになります。"
+
+#: ../../rst/community/how_can_I_help.rst:57
+msgid "Review and submit pull requests"
+msgstr "プル要求の確認および提出"
+
+#: ../../rst/community/how_can_I_help.rst:59
+msgid "As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you have a fix for a bug in Ansible, or if you have a new feature that you would like to share with millions of Ansible users, read all about the :ref:`Ansible development process <community_development_process>` and and :ref:`how to contribute to collections <contributing_maintained_collections>` to learn how to get your code accepted into Ansible."
+msgstr "Ansible の機能について理解が深まると、問題を修正したり、新しい機能を自分で開発したりできるようになります。Ansible で見つかったバグの解決策を見つけた場合や、自身が作成した新機能を何百万人もの Ansible ユーザーと共有したい場合は、「:ref:`Ansible の開発プロセス <community_development_process>`」および「:ref:`コレクションへの貢献方法 <contributing_maintained_collections>`」をよく読んで、作成したコードを Ansible に受け入れてもらう方法を学んでください。"
+
+#: ../../rst/community/how_can_I_help.rst:61
+msgid "Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/pr/byfile.html>`_, so if a particular module or plugin interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback."
+msgstr "もう 1 つの貢献方法は、別の Ansible ユーザーが作成したプル要求を確認することです。Ansible コミュニティーは、`ファイルごとにオープンなプル要求 <https://ansible.sivel.net/pr/byfile.html>`_ の完全なリストを保持しています。したがって、特に興味のある特定のモジュールやプラグインがあれば、関連する新しいプル要求をすべて簡単に追跡して、テストやフィードバックを提供できます。"
+
+#: ../../rst/community/how_can_I_help.rst:64
+msgid "Become a collection maintainer"
+msgstr "コレクションメンテナーになる"
+
+#: ../../rst/community/how_can_I_help.rst:66
+msgid "Once you have learned about the development process and have contributed code to a collection, we encourage you to become a maintainer of that collection. There are hundreds of modules in dozens of Ansible collections, and the vast majority of them are written and maintained entirely by members of the Ansible community."
+msgstr "開発プロセスについて学習し、コードをコレクションに提供したら、そのコレクションのメンテナーになるよう推奨されます。Ansible には数百ものモジュールがあり、その大部分は Ansible コミュニティーのメンバーによって完全に記述され、維持されています。"
+
+#: ../../rst/community/how_can_I_help.rst:68
+msgid "To learn more about the responsibilities of being an Ansible module maintainer, please read our :ref:`collection maintainer guidelines <maintainers>`."
+msgstr "Ansible モジュールメンテナーにおける責任の詳細は、「:ref:`モジュールのメンテナーガイドライン <maintainers>`」を参照してください。"
+
+#: ../../rst/community/how_can_I_help.rst:73
+msgid "Join a working group"
+msgstr "ワーキンググループへの参加"
+
+#: ../../rst/community/how_can_I_help.rst:75
+msgid "Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the :ref:`Ansible Working Groups<working_group_list>`."
+msgstr "ワーキンググループは、Ansible コミュニティーのメンバーが関心のある特定のトピックについて自己編成する方法です。さまざまなトピックに関するワーキンググループがあります。ワーキンググループに参加するか、「:ref:`Ansible ワーキンググループ<working_group_list>`」を参照してください。"
+
+#: ../../rst/community/how_can_I_help.rst:79
+msgid "Teach Ansible to others"
+msgstr "Ansible を紹介する"
+
+#: ../../rst/community/how_can_I_help.rst:81
+msgid "We are working on a standardized `Ansible workshop <https://ansible.github.io/workshops/>`_ that can provide a good hands-on introduction to Ansible usage and concepts."
+msgstr "現在、Ansible の使用方法や概念をしっかりとハンズオンで紹介できる標準化された `Ansible ワークショップ <https://ansible.github.io/workshops/>`_ に取り組んでいます。"
+
+#: ../../rst/community/how_can_I_help.rst:84
+msgid "Social media"
+msgstr "ソーシャルメディア"
+
+#: ../../rst/community/how_can_I_help.rst:86
+msgid "If you like Ansible and just want to spread the good word, feel free to share on your social media platform of choice, and let us know by using ``@ansible`` or ``#ansible``. We'll be looking for you."
+msgstr "Ansible が好きで、Ansible の良さを広めたい方は、お好きなソーシャルメディアプラットフォームで気軽にシェアしてください。コミュニティーメンバーが気が付くように、``@ansible`` または ``#ansible`` を使用することが推奨されます。"
+
+#: ../../rst/community/index.rst:88
+msgid "Guidelines for specific types of contributors"
+msgstr "貢献者向け各ガイドライン"
+
+#: ../../rst/community/index.rst:5
+msgid "Ansible Community Guide"
+msgstr "Ansible コミュニティーガイド"
+
+#: ../../rst/community/index.rst:9
+msgid "**Making Open Source More Inclusive**"
+msgstr "**多様性を受け入れるオープンソースの強化**"
+
+#: ../../rst/community/index.rst:11
+msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>` を参照してください。"
+
+#: ../../rst/community/index.rst:13
+msgid "Welcome to the Ansible Community Guide!"
+msgstr "Ansible コミュニティーガイドにようこそ!"
+
+#: ../../rst/community/index.rst:15
+msgid "The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and necessary to Ansible's continued success."
+msgstr "本ガイドの目的は、Ansible コミュニティーに貢献する際に必要な知識をすべて説明することです。あらゆる種類の貢献が、Ansible の継続的な成功に必要なものであり、歓迎されます。"
+
+#: ../../rst/community/index.rst:17
+msgid "This page outlines the most common situations and questions that bring readers to this section. If you prefer a :ref:`traditional table of contents <community_toc>`, you can find one at the bottom of the page."
+msgstr "このページでは、本セクションにたどり着いたユーザーにとって最も一般的な状況や質問の概要を説明します。:ref:`従来の目次形式 <community_toc>` をご希望のユーザー向けに、ページの一番下に目次が用意されています。"
+
+#: ../../rst/community/index.rst:21
+msgid "Getting started"
+msgstr "はじめに"
+
+#: ../../rst/community/index.rst:23
+msgid "I am new to the community. Where can I find the Ansible :ref:`code_of_conduct`?"
+msgstr "このコミュニティーに参加して間もないです。Ansible の :ref:`code_of_conduct` はどこで確認できますか。"
+
+#: ../../rst/community/index.rst:24
+msgid "I would like to know what I am agreeing to when I contribute to Ansible. Does Ansible have a :ref:`contributor_license_agreement`?"
+msgstr "Ansible に貢献する際に何に同意しているのか知りたいのです。Ansible には :ref:`contributor_license_agreement` がありますか。"
+
+#: ../../rst/community/index.rst:25
+msgid "I would like to contribute but I am not sure how. Are there :ref:`easy ways to contribute <how_can_i_help>`?"
+msgstr "貢献したいのですが、方法がわかりません。:ref:`簡単に貢献する方法 <how_can_i_help>` はありますか。"
+
+#: ../../rst/community/index.rst:26
+msgid "I want to talk to other Ansible users. How do I find an `Ansible Meetup near me <https://www.meetup.com/topics/ansible/>`_?"
+msgstr "他の Ansible ユーザーと話をしてみたいです。`私が参加できる Ansible Meetup <https://www.meetup.com/topics/ansible/>`_ はどのように探せばいいですか。"
+
+#: ../../rst/community/index.rst:27
+msgid "I have a question. Which :ref:`Ansible email lists and IRC channels <communication>` will help me find answers?"
+msgstr "質問があります。:ref:`Ansible のメーリングリストや IRC チャンネル <communication>` で答えを見つけるにはどうすればいいですか。"
+
+#: ../../rst/community/index.rst:28
+msgid "I want to learn more about Ansible. What can I do?"
+msgstr "Ansible についてもっと知りたいです。どうすればよいでしょうか。"
+
+#: ../../rst/community/index.rst:30
+msgid "`Read books <https://www.ansible.com/resources/ebooks>`_."
+msgstr "`本を読む <https://www.ansible.com/resources/ebooks>`_。"
+
+#: ../../rst/community/index.rst:32
+msgid "`Attend events <https://www.ansible.com/community/events>`_."
+msgstr "`イベントに参加する <https://www.ansible.com/community/events>`_。"
+
+#: ../../rst/community/index.rst:33
+msgid "`Review getting started guides <https://www.ansible.com/resources/get-started>`_."
+msgstr "`スタートガイドを確認する <https://www.ansible.com/resources/get-started>`_。"
+
+#: ../../rst/community/index.rst:34
+msgid "`Watch videos <https://www.ansible.com/resources/videos>`_ - includes Ansible Automates, AnsibleFest & webinar recordings."
+msgstr "`ビデオを観る <https://www.ansible.com/resources/videos>`_ (Ansible Automates、AnsibleFest、ウェビナーの録画など)。"
+
+#: ../../rst/community/index.rst:36
+msgid "I would like updates about new Ansible versions. How are `new releases announced <https://groups.google.com/forum/#!forum/ansible-announce>`_?"
+msgstr "Ansible の新しいバージョンに関する最新情報を知りたいです。`新しいリリースの発表 <https://groups.google.com/forum/#!forum/ansible-announce>`_ はどのように行われますか。"
+
+#: ../../rst/community/index.rst:37
+msgid "I want to use the current release. How do I know which :ref:`releases are current <release_schedule>`?"
+msgstr "最新のリリースを使用したいです。:ref:`どのリリースが最新のリリース <release_schedule>` かを知るにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:40
+msgid "Going deeper"
+msgstr "使い慣れてきた頃"
+
+#: ../../rst/community/index.rst:42
+msgid "I think Ansible is broken. How do I :ref:`report a bug <reporting_bugs>`?"
+msgstr "Ansible が破損しているように見えます。:ref:`バグを報告 <reporting_bugs>` するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:43
+msgid "I need functionality that Ansible does not offer. How do I :ref:`request a feature <request_features>`?"
+msgstr "Ansible が提供していない機能が必要です。:ref:`機能を要求 <request_features>` するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:44
+msgid "How do I :ref:`contribute to an Ansible-maintained collection <contributing_maintained_collections>`?"
+msgstr ":ref:`Ansible が管理するコレクションに貢献 <contributing_maintained_collections>` するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:45
+msgid "I am waiting for a particular feature. How do I see what is :ref:`planned for future Ansible Releases <roadmaps>`?"
+msgstr "特定の機能が必要です。:ref:`Ansible の将来のリリースで予定されている <roadmaps>` ものを確認するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:46
+msgid "I have a specific Ansible interest or expertise (for example, VMware, Linode, and so on). How do I get involved in a :ref:`working group <working_group_list>`?"
+msgstr "特定の Ansible 機能に関心がある、または専門知識があります (VMware、Linode など)。:ref:`ワーキンググループ <working_group_list>` に参加するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:47
+msgid "I would like to participate in conversations about features and fixes. How do I review GitHub issues and pull requests?"
+msgstr "機能や修正に関する議論に参加したいです。GitHub の問題やプル要求を確認するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:48
+msgid "I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>`?"
+msgstr "docs.ansible.com でタイポなどの誤りを見つけました。:ref:`ドキュメントを改善 <community_documentation_contributions>` するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:49
+msgid "Is there a :ref:`mailing list <communication>` I can sign up for to stay informed about Ansible?"
+msgstr "サインアップして Ansible に関する通知を受けることができる :ref:`メーリングリスト <communication>` はありますか。"
+
+#: ../../rst/community/index.rst:53
+msgid "Working with the Ansible repo"
+msgstr "Ansible リポジトリーの使用"
+
+#: ../../rst/community/index.rst:55
+msgid "I want to make my first code changes to a collection or to ``ansible-base``. How do I :ref:`set up my Python development environment <environment_setup>`?"
+msgstr "コレクションまたは ``ansible-base`` に初めてコード変更をします。:ref:`Python 開発環境を設定 <environment_setup>` するにはどうしたら良いですか。"
+
+#: ../../rst/community/index.rst:56
+msgid "I would like to get more efficient as a developer. How can I find :ref:`editors, linters, and other tools <other_tools_and_programs>` that will support my Ansible development efforts?"
+msgstr "開発者としてもっと効率的に作業したいです。Ansible 開発をサポートする :ref:`エディター、Linter などのツール <other_tools_and_programs>` はどうやって見つければ良いですか。"
+
+#: ../../rst/community/index.rst:57
+msgid "I want my code to meet Ansible's guidelines. Where can I find  guidance on :ref:`coding in Ansible <developer_guide>`?"
+msgstr "自分のコードを Ansible のガイドラインに沿ったものにしたいです。:ref:`Ansible でのコーディング <developer_guide>` に関するガイダンスはどこにありますか。"
+
+#: ../../rst/community/index.rst:58
+msgid "I want to learn more about Ansible roadmaps, releases, and projects. How do I find information on :ref:`the development cycle <community_development_process>`?"
+msgstr "Ansible のロードマップ、リリース、およびプロジェクトについて詳しく知りたいです。:ref:`開発サイクル <community_development_process>` に関する情報はどこにありますか。"
+
+#: ../../rst/community/index.rst:59
+msgid "I would like to connect Ansible to a new API or other resource. How do I :ref:`create a collection <developing_modules_in_groups>`?"
+msgstr "Ansible を新しい API やその他のリソースに接続したいです。:ref:`関連モジュールのグループに貢献 <developing_modules_in_groups>` するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:60
+msgid "My pull request is marked ``needs_rebase``. How do I :ref:`rebase my PR <rebase_guide>`?"
+msgstr "プル要求に ``needs_rebase`` というマークが付いています。:ref:`自分のプル要求をリベース <rebase_guide>` するにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:61
+msgid "I am using an older version of Ansible and want a bug fixed in my version that has already been fixed on the ``devel`` branch. How do I :ref:`backport a bugfix PR <backport_process>`?"
+msgstr "Ansible の古いバージョンを使用していますが、``devel`` ブランチですでに修正されているバグを、私の使用しているバージョンで修正してほしいです。:ref:`バグ修正のプル要求 <backport_process>` をバックポートするにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:62
+msgid "I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?"
+msgstr "オープンになっているプル要求でテストに失敗しているものがあります。Ansible の :ref:`テスト (CI) プロセス <developing_testing>` について学ぶにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:63
+msgid "I am ready to step up as a collection maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?"
+msgstr "コレクションメンテナーになりたいです。:ref:`メンテナー向けガイドライン <maintainers>` を教えてください。"
+
+#: ../../rst/community/index.rst:64
+msgid "A module in a collection I maintain is obsolete. How do I :ref:`deprecate a module <deprecating_modules>`?"
+msgstr "私が保守しているモジュールが古くなりました。:ref:`モジュールを非推奨 <deprecating_modules>` にするにはどうすれば良いですか。"
+
+#: ../../rst/community/index.rst:69
+msgid "Traditional Table of Contents"
+msgstr "従来の目次"
+
+#: ../../rst/community/index.rst:71
+msgid "If you prefer to read the entire Community Guide, here is a list of the pages in order:"
+msgstr "コミュニティーガイド全体をお読みになりたい方は、こちらのページを順番にご覧ください。"
+
+#: ../../rst/community/maintainers.rst:5
+msgid "Collection maintainer guidelines"
+msgstr "コレクションメンテナーのガイドライン"
+
+#: ../../rst/community/maintainers.rst:7
+msgid "Thank you for being a community collection maintainer. This guide offers an overview of your responsibilities as a maintainer along with resources for additional information. The Ansible community hopes that you will find that maintaining a collection is as rewarding for you as having the collection content is for the wider community."
+msgstr "Ansible のコミュニティーコレクションのメンテナーになっていただきありがとうございます。本ガイドでは、メンテナーの責任の概要、追加情報のリソースを紹介します。Ansible コミュニティーは、コレクションのコンテンツを持つことがより広いコミュニティーにとって有益であるのと同様に、コレクションを維持することが皆様にとっても有益であると感じていただけることを願っています。"
+
+#: ../../rst/community/maintainers.rst:12
+msgid "In addition to the information below, module maintainers should be familiar with:"
+msgstr "以下の情報に加えて、モジュールメンテナーは以下について理解しておく必要があります。"
+
+#: ../../rst/community/maintainers.rst:14
+msgid ":ref:`General Ansible community development practices <ansible_community_guide>`"
+msgstr ":ref:`Ansible コミュニティー開発に関する一般的なプラクティス <ansible_community_guide>`"
+
+#: ../../rst/community/maintainers.rst:15
+msgid "Documentation on :ref:`module development <developing_modules>`"
+msgstr ":ref:`モジュール開発 <developing_modules>` に関するドキュメント"
+
+#: ../../rst/community/maintainers.rst:19
+msgid "Maintainer responsibilities"
+msgstr "メンテナーの役割"
+
+#: ../../rst/community/maintainers.rst:21
+msgid "When you contribute a module to a collection included in the ``ansible`` package, you become a maintainer for that module once it has been merged. Maintainership empowers you with the authority to accept, reject, or request revisions to pull requests on your module -- but as they say, \"with great power comes great responsibility.\""
+msgstr "``ansible`` パッケージに含まれるコレクションにモジュールを提供し、それがマージされると、そのモジュールのメンテナーになります。メンテナーになると、主に、モジュールへのプル要求を許可、拒否、またはリクエストする権限を持つことになりますが、「権限が大きくなると責任も大きくなる」とも言えます。"
+
+#: ../../rst/community/maintainers.rst:23
+msgid "Maintainers of Ansible collections are expected to provide feedback, responses, or actions on pull requests or issues to the collection(s) they maintain in a reasonably timely manner. You can also update the contributor guidelines for that collection, in collaboration with the Ansible community team and the other maintainers of that collection."
+msgstr "Ansible コレクションのメンテナーは、プル要求または問題に対するフィードバック、応答、またはアクションを、合理的な時間内に、維持するコレクションに提供することが期待されています。また、Ansible コミュニティーチームやそのコレクションの他のメンテナーと協力して、そのコレクションの貢献者ガイドラインを更新することもできます。"
+
+#: ../../rst/community/maintainers.rst:26
+msgid "Resources"
+msgstr "リソース"
+
+#: ../../rst/community/maintainers.rst:28
+msgid "Please see :ref:`communication` for ways to contact the broader Ansible community. For maintainers, following the `ansible-devel <https://groups.google.com/forum/#!forum/ansible-devel>`_ mailing list is a great way to participate in conversations about coding, get assistance when you need it, and influence the overall direction, quality, and goals of Ansible and the collections. If you are not on this relatively low-volume list, please join us here: https://groups.google.com/forum/#!forum/ansible-devel"
+msgstr "幅広い Ansible コミュニティーに連絡する方法は、:ref:`communication` を参照してください。`ansible-devel <https://groups.google.com/forum/#!forum/ansible-devel>`_ メーリングリストに参加することは、メンテナーにとって、コーディングに関する対話に参加し、必要に応じて支援を受け、Ansible およびコレクションの全体的な方向、品質、および目的に影響を与えるための優れた方法です。このリストに載っていない場合はhttps://groups.google.com/forum/#!forum/ansible-devel に参加してください。"
+
+#: ../../rst/community/maintainers.rst:32
+msgid "Pull requests, issues, and workflow"
+msgstr "プル要求、問題、およびワークフロー"
+
+#: ../../rst/community/maintainers.rst:34
+msgid "Each collection community can set its own rules and workflow for managing pull requests, bug reports, documentation issues, and feature requests, as well as adding and replacing maintainers."
+msgstr "各コレクションコミュニティーは、プル要求、バグレポート、ドキュメント問題、および機能リクエストを管理する独自のルールおよびワークフローを設定できます。また、メンテナーの追加および置き換えも可能です。"
+
+#: ../../rst/community/other_tools_and_programs.rst:5
+msgid "Other Tools and Programs"
+msgstr "その他のツールおよびプログラム"
+
+#: ../../rst/community/other_tools_and_programs.rst:10
+msgid "The Ansible community uses a range of tools for working with the Ansible project. This is a list of some of the most popular of these tools."
+msgstr "Ansible コミュニティーは、Ansible プロジェクトで作業するためにさまざまなツールを使用します。ここでは、これらのツールの中でも特に人気のあるものをいくつか紹介します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:12
+msgid "If you know of any other tools that should be added, this list can be updated by clicking \"Edit on GitHub\" on the top right of this page."
+msgstr "他にも追加すべきツールがあれば、このページの右上にある「Edit on GitHub」をクリックすると、この一覧を更新できます。"
+
+#: ../../rst/community/other_tools_and_programs.rst:16
+msgid "Popular editors"
+msgstr "人気のあるエディター"
+
+#: ../../rst/community/other_tools_and_programs.rst:19
+msgid "Atom"
+msgstr "Atom"
+
+#: ../../rst/community/other_tools_and_programs.rst:21
+msgid "An open-source, free GUI text editor created and maintained by GitHub. You can keep track of git project changes, commit from the GUI, and see what branch you are on. You can customize the themes for different colors and install syntax highlighting packages for different languages. You can install Atom on Linux, macOS and Windows. Useful Atom plugins include:"
+msgstr "GitHub で作成および保守されるオープンソースの無料 GUI テキストエディター。git プロジェクトの変更を追跡したり、GUI からコミットしたり、自分がどのブランチにいるかを確認できます。テーマをカスタマイズして色を変えたり、言語ごとに構文強調表示パッケージをインストールしたりできます。Atom は、Linux、macOS、および Windows にインストールできます。便利な Atom プラグインには以下が含まれます。"
+
+#: ../../rst/community/other_tools_and_programs.rst:24
+msgid "`language-yaml <https://atom.io/packages/language-yaml>`_ - YAML highlighting for Atom (built-in)."
+msgstr "`language-yaml <https://atom.io/packages/language-yaml>`_ - Atom での YAML の強調表示 (組み込み)。"
+
+#: ../../rst/community/other_tools_and_programs.rst:25
+msgid "`linter-js-yaml <https://atom.io/packages/linter-js-yaml>`_ - parses your YAML files in Atom through js-yaml."
+msgstr "`linter-js-yaml <https://atom.io/packages/linter-js-yaml>`_ - js-yaml を介して Atom で YAML ファイルを解析。"
+
+#: ../../rst/community/other_tools_and_programs.rst:29
+msgid "Emacs"
+msgstr "Emacs"
+
+#: ../../rst/community/other_tools_and_programs.rst:31
+msgid "A free, open-source text editor and IDE that supports auto-indentation, syntax highlighting and built in terminal shell(among other things)."
+msgstr "無料でオープンソースのテキストエディターと IDE。オートインデント、構文強調表示、端末シェルでのビルドなどをサポートします。"
+
+#: ../../rst/community/other_tools_and_programs.rst:33
+msgid "`yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML highlighting and syntax checking."
+msgstr "`yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML の強調表示と構文のチェック。"
+
+#: ../../rst/community/other_tools_and_programs.rst:34
+msgid "`jinja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking."
+msgstr "`jinja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 の強調表示と構文の確認。"
+
+#: ../../rst/community/other_tools_and_programs.rst:35
+msgid "`magit-mode <https://github.com/magit/magit>`_ -  Git porcelain within Emacs."
+msgstr "`magit-mode <https://github.com/magit/magit>`_ - Emacs 内での git porcelain (磁器)。"
+
+#: ../../rst/community/other_tools_and_programs.rst:39
+msgid "PyCharm"
+msgstr "PyCharm"
+
+#: ../../rst/community/other_tools_and_programs.rst:41
+msgid "A full IDE (integrated development environment) for Python software development. It ships with everything you need to write python scripts and complete software, including support for YAML syntax highlighting. It's a little overkill for writing roles/playbooks, but it can be a very useful tool if you write modules and submit code for Ansible. Can be used to debug the Ansible engine."
+msgstr "Python ソフトウェア開発向けの完全な IDE (統合開発環境)。これには、YAML 構文強調表示のサポートを含む、Python スクリプトを記述するのに必要なすべてのものと完全なソフトウェアが同梱されています。ロール/Playbook の作成には少し時間がかかりますが、モジュールを作成し、Ansible 用のコードを送信する場合は、非常に便利なツールになります。Ansible エンジンのデバッグに使用できます。"
+
+#: ../../rst/community/other_tools_and_programs.rst:45
+msgid "Sublime"
+msgstr "Sublime"
+
+#: ../../rst/community/other_tools_and_programs.rst:47
+msgid "A closed-source, subscription GUI text editor. You can customize the GUI with themes and install packages for language highlighting and other refinements. You can install Sublime on Linux, macOS and Windows. Useful Sublime plugins include:"
+msgstr "クローズドソースのサブスクリプション GUI テキストエディター。テーマを使用して GUI をカスタマイズしたり、言語の強調表示やその他の改良のためのパッケージをインストールしたりすることができます。Sublime は Linux、macOS、Windows にインストールできます。便利な Sublime プラグインには以下のものがあります。"
+
+#: ../../rst/community/other_tools_and_programs.rst:49
+msgid "`GitGutter <https://packagecontrol.io/packages/GitGutter>`_ - shows information about files in a git repository."
+msgstr "`GitGutter <https://packagecontrol.io/packages/GitGutter>`_ - git リポジトリー内のファイルに関する情報を表示します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:50
+msgid "`SideBarEnhancements <https://packagecontrol.io/packages/SideBarEnhancements>`_ - provides enhancements to the operations on Sidebar of Files and Folders."
+msgstr "`SideBarEnhancements <https://packagecontrol.io/packages/SideBarEnhancements>`_ - ファイルおよびディレクトリーのサイドバーに対する操作の強化を提供します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:51
+msgid "`Sublime Linter <https://packagecontrol.io/packages/SublimeLinter>`_ - a code-linting framework for Sublime Text 3."
+msgstr "`Sublime Linter <https://packagecontrol.io/packages/SublimeLinter>`_ - Sublime Text 3 のコードの文法チェックフレームワークです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:52
+msgid "`Pretty YAML <https://packagecontrol.io/packages/Pretty%20YAML>`_ - prettifies YAML for Sublime Text 2 and 3."
+msgstr "`Pretty YAML <https://packagecontrol.io/packages/Pretty%20YAML>`_ - Sublime Text 2 および 3 の YAML を事前設定します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:53
+msgid "`Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - a Sublime wrapper around yamllint."
+msgstr "`Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - yamllint に関する Sublime ラッパーです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:57
+msgid "Visual studio code"
+msgstr "Visual Studio コード"
+
+#: ../../rst/community/other_tools_and_programs.rst:59
+msgid "An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:"
+msgstr "Microsoft が作成および管理するオープンソースの無料 GUI テキストエディター。便利な Visual Studio Code プラグインには以下が含まれます。"
+
+#: ../../rst/community/other_tools_and_programs.rst:62
+msgid "`YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - provides YAML support through yaml-language-server with built-in Kubernetes and Kedge syntax support."
+msgstr "`YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - Kubernetes と Kedge の構文サポートを組み込んだ yaml-language-server を通じて YAML サポートを提供します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:63
+msgid "`Ansible Syntax Highlighting Extension <https://marketplace.visualstudio.com/items?itemName=haaaad.ansible>`_ - YAML & Jinja2 support."
+msgstr "`Ansible Syntax Highlighting Extension <https://marketplace.visualstudio.com/items?itemName=haaaad.ansible>`_ - YAML および Jinja2 サポート。"
+
+#: ../../rst/community/other_tools_and_programs.rst:64
+msgid "`Visual Studio Code extension for Ansible <https://marketplace.visualstudio.com/items?itemName=vscoss.vscode-ansible>`_ - provides autocompletion, syntax highlighting."
+msgstr "`Visual Studio Code extension for Ansible <https://marketplace.visualstudio.com/items?itemName=vscoss.vscode-ansible>`_ - オートコンプリート、構文強調表示を提供します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:67
+msgid "vim"
+msgstr "vim"
+
+#: ../../rst/community/other_tools_and_programs.rst:69
+msgid "An open-source, free command-line text editor. Useful vim plugins include:"
+msgstr "オープンソースの無料コマンドラインテキストエディター。便利な vim プラグインには以下が含まれます。"
+
+#: ../../rst/community/other_tools_and_programs.rst:71
+msgid "`Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files."
+msgstr "`Ansible vim <https://github.com/pearofducks/ansible-vim>`_ - Ansible 2.x の vim 構文プラグイン。YAML Playbook、Jinja2 テンプレート、および Ansible ホストファイルをサポートします。"
+
+#: ../../rst/community/other_tools_and_programs.rst:74
+msgid "JetBrains"
+msgstr "JetBrains"
+
+#: ../../rst/community/other_tools_and_programs.rst:76
+msgid "An open-source Community edition and closed-source Enterprise edition, integrated development environments based on IntelliJ's framework including IDEA, AppCode, CLion, GoLand, PhpStorm, PyCharm and others. Useful JetBrains platform plugins include:"
+msgstr "オープンソースのコミュニティーエディションとクローズドソースのエンタープライズエディション、IntelliJ のフレームワークに基づく統合開発環境 (IDEA、AppCode、CLion、GoLand、PhpStorm、PyCharm などを含む)。便利な JetBrains プラットフォームプラグインは次のとおりです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:78
+msgid "`Ansible <https://plugins.jetbrains.com/plugin/14893-ansible>`_ - general Ansible plugin provides auto-completion, role name suggestion and other handy features for working with playbooks and roles."
+msgstr "`Ansible <https://plugins.jetbrains.com/plugin/14893-ansible>`_ - 一般的な Ansible プラグインは、オートコンプリート、ロール名の提案、および Playbook およびロールを操作するためのその他の便利な機能を提供します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:80
+msgid "`Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - Ansible Vault Editor with auto encryption/decryption."
+msgstr "`Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - 自動暗号化/復号機能を使用した Ansible Vault エディター"
+
+#: ../../rst/community/other_tools_and_programs.rst:84
+msgid "Development tools"
+msgstr "開発ツール"
+
+#: ../../rst/community/other_tools_and_programs.rst:87
+msgid "Finding related issues and PRs"
+msgstr "関連する問題およびプル要求の検索"
+
+#: ../../rst/community/other_tools_and_programs.rst:89
+msgid "There are various ways to find existing issues and pull requests (PRs)"
+msgstr "既存の問題およびプル要求を特定する方法は複数あります。"
+
+#: ../../rst/community/other_tools_and_programs.rst:91
+msgid "`PR by File <https://ansible.sivel.net/pr/byfile.html>`_ - shows a current list of all open pull requests by individual file. An essential tool for Ansible module maintainers."
+msgstr "`ファイル別のプル要求 <https://ansible.sivel.net/pr/byfile.html>`_ - 個別ファイルによるオープンのプル要求の現在の一覧を表示します。Ansible モジュールのメンテナーにとって不可欠なツールです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:92
+msgid "`jctanner's Ansible Tools <https://github.com/jctanner/ansible-tools>`_ - miscellaneous collection of useful helper scripts for Ansible development."
+msgstr "`jctanner の Ansible ツール <https://github.com/jctanner/ansible-tools>`_ - Ansible 開発に役立つヘルパースクリプトのさまざまなコレクション。"
+
+#: ../../rst/community/other_tools_and_programs.rst:98
+msgid "Tools for validating playbooks"
+msgstr "Playbook を検証するためのツール"
+
+#: ../../rst/community/other_tools_and_programs.rst:100
+msgid "`Ansible Lint <https://docs.ansible.com/ansible-lint/index.html>`_ - a highly configurable linter for Ansible playbooks."
+msgstr "`Ansible Lint <https://docs.ansible.com/ansible-lint/index.html>`_ - Ansible Playbook の高度な設定可能な文法チェックプログラムです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:101
+msgid "`Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review."
+msgstr "`Ansible Review <https://github.com/willthames/ansible-review>`_ - コードレビュー用に設計された Ansible Lint の拡張機能です。"
+
+#: ../../rst/community/other_tools_and_programs.rst:102
+msgid "`Molecule <https://molecule.readthedocs.io/en/latest/>`_ - a testing framework for Ansible plays and roles."
+msgstr "`Molecule <https://molecule.readthedocs.io/en/latest/>`_ - は、Anbile による Ansible のプレイおよびロールのテストフレームワークです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:103
+msgid "`yamllint <https://yamllint.readthedocs.io/en/stable/>`__ - a command-line utility to check syntax validity including key repetition and indentation issues."
+msgstr "`yamllint <https://yamllint.readthedocs.io/en/stable/>`__ - キーの繰り返しやインデントの問題など、構文の有効性を確認するコマンドラインユーティリティーです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:108
+msgid "Other tools"
+msgstr "その他のツール"
+
+#: ../../rst/community/other_tools_and_programs.rst:110
+msgid "`Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information."
+msgstr "`Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - Ansible のファクト収集の出力を受け取り、システム設定情報が含まれる静的 HTML 概要ページに変換します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:111
+msgid "`Ansible Inventory Grapher <https://github.com/willthames/ansible-inventory-grapher>`_ - visually displays inventory inheritance hierarchies and at what level a variable is defined in inventory."
+msgstr "`Ansible Inventory Grapher <https://github.com/willthames/ansible-inventory-grapher>`_ - インベントリーの継承階層と、変数がインベントリーで定義されているレベルを視覚的に表示します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:112
+msgid "`Ansible Playbook Grapher <https://github.com/haidaraM/ansible-playbook-grapher>`_ - a command line tool to create a graph representing your Ansible playbook tasks and roles."
+msgstr "`Ansible Playbook Grapher <https://github.com/haidaraM/ansible-playbook-grapher>`_ - Ansible Playbook のタスクおよびロールを表すグラフを作成するコマンドラインツールです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:113
+msgid "`Ansible Shell <https://github.com/dominis/ansible-shell>`_ - an interactive shell for Ansible with built-in tab completion for all the modules."
+msgstr "`Ansible Shell <https://github.com/dominis/ansible-shell>`_ - すべてのモジュールのタブ補完が組み込まれている Ansible 用のインタラクティブシェルです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:114
+msgid "`Ansible Silo <https://github.com/groupon/ansible-silo>`_ - a self-contained Ansible environment by Docker."
+msgstr "`Ansible Silo <https://github.com/groupon/ansible-silo>`_ - Docker による自己完結型の Ansible 環境です。"
+
+#: ../../rst/community/other_tools_and_programs.rst:115
+msgid "`Ansigenome <https://github.com/nickjj/ansigenome>`_ - a command line tool designed to help you manage your Ansible roles."
+msgstr "`Ansigenome <https://github.com/nickjj/ansigenome>`_ - Ansible ロールの管理に役立つように設計されたコマンドラインツールです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:116
+msgid "`ARA <https://github.com/openstack/ara>`_ - records Ansible playbook runs and makes the recorded data available and intuitive for users and systems by integrating with Ansible as a callback plugin."
+msgstr "`ARA <https://github.com/openstack/ara>`_ - Ansible Playbook の実行を記録し、コールバックプラグインとして Ansible と統合することにより、記録されたデータをユーザーおよびシステムが利用できる直感的なものにします。"
+
+#: ../../rst/community/other_tools_and_programs.rst:117
+msgid "`Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ - a collaboratively curated list of awesome Ansible resources."
+msgstr "`Awesome Ansible <https://github.com/jdauphant/awesome-ansible>`_ - Awesome Ansible リソースの共同キュレーションの一覧です。"
+
+#: ../../rst/community/other_tools_and_programs.rst:118
+msgid "`AWX <https://github.com/ansible/awx>`_ - provides a web-based user interface, REST API, and task engine built on top of Ansible. AWX is the upstream project for Red Hat Ansible Tower, part of the Red Hat Ansible Automation subscription."
+msgstr "`AWX <https://github.com/ansible/awx>`_ - Ansible 上に構築された Web ベースのユーザーインターフェース、REST API、およびタスクエンジンを提供します。AWX は、Red Hat Ansible Automation サブスクリプションに含まれる Red Hat Ansible Tower のアップストリームプロジェクトです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:119
+msgid "`Mitogen for Ansible <https://mitogen.networkgenomics.com/ansible_detailed.html>`_ - uses the `Mitogen <https://github.com/dw/mitogen/>`_ library to execute Ansible playbooks in a more efficient way (decreases the execution time)."
+msgstr "`Mitogen for Ansible <https://mitogen.networkgenomics.com/ansible_detailed.html>`_ - `Mitogen <https://github.com/dw/mitogen/>`_ ライブラリーを使用して、より効率的な方法で Ansible Playbook を実行します (実行時間を短縮します)。"
+
+#: ../../rst/community/other_tools_and_programs.rst:120
+msgid "`nanvault <https://github.com/marcobellaccini/nanvault>`_ - a standalone tool to encrypt and decrypt files in the Ansible Vault format, featuring UNIX-style composability."
+msgstr "`nanvault <https://github.com/marcobellaccini/nanvault>`_ - UNIX 形式の構成機能を備えた Ansible Vault 形式ファイルの暗号化および復号を行うスタンドアロンツールです。"
+
+#: ../../rst/community/other_tools_and_programs.rst:121
+msgid "`OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - uses Ansible to configure an environment that provides the support of `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_, namely centralized logging and analysis, availability monitoring, and performance monitoring."
+msgstr "`OpsTools-ansible <https://github.com/centos-opstools/opstools-ansible>`_ - Ansible を使用して `OpsTools <https://wiki.centos.org/SpecialInterestGroup/OpsTools>`_ のサポートを提供する環境 (中央型ロギングと分析、可用性監視、パフォーマンスの監視など) を設定します。"
+
+#: ../../rst/community/other_tools_and_programs.rst:122
+msgid "`TD4A <https://github.com/cidrblock/td4a>`_ - a template designer for automation. TD4A is a visual design aid for building and testing jinja2 templates. It will combine data in yaml format with a jinja2 template and render the output."
+msgstr "`TD4A <https://github.com/cidrblock/td4a>`_ - 自動化のテンプレートデザイナー。TD4A は、jinja2 テンプレートの構築とテストを行うための視覚的な設計支援ツールです。これは、yaml 形式のデータを jinja2 テンプレートと組み合わせ、出力をレンダリングします。"
+
+#: ../../rst/community/other_tools_and_programs.rst:123
+msgid "`PHP-Ansible <https://github.com/maschmann/php-ansible>`_ - an object oriented Ansible wrapper for PHP."
+msgstr "`PHP-Ansible <https://github.com/maschmann/php-ansible>`_: PHP のオブジェクト指向の Ansible ラッパー。"
+
+#: ../../rst/community/release_managers.rst:5
+msgid "Release Manager Guidelines"
+msgstr "リリースマネージャーのガイドライン"
+
+#: ../../rst/community/release_managers.rst:9
+msgid "The release manager's purpose is to ensure a smooth release.  To achieve that goal, they need to coordinate between:"
+msgstr "リリースマネージャーの目的は、スムーズなリリースを確保することです。この目的を達成するには、以下について調整する必要があります。"
+
+#: ../../rst/community/release_managers.rst:12
+msgid "Developers with commit privileges on the `Ansible GitHub repository <https://github.com/ansible/ansible/>`_"
+msgstr "`Ansible GitHub リポジトリー <https://github.com/ansible/ansible/>`_ でコミット権限を持つ開発者"
+
+#: ../../rst/community/release_managers.rst:13
+msgid "Contributors without commit privileges"
+msgstr "コミット権限のない貢献者"
+
+#: ../../rst/community/release_managers.rst:14
+msgid "The community"
+msgstr "コミュニティー"
+
+#: ../../rst/community/release_managers.rst:15
+msgid "Ansible documentation team"
+msgstr "Ansible ドキュメントチーム"
+
+#: ../../rst/community/release_managers.rst:16
+msgid "Ansible Tower team"
+msgstr "Ansible Tower チーム"
+
+#: ../../rst/community/release_managers.rst:19
+msgid "Pre-releases: what and why"
+msgstr "プレリリース: 何を/なぜ"
+
+#: ../../rst/community/release_managers.rst:21
+msgid "Pre-releases exist to draw testers. They give people who don't feel comfortable running from source control a means to get an early version of the code to test and give us feedback. To ensure we get good feedback about a release, we need to make sure all major changes in a release are put into a pre-release. Testers must be given time to test those changes before the final release. Ideally we want there to be sufficient time between pre-releases for people to install and test one version for a span of time. Then they can spend more time using the new code than installing the latest version."
+msgstr "プレリリース版はテスターを集めるために存在します。プレリリースは、ソース管理からの実行に不安を感じているユーザーに、初期バージョンのコードを手に入れてテストをしたり、フィードバックを行う手段を提供します。リリースに関する適切なフィードバックを確実に得るには、リリースに対する主要な変更がすべてプレリリースに組み込まれているようにする必要があります。テスターには、最終リリースの前にこれらの変更をテストする時間が与えられる必要があります。プレリリースとプレリリースの間に、1 つのバージョンをインストールしてテストするのに十分な時間を確保するのが理想的です。そうすれば、最新バージョンをインストールするよりも、新しいコードを使用することに多くの時間を費やすことができます。"
+
+#: ../../rst/community/release_managers.rst:29
+msgid "The right length of time for a tester is probably around two weeks. However, for our three-to-four month development cycle to work, we compress this down to one week; any less runs the risk of people spending more time installing the code instead of running it. However, if there's a time crunch (with a release date that cannot slip), it is better to release with new changes than to hold back those changes to give people time to test between. People cannot test what is not released, so we have to get those tarballs out there even if people feel they have to install more frequently."
+msgstr "テスターにとって適切な期間は、おそら 2 週間程度です。ただし、3 ~ 4か月の開発サイクルを機能させるために、この期間を 1 週間に短縮しています。これより短くなると、コードを実行する代わりにコードのインストールに多くの時間を費やしてしまう可能性があります。ただし、時間的な制約がある場合は (リリース日がずれないようにするには)、ユーザーにテストする時間を与えるために変更を保留するよりも、新しい変更を加えてリリースする方が良いでしょう。リリースされていないものはテストできないため、たとえより頻繁にインストールしなければならないと思われる場合でも、その tarball は公開すべきです。"
+
+#: ../../rst/community/release_managers.rst:38
+msgid "Beta releases"
+msgstr "ベータリリース"
+
+#: ../../rst/community/release_managers.rst:40
+msgid "In a beta release, we know there are still bugs.  We will continue to accept fixes for these. Although we review these fixes, sometimes they can be invasive or potentially destabilize other areas of the code."
+msgstr "ベータリリースでは、バグが存在していることが認識されています。これらの修正は今後も受け入れていきます。これらの修正は確認されますが、場合によっては侵襲的であったり、コードの他の領域を不安定にする可能性があります。"
+
+#: ../../rst/community/release_managers.rst:44
+msgid "During the beta, we will no longer accept feature submissions."
+msgstr "ベータ版では、機能の提出は受け付けなくなります。"
+
+#: ../../rst/community/release_managers.rst:48
+msgid "Release candidates"
+msgstr "Release Candidate (リリースの候補)"
+
+#: ../../rst/community/release_managers.rst:50
+msgid "In a release candidate, we've fixed all known blockers. Any remaining bugfixes are ones that we are willing to leave out of the release. At this point we need user testing to determine if there are any other blocker bugs lurking."
+msgstr "リリース候補では、既知のすべてのブロッカーを修正しました。残っているバグ修正は、リリースから除外しても構わないと考えています。この時点で、他にもブロッカーバグが潜んでいないかどうかを判断するために、ユーザーテストを行う必要があります。"
+
+#: ../../rst/community/release_managers.rst:54
+msgid "Blocker bugs generally are those that cause significant problems for users. Regressions are more likely to be considered blockers because they will break present users' usage of Ansible."
+msgstr "ブロッカーバグとは、一般的にユーザーに重大な問題を引き起こすバグのことです。リグレッションは、現在のユーザーの Ansible の使用方法に支障をきたすため、ブロッカーと見なされる可能性が高くなります。"
+
+#: ../../rst/community/release_managers.rst:57
+msgid "The Release Manager will cherry-pick fixes for new release blockers. The release manager will also choose whether to accept bugfixes for isolated areas of the code or defer those to the next minor release. By themselves, non-blocker bugs will not trigger a new release; they will only make it into the next major release if blocker bugs require that a new release be made."
+msgstr "リリースマネージャーは、新しいリリースのブロッカーの修正を選択します。また、リリースマネージャーは、コードの孤立した部分のバグ修正を受け入れるか、次のマイナーリリースまで受け入れを延ばすを選択します。単独では、ブロッカー以外のバグは新しいリリースのトリガーにはなりません。ブロッカーのバグにより新しいリリースを作成する必要がある場合にのみ、次のメジャーリリースになります。"
+
+#: ../../rst/community/release_managers.rst:62
+msgid "The last RC should be as close to the final as possible. The following things may be changed:"
+msgstr "最後のプル要求は可能な限り最終版に近いものとなるはずです。以下の点が変更される可能性があります。"
+
+#: ../../rst/community/release_managers.rst:64
+msgid "Version numbers are changed automatically and will differ as the pre-release tags are removed from the versions."
+msgstr "バージョン番号が自動的に変更され、プレリリースのタグが削除されるとバージョンが異なります。"
+
+#: ../../rst/community/release_managers.rst:66
+msgid "Tests and :file:`docs/docsite/` can differ if really needed as they do not break runtime. However, the release manager may still reject them as they have the potential to cause breakage that will be visible during the release process."
+msgstr "テストおよび :file:`docs/docsite/` はランタイムを破損しないため、本当に必要であれば変更しても構いません。ただし、リリースプロセス時に目に見える破損を引き起こす可能性がある場合は、リリースマネージャーが拒否する可能性があります。"
+
+#: ../../rst/community/release_managers.rst:70
+msgid "We want to specifically emphasize that code (in :file:`bin/`, :file:`lib/ansible/`, and :file:`setup.py`) must be the same unless there are extraordinary extenuating circumstances.  If there are extenuating circumstances, the Release Manager is responsible for notifying groups (like the Tower Team) which would want to test the code."
+msgstr "特別な事情がない限り、(:file:`bin/`、:file:`lib/ansible/`、および :file:`setup.py` の) コードは同じでなければなりません。特別な事情がある場合は、リリースマネージャーに、コードをテストしたいグループ (Tower チームなど) に通知する責任があります。"
+
+#: ../../rst/community/release_managers.rst:77
+msgid "Ansible release process"
+msgstr "Ansible リリースプロセス"
+
+#: ../../rst/community/release_managers.rst:79
+msgid "The release process is kept in a `separate document <https://docs.google.com/document/d/10EWLkMesi9s_CK_GmbZlE_ZLhuQr6TBrdMLKo5dnMAI/edit#heading=h.ooo3izcel3cz>`_ so that it can be easily updated during a release.  If you need access to edit this, please ask one of the current release managers to add you."
+msgstr "リリースプロセスは、リリース中に簡単に更新できるように、`別のドキュメント <https://docs.google.com/document/d/10EWLkMesi9s_CK_GmbZlE_ZLhuQr6TBrdMLKo5dnMAI/edit#heading=h.ooo3izcel3cz>`_ に保存されています。これを編集するためのアクセス権が必要な場合は、現在のリリースマネージャーに追加を依頼してください。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:5
+msgid "Reporting bugs and requesting features"
+msgstr "バグの報告および機能の要求"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:13
+msgid "Reporting a bug"
+msgstr "バグの報告"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:16
+msgid "Security bugs"
+msgstr "セキュリティーバグ"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:18
+msgid "Ansible practices responsible disclosure - if this is a security-related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to any public groups, and you will receive a prompt response."
+msgstr "Ansible は責任のある開示を実践しています。これがセキュリティー関連のバグである場合は、任意のパブリックグループにチケットを作成または投稿するのではなく、`security@ansible.com <mailto:security@ansible.com>`_ にメールで報告してください。迅速に対応されます。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:21
+msgid "Bugs in ansible-base"
+msgstr "ansible-base のバグ"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:23
+msgid "If you find a bug that affects multiple plugins, a plugin that remained in the ansible/ansible repo, or the overall functioning of Ansible, report it to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_. You need a free GitHub account.  Before reporting a bug, use the bug/issue search to see if the issue has already been reported. If you are not sure if something is a bug yet, you can report the behavior on the :ref:`mailing list or IRC first <communication>`."
+msgstr "複数のプラグイン、ansible/ansible リポジトリーに残っているプラグイン、または Ansible の全体的な機能に影響を与えるバグは、`github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ に報告します。無料の GitHub アカウントが必要になります。バグを報告する前に、バグ/問題検索を使用して、その問題がすでに報告されているかどうかを確認します。バグかどうか分からない場合は、:ref:`最初にメーリングリストまたは IRC <communication>` に動作を報告できます。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:25
+msgid "Do not open issues for \"how do I do this\" type questions.  These are great topics for IRC or the mailing list, where things are likely to be more of a discussion."
+msgstr "「How do I do this (どうすればいいのか)」というタイプの質問で、問題を作成しないでください。このタイプの問題は、物事がより多くの議論になる可能性が高い IRC またはメーリングリストにとって素晴らしいトピックです。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:27
+msgid "If you find a bug, open the issue yourself to ensure we have a record of it. Do not rely on someone else in the community to file the bug report for you. We have created an issue template, which saves time and helps us help everyone with their issues more quickly. Please fill it out as completely and as accurately as possible:"
+msgstr "バグを見つけた場合は、自分で問題を作成して、記録されたことを確認してください。コミュニティーの他の誰かがバグレポートを提出するのを待たないでください。問題テンプレートを作成しました。これにより、時間を節約し、すべての人がその問題をより迅速に解決できるようになります。できるだけ完全かつ正確に記入してください。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:29
+msgid "Include the Ansible version"
+msgstr "Ansible バージョンの記載"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:30
+msgid "Include any relevant configuration"
+msgstr "関連する設定の記載"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:31
+msgid "Include the exact commands or tasks you are running"
+msgstr "実行する正確なコマンドまたはタスクの記載"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:32
+msgid "Describe the behavior you expected"
+msgstr "期待される動作の説明"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:33
+msgid "Provide steps to reproduce the bug * Use minimal well-reduced and well-commented examples, not your entire production playbook * When sharing YAML in playbooks, preserve the formatting by using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_."
+msgstr "バグを再現するための手順の記載 * 実稼働で使用する Playbook 全体ではなく、必要な最小限の部分だけを取り出し、詳細な説明を記載 * Playbook で YAML を共有する場合は、`コードブロック  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ を使用してフォーマットを整理します。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:36
+msgid "Document the behavior you got"
+msgstr "発生した動作の記述"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:37
+msgid "Include output where possible"
+msgstr "可能な場合は出力結果の記載"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:38
+msgid "For multiple-file content, use gist.github.com, which is more durable than pastebin content"
+msgstr "コンテンツが複数ファイルの場合は、gist.github.com を使用します。これは pastebin コンテンツよりも永続的です。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:41
+msgid "Bugs in collections"
+msgstr "コレクションのバグ"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:43
+msgid "Many bugs only affect a single module or plugin. If you find a bug that affects a module or plugin hosted in a collection, file the bug in the repository of the :ref:`collection <collections>`:"
+msgstr "多くのバグは、単一のモジュールまたはプラグインにのみ影響します。コレクションでホストされるモジュールまたはプラグインに影響するバグを見つけた場合は、:ref:`コレクション <collections>` のリポジトリーにバグを報告してください。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:45
+msgid "Find the collection on Galaxy."
+msgstr "Galaxy のコレクションを見つけます。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:46
+msgid "Click on the Issue Tracker link for that collection."
+msgstr "そのコレクションの Issue Tracker リンクをクリックします。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:47
+msgid "Follow the contributor guidelines or instructions in the collection repo."
+msgstr "貢献者向けガイドラインまたはコレクションリポジトリーの指示に従ってください。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:49
+msgid "If you are not sure whether a bug is in ansible-base or in a collection, you can report the behavior on the :ref:`mailing list or IRC first <communication>`."
+msgstr "バグが ansible-base またはコレクションのどちらにあるかわからない場合は、:ref:`最初にメーリングリストまたは IRC <communication>` に動作を報告できます。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:54
+msgid "Requesting a feature"
+msgstr "機能要求"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:56
+msgid "The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-base or against a collection. See also :ref:`ansible_collection_merge_requirements`."
+msgstr "Ansible に機能を取り組むための最良の方法は、ansible-base またはコレクションに対して :ref:`プル要求を提出 <community_pull_requests>` することです。「:ref:`ansible_collection_merge_requirements`」も参照してください。"
+
+#: ../../rst/community/triage_process.rst:3
+msgid "Triage Process"
+msgstr "トリアージプロセス"
+
+#: ../../rst/community/triage_process.rst:5
+msgid "The issue and PR triage processes are driven by the `Ansibot <https://github.com/ansible/ansibullbot>`_. Whenever an issue or PR is filed, the Ansibot examines the issue to ensure that all relevant data is present, and handles the routing of the issue as it works its way to eventual completion."
+msgstr "問題およびプル要求のトリアージープロセスは `Ansibot <https://github.com/ansible/ansibullbot>`_ によって実行されます。問題やプル要求が報告されるたびに、Ansibot は問題を調べ、すべての関連データが存在することを確認し、最終的な完成に向けて問題のルーティングを処理します。"
+
+#: ../../rst/community/triage_process.rst:7
+msgid "For details on how Ansibot manages the triage process, please consult the `Ansibot Issue Guide <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_."
+msgstr "Ansibot によるトリアージプロセスの管理方法に関する詳細は、「`Ansibot 問題ガイド <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_」を参照してください。"
+
