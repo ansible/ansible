@@ -37,7 +37,7 @@ YAML Basics
 ===========
 YAML is a data formatting language. It is 'space sensitive' and relies on indentation rather than having tags (e.g.``<stuff> </endstuff>``) or other separators (``{``, ``}``, ``(``, ``)``, etc). It does have a 'short form' that looks a lot like JSON, but it is less strict about quoting. Most YAML parsers can read JSON directly.
 
-The most basic types are simple, a string looks like a string, so does a number, but once you get into 'container' types, you run into issues, the most basic containers are lists (aka arrays, stacks, etc)  and dictionaries (aka mappings, associative arrays, hashes, etc).
+The most basic types are simple. A string looks like a string, so does a number, but once you get into 'container' types, you run into issues. The most basic containers are lists (aka arrays, stacks, etc) and dictionaries (aka mappings, associative arrays, hashes, etc).
 
 
 A ``-`` character identifies a 'list item'.
