@@ -972,6 +972,11 @@ class DocCLI(CLI, RoleMixin):
             _do_lookup_snippet(text, doc)
         elif 'options' in doc:
             _do_yaml_snippet(text, doc)
+        else:
+            msg = "No snippet can be generated for this %s plugin (%s)." % (ptype, doc.get('name', doc.get(ptype, '')))
+            if ptype == 'inventory':
+                msg += ' It is only available to those with YAML type sources that can be used with the "auto" plugin.'
+            display.warning(msg)
 
         text.append('')
         return "\n".join(text)
