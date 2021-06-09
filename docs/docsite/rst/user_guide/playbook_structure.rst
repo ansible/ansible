@@ -102,7 +102,7 @@ Tasks are the most common and used item in Ansible. They are the basis of everyt
 
     - debug: msg=simple task
 
-A task is defined by the single action, you cannot have more than one action per task, that would require 2 tasks, ``name`` and other keywords are optional in the task.
+A task is defined by the single action. There may only be one action per task. The ``name`` keyword within a task is optional, but it is used during the display of Ansible output.
 
 .. code-block:: YAML
 
