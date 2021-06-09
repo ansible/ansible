@@ -1,4 +1,7 @@
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
+docs/docsite/rst/locales/ja/LC_MESSAGES/dev_guide.po no-smart-quotes  # Translation of the no-smart-quotes rule
+docs/docsite/rst/user_guide/playbooks_filters.rst docs-build
+docs/docsite/rst/user_guide/playbooks_python_version.rst docs-build
 examples/play.yml shebang
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/my_test.py shebang # example module but not in a normal module location
