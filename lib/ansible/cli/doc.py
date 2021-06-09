@@ -972,9 +972,8 @@ class DocCLI(CLI, RoleMixin):
             _do_lookup_snippet(text, doc)
         elif 'options' in doc:
             _do_yaml_snippet(text, doc)
-        else:
-            if ptype == 'inventory':
-                display.warning('Snippets are only available to inventory plugins with YAML type sources that can be used with the "auto" plugin.')
+        elif ptype == 'inventory':
+            display.warning('Snippets are only available to inventory plugins with YAML type sources that can be used with the "auto" plugin.')
 
         text.append('')
         return "\n".join(text)
