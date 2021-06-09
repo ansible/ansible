@@ -6,7 +6,7 @@ By default Ansible sends output about plays, tasks, and module arguments to your
 
 * To save Ansible output in a single log on the control node, set the ``log_path`` :ref:`configuration file setting <intro_configuration>`. You may also want to set ``display_args_to_stdout``, which helps to differentiate similar tasks by including variable values in the Ansible output.
 * To save Ansible output in separate logs, one on each managed node, set the ``no_target_syslog`` and ``syslog_facility`` :ref:`configuration file settings <intro_configuration>`.
-* To save Ansible output to a secure database, use :ref:`Ansible Tower <ansible_tower>`. Tower allows you to review history based on hosts, projects, and particular inventories over time, using graphs and/or a REST API.
+* To save Ansible output to a secure database, use AWX or :ref:`Red Hat Ansible Automation Platform <ansible_platform>`. You can then review history based on hosts, projects, and particular inventories over time, using graphs and/or a REST API.
 
 Protecting sensitive data with ``no_log``
 =========================================
