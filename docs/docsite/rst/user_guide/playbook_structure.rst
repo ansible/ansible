@@ -155,7 +155,7 @@ Plays are a simple mapping of hosts to tasks. Plays bind the actions we define t
 This is the simplest play. It just targets all hosts in inventory and (by default) runs M(gather_facts) on them.
 
 
-There are many ways a play can contain tasks, the simplest one is the ``tasks`` keyword.
+There are many ways a play can contain tasks. The simplest one is the ``tasks`` keyword.
 
 .. code-block:: YAML
 
