@@ -135,7 +135,7 @@ Indentation is important in a task since it is used to separate the task keyword
         msg: 'this is the msg option of the debug action'
       when: 'this is the conditional keyword for tasks' != 'so it must always align to the task itself'
 
-For a list of keywords and the where you can place them see ...
+For a list of keywords and where you may place them, see ...
 
 Handlers
 --------
