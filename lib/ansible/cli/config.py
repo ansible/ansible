@@ -280,7 +280,12 @@ class ConfigCLI(CLI):
 
             if not opt.get('description'):
                 # its a plugin
-                sections = merge_hash(sections, self._get_settings_ini(opt))
+                new_sections = self._get_settings_ini(opt)
+                for s in new_sections:
+                    if s in sections:
+                        sections[s].extend(new_sections[s])
+                    else:
+                        sections[s] = new_sections[s]
                 continue
 
             if isinstance(opt['description'], string_types):
