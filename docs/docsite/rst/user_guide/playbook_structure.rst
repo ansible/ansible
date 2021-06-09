@@ -24,7 +24,7 @@ A simple playbook with 1 play and 2 tasks, written in YAML:
       tasks:
         - name: I am a task that executes a command
           command: echo {{ a _var }}
-          register: result    - name: debug the result
+          register: result
 
         - name: print result of command to screen
           debug:
