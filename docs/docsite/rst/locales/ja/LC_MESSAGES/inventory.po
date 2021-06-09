@@ -1,0 +1,58 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021 Red Hat, Inc.
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-23 10:50+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/inventory/implicit_localhost.rst:6
+msgid "Implicit 'localhost'"
+msgstr "暗黙的な「localhost」"
+
+#: ../../rst/inventory/implicit_localhost.rst:8
+msgid "When you try to reference a ``localhost`` and you don't have it defined in inventory, Ansible will create an implicit one for you.::"
+msgstr "``localhost`` を参照しようとしたにもかかわらず、インベントリーにその localhost が定義されていない場合は、Ansible により暗黙的 localhost が作成されます::"
+
+#: ../../rst/inventory/implicit_localhost.rst:16
+msgid "In a case like this (or ``local_action``) when Ansible needs to contact a 'localhost' but you did not supply one, we create one for you. This host is defined with specific connection variables equivalent to this in an inventory::"
+msgstr "上記のような場合 (または ``local_action``) で、Ansible が「localhost」に問い合わせをする必要があるにもかかわらず、localhost を作成していない場合には、Ansible で localhost が作成されます。このホストは、インベントリーにあるものと同等の特定の接続変数で定義されます::"
+
+#: ../../rst/inventory/implicit_localhost.rst:26
+msgid "This ensures that the proper connection and Python are used to execute your tasks locally. You can override the built-in implicit version by creating a ``localhost`` host entry in your inventory. At that point, all implicit behaviors are ignored; the ``localhost`` in inventory is treated just like any other host. Group and host vars will apply, including connection vars, which includes the ``ansible_python_interpreter`` setting. This will also affect ``delegate_to: localhost`` and ``local_action``, the latter being an alias to the former."
+msgstr "この設定により、適切な接続と Python がローカルでタスクを実行するのに使用されるようにます。インベントリーに ``localhost`` ホストエントリーを作成すると、組み込みの暗黙的ホストのバージョンを上書きできます。この時点で、暗黙的な動作はすべて無視され、インベントリー内の ``localhost`` は他のホストと同じように処理されます。グループおよびホストの変数 (接続変数を含む) が適用されます。これには、``ansible_python_interpreter`` 設定が含まれます。グループおよびホスト変数の設定は、``delegate_to: localhost`` および ``local_action`` にも適用され、``local_action`` は ``delegate_to: localhost`` のエイリアスとなります。"
+
+#: ../../rst/inventory/implicit_localhost.rst:30
+msgid "This host is not targetable via any group, however it will use vars from ``host_vars`` and from the 'all' group."
+msgstr "このホストをターゲットにできるグループはありませんが、``host_vars`` と「all」グループの変数を使用します。"
+
+#: ../../rst/inventory/implicit_localhost.rst:31
+msgid "Implicit localhost does not appear in the ``hostvars`` magic variable unless demanded, such as by ``\"{{ hostvars['localhost'] }}\"``."
+msgstr "``\"{{ hostvars['localhost'] }}\"`` などの要求がない限り、暗黙的な localhost は ``hostvars`` マジック変数には表示されません。"
+
+#: ../../rst/inventory/implicit_localhost.rst:32
+msgid "The ``inventory_file`` and ``inventory_dir`` magic variables are not available for the implicit localhost as they are dependent on **each inventory host**."
+msgstr "マジック変数 ``inventory_file`` および ``inventory_dir`` は、**各インベントリーホスト** に依存しているため、暗黙的な localhost では利用できません。"
+
+#: ../../rst/inventory/implicit_localhost.rst:33
+msgid "This implicit host also gets triggered by using ``127.0.0.1`` or ``::1`` as they are the IPv4 and IPv6 representations of 'localhost'."
+msgstr "この暗黙的ホストは、「localhost」の IPv4 および IPv6 の表現であるため、``127.0.0.1`` または ``::1`` を使用しても発生しません。"
+
+#: ../../rst/inventory/implicit_localhost.rst:34
+msgid "Even though there are many ways to create it, there will only ever be ONE implicit localhost, using the name first used to create it."
+msgstr "それを作成する方法は多数ありますが、暗黙的な localhost は 1 つだけ存在することになります。最初に作成したときに使用した名前が使用されます。"
+
+#: ../../rst/inventory/implicit_localhost.rst:35
+msgid "Having ``connection: local`` does NOT trigger an implicit localhost, you are just changing the connection for the ``inventory_hostname``."
+msgstr "``connection: local`` があっても暗黙的な localhost が作成されない場合は、``inventory_hostname`` の接続を変更します。"
+
