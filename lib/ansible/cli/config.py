@@ -293,9 +293,9 @@ class ConfigCLI(CLI):
                 continue
 
             if isinstance(opt['description'], string_types):
-                desc = '# %s' % opt['description']
+                desc = '# (%s) %s' % (opt.get('type', 'string'), opt['description'])
             else:
-                desc = "# "
+                desc = "# (%s) " % opt.get('type', 'string')
                 desc += "\n# ".join(opt['description'])
 
             if 'ini' in opt and opt['ini']:
