@@ -115,7 +115,7 @@ A task is defined by the single action. There may only be one action per task. T
 
 As you may have noticed, tasks are always prefixed by a `-`. This is because they are always an 'item of a list'. Tasks may only exist inside 'task lists'. These task lists must reside inside a play, directly or indirectly, via a role, block, include or import.
 
-There are 2 ways to write tasks, 'key value pairs' or k=v and pure yaml, which mostly describes how the module/action arguments are defined.
+There are two ways to specify the arguments of a task: 'key-value pairs' (e.g., `key=value`) and pure yaml (e.g., `key: value`)
 
 .. code-block:: YAML
 
