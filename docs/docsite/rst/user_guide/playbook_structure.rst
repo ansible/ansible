@@ -9,9 +9,9 @@ Introcduction
 
 To use Ansible you might want to pickup some basic terminology, though you find most terms in the :ref:`glossary`, here we have a quick rundown of the basics.
 
- * Playbook: a list of plays (sometimes also used to refer to the file that contains the plays) :ref:``Playbooks``
- * Play: ties a list of hosts to a list of tasks :ref:``Plays``
- * Task: an action to execute on a host :ref:``Tasks``
+ * Playbook: a list of plays (sometimes also used to refer to the file that contains the plays) :ref:`playbooks_intro`
+ * Play: ties a list of hosts to a list of tasks
+ * Task: an action to execute on a host
 
 A simple playbook with 1 play and 2 tasks, written in YAML:
 
@@ -169,46 +169,17 @@ This keyword begins the definition of a 'list of tasks'. Other ways a play can c
 
 Plays may ONLY appear inside a playbook. You cannot put a play inside another play nor any other object. See playbooks above.
 
-Blocks
-------
+Blocks, Roles and other things
+------------------------------
 
-Blocks are not tasks (they do look like them), but they act as 'list of tasks' inside the 'list of tasks'
+Once you get more familiar with Ansible, there are other parts of the playbook you should look into:
 
-.. code-block:: YAML
+  * Blocks: A construct to group a list of tasks, set common keywords  and handle errors :ref:`playbooks_blocks`
+  * Roles: A way to bundle Tasks, variables and other things for reuse :ref:`playbooks_reuse_roles`
 
-  - hosts: all
-    pre_tasks:
-     - block:
-          - name: this is a simple task
-            debug: msg=simple task
-
-While not being tasks themselves, blocks can appear anywhere a task can as they just 'wrap' tasks.
-
-For more information on blocks see here:
-
-Roles
------
-
-Roles also contain tasks, but mostly in a separate file, as such, they can appear in plays in several ways,
-most of the time you see them via the ``roles`` keyword:
-
-.. code-block:: YAML
-
-   - hosts: all
-     roles:
-        - rolename
-
-But they can also be included almost anywhere a task can, via the M(include_role) and M(import_role) actions.
-
-.. code-block:: YAML
-
-   - hosts: all
-     tasks:
-        - include_role: name=rolename
-     post_tasks:
-        - include_role: name=otherrole
-
-For more information on roles see here:
+There are also imports and includes :ref:`playbooks_reuse` as ways to reuse Ansible content, though similar the behave differently.
+Imports are 'static', don't really behave like normal tasks and used moslty for inheritance.
+Includes are 'dynamic' and behave much more like a normal task, but also require more resources.
 
 
 Playbooks
