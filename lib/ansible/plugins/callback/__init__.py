@@ -364,7 +364,6 @@ class CallbackBase(AnsiblePlugin):
         host = result._host.get_name()
         self.runner_on_unreachable(host, result._result)
 
-    # FIXME: not called
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
@@ -372,13 +371,11 @@ class CallbackBase(AnsiblePlugin):
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
-    # FIXME: not called
     def v2_runner_on_async_ok(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_ok(host, result._result, jid)
 
-    # FIXME: not called
     def v2_runner_on_async_failed(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')

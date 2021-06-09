@@ -617,6 +617,14 @@ class TaskExecutor:
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    if result.get('failed'):
+                        self._final_q.send_callback(
+                            'v2_runner_on_async_failed',
+                            TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
+                    else:
+                        self._final_q.send_callback(
+                            'v2_runner_on_async_ok',
+                            TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
