@@ -167,7 +167,7 @@ There are many ways a play can contain tasks, the simplest one is the ``tasks`` 
 
 This keyword begins the definition of a 'list of tasks'. Other ways a play can contain tasks is via the ``pre_tasks``, ``post_tasks`` and ``handlers`` keywords.
 
-Plays can ONLY appear inside a playbook, you cannot put a play inside another play nor any other object, see playbooks below.
+Plays may ONLY appear inside a playbook. You cannot put a play inside another play nor any other object. See playbooks above.
 
 Blocks
 ------
