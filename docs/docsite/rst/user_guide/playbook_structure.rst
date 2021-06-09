@@ -9,7 +9,7 @@ Introcduction
 
 To use Ansible you might want to pickup some basic terminology, though you find most terms in the :ref:`glossary`, here we have a quick rundown of the basics.
 
- * Playbook: a list of plays (sometimes also used to reffer to the file that contains the plays) :ref:``Playbooks``
+ * Playbook: a list of plays (sometimes also used to refer to the file that contains the plays) :ref:``Playbooks``
  * Play: ties a list of hosts to a list of tasks :ref:``Plays``
  * Task: an action to execute on a host :ref:``Tasks``
 
