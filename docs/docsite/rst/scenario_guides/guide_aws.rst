@@ -218,14 +218,14 @@ Read :ref:`ansible-pull` for more information on pull-mode playbooks.
 
 .. _aws_autoscale:
 
-Autoscaling with Ansible Tower
-``````````````````````````````
+Autoscaling with AWX or Red Hat Ansible Automation Platform
+```````````````````````````````````````````````````````````
 
-:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
+The GUI component of :ref:`Red Hat Ansible Automation Platform <ansible_tower>` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
 a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
-to reconfigure ephemeral nodes.  See the Tower install and product documentation for more details.
+to reconfigure ephemeral nodes.  See `https://docs.ansible.com/ansible-tower/latest/html/userguide/job_templates.html#provisioning-callbacks`_ for more details.
 
-A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded and less information has to be shared
+A benefit of using the callback approach over pull mode is that job results are still centrally recorded and less information has to be shared
 with remote hosts.
 
 .. _aws_cloudformation_example:

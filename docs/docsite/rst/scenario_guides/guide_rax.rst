@@ -782,15 +782,14 @@ Advanced Usage
 
 .. _awx_autoscale:
 
-Autoscaling with Tower
-++++++++++++++++++++++
+Autoscaling with AWX or Red Hat Ansible Automation Platform
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  
-In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
-and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.
-See the Tower documentation for more details.  
+The GUI component of :ref:`Red Hat Ansible Automation Platform <ansible_tower>` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
+a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
+to reconfigure ephemeral nodes.  See `https://docs.ansible.com/ansible-tower/latest/html/userguide/job_templates.html#provisioning-callbacks`_ for more details.
 
-A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded 
+A benefit of using the callback approach over pull mode is that job results are still centrally recorded 
 and less information has to be shared with remote hosts.
 
 .. _pending_information:
