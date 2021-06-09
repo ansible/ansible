@@ -138,11 +138,6 @@ Indentation is important in a task since it is used to separate the task keyword
 
 For a list of keywords and where you may place them, see ...
 
-Handlers
---------
-
-Handlers are special tasks, not on how you define them, but on where they are located, they do not execute normally but on notification.For more information on handlers see here:
-
 
 Plays
 =====
@@ -313,3 +308,17 @@ There are also imports and includes :ref:`playbooks_reuse` as ways to reuse Ansi
 Imports are 'static', don't really behave like normal tasks and used moslty for inheritance.
 Includes are 'dynamic' and behave much more like a normal task, but also require more resources.
 
+.. seealso::
+
+   :ref:`working_with_playbooks`
+       Review the basic Playbook language features
+   :ref:`playbooks_variables`
+       All about variables in playbooks
+   :ref:`playbooks_conditionals`
+       Conditionals in playbooks
+   :ref:`playbooks_loops`
+       Loops in playbooks
+   `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
+       Complete playbook files from the GitHub project source
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
