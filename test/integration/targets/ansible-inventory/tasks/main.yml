@@ -105,3 +105,30 @@
     that:
         - result is failed
         - '"ERROR! The source inventory contains a non-string key" in result.stderr'
+
+- name: "test json output with unicode characters"
+  command: ansible-inventory --list -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
+
+- name: "test yaml output with unicode characters"
+  command: ansible-inventory --list --yaml -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
+
+- name: "test toml output with unicode characters"
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
