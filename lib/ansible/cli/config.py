@@ -316,7 +316,18 @@ class ConfigCLI(CLI):
         data = []
         config_entries = self._list_entries_from_args()
         if context.CLIARGS['format'] == 'ini':
+            plugin_types = config_entries.pop('PLUGINS', None)
             sections = self._get_settings_ini(config_entries)
+
+            if plugin_types:
+                for ptype in plugin_types:
+                    plugin_sections = self._get_settings_ini(plugin_types[ptype])
+                    for s in plugin_sections:
+                        if s in sections:
+                            sections[s].extend(plugin_sections[s])
+                        else:
+                            sections[s] = plugin_sections[s]
+
             if sections:
                 for section in sections.keys():
                     data.append('[%s]' % section)
