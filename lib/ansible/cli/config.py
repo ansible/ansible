@@ -70,7 +70,7 @@ class ConfigCLI(CLI):
 
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
-        init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'yaml'], default='ini')
+        init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini')
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
@@ -250,7 +250,11 @@ class ConfigCLI(CLI):
                     default = ''
 
             if subkey in settings[setting] and settings[setting][subkey]:
-                entry = settings[setting][subkey][-1]['name']
+                try:
+                    entry = settings[setting][subkey][-1]['name']
+                except Exception as e:
+                    print(setting, subkey)
+                    raise e
                 if isinstance(settings[setting]['description'], string_types):
                     desc = settings[setting]['description']
                 else:
@@ -261,7 +265,7 @@ class ConfigCLI(CLI):
                 # TODO: might need quoting and value coercion depending on type
                 if subkey == 'env':
                     data.append('%s=%s' % (entry, default))
-                elif subkey == 'yaml':
+                elif subkey == 'vars':
                     data.append(to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
                 data.append('')
 
@@ -315,8 +319,8 @@ class ConfigCLI(CLI):
 
         data = []
         config_entries = self._list_entries_from_args()
+        plugin_types = config_entries.pop('PLUGINS', None)
         if context.CLIARGS['format'] == 'ini':
-            plugin_types = config_entries.pop('PLUGINS', None)
             sections = self._get_settings_ini(config_entries)
 
             if plugin_types:
@@ -335,8 +339,11 @@ class ConfigCLI(CLI):
                         data.append(key)
                         data.append('')
                     data.append('')
-        elif context.CLIARGS['format'] in ('env', 'yaml'):
+        elif context.CLIARGS['format'] in ('env', 'vars'):  # TODO: add yaml once that config option is added
             data = self._get_settings_vars(config_entries, context.CLIARGS['format'])
+            if plugin_types:
+                for ptype in plugin_types:
+                    data.extend(self._get_settings_vars(plugin_types[ptype], context.CLIARGS['format']))
 
         self.pager(to_text('\n'.join(data), errors='surrogate_or_strict'))
 
