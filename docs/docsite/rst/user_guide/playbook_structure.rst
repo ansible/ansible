@@ -116,7 +116,7 @@ A task is defined by the single action. There may only be one action per task. T
 As you may have noticed, tasks are always prefixed by a ``-``. This is because they are always an 'item of a list'.
 Tasks may only exist inside 'task lists'. These task lists must reside inside a play, directly or indirectly, via a role, block, include or import.
 
-There are two ways to specify the arguments of a task: 'key-value pairs' (`key=value`) and pure yaml (`key: value`)
+There are two ways to specify the arguments of a task: 'key-value pairs' (``key=value``) and pure yaml (``key: value``)
 
 .. code-block:: YAML
 
@@ -136,7 +136,8 @@ Indentation is important in a task since it is used to separate the task keyword
         msg: 'this is the msg option of the debug action'
       when: 'this is the conditional keyword for tasks' != 'so it must always align to the task itself'
 
-For a list of keywords and where you may place them, see ...
+For a list of keywords and where you may place them you can consult :ref:`<playbook_keywords>`
+Also ``ansible-doct -t keywords <keyword>`` 
 
 
 Plays
