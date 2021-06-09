@@ -126,7 +126,7 @@ There are two ways to specify the arguments of a task: 'key-value pairs' (e.g., 
 
     - debug: msg='this is a key-value pair task'
 
-Indentation is important in a task, to separate the task keywords from the module/action options:
+Indentation is important in a task since it is used to separate the task keywords from the module/action options:
 
 .. code-block:: YAML
 
