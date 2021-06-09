@@ -113,9 +113,10 @@ A task is defined by the single action. There may only be one action per task. T
       debug: msg=simple task
       copy: src=/etc/localfile dest=/tmp/remotefile
 
-As you may have noticed, tasks are always prefixed by a `-`. This is because they are always an 'item of a list'. Tasks may only exist inside 'task lists'. These task lists must reside inside a play, directly or indirectly, via a role, block, include or import.
+As you may have noticed, tasks are always prefixed by a ``-``. This is because they are always an 'item of a list'.
+Tasks may only exist inside 'task lists'. These task lists must reside inside a play, directly or indirectly, via a role, block, include or import.
 
-There are two ways to specify the arguments of a task: 'key-value pairs' (e.g., `key=value`) and pure yaml (e.g., `key: value`)
+There are two ways to specify the arguments of a task: 'key-value pairs' (`key=value`) and pure yaml (`key: value`)
 
 .. code-block:: YAML
 
@@ -169,17 +170,6 @@ This keyword begins the definition of a 'list of tasks'. Other ways a play can c
 
 Plays may ONLY appear inside a playbook. You cannot put a play inside another play nor any other object. See playbooks above.
 
-Blocks, Roles and other things
-------------------------------
-
-Once you get more familiar with Ansible, there are other parts of the playbook you should look into:
-
-  * Blocks: A construct to group a list of tasks, set common keywords  and handle errors :ref:`playbooks_blocks`
-  * Roles: A way to bundle Tasks, variables and other things for reuse :ref:`playbooks_reuse_roles`
-
-There are also imports and includes :ref:`playbooks_reuse` as ways to reuse Ansible content, though similar the behave differently.
-Imports are 'static', don't really behave like normal tasks and used moslty for inheritance.
-Includes are 'dynamic' and behave much more like a normal task, but also require more resources.
 
 
 Playbooks
@@ -207,17 +197,6 @@ This just contains one play, that targtes all hosts, but you can also have more 
 
 playbooks can ONLY have plays, you cannot put a task in a playbook, only inside a play.
 
-import_playbook
----------------
-Now this might be a bit confusing due to the following being a valid playbook.
-
-.. code-block:: YAML
-
-   - hosts: all
-
-   - import_playbook: play.yml
-
-This looks like we are mixing plays and tasks, but that is not true, the M(import_playbook) is a special directive that allows referencing other playbook files and importing them into the current one, as such it is not considered a 'real task' and is allowed in playbooks. Note that you can have a list of plays imported by M(import_playbook), not just one play.
 
 
 Full example
@@ -320,3 +299,17 @@ Now just the tasks.
 
 
 There is a lot more to Ansible, but this should be the minimal you need to start writing your own playbooks, plays and tasks.
+
+Blocks, Roles and other advanced things
+---------------------------------------
+
+Once you get more familiar with Ansible, there are other parts of the playbook you should look into:
+
+  * Blocks: A construct to group a list of tasks, set common keywords and handle errors :ref:`playbooks_blocks` and :ref:`playbooks_error_handling`
+  * Roles: A way to bundle Tasks, variables and other things for reuse :ref:`playbooks_reuse_roles`
+  * Handlers are a special kind of task that only executes conditioned on another linked task being in 'changed' state :ref:`_handlers`
+
+There are also imports and includes :ref:`playbooks_reuse` as ways to reuse Ansible content, though similar the behave differently.
+Imports are 'static', don't really behave like normal tasks and used moslty for inheritance.
+Includes are 'dynamic' and behave much more like a normal task, but also require more resources.
+
