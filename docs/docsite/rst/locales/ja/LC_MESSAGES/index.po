@@ -1,0 +1,124 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021 Red Hat, Inc.
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/2.10_index.rst:23 ../../rst/ansible_index.rst:25
+#: ../../rst/core_index.rst:30
+msgid "Installation, Upgrade & Configuration"
+msgstr "インストール、アップグレード、および設定"
+
+#: ../../rst/core_index.rst:37
+msgid "Using Ansible Core"
+msgstr "Ansible Core の使用"
+
+#: ../../rst/core_index.rst:43
+msgid "Contributing to Ansible Core"
+msgstr "Ansible Core への貢献"
+
+#: ../../rst/2.10_index.rst:42 ../../rst/ansible_index.rst:44
+#: ../../rst/core_index.rst:49
+msgid "Extending Ansible"
+msgstr "Ansible の拡張"
+
+#: ../../rst/2.10_index.rst:73 ../../rst/ansible_index.rst:75
+#: ../../rst/core_index.rst:56
+msgid "Reference & Appendices"
+msgstr "参照および付録"
+
+#: ../../rst/2.10_index.rst:102 ../../rst/ansible_index.rst:100
+#: ../../rst/core_index.rst:80
+msgid "Roadmaps"
+msgstr "ロードマップ"
+
+#: ../../rst/core_index.rst:8
+msgid "Ansible Core Documentation"
+msgstr "Ansible Core ドキュメント"
+
+#: ../../rst/core_index.rst:11
+msgid "About ansible-core"
+msgstr "ansible-core の概要"
+
+#: ../../rst/2.10_index.rst:9 ../../rst/ansible_index.rst:11
+#: ../../rst/core_index.rst:13
+msgid "Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates."
+msgstr "Ansible は IT 自動化ツールです。このツールを使用すると、システムの構成、ソフトウェアの展開、より高度な IT タスク (継続的なデプロイメント、ダウンタイムなしのローリング更新など) のオーケストレーションが可能になります。"
+
+#: ../../rst/2.10_index.rst:11 ../../rst/ansible_index.rst:13
+#: ../../rst/core_index.rst:15
+msgid "Ansible's main goals are simplicity and ease-of-use. It also has a strong focus on security and reliability, featuring a minimum of moving parts, usage of OpenSSH for transport (with other transports and pull modes as alternatives), and a language that is designed around auditability by humans--even those not familiar with the program."
+msgstr "Ansible の主な目標は、簡単で使いやすいことです。また、セキュリティーおよび信頼性に重点を置いており、最小限の可動部品、トランスポート用の OpenSSH の使用 (代替として他のトランスポートとプルモードを使用)、およびプログラムに精通していない人でも監査を可能にする言語も備えています。"
+
+#: ../../rst/2.10_index.rst:13 ../../rst/ansible_index.rst:15
+#: ../../rst/core_index.rst:17
+msgid "We believe simplicity is relevant to all sizes of environments, so we design for busy users of all types: developers, sysadmins, release engineers, IT managers, and everyone in between. Ansible is appropriate for managing all environments, from small setups with a handful of instances to enterprise environments with many thousands of instances."
+msgstr "簡素化はあらゆる規模の環境に関連しており、開発者、システム管理者、リリースエンジニア、IT マネージャーなど、あらゆるタイプのビジーユーザー向けに設計されています。Ansible は、わずかなインスタンスしかない小規模のセットアップから、インスタンスが数千にもなるエンタープライズ環境まで、すべての環境を管理するのに適しています。"
+
+#: ../../rst/2.10_index.rst:15 ../../rst/ansible_index.rst:17
+#: ../../rst/core_index.rst:19
+msgid "You can learn more at `AnsibleFest <https://www.ansible.com/ansiblefest>`_, the annual event for all Ansible contributors, users, and customers hosted by Red Hat. AnsibleFest is the place to connect with others, learn new skills, and find a new friend to automate with."
+msgstr "詳細は、`AnsibleFest <https://www.ansible.com/ansiblefest>`_ (Red Hat が開催する、Ansible のすべての貢献者、ユーザー、および顧客のための毎年恒例のイベント) で学ぶことができます。AnsibleFest は、他の人とつながり、新しいスキルを学び、自動化に興味のある人達と知り合うためのイベントです。"
+
+#: ../../rst/2.10_index.rst:17 ../../rst/ansible_index.rst:19
+#: ../../rst/core_index.rst:21
+msgid "Ansible manages machines in an agent-less manner. There is never a question of how to upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled.  Because OpenSSH is one of the most peer-reviewed open source components, security exposure is greatly reduced. Ansible is decentralized--it relies on your existing OS credentials to control access to remote machines. If needed, Ansible can easily connect with Kerberos, LDAP, and other centralized authentication management systems."
+msgstr "Ansible は、エージェントを使用せずにマシンを管理します。リモートデーモンをアップグレードする方法や、デーモンがアンインストールされているためにシステムを管理できないという問題はありません。OpenSSH は、相互評価が最も行われるオープンソースコンポーネントの 1 つであるため、セキュリティーの危険性は大幅に軽減されます。Ansible は分散化されており、既存の OS 認証情報を使用して、リモートマシンへのアクセスを制御します。必要に応じて、Ansible は、Kerberos、LDAP、およびその他の集中認証管理システムに簡単に接続できます。"
+
+#: ../../rst/2.10_index.rst:19 ../../rst/ansible_index.rst:21
+#: ../../rst/core_index.rst:23
+msgid "This documentation covers the version of Ansible noted in the upper left corner of this page. We maintain multiple versions of Ansible and of the documentation, so please be sure you are using the version of the documentation that covers the version of Ansible you're using. For recent features, we note the version of Ansible where the feature was added."
+msgstr "本ドキュメントは、本ページの左上にある Ansible のバージョンを説明します。Red Hat は、複数のバージョンの Ansible とドキュメントを提供しているため、参照しているドキュメントが、お使いの Ansible のバージョンのものであることを確認してください。最新の機能については、この機能が追加された Ansible のバージョンを記載しています。"
+
+#: ../../rst/core_index.rst:26
+msgid "``ansible-core`` releases a new major release approximately twice a year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly."
+msgstr "``ansible-core`` は、年に約 2 回、新しいメジャーリリースをリリースします。コアアプリケーションは、言語の設計および設定の単純性が重視され、その進化は若干保守的となります。貢献者はバージョン 2.10 以降のコレクションでホストされるモジュールとプラグインを、はるかに迅速に開発および変更します。"
+
+#: ../../rst/2.10_index.rst:30 ../../rst/ansible_index.rst:32
+msgid "Using Ansible"
+msgstr "Ansible の使用"
+
+#: ../../rst/2.10_index.rst:36 ../../rst/ansible_index.rst:38
+msgid "Contributing to Ansible"
+msgstr "Ansible への貢献"
+
+#: ../../rst/2.10_index.rst:48 ../../rst/ansible_index.rst:50
+msgid "Common Ansible Scenarios"
+msgstr "Ansible の一般的なシナリオ"
+
+#: ../../rst/2.10_index.rst:57 ../../rst/ansible_index.rst:59
+msgid "Network Automation"
+msgstr "ネットワークの自動化"
+
+#: ../../rst/2.10_index.rst:65 ../../rst/ansible_index.rst:67
+msgid "Ansible Galaxy"
+msgstr "Ansible Galaxy"
+
+#: ../../rst/2.10_index.rst:4 ../../rst/ansible_index.rst:6
+msgid "Ansible Documentation"
+msgstr "Ansible ドキュメント"
+
+#: ../../rst/2.10_index.rst:7 ../../rst/ansible_index.rst:9
+msgid "About Ansible"
+msgstr "Ansible の概要"
+
+#: ../../rst/2.10_index.rst:21 ../../rst/ansible_index.rst:23
+msgid "Ansible releases a new major release approximately twice a year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly."
+msgstr "Ansible は、年に約 2 回、新しいメジャーリリースをリリースします。コアアプリケーションは、言語の設計および設定の単純性が重視され、その進化は若干保守的となります。貢献者はバージョン 2.10 以降のコレクションでホストされるモジュールとプラグインを、はるかに迅速に開発および変更します。"
+
+#: ../../rst/2.10_index.rst:98
+msgid "Release Notes"
+msgstr "リリースノート"
+
