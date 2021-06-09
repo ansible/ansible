@@ -32,6 +32,23 @@ A simple playbook with 1 play and 2 tasks, written in YAML:
 
 To understand the structure above you might want to check out the YAML Basics
 
+Keywords
+--------
+These are reserved words that help define the objects in an ansible playbook (plays, tasks, and the rest), above ``name``, ``register`` and ``hosts`` are 'keywords'.
+They can be considered the 'Ansible Language'.  For a list of keywords and where you may place them you can consult :ref:`<playbook_keywords>`
+
+On the command line, you can use ``ansbile-doc -t keywords -l`` to list all available and ``ansible-dco -t keywords <keyword>`` to get specific documentation.
+
+Options
+-------
+These are plugin specific specific options, Ansible uses many plugin types, the most common is a 'module' (which defines a task's actions, see more below).
+In the above example the last line ``var`` is an option of the ``debug`` action, indentation is normally a clue.
+
+The options available are referenced in each plugin's specific documentation, for example you can check modules here :ref:`all_modules`,
+
+On the command line you can also use ``ansible-doc -t modules -l`` to list all those avialable to you and ``ansible-doc -t modules <action name>`` to get the specific options.
+Other plugins work the same way, just changing the plugin type (``-t``). Valid values are visible using ``--help``.
+
 
 YAML Basics
 ===========
@@ -135,9 +152,6 @@ Indentation is important in a task since it is used to separate the task keyword
       debug:
         msg: 'this is the msg option of the debug action'
       when: 'this is the conditional keyword for tasks' != 'so it must always align to the task itself'
-
-For a list of keywords and where you may place them you can consult :ref:`<playbook_keywords>`
-Also ``ansible-doct -t keywords <keyword>`` 
 
 
 Plays
