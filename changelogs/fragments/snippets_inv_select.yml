@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc, make inventory plugin selection for snippets generic and not a hardcoded list
