@@ -193,6 +193,19 @@ This just contains one play, that targtes all hosts, but you can also have more 
 playbooks can ONLY have plays, you cannot put a task in a playbook, only inside a play.
 
 
+Blocks, Roles and other advanced things
+---------------------------------------
+
+Once you get more familiar with Ansible, there are other parts of the playbook you should look into:
+
+  * Blocks: A construct to group a list of tasks, set common keywords and handle errors :ref:`playbooks_blocks` and :ref:`playbooks_error_handling`
+  * Roles: A way to bundle Tasks, variables and other things for reuse :ref:`playbooks_reuse_roles`
+  * Handlers are a special kind of task that only executes conditioned on another linked task being in 'changed' state :ref:`_handlers`
+
+There are also imports and includes :ref:`playbooks_reuse` as ways to reuse Ansible content, though similar the behave differently.
+Imports are 'static', don't really behave like normal tasks and used moslty for inheritance.
+Includes are 'dynamic' and behave much more like a normal task, but also require more resources.
+
 
 Full example
 ============
@@ -294,19 +307,6 @@ Now just the tasks.
 
 
 There is a lot more to Ansible, but this should be the minimal you need to start writing your own playbooks, plays and tasks.
-
-Blocks, Roles and other advanced things
----------------------------------------
-
-Once you get more familiar with Ansible, there are other parts of the playbook you should look into:
-
-  * Blocks: A construct to group a list of tasks, set common keywords and handle errors :ref:`playbooks_blocks` and :ref:`playbooks_error_handling`
-  * Roles: A way to bundle Tasks, variables and other things for reuse :ref:`playbooks_reuse_roles`
-  * Handlers are a special kind of task that only executes conditioned on another linked task being in 'changed' state :ref:`_handlers`
-
-There are also imports and includes :ref:`playbooks_reuse` as ways to reuse Ansible content, though similar the behave differently.
-Imports are 'static', don't really behave like normal tasks and used moslty for inheritance.
-Includes are 'dynamic' and behave much more like a normal task, but also require more resources.
 
 .. seealso::
 
