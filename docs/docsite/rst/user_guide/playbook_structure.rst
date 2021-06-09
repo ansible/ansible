@@ -165,7 +165,7 @@ There are many ways a play can contain tasks, the simplest one is the ``tasks`` 
           debug: msg=simple task
 
 
-This keyword is just the home for a 'list of tasks', other ways a play can contain task is via the ``pre_tasks``, ``post_tasks`` and ``handlers`` keywords.
+This keyword begins the definition of a 'list of tasks'. Other ways a play can contain tasks is via the ``pre_tasks``, ``post_tasks`` and ``handlers`` keywords.
 
 Plays can ONLY appear inside a playbook, you cannot put a play inside another play nor any other object, see playbooks below.
 
