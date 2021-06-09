@@ -313,12 +313,15 @@ def import_key(module, keyring, keyserver, key_id):
 
     global lang_env
     if keyring:
-        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --no-tty --keyserver %s" % (apt_key_bin, keyring, keyserver)
     else:
-        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --no-tty --keyserver %s" % (apt_key_bin, keyserver)
 
     # check for proxy
     cmd = add_http_proxy(cmd)
+
+    # add recv argument as last one
+    cmd = "%s --recv %s" % (cmd, key_id)
 
     for retry in range(5):
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
