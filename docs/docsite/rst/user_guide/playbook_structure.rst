@@ -146,7 +146,7 @@ Handlers are special tasks, not on how you define them, but on where they are lo
 Plays
 =====
 
-Plays are a simple mapping of hosts to tasks, plays bind the actions we define to the targets we desire to apply them to.
+Plays are a simple mapping of hosts to tasks. Plays bind the actions we define to the targets we desire to apply them to.
 
 .. code-block:: YAML
 
