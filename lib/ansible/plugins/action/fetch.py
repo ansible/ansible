@@ -76,18 +76,17 @@ class ActionModule(ActionBase):
                 try:
                     remote_stat = self._execute_remote_stat(source, all_vars=task_vars, follow=True)
                 except AnsibleError as ae:
-                    raise AnsibleActionFail(to_text(ae))
-
-                if remote_stat.get('failed'):
                     if not fail_on_missing and remote_stat.get('exists') is False:
                         result['changed'] = False
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
                         result['file'] = source
                     else:
-                        result.update(remote_stat)
+                        result['msg'] = to_text(ae)
+
                     return result
 
                 if remote_stat.get('exists'):
+                    remote_checksum = remote_stat.get('checksum')
                     if remote_stat.get('isdir'):
                         result['failed'] = True
                         result['changed'] = False
@@ -105,18 +104,18 @@ class ActionModule(ActionBase):
 
                         return result
 
-                    if remote_stat.get('checksum'):
-                        remote_checksum = remote_stat.get('checksum')
-
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
             if remote_checksum is None:
                 slurpres = self._execute_module(module_name='ansible.legacy.slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
-                    if not fail_on_missing and (slurpres.get('msg').startswith('file not found')):
-                        result['msg'] = "the remote file does not exist, not transferring, ignored"
+                    if not fail_on_missing:
                         result['file'] = source
                         result['changed'] = False
+                        if slurpres.get('msg', '').startswith('file not found'):
+                            result['msg'] = "the remote file does not exist, not transferring, ignored"
+                        elif slurpres.get('msg', '').startswith('source is a directory'):
+                            result['msg'] = "remote file is a directory, fetch cannot work on directories"
                     else:
                         result.update(slurpres)
                     return result
