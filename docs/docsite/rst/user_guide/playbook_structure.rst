@@ -124,7 +124,7 @@ There are two ways to specify the arguments of a task: 'key-value pairs' (e.g., 
         src: /etc/localfile
         dest: /tmp/remotefile
 
-    - debug: msg='this is a key value  pair task'
+    - debug: msg='this is a key-value pair task'
 
 Indentation is important in a task, to separate the task keywords from the module/action options:
 
