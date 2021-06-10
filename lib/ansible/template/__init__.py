@@ -1109,12 +1109,12 @@ class Templar:
             self.cur_context = new_context = t.new_context(jvars, shared=True)
             rf = t.root_render_func(new_context)
 
-            unsafe = getattr(new_context, 'unsafe', False)
             try:
                 if self.jinja2_native:
                     res = ansible_native_concat(rf)
                 else:
                     res = j2_concat(rf)
+                unsafe = getattr(new_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
             except TypeError as te:
