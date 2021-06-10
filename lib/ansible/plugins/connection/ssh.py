@@ -272,7 +272,6 @@ DOCUMENTATION = '''
           - name: ansible_sftp_batch_mode
             version_added: '2.7'
       ssh_transfer_method:
-        default: smart
         description:
             - "Preferred method to use when transferring files over ssh"
             - Setting to 'smart' (default) will try them in order, until one succeeds or they all fail
@@ -281,6 +280,9 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
         ini:
             - {key: transfer_method, section: ssh_connection}
+        vars:
+            - name: ansible_ssh_transfer_method
+              version_added: '2.12'
       scp_if_ssh:
         default: smart
         description:
@@ -1172,6 +1174,10 @@ class Connection(ConnectionBase):
 
         # Use the transfer_method option if set, otherwise use scp_if_ssh
         ssh_transfer_method = self.get_option('ssh_transfer_method')
+        scp_if_ssh = self.get_option('scp_if_ssh')
+        if ssh_transfer_method is None and scp_if_ssh == 'smart':
+            ssh_transfer_method = 'smart'
+
         if ssh_transfer_method is not None:
             if ssh_transfer_method == 'smart':
                 methods = smart_methods
@@ -1179,7 +1185,6 @@ class Connection(ConnectionBase):
                 methods = [ssh_transfer_method]
         else:
             # since this can be a non-bool now, we need to handle it correctly
-            scp_if_ssh = self.get_option('scp_if_ssh')
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
