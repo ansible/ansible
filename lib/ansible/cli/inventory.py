@@ -15,7 +15,7 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -158,8 +158,8 @@ class InventoryCLI(CLI):
                 display.display(results)
             else:
                 try:
-                    with open(to_bytes(outfile), 'wt') as f:
-                        f.write(results)
+                    with open(to_bytes(outfile), 'wb') as f:
+                        f.write(to_bytes(results))
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
             sys.exit(0)
@@ -172,7 +172,7 @@ class InventoryCLI(CLI):
         if context.CLIARGS['yaml']:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
-            results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
+            results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
             from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
             if not HAS_TOML:
@@ -192,9 +192,9 @@ class InventoryCLI(CLI):
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
             try:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
+                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
             except TypeError as e:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True)
+                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
                 display.warning("Could not sort JSON output due to issues while sorting keys: %s" % to_native(e))
 
         return results

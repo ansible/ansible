@@ -1,0 +1,2 @@
+bugfixes:
+  - Add unicode support to ``ansible-inventory`` CLI (https://github.com/ansible/ansible/issues/57378)
