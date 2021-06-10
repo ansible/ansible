@@ -40,7 +40,7 @@ def platform_linux(mocker):
     ),
 )
 def test_get_distribution_not_linux(system, dist, mocker):
-    """For platforms other than Linux, ruturn the distribution"""
+    """For platforms other than Linux, return the distribution"""
     mocker.patch('platform.system', return_value=system)
     mocker.patch('ansible.module_utils.common.sys_info.distro.id', return_value=dist)
     assert get_distribution() == dist
