@@ -241,20 +241,21 @@ class ConfigCLI(CLI):
                     else:
                         default = '0'
                 elif default:
-                    if stype == 'list' and not isinstance(default, string_types):
-                        # python lists are not valid env ones
-                        default = ', '.join(default)
+                    if stype == 'list':
+                        if not isinstance(default, string_types):
+                            # python lists are not valid env ones
+                            try:
+                                default = ', '.join(default)
+                            except Exception as e:
+                                # list of other stuff
+                                default = '%s' % to_native(default)
                     if isinstance(default, string_types) and not is_quoted(default):
                         default = shlex_quote(default)
                 elif default is None:
                     default = ''
 
             if subkey in settings[setting] and settings[setting][subkey]:
-                try:
-                    entry = settings[setting][subkey][-1]['name']
-                except Exception as e:
-                    print(setting, subkey)
-                    raise e
+                entry = settings[setting][subkey][-1]['name']
                 if isinstance(settings[setting]['description'], string_types):
                     desc = settings[setting]['description']
                 else:
@@ -343,7 +344,8 @@ class ConfigCLI(CLI):
             data = self._get_settings_vars(config_entries, context.CLIARGS['format'])
             if plugin_types:
                 for ptype in plugin_types:
-                    data.extend(self._get_settings_vars(plugin_types[ptype], context.CLIARGS['format']))
+                    for plugin in plugin_types[ptype].keys():
+                        data.extend(self._get_settings_vars(plugin_types[ptype][plugin], context.CLIARGS['format']))
 
         self.pager(to_text('\n'.join(data), errors='surrogate_or_strict'))
 
