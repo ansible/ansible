@@ -1,0 +1,2 @@
+bugfixes:
+  - apt_key - set --recv argument as last one in apt-key command when using env var HTTP_PROXY (https://github.com/ansible/ansible/issues/74946)
