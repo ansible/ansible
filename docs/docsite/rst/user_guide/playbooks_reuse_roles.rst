@@ -344,7 +344,7 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
 
            * Specifies the data type for list elements when type is ``list``.
 
-        :suboptions:
+        :options:
 
            * If this option takes a dict or list of dicts, you can define the structure here.
 
