@@ -155,10 +155,8 @@ class CollectionVerifyResult:
         self.success = True  # type: bool
 
 
-def verify_local_collection(
-        local_collection, remote_collection,
-        artifacts_manager,
-):  # type: (Candidate, Candidate | None, ConcreteArtifactsManager) -> CollectionVerifyResult
+def verify_local_collection(local_collection, remote_collection, artifacts_manager):
+    # type: (Candidate, Candidate | None, ConcreteArtifactsManager) -> CollectionVerifyResult
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
@@ -168,9 +166,7 @@ def verify_local_collection(
     """
     result = CollectionVerifyResult(local_collection.fqcn)
 
-    b_collection_path = to_bytes(
-        local_collection.src, errors='surrogate_or_strict',
-    )
+    b_collection_path = to_bytes(local_collection.src, errors='surrogate_or_strict')
 
     display.display("Verifying '{coll!s}'.".format(coll=local_collection))
     display.display(
@@ -881,10 +877,7 @@ def verify_collections(
                             )
                         raise
 
-                result = verify_local_collection(
-                    local_collection, remote_collection,
-                    artifacts_manager,
-                )
+                result = verify_local_collection(local_collection, remote_collection, artifacts_manager)
 
                 results.append(result)
 
@@ -1245,10 +1238,7 @@ def find_existing_collections(path, artifacts_manager):
                 continue
 
             try:
-                req = Candidate.from_dir_path_as_unknown(
-                    b_collection_path,
-                    artifacts_manager,
-                )
+                req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
             except ValueError as val_err:
                 raise_from(AnsibleError(val_err), val_err)
 
@@ -1389,11 +1379,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
         raise
 
 
-def install_src(
-        collection,
-        b_collection_path, b_collection_output_path,
-        artifacts_manager,
-):
+def install_src(collection, b_collection_path, b_collection_output_path, artifacts_manager):
     r"""Install the collection from source control into given dir.
 
     Generates the Ansible collection artifact data from a galaxy.yml and

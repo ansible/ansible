@@ -134,7 +134,7 @@ def cleanup_tmp_file(path, warn=False):
         pass
 
 
-def is_subpath(child, parent):
+def is_subpath(child, parent, real=False):
     """
     Compares paths to check if one is contained in the other
     :arg: child: Path to test
@@ -144,6 +144,10 @@ def is_subpath(child, parent):
 
     abs_child = unfrackpath(child, follow=False)
     abs_parent = unfrackpath(parent, follow=False)
+
+    if real:
+        abs_child = os.path.realpath(abs_child)
+        abs_parent = os.path.realpath(abs_parent)
 
     c = abs_child.split(os.path.sep)
     p = abs_parent.split(os.path.sep)

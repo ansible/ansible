@@ -995,13 +995,11 @@ class Jinja2Loader(PluginLoader):
 
     We can't use the base class version because of file == plugin assumptions and dedupe logic
     """
-    def find_plugin(self, name, collection_list=None):
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
+        ''' this is really 'find plugin file' '''
 
-        if '.' in name:  # NOTE: this is wrong way, use: AnsibleCollectionRef.is_valid_fqcr(name) or collection_list
-            return super(Jinja2Loader, self).find_plugin(name, collection_list=collection_list)
-
-        # Nothing is currently using this method
-        raise AnsibleError('No code should call "find_plugin" for Jinja2Loaders (Not implemented)')
+        return super(Jinja2Loader, self).find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases,
+                                                     collection_list=collection_list)
 
     def get(self, name, *args, **kwargs):
 
@@ -1009,7 +1007,7 @@ class Jinja2Loader(PluginLoader):
             return super(Jinja2Loader, self).get(name, *args, **kwargs)
 
         # Nothing is currently using this method
-        raise AnsibleError('No code should call "get" for Jinja2Loaders (Not implemented)')
+        raise AnsibleError('No code should call "get" for Jinja2Loaders (Not implemented) for non collection use')
 
     def all(self, *args, **kwargs):
         """
