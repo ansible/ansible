@@ -8,13 +8,13 @@
 - name: create unreadable file
   copy:
     content: "Hello, World!"
-    dest: /tmp/qux.txt
-    mode: 0600
+    dest: "{{ output_dir }}/qux.txt"
+    mode: '0600'
     owner: root
 
 - name: test slurp unreadable file
   slurp:
-    src: '/tmp/qux.txt'
+    src: "{{ output_dir }}/qux.txt"
   register: slurp_unreadable_file
   become: true
   become_user: "{{ become_test_user }}"
@@ -30,14 +30,14 @@
 
 - name: create unreadable directory
   file:
-    path: /tmp/test_data
+    path: "{{ output_dir }}/test_data"
     state: directory
     mode: 0700
     owner: root
 
 - name: test slurp unreadable directory
   slurp:
-    src: /tmp/test_data
+    src: "{{ output_dir }}/test_data"
   register: slurp_unreadable_dir
   become: true
   become_user: "{{ become_test_user }}"
