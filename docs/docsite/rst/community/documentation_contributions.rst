@@ -74,8 +74,7 @@ Setting up your environment to build documentation locally
 
 To build documentation locally, ensure you have a working :ref:`development environment <environment_setup>`.
 
-To work with documentation on your local machine, you need to have python-3.5 or greater and the
-following packages installed:
+To work with documentation on your local machine, you need to have python-3.5 or greater and the following packages installed:
 
     - ``gcc``
     - ``jinja2``
@@ -90,14 +89,21 @@ following packages installed:
     - ``sphinx-notfound-page``
     - ``straight.plugin``
 
-These required packages are listed in two :file:`requirements.txt` files to make installation easier:
+These required packages are listed in our :file:`requirements.txt` files to make installation easier:
 
 .. code-block:: bash
 
     pip install --user -r requirements.txt
     pip install --user -r docs/docsite/requirements.txt
 
-You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
+The :file:`docs/docsite/requirements.txt` file allows a wide range of versions and may install new releases of required packages. New releases of these packages may cause problems with the Ansible docs build. If you want to install tested versions of these dependencies, use :file:`docs/docsite/known_good_reqs.txt` instead:
+
+.. code-block:: bash
+
+    pip install --user -r requirements.txt
+    pip install --user -r docs/docsite/known_good_reqs.txt
+
+You can drop ``--user`` if you have set up a virtual environment (venv/virtenv). 
 
 .. note::
 
