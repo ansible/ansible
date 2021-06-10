@@ -35,18 +35,19 @@
   register: failed_fetch_dir
   ignore_errors: yes
 
-- name: check fetch missing with failure with implicit fail
+- name: Check fetch missing with failure with implicit fail
   assert:
     that:
-      - fetch_missing_nofail.msg
+      - fetch_missing_nofail.msg is search('ignored')
       - fetch_missing_nofail is not changed
       - fetch_missing is failed
-      - fetch_missing.msg
       - fetch_missing is not changed
+      - fetch_missing.msg is search ('remote file does not exist')
       - fetch_missing_implicit is failed
-      - fetch_missing_implicit.msg
       - fetch_missing_implicit is not changed
+      - fetch_missing_implicit.msg is search ('remote file does not exist')
       - fetch_dir is not changed
-      - fetch_dir.msg
+      - fetch_dir.msg is search('is a directory')
       - failed_fetch_dir is failed
-      - fetch_dir.msg
+      - failed_fetch_dir is not changed
+      - failed_fetch_dir.msg is search('is a directory')

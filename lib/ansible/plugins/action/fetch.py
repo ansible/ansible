@@ -112,12 +112,14 @@ class ActionModule(ActionBase):
                     if not fail_on_missing:
                         result['file'] = source
                         result['changed'] = False
-                        if slurpres.get('msg', '').startswith('file not found'):
-                            result['msg'] = "the remote file does not exist, not transferring, ignored"
-                        elif slurpres.get('msg', '').startswith('source is a directory'):
-                            result['msg'] = "remote file is a directory, fetch cannot work on directories"
                     else:
                         result.update(slurpres)
+
+                    if slurpres.get('msg', '').startswith('file not found'):
+                        result['msg'] = "the remote file does not exist, not transferring, ignored"
+                    elif slurpres.get('msg', '').startswith('source is a directory'):
+                        result['msg'] = "remote file is a directory, fetch cannot work on directories"
+
                     return result
                 else:
                     if slurpres['encoding'] == 'base64':
