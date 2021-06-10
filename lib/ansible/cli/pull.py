@@ -94,7 +94,8 @@ class PullCLI(CLI):
                                       'This is a useful way to disperse git requests')
         self.parser.add_argument('-f', '--force', dest='force', default=False, action='store_true',
                                  help='run the playbook even if the repository could not be updated')
-        self.parser.add_argument('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
+        self.parser.add_argument('-d', '--directory', dest='dest', default=None,
+                                 help='absolute path of repository checkout directory (relative paths are not supported)')
         self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
         self.parser.add_argument('-C', '--checkout', dest='checkout',
