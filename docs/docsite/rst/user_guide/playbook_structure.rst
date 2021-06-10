@@ -1,8 +1,8 @@
 :orphan:
 
-Ansible basic structures introduction
-=====================================
-=====================================
+Ansible basic structures
+========================
+========================
 
 To use Ansible you might want to pickup some basic terminology, though you find most terms in the :ref:`glossary`, here we have a quick rundown of the basics.
 
@@ -30,7 +30,7 @@ A simple playbook with 1 play and 2 tasks, written in YAML:
           debug:
             var: result.stdout
 
-To understand the structure above you might want to check out the YAML Basics
+This is a YAML document, if you need to understand the structure above you might want to check out :ref:`yaml_syntax` first.
 
 Keywords
 --------
@@ -49,65 +49,6 @@ The options available are referenced in each plugin's specific documentation, fo
 On the command line you can also use ``ansible-doc -t modules -l`` to list all those avialable to you and ``ansible-doc -t modules <action name>`` to get the specific options.
 Other plugins work the same way, just changing the plugin type (``-t``). Valid values are visible using ``--help``.
 
-
-YAML Basics
-===========
-YAML is a data formatting language. It is 'space sensitive' and relies on indentation rather than having tags (for example ``<stuff> </endstuff>``) or other separators (``{``, ``}``, ``(``, ``)``, etc). It does have a 'short form' that looks a lot like JSON, but it is less strict about quoting. Most YAML parsers can read JSON directly.
-
-The most basic types are simple. A string looks like a string, so does a number, but once you get into 'container' types, you run into issues. The most basic containers are lists (aka arrays, stacks, etc) and dictionaries (aka mappings, associative arrays, hashes, etc).
-
-
-A ``-`` character identifies a 'list item'.
-
-.. code-block:: YAML
-
-    - one
-    - two
-    - three
-
-Or in short form YAML.
-
-.. code-block:: YAML
-
-    [one, two, three]
-
-A word with a colon (word:) identifies a mapping/dictionary
-
-.. code-block:: YAML
-
-    this: mapping
-    has: two keys
-
-Also in short form:
-
-.. code-block:: YAML
-
-    {this: mapping, has: 'two keys'}
-
-
-They can intermix so you can have a list of dictionaries and lists in dictionaries as well as lists of lists and dictionaries within dictionaries …
-
-.. code-block:: YAML
-
-    this_list:
-        - 1
-        - 2
-        - hasadict: with
-          several: keys
-          and: values
-          with:
-            - a
-            - list
-            - also
-
-
-'---'
------
-
-What is the ``---`` we see on top of YAML files? This is a 'document separator'. It is an OPTIONAL indicator that a YAML document is starting and not needed for Ansible to function (though some linting programs will complain if it is missing). You may also see a related delimiter ``...``, which is also optional, that means 'end of document'.
-
-
-For more details on YAML you can go here :ref:`yaml_syntax`.
 
 
 Tasks
