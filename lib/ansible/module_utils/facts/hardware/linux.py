@@ -199,9 +199,9 @@ class LinuxHardware(Hardware):
 
         cpu_facts['processor'] = []
         for line in get_file_lines('/proc/cpuinfo'):
-            # This builds a map of the sockets, cores, and CPUS on the system.
-            # Cores and logical CPU IDs are listed for each socket. Threads per
-            # core are known as 'siblings'.
+            # This builds a map of the sockets, cores, and CPUs on the system.
+            # Cores and logical CPU IDs are listed for each socket. The value for
+            # 'siblings' indicates threads per core.
             #
             # Example output once /proc/cpuinfo is parsed:
             # sockets = {
