@@ -76,12 +76,13 @@ class ActionModule(ActionBase):
                 try:
                     remote_stat = self._execute_remote_stat(source, all_vars=task_vars, follow=True)
                 except AnsibleError as ae:
-                    if not fail_on_missing and remote_stat.get('exists') is False:
-                        result['changed'] = False
-                        result['msg'] = "the remote file does not exist, not transferring, ignored"
-                        result['file'] = source
-                    else:
+                    result['changed'] = False
+                    result['file'] = source
+                    if fail_on_missing:
+                        result['failed'] = True
                         result['msg'] = to_text(ae)
+                    else:
+                        result['msg'] = "%s, ignored" % to_text(ae, errors='surrogate_or_replace')
 
                     return result
 
