@@ -158,8 +158,8 @@ class InventoryCLI(CLI):
                 display.display(results)
             else:
                 try:
-                    with open(to_bytes(outfile), 'wt') as f:
-                        f.write(to_native(results))
+                    with open(to_bytes(outfile), 'wb') as f:
+                        f.write(to_bytes(results))
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
             sys.exit(0)
