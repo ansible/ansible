@@ -81,9 +81,9 @@
 - name: check slurp directory result
   assert:
     that:
-      - "slurp_dir is failed"
-      - "slurp_dir.msg"
-      - "slurp_dir is not changed"
+      - slurp_dir is failed
+      - slurp_dir.msg is search('source is a directory and must be a file')
+      - slurp_dir is not changed
 
 - name: test slurp with missing argument
   action: slurp
