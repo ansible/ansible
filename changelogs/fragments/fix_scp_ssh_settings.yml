@@ -1,0 +1,4 @@
+bugfixes:
+  - ssh connection, fix interaction between trasnfer settings options.
+minor_changes:
+  - ssh connection, can not configure ssh_transfer_method with a variable.
