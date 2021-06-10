@@ -13,9 +13,17 @@
   check_mode: yes
   register: fetch_check_mode
 
-- name: Assert that the file was not fetched the second time
-  assert:
-    that:
+- name: Fetch with dest ending in path sep
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/"
+    flat: yes
+
+- name: Fetch with dest with relative path
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir[1:] }}"
+    flat: yes
 
 - name: Assert that we fetched correctly
   assert:
