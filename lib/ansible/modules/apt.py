@@ -95,7 +95,7 @@ options:
     description:
       - Corresponds to the C(--allow-downgrades) option for I(apt).
       - This option enables the named package and version to replace an already installed higher version of that package.
-      - Note that setting allow_downgrade=True can make this module behave in a non-idempotent way.
+      - Note that setting I(allow_downgrade=true) can make this module behave in a non-idempotent way.
       - (The task could end up with a set of packages that does not match the complete list of specified packages to install).
     aliases: [ allow-downgrade, allow_downgrades, allow-downgrades ]
     type: bool
