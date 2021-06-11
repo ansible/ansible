@@ -1,0 +1,33 @@
+- hosts: testhost
+  gather_facts: no
+
+  tasks:
+    - import_role:
+        name: fetch_tests
+        tasks_from: setup.yml
+      vars:
+        skip_cleanup: yes
+
+    - name: Get passwd entry for fetcher
+      getent:
+        database: passwd
+        key: fetcher
+
+    - name: Create .ssh dir
+      file:
+        path: "{{ getent_passwd.fetcher[4] }}/.ssh"
+        state: directory
+        owner: fetcher
+        mode: '0700'
+
+    - name: Configure authorized_keys
+      copy:
+        src: "~root/.ssh/authorized_keys"
+        dest: "{{ getent_passwd.fetcher[4] }}/.ssh/authorized_keys"
+        owner: fetcher
+        mode: '0600'
+
+    - copy:
+        content: "{{ remote_tmp_dir }}"
+        dest: "{{ playbook_dir }}/remote_tmp_dir.txt"
+      delegate_to: localhost

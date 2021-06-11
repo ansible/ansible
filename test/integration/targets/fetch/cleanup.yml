@@ -1,0 +1,19 @@
+- name: Cleanup user account
+  hosts: testhost
+
+  vars:
+    remote_tmp_dir: "{{ lookup('file', 'remote_tmp_dir.txt') }}"
+
+  tasks:
+    - name: remove test user
+      user:
+        name: fetcher
+        state: absent
+        remove: yes
+        force: yes
+
+    - name: delete temporary directory
+      file:
+        path: "{{ remote_tmp_dir }}"
+        state: absent
+      no_log: yes

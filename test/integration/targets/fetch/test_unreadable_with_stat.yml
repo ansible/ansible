@@ -1,0 +1,27 @@
+- name: Test unreadable file using stat
+  hosts: testhost
+  gather_facts: no
+
+  vars:
+    remote_tmp_dir: "{{ lookup('file', 'remote_tmp_dir.txt') }}"
+
+  tasks:
+    - name: Try to fetch a file inside an inaccessible directory
+      fetch:
+        src: "{{ remote_tmp_dir }}/noaccess/file1"
+        dest: "{{ output_dir }}"
+      register: failed_fetch_no_access
+      ignore_errors: yes
+
+    - name: Try to fetch a file inside an inaccessible directory without fail_on_missing
+      fetch:
+        src: "{{ remote_tmp_dir }}/noaccess/file1"
+        dest: "{{ output_dir }}"
+        fail_on_missing: no
+      register: failed_fetch_no_access_fail_on_missing
+
+    - assert:
+        that:
+          - failed_fetch_no_access is failed
+          - failed_fetch_no_access.msg is search('Permission denied')
+          - failed_fetch_no_access_fail_on_missing.msg is search(', ignored')
