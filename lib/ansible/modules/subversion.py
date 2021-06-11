@@ -134,6 +134,13 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class Subversion(object):
+
+    # Example text matched by the regexp:
+    #  Révision : 1889134
+    #  版本: 1889134
+    #  Revision: 1889134
+    REVISION_RE = r'^\w+\s?:\s+\d+$'
+
     def __init__(self, module, dest, repo, revision, username, password, svn_path, validate_certs):
         self.module = module
         self.dest = dest
@@ -228,14 +235,28 @@ class Subversion(object):
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.dest]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
-        url = re.search(r'^URL:.*$', text, re.MULTILINE).group(0)
+        rev = re.search(self.REVISION_RE, text, re.MULTILINE)
+        if rev:
+            rev = rev.group(0)
+        else:
+            rev = 'Unable to get revision'
+
+        url = re.search(r'^URL\s?:.*$', text, re.MULTILINE)
+        if url:
+            url = url.group(0)
+        else:
+            url = 'Unable to get URL'
+
         return rev, url
 
     def get_remote_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.repo]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
+        rev = re.search(self.REVISION_RE, text, re.MULTILINE)
+        if rev:
+            rev = rev.group(0)
+        else:
+            rev = 'Unable to get remote revision'
         return rev
 
     def has_local_mods(self):
@@ -250,7 +271,11 @@ class Subversion(object):
     def needs_update(self):
         curr, url = self.get_revision()
         out2 = '\n'.join(self._exec(["info", "-r", self.revision, self.dest]))
-        head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
+        head = re.search(self.REVISION_RE, out2, re.MULTILINE)
+        if head:
+            head = head.group(0)
+        else:
+            head = 'Unable to get revision'
         rev1 = int(curr.split(':')[1].strip())
         rev2 = int(head.split(':')[1].strip())
         change = False
