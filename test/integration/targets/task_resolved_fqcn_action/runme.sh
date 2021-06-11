@@ -10,12 +10,8 @@ action_resolution=(
     "legacy_module == legacy_module"
     "debug == ansible.builtin.debug"
     "ping == ansible.builtin.ping"
-    "collection_action == test_ns.test_coll.collection_action"
-    "collection_module == test_ns.test_coll.collection_module"
-    "formerly_action == test_ns.test_coll.collection_action"
-    "formerly_module == test_ns.test_coll.collection_module"
 )
-for result in "$action_resolution"; do
+for result in "${action_resolution[@]}"; do
     grep -q out.txt -e "$result"
 done
 
@@ -30,7 +26,7 @@ action_resolution=(
     "formerly_action == test_ns.test_coll.collection_action"
     "formerly_module == test_ns.test_coll.collection_module"
 )
-for result in "$action_resolution"; do
+for result in "${action_resolution[@]}"; do
     grep -q out.txt -e "$result"
 done
 
@@ -47,6 +43,6 @@ action_resolution=(
     "test_ns.test_coll.formerly_action == test_ns.test_coll.collection_action"
     "test_ns.test_coll.formerly_module == test_ns.test_coll.collection_module"
 )
-for result in "$action_resolution"; do
+for result in "${action_resolution[@]}"; do
     grep -q out.txt -e "$result"
 done
