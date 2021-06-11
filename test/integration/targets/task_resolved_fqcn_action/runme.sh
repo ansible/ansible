@@ -2,46 +2,51 @@
 
 set -eux
 
-ANSIBLE_STDOUT_CALLBACK=display_resolved_action ansible-playbook playbook.yml "$@" | tee out.txt
+export ANSIBLE_CALLBACKS_ENABLED=display_resolved_action
 
-#### Test action/module callback banners from a playbook
+ansible-playbook unqualified.yml "$@" | tee out.txt
+action_resolution=(
+    "legacy_action == legacy_action"
+    "legacy_module == legacy_module"
+    "debug == ansible.builtin.debug"
+    "ping == ansible.builtin.ping"
+    "collection_action == test_ns.test_coll.collection_action"
+    "collection_module == test_ns.test_coll.collection_module"
+    "formerly_action == test_ns.test_coll.collection_action"
+    "formerly_module == test_ns.test_coll.collection_module"
+)
+for result in "$action_resolution"; do
+    grep -q out.txt -e "$result"
+done
 
-# Called as:
-# - custom_module + collections kw
-# - test_ns.test_coll.custom_module
-# - redirected_module + collections kw
-# - test_ns.test_coll.redirected_module
-test "$(grep -c out.txt -e '\[test_ns.test_coll.custom_module\]')" == 4
+ansible-playbook unqualified_and_collections_kw.yml "$@" | tee out.txt
+action_resolution=(
+    "legacy_action == legacy_action"
+    "legacy_module == legacy_module"
+    "debug == ansible.builtin.debug"
+    "ping == ansible.builtin.ping"
+    "collection_action == test_ns.test_coll.collection_action"
+    "collection_module == test_ns.test_coll.collection_module"
+    "formerly_action == test_ns.test_coll.collection_action"
+    "formerly_module == test_ns.test_coll.collection_module"
+)
+for result in "$action_resolution"; do
+    grep -q out.txt -e "$result"
+done
 
-# Called as:
-# - custom_action + collections kw
-# - test_ns.test_coll.custom_action
-# - redirected_action + collections kw
-# - test_ns.test_coll.redirected_action
-test "$(grep -c out.txt -e '\[test_ns.test_coll.custom_action\]')" == 4
-
-# Called as:
-# - legacy_module
-# - legacy_module + collections kw
-# - ansible.legacy.legacy_module
-test "$(grep -c out.txt -e '\[legacy_module\]')" == 3
-
-# Called as:
-# - legacy_action
-# - legacy_action + collections kw
-# - ansible.legacy.legacy_action
-test "$(grep -c out.txt -e '\[legacy_action\]')" == 3
-
-#### Test action/module callback banners from a legacy role
-
-test "$(grep -c out.txt -e '\[legacy_role : test_ns.test_coll.custom_module\]')" == 1
-test "$(grep -c out.txt -e '\[legacy_role : test_ns.test_coll.custom_action\]')" == 1
-test "$(grep -c out.txt -e '\[legacy_role : legacy_module\]')" == 1
-test "$(grep -c out.txt -e '\[legacy_role : legacy_action\]')" == 1
-
-#### Test action/module callback banners from a collection's role
-
-test "$(grep -c out.txt -e '\[test_ns.test_coll.collection_role : test_ns.test_coll.custom_module\]')" == 1
-test "$(grep -c out.txt -e '\[test_ns.test_coll.collection_role : test_ns.test_coll.custom_action\]')" == 1
-test "$(grep -c out.txt -e '\[test_ns.test_coll.collection_role : legacy_module\]')" == 1
-test "$(grep -c out.txt -e '\[test_ns.test_coll.collection_role : legacy_action\]')" == 1
+ansible-playbook fqcn.yml "$@" | tee out.txt
+action_resolution=(
+    "ansible.legacy.legacy_action == legacy_action"
+    "ansible.legacy.legacy_module == legacy_module"
+    "ansible.legacy.debug == ansible.builtin.debug"
+    "ansible.legacy.ping == ansible.builtin.ping"
+    "ansible.builtin.debug == ansible.builtin.debug"
+    "ansible.builtin.ping == ansible.builtin.ping"
+    "test_ns.test_coll.collection_action == test_ns.test_coll.collection_action"
+    "test_ns.test_coll.collection_module == test_ns.test_coll.collection_module"
+    "test_ns.test_coll.formerly_action == test_ns.test_coll.collection_action"
+    "test_ns.test_coll.formerly_module == test_ns.test_coll.collection_module"
+)
+for result in "$action_resolution"; do
+    grep -q out.txt -e "$result"
+done

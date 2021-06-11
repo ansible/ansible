@@ -11,5 +11,4 @@ class ActionModule(ActionBase):
     _VALID_ARGS = frozenset()
 
     def run(self, tmp=None, task_vars=None):
-        result = {'success': True, 'changed': False}
-        return result
+        return {'changed': False}

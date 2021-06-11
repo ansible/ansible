@@ -22,7 +22,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(supports_check_mode=True, argument_spec={})
-    module.exit_json(success=True, changed=False)
+    module.exit_json(changed=False)
 
 
 if __name__ == '__main__':
