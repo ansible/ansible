@@ -1,0 +1,2 @@
+bugfixes:
+  - subversion - fix stack trace when getting information about the repository (https://github.com/ansible/ansible/issues/36498)
