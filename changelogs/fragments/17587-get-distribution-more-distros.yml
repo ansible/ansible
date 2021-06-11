@@ -1,0 +1,7 @@
+minor_changes:
+  - >
+    get_distribution - ``lib.ansible.module_utils.common.sys_info.get_distribution`` now returns
+    distribution information for all platforms not just Linux (https://github.com/ansible/ansible/issues/17587)
+  - >
+    get_distribution_version - ``lib.ansible.module_utils.common.sys_info.get_distribution_version`` now
+    returns the version for all platfroms not just Linux (https://github.com/ansible/ansible/issues/17587)
