@@ -152,7 +152,8 @@
     - name: Test that retrieving all facts filtered to date_time even w/o using ansible_ prefix
       assert:
         that:
-          - 'ansible_date_time|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
+          - 'ansible_facts["date_time"]|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+          - 'ansible_date_time|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
 
 - hosts: facthost26
   tags: [ 'fact_min' ]
@@ -166,7 +167,8 @@
     - name: Test that retrieving all facts filtered to date_time even using ansible_ prefix
       assert:
         that:
-          - 'ansible_date_time|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
+          - 'ansible_facts["date_time"]|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+          - 'ansible_date_time|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
 
 - hosts: facthost13
   tags: [ 'fact_min' ]
