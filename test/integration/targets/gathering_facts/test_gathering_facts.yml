@@ -142,7 +142,6 @@
 
 - hosts: facthost25
   tags: [ 'fact_min' ]
-  connection: local
   gather_facts: no
   tasks:
     - setup:
@@ -157,7 +156,6 @@
 
 - hosts: facthost26
   tags: [ 'fact_min' ]
-  connection: local
   gather_facts: no
   tasks:
     - setup:
