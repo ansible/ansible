@@ -852,7 +852,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         data = self._low_level_execute_command(cmd, sudoable=False)
 
         try:
-            initial_fragment = data['stdout'].strip().rstrip('\n')
+            initial_fragment = data['stdout'].strip().splitlines()[-1]
         except IndexError:
             initial_fragment = None
 
