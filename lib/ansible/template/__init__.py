@@ -1114,7 +1114,8 @@ class Templar:
                     res = ansible_native_concat(rf)
                 else:
                     res = j2_concat(rf)
-                if getattr(new_context, 'unsafe', False):
+                unsafe = getattr(new_context, 'unsafe', False)
+                if unsafe:
                     res = wrap_var(res)
             except TypeError as te:
                 if 'AnsibleUndefined' in to_native(te):
@@ -1144,6 +1145,8 @@ class Templar:
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
                     res += self.environment.newline_sequence * (data_newlines - res_newlines)
+                    if unsafe:
+                        res = wrap_var(res)
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
