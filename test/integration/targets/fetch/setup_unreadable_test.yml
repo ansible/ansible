@@ -8,6 +8,11 @@
       vars:
         skip_cleanup: yes
 
+    - name: Remove /run/nologin
+      file:
+        path: /run/nologin
+        state: absent
+
     - name: Get passwd entry for fetcher
       getent:
         database: passwd

@@ -16,5 +16,7 @@ ansible-playbook -i ../../inventory run_fetch_tests.yml -e "output_dir=${OUTPUT_
 ansible-playbook -i ../../inventory injection/avoid_slurp_return.yml -e "output_dir=${OUTPUT_DIR}" "$@"
 
 # Test unreadable file with stat. Requires running without become and as a user other than root.
+export ANSIBLE_SSH_EXTRA_ARGS="-o UserKnownHostsFile=/dev/null"
 ansible-playbook -i hosts.yml setup_unreadable_test.yml -e "output_dir=${OUTPUT_DIR}" "$@"
 ansible-playbook --user fetcher -i hosts.yml test_unreadable_with_stat.yml -e "output_dir=${OUTPUT_DIR}" "$@"
+unset ANSIBLE_SSH_EXTRA_ARGS
