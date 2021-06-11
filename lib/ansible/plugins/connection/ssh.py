@@ -279,9 +279,6 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
         ini:
             - {key: transfer_method, section: ssh_connection}
-        vars:
-            - name: ansible_ssh_transfer_method
-              version_added: '2.12'
       scp_if_ssh:
         default: smart
         description:
