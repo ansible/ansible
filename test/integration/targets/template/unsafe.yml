@@ -1,0 +1,19 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    nottemplated: this should not be seen
+    imunsafe: !unsafe '{{ nottemplated }}'
+  tasks:
+
+    - set_fact:
+        this_was_unsafe: >
+          {{ imunsafe }}
+
+    - set_fact:
+          this_always_safe: '{{ imunsafe }}'
+
+    - name: ensure nothing was templated
+      assert:
+        that:
+        - this_always_safe == imunsafe
+        - imunsafe == this_was_unsafe.strip()

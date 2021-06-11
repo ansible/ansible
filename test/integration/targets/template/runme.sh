@@ -34,3 +34,7 @@ ansible-playbook 6653.yml -v "$@"
 
 # https://github.com/ansible/ansible/issues/72262
 ansible-playbook 72262.yml -v "$@"
+
+# ensure unsafe is preserved, even with extra newlines
+ansible-playbook unsafe.yml -v "$@"
+
