@@ -36,6 +36,7 @@ display = Display()
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+        changed = False
         socket_path = None
         network_os = self._get_network_os(task_vars)
         persistent_connection = self._play_context.connection.split('.')[-1]
