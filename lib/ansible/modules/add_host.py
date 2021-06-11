@@ -40,7 +40,7 @@ notes:
 - Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
 seealso:
 - The hosts added will not bypass the ``--limit`` from the command line, so both of those need to be in agreement to make them available as play targets.
-  They are still available via hostvars and for delegation.
+  They are still available via hostvars and for delegation as normal part of the inventory.
 - module: ansible.builtin.group_by
 author:
 - Ansible Core Team
