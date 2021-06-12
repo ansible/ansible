@@ -1,0 +1,3 @@
+bugfixes:
+- psrp - Fix error when resetting a connection that was initialised but not connected - (https://github.com/ansible/ansible/issues/74092).
+- psrp - Try to clean up any server-side resources when resetting a connection.
