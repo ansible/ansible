@@ -410,7 +410,16 @@ class Connection(ConnectionBase):
 
     def reset(self):
         if not self._connected:
+            self.runspace = None
             return
+
+        # Try out best to ensure the runspace is closed to free up server side resources
+        try:
+            self.close()
+        except Exception as e:
+            # There's a good chance the connection was already closed so just log the error and move on
+            display.debug("PSRP reset - failed to closed runspace: %s" % to_text(e))
+
         display.vvvvv("PSRP: Reset Connection", host=self._psrp_host)
         self.runspace = None
         self._connect()
