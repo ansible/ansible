@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test config - allow to specify sanity tests which should always be enabled or disabled in the config (https://github.com/ansible/ansible/pull/74989)."

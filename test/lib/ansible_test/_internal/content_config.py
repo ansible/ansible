@@ -61,6 +61,18 @@ class ModulesConfig(BaseConfig):
         self.controller_only = python_requires == 'controller'
 
 
+class TestsConfig(BaseConfig):
+    """Configuration for tests."""
+    def __init__(self, data):  # type: (t.Any) -> None
+        super().__init__(data)
+
+        disable_sanity_tests = data.get('disable_sanity_tests', [])
+        enable_sanity_tests = data.get('enable_sanity_tests', [])
+
+        self.disable_sanity_tests = parse_sanity_test_list('disable_sanity_tests', disable_sanity_tests)
+        self.enable_sanity_tests = parse_sanity_test_list('enable_sanity_tests', enable_sanity_tests)
+
+
 class ContentConfig(BaseConfig):
     """Configuration for all content."""
     def __init__(self, data):  # type: (t.Any) -> None
@@ -68,6 +80,9 @@ class ContentConfig(BaseConfig):
 
         # Configuration specific to modules/module_utils.
         self.modules = ModulesConfig(data.get('modules', {}))
+
+        # Configuration specific to tests.
+        self.tests = TestsConfig(data.get('tests', {}))
 
         # Python versions supported by the controller, combined with Python versions supported by modules/module_utils.
         # Mainly used for display purposes and to limit the Python versions used for sanity tests.
@@ -149,3 +164,23 @@ def parse_python_requires(value):  # type: (t.Any) -> t.List[str]
         versions = [version for version in SUPPORTED_PYTHON_VERSIONS if specifier_set.contains(Version(version))]
 
     return versions
+
+
+def parse_sanity_test_list(filter_list_name, filter_list):  # type: (str, t.Any) -> t.List[str]
+    """Parse the given list of sanity tests."""
+    if not isinstance(filter_list, list):
+        raise ValueError('%s must must be of type `list` not type `%s`' % (filter_list_name, type(filter_list)))
+
+    if not filter_list:
+        return []
+
+    from .commands.sanity import sanity_get_tests
+
+    result = []
+    all_sanity_tests = [target.name for target in sanity_get_tests()]
+    for test in filter_list:
+        if test in all_sanity_tests:
+            result.append(test)
+        else:
+            display.warning('Ignoring %s entry "%s"' % (filter_list_name, test))
+    return result

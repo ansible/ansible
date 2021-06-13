@@ -153,8 +153,15 @@ def command_sanity(args):  # type: (SanityConfig) -> None
         disabled = []
         tests = [target for target in tests if target.name in args.test]
     else:
-        disabled = [target.name for target in tests if not target.enabled and not args.allow_disabled]
-        tests = [target for target in tests if target.enabled or args.allow_disabled]
+        disable_sanity_tests = get_content_config().tests.disable_sanity_tests
+        enable_sanity_tests = get_content_config().tests.enable_sanity_tests
+        disabled = {
+            target.name for target in tests
+            if (not target.enabled or target.name in disable_sanity_tests)
+            and not args.allow_disabled
+            and target.name not in enable_sanity_tests
+        }
+        tests = [target for target in tests if target.name not in disabled]
 
     if args.skip_test:
         tests = [target for target in tests if target.name not in args.skip_test]

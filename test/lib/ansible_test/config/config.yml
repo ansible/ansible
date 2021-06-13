@@ -39,3 +39,22 @@ modules:
   # These settings only apply to modules/module_utils.
   # It is not possible to declare supported Python versions for controller-only code.
   # All Python versions supported by the controller must be supported by controller-only code.
+
+tests:
+  # Configuration for tests.
+
+  enable_sanity_tests: []
+  # Sanity Tests that should be enabled by default.
+  # This setting is optional.
+  #
+  # Specifying a sanity test here will enable the test by default when `ansible-test sanity` is used. Such tests can be explicitly skipped by specifying `--skip-test`.
+  #
+  # You can get a list of valid values by running `ansible-test sanity --list-tests` inside a collection.
+
+  disable_sanity_tests: []
+  # Sanity Tests that should be disabled by default.
+  # This setting is optional.
+  #
+  # Specifying a sanity test here will disable the test by default when `ansible-test sanity` is used. Such tests can be explicitly run by specifying `--test` or `--allow-disabled`.
+  #
+  # You can get a list of valid values by running `ansible-test sanity --list-tests` inside a collection.
