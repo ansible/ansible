@@ -305,6 +305,7 @@ class GalaxyCLI(CLI):
         if galaxy_type == 'collection':
             list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
                                      help="Format to display the list of collections in.")
+            opt_help.add_basedir_options(list_parser)
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1396,8 +1397,10 @@ class GalaxyCLI(CLI):
 
         output_format = context.CLIARGS['output_format']
         collections_search_paths = set(context.CLIARGS['collections_path'])
+        if context.CLIARGS['basedir']:
+            collections_search_paths.update([context.CLIARGS['basedir']])
         collection_name = context.CLIARGS['collection']
-        default_collections_path = AnsibleCollectionConfig.collection_paths
+        default_collections_path = AnsibleCollectionConfig.collection_paths + [context.CLIARGS['basedir']]
         collections_in_paths = {}
 
         warnings = []
