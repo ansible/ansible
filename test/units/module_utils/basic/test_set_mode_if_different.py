@@ -100,6 +100,13 @@ def test_mode_unchanged_when_already_0660(am, mock_stats, mocker, mode, check_mo
     assert not m_lchmod.called
 
 
+@pytest.mark.parametrize('mode, stdin', product(SYNONYMS_0660, ({},)), indirect=['stdin'])
+def test_mode_changed_to_0660_check_mode_no_file(am, mocker, mode):
+    am.check_mode = True
+    mocker.patch('os.path.exists', return_value=False)
+    assert am.set_mode_if_different('/path/to/file', mode, False)
+
+
 @pytest.mark.parametrize('check_mode, stdin',
                          product((True, False), ({},)),
                          indirect=['stdin'])
