@@ -986,6 +986,9 @@ class DocCLI(CLI, RoleMixin):
     def _format_version_added(version_added, version_added_collection=None):
         if version_added_collection == 'ansible.builtin':
             version_added_collection = 'ansible-core'
+            # In ansible-core, version_added can be 'historical'
+            if version_added == 'historical':
+                return 'historical'
         if version_added_collection:
             version_added = '%s of %s' % (version_added, version_added_collection)
         return 'version %s' % (version_added, )
