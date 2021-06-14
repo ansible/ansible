@@ -1,9 +1,6 @@
 - name: Cleanup user account
   hosts: testhost
 
-  vars:
-    remote_tmp_dir: "{{ lookup('file', 'remote_tmp_dir.txt') }}"
-
   tasks:
     - name: remove test user
       user:

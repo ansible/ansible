@@ -6,7 +6,8 @@
         name: fetch_tests
         tasks_from: setup.yml
       vars:
-        skip_cleanup: yes
+        setup_remote_tmp_dir_skip_cleanup: yes
+        setup_remote_tmp_dir_cache_path: yes
 
     - name: Remove /run/nologin
       file:
@@ -30,8 +31,3 @@
         dest: "{{ fetcher_home.stdout }}/.ssh/authorized_keys"
         owner: fetcher
         mode: '0600'
-
-    - copy:
-        content: "{{ remote_tmp_dir }}"
-        dest: "{{ playbook_dir }}/remote_tmp_dir.txt"
-      delegate_to: localhost

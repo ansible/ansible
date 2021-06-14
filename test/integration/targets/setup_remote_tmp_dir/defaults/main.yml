@@ -1,1 +1,2 @@
-skip_cleanup: no
+setup_remote_tmp_dir_skip_cleanup: no
+setup_remote_tmp_dir_cache_path: no

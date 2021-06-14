@@ -2,9 +2,6 @@
   hosts: testhost
   gather_facts: no
 
-  vars:
-    remote_tmp_dir: "{{ lookup('file', 'remote_tmp_dir.txt') }}"
-
   tasks:
     - name: Try to fetch a file inside an inaccessible directory
       fetch:
