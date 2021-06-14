@@ -1,7 +1,19 @@
+- name: Include system specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.system }}.yml"
+        - default.yml
+      paths:
+        - "{{ role_path }}/vars"
+
 - name: Create test user
   user:
     name: fetcher
     create_home: yes
+    groups: "{{ _fetch_additional_groups | default(omit) }}"
+    append: "{{ True if _fetch_additional_groups else False }}"
   become: yes
   notify:
     - remove test user

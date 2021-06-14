@@ -13,14 +13,13 @@
         path: /run/nologin
         state: absent
 
-    - name: Get passwd entry for fetcher
-      getent:
-        database: passwd
-        key: fetcher
+    - name: Get home directory for temporary user
+      command: echo ~fetcher
+      register: fetcher_home
 
     - name: Create .ssh dir
       file:
-        path: "{{ getent_passwd.fetcher[4] }}/.ssh"
+        path: "{{ fetcher_home.stdout }}/.ssh"
         state: directory
         owner: fetcher
         mode: '0700'
@@ -28,7 +27,7 @@
     - name: Configure authorized_keys
       copy:
         src: "~root/.ssh/authorized_keys"
-        dest: "{{ getent_passwd.fetcher[4] }}/.ssh/authorized_keys"
+        dest: "{{ fetcher_home.stdout }}/.ssh/authorized_keys"
         owner: fetcher
         mode: '0600'
 
