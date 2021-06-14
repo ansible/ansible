@@ -1855,6 +1855,32 @@ releases:
     - template_temp_vars_fix.yml
     - v2.10.10rc1_summary.yaml
     release_date: '2021-05-17'
+  2.10.11rc1:
+    changes:
+      bugfixes:
+      - gather_facts, package, service - fix using module_defaults for the modules
+        in addition to the action plugins. (https://github.com/ansible/ansible/issues/72918)
+      - psrp - Always cleanup the last run pipeline if a second pipeline is invoked
+        to avoid violating any resource limits.
+      - psrp - Fix error when resetting a connection that was initialised but not
+        connected - (https://github.com/ansible/ansible/issues/74092).
+      - psrp - Try to clean up any server-side resources when resetting a connection.
+      release_summary: '| Release Date: 2021-06-14
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - templating engine fix for not preserving usnafe status when trying to preserve
+        newlines. CVE-2021-3583
+    codename: When the Levee Breaks
+    fragments:
+    - 73864-action-plugin-module-defaults.yml
+    - fix_unsafe_newline.yml
+    - psrp-cleanup.yml
+    - psrp-reset.yml
+    - v2.10.11rc1_summary.yaml
+    release_date: '2021-06-14'
   2.10.1rc1:
     changes:
       bugfixes:

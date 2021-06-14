@@ -5,6 +5,29 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2021-06-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Security Fixes
+--------------
+
+- templating engine fix for not preserving usnafe status when trying to preserve newlines. CVE-2021-3583
+
+Bugfixes
+--------
+
+- gather_facts, package, service - fix using module_defaults for the modules in addition to the action plugins. (https://github.com/ansible/ansible/issues/72918)
+- psrp - Always cleanup the last run pipeline if a second pipeline is invoked to avoid violating any resource limits.
+- psrp - Fix error when resetting a connection that was initialised but not connected - (https://github.com/ansible/ansible/issues/74092).
+- psrp - Try to clean up any server-side resources when resetting a connection.
+
 v2.10.10
 ========
 
