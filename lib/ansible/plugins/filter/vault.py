@@ -5,8 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
-# from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.parsing.vault import is_encrypted, VaultSecret, VaultLib
@@ -26,9 +25,12 @@ def do_vault(data, secret, vaultid=None):
     vault = ''
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib()
-    vault = vl.encrypt(to_bytes(data), vs, vaultid)
+    try:
+        vault = vl.encrypt(to_bytes(data), vs, vaultid)
+    except Exception as e:
+        raise AnsibleFilterError("Unable to encrypt: %s" % to_native(e), orig_exc=e)
 
-    return to_text(vault)
+    return to_native(vault)
 
 
 def do_unvault(vault, secret, vaultid='default'):
@@ -49,8 +51,7 @@ def do_unvault(vault, secret, vaultid='default'):
         try:
             data = vl.decrypt(vault)
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            raise AnsibleFilterError("Unable to decrypt: %s" % to_native(e), orig_exc=e)
     else:
         data = vault
 
