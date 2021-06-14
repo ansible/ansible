@@ -1,0 +1,4 @@
+bugfixes:
+  - ssh connection now correctly handle ssh_transfer_method and scp_if_ssh interactions.
+minor_changes:
+  - ssh connection, ssh_transfer_method is now configurable via variable.

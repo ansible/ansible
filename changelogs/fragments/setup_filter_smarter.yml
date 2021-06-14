@@ -1,0 +1,2 @@
+bugfixes:
+  - setup module, fix filter to adjust for missing ``ansible_`` prefix on query.
