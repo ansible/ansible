@@ -1,0 +1,2 @@
+bugfixes:
+  - Avoid task executor from ending early as vars can come from delegated to host.
