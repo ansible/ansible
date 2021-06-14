@@ -17,7 +17,7 @@ display = Display()
 def do_vault(data, secret, vaultid='default', wrap_object=False):
 
     if not isinstance(secret, string_types):
-        raise AnsibleFilterTypeError("Secret passed is required to be as tring, instead we got: %s" % type(secret))
+        raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
 
     if not isinstance(data, string_types):
         raise AnsibleFilterTypeError("Can only vault strings, instead we got: %s" % type(data))
