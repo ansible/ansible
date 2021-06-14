@@ -60,7 +60,7 @@ def do_unvault(vault, secret, vaultid='default'):
     else:
         data = vault
 
-    return data
+    return to_native(data)
 
 
 class FilterModule(object):
