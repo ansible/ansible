@@ -358,6 +358,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 },
             },
             'name': task_name,
+            'tags': ['always'],
         }
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
