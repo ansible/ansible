@@ -1767,3 +1767,55 @@ releases:
     - v2.11.1rc1_summary.yaml
     - world_readable_fixes.yml
     release_date: '2021-05-17'
+  2.11.2rc1:
+    changes:
+      bugfixes:
+      - AnsibleModule.set_mode_if_different - don't check file existence when check_mode
+        is activated (https://github.com/ansible/ansible/issues/61185).
+      - Apply ``display_failed_stderr`` callback option on loop item results. (https://github.com/ansible/ansible/issues/74864)
+      - Avoid task executor from ending early as vars can come from delegated to host.
+      - ansible-pull - update documentation for ``--directory`` option to clarify
+        path must be absolute.
+      - config, ensure 'quoted' lists from ini or env do not take the quotes literally
+        as part of the list item.
+      - gather_facts, package, service - fix using module_defaults for the modules
+        in addition to the action plugins. (https://github.com/ansible/ansible/issues/72918)
+      - psrp - Always cleanup the last run pipeline if a second pipeline is invoked
+        to avoid violating any resource limits.
+      - psrp - Fix error when resetting a connection that was initialised but not
+        connected - (https://github.com/ansible/ansible/issues/74092).
+      - psrp - Try to clean up any server-side resources when resetting a connection.
+      - roles - make sure argspec validation task is tagged with ``always`` (https://github.com/ansible/ansible/pull/74994).
+      - slurp - Fix error messages for unreadable files and directories (https://github.com/ansible/ansible/issues/67340).
+      - slurp - handle error when ``path`` is a directory and not a file (https://github.com/ansible/ansible/pull/74930).
+      - ssh connection - fix interaction between transfer settings options.
+      - subversion - fix stack trace when getting information about the repository
+        (https://github.com/ansible/ansible/issues/36498)
+      - version test - improve error message when an empty version is provided
+      release_summary: '| Release Date: 2021-06-14
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - templating engine fix for not preserving usnafe status when trying to preserve
+        newlines. CVE-2021-3583
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 36498-subversion-fix-info-parsing.yml
+    - 61185-basic.py-fix-check_mode.yaml
+    - 67340-slurp_error_message.yml
+    - 73864-action-plugin-module-defaults.yml
+    - 74864-display_failed_stderr-per-item.yml
+    - ansible-pull-doc-update.yml
+    - config_lists_unquote.yml
+    - delegate_te_fix.yml
+    - fix_scp_ssh_settings.yml
+    - fix_unsafe_newline.yml
+    - psrp-cleanup.yml
+    - psrp-reset.yml
+    - role_argspec_tagged_always.yml
+    - slurp-handle-error-with-dir.yml
+    - v2.11.2rc1_summary.yaml
+    - version_compare-error-on-empty.yml
+    release_date: '2021-06-14'

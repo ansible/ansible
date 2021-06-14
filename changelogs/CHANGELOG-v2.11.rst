@@ -5,6 +5,40 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-06-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Security Fixes
+--------------
+
+- templating engine fix for not preserving usnafe status when trying to preserve newlines. CVE-2021-3583
+
+Bugfixes
+--------
+
+- AnsibleModule.set_mode_if_different - don't check file existence when check_mode is activated (https://github.com/ansible/ansible/issues/61185).
+- Apply ``display_failed_stderr`` callback option on loop item results. (https://github.com/ansible/ansible/issues/74864)
+- Avoid task executor from ending early as vars can come from delegated to host.
+- ansible-pull - update documentation for ``--directory`` option to clarify path must be absolute.
+- config, ensure 'quoted' lists from ini or env do not take the quotes literally as part of the list item.
+- gather_facts, package, service - fix using module_defaults for the modules in addition to the action plugins. (https://github.com/ansible/ansible/issues/72918)
+- psrp - Always cleanup the last run pipeline if a second pipeline is invoked to avoid violating any resource limits.
+- psrp - Fix error when resetting a connection that was initialised but not connected - (https://github.com/ansible/ansible/issues/74092).
+- psrp - Try to clean up any server-side resources when resetting a connection.
+- roles - make sure argspec validation task is tagged with ``always`` (https://github.com/ansible/ansible/pull/74994).
+- slurp - Fix error messages for unreadable files and directories (https://github.com/ansible/ansible/issues/67340).
+- slurp - handle error when ``path`` is a directory and not a file (https://github.com/ansible/ansible/pull/74930).
+- ssh connection - fix interaction between transfer settings options.
+- subversion - fix stack trace when getting information about the repository (https://github.com/ansible/ansible/issues/36498)
+- version test - improve error message when an empty version is provided
+
 v2.11.1
 =======
 
