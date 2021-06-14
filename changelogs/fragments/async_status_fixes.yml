@@ -1,0 +1,3 @@
+bugfixes:
+  - async_status, ensure we always get documented returns
+  - task_executor, Actions using AnsibleActionFail/Skip will now propagate 'results' if given
