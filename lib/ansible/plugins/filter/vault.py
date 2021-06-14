@@ -14,7 +14,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, vaultid=None, wrap_object=False):
+def do_vault(data, secret, vaultid='default', wrap_object=False):
 
     if not isinstance(secret, string_types):
         raise AnsibleFilterTypeError("Secret passed is required to be as tring, instead we got: %s" % type(secret))
