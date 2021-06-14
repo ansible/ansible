@@ -218,8 +218,8 @@ The :ref:`Community Guide <ansible_community_guide>` covers how to open a pull r
 Communication and development support
 =====================================
 
-Join the IRC channel ``#ansible-devel`` on freenode for discussions
-surrounding Ansible development.
+Join the IRC channel ``#ansible-devel`` on `irc.libera.chat <https://libera.chat/>`_ for
+discussions surrounding Ansible development.
 
 For questions and discussions pertaining to using the Ansible product,
 use the ``#ansible`` channel.
