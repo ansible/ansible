@@ -1,0 +1,2 @@
+bugfixes:
+    - roles - make sure argspec validation task is tagged with ``always`` (https://github.com/ansible/ansible/pull/74994).
