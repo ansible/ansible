@@ -61,7 +61,17 @@ class AnsibleFactCollector(collector.BaseFactCollector):
         if is_string(filter_spec):
             filter_spec = [filter_spec]
 
-        return [(x, y) for x, y in facts_dict.items() for f in filter_spec if not f or fnmatch.fnmatch(x, f)]
+        found = []
+        for f in filter_spec:
+            for x, y in facts_dict.items():
+                if not f or fnmatch.fnmatch(x, f):
+                    found.append((x, y))
+                elif not f.startswith(('ansible_', 'facter', 'ohai')):
+                    # try to match with ansible_ prefix added when non empty
+                    g = 'ansible_%s' % f
+                    if fnmatch.fnmatch(x, g):
+                        found.append((x, y))
+        return found
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

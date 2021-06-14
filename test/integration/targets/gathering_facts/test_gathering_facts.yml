@@ -140,6 +140,34 @@
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
           - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
 
+- hosts: facthost25
+  tags: [ 'fact_min' ]
+  gather_facts: no
+  tasks:
+    - setup:
+        filter:
+            - "date_time"
+
+    - name: Test that retrieving all facts filtered to date_time even w/o using ansible_ prefix
+      assert:
+        that:
+          - 'ansible_facts["date_time"]|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+          - 'ansible_date_time|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+
+- hosts: facthost26
+  tags: [ 'fact_min' ]
+  gather_facts: no
+  tasks:
+    - setup:
+        filter:
+            - "ansible_date_time"
+
+    - name: Test that retrieving all facts filtered to date_time even using ansible_ prefix
+      assert:
+        that:
+          - 'ansible_facts["date_time"]|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+          - 'ansible_date_time|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+
 - hosts: facthost13
   tags: [ 'fact_min' ]
   connection: local
