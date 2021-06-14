@@ -1,0 +1,2 @@
+bugfixes:
+- psrp - Always cleanup the last run pipeline if a second pipeline is invoked to avoid violating any resource limits.
