@@ -64,7 +64,7 @@ def do_unvault(vault, secret, vaultid='default'):
 
 
 class FilterModule(object):
-    ''' Ansible math jinja2 filters '''
+    ''' Ansible vault jinja2 filters '''
 
     def filters(self):
         filters = {
