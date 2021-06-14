@@ -353,6 +353,7 @@ class Connection(ConnectionBase):
 
         self.runspace = None
         self.host = None
+        self._last_pipeline = False
 
         self._shell_type = 'powershell'
         super(Connection, self).__init__(*args, **kwargs)
@@ -406,6 +407,7 @@ class Connection(ConnectionBase):
                 )
 
             self._connected = True
+            self._last_pipeline = None
         return self
 
     def reset(self):
@@ -681,7 +683,7 @@ end {
                 if offset == 0:  # empty file
                     yield [""]
 
-        rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path], force_stop=True)
+        rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path])
 
         return rc, stdout, stderr, sha1_hash.hexdigest()
 
@@ -732,8 +734,7 @@ if ($bytes_read -gt 0) {
         # need to run the setup script outside of the local scope so the
         # file stream stays active between fetch operations
         rc, stdout, stderr = self._exec_psrp_script(setup_script,
-                                                    use_local_scope=False,
-                                                    force_stop=True)
+                                                    use_local_scope=False)
         if rc != 0:
             raise AnsibleError("failed to setup file stream for fetch '%s': %s"
                                % (out_path, to_native(stderr)))
@@ -748,7 +749,7 @@ if ($bytes_read -gt 0) {
             while True:
                 display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
                               (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = self._exec_psrp_script(read_script % offset, force_stop=True)
+                rc, stdout, stderr = self._exec_psrp_script(read_script % offset)
                 if rc != 0:
                     raise AnsibleError("failed to transfer file to '%s': %s"
                                        % (out_path, to_native(stderr)))
@@ -759,7 +760,7 @@ if ($bytes_read -gt 0) {
                     break
                 offset += len(data)
 
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()", force_stop=True)
+            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()")
             if rc != 0:
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
@@ -771,6 +772,7 @@ if ($bytes_read -gt 0) {
             self.runspace.close()
         self.runspace = None
         self._connected = False
+        self._last_pipeline = None
 
     def _build_kwargs(self):
         self._psrp_host = self.get_option('remote_addr')
@@ -877,7 +879,15 @@ if ($bytes_read -gt 0) {
             option = self.get_option('_extras')['ansible_psrp_%s' % arg]
             self._psrp_conn_kwargs[arg] = option
 
-    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, force_stop=False, arguments=None):
+    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, arguments=None):
+        # Check if there's a command on the current pipeline that still needs to be closed.
+        if self._last_pipeline:
+            # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
+            # can call stop without any issues.
+            self._last_pipeline.state = PSInvocationState.RUNNING
+            self._last_pipeline.stop()
+            self._last_pipeline = None
+
         ps = PowerShell(self.runspace)
         ps.add_script(script, use_local_scope=use_local_scope)
         if arguments:
@@ -888,14 +898,10 @@ if ($bytes_read -gt 0) {
 
         rc, stdout, stderr = self._parse_pipeline_result(ps)
 
-        if force_stop:
-            # This is usually not needed because we close the Runspace after our exec and we skip the call to close the
-            # pipeline manually to save on some time. Set to True when running multiple exec calls in the same runspace.
-
-            # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
-            # can call stop without any issues.
-            ps.state = PSInvocationState.RUNNING
-            ps.stop()
+        # We should really call .stop() on all pipelines that are run to decrement the concurrent command counter on
+        # PSSession but that involves another round trip and is done when the runspace is closed. We instead store the
+        # last pipeline which is closed if another command is run on the runspace.
+        self._last_pipeline = ps
 
         return rc, stdout, stderr
 
