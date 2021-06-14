@@ -14,7 +14,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, vaultid=None):
+def do_vault(data, secret, vaultid=None, wrap_object=False):
 
     if not isinstance(secret, string_types):
         raise AnsibleFilterTypeError("Secret passed is required to be as tring, instead we got: %s" % type(secret))
@@ -30,7 +30,12 @@ def do_vault(data, secret, vaultid=None):
     except Exception as e:
         raise AnsibleFilterError("Unable to encrypt: %s" % to_native(e), orig_exc=e)
 
-    return to_native(vault)
+    if wrap_object:
+        vault = AnsibleVaultEncryptedUnicode(vault)
+    else:
+        vault = to_native(vault)
+
+    return vault
 
 
 def do_unvault(vault, secret, vaultid='default'):
