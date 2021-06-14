@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import uuid
 
 from .... import types as t
 
@@ -100,6 +101,7 @@ class AwsCloudEnvironment(CloudEnvironment):
 
         ansible_vars = dict(
             resource_prefix=self.resource_prefix,
+            tiny_prefix=uuid.uuid4().hex[0:12]
         )
 
         # noinspection PyTypeChecker
