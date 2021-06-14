@@ -363,26 +363,14 @@ class PortTransaction(FirewallTransaction):
         )
 
     def get_enabled_immediate(self, port, protocol, timeout):
-        port_proto = [port, protocol]
         if self.fw_offline:
-            fw_zone, fw_settings = self.get_fw_zone_settings()
-            ports_list = fw_settings.getPorts()
-        else:
-            ports_list = self.fw.getPorts(self.zone)
-
-        if port_proto in ports_list:
-            return True
-        else:
-            return False
+            dummy, fw_settings = self.get_fw_zone_settings()
+            return fw_settings.queryPort(port=port, protocol=protocol)
+        return self.fw.queryPort(zone=self.zone, port=port, protocol=protocol)
 
     def get_enabled_permanent(self, port, protocol, timeout):
-        port_proto = (port, protocol)
-        fw_zone, fw_settings = self.get_fw_zone_settings()
-
-        if port_proto in fw_settings.getPorts():
-            return True
-        else:
-            return False
+        dummy, fw_settings = self.get_fw_zone_settings()
+        return fw_settings.queryPort(port=port, protocol=protocol)
 
     def set_enabled_immediate(self, port, protocol, timeout):
         self.fw.addPort(self.zone, port, protocol, timeout)
