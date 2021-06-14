@@ -1057,6 +1057,10 @@ class DocCLI(CLI, RoleMixin):
             if conf:
                 text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
+            # Remove empty version_added_collection
+            if opt.get('version_added_collection') == '':
+                opt.pop('version_added_collection')
+
             for k in sorted(opt):
                 if k.startswith('_'):
                     continue
