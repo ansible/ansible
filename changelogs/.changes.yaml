@@ -1879,6 +1879,14 @@ releases:
     - jinja2_decorator_renames.yml
     - v2.9.22rc1_summary.yaml
     release_date: '2021-05-17'
+  2.9.23rc1:
+    codename: Immigrant Song
+    fragments:
+    - 74802_net_get_missing_changed.yml
+    - firewalld_idempotency.yml
+    - fix_unsafe_newline.yml
+    - v2.9.23rc1_summary.yaml
+    release_date: '2021-06-14'
   2.9.3:
     codename: Immigrant Song
     fragments:

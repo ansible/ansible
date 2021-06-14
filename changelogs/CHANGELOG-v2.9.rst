@@ -5,6 +5,27 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.23rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-06-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Security Fixes
+--------------
+
+- templating engine fix for not preserving usnafe status when trying to preserve newlines. CVE-2021-3583
+
+Bugfixes
+--------
+
+- Backport to fix missing ``changed`` in net_get (https://github.com/ansible/ansible/issues/74802)
+- firewalld - ensure idempotency with firewalld 0.9.3 (https://github.com/ansible-collections/ansible.posix/issues/179).
+
 v2.9.22
 =======
 
