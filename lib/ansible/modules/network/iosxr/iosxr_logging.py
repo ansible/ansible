@@ -66,6 +66,7 @@ options:
     description:
         Set file path.
     type: str
+  version_added: 2.9
   aggregate:
     description: List of syslog logging configuration definitions.
   state:
@@ -777,9 +778,9 @@ def main():
     elif is_netconf(module):
         config_object = NCConfiguration(module)
         os_version = (
-            get_capabilities(module)
-                .get("device_info")
-                .get("network_os_version")
+            get_capabilities(module).get(
+                "device_info").get(
+                "network_os_version")
         )
 
     if config_object:

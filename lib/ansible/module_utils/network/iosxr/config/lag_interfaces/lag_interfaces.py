@@ -39,6 +39,7 @@ from ansible.module_utils.network.iosxr.iosxr import (
     get_os_version,
 )
 
+
 class Lag_interfaces(ConfigBase):
     """
     The iosxr_lag_interfaces class

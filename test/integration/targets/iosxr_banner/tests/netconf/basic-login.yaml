@@ -38,4 +38,3 @@
     that:
       - result.changed == false
       - result.xml | length == 0
-

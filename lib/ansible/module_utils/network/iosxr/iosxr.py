@@ -577,6 +577,7 @@ def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
     conf = ('\n').join(conf_lines)
     return conf
 
+
 def get_os_version(module):
     connection = get_connection(module)
     if connection.get_device_info():

@@ -24,6 +24,7 @@ from ansible.module_utils.network.iosxr.iosxr import (
     get_os_version,
 )
 
+
 class L2_Interfaces(ConfigBase):
     """
     The iosxr_interfaces class

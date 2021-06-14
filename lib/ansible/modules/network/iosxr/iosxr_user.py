@@ -862,9 +862,9 @@ class NCConfiguration(ConfigBase):
 
     def run(self):
         os_version = (
-            get_capabilities(self._module)
-                .get("device_info")
-                .get("network_os_version")
+            get_capabilities(self._module).get(
+                "device_info").get(
+                "network_os_version")
         )
         self.map_params_to_obj()
         self.map_obj_to_xml_rpc(os_version)
