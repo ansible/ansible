@@ -74,7 +74,10 @@ Setting up your environment to build documentation locally
 
 To build documentation locally, ensure you have a working :ref:`development environment <environment_setup>`.
 
-To work with documentation on your local machine, you need to have python-3.5 or greater and install the `Ansible dependencies <https://github.com/ansible/ansible/blob/devel/requirements.txt>`_ and `documentation dependencies<https://github.com/ansible/ansible/blob/devel/docs/docsite/requirements.txt>`_, which are listed in two :file:`requirements.txt` files to make installation easier:
+To work with documentation on your local machine, you need to have python-3.5 or greater and install the `Ansible dependencies`_ and `documentation dependencies`_, which are listed in two :file:`requirements.txt` files to make installation easier:
+
+.. _Ansible dependencies: https://github.com/ansible/ansible/blob/devel/requirements.txt
+.. _documentation dependencies: https://github.com/ansible/ansible/blob/devel/docs/docsite/requirements.txt
 
 .. code-block:: bash
 
