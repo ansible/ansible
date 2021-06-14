@@ -105,8 +105,6 @@ def main():
         _async_dir=dict(type='path', required=True),
     ))
 
-    module.deprecate("The async_status module should not be called directly anymore, use the action plugin instead", version='2.16')
-
     mode = module.params['mode']
     jid = module.params['jid']
     async_dir = module.params['_async_dir']
