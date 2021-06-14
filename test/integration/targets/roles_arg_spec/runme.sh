@@ -25,3 +25,8 @@ set +e
 ansible-playbook test_play_level_role_fails.yml -i ../../inventory "$@"
 test $? -ne 0
 set -e
+
+# Test the validation task is tagged with 'always' by specifying an unused tag.
+# The task is tagged with 'foo' but we use 'bar' in the call below and expect
+# the validation task to run anyway since it is tagged 'always'.
+ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar | grep "a : Validating arguments against arg spec 'main' - Main entry point for role A."

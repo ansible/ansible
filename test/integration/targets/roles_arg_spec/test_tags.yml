@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+      - name: "Tag test #1"
+        import_role:
+            name: a
+        vars:
+            a_str: "tag test #1"
+        tags:
+            - foo

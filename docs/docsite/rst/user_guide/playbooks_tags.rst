@@ -305,6 +305,10 @@ For example:
      you apply a tag and then use a different tag in ``--tags`` or the same
      tag in ``--skip-tags``.
 
+.. warning::
+   * The role argument specification validation task is tagged with 'always' by default. This validation
+     will be skipped if you use ``--skip-tags always``.
+
 .. versionadded:: 2.5
 
 If you assign the ``never`` tag to a task or play, Ansible will skip that task or play unless you specifically request it (``--tags never``).
