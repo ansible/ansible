@@ -86,8 +86,8 @@ class ActionModule(ActionBase):
 
                     return result
 
+                remote_checksum = remote_stat.get('checksum')
                 if remote_stat.get('exists'):
-                    remote_checksum = remote_stat.get('checksum')
                     if remote_stat.get('isdir'):
                         result['failed'] = True
                         result['changed'] = False
@@ -107,7 +107,7 @@ class ActionModule(ActionBase):
 
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
-            if remote_checksum is None:
+            if remote_checksum in (None, '1', ''):
                 slurpres = self._execute_module(module_name='ansible.legacy.slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing:
@@ -116,7 +116,7 @@ class ActionModule(ActionBase):
                     else:
                         result.update(slurpres)
 
-                    if slurpres.get('msg', '').startswith('file not found'):
+                    if 'not found' in slurpres.get('msg', ''):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
                     elif slurpres.get('msg', '').startswith('source is a directory'):
                         result['msg'] = "remote file is a directory, fetch cannot work on directories"
