@@ -66,7 +66,7 @@ options:
     description:
         Set file path.
     type: str
-  version_added: 2.9
+    version_added: 2.9
   aggregate:
     description: List of syslog logging configuration definitions.
   state:
