@@ -50,7 +50,7 @@ DOCUMENTATION = '''
             deprecated:
                 why: this was a typo
                 version: '2.16'
-                alternatives: '[defaults]yaml_vali_extensions'
+                alternatives: '[defaults]yaml_valid_extensions'
           - key: yaml_valid_extensions
             section: defaults
         type: list
