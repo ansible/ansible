@@ -1197,12 +1197,17 @@ class VaultAES256:
 
     @classmethod
     def encrypt(cls, b_plaintext, secret, salt=None):
+
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
-        if not salt:
+
+        if salt is None:
             b_salt = os.urandom(32)
+        elif not salt:
+            raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:
             b_salt = to_bytes(salt)
+
         b_password = secret.bytes
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
 
