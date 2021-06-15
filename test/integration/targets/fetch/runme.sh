@@ -4,14 +4,11 @@ set -eux
 
 function cleanup {
     ansible-playbook -i hosts.yml cleanup.yml -b "$@"
-    unset ANSIBLE_SSH_EXTRA_ARGS
     unset ANSIBLE_CACHE_PLUGIN
     unset ANSIBLE_CACHE_PLUGIN_CONNECTION
 }
 
 trap 'cleanup "$@"' EXIT
-
-export ANSIBLE_SSH_COMMON_ARGS="-o UserKnownHostsFile=/dev/null"
 
 # setup required roles
 ln -s ../../setup_remote_tmp_dir roles/setup_remote_tmp_dir
