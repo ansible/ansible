@@ -54,6 +54,13 @@ def find_latest_ansible_dir(build_data_working):
         except InvalidVersion:
             continue
 
+        # Check if it contains any other .deps files than ancestor.deps
+        deps_files = [
+            df for df in glob.glob(os.path.join(directory_name, '*.deps'))
+            if os.path.basename(df) != 'ancestor.deps']
+        if not deps_files:
+            continue
+
         if new_version > latest_ver:
             latest_ver = new_version
             latest = directory_name
