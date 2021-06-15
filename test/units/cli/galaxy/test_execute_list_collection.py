@@ -33,7 +33,7 @@ def isdir(path):
         return True
 
 
-def cliargs(collections_paths=None, collection_name=None):
+def cliargs(collections_paths=None, collection_name=None, basedir=None):
     if collections_paths is None:
         collections_paths = ['~/root/.ansible/collections', '/usr/share/ansible/collections']
 
@@ -41,15 +41,20 @@ def cliargs(collections_paths=None, collection_name=None):
         'collections_path': collections_paths,
         'collection': collection_name,
         'type': 'collection',
-        'output_format': 'human'
+        'output_format': 'human',
+        'basedir': basedir
     }
 
 
 @pytest.fixture
 def mock_collection_objects(mocker):
-    mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', side_effect=['/root/.ansible/collections', '/usr/share/ansible/collections'])
+    mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', 
+                 side_effect=['/root/.ansible/collections', '/usr/share/ansible/collections', '/foo/collections'])
     mocker.patch('ansible.cli.galaxy.validate_collection_path',
-                 side_effect=['/root/.ansible/collections/ansible_collections', '/usr/share/ansible/collections/ansible_collections'])
+                 side_effect=[
+                     '/root/.ansible/collections/ansible_collections', 
+                     '/usr/share/ansible/collections/ansible_collections', 
+                     '/foo/collections/ansible_collections'])
 
     collection_args_1 = (
         (
@@ -81,10 +86,27 @@ def mock_collection_objects(mocker):
         ),
     )
 
+    collection_args_3 = (
+        (
+            'sandwiches.bologna',
+            '1.0.1',
+            None,
+            'dir',
+        ),
+        (
+            'sandwiches.eggs',
+            '2.1.0',
+            None,
+            'dir',
+        ),
+    )
+
     collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
     collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
+    collections_path_3 = [Requirement(*cargs) for cargs in collection_args_3]
 
-    mocker.patch('ansible.cli.galaxy.find_existing_collections', side_effect=[collections_path_1, collections_path_2])
+    mocker.patch('ansible.cli.galaxy.find_existing_collections', 
+                 side_effect=[collections_path_1, collections_path_2, collections_path_3])
 
 
 @pytest.fixture
@@ -149,6 +171,43 @@ def test_execute_list_collection_all(mocker, capsys, mock_collection_objects, tm
     assert out_lines[9] == '-------------- -------'
     assert out_lines[10] == 'sandwiches.ham 1.0.0  '
     assert out_lines[11] == 'sandwiches.pbj 1.0.0  '
+
+
+def test_execute_list_collection_all_with_playbook_dir(mocker, capsys, mock_collection_objects, tmp_path_factory):
+    """Test listing all collections searches for received dir with --playbook-dir option"""
+
+    cliargs(basedir='/foo')
+
+    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch('os.path.isdir', return_value=True)
+    gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list'])
+
+    tmp_path = tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    gc.execute_list_collection(artifacts_manager=concrete_artifact_cm)
+
+    out, err = capsys.readouterr()
+    out_lines = out.splitlines()
+
+    assert len(out_lines) == 18
+    assert out_lines[0] == ''
+    assert out_lines[1] == '# /root/.ansible/collections/ansible_collections'
+    assert out_lines[2] == 'Collection        Version'
+    assert out_lines[3] == '----------------- -------'
+    assert out_lines[4] == 'sandwiches.pbj    1.5.0  '
+    assert out_lines[5] == 'sandwiches.reuben 2.5.0  '
+    assert out_lines[6] == ''
+    assert out_lines[7] == '# /usr/share/ansible/collections/ansible_collections'
+    assert out_lines[8] == 'Collection     Version'
+    assert out_lines[9] == '-------------- -------'
+    assert out_lines[10] == 'sandwiches.ham 1.0.0  '
+    assert out_lines[11] == 'sandwiches.pbj 1.0.0  '
+    assert out_lines[12] == ''
+    assert out_lines[13] == '# /foo/collections/ansible_collections'
+    assert out_lines[14] == 'Collection         Version'
+    assert out_lines[15] == '------------------ -------'
+    assert out_lines[16] == 'sandwiches.bologna 1.0.1  '
+    assert out_lines[17] == 'sandwiches.eggs    2.1.0  '
 
 
 def test_execute_list_collection_specific(mocker, capsys, mock_collection_objects, mock_from_path, tmp_path_factory):
