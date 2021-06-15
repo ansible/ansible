@@ -125,6 +125,7 @@
       user:
         name: '{{ remote_unprivileged_user }}'
       register: user
+      notify: remove users
 
     - name: Create a local temporary directory
       tempfile:
