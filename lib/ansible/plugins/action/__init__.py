@@ -841,9 +841,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # We will really not hit this since remote_tmp handling should already account for this case. Hack kept JIC
             if not getattr(self._connection, '_remote_is_local', False):
 
+                become_user = self.get_become_option('become_user')
                 # remote user depends on privilege escalation or not
                 if sudoable and self._connection.become and become_user:
-                    user = self.get_become_option('become_user')
+                    user = become_user
                 else:
                     # use remote user instead, if none set default to current user
                     user = self._get_remote_user() or ''
