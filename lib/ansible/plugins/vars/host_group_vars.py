@@ -47,6 +47,12 @@ DOCUMENTATION = '''
         ini:
           - section: yaml_valid_extensions
             key: defaults
+            deprecated:
+                why: this was a typo
+                version: '2.16'
+                alternatives: '[defaults]yaml_vali_extensions'
+          - key: yaml_valid_extensions
+            section: defaults
         type: list
     extends_documentation_fragment:
       - vars_plugin_staging
