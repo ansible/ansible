@@ -71,7 +71,7 @@ class ConfigCLI(CLI):
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
         init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini', help='Output format for init')
-        init_parser.add_argument('--commented', dest='commented', action='store_true',  default='false', help='Forces entries to be prefix by a comment character')
+        init_parser.add_argument('--disabled', dest='commented', action='store_true',  default='false', help='Prefixes all entries with a comment character to disable them')
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
