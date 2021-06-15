@@ -829,32 +829,39 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not path.startswith('~'):
             return path
 
-        # Per Jborean, we don't have to worry about Windows as we don't have a notion of user's home
-        # dir there.
+        # We don't have to worry about Windows here as '~' is a POSIX thing
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
+        user = None
 
         if expand_path == '~':
+
             # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
             # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
-            # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
-            become_user = self.get_become_option('become_user')
-            if getattr(self._connection, '_remote_is_local', False):
-                pass
-            elif sudoable and self._connection.become and become_user:
-                expand_path = '~%s' % become_user
-            else:
-                # use remote user instead, if none set default to current user
-                expand_path = '~%s' % (self._get_remote_user() or '')
+            # We will really not hit this since remote_tmp handling should already account for this case. Hack kept JIC
+            if not getattr(self._connection, '_remote_is_local', False):
+
+                # remote user depends on privilege escalation or not
+                if sudoable and self._connection.become and become_user:
+                    user = self.get_become_option('become_user')
+                else:
+                    # use remote user instead, if none set default to current user
+                    user = self._get_remote_user() or ''
+
+                expand_path = '~%s' % user
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
 
-        try:
-            initial_fragment = data['stdout'].strip().splitlines()[-1]
-        except IndexError:
-            initial_fragment = None
+        initial_fragment = data['stdout'].strip()
+        # avoid spliting lines when domain\{r,n}restofusername or empty data
+        if initial_fragment and (not user or ('\n' not in user and '\r' not in user)):
+            try:
+                # try to remove cruft that might have made it back with stdout
+                initial_fragment = initial_fragment.splitlines()[-1]
+            except IndexError:
+                initial_fragment = None
 
         if not initial_fragment:
             # Something went wrong trying to expand the path remotely. Try using pwd, if not, return

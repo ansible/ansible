@@ -1,0 +1,2 @@
+bugfixes:
+  - actionbase fix to handle remote_users with domain/user that can conflict with line ends.
