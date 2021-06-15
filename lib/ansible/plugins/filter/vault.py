@@ -6,7 +6,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils._text import to_native, to_bytes
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, binary_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.parsing.vault import is_encrypted, VaultSecret, VaultLib
 from ansible.utils.display import Display
@@ -16,10 +16,10 @@ display = Display()
 
 def do_vault(data, secret, salt=None, vaultid=None):
 
-    if not isinstance(secret, string_types):
+    if not isinstance(secret, (string_types, binary_type)):
         raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
 
-    if not isinstance(data, string_types):
+    if not isinstance(data, (string_types, binary_type)):
         raise AnsibleFilterTypeError("Can only vault strings, instead we got: %s" % type(data))
 
     vault = ''
@@ -35,10 +35,10 @@ def do_vault(data, secret, salt=None, vaultid=None):
 
 def do_unvault(vault, secret, vaultid=None):
 
-    if not isinstance(secret, string_types):
+    if not isinstance(secret, (string_types, binary_type)):
         raise AnsibleFilterTypeError("Secret passed is required to be as tring, instead we got: %s" % type(secret))
 
-    if not isinstance(vault, (string_types, AnsibleVaultEncryptedUnicode)):
+    if not isinstance(vault, (string_types, binary_type, AnsibleVaultEncryptedUnicode)):
         raise AnsibleFilterTypeError("Vault should be in the form of a string, instead we got: %s" % type(vault))
 
     data = ''
