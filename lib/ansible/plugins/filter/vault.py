@@ -47,12 +47,12 @@ def do_unvault(vault, secret, vaultid=None):
         raise AnsibleFilterTypeError("Vault should be in the form of a string, instead we got: %s" % type(vault))
 
     data = ''
+    vs = VaultSecret(to_bytes(secret))
+    vl = VaultLib([(vaultid, vs)])
     if isinstance(vault, AnsibleVaultEncryptedUnicode):
-        vault = vault.data
-
-    if is_encrypted(vault):
-        vs = VaultSecret(to_bytes(secret))
-        vl = VaultLib([(vaultid, vs)])
+        vault.vault = vl
+        data = vault.data
+    elif is_encrypted(vault):
         try:
             data = vl.decrypt(vault)
         except Exception as e:
