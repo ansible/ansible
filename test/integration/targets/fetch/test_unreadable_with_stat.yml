@@ -1,3 +1,6 @@
+# This playbook needs to be run as a non-root user without become. Under
+# those circumstances, the fetch module uses stat and not slurp.
+
 - name: Test unreadable file using stat
   hosts: testhost
   gather_facts: no
