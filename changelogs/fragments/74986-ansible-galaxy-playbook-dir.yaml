@@ -1,0 +1,3 @@
+bugfixes:
+  - "Adds --playbook-dir to ansible-galaxy CLI"
+  - "Fixes issue #74942"

@@ -1400,7 +1400,7 @@ class GalaxyCLI(CLI):
         if context.CLIARGS['basedir']:
             collections_search_paths.update([context.CLIARGS['basedir']])
         collection_name = context.CLIARGS['collection']
-        default_collections_path = AnsibleCollectionConfig.collection_paths + [context.CLIARGS['basedir']]
+        default_collections_path = [context.CLIARGS['basedir']] + AnsibleCollectionConfig.collection_paths
         collections_in_paths = {}
 
         warnings = []
