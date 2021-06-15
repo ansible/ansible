@@ -11,6 +11,8 @@ function cleanup {
 
 trap 'cleanup "$@"' EXIT
 
+export ANSIBLE_SSH_COMMON_ARGS="-o UserKnownHostsFile=/dev/null"
+
 # setup required roles
 ln -s ../../setup_remote_tmp_dir roles/setup_remote_tmp_dir
 
@@ -26,7 +28,6 @@ ansible-playbook -i ../../inventory injection/avoid_slurp_return.yml -e "output_
 ## Test unreadable file with stat. Requires running without become and as a user other than root.
 #
 # Change the known_hosts file to avoid changing the test environment
-export ANSIBLE_SSH_COMMON_ARGS="-o UserKnownHostsFile=/dev/null"
 export ANSIBLE_CACHE_PLUGIN=jsonfile
 export ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}/cache"
 # Create a non-root user account and configure SSH acccess for that account
