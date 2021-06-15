@@ -94,7 +94,7 @@ Most commonly users are affected by this when updating a single file on a single
 
 This can be handled in several ways::
 
-    - name: "handle concurrency via a loop on the hosts with `run_once: true`"
+    - name: "handle concurrency with a loop on the hosts with `run_once: true`"
       lineinfile: "<options here>"
       run_once: true
       loop: '{{ ansible_play_hosts_all }}'
