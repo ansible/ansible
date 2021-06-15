@@ -1,0 +1,2 @@
+bugfixes:
+    - host_group_vars vars plugin fixed ini entry, section and key were reversed.
