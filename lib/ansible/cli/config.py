@@ -70,7 +70,8 @@ class ConfigCLI(CLI):
 
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
-        init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini')
+        init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini', help='Output format for init')
+        init_parser.add_argument('--commented', dest='commented', action='store_true',  default='false', help='Forces entries to be prefix by a comment character')
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
@@ -263,6 +264,9 @@ class ConfigCLI(CLI):
                 name = settings[setting].get('name', setting)
                 data.append('# %s(%s): %s' % (name, settings[setting].get('type', 'string'), desc))
 
+                if context.CLIARGS['commented']:
+                    entry = '#%s' % entry
+
                 # TODO: might need quoting and value coercion depending on type
                 if subkey == 'env':
                     data.append('%s=%s' % (entry, default))
@@ -311,7 +315,10 @@ class ConfigCLI(CLI):
                 elif default is None:
                     default = ''
 
-                key = desc + '\n' + '%s=%s' % (entry['key'], default)
+                if context.CLIARGS['commented']:
+                    entry['key'] = ';%s' % entry['key']
+
+                key = desc + '\n%s=%s' % (entry['key'], default)
                 sections[entry['section']].append(key)
 
         return sections
