@@ -37,7 +37,6 @@ platforms, products, and technologies. They explore particular use cases in grea
    :maxdepth: 1
    :caption: Virtualization & Containerization Guides
 
-   guide_docker
    guide_kubernetes
    guide_vagrant
    guide_vmware
