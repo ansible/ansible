@@ -45,8 +45,8 @@ DOCUMENTATION = '''
         env:
           - name: ANSIBLE_YAML_FILENAME_EXT
         ini:
-          - section: yaml_valid_extensions
-            key: defaults
+          - key: yaml_valid_extensions
+            section: defaults
         type: list
     extends_documentation_fragment:
       - vars_plugin_staging
