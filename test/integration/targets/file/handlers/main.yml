@@ -1,0 +1,19 @@
+- name: remove users
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+  loop:
+    - test1
+    - test_uid
+    - nonexistent
+    - "{{ remote_unprivileged_user }}"
+
+- name: remove groups
+  group:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test1
+    - test_gid
+    - nonexistent1
