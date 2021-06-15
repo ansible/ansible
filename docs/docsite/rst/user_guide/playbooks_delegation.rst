@@ -90,7 +90,7 @@ To specify more arguments, use the following syntax::
 Parallelism
 -----------
 By default Ansible tasks are executed in parallel. Delegating a task does not change this and does not handle concurrency issues (multiple forks writing to the same file).
-Most commonly users are affected by this when updating a single file on a single delegated to host for all hosts (via copy/template/lineinfile/etc), they will still operate in parallel forks (default 5) and overwrite each other.
+Most commonly, users are affected by this when updating a single file on a single delegated to host for all hosts (using the ``copy``, ``template``, or ``lineinfile`` modules, for example). They will still operate in parallel forks (default 5) and overwrite each other.
 
 This can be handled in several ways::
 
