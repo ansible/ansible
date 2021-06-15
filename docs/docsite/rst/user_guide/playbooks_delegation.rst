@@ -99,7 +99,7 @@ This can be handled in several ways::
       run_once: true
       loop: '{{ ansible_play_hosts_all }}'
 
-By using an intermediate play with  `serial: 1` or using  `throttle: 1` at task level.
+By using an intermediate play with  `serial: 1` or using  `throttle: 1` at task level, for more detail see :ref:`playbooks_strategies`
 
 .. _delegate_facts:
 
