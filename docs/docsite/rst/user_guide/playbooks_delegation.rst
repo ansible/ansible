@@ -78,7 +78,7 @@ To specify more arguments, use the following syntax::
           run_once: True
 
 .. note::
-    - The `ansible_host` variable and other connection variables, if present, will reflect information about the host a task is delegated to, not the inventory_hostname.
+    - The `ansible_host` variable and other connection variables, if present, reflects information about the host a task is delegated to, not the inventory_hostname.
 
 .. warning::
 
