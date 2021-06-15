@@ -197,7 +197,7 @@ class ConfigCLI(CLI):
 
     def _list_entries_from_args(self):
         '''
-        build a dic with the list requested configs
+        build a dict with the list requested configs
         '''
         config_entries = {}
         if context.CLIARGS['type'] == 'base':
