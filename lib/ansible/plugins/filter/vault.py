@@ -14,7 +14,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, vaultid='default', wrap_object=False):
+def do_vault(data, secret, salt=None, vaultid=None, wrap_object=False):
 
     if not isinstance(secret, string_types):
         raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
@@ -26,7 +26,7 @@ def do_vault(data, secret, vaultid='default', wrap_object=False):
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib()
     try:
-        vault = vl.encrypt(to_bytes(data), vs, vaultid)
+        vault = vl.encrypt(to_bytes(data), vs, vaultid, salt)
     except Exception as e:
         raise AnsibleFilterError("Unable to encrypt: %s" % to_native(e), orig_exc=e)
 
@@ -38,7 +38,7 @@ def do_vault(data, secret, vaultid='default', wrap_object=False):
     return vault
 
 
-def do_unvault(vault, secret, vaultid='default'):
+def do_unvault(vault, secret, vaultid=None):
 
     if not isinstance(secret, string_types):
         raise AnsibleFilterTypeError("Secret passed is required to be as tring, instead we got: %s" % type(secret))
