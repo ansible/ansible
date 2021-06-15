@@ -48,12 +48,12 @@ def cliargs(collections_paths=None, collection_name=None, basedir=None):
 
 @pytest.fixture
 def mock_collection_objects(mocker):
-    mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', 
+    mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path',
                  side_effect=['/root/.ansible/collections', '/usr/share/ansible/collections', '/foo/collections'])
     mocker.patch('ansible.cli.galaxy.validate_collection_path',
                  side_effect=[
-                     '/root/.ansible/collections/ansible_collections', 
-                     '/usr/share/ansible/collections/ansible_collections', 
+                     '/root/.ansible/collections/ansible_collections',
+                     '/usr/share/ansible/collections/ansible_collections',
                      '/foo/collections/ansible_collections'])
 
     collection_args_1 = (
@@ -105,7 +105,7 @@ def mock_collection_objects(mocker):
     collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
     collections_path_3 = [Requirement(*cargs) for cargs in collection_args_3]
 
-    mocker.patch('ansible.cli.galaxy.find_existing_collections', 
+    mocker.patch('ansible.cli.galaxy.find_existing_collections',
                  side_effect=[collections_path_1, collections_path_2, collections_path_3])
 
 
