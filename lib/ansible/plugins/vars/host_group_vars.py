@@ -45,12 +45,6 @@ DOCUMENTATION = '''
         env:
           - name: ANSIBLE_YAML_FILENAME_EXT
         ini:
-          - section: yaml_valid_extensions
-            key: defaults
-            deprecated:
-                why: this was a typo
-                version: '2.16'
-                alternatives: '[defaults]yaml_valid_extensions'
           - key: yaml_valid_extensions
             section: defaults
         type: list
