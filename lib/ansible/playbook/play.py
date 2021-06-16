@@ -34,7 +34,6 @@ from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
-from ansible.utils.helpers import _flatten_list, string_to_list
 
 display = Display()
 
@@ -107,14 +106,17 @@ class Play(Base, Taggable, CollectionSearch):
             if not value:
                 raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
 
+            if is_string(value) and any(c in value for c in ('[', ']', '{', '}')):
+                raise AnsibleParserError(err_msg.format(host=value))
+
             if is_sequence(value):
-                # Make sure each item in the sequence is a string
+                # Make sure each item in the sequence is a valid string
                 for entry in value:
-                    if is_sequence(entry):
-                        continue
                     if entry is None:
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
                     elif not is_string(entry):
+                        raise AnsibleParserError(err_msg.format(host=entry))
+                    elif is_string(entry) and any(c in entry for c in ('[', ']', '{', '}')):
                         raise AnsibleParserError(err_msg.format(host=entry))
 
             elif not is_string(value):
@@ -159,25 +161,6 @@ class Play(Base, Taggable, CollectionSearch):
 
             ds['remote_user'] = ds['user']
             del ds['user']
-
-        # Flatten hosts entry to a single list. Any list entries that consist of
-        # k,v pairs will be split into a list and flattened.
-        if ds.get('hosts'):
-            if is_sequence(ds['hosts']):
-                new_hosts = []
-                new_hosts = _flatten_list(ds['hosts'])
-
-                # Turn comma separated strings into a list
-                for id, entry in enumerate(new_hosts):
-                    if is_string(entry):
-                        new_hosts[id] = string_to_list(entry, ',')
-
-                # Flatten again since certain strings could now be lists
-                new_hosts = _flatten_list(new_hosts)
-                ds['hosts'] = new_hosts
-
-            if is_string(ds['hosts']):
-                ds['hosts'] = string_to_list(ds['hosts'], ',')
 
         return super(Play, self).preprocess_data(ds)
 
