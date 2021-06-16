@@ -121,7 +121,7 @@ If you need a synchronization point with an async task, you can register it to o
 
 .. note::
    Asynchronous playbook tasks always return changed. If the task is using a module
-   that requires the user to annotate changes with ``changed_when``, ``creates``, etc.
+   that requires the user to annotate changes with ``changed_when``, ``creates``,  and so on,
    then those should be added to the following ``async_status`` task.
 
 To run multiple asynchronous tasks while limiting the number of tasks running concurrently::
