@@ -1,0 +1,13 @@
+- name: Fetch the file via a symlink
+  fetch:
+    src: "{{ remote_tmp_dir }}/link"
+    dest: "{{ output_dir }}/fetched-link"
+  register: fetched_symlink
+
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - fetched_symlink is changed
+      - fetched_symlink.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched_symlink.remote_checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - 'lookup("file", output_dir + "/fetched-link/" + inventory_hostname + remote_tmp_dir + "/link") == "test"'

@@ -9,3 +9,4 @@
 - name: record temporary directory
   set_fact:
     remote_tmp_dir: "{{ remote_tmp_dir.path }}"
+    cacheable: "{{ setup_remote_tmp_dir_cache_path | bool }}"
