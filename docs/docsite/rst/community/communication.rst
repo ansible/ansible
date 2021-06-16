@@ -18,8 +18,7 @@ Mailing list information
 Ansible has several mailing lists.  Your first post to the mailing list will be moderated (to reduce spam), so please allow up to a day or so for your first post to appear.
 
 * `Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_ is a read-only list that shares information about new releases of Ansible, and also rare infrequent event information, such as announcements about an upcoming AnsibleFest, which is our official conference series. Worth subscribing to!
-* `Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_ 
-* `Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ is for users and developers of the Ansible Container project.
+* `Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ is for `Ansible AWX <https://github.com/ansible/awx>`_
 * `Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for learning how to develop on Ansible, asking about prospective feature design, or discussions about extending ansible or features in progress.
 * `Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
 * `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://ansible.meetup.com/>`_
@@ -48,7 +47,7 @@ General channels
 
 - ``#ansible`` - For general use questions and support.
 - ``#ansible-devel`` - For discussions on developer topics and code related to features or bugs.
-- ``#ansible-community`` - For discussions on community and collections related topics. 
+- ``#ansible-community`` - For discussions on community and collections related topics.
 - ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 .. _working_group_list:
@@ -107,7 +106,7 @@ If you have a question about Ansible Automation Platform, visit `Red Hat support
 The Bullhorn
 ============
 
-**The Bullhorn** is our newsletter for the Ansible developer community. 
+**The Bullhorn** is our newsletter for the Ansible developer community.
 If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues.
 
 Read past issues `here <https://github.com/ansible/community/wiki/News>`_.
