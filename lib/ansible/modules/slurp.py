@@ -94,18 +94,19 @@ def main():
     source = module.params['src']
 
     try:
-        os.stat(source)
         with open(source, 'rb') as source_fh:
             source_content = source_fh.read()
     except (IOError, OSError) as e:
         if e.errno == errno.ENOENT:
-            module.fail_json(msg="file not found: %s" % source)
+            msg = "file not found: %s" % source
         elif e.errno == errno.EACCES:
-            module.fail_json(msg="file is not readable: %s" % source)
+            msg = "file is not readable: %s" % source
         elif e.errno == errno.EISDIR:
-            module.fail_json(msg="source is a directory and must be a file: %s" % source)
+            msg = "source is a directory and must be a file: %s" % source
         else:
-            module.fail_json(msg="unable to slurp file: %s" % to_native(e, errors='surrogate_then_replace'))
+            msg = "unable to slurp file: %s" % to_native(e, errors='surrogate_then_replace')
+
+        module.fail_json(msg)
 
     data = base64.b64encode(source_content)
 
