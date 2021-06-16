@@ -756,14 +756,14 @@ This is something that Tower/AWX excels at by allowing administrators to set up 
 
 .. _complex_configuration_validation:
 
-The 'validate' option is not enough for my needs, what do i do?
+The 'validate' option is not enough for my needs, what do I do?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Many Ansible modules that create or update files have a ``validate`` option that allows you to abort the update if the validation command fails,
-this uses the temporary file Ansible creates before doing the final update. In many cases this does not work since the validation tools
+Many Ansible modules that create or update files have a ``validate`` option that allows you to abort the update if the validation command fails.
+This uses the temporary file Ansible creates before doing the final update. In many cases this does not work since the validation tools
 for the specific application require either specific names, multiple files or some other factor that is not present in this simple feature.
 
-For these cases you have to handle the validation and restoration yourself, the following is a simple example of how to do this with block/rescue
+For these cases you have to handle the validation and restoration yourself. The following is a simple example of how to do this with block/rescue
 and backups, which most file based modules also support:
 
 .. code-block:: yaml
