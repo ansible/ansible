@@ -1,0 +1,2 @@
+minor_changes:
+  - tempfile - Remove unnecessary conditional for creating a temporary directory.
