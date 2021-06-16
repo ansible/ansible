@@ -1,0 +1,8 @@
+- name: remove test user
+  user:
+    name: fetcher
+    state: absent
+    remove: yes
+    force: yes
+  become: yes
+  when: not skip_cleanup | bool
