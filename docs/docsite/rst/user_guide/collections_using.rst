@@ -21,6 +21,9 @@ You can install and use collections through `Ansible Galaxy <https://galaxy.ansi
 Installing collections
 ======================
 
+.. note::
+
+  If you install a collection manually as described in this paragraph, the collection will not be upgraded automatically when you upgrade the ``ansible`` package or ``ansible-core``.
 
 Installing collections with ``ansible-galaxy``
 ----------------------------------------------
