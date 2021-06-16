@@ -2,4 +2,4 @@
 
 set -eux
 
-ansible-playbook base.yml "$@"
+ANSIBLE_GATHER_SUBSET='min' ansible-playbook base.yml "$@"
