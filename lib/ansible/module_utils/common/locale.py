@@ -20,9 +20,9 @@ def get_best_parsable_locale(module, preferences=None):
         if out:
             available = out.strip().splitlines()
         else:
-            module.warn("No output from locale, defaulting to C, rc=%s: %s" % (rc, to_native(err))
+            module.warn("No output from locale, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
     else:
-        module.warn("Unable to get locale information, defaulting to C, rc=%s: %s" % (rc, to_native(err))
+        module.warn("Unable to get locale information, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
 
     if available:
         for pref in preferences:
