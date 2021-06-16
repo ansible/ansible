@@ -64,7 +64,7 @@
   assert:
     that:
       - "slurp_missing is failed"
-      - "slurp_missing.msg"
+      - "slurp_missing.msg is search('file not found')"
       - "slurp_missing is not changed"
 
 - name: Create a directory to test with

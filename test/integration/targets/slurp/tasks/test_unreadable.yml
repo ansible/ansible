@@ -44,9 +44,17 @@
   become_method: su
   ignore_errors: true
 
+- name: Try to access file as directory
+  slurp:
+    src: "{{ output_dir }}/qux.txt/somefile"
+  ignore_errors: yes
+  register: slurp_path_file_as_dir
+
 - name: check slurp unreadable directory result
   assert:
     that:
-      - "slurp_unreadable_dir is failed"
-      - "slurp_unreadable_dir.msg is regex('^file is not readable:')"
-      - "slurp_unreadable_dir is not changed"
+      - slurp_unreadable_dir is failed
+      - slurp_unreadable_dir.msg is regex('^file is not readable:')
+      - slurp_unreadable_dir is not changed
+      - slurp_path_file_as_dir is failed
+      - slurp_path_file_as_dir is search('unable to slurp file')
