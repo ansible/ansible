@@ -94,7 +94,6 @@ def main():
     source = module.params['src']
 
     try:
-        os.stat(source)
         with open(source, 'rb') as source_fh:
             source_content = source_fh.read()
     except (IOError, OSError) as e:
