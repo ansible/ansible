@@ -1,0 +1,2 @@
+minor_changes:
+  - deprecate ``_remote_checksum()`` and remove all internal uses (https://github.com/ansible/ansible/pull/74848)

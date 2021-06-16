@@ -46,6 +46,7 @@ Deprecated
       - include_tasks: provision.yml
         when: not teardown | bool
 
+* The ``_remote_checksum()`` method in ``ActionBase`` is deprecated. Any action plugin using this method should use ``_execute_remote_stat()`` instead.
 
 Modules
 =======
