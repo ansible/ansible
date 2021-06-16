@@ -493,12 +493,22 @@
         - 'parent_dir_cd.stdout == "{{output_dir}}/www"'
         - 'parent_dir_chdir.stdout == "{{output_dir}}/www_root"'
 
+- name: Set print error command for Python 2
+  set_fact:
+    print_error_command: print >> sys.stderr, msg
+  when: ansible_facts.python_version is version('3', '<')
+
+- name: Set print error command for Python 3
+  set_fact:
+    print_error_command: print(msg, file=sys.stderr)
+  when: ansible_facts.python_version is version('3', '>=')
+
 - name: run command with strip
-  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); print(msg, file=sys.stderr)"'
+  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
   register: command_strip
 
 - name: run command without strip
-  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); print(msg, file=sys.stderr)"'
+  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
   args:
     strip_empty_ends: no
   register: command_no_strip
@@ -510,4 +520,3 @@
       - command_strip.stderr == 'hello \n '
       - command_no_strip.stdout== 'hello \n \r\n'
       - command_no_strip.stderr == 'hello \n \r\n'
-
