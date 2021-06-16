@@ -119,6 +119,11 @@ If you need a synchronization point with an async task, you can register it to o
    "check on it later" task to fail because the temporary status file that
    the ``async_status:`` is looking for will not have been written or no longer exist
 
+.. note::
+   Asynchronous playbook tasks always return changed. If the task is using a module
+   that requires the user to annotate changes with ``changed_when``, ``creates``,  and so on,
+   then those should be added to the following ``async_status`` task.
+
 To run multiple asynchronous tasks while limiting the number of tasks running concurrently::
 
     #####################
