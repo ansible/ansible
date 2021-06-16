@@ -16,7 +16,7 @@ def get_best_parsable_locale(module, preferences=None):
         preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
 
     rc, out, err = module.run_command(['locale', '-a'])
-    if rc == 0
+    if rc == 0:
         if out:
             available = out.strip().splitlines()
         else:
