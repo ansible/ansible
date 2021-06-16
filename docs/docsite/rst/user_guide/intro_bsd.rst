@@ -31,7 +31,7 @@ On your control machine you can execute the following for most versions of FreeB
 
 .. code-block:: bash
 
-    ansible -m raw -a "pkg install -y python27" mybsdhost1
+    ansible -m raw -a "pkg install -y python" mybsdhost1
 
 Or for OpenBSD:
 
@@ -54,7 +54,7 @@ To support a variety of Unix-like operating systems and distributions, Ansible c
 .. code-block:: text
 
     [freebsd:vars]
-    ansible_python_interpreter=/usr/local/bin/python2.7
+    ansible_python_interpreter=/usr/local/bin/python
     [openbsd:vars]
     ansible_python_interpreter=/usr/local/bin/python3.8
 
