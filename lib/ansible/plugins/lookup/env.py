@@ -19,7 +19,7 @@ DOCUMENTATION = """
         required: True
     notes:
       - The module returns an empty string if the environment variable is not
-        defined. This makes it impossbile to differentiate between the case the
+        defined. This makes it impossible to differentiate between the case the
         variable is not defined and the case the variable is defined but it
         contains an empty string.
       - The C(default) filter requires second parameter to be set to C(True)
