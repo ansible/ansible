@@ -347,6 +347,14 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
         _terms:
           description: path(s) of files to read
           required: True
+        option1:
+          description:
+                - Sample option that could modify plugin behaviour.
+                - This one can be set directly ``option1='x'`` or in ansible.cfg, but can also use vars or environment.
+          type: string
+          ini:
+            - section: file_lookup
+              key: option1
       notes:
         - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
         - this lookup does not understand globing --- use the fileglob lookup instead.
@@ -361,6 +369,9 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
 
         def run(self, terms, variables=None, **kwargs):
 
+          # First of all populate options,
+          # this will already take into account env vars and ini config
+          self.set_options(var_options=variables, direct=kwargs)
 
           # lookups in general are expected to both take a list as input and output a list
           # this is done so they work with the looping construct 'with_'.
@@ -387,6 +398,10 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
               except AnsibleParserError:
                   raise AnsibleError("could not locate file in lookup: %s" % term)
 
+              # consume an option: if this did something useful, you can retrieve the option value here
+              if self.get_option('option1') == 'do something':
+                pass
+
           return ret
 
 
@@ -398,7 +413,7 @@ The following is an example of how this lookup is called:
   - hosts: all
     vars:
        contents: "{{ lookup('namespace.collection_name.file', '/etc/foo.txt') }}"
-
+       contents_with_option: "{{ lookup('namespace.collection_name.file', '/etc/foo.txt', option1='donothing') }}"
     tasks:
 
        - debug:
