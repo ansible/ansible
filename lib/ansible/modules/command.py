@@ -317,11 +317,7 @@ def main():
         check_command(module, args)
 
     if chdir:
-        try:
-            chdir = to_bytes(chdir, errors='surrogate_or_strict')
-        except ValueError as e:
-            r['msg'] = 'Unable to use supplied chdir from %s: %s ' % (os.getcwd(), to_text(e))
-            module.fail_json(**r)
+        chdir = to_bytes(chdir, errors='surrogate_or_strict')
 
         try:
             os.chdir(chdir)
