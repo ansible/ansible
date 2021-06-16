@@ -163,9 +163,9 @@ class ShellBase(AnsiblePlugin):
         basetmp = self.join_path(basetmpdir, basefile)
 
         # use mkdir -p to ensure parents exist, but mkdir fullpath to ensure last one is created by us
-        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmpdir, self._SHELL_SUB_RIGHT)
-        cmd += '%s mkdir %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
-        cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, shlex_quote(basetmpdir), self._SHELL_SUB_RIGHT)
+        cmd += '%s mkdir %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, shlex_quote(basetmp), self._SHELL_SUB_RIGHT)
+        cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, shlex_quote(basefile), self._SHELL_SUB_LEFT, shlex_quote(basetmp), self._SHELL_SUB_RIGHT)
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
