@@ -82,7 +82,7 @@ In the above example, if we had 6 hosts in the group 'webservers', Ansible would
     TASK [second task] ***************************************
     changed: [web4]
     changed: [web5]
-    changed: [web2]
+    changed: [web6]
 
     PLAY RECAP ***********************************************
     web1      : ok=2    changed=2    unreachable=0    failed=0
