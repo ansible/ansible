@@ -754,6 +754,45 @@ In such environments we recommend securing around Ansible's execution but still 
 This is something that Tower/AWX excels at by allowing administrators to set up RBAC access to inventory, along with managing credentials and job execution.
 
 
+.. _complex_configuration_validation:
+
+The 'validate' option is not enough for my needs, what do I do?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Many Ansible modules that create or update files have a ``validate`` option that allows you to abort the update if the validation command fails.
+This uses the temporary file Ansible creates before doing the final update. In many cases this does not work since the validation tools
+for the specific application require either specific names, multiple files or some other factor that is not present in this simple feature.
+
+For these cases you have to handle the validation and restoration yourself. The following is a simple example of how to do this with block/rescue
+and backups, which most file based modules also support:
+
+.. code-block:: yaml
+
+    - name: update config and backout if validation fails
+      block:
+         - name: do the actual update, works with copy, lineinfile and any action that allows for `backup`.
+           template: src=template.j2 dest=/x/y/z backup=yes moreoptions=stuff
+           register: updated
+
+        - name: run validation, this will change a lot as needed. We assume it returns an error when not passing, use `failed_when` if otherwise.
+          shell: run_validation_commmand
+          become: yes
+          become_user: requiredbyapp
+          environment:
+            WEIRD_REQUIREMENT: 1
+     rescue:
+        - name: restore backup file to original, in the hope the previous configuration was working.
+          copy:
+             remote_src: yes
+             dest: /x/y/z
+             src: "{{ updated['backup_file'] }}"
+     always:
+        - name: We choose to always delete backup, but could copy or move, or only delete in rescue.
+          file:
+             path: "{{ updated['backup_file'] }}"
+             state: absent
+
+
 .. _docs_contributions:
 
 How do I submit a change to the documentation?
