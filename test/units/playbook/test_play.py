@@ -243,9 +243,7 @@ def test_play_invalid_hosts_sequence(value):
         ['one', 'two', {'three': None}],
         ['one', 'two', {'three': 'four'}],
         'one, [two, three]',
-        'one, {two, three]',
-        'one, {two: three}',
-        '{one: two}',
+        'one, two, three]',
     )
 )
 def test_play_invalid_hosts_value(value):
@@ -265,6 +263,12 @@ def test_play_no_name_hosts_sequence():
     play = Play.load({'hosts': ['host1', 'host2']})
 
     assert play.get_name() == 'host1,host2'
+
+
+def test_play_hosts_template_expression():
+    play = Play.load({'hosts': "{{ target_hosts }}"})
+
+    assert play.get_name() == '{{ target_hosts }}'
 
 
 @pytest.mark.parametrize(
