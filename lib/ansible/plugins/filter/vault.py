@@ -14,7 +14,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, salt=None, vaultid=None, wrap_object=False):
+def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=False):
 
     if not isinstance(secret, (string_types, binary_type)):
         raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
@@ -38,7 +38,7 @@ def do_vault(data, secret, salt=None, vaultid=None, wrap_object=False):
     return vault
 
 
-def do_unvault(vault, secret, vaultid=None):
+def do_unvault(vault, secret, vaultid='filter_default'):
 
     if not isinstance(secret, (string_types, binary_type)):
         raise AnsibleFilterTypeError("Secret passed is required to be as tring, instead we got: %s" % type(secret))
