@@ -794,7 +794,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         return mystat['stat']
 
     def _remote_checksum(self, path, all_vars, follow=False):
-        '''
+        """Deprecated. Use _execute_remote_stat() instead.
+
         Produces a remote checksum given a path,
         Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
         0 = unknown error
@@ -803,7 +804,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
         5 = appropriate json module not found
-        '''
+        """
+        self._display.deprecated("The '_remote_checksum()' method is deprecated. "
+                                 "The plugin author should update the code to use '_execute_remote_stat()' instead", "2.16")
         x = "0"  # unknown error has occurred
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
