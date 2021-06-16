@@ -3,7 +3,7 @@
 set -eux
 
 function cleanup {
-    ansible-playbook -i hosts.yml cleanup.yml -b "$@"
+    ansible-playbook -i hosts.yml cleanup.yml -e "output_dir=${OUTPUT_DIR}" -b "$@"
     unset ANSIBLE_CACHE_PLUGIN
     unset ANSIBLE_CACHE_PLUGIN_CONNECTION
 }
