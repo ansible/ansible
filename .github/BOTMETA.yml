@@ -294,6 +294,136 @@ files:
     maintainers: $team_asa
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
+  $modules/network/avi/avi_actiongroupconfig.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_dnspolicy.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_role.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_alertconfig.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_errorpagebody.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_scheduler.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_alertemailconfig.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_errorpageprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_seproperties.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_alertscriptconfig.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_gslbgeodbprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_serverautoscalepolicy.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_alertsyslogconfig.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_gslb.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_serviceenginegroup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_analyticsprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_gslbservice_patch_member.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_serviceengine.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_api_session.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_gslbservice.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_snmptrapprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_api_version.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_hardwaresecuritymodulegroup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_sslkeyandcertificate.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_applicationpersistenceprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_healthmonitor.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_sslprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_applicationprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_httppolicyset.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_stringgroup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_authprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_ipaddrgroup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_systemconfiguration.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_autoscalelaunchconfig.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_ipamdnsproviderprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_tenant.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_backupconfiguration.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_l4policyset.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_trafficcloneprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_backup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_microservicegroup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_useraccountprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_certificatemanagementprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_networkprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_useraccount.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_cloudconnectoruser.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_network.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_user.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_cloudproperties.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_networksecuritypolicy.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_virtualservice.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_cloud.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_pkiprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_vrfcontext.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_clusterclouddetails.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_poolgroupdeploymentpolicy.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_vsdatascriptset.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_cluster.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_poolgroup.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_vsvip.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_controllerproperties.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_pool.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_webhook.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_customipamdnsprofile.py:
+    migrated_to: vmware.alb
+  $modules/network/avi/avi_prioritylabels.py:
+    migrated_to: vmware.alb
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/cloudengine/: &cloudengine
     maintainers: $team_huawei
@@ -1181,6 +1311,9 @@ files:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
   $plugins/doc_fragments/oracle*: *oracle
+  $plugins/doc_fragments/avi.py:
+    maintainers: $team_avi
+    migrated_to: vmware.alb
 ###############################
 # plugins/filter
   $plugins/filter/:
