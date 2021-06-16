@@ -805,7 +805,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         4 = stat module failed, likely due to not finding python
         5 = appropriate json module not found
         """
-        self._display.deprecated("The '_remote_checksum()' method is deprecated. The plugin author should update the code to use '_execute_remote_stat()' instead", "2.16")
+        self._display.deprecated("The '_remote_checksum()' method is deprecated. "
+                                 "The plugin author should update the code to use '_execute_remote_stat()' instead", "2.16")
         x = "0"  # unknown error has occurred
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
