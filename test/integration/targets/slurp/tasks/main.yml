@@ -54,37 +54,6 @@
       - "slurp_binary is not changed"
       - "slurp_binary is not failed"
 
-- name: test slurping a non-existent file
-  slurp:
-    src: '{{ output_dir }}/i_do_not_exist'
-  register: slurp_missing
-  ignore_errors: true
-
-- name: check slurp missing result
-  assert:
-    that:
-      - "slurp_missing is failed"
-      - "slurp_missing.msg"
-      - "slurp_missing is not changed"
-
-- name: Create a directory to test with
-  file:
-    path: '{{ output_dir }}/baz/'
-    state: directory
-
-- name: test slurping a directory
-  slurp:
-    src: '{{ output_dir }}/baz'
-  register: slurp_dir
-  ignore_errors: true
-
-- name: check slurp directory result
-  assert:
-    that:
-      - slurp_dir is failed
-      - slurp_dir.msg is search('source is a directory and must be a file')
-      - slurp_dir is not changed
-
 - name: test slurp with missing argument
   action: slurp
   register: slurp_no_args
@@ -97,6 +66,4 @@
       - "slurp_no_args.msg"
       - "slurp_no_args is not changed"
 
-# Ensure unreadable file and directory handling and error messages
-# https://github.com/ansible/ansible/issues/67340
-- import_tasks: 'test_unreadable.yml'
+- import_tasks: test_unreadable.yml

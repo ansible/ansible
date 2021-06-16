@@ -1,0 +1,2 @@
+bugfixes:
+  - slurp - improve the logic in the error handling and remove ``os.stat()`` call (https://github.com/ansible/ansible/pull/75038)
