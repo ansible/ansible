@@ -12,8 +12,10 @@ class ModuleDocFragment(object):
 options:
   validate:
     description:
-    - The validation command to run before copying into place.
-    - The path to the file to validate is passed in via '%s' which must be present as in the examples below.
-    - The command is passed securely so shell features like expansion and pipes will not work.
+    - The validation command to run before copying the updated file into the final destination.
+    - A temporary file path is used to validate, passed in through '%s' which must be present as in the examples below.
+    - Also, the command is passed securely so shell features such as expansion and pipes will not work.
+    - For an example on how to handle more complex validation than what this option provides,
+      see L(Complex configuration validation,https://docs.ansible.com/ansible/devel/reference_appendices/faq.html).
     type: str
 '''
