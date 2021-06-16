@@ -1,0 +1,2 @@
+bugfixes:
+  - command - remove unreachable code path when trying to convert the value for ``chdir`` to bytes (https://github.com/ansible/ansible/pull/75036)

@@ -132,12 +132,21 @@
     chdir: "{{ output_dir_test }}"
   register: command_result2
 
+- name: Check invalid chdir
+  command: echo
+  args:
+    chdir: "{{ output_dir }}/nope"
+  ignore_errors: yes
+  register: chdir_invalid
+
 - name: assert that the script executed correctly with chdir
   assert:
     that:
       - command_result2.rc == 0
       - command_result2.stderr == ''
       - command_result2.stdout == 'win'
+      - chdir_invalid is failed
+      - chdir_invalid.msg is search('Unable to change directory')
 
 # creates
 
@@ -483,3 +492,31 @@
         - parent_dir_chdir.stdout != parent_dir_cd.stdout
         - 'parent_dir_cd.stdout == "{{output_dir}}/www"'
         - 'parent_dir_chdir.stdout == "{{output_dir}}/www_root"'
+
+- name: Set print error command for Python 2
+  set_fact:
+    print_error_command: print >> sys.stderr, msg
+  when: ansible_facts.python_version is version('3', '<')
+
+- name: Set print error command for Python 3
+  set_fact:
+    print_error_command: print(msg, file=sys.stderr)
+  when: ansible_facts.python_version is version('3', '>=')
+
+- name: run command with strip
+  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  register: command_strip
+
+- name: run command without strip
+  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  args:
+    strip_empty_ends: no
+  register: command_no_strip
+
+- name: Verify strip behavior worked as expected
+  assert:
+    that:
+      - command_strip.stdout == 'hello \n '
+      - command_strip.stderr == 'hello \n '
+      - command_no_strip.stdout== 'hello \n \r\n'
+      - command_no_strip.stderr == 'hello \n \r\n'
