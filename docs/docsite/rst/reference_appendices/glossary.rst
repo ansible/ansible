@@ -181,7 +181,7 @@ when a term comes up on the mailing list.
     Handlers
         Handlers are just like regular tasks in an Ansible
         :term:`playbook <playbooks>` (see :term:`Tasks`) but are only run if
-        the Task contains a ``notify`` directive and also indicates that it
+        the Task contains a ``notify`` keyword and also indicates that it
         changed something.  For example, if a config file is changed, then the
         task referencing the config file templating operation may notify
         a service restart handler.  This means services can be bounced only if
@@ -199,7 +199,7 @@ when a term comes up on the mailing list.
         Each :term:`Play <plays>` in Ansible maps a series of :term:`tasks` (which define the role,
         purpose, or orders of a system) to a set of systems.
 
-        This ``hosts:`` directive in each play is often called the hosts specifier.
+        This ``hosts:`` keyword in each play is often called the hosts specifier.
 
         It may select one system, many systems, one or more groups, or even
         some hosts that are in one group and explicitly not in another.
@@ -250,6 +250,11 @@ when a term comes up on the mailing list.
         Ansible uses JSON for return data from remote modules.  This allows
         modules to be written in any language, not just Python.
 
+    Keyword
+        The main expressions that make up Ansible, which apply to playbook objects
+        (Play, Block, Role and Task). For example 'vars:' is a keyword that lets
+        you define variables in the scope of the playbook object it is applied to.
+
     Lazy Evaluation
         In general, Ansible evaluates any variables in
         :term:`playbook <playbooks>` content at the last possible second,
@@ -270,16 +275,16 @@ when a term comes up on the mailing list.
         servers to one particular server.
 
     Local Action
-        A local_action directive in a :term:`playbook <playbooks>` targeting
-        remote machines means that the given step will actually occur on the
-        local machine, but that the variable ``{{ ansible_hostname }}`` can be
-        passed in to reference the remote hostname being referred to in that
-        step.  This can be used to trigger, for example, an rsync operation.
+        This keyword is an alias for ``delegate_to: localhost``.
+        Used when you want to redirect an action from the remote to
+        execute on the controller itself.
 
     Local Connection
         By using ``connection: local`` in a :term:`playbook <playbooks>`, or
         passing ``-c local`` to :command:`/usr/bin/ansible`, this indicates
-        that we are managing the local host and not a remote machine.
+        that we are executing a local fork instead of executing on the remote machine.
+        You probably want ``local_action`` or ``delegate_to: localhost`` instead
+        as this ONLY changes the connection and no other context for execution.
 
     Lookup Plugin
         A lookup plugin is a way to get data into Ansible from the outside world.
@@ -447,7 +452,7 @@ when a term comes up on the mailing list.
 
     SSH (Native)
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
-        (or a config file, or a directive in the :term:`playbook <playbooks>`)
+        (or a config file, or a keyword in the :term:`playbook <playbooks>`)
         and can be useful if wanting to login via Kerberized SSH or using SSH
         jump hosts, and so on.  In 1.2.1, ``ssh`` will be used by default if the
         OpenSSH binary on the control machine is sufficiently new.
@@ -469,7 +474,7 @@ when a term comes up on the mailing list.
     Task
         :term:`Playbooks` exist to run tasks.  Tasks combine an :term:`action`
         (a module and its arguments) with a name and optionally some other
-        keywords (like :term:`looping directives <loops>`).   :term:`Handlers`
+        keywords (like :term:`looping keywords <loops>`).   :term:`Handlers`
         are also tasks, but they are a special kind of task that do not run
         unless they are notified by name when a task reports an underlying
         change on a remote system.
