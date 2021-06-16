@@ -132,12 +132,21 @@
     chdir: "{{ output_dir_test }}"
   register: command_result2
 
+- name: Check invalid chdir
+  command: echo
+  args:
+    chdir: "{{ output_dir }}/nope"
+  ignore_errors: yes
+  register: chdir_invalid
+
 - name: assert that the script executed correctly with chdir
   assert:
     that:
       - command_result2.rc == 0
       - command_result2.stderr == ''
       - command_result2.stdout == 'win'
+      - chdir_invalid is failed
+      - chdir_invalid.msg is search('Unable to change directory')
 
 # creates
 
@@ -391,3 +400,123 @@
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: absent
+
+- name: test warning with command
+  command:
+    cmd: "rm -h"
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using the file module with state=absent rather than running \\'rm\\'' in warn_result.warnings[0]"
+
+- name: test warning with shell
+  shell: "sed -h"
+  args:
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using the replace, lineinfile or template module rather than running \\'sed\\'' in warn_result.warnings[0]"
+
+- name: test become warning
+  command:
+    cmd: "sudo true"
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using \\'become\\', \\'become_method\\', and \\'become_user\\' rather than running sudo' in warn_result.warnings[0]"
+
+- name: test check mode skip message
+  command:
+    cmd: "true"
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.msg"
+
+- name: test check mode creates/removes message
+  command:
+    cmd: "true"
+    creates: yes
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.msg"
+
+- name: command symlink handling
+  block:
+  - name: Create target folders
+    file:
+      path: '{{output_dir}}/www_root/site'
+      state: directory
+
+  - name: Create symlink
+    file:
+      path: '{{output_dir}}/www'
+      state: link
+      src: '{{output_dir}}/www_root'
+
+  - name: check parent using chdir
+    shell: dirname "$PWD"
+    args:
+      chdir: '{{output_dir}}/www/site'
+    register: parent_dir_chdir
+
+  - name: check parent using cd
+    shell: cd "{{output_dir}}/www/site" && dirname "$PWD"
+    register: parent_dir_cd
+
+  - name: check expected outputs
+    assert:
+      that:
+        - parent_dir_chdir.stdout != parent_dir_cd.stdout
+        - 'parent_dir_cd.stdout == "{{output_dir}}/www"'
+        - 'parent_dir_chdir.stdout == "{{output_dir}}/www_root"'
+
+- name: Set print error command for Python 2
+  set_fact:
+    print_error_command: print >> sys.stderr, msg
+  when: ansible_facts.python_version is version('3', '<')
+
+- name: Set print error command for Python 3
+  set_fact:
+    print_error_command: print(msg, file=sys.stderr)
+  when: ansible_facts.python_version is version('3', '>=')
+
+- name: run command with strip
+  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  register: command_strip
+
+- name: run command without strip
+  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  args:
+    strip_empty_ends: no
+  register: command_no_strip
+
+- name: Verify strip behavior worked as expected
+  assert:
+    that:
+      - command_strip.stdout == 'hello \n '
+      - command_strip.stderr == 'hello \n '
+      - command_no_strip.stdout== 'hello \n \r\n'
+      - command_no_strip.stderr == 'hello \n \r\n'

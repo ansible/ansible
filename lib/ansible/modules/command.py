@@ -303,10 +303,7 @@ def main():
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     if chdir:
-        try:
-            chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
-        except ValueError as e:
-            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
+        chdir = to_bytes(chdir, errors='surrogate_or_strict')
 
         try:
             os.chdir(chdir)
