@@ -324,7 +324,7 @@ def download_collections(
 
     requirements = []
     with _display_progress(
-            "Starting collection download process to '{path!s}'".
+            u"Starting collection download process to '{path!s}'".
             format(path=output_path),
     ):
         for fqcn, concrete_coll_pin in dep_map.copy().items():  # FIXME: move into the provider
@@ -1164,7 +1164,7 @@ def install_src(
     )
 
     display.display(
-        'Created collection for {coll!s} at {path!s}'.
+        u'Created collection for {coll!s} at {path!s}'.
         format(coll=collection, path=collection_output_path)
     )
 

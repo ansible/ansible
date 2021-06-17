@@ -77,7 +77,7 @@ def with_collection_artifacts_manager(wrapped_method):
 
 
 def _display_header(path, h1, h2, w1=10, w2=7):
-    display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
+    display.display(u'\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
         path,
         h1,
         h2,
@@ -99,7 +99,7 @@ def _display_role(gr):
 
 
 def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
-    display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+    display.display(u'{fqcn:{cwidth}} {version:{vwidth}}'.format(
         fqcn=to_text(collection.fqcn),
         version=collection.ver,
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
@@ -1346,7 +1346,7 @@ class GalaxyCLI(CLI):
             if os.path.isdir(path):
                 path_found = True
             else:
-                warnings.append("- the configured path {0} does not exist.".format(path))
+                warnings.append(u"- the configured path {0} does not exist.".format(path))
                 continue
 
             if role_name:
@@ -1409,11 +1409,11 @@ class GalaxyCLI(CLI):
                 if path in default_collections_path:
                     # don't warn for missing default paths
                     continue
-                warnings.append("- the configured path {0} does not exist.".format(collection_path))
+                warnings.append(u"- the configured path {0} does not exist.".format(collection_path))
                 continue
 
             if not os.path.isdir(collection_path):
-                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                warnings.append(u"- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                 continue
 
             path_found = True
@@ -1431,8 +1431,12 @@ class GalaxyCLI(CLI):
                     warnings.append("- unable to find {0} in collection paths".format(collection_name))
                     continue
 
-                if not os.path.isdir(collection_path):
-                    warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                if not os.path.isdir(b_collection_path):
+                    warnings.append(
+                        u"- the configured path {0}, exists, but it is not a directory.".format(
+                            to_text(b_collection_path, errors='surrogate_or_strict')
+                        )
+                    )
                     continue
 
                 collection_found = True
@@ -1461,18 +1465,18 @@ class GalaxyCLI(CLI):
                 # list all collections
                 collection_path = validate_collection_path(path)
                 if os.path.isdir(collection_path):
-                    display.vvv("Searching {0} for collections".format(collection_path))
+                    display.vvv(u"Searching {0} for collections".format(collection_path))
                     collections = list(find_existing_collections(
                         collection_path, artifacts_manager,
                     ))
                 else:
                     # There was no 'ansible_collections/' directory in the path, so there
                     # or no collections here.
-                    display.vvv("No 'ansible_collections' directory found at {0}".format(collection_path))
+                    display.vvv(u"No 'ansible_collections' directory found at {0}".format(collection_path))
                     continue
 
                 if not collections:
-                    display.vvv("No collections found at {0}".format(collection_path))
+                    display.vvv(u"No collections found at {0}".format(collection_path))
                     continue
 
                 if output_format in {'yaml', 'json'}:
