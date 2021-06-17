@@ -200,3 +200,95 @@ class FileLock:
             pass
 
         return True
+
+
+class LockedFile:
+    '''
+    Avoid mixing lock mixing, either use this class or fcntl,
+    otherwise it will certainly cause unwanted and/or unexpected behaviour.
+    File will automatically be locked on open (or fail to open if not possible)
+    and will stay locked until closed.
+
+    Also note that POSIX and BSD locks are notoriouslly unreliable, you should
+    really try to avoid andy parallel access to files and use atomic_write to
+    ensure data consistency (last writer wins vs having all writers try to lock).
+    '''
+    def __init__(self, path):
+        '''
+        :kw path: Path (file) to lock
+        '''
+        try:
+            fcntl.flock()
+        except AttributeError:
+            # dont have flock (BSD+), fallback to lockf (POSIX)
+            self._method = 'lockf'
+        except TypeError:
+            # method exists, we just called it wrong, on purpose
+            self._method = 'flock'
+
+        self._lock_fd = None
+        self._path = path
+
+    def open(self, flags='w', lock_timeout=0):
+        '''
+        Try to open this file with an exclusive lock, within a timeout.
+        Please note that currently file locking is very limited on POSIX and unix systems,
+        specially if you are using network or shared filesystems.
+        It will fail across users, threads and/or processes under many circumstances,
+        so try to limit scope as much as possible.
+
+        We don't allow indefinite waiting for a lock as it is too easy to lead to deadlocks,
+        the caller can easily implement such, but that we cannot control.
+
+        :kw flags:
+            open() flags, defaults to 'w'
+        :kw lock_timeout:
+            Number of seconds to wait for lock acquisition, fail if timeout is reached.
+        :returns: True
+        '''
+        l_wait = 0.1
+        self._lock_fd = open(self._path, flags)
+
+        e_secs = 0
+        exc = None
+        while True:
+            if e_secs >= lock_timeout:
+                self._lock_fd.close()
+                # note: switch to TimeoutError once older python is dropped
+                raise OSError('Could not lock "%s" within %s seconds: %s' % (self._path, lock_timeout, to_native(exc)))
+            try:
+                self._method(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except (IOError, OSError) as e:
+                # IOError is needed for python <= 3.3 support
+                # TODO: for certain versions we could capture errno and break early
+                # in case of non locking related errors
+                time.sleep(l_wait)
+                e_secs += l_wait
+                exc = e
+
+        return self
+
+    def close(self):
+        '''
+        Make sure lock file is available for everyone and Unlock the file descriptor
+        '''
+        if self._lock_fd:
+            try:
+                self._method(self._lock_fd, fcntl.LOCK_UN)
+                self._lock_fd.close()
+            except ValueError:  # file wasn't opened, let context manager fail gracefully
+                pass
+
+    def _method(args, kwargs):
+        do = getattr(fcntl, self._method)
+        return do(*args, **kwargs)
+
+    def __getattr__(self, name):
+
+        if hasattr(self, name):
+            a = getattr(self, name)
+        else:
+            a = getattr(self._lock_fd, name)
+
+        return a

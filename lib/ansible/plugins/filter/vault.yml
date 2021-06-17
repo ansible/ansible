@@ -30,6 +30,7 @@ DOCUMENTATION:
     wrap_object:
       description:
         - This toggle can force the return of an AnsibleVaultEncryptedUnicode string object, when ``False``, you get a simple string
+        - Mostly useful when combining with the ``to_yaml`` filter.
       type: bool
       format: named
       default: False
