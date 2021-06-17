@@ -9,12 +9,12 @@ from ansible.module_utils._text import to_native
 
 def get_best_parsable_locale(module, preferences=None):
     '''
-        Attempts to return the best possible locale for parsing output in english
+        Attempts to return the best possible locale for parsing output in English
         useful for scraping output with i18n tools
 
         :param module: an AnsibleModule instance
-        :param preferences: A list of prefered locales, in order of preference
-        :returns: The first matched prefered locale or 'C' which is the default
+        :param preferences: A list of preferred locales, in order of preference
+        :returns: The first matched preferred locale or 'C' which is the default
     '''
 
     found = 'C'  # default posix, its ascii but always there
