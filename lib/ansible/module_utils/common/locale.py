@@ -7,7 +7,7 @@ __metaclass__ = type
 from ansible.module_utils._text import to_native
 
 
-def get_best_parsable_locale(module, preferences=None, ignore_warnigns=False):
+def get_best_parsable_locale(module, preferences=None, error_handler='warn'):
     '''
         Attempts to return the best possible locale for parsing output in English
         useful for scraping output with i18n tools
@@ -18,27 +18,34 @@ def get_best_parsable_locale(module, preferences=None, ignore_warnigns=False):
     '''
 
     found = 'C'  # default posix, its ascii but always there
-    available = []
+    errors = getattr(module, error_handler, 'warn')
 
-    if preferences is None:
-        # new POSIX standard or English cause those are messages core team expects
-        # yes, the last 2 are the same but some systems are weird
-        preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
+    locale = module.get_bin_path("locale")
+    if locale:
+        available = []
 
-    rc, out, err = module.run_command(['locale', '-a'])
+        if preferences is None:
+            # new POSIX standard or English cause those are messages core team expects
+            # yes, the last 2 are the same but some systems are weird
+            preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
 
-    if rc == 0:
-        if out:
-            available = out.strip().splitlines()
-        elif not ignore_warnings:
-            module.warn("No output from locale, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
-    elif not ignore_warnings:
-        module.warn("Unable to get locale information, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
+        rc, out, err = module.run_command([locale, '-a'])
 
-    if available:
-        for pref in preferences:
-            if pref in available:
-                found = pref
-                break
+        if rc == 0:
+            if out:
+                available = out.strip().splitlines()
+            else:
+                errors("No output from locale, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
+        else:
+            errors("Unable to get locale information, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
+
+        if available:
+            for pref in preferences:
+                if pref in available:
+                    found = pref
+                    break
+
+    else:
+        errors("Unable to find locale tool, defaulting to C")
 
     return found
