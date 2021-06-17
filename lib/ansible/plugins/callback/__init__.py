@@ -378,7 +378,11 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_runner_on_async_failed(self, result):
         host = result._host.get_name()
+        # Attempt to get the async job ID. If the job does not finish before the
+        # async timeout value, the ID may be within the unparsed 'async_result' dict.
         jid = result._result.get('ansible_job_id')
+        if not jid and 'async_result' in result._result:
+            jid = result._result['async_result'].get('ansible_job_id')
         self.runner_on_async_failed(host, result._result, jid)
 
     def v2_playbook_on_start(self, playbook):
