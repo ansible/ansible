@@ -101,7 +101,7 @@ def main():
                 dir=module.params['path'],
             )
             close(handle)
-        elif module.params['state'] == 'directory':
+        else:
             path = mkdtemp(
                 prefix=module.params['prefix'],
                 suffix=module.params['suffix'],
