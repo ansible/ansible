@@ -17,7 +17,11 @@ def get_best_parsable_locale(module, preferences=None):
         :param preferences: A list of preferred locales, in order of preference
         :returns: The first matched preferred locale or 'C' which is the default
     '''
-    locale = module.get_bin_path("locale", required=True)
+
+    locale = module.get_bin_path("locale")
+    if not locale:
+        # not using required=true as that forces fail_json
+        raise RuntimeWarning("Could not find 'locale' tool")
 
     available = []
     found = 'C'  # default posix, its ascii but always there
