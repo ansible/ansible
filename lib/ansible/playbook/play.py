@@ -113,8 +113,6 @@ class Play(Base, Taggable, CollectionSearch):
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
                     elif not is_string(entry):
                         raise AnsibleParserError(err_msg.format(host=entry))
-                    elif not is_string(entry):
-                        raise AnsibleParserError(err_msg.format(host=entry))
 
             elif not is_string(value):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
