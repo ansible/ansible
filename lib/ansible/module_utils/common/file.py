@@ -19,6 +19,7 @@ import sys
 from contextlib import contextmanager
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import b, binary_type
+from ansible.module_utils.common.warnings import deprecate
 
 try:
     import selinux
@@ -122,6 +123,8 @@ class FileLock:
     unwanted and/or unexpected behaviour
     '''
     def __init__(self):
+        deprecate("FileLock is not reliable and has never been used in core for that reason. There is no current alternative that works across POSIX targets",
+                  version='2.16')
         self.lockfd = None
 
     @contextmanager
