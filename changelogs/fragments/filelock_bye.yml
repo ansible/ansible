@@ -1,0 +1,2 @@
+deprecated_features:
+  - module_utils' FileLock is scheduled to be removed, it is not used due to its unreliable nature.
