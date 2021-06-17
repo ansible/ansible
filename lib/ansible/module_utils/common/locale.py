@@ -7,7 +7,7 @@ __metaclass__ = type
 from ansible.module_utils._text import to_native
 
 
-def get_best_parsable_locale(module, preferences=None):
+def get_best_parsable_locale(module, preferences=None, ignore_warnigns=False):
     '''
         Attempts to return the best possible locale for parsing output in English
         useful for scraping output with i18n tools
@@ -18,18 +18,21 @@ def get_best_parsable_locale(module, preferences=None):
     '''
 
     found = 'C'  # default posix, its ascii but always there
+    available = []
+
     if preferences is None:
         # new POSIX standard or English cause those are messages core team expects
         # yes, the last 2 are the same but some systems are weird
         preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
 
     rc, out, err = module.run_command(['locale', '-a'])
+
     if rc == 0:
         if out:
             available = out.strip().splitlines()
-        else:
+        elif not ignore_warnings:
             module.warn("No output from locale, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
-    else:
+    elif not ignore_warnings:
         module.warn("Unable to get locale information, defaulting to C, rc=%s: %s" % (rc, to_native(err)))
 
     if available:
