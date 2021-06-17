@@ -116,7 +116,6 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         # provide a transition period for hosts that were using /usr/bin/python previously (but shouldn't have been)
         if is_auto_legacy:
             if platform_interpreter != u'/usr/bin/python' and u'/usr/bin/python' in found_interpreters:
-                # FIXME: support comments in sivel's deprecation scanner so we can get reminded on this
                 if not is_silent:
                     action._discovery_warnings.append(
                         u"Distribution {0} {1} on host {2} should use {3}, but is using "
