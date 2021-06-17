@@ -1,0 +1,2 @@
+minor_changes:
+   - blockinfile - Remove unused code for Ansible 1.x.
