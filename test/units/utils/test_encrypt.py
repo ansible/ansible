@@ -44,7 +44,7 @@ def test_encrypt_with_rounds_no_passlib():
                     secret="123", algorithm="sha256_crypt", salt="12345678", rounds=5000)
         assert_hash("$5$rounds=10000$12345678$JBinliYMFEcBeAXKZnLjenhgEhTmJBvZn3aR8l70Oy/",
                     secret="123", algorithm="sha256_crypt", salt="12345678", rounds=10000)
-        assert_hash("$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
+        assert_hash("$6$rounds=5000$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
                     secret="123", algorithm="sha512_crypt", salt="12345678", rounds=5000)
 
 
