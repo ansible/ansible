@@ -118,14 +118,12 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
             if platform_interpreter != u'/usr/bin/python' and u'/usr/bin/python' in found_interpreters:
                 # FIXME: support comments in sivel's deprecation scanner so we can get reminded on this
                 if not is_silent:
-                    action._discovery_deprecation_warnings.append(dict(
-                        msg=u"Distribution {0} {1} on host {2} should use {3}, but is using "
-                            u"/usr/bin/python for backward compatibility with prior Ansible releases. "
-                            u"A future Ansible release will default to using the discovered platform "
-                            u"python for this host. See {4} for more information"
-                            .format(distro, version, host, platform_interpreter,
-                                    get_versioned_doclink('reference_appendices/interpreter_discovery.html')),
-                        version='2.12'))
+                    action._discovery_warnings.append(
+                        u"Distribution {0} {1} on host {2} should use {3}, but is using "
+                        u"/usr/bin/python for backward compatibility with prior Ansible releases. "
+                        u"See {4} for more information"
+                        .format(distro, version, host, platform_interpreter,
+                                get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
                 return u'/usr/bin/python'
 
         if platform_interpreter not in found_interpreters:
