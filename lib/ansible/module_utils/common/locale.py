@@ -19,8 +19,8 @@ def get_best_parsable_locale(module, preferences=None):
 
     found = 'C'  # default posix, its ascii but always there
     if preferences is None:
-        # new posix standard or english cause those are messages core team expects
-        # yes, last 2 are same but some systems are weird
+        # new POSIX standard or English cause those are messages core team expects
+        # yes, the last 2 are the same but some systems are weird
         preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
 
     rc, out, err = module.run_command(['locale', '-a'])
