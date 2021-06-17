@@ -1,6 +1,6 @@
 .. _lookup_plugins:
 
-Lookup Plugins
+Lookup plugins
 ==============
 
 .. contents::
