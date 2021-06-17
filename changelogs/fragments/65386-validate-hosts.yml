@@ -1,0 +1,2 @@
+bugfixes:
+  - play - validate the ``hosts`` entry in a play (https://github.com/ansible/ansible/issues/65386)
