@@ -1,7 +1,7 @@
 .. _filter_plugins:
 
 Filter plugins
-=============
+==============
 
 .. contents::
    :local:
@@ -12,14 +12,14 @@ Filter plugins manipulate data. With the right filter you can extract a particul
 .. _enabling_filter:
 
 Enabling filter plugins
-----------------------
+-----------------------
 
 You can add a custom filter plugin by dropping it into a ``filter_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the filter plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 .. _using_filter:
 
 Using filter plugins
--------------------
+--------------------
 
 For information on using filter plugins, see :ref:`playbooks_filters`.
 

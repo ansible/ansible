@@ -12,7 +12,7 @@ Docs fragments allow you to document common parameters of multiple plugins or mo
 .. _enabling_docs_fragments:
 
 Enabling docs fragments
-----------------------
+-----------------------
 
 You can add a custom docs fragment by dropping it into a ``doc_fragments`` directory adjacent to your collection or role, just like any other plugin.
 

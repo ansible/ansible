@@ -7,7 +7,7 @@ Lookup plugins
    :local:
    :depth: 2
 
-Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources. You can :ref:`create custom lookup plugins <_developing_lookup_plugins>`.
+Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources. You can :ref:`create custom lookup plugins <developing_lookup_plugins>`.
 
 .. note::
    - Lookups are executed with a working directory relative to the role or play,
