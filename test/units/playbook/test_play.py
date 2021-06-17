@@ -242,8 +242,6 @@ def test_play_invalid_hosts_sequence(value):
         [set((None, 'one'))],
         ['one', 'two', {'three': None}],
         ['one', 'two', {'three': 'four'}],
-        'one, [two, three]',
-        'one, two, three]',
     )
 )
 def test_play_invalid_hosts_value(value):

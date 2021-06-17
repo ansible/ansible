@@ -106,9 +106,6 @@ class Play(Base, Taggable, CollectionSearch):
             if not value:
                 raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
 
-            if is_string(value) and any(c in value for c in ('[', ']')):
-                raise AnsibleParserError(err_msg.format(host=value))
-
             if is_sequence(value):
                 # Make sure each item in the sequence is a valid string
                 for entry in value:
@@ -116,7 +113,7 @@ class Play(Base, Taggable, CollectionSearch):
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
                     elif not is_string(entry):
                         raise AnsibleParserError(err_msg.format(host=entry))
-                    elif is_string(entry) and any(c in entry for c in ('[', ']')):
+                    elif not is_string(entry):
                         raise AnsibleParserError(err_msg.format(host=entry))
 
             elif not is_string(value):
