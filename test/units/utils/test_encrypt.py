@@ -96,7 +96,7 @@ def test_encrypt_default_rounds():
                 secret="123", algorithm="md5_crypt", salt="12345678")
     assert_hash("$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv.",
                 secret="123", algorithm="sha256_crypt", salt="12345678")
-    assert_hash("$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
+    assert_hash("$6$rounds=656000$12345678$InMy49UwxyCh2pGJU1NpOhVSElDDzKeyuC6n6E9O34BCUGVNYADnI.rcA3m.Vro9BiZpYmjEoNhpREqQcbvQ80",
                 secret="123", algorithm="sha512_crypt", salt="12345678")
 
     assert encrypt.PasslibHash("md5_crypt").hash("123")
@@ -155,7 +155,7 @@ def test_do_encrypt_passlib():
         encrypt.do_encrypt("123", "sha257_crypt", salt="12345678")
 
     # Uses passlib default rounds value for sha256 matching crypt behaviour.
-    assert encrypt.do_encrypt("123", "sha256_crypt", salt="12345678") == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+    assert encrypt.do_encrypt("123", "sha256_crypt", salt="12345678") == "$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv."
 
     assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
 
