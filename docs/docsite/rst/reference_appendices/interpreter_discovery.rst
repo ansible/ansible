@@ -15,7 +15,7 @@ To control the discovery behavior:
 
 Use one of the following values:
 
-auto_legacy : (default in 2.8)
+auto_legacy :
   Detects the target OS platform, distribution, and version, then consults a
   table listing the correct Python interpreter and path for each
   platform/distribution/version. If an entry is found, and ``/usr/bin/python`` is absent, uses the discovered interpreter (and path). If an entry
@@ -30,7 +30,7 @@ auto_legacy : (default in 2.8)
   paths and uses the first one found; also issues a warning that future
   installation of another Python interpreter could alter the one chosen.
 
-auto : (future default in 2.12)
+auto : (default in 2.12)
   Detects the target OS platform, distribution, and version, then consults a
   table listing the correct Python interpreter and path for each
   platform/distribution/version. If an entry is found, uses the discovered
