@@ -34,7 +34,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
-from ansible.utils import encrypt
+from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
@@ -265,23 +265,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
     try:
-        if encrypt.PASSLIB_AVAILABLE:
-            if hashtype == 'bcrypt':
-                if not rounds:
-                    rounds = 12
-                if not salt:
-                    salt = encrypt.random_salt(length=22)
-                if not ident:
-                    ident = "2b"
-            if hashtype == 'sha256_crypt' or hashtype == 'sha512_crypt':
-                if hashtype == 'sha256_crypt' and not rounds:
-                    rounds = 535000
-                if hashtype == 'sha512_crypt' and not rounds:
-                    rounds = 656000
-                if not salt:
-                    salt = encrypt.random_salt(length=16)
-
-        return encrypt.passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     except AnsibleError as e:
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
 
