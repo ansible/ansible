@@ -577,9 +577,6 @@ class AnsibleModule(object):
 
         return self._tmpdir
 
-    def ignore(self, msg):
-        pass
-
     def warn(self, warning):
         warn(warning)
         self.log('[WARNING] %s' % warning)
