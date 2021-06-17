@@ -22,6 +22,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.errors import AnsibleAssertionError, AnsibleParserError
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.playbook.block import Block
 from ansible.playbook.play import Play
 from ansible.playbook.role import Role
@@ -227,6 +228,7 @@ def test_play_none_hosts(value):
         True,
         1,
         1.75,
+        AnsibleVaultEncryptedUnicode('secret'),
     )
 )
 def test_play_invalid_hosts_sequence(value):
@@ -242,6 +244,7 @@ def test_play_invalid_hosts_sequence(value):
         [set((None, 'one'))],
         ['one', 'two', {'three': None}],
         ['one', 'two', {'three': 'four'}],
+        [AnsibleVaultEncryptedUnicode('secret')],
     )
 )
 def test_play_invalid_hosts_value(value):

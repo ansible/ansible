@@ -23,8 +23,8 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common.collections import is_sequence, is_string
-from ansible.module_utils.six import string_types
+from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -109,11 +109,10 @@ class Play(Base, Taggable, CollectionSearch):
                 for entry in value:
                     if entry is None:
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
-                    elif not is_string(entry):
-                        raise AnsibleParserError(err_msg.format(host=entry))
+                    elif not isinstance(entry, (binary_type, text_type)):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
 
-            elif not is_string(value):
+            elif not isinstance(value, (binary_type, text_type)):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
