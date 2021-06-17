@@ -1,4 +1,4 @@
-# Copyright 2021, Ansible Project
+# Copyright: (c) 2021, Ansible Project
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
