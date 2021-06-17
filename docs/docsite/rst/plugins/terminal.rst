@@ -1,6 +1,6 @@
 .. _terminal_plugins:
 
-Terminal Plugins
+Terminal plugins
 ================
 
 .. contents::
@@ -23,7 +23,7 @@ You can extend Ansible to support other network devices by dropping a custom plu
 Using terminal plugins
 ------------------------
 
-The terminal plugin to use is determined automatically from the ``ansible_network_os`` variable. There should be no reason to override this functionality.
+Ansible determines which terminal plugin to use automatically from the ``ansible_network_os`` variable. There should be no reason to override this functionality.
 
 Terminal plugins operate without configuration. All options to control the terminal are exposed in the ``network_cli`` connection plugin.
 
