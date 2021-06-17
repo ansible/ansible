@@ -47,6 +47,12 @@
         state: absent
 
 - block:
+  - name: Install toml package
+    pip:
+      name:
+        - toml
+      state: present
+
   - name: "test toml output with unicode characters"
     command: ansible-inventory --list --toml -i {{ role_path }}/files/unicode.yml
     register: result
