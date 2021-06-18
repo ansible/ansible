@@ -202,19 +202,19 @@ class ConfigCLI(CLI):
         build a dict with the list requested configs
         '''
         config_entries = {}
-        if context.CLIARGS['type'] == 'base':
+        if context.CLIARGS['type'] in ('base', 'all'):
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
-        elif context.CLIARGS['type'] == 'all':
-            # get global
-            config_entries = self.config.get_configuration_definitions(ignore_private=True)
 
+        if context.CLIARGS['type'] != 'base':
             config_entries['PLUGINS'] = {}
+
+        if context.CLIARGS['type'] == 'all':
             # now each plugin type
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
-        else:
-            config_entries = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
+        elif context.CLIARGS['type'] != 'base':
+            config_entries['PLUGINS'][context.CLIARGS['type']]  = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
         return config_entries
 
@@ -329,6 +329,7 @@ class ConfigCLI(CLI):
         data = []
         config_entries = self._list_entries_from_args()
         plugin_types = config_entries.pop('PLUGINS', None)
+
         if context.CLIARGS['format'] == 'ini':
             sections = self._get_settings_ini(config_entries)
 
@@ -348,6 +349,7 @@ class ConfigCLI(CLI):
                         data.append(key)
                         data.append('')
                     data.append('')
+
         elif context.CLIARGS['format'] in ('env', 'vars'):  # TODO: add yaml once that config option is added
             data = self._get_settings_vars(config_entries, context.CLIARGS['format'])
             if plugin_types:
