@@ -72,7 +72,7 @@ class ModuleDocFragment(object):
         name: Show markers when running in check mode
         description:
         - Toggle to control displaying markers when running in check mode.
-        - "The markers are C(DRY RUN) at the beggining and ending of playbook execution (when calling C(ansible-playbook --check))
+        - "The markers are C(DRY RUN) at the beginning and ending of playbook execution (when calling C(ansible-playbook --check))
         and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
         type: bool
         default: no
