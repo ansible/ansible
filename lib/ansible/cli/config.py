@@ -229,6 +229,11 @@ class ConfigCLI(CLI):
     def _get_settings_vars(self, settings, subkey):
 
         data = []
+        if context.CLIARGS['commented']:
+            prefix = '#'
+        else:
+            prefix = ''
+
         for setting in settings:
 
             if not settings[setting].get('description'):
@@ -265,14 +270,11 @@ class ConfigCLI(CLI):
                 name = settings[setting].get('name', setting)
                 data.append('# %s(%s): %s' % (name, settings[setting].get('type', 'string'), desc))
 
-                if context.CLIARGS['commented']:
-                    entry = '#%s' % entry
-
                 # TODO: might need quoting and value coercion depending on type
                 if subkey == 'env':
-                    data.append('%s=%s' % (entry, default))
+                    data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
                 data.append('')
 
         return data
