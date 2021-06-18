@@ -24,3 +24,27 @@ ansible-playbook validation.yml "$@"
 
 # test types from config (just lists for now)
 ANSIBLE_CONFIG=type_munging.cfg ansible-playbook types.yml "$@"
+
+cleanup() {
+	rm -f files/*.new.*
+}
+
+trap 'cleanup' EXIT
+
+diff_failure() {
+    if [[ $INIT = 0 ]]; then
+        echo "FAILURE...diff mismatch!"
+        exit 1
+    fi
+}
+# check a-c init per format
+ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f ini > files/types.new.ini
+diff -u files/types.ini files/types.new.ini || diff_failure
+
+ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f vars > files/types.new.yml
+diff -u files/types.yml files/types.new.yml || diff_failure
+
+ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f env > files/types.new.env
+diff -u files/types.env files/types.new.env || diff_failure
+
+
