@@ -753,7 +753,7 @@ class VaultLib:
 
         return b_plaintext, vault_id_used, vault_secret_used
 
-    def load_map_file(self, data_loader, vault_map_file_path, vault_map_file_secret):
+    def load_map_file(self, data_loader, vault_map_file_path, vault_map_file_secret):  # give me another check please!
 
         '''Load and decrypt a vault map file.
 
