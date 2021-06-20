@@ -54,6 +54,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
+from ansible.module_utils.common.yaml import HAS_YAML
 from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
@@ -752,6 +753,131 @@ class VaultLib:
 
         return b_plaintext, vault_id_used, vault_secret_used
 
+    def load_map_file(self, data_loader, vault_map_file_path, vault_map_file_secret):
+
+        '''Load and decrypt a vault map file.
+
+        :arg data_loader: the DataLoader instance this method was called from.
+            It is used to interpret the loaded data as JSON/YAML.
+        :arg vault_map_file_path: the filename of the vault map file to decrypt.
+            This specifies which file should be decrypted
+        :arg vault_map_file_secret: the secret (a tuple of the vault_map_file_path and a
+            suitable Secret to decrypt it) to decrypt the file with
+
+        :returns: a list of secrets (tuples) structured like (vault_id, vault_secret)
+            which were read from the vault map file
+        '''
+
+        try:
+            with open(vault_map_file_path, 'rb') as f:
+                vault_map_ciphertext = f.read()
+        except (OSError, IOError) as e:
+            raise AnsibleError(u"Could not read vault map file %s: %s" %
+                               (vault_map_file_path, e))
+
+        return self.decrypt_map_file_content(
+                    data_loader=data_loader,
+                    vault_map_file_path=vault_map_file_path,
+                    vault_map_file_secret=vault_map_file_secret,
+                    vault_map_vaulttext=vault_map_ciphertext
+               )
+
+    def decrypt_map_file_content(self, data_loader, vault_map_file_path, vault_map_file_secret, vault_map_vaulttext):
+
+        '''Decrypt a vault map file.
+
+        :arg data_loader: the DataLoader instance this method was called from.
+            It is used to interpret the loaded data as JSON/YAML.
+        :arg vault_map_file_path: the filename of the vault map file to decrypt.
+            This specifies which file should be decrypted. It is only used for
+            outputting it in messages, its contents are passed via the
+            vault_map_vaulttext param.
+        :arg vault_map_file_secret: the secret (a tuple of the vault_map_file_path and a
+            suitable Secret to decrypt it) to decrypt the file with
+        :arg vault_map_vaulttext: the encrypted content of the file as bytes
+        :returns: a list of secrets (tuples) structured like (vault_id, vault_secret)
+            which were read from the vault map file
+        '''
+        b_vaulttext = to_bytes(vault_map_vaulttext, errors='strict', encoding='utf-8')
+
+        if not is_encrypted(b_vaulttext):
+            msg = 'input is not vault encrypted data. %s is not a vault encrypted file' % vault_map_file_path
+            raise AnsibleError(msg)
+
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
+                                                                             filename=vault_map_file_path)
+
+        # create the cipher object, note that the cipher used for decrypt can
+        # be different than the cipher used for encrypt
+        if cipher_name in CIPHER_WHITELIST:
+            this_cipher = CIPHER_MAPPING[cipher_name]()
+        else:
+            raise AnsibleError("{0} cipher could not be found".format(cipher_name))
+
+        b_plaintext = None
+
+        try:
+            display.vvvv(u'Trying secret %s for vault_map_file_path=%s' %
+                         (to_text(vault_map_file_secret), vault_map_file_path))
+            b_plaintext = this_cipher.decrypt(b_vaulttext, vault_map_file_secret)
+        except AnsibleVaultFormatError as exc:
+            exc.obj = obj
+            msg = u'There was a vault format error in %s: %s' % (vault_map_file_path, to_text(exc))
+            display.warning(msg, formatted=True)
+            raise
+        except AnsibleError as e:
+            display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
+                         (to_text(vault_map_file_secret), vault_map_file_path, e))
+            raise AnsibleError(u'Failed to decrypt vault map file "%s"' % vault_map_file_path)
+
+        if b_plaintext is None:
+            raise AnsibleError('Decryption failed on %s' % vault_map_file_path)
+
+        display.vvvvv(
+            u'Decryption of "%s" successful with secret=%s' %
+            (vault_map_file_path, to_text(vault_map_file_secret))
+        )
+
+        try:
+            vault_map = data_loader.load(
+                data=b_plaintext,
+                file_name=vault_map_file_path,
+                json_only=False if HAS_YAML else True
+            )
+            assert(hasattr(vault_map, 'keys')) # ensure the vault map is a dictionary
+        except AssertionError as e:
+            raise AnsibleError(
+                u'Vault map file "%s" contains no valid JSON or YAML array.' % vault_map_file_path
+            )
+
+        if len(vault_map) == 0:
+            display.warning(u'Vault map file "%s" contains no vault mappings' % vault_map_file_path)
+
+        loaded_secrets = []
+
+        for vault_id in vault_map:
+            vault_password = vault_map[vault_id]
+
+            if not isinstance(vault_password, str):
+                raise AnsibleError(
+                    u'Expected a vault password as a string but got type "%s" for vault with id "%s"' %
+                    (type(vault_password), vault_id)
+                )
+
+            vault_secret = VaultSecret(_bytes=vault_password.encode('utf-8'))
+
+            display.display(
+                u'Imported password for vault "%s" from vault map file "%s"' %
+                (vault_id, vault_map_file_path)
+            )
+            display.vvvvv(
+                u'Created secret "%s" for vault with id "%s"' %
+                (to_text(vault_secret), vault_id)
+            )
+
+            loaded_secrets.append((vault_id, vault_secret))
+
+        return loaded_secrets
 
 class VaultEditor:
 
