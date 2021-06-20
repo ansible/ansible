@@ -801,8 +801,7 @@ class VaultLib:
         b_vaulttext = to_bytes(vault_map_vaulttext, errors='strict', encoding='utf-8')
 
         if not is_encrypted(b_vaulttext):
-            msg = 'input is not vault encrypted data. %s is not a vault encrypted file' % vault_map_file_path
-            raise AnsibleError(msg)
+            raise AnsibleError(u'input is not vault encrypted data. %s is not a vault encrypted file' % vault_map_file_path)
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
                                                                              filename=vault_map_file_path)
@@ -821,8 +820,9 @@ class VaultLib:
                          (to_text(vault_map_file_secret), vault_map_file_path))
             b_plaintext = this_cipher.decrypt(b_vaulttext, vault_map_file_secret)
         except AnsibleVaultFormatError as exc:
-            msg = u'There was a vault format error in %s: %s' % (vault_map_file_path, to_text(exc))
-            display.warning(msg, formatted=True)
+            display.warning(
+                u'There was a vault format error in %s: %s' % (vault_map_file_path, to_text(exc)),
+                formatted=True)
             raise
         except AnsibleError as e:
             display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
