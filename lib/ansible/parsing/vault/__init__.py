@@ -877,8 +877,8 @@ class VaultLib:
 
         return loaded_secrets
 
-class VaultEditor:
 
+class VaultEditor:
 
     def __init__(self, vault=None):
         # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
