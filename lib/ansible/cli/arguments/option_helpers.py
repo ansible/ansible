@@ -362,6 +362,8 @@ def add_vault_options(parser):
     """Add options for loading vault files"""
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
+    parser.add_argument('--vault-map-file', default=[], dest='vault_map_files', action='append', type=str,
+                        help='the vault map file to use')
     base_group = parser.add_mutually_exclusive_group()
     base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
