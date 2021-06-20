@@ -151,14 +151,11 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     # TODO: remove the now unused args
     @staticmethod
-    def setup_vault_secrets(loader, vault_ids, vault_map_files=[], vault_password_files=None,
+    def setup_vault_secrets(loader, vault_ids, vault_map_files=None, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
                             auto_prompt=True):
         # list of tuples
         vault_secrets = []
-
-        # list of tuples
-        vault_map_file_secrets = []
 
         # Depending on the vault_id value (including how --ask-vault-pass / --vault-password-file create a vault_id)
         # we need to show different prompts. This is for compat with older Towers that expect a
@@ -241,14 +238,14 @@ class CLI(with_metaclass(ABCMeta, object)):
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
 
+        vault_map_files = vault_map_files or []
         for vault_map_slug in vault_map_files:
-            vault_map_file_secrets = []
 
             vault_map_file_path, vault_map_value = CLI.split_vault_map(vault_map_slug)
 
             # error globally if the vault map definition passed via the CLI args is invalid
 
-            if vault_map_file_path == None:
+            if vault_map_file_path is None:
                 raise AnsibleError(u'Invalid vault map definition. Expected [vault-map-file]@[prompt|file] but got "%s"' %
                                    vault_map_slug)
 
