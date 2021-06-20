@@ -843,7 +843,7 @@ class VaultLib:
             json_only=False if HAS_YAML else True
         )
         
-        if not hasattr(vault_map, 'keys')  # ensure the vault map is a dictionary
+        if not hasattr(vault_map, 'keys'):  # ensure the vault map is a dictionary
             raise AnsibleError(
                 u'Vault map file "%s" contains no valid JSON or YAML array.' % vault_map_file_path
             )
