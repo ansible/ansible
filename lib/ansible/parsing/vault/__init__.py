@@ -776,11 +776,11 @@ class VaultLib:
                                (vault_map_file_path, e))
 
         return self.decrypt_map_file_content(
-                    data_loader=data_loader,
-                    vault_map_file_path=vault_map_file_path,
-                    vault_map_file_secret=vault_map_file_secret,
-                    vault_map_vaulttext=vault_map_ciphertext
-               )
+            data_loader=data_loader,
+            vault_map_file_path=vault_map_file_path,
+            vault_map_file_secret=vault_map_file_secret,
+            vault_map_vaulttext=vault_map_ciphertext
+        )
 
     def decrypt_map_file_content(self, data_loader, vault_map_file_path, vault_map_file_secret, vault_map_vaulttext):
 
@@ -821,7 +821,6 @@ class VaultLib:
                          (to_text(vault_map_file_secret), vault_map_file_path))
             b_plaintext = this_cipher.decrypt(b_vaulttext, vault_map_file_secret)
         except AnsibleVaultFormatError as exc:
-            exc.obj = obj
             msg = u'There was a vault format error in %s: %s' % (vault_map_file_path, to_text(exc))
             display.warning(msg, formatted=True)
             raise
@@ -838,14 +837,13 @@ class VaultLib:
             (vault_map_file_path, to_text(vault_map_file_secret))
         )
 
-        try:
-            vault_map = data_loader.load(
-                data=b_plaintext,
-                file_name=vault_map_file_path,
-                json_only=False if HAS_YAML else True
-            )
-            assert(hasattr(vault_map, 'keys')) # ensure the vault map is a dictionary
-        except AssertionError as e:
+        vault_map = data_loader.load(
+            data=b_plaintext,
+            file_name=vault_map_file_path,
+            json_only=False if HAS_YAML else True
+        )
+        
+        if not hasattr(vault_map, 'keys')  # ensure the vault map is a dictionary
             raise AnsibleError(
                 u'Vault map file "%s" contains no valid JSON or YAML array.' % vault_map_file_path
             )
@@ -880,6 +878,7 @@ class VaultLib:
         return loaded_secrets
 
 class VaultEditor:
+
 
     def __init__(self, vault=None):
         # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
