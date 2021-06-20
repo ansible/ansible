@@ -75,6 +75,10 @@ class DataLoader:
     def set_vault_secrets(self, vault_secrets):
         self._vault.secrets = vault_secrets
 
+    def load_vault_map_file_secrets(self, vault_map_file_path, vault_map_file_secret):
+        ''' Loads vault secrets from a file, which can contain either JSON or YAML. '''
+        return self._vault.load_map_file(self, vault_map_file_path, vault_map_file_secret)
+
     def load(self, data, file_name='<string>', show_content=True, json_only=False):
         '''Backwards compat for now'''
         return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
