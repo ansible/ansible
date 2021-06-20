@@ -1,0 +1,3 @@
+major_changes:
+  - Added new method to decrypt multiple named vault files by using a so-called vault map file 
+  - Added new parameter "--vault-map-file" to the vault CLI arguments
