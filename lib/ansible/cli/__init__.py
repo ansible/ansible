@@ -113,6 +113,17 @@ class CLI(with_metaclass(ABCMeta, object)):
         return ret
 
     @staticmethod
+    def split_vault_map(vault_map):
+        # return (before_@, after_@)
+        # if no @, return None
+        if '@' not in vault_map:
+            return (None, None)
+
+        parts = vault_map.split('@', 1)
+        ret = tuple(parts)
+        return ret
+
+    @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
@@ -140,11 +151,14 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     # TODO: remove the now unused args
     @staticmethod
-    def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
+    def setup_vault_secrets(loader, vault_ids, vault_map_files=[], vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
                             auto_prompt=True):
         # list of tuples
         vault_secrets = []
+
+        # list of tuples
+        vault_map_file_secrets = []
 
         # Depending on the vault_id value (including how --ask-vault-pass / --vault-password-file create a vault_id)
         # we need to show different prompts. This is for compat with older Towers that expect a
@@ -226,6 +240,60 @@ class CLI(with_metaclass(ABCMeta, object)):
 
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
+
+        for vault_map_slug in vault_map_files:
+            vault_map_file_secrets = []
+
+            vault_map_file_path, vault_map_value = CLI.split_vault_map(vault_map_slug)
+
+            # error globally if the vault map definition passed via the CLI args is invalid
+
+            if vault_map_file_path == None:
+                raise AnsibleError(u'Invalid vault map definition. Expected [vault-map-file]@[prompt|file] but got "%s"' %
+                                   vault_map_slug)
+
+            vault_map_file_path = unfrackpath(vault_map_file_path)
+            if vault_map_value in ['prompt', 'prompt_ask_vault_pass']:
+                prompted_vault_secret = PromptVaultSecret(
+                    prompt_formats=prompt_formats[vault_map_value],
+                    vault_id=vault_map_file_path
+                )
+
+                # an empty or invalid password from the prompt will error globally
+
+                try:
+                    prompted_vault_secret.load()
+                except AnsibleError as exc:
+                    raise AnsibleError('Error in vault password prompt (%s): %s' % (vault_map_file_path, exc))
+
+                vault_secrets.extend(
+                    loader.load_vault_map_file_secrets(
+                        vault_map_file_path=vault_map_file_path,
+                        vault_map_file_secret=prompted_vault_secret
+                    )
+                )
+                continue
+
+            display.vvvvv('Reading vault password file: %s' % vault_map_value)
+            file_vault_secret = get_file_vault_secret(filename=vault_map_value,
+                                                      loader=loader)
+
+            # error globally when loading the secret from the file fails
+
+            try:
+                file_vault_secret.load()
+            except AnsibleError as exc:
+                raise AnsibleError('Error in vault password file loading (%s): %s' % (vault_map_file_path, to_text(exc)))
+
+            # extend the existing secrets with the secrets parsed from the
+            # vault map file. a separate secret will be added for every vault id
+
+            vault_secrets.extend(
+                loader.load_vault_map_file_secrets(
+                    vault_map_file_path=vault_map_file_path,
+                    vault_map_file_secret=file_vault_secret
+                )
+            )
 
         return vault_secrets
 
@@ -461,6 +529,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         vault_secrets = CLI.setup_vault_secrets(loader,
                                                 vault_ids=vault_ids,
+                                                vault_map_files=options['vault_map_files'],
                                                 vault_password_files=list(options['vault_password_files']),
                                                 ask_vault_pass=options['ask_vault_pass'],
                                                 auto_prompt=False)
