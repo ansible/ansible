@@ -426,7 +426,6 @@ class CallbackModule(CallbackBase):
         jid = result._result.get('ansible_job_id')
         if not jid and 'async_result' in result._result:
             jid = result._result['async_result'].get('ansible_job_id')
-        self._display.display("RESULT: %s" % result)
         self._display.display("ASYNC FAILED on %s: jid=%s" % (host, jid), color=C.COLOR_DEBUG)
 
     def v2_playbook_on_notify(self, handler, host):
