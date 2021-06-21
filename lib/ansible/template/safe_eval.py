@@ -19,13 +19,88 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import sys
 
-from ansible import constants as C
 from ansible.module_utils.common.text.converters import container_to_text, to_native
-from ansible.module_utils.six import string_types, PY2
-from ansible.module_utils.six.moves import builtins
-from ansible.plugins.loader import filter_loader, test_loader
+from ansible.module_utils.six import PY2, string_types
+
+# define certain JSON types
+# eg. JSON booleans are unknown to python eval()
+_OUR_GLOBALS = {
+    '__builtins__': {},  # avoid global builtins as per eval docs
+    'false': False,
+    'null': None,
+    'true': True,
+}
+
+_CALL_ENABLED = frozenset(k for k, v in _OUR_GLOBALS.items() if callable(v))
+
+_optional_nodes = []
+# These node types are dependent on Python version
+for _name in ('Set', 'NameConstant', 'Constant'):
+    try:
+        _optional_nodes.append(getattr(ast, _name))
+    except AttributeError:
+        pass
+
+# this is the list of AST nodes we are going to
+# allow in the evaluation. Any node type other than
+# those listed here will raise an exception in our custom
+# visitor class defined below.
+_SAFE_NODES = frozenset(
+    (
+        ast.Add,
+        ast.BinOp,
+        ast.Call,
+        ast.Compare,
+        ast.Dict,
+        ast.Div,
+        ast.Expression,
+        ast.List,
+        ast.Load,
+        ast.Mult,
+        ast.Num,
+        ast.Name,
+        ast.Str,
+        ast.Sub,
+        ast.USub,
+        ast.Tuple,
+        ast.UnaryOp,
+    ) + tuple(_optional_nodes)
+)
+
+
+class CleansingNodeVisitor(ast.NodeVisitor):
+    def __init__(self, expr):
+        self._expr = expr
+        self._inside_call = False
+
+    def generic_visit(self, node):
+        if type(node) not in _SAFE_NODES:
+            raise Exception("invalid expression (%s)" % self._expr)
+        super(CleansingNodeVisitor, self).generic_visit(node)
+
+    def visit_Attribute(self, node):
+        # ast.Attribute isn't in _SAFE_NODES, so this will never be called
+        # added just for safety, and reference if we ever allow it
+        if self._inside_call:
+            # Disallow calls to any attribute
+            raise Exception("invalid function: %s" % node.attr)
+        self.generic_visit(node)
+
+    def visit_Name(self, node):
+        if self._inside_call and node.id not in _CALL_ENABLED:
+            # Disallow calls to functions that we have not vetted
+            # as safe.  Other functions are excluded by setting locals in
+            # the call to eval() later on
+            raise Exception("invalid function: %s" % node.id)
+        self.generic_visit(node)
+
+    def visit_Call(self, node):
+        try:
+            self._inside_call = True
+            self.generic_visit(node)
+        finally:
+            self._inside_call = False
 
 
 def safe_eval(expr, locals=None, include_exceptions=False):
@@ -41,118 +116,21 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     '''
     locals = {} if locals is None else locals
 
-    # define certain JSON types
-    # eg. JSON booleans are unknown to python eval()
-    OUR_GLOBALS = {
-        '__builtins__': {},  # avoid global builtins as per eval docs
-        'false': False,
-        'null': None,
-        'true': True,
-        # also add back some builtins we do need
-        'True': True,
-        'False': False,
-        'None': None
-    }
-
-    # this is the whitelist of AST nodes we are going to
-    # allow in the evaluation. Any node type other than
-    # those listed here will raise an exception in our custom
-    # visitor class defined below.
-    SAFE_NODES = set(
-        (
-            ast.Add,
-            ast.BinOp,
-            # ast.Call,
-            ast.Compare,
-            ast.Dict,
-            ast.Div,
-            ast.Expression,
-            ast.List,
-            ast.Load,
-            ast.Mult,
-            ast.Num,
-            ast.Name,
-            ast.Str,
-            ast.Sub,
-            ast.USub,
-            ast.Tuple,
-            ast.UnaryOp,
-        )
-    )
-
-    # AST node types were expanded after 2.6
-    if sys.version_info[:2] >= (2, 7):
-        SAFE_NODES.update(
-            set(
-                (ast.Set,)
-            )
-        )
-
-    # And in Python 3.4 too
-    if sys.version_info[:2] >= (3, 4):
-        SAFE_NODES.update(
-            set(
-                (ast.NameConstant,)
-            )
-        )
-
-    # And in Python 3.6 too, although not encountered until Python 3.8, see https://bugs.python.org/issue32892
-    if sys.version_info[:2] >= (3, 6):
-        SAFE_NODES.update(
-            set(
-                (ast.Constant,)
-            )
-        )
-
-    filter_list = []
-    for filter_ in filter_loader.all():
-        try:
-            filter_list.extend(filter_.filters().keys())
-        except Exception:
-            # This is handled and displayed in JinjaPluginIntercept._load_ansible_plugins
-            continue
-
-    test_list = []
-    for test in test_loader.all():
-        try:
-            test_list.extend(test.tests().keys())
-        except Exception:
-            # This is handled and displayed in JinjaPluginIntercept._load_ansible_plugins
-            continue
-
-    CALL_ENABLED = C.CALLABLE_ACCEPT_LIST + filter_list + test_list
-
-    class CleansingNodeVisitor(ast.NodeVisitor):
-        def generic_visit(self, node, inside_call=False):
-            if type(node) not in SAFE_NODES:
-                raise Exception("invalid expression (%s)" % expr)
-            elif isinstance(node, ast.Call):
-                inside_call = True
-            elif isinstance(node, ast.Name) and inside_call:
-                # Disallow calls to builtin functions that we have not vetted
-                # as safe.  Other functions are excluded by setting locals in
-                # the call to eval() later on
-                if hasattr(builtins, node.id) and node.id not in CALL_ENABLED:
-                    raise Exception("invalid function: %s" % node.id)
-            # iterate over all child nodes
-            for child_node in ast.iter_child_nodes(node):
-                self.generic_visit(child_node, inside_call)
-
     if not isinstance(expr, string_types):
         # already templated to a datastructure, perhaps?
         if include_exceptions:
             return (expr, None)
         return expr
 
-    cnv = CleansingNodeVisitor()
+    cnv = CleansingNodeVisitor(expr)
     try:
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, '<expr %s>' % to_native(expr), 'eval')
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
-        # addition to the filtering of builtins done in CleansingNodeVisitor
-        result = eval(compiled, OUR_GLOBALS, dict(locals))
+        # addition to the filtering of callables done in CleansingNodeVisitor
+        result = eval(compiled, _OUR_GLOBALS, locals)
         if PY2:
             # On Python 2 u"{'key': 'value'}" is evaluated to {'key': 'value'},
             # ensure it is converted to {u'key': u'value'}.
@@ -162,7 +140,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except SyntaxError as e:
+    except SyntaxError:
         # special handling for syntax errors, we just return
         # the expression string back as-is to support late evaluation
         if include_exceptions:
