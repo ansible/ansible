@@ -39,5 +39,5 @@ For information on using modules in ad hoc tasks, see :ref:`intro_adhoc`. For in
        An guide to creating Ansible collections
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   `irc.libera.chat <https://libera.chat/>`_
+       #ansible-devel IRC chat channel

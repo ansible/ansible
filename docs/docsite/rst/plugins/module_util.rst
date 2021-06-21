@@ -31,5 +31,5 @@ For information on using module utilities, see :ref:`developing_module_utilities
        An guide to creating Ansible collections
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   `irc.libera.chat <https://libera.chat/>`_
+       #ansible-devel IRC chat channel
