@@ -127,9 +127,8 @@ run_test default
 
 # Check for async output
 ansible-playbook -i inventory test_async.yml > async_test.out
-cat async_test.out
-grep "ASYNC OK .* jid=\d\+" async_test.out
-grep "ASYNC FAILED .* jid=\d+" async_test.out
+grep "ASYNC OK .* jid=[0-9]\{1,\}" async_test.out
+grep "ASYNC FAILED .* jid=[0-9]\{1,\}" async_test.out
 rm -f asysnc_test.out
 
 # Hide skipped
