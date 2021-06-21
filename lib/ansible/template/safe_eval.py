@@ -32,6 +32,12 @@ _OUR_GLOBALS = {
     'true': True,
 }
 
+if PY2:
+    _OUR_GLOBALS.update({
+        'True': True,
+        'False': False,
+    })
+
 _CALL_ENABLED = frozenset(k for k, v in _OUR_GLOBALS.items() if callable(v))
 
 _optional_nodes = []
