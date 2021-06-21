@@ -41,6 +41,8 @@ These plugins have migrated to collections on `Ansible Galaxy <https://galaxy.an
 
    :ref:`Ansible for Network Automation<network_guide>`
        An overview of using Ansible to automate networking devices.
+   :ref:`connection_plugins`
+       Connection plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_
