@@ -19,11 +19,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import copy
 
 from ansible.module_utils.common.text.converters import container_to_text, to_native
 from ansible.module_utils.six import PY2, string_types
 from ansible.utils.display import Display
-from ansible.vars.clean import module_response_deepcopy
 
 display = Display()
 
@@ -124,7 +124,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
-    locals = {} if locals is None else module_response_deepcopy(locals)
+    locals = {} if locals is None else copy.deepcopy(locals)
 
     if not isinstance(expr, string_types):
         # already templated to a datastructure, perhaps?
@@ -140,7 +140,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of callables done in CleansingNodeVisitor
-        result = eval(compiled, module_response_deepcopy(_OUR_GLOBALS), locals)
+        result = eval(compiled, copy.deepcopy(_OUR_GLOBALS), locals)
         if PY2:
             # On Python 2 u"{'key': 'value'}" is evaluated to {'key': 'value'},
             # ensure it is converted to {u'key': u'value'}.
