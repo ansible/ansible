@@ -1,3 +1,5 @@
-minor_changes:
-  - vault filter, create Ansible Vault to encrypt your data
-  - unvault filter, open an Ansible Vault to retrieve your data
+add plugin.filter:
+  - name: vault
+    description: Create Ansible Vault to encrypt your data
+  - name: unvault
+    description: Open an Ansible Vault to retrieve your data
