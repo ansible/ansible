@@ -38,7 +38,7 @@ diff_failure() {
     fi
 }
 # check a-c init per format
-for format in "var ini env"
+for format in "vars" "ini" "env"
 do
 	ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f "${format}" > "files/types.new.${format}"
 	diff -u "files/types.${format}" "files/types.new.${format}"|| diff_failure
