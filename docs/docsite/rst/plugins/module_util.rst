@@ -7,7 +7,7 @@ Module utilities
    :local:
    :depth: 2
 
-Module utilities contain shared code used by multiple modules. You can write :ref:`custom module utilities <developing_module_utilities>`.
+Module utilities contain shared code used by multiple plugins. You can write :ref:`custom module utilities <developing_module_utilities>`.
 
 .. _enabling_module_utils:
 
