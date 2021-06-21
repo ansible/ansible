@@ -1,7 +1,7 @@
 .. _terminal_plugins:
 
 Terminal Plugins
-===============
+================
 
 .. contents::
    :local:
@@ -32,7 +32,7 @@ Plugins are self-documenting. Each plugin should document its configuration opti
 .. _terminal_plugin_list:
 
 Viewing terminal plugins
------------------------
+------------------------
 
 These plugins have migrated to collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. If you installed Ansible version 2.10 or later using ``pip``, you have access to several terminal plugins. To list all available terminal plugins on your control node, type ``ansible-doc -t terminal -l``. To view plugin-specific documentation and examples, use ``ansible-doc -t terminal``.
 
