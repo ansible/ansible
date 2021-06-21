@@ -618,11 +618,11 @@ class TaskExecutor:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
                     if result.get('failed'):
+                        display.display("send failed async result: %s" % result)
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
                             TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
                     else:
-                        display.display("send failed async result: %s" % result)
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
                             TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
