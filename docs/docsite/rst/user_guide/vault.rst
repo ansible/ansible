@@ -113,8 +113,6 @@ Ansible executes the client script with a ``--vault-id`` option so the script kn
 
     contrib/vault/vault-keyring-client.py --vault-id dev
 
-For an example of a client script that loads passwords from the system keyring, see :file:`contrib/vault/vault-keyring-client.py`.
-
 
 Encrypting content with Ansible Vault
 =====================================
