@@ -983,6 +983,17 @@ class DocCLI(CLI, RoleMixin):
         return DocCLI.tty_ify('\n'.join([indent + line for line in yaml.dump(struct, default_flow_style=False, Dumper=AnsibleDumper).split('\n')]))
 
     @staticmethod
+    def _format_version_added(version_added, version_added_collection=None):
+        if version_added_collection == 'ansible.builtin':
+            version_added_collection = 'ansible-core'
+            # In ansible-core, version_added can be 'historical'
+            if version_added == 'historical':
+                return 'historical'
+        if version_added_collection:
+            version_added = '%s of %s' % (version_added, version_added_collection)
+        return 'version %s' % (version_added, )
+
+    @staticmethod
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
@@ -1057,9 +1068,8 @@ class DocCLI(CLI, RoleMixin):
             if conf:
                 text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
-            # Remove empty version_added_collection
-            if opt.get('version_added_collection') == '':
-                opt.pop('version_added_collection')
+            version_added = opt.pop('version_added', None)
+            version_added_collection = opt.pop('version_added_collection', None)
 
             for k in sorted(opt):
                 if k.startswith('_'):
@@ -1073,6 +1083,9 @@ class DocCLI(CLI, RoleMixin):
                     text.append(DocCLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
                     text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
+
+            if version_added:
+                text.append("%sadded in: %s\n" % (opt_indent, DocCLI._format_version_added(version_added, version_added_collection)))
 
             for subkey, subdata in suboptions:
                 text.append('')
@@ -1166,6 +1179,11 @@ class DocCLI(CLI, RoleMixin):
 
         text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
                                            subsequent_indent=opt_indent))
+
+        if 'version_added' in doc:
+            version_added = doc.pop('version_added')
+            version_added_collection = doc.pop('version_added_collection', None)
+            text.append("ADDED IN: %s\n" % DocCLI._format_version_added(version_added, version_added_collection))
 
         if doc.get('deprecated', False):
             text.append("DEPRECATED: \n")

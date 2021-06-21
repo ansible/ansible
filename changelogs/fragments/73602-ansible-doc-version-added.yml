@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-doc - show ``version_added`` for the plugin/module itself in text output, and improve ``version_added`` formatting (https://github.com/ansible/ansible/pull/73602)."
