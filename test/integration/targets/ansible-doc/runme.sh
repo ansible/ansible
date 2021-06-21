@@ -19,6 +19,11 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule | sed '1 
 expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.FAKEMODULE\).*(.*)$/\1/' fakemodule.output)"
 test "$current_out" == "$expected_out"
 
+# we use sed to strip the module path from the first line
+current_out="$(ansible-doc --playbook-dir ./ testns.testcol.randommodule | sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/')"
+expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' randommodule-text.output)"
+test "$current_out" == "$expected_out"
+
 # ensure we do work with valid collection name for list
 ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection pattern"
 
