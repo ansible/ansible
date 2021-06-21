@@ -1,6 +1,6 @@
 .. _cache_plugins:
 
-Cache Plugins
+Cache plugins
 =============
 
 .. contents::
@@ -11,11 +11,11 @@ Cache plugins allow Ansible to store gathered facts or inventory source data wit
 
 The default cache plugin is the :ref:`memory <memory_cache>` plugin, which only caches the data for the current execution of Ansible. Other plugins with persistent storage are available to allow caching the data across runs. Some of these cache plugins write to files, others write to databases.
 
-You can use different cache plugins for inventory and facts. If you enable inventory caching without setting an inventory-specific cache plugin, Ansible uses the fact cache plugin for both facts and inventory.
+You can use different cache plugins for inventory and facts. If you enable inventory caching without setting an inventory-specific cache plugin, Ansible uses the fact cache plugin for both facts and inventory. If necessary, you can :ref:`create custom cache plugins <developing_cache_plugins>`.
 
 .. _enabling_cache:
 
-Enabling Fact Cache Plugins
+Enabling fact cache plugins
 ---------------------------
 
 Fact caching is always enabled. However, only one fact cache plugin can be active at a time. You can select the cache plugin to use for fact caching in the Ansible configuration, either with an environment variable:
@@ -42,8 +42,7 @@ To enable a custom cache plugin, save it in a ``cache_plugins`` directory adjace
 
 You also need to configure other settings specific to each plugin. Consult the individual plugin documentation or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details.
 
-
-Enabling Inventory Cache Plugins
+Enabling inventory cache plugins
 --------------------------------
 
 Inventory caching is disabled by default. To cache inventory data, you must enable inventory caching and then select the specific cache plugin you want to use. Not all inventory plugins support caching, so check the documentation for the inventory plugin(s) you want to use. You can enable inventory caching with an environment variable:
@@ -104,7 +103,7 @@ If you enable caching for inventory plugins without selecting an inventory-speci
 
 .. _using_cache:
 
-Using Cache Plugins
+Using cache plugins
 -------------------
 
 Cache plugins are used automatically once they are enabled.
@@ -112,7 +111,7 @@ Cache plugins are used automatically once they are enabled.
 
 .. _cache_plugin_list:
 
-Plugin List
+Plugin list
 -----------
 
 You can use ``ansible-doc -t cache -l`` to see the list of available plugins.
@@ -121,19 +120,19 @@ Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and exa
 .. seealso::
 
    :ref:`action_plugins`
-       Ansible Action plugins
+       Action plugins
    :ref:`callback_plugins`
-       Ansible callback plugins
+       Callback plugins
    :ref:`connection_plugins`
-       Ansible connection plugins
+       Connection plugins
    :ref:`inventory_plugins`
-       Ansible inventory plugins
+       Inventory plugins
    :ref:`shell_plugins`
-       Ansible Shell plugins
+       Shell plugins
    :ref:`strategy_plugins`
-       Ansible Strategy plugins
+       Strategy plugins
    :ref:`vars_plugins`
-       Ansible Vars plugins
+       Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_

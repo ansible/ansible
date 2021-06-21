@@ -1,13 +1,13 @@
 .. _strategy_plugins:
 
-Strategy Plugins
+Strategy plugins
 ================
 
 .. contents::
    :local:
    :depth: 2
 
-Strategy plugins control the flow of play execution by handling task and host scheduling.
+Strategy plugins control the flow of play execution by handling task and host scheduling. For more information on using strategy plugins and other ways to control execution order, see :ref:`playbooks_strategies`.
 
 .. _enable_strategy:
 
@@ -22,8 +22,7 @@ putting it in one of the lookup directory sources configured in :ref:`ansible.cf
 Using strategy plugins
 ----------------------
 
-Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run.
-The default is the :ref:`linear <linear_strategy>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:
+Only one strategy plugin can be used in a play, but you can use different ones for each play in a playbook or ansible run. By default Ansible uses the :ref:`linear <linear_strategy>` plugin. You can change this default in Ansible :ref:`configuration <ansible_configuration_settings>` using an environment variable:
 
 .. code-block:: shell
 
@@ -64,15 +63,15 @@ Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific do
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`inventory_plugins`
-       Ansible inventory plugins
+       Inventory plugins
    :ref:`callback_plugins`
-       Ansible callback plugins
-   :ref:`playbooks_filters`
-       Jinja2 filter plugins
-   :ref:`playbooks_tests`
-       Jinja2 test plugins
-   :ref:`playbooks_lookups`
-       Jinja2 lookup plugins
+       Callback plugins
+   :ref:`filter_plugins`
+       Filter plugins
+   :ref:`test_plugins`
+       Test plugins
+   :ref:`lookup_plugins`
+       Lookup plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_

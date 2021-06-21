@@ -1,6 +1,6 @@
 .. _connection_plugins:
 
-Connection Plugins
+Connection plugins
 ==================
 
 .. contents::
@@ -9,7 +9,7 @@ Connection Plugins
 
 Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 
-By default, Ansible ships with several plugins. The most commonly used are the :ref:`paramiko SSH<paramiko_ssh_connection>`, native ssh (just called :ref:`ssh<ssh_connection>`), and :ref:`local<local_connection>` connection types.  All of these can be used in playbooks and with :command:`/usr/bin/ansible` to decide how you want to talk to remote machines.
+By default, Ansible ships with several connection plugins. The most commonly used are the :ref:`paramiko SSH<paramiko_ssh_connection>`, native ssh (just called :ref:`ssh<ssh_connection>`), and :ref:`local<local_connection>` connection types.  All of these can be used in playbooks and with :command:`/usr/bin/ansible` to decide how you want to talk to remote machines. If necessary, you can :ref:`create custom connection plugins <developing_connection_plugins>`.
 
 The basics of these connection types are covered in the :ref:`getting started<intro_getting_started>` section.
 
@@ -51,7 +51,7 @@ Each plugin might also have a specific version of a variable that overrides the 
 
 .. _connection_plugin_list:
 
-Plugin List
+Plugin list
 -----------
 
 You can use ``ansible-doc -t connection -l`` to see the list of available plugins.
@@ -63,15 +63,15 @@ Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation an
    :ref:`Working with Playbooks<working_with_playbooks>`
        An introduction to playbooks
    :ref:`callback_plugins`
-       Ansible callback plugins
-   :ref:`Filters<playbooks_filters>`
-       Jinja2 filter plugins
-   :ref:`Tests<playbooks_tests>`
-       Jinja2 test plugins
-   :ref:`Lookups<playbooks_lookups>`
-       Jinja2 lookup plugins
+       Callback plugins
+   :ref:`filter_plugins`
+       Filter plugins
+   :ref:`test_plugins`
+       Test plugins
+   :ref:`lookup_plugins`
+       Lookup plugins
    :ref:`vars_plugins`
-       Ansible vars plugins
+       Vars plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_
