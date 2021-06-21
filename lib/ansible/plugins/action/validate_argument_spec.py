@@ -9,12 +9,22 @@ from ansible.plugins.action import ActionBase
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import AnsibleValidationErrorMultiple
+from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleMapping
 
 
 class ActionModule(ActionBase):
     ''' Validate an arg spec'''
 
     TRANSFERS_FILES = False
+
+    def template_any_strings(self, ds):
+        if isinstance(ds, string_types):
+            return self._templar.do_template(ds)
+        if isinstance(ds, list):
+            return AnsibleSequence([self.template_any_strings(item) for item in ds])
+        if isinstance(ds, dict):
+            return AnsibleMapping((k, self.template_any_strings(v)) for k, v in ds.items())
+        return ds
 
     def get_args_from_task_vars(self, argument_spec, task_vars):
         '''
@@ -31,12 +41,7 @@ class ActionModule(ActionBase):
 
         for argument_name, argument_attrs in iteritems(argument_spec):
             if argument_name in task_vars:
-                if isinstance(task_vars[argument_name], string_types):
-                    value = self._templar.do_template(task_vars[argument_name])
-                    if value:
-                        args[argument_name] = value
-                else:
-                    args[argument_name] = task_vars[argument_name]
+                args[argument_name] = self.template_any_strings(task_vars[argument_name])
         return args
 
     def run(self, tmp=None, task_vars=None):
