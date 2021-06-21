@@ -356,6 +356,9 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
 
+    if os.path.isdir(this_path):
+        raise AnsibleError("The vault password file %s cannot be directory" % this_path)
+
     if loader.is_executable(this_path):
         if script_is_client(filename):
             display.vvvv(u'The vault password file %s is a client script.' % to_text(filename))

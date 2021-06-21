@@ -185,6 +185,12 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
+# test if vault password file is not a directory
+ANSIBLE_VAULT_PASSWORD_FILE='' ansible-vault view "$@" format_1_1_AES.yml && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
 # test with a default vault-id list set via config/env, right password
 ANSIBLE_VAULT_PASSWORD_FILE=wrong@vault-password-wrong,correct@vault-password ansible-vault view "$@" format_1_1_AES.yml && :
 
