@@ -43,8 +43,7 @@ def get_best_parsable_locale(module, preferences=None):
 
     if available:
         for pref in preferences:
-            for avail in available:
-                if pref.casefold() == avail.casefold():
-                    found = pref
-                    break
+            if pref in available:
+                found = pref
+                break
     return found
