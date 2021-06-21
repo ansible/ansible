@@ -622,7 +622,7 @@ class TaskExecutor:
                             'v2_runner_on_async_failed',
                             TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
                     else:
-                        display.display("send failed async result: result")
+                        display.display("send failed async result: %s" % result)
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
                             TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
