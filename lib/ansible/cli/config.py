@@ -214,7 +214,7 @@ class ConfigCLI(CLI):
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
         elif context.CLIARGS['type'] != 'base':
-            config_entries['PLUGINS'][context.CLIARGS['type']]  = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
+            config_entries['PLUGINS'][context.CLIARGS['type']] = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
         return config_entries
 
