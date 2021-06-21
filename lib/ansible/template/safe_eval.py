@@ -46,7 +46,12 @@ _CALL_ENABLED = frozenset(k for k, v in _OUR_GLOBALS.items() if callable(v))
 
 _optional_nodes = []
 # These node types are dependent on Python version
-for _name in ('Set', 'NameConstant', 'Constant'):
+# Set - 3.7
+# NameConstant - 3.4 - Deprecated in 3.8
+# Constant - 3.6
+# Str - Deprecated in 3.8
+# Num - Deprecated in 3.8
+for _name in ('Set', 'NameConstant', 'Constant', 'Str', 'Num'):
     try:
         _optional_nodes.append(getattr(ast, _name))
     except AttributeError:
@@ -58,20 +63,19 @@ for _name in ('Set', 'NameConstant', 'Constant'):
 # visitor class defined below.
 _SAFE_NODES = frozenset(
     (
-        ast.Add,
-        ast.BinOp,
+        # ast.Add,
+        # ast.BinOp,
         ast.Call,
-        ast.Compare,
+        # ast.Compare,
         ast.Dict,
-        ast.Div,
+        # ast.Div,
         ast.Expression,
         ast.List,
         ast.Load,
-        ast.Mult,
-        ast.Num,
+        # ast.Mult,
         ast.Name,
-        ast.Str,
-        ast.Sub,
+        # ast.Sub,
+        ast.UAdd,
         ast.USub,
         ast.Tuple,
         ast.UnaryOp,
@@ -80,6 +84,10 @@ _SAFE_NODES = frozenset(
 
 
 class CleansingNodeVisitor(ast.NodeVisitor):
+    """ast.NodeVisitor subclass that will raise an exception on
+    disallowed Nodes or disallowed callables
+    """
+
     def __init__(self, expr):
         self._expr = expr
         self._inside_call = False
@@ -115,11 +123,15 @@ class CleansingNodeVisitor(ast.NodeVisitor):
 
 def safe_eval(expr, locals=None, include_exceptions=False):
     '''
-    This is intended for allowing things like:
-    with_items: a_list_variable
+    This is intended for converting Python string representations of data
+    into Python objects but restricting the evaluation to specific operations
+    and callables (outside of Jinja2, where the env is constrained).
 
-    Where Jinja2 would return a string but we do not want to allow it to
-    call functions (outside of Jinja2, where the env is constrained).
+    An example use is where a single templating operation of ``{{ foo }}`` returns a Python
+    string representation that looks like the following, but we desire it to be an actual python
+    dict:
+
+        "{'bar': ['baz'], 'qux': True}"
 
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
