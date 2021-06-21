@@ -47,7 +47,6 @@ def module_response_deepcopy(v):
     * ``ansible.executor.task_result.TaskResult.clean_copy``
     * ``ansible.vars.clean.clean_facts``
     * ``ansible.vars.namespace_facts``
-    * ``ansible.template.safe_eval``
     """
     if isinstance(v, dict):
         ret = v.copy()
