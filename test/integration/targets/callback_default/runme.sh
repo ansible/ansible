@@ -125,6 +125,13 @@ export ANSIBLE_CHECK_MODE_MARKERS=0
 
 run_test default
 
+# Check for async output
+ansible-playbook -i inventory test_async.yml > async_test.out
+cat async_test.out
+grep "ASYNC OK .* jid=\d\+" async_test.out
+grep "ASYNC FAILED .* jid=\d+" async_test.out
+rm -f asysnc_test.out
+
 # Hide skipped
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 
@@ -205,9 +212,3 @@ rm -f meta_test.out
 # Ensure free/host_pinned non-lockstep strategies display correctly
 diff -u callback_default.out.free.stdout <(ANSIBLE_STRATEGY=free ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null)
 diff -u callback_default.out.host_pinned.stdout <(ANSIBLE_STRATEGY=host_pinned ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null)
-
-# Check for async output
-ansible-playbook -i inventory test_async.yml > async_test.out
-grep "ASYNC OK .* jid=\d\+" async_test.out
-grep "ASYNC FAILED .* jid=\d+" async_test.out
-rm -f asysnc_test.out
