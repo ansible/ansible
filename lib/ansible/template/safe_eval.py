@@ -27,10 +27,12 @@ from ansible.utils.display import Display
 
 display = Display()
 
-# define certain JSON types
-# eg. JSON booleans are unknown to python eval()
+# Define globals that we understand and can convert to a Python type
+# or are used to limit functionality
 _OUR_GLOBALS = {
     '__builtins__': {},  # avoid global builtins as per eval docs
+
+    # JSON: These are included to automatically convert JSON objects to python
     'false': False,
     'null': None,
     'true': True,
@@ -42,6 +44,7 @@ if PY2:
         'False': False,
     })
 
+# Set of global names for callables that we will allow
 _CALL_ENABLED = frozenset(k for k, v in _OUR_GLOBALS.items() if callable(v))
 
 _optional_nodes = []
@@ -84,7 +87,8 @@ _SAFE_NODES = frozenset(
 
 
 class CleansingNodeVisitor(ast.NodeVisitor):
-    """ast.NodeVisitor subclass that will raise an exception on
+    """
+    ast.NodeVisitor subclass that will raise an exception on
     disallowed Nodes or disallowed callables
     """
 
