@@ -1,6 +1,6 @@
 .. _netconf_plugins:
 
-Netconf Plugins
+Netconf plugins
 ===============
 
 .. contents::
