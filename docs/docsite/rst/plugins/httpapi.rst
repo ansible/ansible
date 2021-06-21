@@ -1,6 +1,6 @@
 .. _httpapi_plugins:
 
-Httpapi Plugins
+Httpapi plugins
 ===============
 
 .. contents::

@@ -1,13 +1,13 @@
 .. _lookup_plugins:
 
-Lookup Plugins
+Lookup plugins
 ==============
 
 .. contents::
    :local:
    :depth: 2
 
-Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources.
+Lookup plugins are an Ansible-specific extension to the Jinja2 templating language. You can use lookup plugins to access data from outside sources (files, databases, key/value stores, APIs, and other services) within your playbooks. Like all :ref:`templating <playbooks_templating>`, lookups execute and are evaluated on the Ansible control machine. Ansible makes the data returned by a lookup plugin available using the standard templating system. You can use lookup plugins to load variables or templates with information from external sources. You can :ref:`create custom lookup plugins <developing_lookup_plugins>`.
 
 .. note::
    - Lookups are executed with a working directory relative to the role or play,
@@ -32,7 +32,7 @@ Ansible enables all lookup plugins it can find. You can activate a custom lookup
 Using lookup plugins
 --------------------
 
-You can use lookup plugins anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module.
+You can use lookup plugins anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module. For more information on using lookup plugins, see :ref:`playbooks_lookups`.
 
 .. code-block:: YAML+Jinja
 
@@ -147,12 +147,10 @@ You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. U
        Ansible inventory plugins
    :ref:`callback_plugins`
        Ansible callback plugins
-   :ref:`playbooks_filters`
+   :ref:`filter_plugins`
        Jinja2 filter plugins
-   :ref:`playbooks_tests`
+   :ref:`test_plugins`
        Jinja2 test plugins
-   :ref:`playbooks_lookups`
-       Jinja2 lookup plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_

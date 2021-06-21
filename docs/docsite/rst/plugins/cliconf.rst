@@ -1,6 +1,6 @@
 .. _cliconf_plugins:
 
-Cliconf Plugins
+Cliconf plugins
 ===============
 
 .. contents::

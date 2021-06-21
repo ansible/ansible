@@ -1,14 +1,13 @@
 .. _inventory_plugins:
 
-Inventory Plugins
+Inventory plugins
 =================
 
 .. contents::
    :local:
    :depth: 2
 
-Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either using the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
-
+Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either using the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources. If necessary, you can :ref:`create custom inventory plugins <developing_inventory_plugins>`.
 
 .. _enabling_inventory:
 
@@ -134,7 +133,7 @@ Here is an example of setting inventory caching with some fact caching defaults 
 
 .. _inventory_plugin_list:
 
-Plugin List
+Plugin list
 -----------
 
 You can use ``ansible-doc -t inventory -l`` to see the list of available plugins.
@@ -145,17 +144,17 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`callback_plugins`
-       Ansible callback plugins
+       Callback plugins
    :ref:`connection_plugins`
-       Ansible connection plugins
-   :ref:`playbooks_filters`
-       Jinja2 filter plugins
-   :ref:`playbooks_tests`
-       Jinja2 test plugins
-   :ref:`playbooks_lookups`
-       Jinja2 lookup plugins
+       Connection plugins
+   :ref:`filter_plugins`
+       Filter plugins
+   :ref:`test_plugins`
+       Test plugins
+   :ref:`lookup_plugins`
+       Lookup plugins
    :ref:`vars_plugins`
-       Ansible vars plugins
+       Vars plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_

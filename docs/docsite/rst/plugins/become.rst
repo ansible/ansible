@@ -1,6 +1,6 @@
 .. _become_plugins:
 
-Become Plugins
+Become plugins
 ==============
 
 .. contents::
@@ -52,15 +52,15 @@ Use ``ansible-doc -t become <plugin name>`` to see specific documentation and ex
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`inventory_plugins`
-       Ansible inventory plugins
+       Inventory plugins
    :ref:`callback_plugins`
-       Ansible callback plugins
-   :ref:`playbooks_filters`
-       Jinja2 filter plugins
-   :ref:`playbooks_tests`
-       Jinja2 test plugins
-   :ref:`playbooks_lookups`
-       Jinja2 lookup plugins
+       Callback plugins
+   :ref:`filter_plugins`
+       Filter plugins
+   :ref:`test_plugins`
+       Test plugins
+   :ref:`lookup_plugins`
+       Lookup plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.libera.chat <https://libera.chat/>`_
