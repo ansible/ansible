@@ -12,6 +12,7 @@ import json
 import os
 import random
 import re
+import shlex
 import stat
 import tempfile
 from abc import ABCMeta, abstractmethod
@@ -834,6 +835,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         expand_path = split_path[0]
         user = None
 
+        # to get escape char
+        s = shlex.shlex()
         if expand_path == '~':
 
             # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
@@ -849,6 +852,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     # use remote user instead, if none set default to current user
                     user = self._get_remote_user() or ''
 
+                if s.escape in user:
+                    # if user name has \ for some reason (for example DOMAIN\user)
+                    user = user.replace(s.escape, s.escape + s.escape)
+
                 expand_path = '~%s' % user
 
         # use shell to construct appropriate command and execute
@@ -856,8 +863,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         data = self._low_level_execute_command(cmd, sudoable=False)
 
         initial_fragment = data['stdout'].strip()
-        # avoid spliting lines when domain\{r,n}restofusername or empty data
-        if initial_fragment and (not user or ('\n' not in user and '\r' not in user)):
+        # avoid spliting lines when domain\username or empty data
+        if initial_fragment and (not user or s.escape not in user):
             try:
                 # try to remove cruft that might have made it back with stdout
                 initial_fragment = initial_fragment.splitlines()[-1]
