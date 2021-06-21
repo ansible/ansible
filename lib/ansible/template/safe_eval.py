@@ -22,6 +22,9 @@ import ast
 
 from ansible.module_utils.common.text.converters import container_to_text, to_native
 from ansible.module_utils.six import PY2, string_types
+from ansible.utils.display import Display
+
+display = Display()
 
 # define certain JSON types
 # eg. JSON booleans are unknown to python eval()
@@ -146,13 +149,15 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except SyntaxError:
+    except SyntaxError as e:
         # special handling for syntax errors, we just return
         # the expression string back as-is to support late evaluation
+        display.warning('Unable to safely evaluate %r: %s' % (expr, e))
         if include_exceptions:
             return (expr, None)
         return expr
     except Exception as e:
+        display.warning('Unable to safely evaluate %r: %s' % (expr, e))
         if include_exceptions:
             return (expr, e)
         return expr
