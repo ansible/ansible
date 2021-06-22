@@ -463,7 +463,7 @@ class ConfigCLI(CLI):
             # deal with plugins
             for ptype in C.CONFIGURABLE_PLUGINS:
                 text.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
-                text.extend(self._get_plugin_configs(ptype))
+                text.extend(self._get_plugin_configs(ptype, context.CLIARGS['args']))
         else:
             # deal with plugins
             text = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
