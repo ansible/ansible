@@ -3,13 +3,23 @@
   hosts: localhost
   gather_facts: false
   vars:
+      ansible_unicode_type_match: "<type 'ansible.parsing.yaml.objects.AnsibleUnicode'>"
       unicode_type_match: "<type 'unicode'>"
       string_type_match: "<type 'str'>"
       float_type_match: "<type 'float'>"
+      list_type_match: "<type 'list'>"
+      ansible_list_type_match: "<type 'ansible.parsing.yaml.objects.AnsibleSequence'>"
+      dict_type_match: "<type 'dict'>"
+      ansible_dict_type_match: "<type 'ansible.parsing.yaml.objects.AnsibleMapping'>"
+      ansible_unicode_class_match: "<class 'ansible.parsing.yaml.objects.AnsibleUnicode'>"
       unicode_class_match: "<class 'unicode'>"
       string_class_match: "<class 'str'>"
       bytes_class_match: "<class 'bytes'>"
       float_class_match: "<class 'float'>"
+      list_class_match: "<class 'list'>"
+      ansible_list_class_match: "<class 'ansible.parsing.yaml.objects.AnsibleSequence'>"
+      dict_class_match: "<class 'dict'>"
+      ansible_dict_class_match: "<class 'ansible.parsing.yaml.objects.AnsibleMapping'>"
       expected:
           test1_1:
               argument_errors: [
@@ -98,24 +108,44 @@
                   # because py3 quotes the value in the error while py2 does not, so we just ignore
                   # the rest of the line.
                   actual_generic: "{{ ansible_failed_result.argument_errors|
+                                      map('replace', ansible_unicode_type_match, 'STR')|
                                       map('replace', unicode_type_match, 'STR')|
                                       map('replace', string_type_match, 'STR')|
                                       map('replace', float_type_match, 'FLOAT')|
+                                      map('replace', list_type_match, 'LIST')|
+                                      map('replace', ansible_list_type_match, 'LIST')|
+                                      map('replace', dict_type_match, 'DICT')|
+                                      map('replace', ansible_dict_type_match, 'DICT')|
+                                      map('replace', ansible_unicode_class_match, 'STR')|
                                       map('replace', unicode_class_match, 'STR')|
                                       map('replace', string_class_match, 'STR')|
                                       map('replace', bytes_class_match, 'STR')|
                                       map('replace', float_class_match, 'FLOAT')|
+                                      map('replace', list_class_match, 'LIST')|
+                                      map('replace', ansible_list_class_match, 'LIST')|
+                                      map('replace', dict_class_match, 'DICT')|
+                                      map('replace', ansible_dict_class_match, 'DICT')|
                                       map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
                                       map('regex_replace', 'Valid booleans include.*$', '')|
                                       list }}"
                   expected_generic: "{{ expected.test1_1.argument_errors|
+                                        map('replace', ansible_unicode_type_match, 'STR')|
                                         map('replace', unicode_type_match, 'STR')|
                                         map('replace', string_type_match, 'STR')|
                                         map('replace', float_type_match, 'FLOAT')|
+                                        map('replace', list_type_match, 'LIST')|
+                                        map('replace', ansible_list_type_match, 'LIST')|
+                                        map('replace', dict_type_match, 'DICT')|
+                                        map('replace', ansible_dict_type_match, 'DICT')|
+                                        map('replace', ansible_unicode_class_match, 'STR')|
                                         map('replace', unicode_class_match, 'STR')|
                                         map('replace', string_class_match, 'STR')|
                                         map('replace', bytes_class_match, 'STR')|
                                         map('replace', float_class_match, 'FLOAT')|
+                                        map('replace', list_class_match, 'LIST')|
+                                        map('replace', ansible_list_class_match, 'LIST')|
+                                        map('replace', dict_class_match, 'DICT')|
+                                        map('replace', ansible_dict_class_match, 'DICT')|
                                         map('regex_replace', '''float:.*$''', 'THE_FLOAT_REPR')|
                                         map('regex_replace', 'Valid booleans include.*$', '')|
                                         list }}"
