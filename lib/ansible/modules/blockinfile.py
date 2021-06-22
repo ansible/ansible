@@ -15,6 +15,9 @@ short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
 - This module will insert/update/remove a block of multi-line text surrounded by customizable marker lines.
+- If enabled C({multiline_search}), the search will be executed via the re.MULTILINE option and
+  searches within the whole file. This allows the user to insert text after or before a multiline string
+  to be more specific about where to insert the text.
 author:
 - Yaegashi Takeshi (@yaegashi)
 options:
@@ -84,6 +87,12 @@ options:
     type: str
     default: END
     version_added: '2.5'
+  multiline_search:
+    required: false
+    description:
+    - If enabled, it will do a multiline search within the text instead of search per line.
+    type: bool
+    default: no
 notes:
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
@@ -158,6 +167,14 @@ EXAMPLES = r'''
     - { name: host1, ip: 10.10.1.10 }
     - { name: host2, ip: 10.10.1.11 }
     - { name: host3, ip: 10.10.1.12 }
+
+- name: Search with a multiline search refex and if found insert after
+  blockinfile:
+    path: listener.ora
+    block: "{{ listener_line | indent(width=8, first=True) }}"
+    insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+
 '''
 
 import re
@@ -216,6 +233,7 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
+            multiline_search=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -259,6 +277,7 @@ def main():
     block = to_bytes(params['block'])
     marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
+    multiline_search = params['multiline_search']
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
@@ -266,10 +285,11 @@ def main():
     if insertbefore is None and insertafter is None:
         insertafter = 'EOF'
 
+    flags = re.MULTILINE if multiline_search else 0
     if insertafter not in (None, 'EOF'):
-        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
+        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'), flags=flags)
     elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
+        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'), flags=flags)
     else:
         insertre = None
 
@@ -292,9 +312,17 @@ def main():
     if None in (n0, n1):
         n0 = None
         if insertre is not None:
-            for i, line in enumerate(lines):
-                if insertre.search(line):
-                    n0 = i
+            if multiline_search:
+                match = re.search(insertre, original)
+                if match:
+                    if insertafter:
+                        n0 = original.decode().count('\n', 0, match.end())
+                    elif insertbefore:
+                        n0 = original.decode().count('\n', 0, match.start())
+            else:
+                for i, line in enumerate(lines):
+                    if insertre.search(line):
+                        n0 = i
             if n0 is None:
                 n0 = len(lines)
             elif insertafter is not None:
