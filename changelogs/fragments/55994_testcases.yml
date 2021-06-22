@@ -1,0 +1,3 @@
+---
+minor_changes:
+- validation testcases for check_* APIs (https://github.com/ansible/ansible/issues/55994).
