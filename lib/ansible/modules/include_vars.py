@@ -70,6 +70,14 @@ options:
     type: bool
     default: no
     version_added: "2.7"
+  hash_behaviour:
+    description:
+      - If set to C(merge), merges existing hash variables instead of overwriting them.
+      - If omitted C(null), the behavior falls back to the global I(hash_behaviour) configuration.
+    default: null
+    type: str
+    choices: ["replace", "merge"]
+    version_added: "2.12"
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.

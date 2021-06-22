@@ -166,6 +166,48 @@
       - "'my_custom_service' == service_name_fqcn"
       - "'my_custom_service' == service_name_tmpl_fqcn"
 
+- name: Include a vars file with a hash variable
+  include_vars:
+    file: vars2/hashes/hash1.yml
+
+- name: Verify the hash variable
+  assert:
+    that:
+      - "{{ config | length }} == 3"
+      - "config.key0 == 0"
+      - "config.key1 == 0"
+      - "{{ config.key2 | length }} == 1"
+      - "config.key2.a == 21"
+
+- name: Include the second file to merge the hash variable
+  include_vars:
+    file: vars2/hashes/hash2.yml
+    hash_behaviour: merge
+
+- name: Verify that the hash is merged
+  assert:
+    that:
+      - "{{ config | length }} == 4"
+      - "config.key0 == 0"
+      - "config.key1 == 1"
+      - "{{ config.key2 | length }} == 2"
+      - "config.key2.a == 21"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
+- name: Include the second file again without hash_behaviour option
+  include_vars:
+    file: vars2/hashes/hash2.yml
+
+- name: Verify that the properties from the first file is cleared
+  assert:
+    that:
+      - "{{ config | length }} == 3"
+      - "config.key1 == 1"
+      - "{{ config.key2 | length }} == 1"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
 - include_vars:
     file: no_auto_unsafe.yml
   register: baz
