@@ -1,0 +1,4 @@
+minor_changes:
+    - callback API - implemented ``v2_runner_on_async_ok`` and ``v2_runner_on_async_failed`` callbacks
+      (https://github.com/ansible/ansible/pull/74953).
+    - default callback plugin - displays output for ``v2_runner_on_async_ok`` and ``v2_runner_on_async_failed`` callbacks.
