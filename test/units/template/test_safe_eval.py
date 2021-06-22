@@ -38,6 +38,8 @@ class TestSafeEval(unittest.TestCase):
             self.assertEqual(safe_eval('0', locals=locals_vars), 0)
             self.assertEqual(safe_eval('[]', locals=locals_vars), [])
             self.assertEqual(safe_eval('{}', locals=locals_vars), {})
+            self.assertEqual(safe_eval('[1] + [2]', locals=locals_vars), '[1] + [2]')
+            self.assertEqual(safe_eval('len("foo")', locals=locals_vars), 'len("foo")')
 
     @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Python 2.6 has no set literals")
     def test_set_literals(self):
