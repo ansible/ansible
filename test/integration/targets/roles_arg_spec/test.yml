@@ -303,3 +303,38 @@
               - ansible_failed_result.validate_args_context.name == "blah"
               - ansible_failed_result.validate_args_context.type == "role"
               - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/collections/ansible_collections/foo/bar/roles/blah')"
+
+- name: "New play to reset vars: Test templating succeeds"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    value_some_choices: "choice2"
+    value_some_list: [1.5]
+    value_some_dict: {"some_key": "some_value"}
+    value_some_int: 1
+    value_some_float: 1.5
+    value_some_json: '{[1, 3, 3] 345345|45v<#!}'
+    value_some_jsonarg: {"foo": [1, 3, 3]}
+    value_some_second_level: True
+    value_third_level: 5
+  tasks:
+    - block:
+      - include_role:
+          name: test1
+        vars:
+          some_choices: "{{ value_some_choices }}"
+          some_list: "{{ value_some_list }}"
+          some_dict: "{{ value_some_dict }}"
+          some_int: "{{ value_some_int }}"
+          some_float: "{{ value_some_float }}"
+          some_json: "{{ value_some_json }}"
+          some_jsonarg: "{{ value_some_jsonarg }}"
+          some_dict_options:
+            some_second_level: "{{ value_some_second_level }}"
+          multi_level_option:
+            second_level:
+              third_level: "{{ value_third_level }}"
+      rescue:
+        - debug: var=ansible_failed_result
+        - fail:
+            msg: "Should not get here"

@@ -31,12 +31,8 @@ class ActionModule(ActionBase):
 
         for argument_name, argument_attrs in iteritems(argument_spec):
             if argument_name in task_vars:
-                if isinstance(task_vars[argument_name], string_types):
-                    value = self._templar.do_template(task_vars[argument_name])
-                    if value:
-                        args[argument_name] = value
-                else:
-                    args[argument_name] = task_vars[argument_name]
+                args[argument_name] = task_vars[argument_name]
+        args = self._templar.template(args)
         return args
 
     def run(self, tmp=None, task_vars=None):
