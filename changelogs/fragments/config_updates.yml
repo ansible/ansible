@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-config can now list and dump for specific documentable plugins by specifying them in the command line
+  - ansible-config has new 'init' option to create, highly commented, example configurations as ini (ansible.cfg),
+    environment variables (shell) or Ansible variable files (YAML)

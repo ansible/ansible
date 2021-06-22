@@ -1,1 +1,4 @@
 shippable/posix/group1
+skip/python2
+skip/python3.6
+skip/python3.7
