@@ -1,0 +1,2 @@
+minor_changes:
+  - include_vars - add ``hash_behaviour`` option (https://github.com/ansible/ansible/pull/72944).

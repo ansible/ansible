@@ -1,0 +1,5 @@
+---
+config:
+  key1: 1
+  key2: { b: 22 }
+  key3: 3
