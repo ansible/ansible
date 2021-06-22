@@ -71,6 +71,8 @@ DOCUMENTATION = """
             description:
                 - List of localized strings to match for prompt detection
                 - If empty we'll use the built in one
+                - Do NOT add a colon (:) to your custom entries as we do this internally
+                  to ensure we are matching a prompt
             default: []
             type: list
             ini:
