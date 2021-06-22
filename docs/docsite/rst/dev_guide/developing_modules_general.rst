@@ -39,8 +39,8 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo yum group install "Development Tools"
     sudo yum install python3-devel openssl-devel libffi libffi-devel 
 
-Creating a development environment (platform-agnostic steps)
-------------------------------------------------------------
+Creating a development environment (platform-independent steps)
+---------------------------------------------------------------
 
 1. Clone the Ansible repository:
    ``$ git clone https://github.com/ansible/ansible.git``
@@ -51,7 +51,7 @@ Creating a development environment (platform-agnostic steps)
 4. Activate the virtual environment: ``$ . venv/bin/activate``
 5. Install development requirements:
    ``$ pip install -r requirements.txt``
-6. Run the environment setup script for each new dev shell process:
+6. Run the environment setup script for each new development shell process:
    ``$ . hacking/env-setup``
 
 .. note:: After the initial setup above, every time you are ready to start

@@ -10,7 +10,7 @@ In previous versions, you had to create a script or program that could output JS
 You can still use and write inventory scripts, as we ensured backwards compatibility via the :ref:`script inventory plugin <script_inventory>`
 and there is no restriction on the programming language used.
 If you choose to write a script, however, you will need to implement some features yourself such as caching, configuration management, dynamic variable and group composition, and so on.
-If you use :ref:`inventory plugins <inventory_plugins>` instead, you can leverage the Ansible codebase and add these common features automatically.
+If you use :ref:`inventory plugins <inventory_plugins>` instead, you can use the Ansible codebase and add these common features automatically.
 
 .. contents:: Topics
    :local:
@@ -349,7 +349,7 @@ From Ansible 2.5 onwards, we include the :ref:`auto inventory plugin <auto_inven
 Inventory scripts
 =================
 
-Even though we now have inventory plugins, we still support inventory scripts, not only for backwards compatibility but also to allow users to leverage other programming languages.
+Even though we now have inventory plugins, we still support inventory scripts, not only for backwards compatibility but also to allow users to use other programming languages.
 
 
 .. _inventory_script_conventions:

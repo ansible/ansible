@@ -38,7 +38,7 @@ If you use FQCN, you can use documentation fragments from one collection in anot
 Leveraging optional module utilities in collections
 ===================================================
 
-Optional module utilities let you adopt the latest features from the most recent ansible-core release in your collection-based modules without breaking your collection on older Ansible versions. With optional module utilities, you can leverage the latest features when running against the latest versions, while still providing fallback behaviors when running against older versions.
+Optional module utilities let you adopt the latest features from the most recent ansible-core release in your collection-based modules without breaking your collection on older Ansible versions. With optional module utilities, you can use the latest features when running against the latest versions, while still providing fallback behaviors when running against older versions.
 
 This implementation, widely used in Python programming, wraps optional imports in conditionals or defensive `try/except` blocks, and implements fallback behaviors for missing imports. Ansible's module payload builder supports these patterns by treating any module_utils import nested in a block (e.g., `if`, `try`) as optional. If the requested import cannot be found during the payload build, it is simply omitted from the target payload and assumed that the importing code will handle its absence at runtime. Missing top-level imports of module_utils packages (imports that are not wrapped in a block statement of any kind) will fail the module payload build, and will not execute on the target.
 
