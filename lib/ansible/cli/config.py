@@ -18,6 +18,10 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
@@ -46,7 +50,8 @@ class ConfigCLI(CLI):
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
         common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                            help="Show configuration for a plugin type, for a specific plugin's options see ansible-doc.")
+                            help="Filter down to a specific plugin type.")
+        common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
@@ -62,13 +67,14 @@ class ConfigCLI(CLI):
         view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
 
-        # update_parser = subparsers.add_parser('update', help='Update configuration option')
-        # update_parser.set_defaults(func=self.execute_update)
-        # update_parser.add_argument('-s', '--setting', dest='setting',
-        #                            help="config setting, the section defaults to 'defaults'",
-        #                            metavar='[section.]setting=value')
+        init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
+        init_parser.set_defaults(func=self.execute_init)
+        init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini',
+                                 help='Output format for init')
+        init_parser.add_argument('--disabled', dest='commented', action='store_true', default=False,
+                                 help='Prefixes all entries with a comment character to disable them')
 
-        # search_parser = subparsers.add_parser('search', help='Search configuration')
+        # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
         # search_parser.add_argument('args', help='Search term', metavar='<search term>')
 
@@ -110,6 +116,7 @@ class ConfigCLI(CLI):
         elif context.CLIARGS['action'] == 'view':
             raise AnsibleError('Invalid or no config file was supplied')
 
+        # run the requested action
         context.CLIARGS['func']()
 
     def execute_update(self):
@@ -160,10 +167,24 @@ class ConfigCLI(CLI):
         except Exception as e:
             raise AnsibleError("Failed to open editor: %s" % to_native(e))
 
-    def _list_plugin_settings(self, ptype):
+    def _list_plugin_settings(self, ptype, plugins=None):
         entries = {}
         loader = getattr(plugin_loader, '%s_loader' % ptype)
-        for plugin in loader.all(class_only=True):
+
+        # build list
+        if plugins:
+            plugin_cs = []
+            for plugin in plugins:
+                p = loader.get(plugin, class_only=True)
+                if p is None:
+                    display.warning("Skipping %s as we could not find matching plugin" % plugin)
+                else:
+                    plugin_cs.append(p)
+        else:
+            plugin_cs = loader.all(class_only=True)
+
+        # iterate over class instances
+        for plugin in plugin_cs:
             finalname = name = plugin._load_name
             if name.startswith('_'):
                 # alias or deprecated
@@ -176,27 +197,169 @@ class ConfigCLI(CLI):
 
         return entries
 
-    def execute_list(self):
+    def _list_entries_from_args(self):
         '''
-        list all current configs reading lib/constants.py and shows env and config file setting names
+        build a dict with the list requested configs
         '''
-
         config_entries = {}
-        if context.CLIARGS['type'] == 'base':
+        if context.CLIARGS['type'] in ('base', 'all'):
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
-        elif context.CLIARGS['type'] == 'all':
-            # get global
-            config_entries = self.config.get_configuration_definitions(ignore_private=True)
 
+        if context.CLIARGS['type'] != 'base':
             config_entries['PLUGINS'] = {}
+
+        if context.CLIARGS['type'] == 'all':
             # now each plugin type
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
-        else:
-            config_entries = self._list_plugin_settings(context.CLIARGS['type'])
+        elif context.CLIARGS['type'] != 'base':
+            config_entries['PLUGINS'][context.CLIARGS['type']] = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
+        return config_entries
+
+    def execute_list(self):
+        '''
+        list and output available configs
+        '''
+
+        config_entries = self._list_entries_from_args()
         self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+
+    def _get_settings_vars(self, settings, subkey):
+
+        data = []
+        if context.CLIARGS['commented']:
+            prefix = '#'
+        else:
+            prefix = ''
+
+        for setting in settings:
+
+            if not settings[setting].get('description'):
+                continue
+
+            default = settings[setting].get('default', '')
+            if subkey == 'env':
+                stype = settings[setting].get('type', '')
+                if stype == 'boolean':
+                    if default:
+                        default = '1'
+                    else:
+                        default = '0'
+                elif default:
+                    if stype == 'list':
+                        if not isinstance(default, string_types):
+                            # python lists are not valid env ones
+                            try:
+                                default = ', '.join(default)
+                            except Exception as e:
+                                # list of other stuff
+                                default = '%s' % to_native(default)
+                    if isinstance(default, string_types) and not is_quoted(default):
+                        default = shlex_quote(default)
+                elif default is None:
+                    default = ''
+
+            if subkey in settings[setting] and settings[setting][subkey]:
+                entry = settings[setting][subkey][-1]['name']
+                if isinstance(settings[setting]['description'], string_types):
+                    desc = settings[setting]['description']
+                else:
+                    desc = '\n#'.join(settings[setting]['description'])
+                name = settings[setting].get('name', setting)
+                data.append('# %s(%s): %s' % (name, settings[setting].get('type', 'string'), desc))
+
+                # TODO: might need quoting and value coercion depending on type
+                if subkey == 'env':
+                    data.append('%s%s=%s' % (prefix, entry, default))
+                elif subkey == 'vars':
+                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+                data.append('')
+
+        return data
+
+    def _get_settings_ini(self, settings):
+
+        sections = {}
+        for o in sorted(settings.keys()):
+
+            opt = settings[o]
+
+            if not isinstance(opt, Mapping):
+                # recursed into one of the few settings that is a mapping, now hitting it's strings
+                continue
+
+            if not opt.get('description'):
+                # its a plugin
+                new_sections = self._get_settings_ini(opt)
+                for s in new_sections:
+                    if s in sections:
+                        sections[s].extend(new_sections[s])
+                    else:
+                        sections[s] = new_sections[s]
+                continue
+
+            if isinstance(opt['description'], string_types):
+                desc = '# (%s) %s' % (opt.get('type', 'string'), opt['description'])
+            else:
+                desc = "# (%s) " % opt.get('type', 'string')
+                desc += "\n# ".join(opt['description'])
+
+            if 'ini' in opt and opt['ini']:
+                entry = opt['ini'][-1]
+                if entry['section'] not in sections:
+                    sections[entry['section']] = []
+
+                default = opt.get('default', '')
+                if opt.get('type', '') == 'list' and not isinstance(default, string_types):
+                    # python lists are not valid ini ones
+                    default = ', '.join(default)
+                elif default is None:
+                    default = ''
+
+                if context.CLIARGS['commented']:
+                    entry['key'] = ';%s' % entry['key']
+
+                key = desc + '\n%s=%s' % (entry['key'], default)
+                sections[entry['section']].append(key)
+
+        return sections
+
+    def execute_init(self):
+
+        data = []
+        config_entries = self._list_entries_from_args()
+        plugin_types = config_entries.pop('PLUGINS', None)
+
+        if context.CLIARGS['format'] == 'ini':
+            sections = self._get_settings_ini(config_entries)
+
+            if plugin_types:
+                for ptype in plugin_types:
+                    plugin_sections = self._get_settings_ini(plugin_types[ptype])
+                    for s in plugin_sections:
+                        if s in sections:
+                            sections[s].extend(plugin_sections[s])
+                        else:
+                            sections[s] = plugin_sections[s]
+
+            if sections:
+                for section in sections.keys():
+                    data.append('[%s]' % section)
+                    for key in sections[section]:
+                        data.append(key)
+                        data.append('')
+                    data.append('')
+
+        elif context.CLIARGS['format'] in ('env', 'vars'):  # TODO: add yaml once that config option is added
+            data = self._get_settings_vars(config_entries, context.CLIARGS['format'])
+            if plugin_types:
+                for ptype in plugin_types:
+                    for plugin in plugin_types[ptype].keys():
+                        data.extend(self._get_settings_vars(plugin_types[ptype][plugin], context.CLIARGS['format']))
+
+        self.pager(to_text('\n'.join(data), errors='surrogate_or_strict'))
 
     def _render_settings(self, config):
 
@@ -226,7 +389,7 @@ class ConfigCLI(CLI):
 
         return self._render_settings(config)
 
-    def _get_plugin_configs(self, ptype):
+    def _get_plugin_configs(self, ptype, plugins):
 
         # prep loading
         loader = getattr(plugin_loader, '%s_loader' % ptype)
@@ -234,8 +397,20 @@ class ConfigCLI(CLI):
         # acumulators
         text = []
         config_entries = {}
-        for plugin in loader.all(class_only=True):
 
+        # build list
+        if plugins:
+            plugin_cs = []
+            for plugin in plugins:
+                p = loader.get(plugin, class_only=True)
+                if p is None:
+                    display.warning("Skipping %s as we could not find matching plugin" % plugin)
+                else:
+                    plugin_cs.append(loader.get(plugin, class_only=True))
+        else:
+            plugin_cs = loader.all(class_only=True)
+
+        for plugin in plugin_cs:
             # in case of deprecastion they diverge
             finalname = name = plugin._load_name
             if name.startswith('_'):
@@ -288,9 +463,9 @@ class ConfigCLI(CLI):
             # deal with plugins
             for ptype in C.CONFIGURABLE_PLUGINS:
                 text.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
-                text.extend(self._get_plugin_configs(ptype))
+                text.extend(self._get_plugin_configs(ptype, context.CLIARGS['args']))
         else:
             # deal with plugins
-            text = self._get_plugin_configs(context.CLIARGS['type'])
+            text = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))

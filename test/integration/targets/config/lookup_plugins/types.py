@@ -22,24 +22,40 @@ DOCUMENTATION = """
             ini:
                 - section: list_values
                   key: valid
+            env:
+                - name: ANSIBLE_TYPES_VALID
+            vars:
+                - name: ansible_types_valid
         mustunquote:
             description: does nothihng, just for testing values
             type: list
             ini:
                 - section: list_values
                   key: mustunquote
+            env:
+                - name: ANSIBLE_TYPES_MUSTUNQUOTE
+            vars:
+                - name: ansible_types_mustunquote
         notvalid:
             description: does nothihng, just for testing values
             type: list
             ini:
                 - section: list_values
                   key: notvalid
+            env:
+                - name: ANSIBLE_TYPES_NOTVALID
+            vars:
+                - name: ansible_types_notvalid
         totallynotvalid:
             description: does nothihng, just for testing values
             type: list
             ini:
                 - section: list_values
                   key: totallynotvalid
+            env:
+                - name: ANSIBLE_TYPES_TOTALLYNOTVALID
+            vars:
+                - name: ansible_types_totallynotvalid
 """
 
 EXAMPLES = """

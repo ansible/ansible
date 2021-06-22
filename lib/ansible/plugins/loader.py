@@ -914,10 +914,16 @@ class PluginLoader:
             basename = os.path.basename(name)
 
             if basename == '__init__' or basename in _PLUGIN_FILTERS[self.package]:
+                # either empty or ignored by the module blocklist
+                continue
+
+            if basename == 'base' and self.package == 'ansible.plugins.cache':
+                # cache has legacy 'base.py' file, which is wrapper for __init__.py
                 continue
 
             if dedupe and basename in loaded_modules:
                 continue
+
             loaded_modules.add(basename)
 
             if path_only:
