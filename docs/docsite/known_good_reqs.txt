@@ -1,0 +1,17 @@
+# pip packages required to build docsite
+# tested June 9 2021
+
+antsibull==0.33.0
+docutils==0.16
+# check unordered lists when testing more recent docutils versions
+# see https://github.com/readthedocs/sphinx_rtd_theme/issues/1115
+jinja2==3.0.1
+Pygments==2.9.0
+PyYAML==5.4.1
+resolvelib==0.5.4
+rstcheck==3.3.1
+sphinx==4.0.2
+sphinx-notfound-page==0.7.1 # must be >= 0.6
+sphinx-intl==2.0.1
+sphinx_ansible_theme===0.6.0
+straight.plugin==1.5.0 # Needed for hacking/build-ansible.py which is the backend build script

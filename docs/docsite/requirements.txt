@@ -1,13 +1,18 @@
-#pip packages required to build docsite
+# pip packages required to build docsite
+# these requirements are as loosely defined as possible
+# if you want known good versions of these dependencies
+# use known_good_reqs.txt instead 
+
+antsibull >= 0.25.0
+docutils == 0.16 # pin for now until the problem with unordered lists is fixed
+# see https://github.com/readthedocs/sphinx_rtd_theme/issues/1115jinja2==3.0.1
 jinja2
+Pygments >= 2.4.0
 PyYAML
 rstcheck
-sphinx==2.1.2
+sphinx
 sphinx-notfound-page >= 0.6
 sphinx-intl
 sphinx_ansible_theme === 0.6.0
 resolvelib
-Pygments >= 2.4.0
 straight.plugin # Needed for hacking/build-ansible.py which is the backend build script
-antsibull >= 0.25.0
-docutils==0.16 # pin for now until sphinx_rtd_theme is compatible with 0.17 or later
