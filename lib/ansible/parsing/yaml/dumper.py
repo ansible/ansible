@@ -26,6 +26,7 @@ from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 from ansible.vars.hostvars import HostVars, HostVarsVars
+from ansible.vars.manager import VarsWithSources
 
 
 class AnsibleDumper(SafeDumper):
@@ -80,6 +81,11 @@ AnsibleDumper.add_representer(
 
 AnsibleDumper.add_representer(
     HostVarsVars,
+    represent_hostvars,
+)
+
+AnsibleDumper.add_representer(
+    VarsWithSources,
     represent_hostvars,
 )
 

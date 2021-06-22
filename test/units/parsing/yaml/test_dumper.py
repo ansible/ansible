@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import io
+import yaml
 
 from units.compat import unittest
 from ansible.parsing import vault
@@ -29,6 +30,7 @@ from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 
 from units.mock.yaml_helper import YamlTestUtils
 from units.mock.vault_helper import TextVaultSecret
+from ansible.vars.manager import VarsWithSources
 
 
 class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
@@ -101,3 +103,9 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         data_from_yaml = loader.get_single_data()
 
         self.assertEqual(u_text, data_from_yaml)
+
+    def test_vars_with_sources(self):
+        try:
+            self._dump_string(VarsWithSources(), dumper=self.dumper)
+        except yaml.representer.RepresenterError:
+            self.fail("Dump VarsWithSources raised RepresenterError unexpectedly!")
