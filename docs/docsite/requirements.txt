@@ -3,7 +3,7 @@
 # if you want known good versions of these dependencies
 # use known_good_reqs.txt instead 
 
-antsibull >= 0.25.0
+antsibull >= 0.34.0
 docutils == 0.16 # pin for now until the problem with unordered lists is fixed
 # see https://github.com/readthedocs/sphinx_rtd_theme/issues/1115jinja2==3.0.1
 jinja2
