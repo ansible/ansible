@@ -75,6 +75,8 @@ def check_mutually_exclusive(terms, parameters, options_context=None):
 
     :arg terms: List of mutually exclusive parameters
     :arg parameters: Dictionary of parameters
+    :kwarg options_context: List of strings of parent key names if ``terms`` are
+        in a sub spec.
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -142,6 +144,8 @@ def check_required_together(terms, parameters, options_context=None):
         parameters that are all required when at least one is specified
         in the parameters.
     :arg parameters: Dictionary of parameters
+    :kwarg options_context: List of strings of parent key names if ``terms`` are
+        in a sub spec.
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -174,6 +178,8 @@ def check_required_by(requirements, parameters, options_context=None):
 
     :arg requirements: Dictionary of requirements
     :arg parameters: Dictionary of parameters
+    :kwarg options_context: List of strings of parent key names if ``requirements`` are
+        in a sub spec.
 
     :returns: Empty dictionary or raises :class:`TypeError` if the
     """
@@ -213,6 +219,8 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
     :arg argument_spec: Argument spec dictionary containing all parameters
         and their specification
     :arg parameters: Dictionary of parameters
+    :kwarg options_context: List of strings of parent key names if ``argument_spec`` are
+        in a sub spec.
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -280,6 +288,8 @@ def check_required_if(requirements, parameters, options_context=None):
                 }
             ]
 
+    :kwarg options_context: List of strings of parent key names if ``requirements`` are
+        in a sub spec.
     """
     results = []
     if requirements is None:
