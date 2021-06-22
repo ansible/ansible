@@ -5,13 +5,13 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
-v2.10.11rc1
-===========
+v2.10.11
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2021-06-14
+| Release Date: 2021-06-22
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
