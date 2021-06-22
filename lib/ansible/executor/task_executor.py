@@ -618,7 +618,6 @@ class TaskExecutor:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
                     if result.get('failed'):
-                        display.display("send failed async result: %s" % result)
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
                             TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
@@ -840,7 +839,7 @@ class TaskExecutor:
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
-                return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val)
+                return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val, async_result=async_result)
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
