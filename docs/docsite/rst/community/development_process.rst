@@ -154,10 +154,11 @@ You do not need a changelog fragment for PRs that:
 
 
 More precisely:
+
 * Every bugfix PR must have a changelog fragment. The only exception are fixes to a change that has not yet been included in a release.
 * Every feature PR must have a changelog fragment.
 * New modules and plugins (except jinja2 filter and test plugins) must have ``versions_added`` set correctly, and do not need a changelog fragment. The tooling detects new modules and plugins by their ``versions_added`` value and announces them in the next release's changelog automatically.
-* New jinja2 filter and test plugins, and also new roles and playbooks (for collections) must have a changelog fragment. See :ref:`changelogs_how_to_format_j2_roles_playbooks` or the `antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>_` for information on how the fragments should look like.
+* New jinja2 filter and test plugins, and also new roles and playbooks (for collections) must have a changelog fragment. See :ref:`changelogs_how_to_format_j2_roles_playbooks` or the `antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_ for information on how the fragments should look like.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
