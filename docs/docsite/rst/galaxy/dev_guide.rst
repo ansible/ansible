@@ -54,7 +54,7 @@ The above will create the following directory structure in the current working d
        vars/
            main.yml
 
-If you want to create a repository for the role the repository root should be `role_name`.
+If you want to create a repository for the role, the repository root should be `role_name`.
 
 Force
 -----
