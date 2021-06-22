@@ -39,6 +39,7 @@ _OUR_GLOBALS = {
 }
 
 if PY2:
+    # TODO: remove this
     _OUR_GLOBALS.update({
         'True': True,
         'False': False,
@@ -49,11 +50,12 @@ _CALL_ENABLED = frozenset(k for k, v in _OUR_GLOBALS.items() if callable(v))
 
 _optional_nodes = []
 # These node types are dependent on Python version
-# Set - 3.7
+# Set - 2.7
 # NameConstant - 3.4 - Deprecated in 3.8
 # Constant - 3.6
 # Str - Deprecated in 3.8
 # Num - Deprecated in 3.8
+# TODO: Move these directly into _SAFE_NODES
 for _name in ('Set', 'NameConstant', 'Constant', 'Str', 'Num'):
     try:
         _optional_nodes.append(getattr(ast, _name))
@@ -66,18 +68,12 @@ for _name in ('Set', 'NameConstant', 'Constant', 'Str', 'Num'):
 # visitor class defined below.
 _SAFE_NODES = frozenset(
     (
-        # ast.Add,
-        # ast.BinOp,
         ast.Call,
-        # ast.Compare,
         ast.Dict,
-        # ast.Div,
         ast.Expression,
         ast.List,
         ast.Load,
-        # ast.Mult,
         ast.Name,
-        # ast.Sub,
         ast.UAdd,
         ast.USub,
         ast.Tuple,
@@ -158,6 +154,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # addition to the filtering of callables done in CleansingNodeVisitor
         result = eval(compiled, copy.deepcopy(_OUR_GLOBALS), locals)
         if PY2:
+            # TODO: Remove this
             # On Python 2 u"{'key': 'value'}" is evaluated to {'key': 'value'},
             # ensure it is converted to {u'key': u'value'}.
             result = container_to_text(result)
@@ -169,6 +166,9 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     except SyntaxError as e:
         # special handling for syntax errors, we just return
         # the expression string back as-is to support late evaluation
+        # TODO: Maybe provide a note here that this is likely due to some
+        #       repr that cannot be safely evaluated, either a callable, or something like
+        #       a generator repr
         display.warning('Unable to safely evaluate %r: %s' % (expr, e))
         if include_exceptions:
             return (expr, None)
