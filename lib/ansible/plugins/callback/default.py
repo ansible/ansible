@@ -413,6 +413,21 @@ class CallbackModule(CallbackBase):
             color=C.COLOR_DEBUG
         )
 
+    def v2_runner_on_async_ok(self, result):
+        host = result._host.get_name()
+        jid = result._result.get('ansible_job_id')
+        self._display.display("ASYNC OK on %s: jid=%s" % (host, jid), color=C.COLOR_DEBUG)
+
+    def v2_runner_on_async_failed(self, result):
+        host = result._host.get_name()
+
+        # Attempt to get the async job ID. If the job does not finish before the
+        # async timeout value, the ID may be within the unparsed 'async_result' dict.
+        jid = result._result.get('ansible_job_id')
+        if not jid and 'async_result' in result._result:
+            jid = result._result['async_result'].get('ansible_job_id')
+        self._display.display("ASYNC FAILED on %s: jid=%s" % (host, jid), color=C.COLOR_DEBUG)
+
     def v2_playbook_on_notify(self, handler, host):
         if self._display.verbosity > 1:
             self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)
