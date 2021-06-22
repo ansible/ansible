@@ -19,7 +19,17 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
+* Templating - ``safe_eval`` no longer allows performing arithmetic and concatenation operations outside of the jinja template. The following statement will need to be rewritten to produce ``[1, 2]``:
+
+.. code-block:: yaml
+
+    - name: Prior to 2.12
+      debug:
+        msg: '[1] + {{ [2] }}'
+
+    - name: 2.12 and forward
+      debug:
+        msg: '{{ [1] + [2] }}'
 
 
 Command Line

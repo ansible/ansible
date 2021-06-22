@@ -1,0 +1,5 @@
+minor_changes:
+- Templating - refactor ``safe_eval`` to improve performance and correctness, also re-enable the path to allow
+  callables. No callables are enabled, but may be utilized in the future (https://github.com/ansible/ansible/pull/75068)
+breaking_changes:
+- Templating - ``safe_eval`` no longer allows performing arithmetic and concatenation operations outside of the jinja template (https://github.com/ansible/ansible/pull/75068)
