@@ -1,0 +1,4 @@
+minor_changes:
+    - >-
+        add a quick short circuit when checking if a string is a template to improve performance
+        on large strings (https://github.com/ansible/ansible/issues/74336)
