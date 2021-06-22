@@ -219,7 +219,7 @@ def is_template(data, jinja_env):
 
     # Quick check to see if this is remotely like a template before doing
     # more expensive investigation.
-    if not is_possibly_template(data, jinja_env):
+    if not is_possibly_template(d2, jinja_env):
         return False
 
     # This wraps a lot of code, but this is due to lex returning a generator
