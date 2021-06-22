@@ -69,4 +69,4 @@
       - multiline_search1 is changed
       - multiline_search2 is not changed
       - multiline_search3 is not changed
-      - listener_ora_file.stat.checksum == 'c4485ff5b324f801f99c5ae4425c755ea2e06ed6'
+      - listener_ora_file.stat.checksum == 'd5445ede440fe42b060a03d488421095f1e4eda9'
