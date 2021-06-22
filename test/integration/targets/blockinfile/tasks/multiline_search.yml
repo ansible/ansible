@@ -35,7 +35,7 @@
 - name: Add block using multiline_search enabled
   blockinfile:
     path: "{{ output_dir }}/listener.ora"
-    block: "{{ listener_line | indent(width=8, first=True) }}"
+    block: "{{ listener_line }}"
     insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
     multiline_search: True
@@ -44,7 +44,7 @@
 - name: Add block using multiline_search enabled again
   blockinfile:
     path: "{{ output_dir }}/listener.ora"
-    block: "{{ listener_line | indent(width=8, first=True) }}"
+    block: "{{ listener_line }}"
     insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
     multiline_search: True
@@ -53,7 +53,7 @@
 - name: Try to add block using without multiline_search==True but with multiline search string
   blockinfile:
     path: "{{ output_dir }}/listener.ora"
-    block: "{{ listener_line | indent(width=8, first=True) }}"
+    block: "{{ listener_line }}"
     insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
   register: multiline_search3
