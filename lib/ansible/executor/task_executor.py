@@ -620,11 +620,17 @@ class TaskExecutor:
                     if result.get('failed'):
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
-                            TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
+                            TaskResult(self._host.name,
+                                       self._task,    # We send the full task here, because the controller knows nothing about it, the TE created it
+                                       result,
+                                       task_fields=self._task.dump_attrs()))
                     else:
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
-                            TaskResult(self._host.name, self._task, result, task_fields=self._task.dump_attrs()))
+                            TaskResult(self._host.name,
+                                       self._task,    # We send the full task here, because the controller knows nothing about it, the TE created it
+                                       result,
+                                       task_fields=self._task.dump_attrs()))
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
