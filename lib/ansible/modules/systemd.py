@@ -143,6 +143,7 @@ EXAMPLES = '''
   block:
     - name: Ensure lingering is enabled (can be run as same user that is being enabled or root)
       command: "loginctl enable-linger '{{ username }}'"
+      args:
         creates: '"/var/lib/systemd/linger/{{ username }}"'
       register: linger
       # Optional conditionals that require other tasks (setup/stat) to be run
