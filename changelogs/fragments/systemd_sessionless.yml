@@ -1,0 +1,2 @@
+bugfixes:
+  - systemd module now attempts to create lingering sessions if possible.

@@ -136,6 +136,28 @@ EXAMPLES = '''
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
+
+- name: ensure we have a session for the systemd scoped user
+  become: yes
+  become_user: '{{username}}'
+  block:
+    - name: Ensure lingering is enabled (can be run as same user that is being enabled or root)
+      command: "loginctl enable-linger '{{ username }}'"
+        creates: '"/var/lib/systemd/linger/{{ username }}"'
+      register: linger
+      # Optional conditionals that require other tasks (setup/stat) to be run
+      # when: "'XDG_RUNTIME_DIR' not in ansible_env and not stat_run_user.exists"
+
+    - name: Run a user service, now that we KNOW we have a session
+      systemd:
+        name: the_service
+        state: started
+        scope: user
+  always:
+    - name: "remove it now that it is not needed, still, now I have The cranberries' song in head all day"
+      command: "loginctl disable-linger '{{ username }}'"
+        removes: '"/var/lib/systemd/linger/{{ username }}"'
+      when: linger is changed
 '''
 
 RETURN = '''
@@ -269,11 +291,12 @@ status:
 '''  # NOQA
 
 import os
+import getpass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 def is_running_service(service_status):
@@ -323,9 +346,33 @@ def parse_systemctl_show(lines):
     return parsed
 
 
+def enable_linger(module):
+    ''' allows for lingering dbus sessions '''
+
+    enabled = False
+    user = getpass.getuser()
+    ldir = os.path.join(['var', 'lib', 'systemd', 'linger', user])
+
+    if not os.path.exists(ldir):
+        loginctl = module.find_bin_path('loginctl', required=True)
+        rc, out, err = module.runcommand([loginctl, 'enable-linger', user])
+        if rc != 0:
+            module.fail_json(msg="Cannot continue, no dbus session avialable and failed to create one", stdout=out, stderr=err, rc=rc)
+        enabled = True
+
+    return enabled
+
+
+def disable_linger(module):
+
+    loginctl = module.find_bin_path('loginctl')
+    rc, out, err = module.runcommand([loginctl, 'disable-linger', getpass.getuser()])
+    if rc != 0:
+        module.warning("Failed to disable session lingerng rc=%s: %s" % (rc, err))
+
+
 # ===========================================
 # Main control flow
-
 def main():
     # initialize
     module = AnsibleModule(
@@ -357,8 +404,30 @@ def main():
 
     systemctl = module.get_bin_path('systemctl', True)
 
-    if os.getenv('XDG_RUNTIME_DIR') is None:
-        os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
+    xdg = os.getenv('XDG_RUNTIME_DIR')
+    xdg_path = '/run/user/%s' % os.geteuid()
+    lingered = False
+    if xdg is None:
+        if not os.path.exists(xdg_path):
+            lingered = enable_linger(module)
+            if lingered:
+                module.warn("No dbus session found, forcing loginctl to enable linger")
+            else:
+                module.debug("No dbus session found, but linger is enabled")
+        else:
+            os.environ['XDG_RUNTIME_DIR'] = xdg_path
+            module.warn("Setting missing XDG_RUNTIME_DIR to %s" % to_text(xdg_path))
+    elif not os.path.exists(xdg):
+        msg = "Existing XDG_RUNTIME_DIR (%s) pointed at non existing/accessible path, " % to_text(xdg)
+        if not os.path_exists(xdg_path):
+            lingered = enable_linger(module)
+            if lingered:
+                module.warn(msg + "forcing loginctl to enable linger")
+            else:
+                module.debug(msg + "session lingering was enabled though, attempting to use that")
+        else:
+            os.environ['XDG_RUNTIME_DIR'] = xdg_path
+            module.warn(msg + "using '%s' instead" % to_text(xdg_path))
 
     ''' Set CLI options depending on params '''
     # if scope is 'system' or None, we can ignore as there is no extra switch.
@@ -550,6 +619,9 @@ def main():
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
+
+    if lingered:
+        disable_linger(module)
 
     module.exit_json(**result)
 
