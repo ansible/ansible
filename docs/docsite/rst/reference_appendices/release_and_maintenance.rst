@@ -29,5 +29,5 @@ Please go to `the devel release and maintenance page <https://docs.ansible.com/a
        Ansible release tarballs
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

@@ -301,7 +301,6 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../pytho
 
 # linckchecker settings
 linkcheck_ignore = [
-    r'http://irc\.freenode\.net',
 ]
 linkcheck_workers = 25
 # linkcheck_anchors = False
