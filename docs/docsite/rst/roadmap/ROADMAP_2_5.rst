@@ -109,8 +109,8 @@ Azure
 Network Roadmap
 ---------------
 - Refactor common network shared code into package **(done)**
-- Convert various nxos modules to leverage declarative intent **(done)**
-- Refactor various modules to leverage the cliconf plugin **(done)**
+- Convert various nxos modules to use declarative intent **(done)**
+- Refactor various modules to use the cliconf plugin **(done)**
 - Add various missing declarative modules for supported platforms and functions **(done)**
 - Implement a feature that handles platform differences and feature unavailability **(done)**
 - netconf-config.py should provide control for deployment strategy
@@ -120,7 +120,7 @@ Network Roadmap
 - Implements jsonrpc message passing for ansible-connection **(done)**
 - Improve logging for ansible-connection **(done)**
 - Improve stdout output for failures whilst using persistent connection **(done)**
-- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin **(done)**
+- Create IOS-XR NetConf Plugin and refactor iosxr modules to use netconf plugin **(done)**
 - Refactor junos modules to use netconf plugin **(done)**
 - Filters: Add a filter to convert XML response from a network device to JSON object **(done)**
 
