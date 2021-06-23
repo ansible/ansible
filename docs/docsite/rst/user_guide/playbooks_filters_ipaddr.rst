@@ -644,5 +644,5 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

@@ -94,7 +94,7 @@ If either of these issues appear to be the case, you can rerun the Shippable tes
 * closing and re-opening the PR
 * making another change to the PR and pushing to GitHub
 
-If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC.
+If the issue persists, please contact us in the ``#ansible-devel`` irc channel on the `irc.libera.chat <https://libera.chat/>`_ IRC network.
 
 
 How to test a PR

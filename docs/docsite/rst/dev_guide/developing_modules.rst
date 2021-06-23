@@ -59,5 +59,5 @@ If your use case isn't covered by an existing module, an open PR, an action plug
        Browse module source code
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        Development mailing list
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel

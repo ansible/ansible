@@ -108,5 +108,5 @@ You've anchored the value of ``version`` with the ``&my_version`` anchor, and re
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
+   `irc.libera.chat <https://libera.chat/>`_
        #ansible IRC chat channel
