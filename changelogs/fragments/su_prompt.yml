@@ -1,0 +1,2 @@
+minor_changes:
+  - su become plugin adds a more dynamic prompt matching, allowing interpolation of {become_user}.
