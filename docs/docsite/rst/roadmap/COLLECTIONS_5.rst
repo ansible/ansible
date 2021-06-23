@@ -32,7 +32,7 @@ Release schedule
 :2021-11-16: Ansible-5.0.0 release.
 :2021-12-07: Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks).
 
-.. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.1.0; Ansible-5.0.0 could ship with community-crypto-2.1.1.  It would not ship with community.crypto 2.2.0.
+.. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.1.0; Ansible-5.0.0 could ship with community.crypto 2.1.1.  It would not ship with community.crypto 2.2.0.
 
 .. [2] After this date only changes blocking a release are accepted.  Accepted changes require creating a new rc and may slip the final release date.
 .. [3] Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
