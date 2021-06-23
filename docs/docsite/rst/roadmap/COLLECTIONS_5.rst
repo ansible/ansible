@@ -13,22 +13,24 @@ This release schedule includes dates for the `ansible <https://pypi.org/project/
 Release schedule
 =================
 
-
 :2021-04-14: New Collections can be reviewed for inclusion in Ansible 5. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
-:2021-09-21: Ansible-5.0.0 alpha1 (biweekly ``ansible`` alphas.  These are timed to coincide with the start of the ``ansible-core-2.12`` pre-releases).
-:2021-10-05: Ansible-5.0.0 alpha2
-:2021-10-12: Last day for new collections to be submitted for inclusion in Ansible-5. Note that collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
-:2021-10-13: Community IRC Meeting topic: list any new collection reviews which block release.  List any backwards incompatible collection releases that beta1 should try to accommodate.
-:2021-10-19: Ansible-5.0.0 alpha3
+:2021-08-30: ansible-core feature freeze.
+:2021-09-13: start of ansible-core 2.12 betas (weekly, as needed).
+:2021-09-21: Ansible-5.0.0 alpha1 (biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.12`` pre-releases).
+:2021-10-04: first ansible-core release candidate, stable-2.12 branch created.
+:2021-10-05: Ansible-5.0.0 alpha2.
+:2021-10-12: Last day for new collections to be submitted for inclusion in Ansible-5. Collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
+:2021-10-13: Community IRC Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
+:2021-10-19: Ansible-5.0.0 alpha3.
 :2021-10-20: Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2021-10-25: Last day for new collections to be **reviewed and approved** for inclusion in Ansible-5.
 :2021-10-25: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-5.
-:2021-10-26: Create the ansible-build-data directory and files for Ansible-6. new collection approvals will target this.
-:2021-10-26: Ansible-5.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users should test for bugs).
-:2021-11-02: Ansible-5.0.0 beta2
-:2021-11-09: Ansible-5.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed.  Test and alert us to any blocker bugs).
-:2021-11-16: Ansible-5.0.0 release
-:2021-12-07: Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks)
+:2021-10-26: Create the ansible-build-data directory and files for Ansible-6; new collection approvals will target this.
+:2021-10-26: Ansible-5.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
+:2021-11-02: Ansible-5.0.0 beta2.
+:2021-11-09: Ansible-5.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).
+:2021-11-16: Ansible-5.0.0 release.
+:2021-12-07: Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks).
 
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.1.0; Ansible-5.0.0 could ship with community-crypto-2.1.1.  It would not ship with community.crypto 2.2.0.
 
