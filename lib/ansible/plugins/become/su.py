@@ -131,11 +131,15 @@ class BecomeModule(BecomeBase):
         '口令',
     ]
 
+    def __init__(self):
+        super(BecomeModule, self).__init__()
+        self._fields = {}
+
     def check_password_prompt(self, b_output):
         ''' checks if the expected password prompt exists in b_output '''
 
         prompts = self.get_option('prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
-        b_password_string = b"|".join((br'(\w+\'s )?' + to_bytes(p)) for p in prompts)
+        b_password_string = b"|".join((br'(\w+\'s )?' + to_bytes(p.format(self._fields))) for p in prompts)
         # Colon or unicode fullwidth colon
         b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
         b_su_prompt_localizations_re = re.compile(b_password_string, flags=re.IGNORECASE)
@@ -154,6 +158,9 @@ class BecomeModule(BecomeBase):
         exe = self.get_option('become_exe') or self.name
         flags = self.get_option('become_flags') or ''
         user = self.get_option('become_user') or ''
+        if user:
+            self._fields['become_user'] = user
+
         success_cmd = self._build_success_command(cmd, shell)
 
         return "%s %s %s -c %s" % (exe, flags, user, shlex_quote(success_cmd))
