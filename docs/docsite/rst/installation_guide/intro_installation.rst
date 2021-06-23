@@ -288,7 +288,7 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 Installing Ansible on Debian
 ----------------------------
 
-Debian users may leverage the same source as the Ubuntu PPA.
+Debian users may use the same source as the Ubuntu PPA.
 
 Add the following line to ``/etc/apt/sources.list``:
 

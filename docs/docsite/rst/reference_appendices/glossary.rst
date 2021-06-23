@@ -310,7 +310,7 @@ when a term comes up on the mailing list.
         :command:`/usr/bin/ansible` or :command:`/usr/bin/ansible-playbook`
         (where multiple tasks use lots of different modules in conjunction).
         Modules can be implemented in any language, including Perl, Bash, or
-        Ruby -- but can leverage some useful communal library code if written
+        Ruby -- but can take advantage of some useful communal library code if written
         in Python.  Modules just have to return :term:`JSON`.  Once modules are
         executed on remote machines, they are removed, so no long running
         daemons are used.  Ansible refers to the collection of available

@@ -7,7 +7,7 @@ Filter plugins
    :local:
    :depth: 2
 
-Filter plugins manipulate data. With the right filter you can extract a particular value, transform data types and formats, perform mathematical calculations, split and concatenate strings, insert dates and times, and do much more.  Ansible leverages the :ref:`standard filters <jinja2:builtin-filters>` shipped with Jinja2 and adds some specialized filter plugins. You can :ref:`create custom Ansible filters as plugins <developing_filter_plugins>`.
+Filter plugins manipulate data. With the right filter you can extract a particular value, transform data types and formats, perform mathematical calculations, split and concatenate strings, insert dates and times, and do much more.  Ansible uses the :ref:`standard filters <jinja2:builtin-filters>` shipped with Jinja2 and adds some specialized filter plugins. You can :ref:`create custom Ansible filters as plugins <developing_filter_plugins>`.
 
 .. _enabling_filter:
 
