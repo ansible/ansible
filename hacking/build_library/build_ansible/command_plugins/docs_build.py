@@ -54,11 +54,8 @@ def find_latest_ansible_dir(build_data_working):
         except InvalidVersion:
             continue
 
-        # Check if it contains any other .deps files than ancestor.deps
-        deps_files = [
-            df for df in glob.glob(os.path.join(directory_name, '*.deps'))
-            if os.path.basename(df) != 'ancestor.deps']
-        if not deps_files:
+        # For the devel build, we only need ansible.in, so make sure it's there
+        if not os.path.exists(os.path.join(directory_name, 'ansible.in')):
             continue
 
         if new_version > latest_ver:
@@ -150,25 +147,28 @@ def generate_full_docs(args):
         ansible_version = args.ansible_version
         if ansible_version is None:
             ansible_version = find_latest_ansible_dir(build_data_working)
+            params = ['devel', '--pieces-file', os.path.join(ansible_version, 'ansible.in')]
+        else:
+            latest_filename = find_latest_deps_file(build_data_working, ansible_version)
 
-        latest_filename = find_latest_deps_file(build_data_working, ansible_version)
+            # Make a copy of the deps file so that we can set the ansible-base version we'll use
+            modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
+            shutil.copyfile(latest_filename, modified_deps_file)
 
-        # Make a copy of the deps file so that we can set the ansible-base version we'll use
-        modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
-        shutil.copyfile(latest_filename, modified_deps_file)
+            # Put our version of ansible-base into the deps file
+            with open(modified_deps_file, 'r') as f:
+                deps_data = yaml.safe_load(f.read())
 
-        # Put our version of ansible-base into the deps file
-        with open(modified_deps_file, 'r') as f:
-            deps_data = yaml.safe_load(f.read())
+            deps_data['_ansible_base_version'] = ansible_base__version__
 
-        deps_data['_ansible_base_version'] = ansible_base__version__
+            with open(modified_deps_file, 'w') as f:
+                f.write(yaml.dump(deps_data))
 
-        with open(modified_deps_file, 'w') as f:
-            f.write(yaml.dump(deps_data))
+            params = ['stable', '--deps-file', modified_deps_file]
 
         # Generate the plugin rst
-        return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                                   '--ansible-base-source', str(args.top_dir),
+        return antsibull_docs.run(['antsibull-docs'] + params +
+                                  ['--ansible-base-source', str(args.top_dir),
                                    '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
