@@ -321,7 +321,7 @@ If `ansible-playbook` fails, please follow the debug steps in :ref:`network_debu
 .. _network-independent-examples:
 
 Example 2: simplifying playbooks with platform-independent modules
-=================================================================
+==================================================================
 
 (This example originally appeared in the `Deep Dive on cli_command for Network Automation <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_ blog post by Sean Cavanaugh -`@IPvSean <https://github.com/IPvSean>`_).
 
@@ -355,7 +355,7 @@ This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.
     when: ansible_network_os == 'vyos.vyos.vyos'
 
 Simplified playbook with ``cli_command`` platform-independent module
--------------------------------------------------------------------
+--------------------------------------------------------------------
 
 You can replace these platform-specific modules with the platform-independent ``ansible.netcommon.cli_command`` module as follows:
 
