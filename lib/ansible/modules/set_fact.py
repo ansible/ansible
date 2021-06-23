@@ -28,7 +28,7 @@ options:
     required: true
   cacheable:
     description:
-      - This boolean converts the variable into an actual 'fact' which will also be added to the fact cache
+      - This boolean converts the variable into an actual 'fact' which will also be added to the fact cache.
         It does not enable fact caching across runs, it just means it will work with it if already enabled.
       - Normally this module creates 'host level variables' and has much higher precedence, this option changes the nature and precedence
         (by 7 steps) of the variable created.
