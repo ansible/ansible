@@ -326,16 +326,7 @@ class ModuleArgsParser:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
 
                 if context is not None and context.resolved:
-                    resolved = context.redirect_list[-1]
-
-                    if not AnsibleCollectionRef.is_valid_fqcr(resolved) and context.plugin_resolved_collection:
-                        resolved = context.plugin_resolved_collection + '.' + resolved
-                    elif AnsibleCollectionRef.is_valid_fqcr(resolved) and resolved.startswith('ansible.legacy.'):
-                        resolved = resolved.split('ansible.legacy.')[-1]
-                        if context.plugin_resolved_collection:
-                            resolved = context.plugin_resolved_collection + '.' + resolved
-
-                    self.resolved_action = resolved
+                    self.resolved_action = context.resolved_fqcn
 
                 action = item
                 thing = value
