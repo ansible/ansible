@@ -320,21 +320,21 @@ If `ansible-playbook` fails, please follow the debug steps in :ref:`network_debu
 
 .. _network-independent-examples:
 
-Example 2: simplifying playbooks with network independent modules
+Example 2: simplifying playbooks with platform independent modules
 =================================================================
 
 (This example originally appeared in the `Deep Dive on cli_command for Network Automation <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_ blog post by Sean Cavanaugh -`@IPvSean <https://github.com/IPvSean>`_).
 
-If you have two or more network platforms in your environment, you can use the network independent modules to simplify your playbooks. You can use network independent modules such as ``ansible.netcommon.cli_command`` or ``ansible.netcommon.cli_config`` in place of the platform-specific modules such as ``arista.eos.eos_config``, ``cisco.ios.ios_config``, and ``junipernetworks.junos.junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
+If you have two or more network platforms in your environment, you can use the platform independent modules to simplify your playbooks. You can use platform independent modules such as ``ansible.netcommon.cli_command`` or ``ansible.netcommon.cli_config`` in place of the platform-specific modules such as ``arista.eos.eos_config``, ``cisco.ios.ios_config``, and ``junipernetworks.junos.junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
 
 .. note::
-  Network independent modules require the :ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection plugin.
+  Platform independent modules require the :ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection plugin.
 
 
 Sample playbook with platform-specific modules
 ----------------------------------------------
 
-This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the network independent modules, a sample playbook might contain the following three tasks with platform-specific commands:
+This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the platform independent modules, a sample playbook might contain the following three tasks with platform-specific commands:
 
 .. code-block:: yaml
 
@@ -354,10 +354,10 @@ This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.
       commands: show interface
     when: ansible_network_os == 'vyos.vyos.vyos'
 
-Simplified playbook with ``cli_command`` network independent module
+Simplified playbook with ``cli_command`` platform independent module
 -------------------------------------------------------------------
 
-You can replace these platform-specific modules with the network independent ``ansible.netcommon.cli_command`` module as follows:
+You can replace these platform-specific modules with the platform independent ``ansible.netcommon.cli_command`` module as follows:
 
 .. code-block:: yaml
 
@@ -420,7 +420,7 @@ If you use groups and group_vars by platform type, this playbook can be further 
         register: command_output
 
 
-You can see a full example of this using group_vars and also a configuration backup example at `Network independent examples <https://github.com/network-automation/agnostic_example>`_.
+You can see a full example of this using group_vars and also a configuration backup example at `Platform independent examples <https://github.com/network-automation/agnostic_example>`_.
 
 Using multiple prompts with the  ``ansible.netcommon.cli_command``
 -------------------------------------------------------------------
