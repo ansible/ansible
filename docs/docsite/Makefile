@@ -197,8 +197,6 @@ keywords: ../templates/playbooks_keywords.rst.j2
 config: ../templates/config.rst.j2
 	$(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ ../../lib/ansible/config/base.yml
 
-# For now, if we're building on devel, just build base docs.  In the future we'll want to build docs that
-# are the latest versions on galaxy (using a different antsibull-docs subcommand)
 plugins:
 	$(PLUGIN_FORMATTER) full -o rst $(ANSIBLE_VERSION_ARGS) $(PLUGIN_ARGS);\
 
