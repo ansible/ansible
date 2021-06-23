@@ -30,7 +30,7 @@ Running Cloud Tests
 ====================
 
 Cloud tests exercise capabilities of cloud modules (for example, ec2_key).  These are
-not 'tests run in the cloud' so much as tests that leverage the cloud modules
+not 'tests run in the cloud' so much as tests that use the cloud modules
 and are organized by cloud provider.
 
 Some AWS tests may use environment variables. It is recommended to either unset any AWS environment variables( such as ``AWS_DEFAULT_PROFILE``, ``AWS_SECRET_ACCESS_KEY``, and so on) or be sure that the environment variables match the credentials provided in ``credentials.yml`` to ensure the tests run with consistency to their full capability on the expected account. See `AWS CLI docs <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html>`_ for information on creating a profile.

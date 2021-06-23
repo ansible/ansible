@@ -38,7 +38,7 @@ Writing tasks, plays, and playbooks
   * Changing the way Ansible :ref:`handles failures <playbooks_error_handling>`
   * Setting remote :ref:`environment values <playbooks_environment>`
 
-* I want to leverage the power of re-usable Ansible artifacts. How do I create re-usable :ref:`files <playbooks_reuse>` and :ref:`roles <playbooks_reuse_roles>`?
+* I want to take advantage of the power of re-usable Ansible artifacts. How do I create re-usable :ref:`files <playbooks_reuse>` and :ref:`roles <playbooks_reuse_roles>`?
 * I need to incorporate one file or playbook inside another. What is the difference between :ref:`including and importing <dynamic_vs_static>`?
 * I want to run selected parts of my playbook. How do I add and use :ref:`tags <tags>`?
 

@@ -4,7 +4,7 @@
 Python3 in templates
 ********************
 
-Ansible uses Jinja2 to leverage Python data types and standard functions in templates and variables.
+Ansible uses Jinja2 to take advantage of Python data types and standard functions in templates and variables.
 You can use these data types and standard functions to perform a rich set of operations on your data. However,
 if you use templates, you must be aware of differences between Python versions.
 

@@ -16,7 +16,7 @@ Network and security devices separate configuration into sections (such as inter
 
 #. Fetches a piece of the configuration (fact gathering), for example, the interfaces configuration.
 #. Converts the returned configuration into key-value pairs.
-#. Places those key-value pairs into an internal agnostic structured data format.
+#. Places those key-value pairs into an internal independent structured data format.
 
 Now that the configuration data is normalized, the user can update and modify the data and then use the resource module to send the configuration data back to the device. This results in a full round-trip configuration update without the need for manual parsing, data manipulation, and data model management.
 
@@ -66,7 +66,7 @@ Modules in Ansible-maintained collections must support these state values. If yo
 Developing network and security resource modules
 =================================================
 
-The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-agnostic feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module.
+The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-independent feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module.
 
 
 The highlevel process for developing a resource module is:

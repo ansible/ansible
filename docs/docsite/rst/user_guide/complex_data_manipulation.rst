@@ -212,7 +212,7 @@ Complex Type transformations
 =============================
 
 Jinja provides filters for simple data type transformations (``int``, ``bool``, and so on), but when you want to transform data structures things are not as easy.
-You can use loops and list comprehensions as shown above to help, also other filters and lookups can be chained and leveraged to achieve more complex transformations.
+You can use loops and list comprehensions as shown above to help, also other filters and lookups can be chained and used to achieve more complex transformations.
 
 
 .. _create_dictionary_from_list:
