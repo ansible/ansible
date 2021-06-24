@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - ansible.legacy.legacy_action:
+    - ansible.legacy.legacy_module:
+    - ansible.legacy.debug:
+    - ansible.legacy.ping:
+    - ansible.builtin.debug:
+    - ansible.builtin.ping:
+    - test_ns.test_coll.collection_action:
+    - test_ns.test_coll.collection_module:
+    - test_ns.test_coll.formerly_action:
+    - test_ns.test_coll.formerly_module:

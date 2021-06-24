@@ -98,6 +98,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         self._role = role
         self._parent = None
         self.implicit = False
+        self.resolved_action = None
 
         if task_include:
             self._parent = task_include
@@ -227,6 +228,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
         else:
             self._ansible_internal_redirect_list = args_parser.internal_redirect_list[:]
+            self.resolved_action = args_parser.resolved_action
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
@@ -403,6 +405,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             new_me._role = self._role
 
         new_me.implicit = self.implicit
+        new_me.resolved_action = self.resolved_action
 
         return new_me
 
@@ -421,6 +424,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 data['_ansible_internal_redirect_list'] = self._ansible_internal_redirect_list[:]
 
             data['implicit'] = self.implicit
+            data['resolved_action'] = self.resolved_action
 
         return data
 
@@ -453,6 +457,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         self._ansible_internal_redirect_list = data.get('_ansible_internal_redirect_list', [])
 
         self.implicit = data.get('implicit', False)
+        self.resolved_action = data.get('resolved_action')
 
         super(Task, self).deserialize(data)
 
