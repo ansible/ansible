@@ -280,7 +280,9 @@ def main():
 
     regex = re.compile(r'[\$|\^]')
     if re.match(regex, insertafter) or re.match(regex, insertbefore):
-        multiline_search  = True
+        multiline_search = True
+    else:
+        multiline_search = False
 
     flags = re.MULTILINE if multiline_search else 0
     if insertafter not in (None, 'EOF'):
