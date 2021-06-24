@@ -129,6 +129,22 @@ class PluginLoadContext(object):
         self.removal_version = None
         self.deprecation_warnings = []
         self.resolved = False
+        self._resolved_fqcn = None
+
+    @property
+    def resolved_fqcn(self):
+        if not self.resolved:
+            return
+
+        if not self._resolved_fqcn:
+            final_plugin = self.redirect_list[-1]
+            if AnsibleCollectionRef.is_valid_fqcr(final_plugin) and final_plugin.startswith('ansible.legacy.'):
+                final_plugin = final_plugin.split('ansible.legacy.')[-1]
+            if self.plugin_resolved_collection and not AnsibleCollectionRef.is_valid_fqcr(final_plugin):
+                final_plugin = self.plugin_resolved_collection + '.' + final_plugin
+            self._resolved_fqcn = final_plugin
+
+        return self._resolved_fqcn
 
     def record_deprecation(self, name, deprecation, collection_name):
         if not deprecation:

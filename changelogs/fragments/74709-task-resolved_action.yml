@@ -1,0 +1,2 @@
+minor_changes:
+  - Task - Add a resolved_action attribute for Task objects to get the final resolved plugin.
