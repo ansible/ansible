@@ -243,7 +243,7 @@ class TestVariableUtils(unittest.TestCase):
                 ]
             }
         }
-        self.assertEqual(merge_hash(low, high, True, 'replace'), expected)
+        self.assertEqual(merge_hash(low, high, True, 'combine'), expected)
 
     def test_merge_hash_recursive_and_list_replace(self):
         low = self.merge_hash_data['low_prio']

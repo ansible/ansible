@@ -103,7 +103,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     """
     if list_merge not in LIST_MERGE_OPTIONS:
         raise AnsibleError("merge_hash: 'list_merge' argument can only be equal to '"
-                + "', '".join(LIST_MERGE_OPTIONS[:-1]) + "' or '" + LIST_MERGE_OPTIONS[-1] + "'")
+              + "', '".join(LIST_MERGE_OPTIONS[:-1]) + "' or '" + LIST_MERGE_OPTIONS[-1] + "'")
 
     # verify x & y are dicts
     _validate_mutable_mappings(x, y)
