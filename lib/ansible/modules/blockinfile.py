@@ -15,9 +15,6 @@ short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
 - This module will insert/update/remove a block of multi-line text surrounded by customizable marker lines.
-- If enabled C({multiline_search}), the search will be executed via the re.MULTILINE option and
-  searches within the whole file. This allows the user to insert text after or before a multiline string
-  to be more specific about where to insert the text.
 author:
 - Yaegashi Takeshi (@yaegashi)
 options:
@@ -53,6 +50,8 @@ options:
     - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
+    - If multiline regex flags (^|$) are specified in the regular expression, a multiline search will be executed by searching the whole file
+      instead of searching per line.
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -61,6 +60,8 @@ options:
     - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
+    - If multiline regex flags (^|$) are specified in the regular expression, a multiline search will be executed by searching the whole file
+      instead of searching per line.
     type: str
     choices: [ BOF, '*regex*' ]
   create:
@@ -87,12 +88,6 @@ options:
     type: str
     default: END
     version_added: '2.5'
-  multiline_search:
-    required: false
-    description:
-    - If enabled, it will do a multiline search within the text instead of search per line.
-    type: bool
-    default: no
 notes:
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
@@ -168,11 +163,11 @@ EXAMPLES = r'''
     - { name: host2, ip: 10.10.1.11 }
     - { name: host3, ip: 10.10.1.12 }
 
-- name: Search with a multiline search refex and if found insert after
+- name: Search with a multiline search flags regex and if found insert after
   blockinfile:
     path: listener.ora
     block: "{{ listener_line | indent(width=8, first=True) }}"
-    insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    insertafter: '^SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
 '''
@@ -233,7 +228,6 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
-            multiline_search=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -277,13 +271,16 @@ def main():
     block = to_bytes(params['block'])
     marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
-    multiline_search = params['multiline_search']
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
 
     if insertbefore is None and insertafter is None:
         insertafter = 'EOF'
+
+    regex = re.compile(r'[\$|\^]')
+    if re.match(regex, insertafter) or re.match(regex, insertbefore):
+        multiline_search  = True
 
     flags = re.MULTILINE if multiline_search else 0
     if insertafter not in (None, 'EOF'):
