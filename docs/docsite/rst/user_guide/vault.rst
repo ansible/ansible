@@ -94,7 +94,7 @@ You can store your vault passwords on the system keyring, in a database, or in a
 
 To create a vault password client script:
 
-  * Create a file with a name ending in ``-client.py``
+  * Create a file with a name ending in either ``-client`` or ``-client.EXTENSION``
   * Make the file executable
   * Within the script itself:
       * Print the passwords to standard output
