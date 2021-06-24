@@ -25,7 +25,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
-from ansible.utils.path import makedirs_safe, is_subpath
+from ansible.utils.path import is_subpath
 
 display = Display()
 
@@ -171,7 +171,7 @@ class ActionModule(ActionBase):
 
             if remote_checksum != local_checksum:
                 # create the containing directories, if needed
-                makedirs_safe(os.path.dirname(dest))
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
 
                 # fetch the file and check for changes
                 if remote_data is None:

@@ -24,7 +24,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ['unfrackpath', 'makedirs_safe', 'basedir']
 
 
 def unfrackpath(path, follow=True, basedir=None):
@@ -75,6 +75,10 @@ def makedirs_safe(path, mode=None):
     :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
     '''
+
+    from ansible.utils.display import Display
+    display = Display()
+    display.deprecated("Since we use newer python now, use exist_ok=True in os.makedirs instead", version="2.15")
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)

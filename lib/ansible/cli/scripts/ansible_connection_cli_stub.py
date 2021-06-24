@@ -260,7 +260,7 @@ def main(args=None):
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
-        makedirs_safe(tmp_path)
+        os.makedirs(tmp_path, exist_ok=True)
 
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
         lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))

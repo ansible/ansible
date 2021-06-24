@@ -30,7 +30,6 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
-from ansible.utils.path import makedirs_safe
 
 display = Display()
 _CACHE_LOCK = threading.Lock()
@@ -294,7 +293,7 @@ class GalaxyAPI:
         self._priority = priority
         self._server_timeout = timeout
 
-        b_cache_dir = to_bytes(C.GALAXY_CACHE_DIR, errors='surrogate_or_strict')
+        b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
         makedirs_safe(b_cache_dir, mode=0o700)
         self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 
