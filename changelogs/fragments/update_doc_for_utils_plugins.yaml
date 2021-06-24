@@ -1,0 +1,3 @@
+---
+doc_changes:
+  - Update network user guide to explain use of cli_parse and validate plugins.
