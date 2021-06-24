@@ -157,6 +157,7 @@ EXAMPLES = '''
   always:
     - name: "remove it now that it is not needed, still, now I have The cranberries' song in head all day"
       command: "loginctl disable-linger '{{ username }}'"
+      args:
         removes: '"/var/lib/systemd/linger/{{ username }}"'
       when: linger is changed
 '''
@@ -354,7 +355,7 @@ def enable_linger(module):
     user = getpass.getuser()
     ldir = os.path.join(['var', 'lib', 'systemd', 'linger', user])
 
-    if not os.path.exists(ldir):
+    if not os.path.exists(to_bytes(ldir)):
         loginctl = module.find_bin_path('loginctl', required=True)
         rc, out, err = module.runcommand([loginctl, 'enable-linger', user])
         if rc != 0:
@@ -409,7 +410,7 @@ def main():
     xdg_path = '/run/user/%s' % os.geteuid()
     lingered = False
     if xdg is None:
-        if not os.path.exists(xdg_path):
+        if not os.path.exists(to_bytes(xdg_path)):
             lingered = enable_linger(module)
             if lingered:
                 module.warn("No dbus session found, forcing loginctl to enable linger")
@@ -418,9 +419,9 @@ def main():
         else:
             os.environ['XDG_RUNTIME_DIR'] = xdg_path
             module.warn("Setting missing XDG_RUNTIME_DIR to %s" % to_text(xdg_path))
-    elif not os.path.exists(xdg):
+    elif not os.path.exists(to_bytes(xdg)):
         msg = "Existing XDG_RUNTIME_DIR (%s) pointed at non existing/accessible path, " % to_text(xdg)
-        if not os.path_exists(xdg_path):
+        if not os.path_exists(to_bytes(xdg_path)):
             lingered = enable_linger(module)
             if lingered:
                 module.warn(msg + "forcing loginctl to enable linger")
