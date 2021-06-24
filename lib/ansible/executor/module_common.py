@@ -1186,9 +1186,18 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # so that no one looking for the file reads a partially
                     # written file)
                     if not os.path.exists(lookup_path):
-                        # Note -- if we have a global function to setup, that would
-                        # be a better place to run this
-                        os.makedirs(lookup_path)
+                        try:
+                            # Note -- if we have a global function to setup, that would
+                            # be a better place to run this
+                            os.makedirs(lookup_path)
+                        except FileExistsError:
+                            # Multiple workers tried to create the directory concurrently.
+                            # Try again to make sure it exists.
+                            if not os.path.exists(lookup_path):
+                                try:
+                                    os.makedirs(lookup_path)
+                                except Exception:
+                                    raise
                     display.debug('ANSIBALLZ: Writing module')
                     with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
