@@ -367,7 +367,7 @@ def enable_linger(module):
 
 def disable_linger(module):
 
-    loginctl = module.find_bin_path('loginctl')
+    loginctl = module.get_bin_path('loginctl')
     rc, out, err = module.run_command([loginctl, 'disable-linger', getpass.getuser()])
     if rc != 0:
         module.warning("Failed to disable session lingerng rc=%s: %s" % (rc, err))
