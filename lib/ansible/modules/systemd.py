@@ -353,7 +353,7 @@ def enable_linger(module):
 
     enabled = False
     user = getpass.getuser()
-    ldir = os.path.join(['var', 'lib', 'systemd', 'linger', user])
+    ldir = os.path.join('var', 'lib', 'systemd', 'linger', user)
 
     if not os.path.exists(to_bytes(ldir)):
         loginctl = module.get_bin_path('loginctl', required=True)
