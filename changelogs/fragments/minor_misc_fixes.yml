@@ -1,0 +1,2 @@
+bugfixes:
+  - utils.path, updated expected exception, fixed warning and updated comments
