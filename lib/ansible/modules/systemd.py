@@ -356,7 +356,7 @@ def enable_linger(module):
     ldir = os.path.join(['var', 'lib', 'systemd', 'linger', user])
 
     if not os.path.exists(to_bytes(ldir)):
-        loginctl = module.find_bin_path('loginctl', required=True)
+        loginctl = module.get_bin_path('loginctl', required=True)
         rc, out, err = module.runcommand([loginctl, 'enable-linger', user])
         if rc != 0:
             module.fail_json(msg="Cannot continue, no dbus session available and failed to create one", stdout=out, stderr=err, rc=rc)
