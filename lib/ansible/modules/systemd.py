@@ -359,7 +359,7 @@ def enable_linger(module):
         loginctl = module.find_bin_path('loginctl', required=True)
         rc, out, err = module.runcommand([loginctl, 'enable-linger', user])
         if rc != 0:
-            module.fail_json(msg="Cannot continue, no dbus session avialable and failed to create one", stdout=out, stderr=err, rc=rc)
+            module.fail_json(msg="Cannot continue, no dbus session available and failed to create one", stdout=out, stderr=err, rc=rc)
         enabled = True
 
     return enabled
