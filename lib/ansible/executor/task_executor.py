@@ -547,11 +547,10 @@ class TaskExecutor:
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
-        action_groups = self._task._parent._play._action_groups
-        # FIXME: discontinue use of the redirect list and only pass the canonical plugin name
         # Apply default params for action/module, if present
         self._task.args = get_action_args_with_defaults(
-            self._task.action, self._task.args, self._task.module_defaults, templar, self._task._ansible_internal_redirect_list, action_groups
+            self._task.resolved_action, self._task.args, self._task.module_defaults, templar,
+            action_groups=self._task._parent._play._action_groups
         )
 
         # And filter out any fields which were set to default(omit), and got the omit token value

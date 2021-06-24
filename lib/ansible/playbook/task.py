@@ -91,10 +91,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
-        # This is a reference of all the candidate action names for transparent execution of module_defaults with redirected content
-        # This isn't a FieldAttribute to prevent it from being set via the playbook
-        self._ansible_internal_redirect_list = []
-
         self._role = role
         self._parent = None
         self.implicit = False
@@ -227,7 +223,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
         else:
-            self._ansible_internal_redirect_list = args_parser.internal_redirect_list[:]
             self.resolved_action = args_parser.resolved_action
 
         # the command/shell/script modules used to support the `cmd` arg,
@@ -393,9 +388,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(Task, self).copy()
 
-        # if the task has an associated list of candidate names, copy it to the new object too
-        new_me._ansible_internal_redirect_list = self._ansible_internal_redirect_list[:]
-
         new_me._parent = None
         if self._parent and not exclude_parent:
             new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
@@ -419,9 +411,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
             if self._role:
                 data['role'] = self._role.serialize()
-
-            if self._ansible_internal_redirect_list:
-                data['_ansible_internal_redirect_list'] = self._ansible_internal_redirect_list[:]
 
             data['implicit'] = self.implicit
             data['resolved_action'] = self.resolved_action
@@ -453,8 +442,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             r.deserialize(role_data)
             self._role = r
             del data['role']
-
-        self._ansible_internal_redirect_list = data.get('_ansible_internal_redirect_list', [])
 
         self.implicit = data.get('implicit', False)
         self.resolved_action = data.get('resolved_action')

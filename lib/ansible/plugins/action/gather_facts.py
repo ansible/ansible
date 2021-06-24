@@ -41,12 +41,13 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        redirect_list = self._shared_loader_obj.module_loader.find_plugin_with_context(
+        resolved_fact_module = self._shared_loader_obj.module_loader.find_plugin_with_context(
             fact_module, collection_list=self._task.collections
-        ).redirect_list
+        ).resolved_fqcn
 
         mod_args = get_action_args_with_defaults(
-            fact_module, mod_args, self._task.module_defaults, self._templar, redirect_list
+            resolved_fact_module, mod_args, self._task.module_defaults, self._templar,
+            action_groups=self._task._parent._play._action_groups
         )
 
         return mod_args

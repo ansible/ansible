@@ -509,9 +509,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not context.resolved:
             context = module_loader.find_plugin_with_context(action_name)
 
-        # TODO: use the canonical name on the context once it's available?
         if context.resolved:
-            return context.redirect_list[-1]
+            return context.resolved_fqcn
         if mandatory:
             raise AnsibleParserError("Could not resolve action %s in module_defaults" % action_name)
         display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
