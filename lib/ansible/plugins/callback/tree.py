@@ -33,7 +33,7 @@ from ansible.constants import TREE_DIR
 from ansible.executor.task_result import CallbackTaskResult
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.path import makedirs_safe, unfrackpath
+from ansible.utils.path import unfrackpath
 from ansible.module_utils._internal import _deprecator
 
 
@@ -72,9 +72,9 @@ class CallbackModule(CallbackBase):
 
         buf = to_bytes(buf)
         try:
-            makedirs_safe(self.tree)
-        except OSError as ex:
-            self._display.error_as_warning(f"Unable to access or create the configured directory {self.tree!r}.", exception=ex)
+            os.makedirs(self.tree, exist_ok=True)
+        except (OSError, IOError) as e:
+            self._display.error_as_warning(f"Unable to access or create the configured directory {self.tree!r}.", exception=e)
 
         try:
             path = to_bytes(os.path.join(self.tree, hostname))

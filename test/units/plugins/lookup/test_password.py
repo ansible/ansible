@@ -391,7 +391,7 @@ class TestFormatContent(unittest.TestCase):
 
 class TestWritePasswordFile(unittest.TestCase):
     def setUp(self):
-        self.makedirs_safe = password.makedirs_safe
+        self.makedirs_safe = password.os.makedirs
         self.os_chmod = password.os.chmod
         password.makedirs_safe = self.noop
         password.os.chmod = self.noop
@@ -400,7 +400,7 @@ class TestWritePasswordFile(unittest.TestCase):
         pass
 
     def tearDown(self):
-        password.makedirs_safe = self.makedirs_safe
+        password.os.makedirs = self.makedirs_safe
         password.os.chmod = self.os_chmod
 
     def test_content_written(self):
@@ -433,6 +433,7 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.open = self.os_open
         password.os.close = self.os_close
         password.makedirs_safe = self.makedirs_safe
+        password.os.remove = self.os_remove
 
 
 class TestLookupModuleWithoutPasslib(BaseTestLookupModule):

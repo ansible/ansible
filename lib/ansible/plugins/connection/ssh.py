@@ -445,7 +445,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
-from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.path import unfrackpath
 from ansible._internal._ssh import _ssh_agent
 
 try:
@@ -454,7 +454,6 @@ except ImportError:
     HAS_CRYPTOGRAPHY = False
 else:
     HAS_CRYPTOGRAPHY = True
-
 
 display = Display()
 
@@ -914,7 +913,7 @@ class Connection(ConnectionBase):
                 b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
                 # The directory must exist and be writable.
-                makedirs_safe(b_cpdir, 0o700)
+                os.makedirs(b_cpdir, mode=0o700, exist_ok=True)
                 if not os.access(b_cpdir, os.W_OK):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 

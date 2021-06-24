@@ -23,12 +23,14 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ['unfrackpath', 'makedirs_safe', 'basedir']
 
 
 def unfrackpath(path: str, follow: bool = True, basedir: str | None = None) -> str:
     """
     Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
+    Returns an absolute path after resolving environment variables, relative path traversals and symbols (~)
+    and possibly symlinks, depending on options
 
     :arg path: A byte or text string representing a path to be canonicalized
     :arg follow: A boolean to indicate of symlinks should be resolved or not
@@ -70,11 +72,17 @@ def makedirs_safe(path, mode=None):
     chance the parent directory might be world-writable (eg, /tmp) to prevent symlink hijacking and potential
     disclosure or modification of sensitive file contents.
 
+    NOT SAFE security wise, that requires checking all parents and permissions.
+
     :arg path: A byte or text string representing a directory chain to be created
     :kwarg mode: If given, the mode to set the directory to
     :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
     """
+
+    from ansible.utils.display import Display
+    display = Display()
+    display.deprecated("Since we use newer python now, use exist_ok=True in os.makedirs instead", version="2.22")
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)
@@ -89,7 +97,14 @@ def makedirs_safe(path, mode=None):
 
 
 def basedir(source):
-    """ returns directory for inventory or playbook """
+    """
+    returns abs path to deepest directory in given path,
+    unlike other basdedir/dirname functions that might return the 2nd if
+    path given already points to a directory.
+
+    :arg source: Input path to derive basedir from
+    :returns: An absolute path to a directory
+    """
     source = to_bytes(source, errors='surrogate_or_strict')
     dname = None
     if os.path.isdir(source):
@@ -127,7 +142,7 @@ def cleanup_tmp_file(path, warn=False):
                     # Importing here to avoid circular import
                     from ansible.utils.display import Display
                     display = Display()
-                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+                    display.warning(u'Unable to remove temporary file {0}'.format(to_text(e)))
     except Exception:
         pass
 
@@ -135,8 +150,10 @@ def cleanup_tmp_file(path, warn=False):
 def is_subpath(child, parent, real=False):
     """
     Compares paths to check if one is contained in the other
+
     :arg: child: Path to test
     :arg parent; Path to test against
+    :returns: Boolean reflecting the path relationship
      """
     test = False
 

@@ -137,7 +137,6 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
-from ansible.utils.path import makedirs_safe
 
 
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
@@ -255,7 +254,7 @@ def _format_content(password, salt, encrypt=None, ident=None):
 
 def _write_password_file(b_path, content):
     b_pathdir = os.path.dirname(b_path)
-    makedirs_safe(b_pathdir, mode=0o700)
+    os.makedirs(b_pathdir, mode=0o700, exist_ok=True)
 
     with open(b_path, 'wb') as f:
         os.chmod(b_path, 0o600)
@@ -270,7 +269,7 @@ def _get_lock(b_path):
     lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
     if b_path != b'/dev/null':
-        makedirs_safe(b_pathdir, mode=0o700)
+        os.makedirs(b_pathdir, mode=0o700, exist_ok=True)
         with contextlib.suppress(FileExistsError):
             fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
             os.close(fd)
