@@ -137,3 +137,5 @@ if [[ "$(grep -wc "dynamic_host_a" "$CACHEFILE")" -ne "0" ]]; then
 fi
 
 ./vars_plugin_tests.sh
+
+./test_task_resolved_plugin.sh

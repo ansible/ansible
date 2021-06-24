@@ -4,7 +4,7 @@ set -eux
 
 export ANSIBLE_CALLBACKS_ENABLED=display_resolved_action
 
-ansible-playbook unqualified.yml "$@" | tee out.txt
+ansible-playbook test_task_resolved_plugin/unqualified.yml "$@" | tee out.txt
 action_resolution=(
     "legacy_action == legacy_action"
     "legacy_module == legacy_module"
@@ -15,7 +15,7 @@ for result in "${action_resolution[@]}"; do
     grep -q out.txt -e "$result"
 done
 
-ansible-playbook unqualified_and_collections_kw.yml "$@" | tee out.txt
+ansible-playbook test_task_resolved_plugin/unqualified_and_collections_kw.yml "$@" | tee out.txt
 action_resolution=(
     "legacy_action == legacy_action"
     "legacy_module == legacy_module"
@@ -30,7 +30,7 @@ for result in "${action_resolution[@]}"; do
     grep -q out.txt -e "$result"
 done
 
-ansible-playbook fqcn.yml "$@" | tee out.txt
+ansible-playbook test_task_resolved_plugin/fqcn.yml "$@" | tee out.txt
 action_resolution=(
     "ansible.legacy.legacy_action == legacy_action"
     "ansible.legacy.legacy_module == legacy_module"
