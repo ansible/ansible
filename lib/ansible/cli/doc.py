@@ -577,7 +577,7 @@ class DocCLI(CLI, RoleMixin):
                 data[keyword] = kdata
 
             except KeyError as e:
-                display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_native(e)))
+                display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_text(e)))
 
         return data
 
@@ -716,9 +716,23 @@ class DocCLI(CLI, RoleMixin):
             if plugin_type in C.DOCUMENTABLE_PLUGINS:
                 if listing and docs:
                     self.display_plugin_list(docs)
+                elif context.CLIARGS['show_snippet']:
+                    if plugin_type not in SNIPPETS:
+                        raise AnsibleError('Snippets are only available for the following plugin'
+                                           ' types: %s' % ', '.join(SNIPPETS))
+
+                    for plugin, doc_data in docs.items():
+                        try:
+                            textret = DocCLI.format_snippet(plugin, plugin_type, doc_data['doc'])
+                        except ValueError as e:
+                            display.warning("Unable to construct a snippet for"
+                                            " '{0}': {1}".format(plugin, to_text(e)))
+                        else:
+                            text.append(textret)
                 else:
                     # Some changes to how plain text docs are formatted
                     for plugin, doc_data in docs.items():
+
                         textret = DocCLI.format_plugin_doc(plugin, plugin_type,
                                                            doc_data['doc'], doc_data['examples'],
                                                            doc_data['return'], doc_data['metadata'])
@@ -726,11 +740,13 @@ class DocCLI(CLI, RoleMixin):
                             text.append(textret)
                         else:
                             display.warning("No valid documentation was retrieved from '%s'" % plugin)
+
             elif plugin_type == 'role':
                 if context.CLIARGS['list_dir'] and docs:
                     self._display_available_roles(docs)
                 elif docs:
                     self._display_role_doc(docs)
+
             elif docs:
                 text = DocCLI._dump_yaml(docs, '')
 
@@ -825,6 +841,26 @@ class DocCLI(CLI, RoleMixin):
         return {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
 
     @staticmethod
+    def format_snippet(plugin, plugin_type, doc):
+        ''' return heavily commented plugin use to insert into play '''
+        if plugin_type == 'inventory' and doc.get('options', {}).get('plugin'):
+            # these do not take a yaml config that we can write a snippet for
+            raise ValueError('The {0} inventory plugin does not take YAML type config source'
+                             ' that can be used with the "auto" plugin so a snippet cannot be'
+                             ' created.'.format(plugin))
+
+        text = []
+
+        if plugin_type == 'lookup':
+            text = _do_lookup_snippet(doc)
+
+        elif 'options' in doc:
+            text = _do_yaml_snippet(doc)
+
+        text.append('')
+        return "\n".join(text)
+
+    @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
         collection_name = doc['collection']
 
@@ -839,20 +875,11 @@ class DocCLI(CLI, RoleMixin):
         doc['returndocs'] = returndocs
         doc['metadata'] = metadata
 
-        if context.CLIARGS['show_snippet']:
-            if plugin_type not in SNIPPETS:
-                raise AnsibleError("Snippets are only available for the following plugin types: %s" % ', '.join(SNIPPETS))
-            if plugin_type == 'inventory' and doc.get('options') and not doc['options'].get('plugin'):
-                # these are 'configurable' but not intended for yaml type inventory sources, like ini or script
-                # so we cannot use as source for snippets
-                del doc['options']
-            text = DocCLI.get_snippet_text(doc, plugin_type)
-        else:
-            try:
-                text = DocCLI.get_man_text(doc, collection_name, plugin_type)
-            except Exception as e:
-                display.vvv(traceback.format_exc())
-                raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)), orig_exc=e)
+        try:
+            text = DocCLI.get_man_text(doc, collection_name, plugin_type)
+        except Exception as e:
+            display.vvv(traceback.format_exc())
+            raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)), orig_exc=e)
 
         return text
 
@@ -962,21 +989,6 @@ class DocCLI(CLI, RoleMixin):
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
-
-    @staticmethod
-    def get_snippet_text(doc, ptype='module'):
-        ''' return heavily commented plugin use to insert into play '''
-        text = []
-
-        if ptype == 'lookup':
-            _do_lookup_snippet(text, doc)
-        elif 'options' in doc:
-            _do_yaml_snippet(text, doc)
-        elif ptype == 'inventory':
-            display.warning('Snippets are only available to inventory plugins with YAML type sources that can be used with the "auto" plugin.')
-
-        text.append('')
-        return "\n".join(text)
 
     @staticmethod
     def _dump_yaml(struct, indent):
@@ -1286,10 +1298,12 @@ class DocCLI(CLI, RoleMixin):
         return "\n".join(text)
 
 
-def _do_yaml_snippet(text, doc):
+def _do_yaml_snippet(doc):
+    text = []
 
     mdesc = DocCLI.tty_ify(doc['short_description'])
     module = doc.get('module')
+
     if module:
         # this is actually a usable task!
         text.append("- name: %s" % (mdesc))
@@ -1311,7 +1325,7 @@ def _do_yaml_snippet(text, doc):
 
         required = opt.get('required', False)
         if not isinstance(required, bool):
-            raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            raise ValueError("Incorrect value for 'Required', a boolean is needed: %s" % required)
 
         o = '%s:' % o
         if module:
@@ -1326,11 +1340,14 @@ def _do_yaml_snippet(text, doc):
 
             text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
 
+    return text
 
-def _do_lookup_snippet(text, doc):
 
+def _do_lookup_snippet(doc):
+    text = []
     snippet = "lookup('%s', " % doc.get('plugin', doc.get('name'))
     comment = []
+
     for o in sorted(doc['options'].keys()):
 
         opt = doc['options'][o]
@@ -1342,7 +1359,7 @@ def _do_lookup_snippet(text, doc):
 
         required = opt.get('required', False)
         if not isinstance(required, bool):
-            raise("Incorrect value for 'Required', a boolean is needed.: %s" % required)
+            raise ValueError("Incorrect value for 'Required', a boolean is needed: %s" % required)
 
         if required:
             default = '<REQUIRED>'
@@ -1355,7 +1372,10 @@ def _do_lookup_snippet(text, doc):
             snippet += ', %s=%s' % (o, default)
 
     snippet += ")"
+
     if comment:
         text.extend(comment)
         text.append('')
     text.append(snippet)
+
+    return text
