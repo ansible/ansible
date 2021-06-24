@@ -1192,12 +1192,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                             os.makedirs(lookup_path)
                         except FileExistsError:
                             # Multiple workers tried to create the directory concurrently.
-                            # Try again to make sure it exists.
+                            # Check again to make sure it exists. If it still doesn't exist, there is a problem.
                             if not os.path.exists(lookup_path):
-                                try:
-                                    os.makedirs(lookup_path)
-                                except Exception:
-                                    raise
+                                raise
                     display.debug('ANSIBALLZ: Writing module')
                     with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
