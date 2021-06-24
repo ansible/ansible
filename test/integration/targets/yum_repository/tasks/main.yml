@@ -167,7 +167,7 @@
         description: Testing list feature
         baseurl:
           - "{{ yum_repository_test_repo.baseurl }}"
-          - "{{ yum_repository_test_repo.baseurl | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
+          - "{{ yum_repository_test_repo.baseurl ~ 'another_baseurl' }}"
         gpgkey:
           - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
           - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG2-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
@@ -187,13 +187,12 @@
     - name: Assert that lists were properly inserted
       assert:
         that:
-          - url_hostname in repofile
-          - url_hostname2 in repofile
+          - yum_repository_test_repo.baseurl in repofile
+          - another_baseurl in repofile
           - "'RPM-GPG-KEY-EPEL' in repofile"
           - "'RPM-GPG2-KEY-EPEL' in repofile"
           - "'aaa bbb' in repofile"
           - "'ccc ddd' in repofile"
       vars:
         repofile: "{{ slurp.content | b64decode }}"
-        url_hostname: "{{ yum_repository_test_repo.baseurl | urlsplit('hostname') }}"
-        url_hostname2: "{{ url_hostname | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
+        another_baseurl: "{{ yum_repository_test_repo.baseurl ~ 'another_baseurl' }}"
