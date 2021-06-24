@@ -36,6 +36,7 @@ from ansible.parsing.splitter import parse_kv
 
 
 ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
+LIST_MERGE_OPTIONS = ('combine', 'replace', 'keep', 'append', 'prepend', 'append_rp', 'prepend_rp')
 
 _MAXSIZE = 2 ** 32
 cur_id = 0
@@ -100,8 +101,9 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     so that keys from y take precedence over keys from x.
     (x and y aren't modified)
     """
-    if list_merge not in ('replace', 'keep', 'append', 'prepend', 'append_rp', 'prepend_rp'):
-        raise AnsibleError("merge_hash: 'list_merge' argument can only be equal to 'replace', 'keep', 'append', 'prepend', 'append_rp' or 'prepend_rp'")
+    if list_merge not in LIST_MERGE_OPTIONS:
+        raise AnsibleError("merge_hash: 'list_merge' argument can only be equal to '"
+                + "', '".join(LIST_MERGE_OPTIONS[:-1]) + "' or '" + LIST_MERGE_OPTIONS[-1] + "'")
 
     # verify x & y are dicts
     _validate_mutable_mappings(x, y)
@@ -154,7 +156,13 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # "merge" them depending on the `list_merge` argument
         # and move on to the next element of y
         if isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
-            if list_merge == 'replace':
+            if list_merge == 'combine':
+                # treat lists as dictionaries with numeric keys
+                x_hash, y_hash = [dict(enumerate(_list)) for _list in (x_value, y_value)]
+                merged = merge_hash(x_hash, y_hash, recursive, list_merge)
+                # transform back to list
+                x[key] = [merged[i] for i in sorted(merged)]
+            elif list_merge == 'replace':
                 # replace x value by y's one as it has higher priority
                 x[key] = y_value
             elif list_merge == 'append':

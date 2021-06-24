@@ -420,7 +420,7 @@ recursive
   Note: It does **not** depend on the value of the ``hash_behaviour`` setting in ``ansible.cfg``.
 
 list_merge
-  Is a string, its possible values are ``replace`` (default), ``keep``, ``append``, ``prepend``, ``append_rp`` or ``prepend_rp``.
+  Is a string, its possible values are ``combine``, ``replace`` (default), ``keep``, ``append``, ``prepend``, ``append_rp`` or ``prepend_rp``.
   It modifies the behaviour of ``combine`` when the hashes to merge contain arrays/lists.
 
 .. code-block:: yaml
@@ -462,16 +462,27 @@ This would result in::
     b: patch
     c: default
 
-If ``list_merge='replace'`` (the default), arrays from the right hash will "replace" the ones in the left hash::
+If ``list_merge='combine'`` (SHOULD be the default), arrays from the right hash will "combine" with the ones in the left hash in exactly the same way keys in hashes "combine" (i.e. this option essentially treats arrays as hashes with numeric keys)::
 
     default:
       a:
-        - default
+        - default1
+        - default2
     patch:
       a:
         - patch
 
 .. code-block:: jinja
+
+    {{ default | combine(patch, list_merge='combine') }}
+
+This would result in::
+
+    a:
+      - patch
+      - default2
+
+If ``list_merge='replace'`` (the default), arrays from the right hash will "replace" the ones in the left hash::
 
     {{ default | combine(patch) }}
 
@@ -487,7 +498,8 @@ If ``list_merge='keep'``, arrays from the left hash will be kept::
 This would result in::
 
     a:
-      - default
+      - default1
+      - default2
 
 If ``list_merge='append'``, arrays from the right hash will be appended to the ones in the left hash::
 
@@ -496,7 +508,8 @@ If ``list_merge='append'``, arrays from the right hash will be appended to the o
 This would result in::
 
     a:
-      - default
+      - default1
+      - default2
       - patch
 
 If ``list_merge='prepend'``, arrays from the right hash will be prepended to the ones in the left hash::
@@ -507,7 +520,8 @@ This would result in::
 
     a:
       - patch
-      - default
+      - default1
+      - default2
 
 If ``list_merge='append_rp'``, arrays from the right hash will be appended to the ones in the left hash. Elements of arrays in the left hash that are also in the corresponding array of the right hash will be removed ("rp" stands for "remove present"). Duplicate elements that aren't in both hashes are kept::
 
@@ -567,6 +581,7 @@ This would result in::
         - 1
         - 1
         - 2
+        - default_key: default_value
         - 3
     patch:
       a:
@@ -579,7 +594,7 @@ This would result in::
         - 3
         - 4
         - 4
-        - key: value
+        - patch_key: patch_value
 
 .. code-block:: jinja
 
@@ -599,11 +614,32 @@ This would result in::
       - 1
       - 1
       - 2
+      - default_key: default_value
       - 3
       - 4
       - 4
-      - key: value
+      - patch_key: patch_value
 
+The ``list_merge='combine'`` option shows its true strength when combined with ``recusive=True``, as it traverse complex data structures fully, combining both hash keys and array items::
+
+    {{ default | combine(patch, recursive=True, list_merge='combine') }}
+
+This would result in::
+
+    a:
+      a':
+        x: default_value
+        y: patch_value
+        z: patch_value
+        list:
+          - patch_value
+    b:
+      - 3
+      - 4
+      - 4
+      - default_key: default_value
+        patch_key: patch_value
+      - 3
 
 .. _extract_filter:
 

@@ -101,7 +101,16 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["low_value"]
                 }
             },
-            "b": [1, 1, 2, 3]
+            "b": [1, 1, 2, 3, 7],
+            "c": {
+                "c'": [
+                    {
+                        "x'": "low_value",
+                        "y'": "low_value",
+                        "list'": ["first_low_value", "second_low_value"]
+                    }
+                ]
+            }
         },
         "high_prio": {
             "a": {
@@ -111,7 +120,16 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["high_value"]
                 }
             },
-            "b": [3, 4, 4, {"5": "value"}]
+            "b": [3, 4, 4, {"5": "value"}],
+            "c": {
+                "c'": [
+                    {
+                        "y'": "high_value",
+                        "z'": "high_value",
+                        "list'": ["only_high_value"]
+                    }
+                ]
+            }
         }
     }
 
@@ -130,9 +148,20 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["high_value"]
                 }
             },
-            "b": high['b']
+            "b": high['b'],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high), expected)
+
+    def test_merge_hash_non_recursive_and_list_combine(self):
+        low = self.merge_hash_data['low_prio']
+        high = self.merge_hash_data['high_prio']
+        expected = {
+            "a": high['a'],
+            "b": high['b'] + [7],
+            "c": high['c']
+        }
+        self.assertEqual(merge_hash(low, high, False, 'combine'), expected)
 
     def test_merge_hash_non_recursive_and_list_replace(self):
         low = self.merge_hash_data['low_prio']
@@ -145,7 +174,8 @@ class TestVariableUtils(unittest.TestCase):
         high = self.merge_hash_data['high_prio']
         expected = {
             "a": high['a'],
-            "b": low['b']
+            "b": low['b'],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high, False, 'keep'), expected)
 
@@ -154,7 +184,8 @@ class TestVariableUtils(unittest.TestCase):
         high = self.merge_hash_data['high_prio']
         expected = {
             "a": high['a'],
-            "b": low['b'] + high['b']
+            "b": low['b'] + high['b'],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high, False, 'append'), expected)
 
@@ -163,7 +194,8 @@ class TestVariableUtils(unittest.TestCase):
         high = self.merge_hash_data['high_prio']
         expected = {
             "a": high['a'],
-            "b": high['b'] + low['b']
+            "b": high['b'] + low['b'],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high, False, 'prepend'), expected)
 
@@ -172,7 +204,8 @@ class TestVariableUtils(unittest.TestCase):
         high = self.merge_hash_data['high_prio']
         expected = {
             "a": high['a'],
-            "b": [1, 1, 2] + high['b']
+            "b": [1, 1, 2, 7] + high['b'],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high, False, 'append_rp'), expected)
 
@@ -181,9 +214,36 @@ class TestVariableUtils(unittest.TestCase):
         high = self.merge_hash_data['high_prio']
         expected = {
             "a": high['a'],
-            "b": high['b'] + [1, 1, 2]
+            "b": high['b'] + [1, 1, 2, 7],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high, False, 'prepend_rp'), expected)
+
+    def test_merge_hash_recursive_and_list_combine(self):
+        low = self.merge_hash_data['low_prio']
+        high = self.merge_hash_data['high_prio']
+        expected = {
+            "a": {
+                "a'": {
+                    "x": "low_value",
+                    "y": "high_value",
+                    "z": "high_value",
+                    "list": ["high_value"]
+                }
+            },
+            "b": high['b'] + [7],
+            "c": {
+                "c'": [
+                    {
+                        "x'": "low_value",
+                        "y'": "high_value",
+                        "z'": "high_value",
+                        "list'": ["only_high_value", "second_low_value"]
+                    }
+                ]
+            }
+        }
+        self.assertEqual(merge_hash(low, high, True, 'replace'), expected)
 
     def test_merge_hash_recursive_and_list_replace(self):
         low = self.merge_hash_data['low_prio']
@@ -197,7 +257,8 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["high_value"]
                 }
             },
-            "b": high['b']
+            "b": high['b'],
+            "c": high['c']
         }
         self.assertEqual(merge_hash(low, high, True, 'replace'), expected)
 
@@ -213,7 +274,8 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["low_value"]
                 }
             },
-            "b": low['b']
+            "b": low['b'],
+            "c": low['c']
         }
         self.assertEqual(merge_hash(low, high, True, 'keep'), expected)
 
@@ -229,7 +291,10 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["low_value", "high_value"]
                 }
             },
-            "b": low['b'] + high['b']
+            "b": low['b'] + high['b'],
+            "c": {
+                "c'": low['c']["c'"] + high['c']["c'"]
+            }
         }
         self.assertEqual(merge_hash(low, high, True, 'append'), expected)
 
@@ -245,7 +310,10 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["high_value", "low_value"]
                 }
             },
-            "b": high['b'] + low['b']
+            "b": high['b'] + low['b'],
+            "c": {
+                "c'": high['c']["c'"] + low['c']["c'"]
+            }
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend'), expected)
 
@@ -261,7 +329,10 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["low_value", "high_value"]
                 }
             },
-            "b": [1, 1, 2] + high['b']
+            "b": [1, 1, 2, 7] + high['b'],
+            "c": {
+                "c'": low['c']["c'"] + high['c']["c'"]
+            }
         }
         self.assertEqual(merge_hash(low, high, True, 'append_rp'), expected)
 
@@ -277,6 +348,9 @@ class TestVariableUtils(unittest.TestCase):
                     "list": ["high_value", "low_value"]
                 }
             },
-            "b": high['b'] + [1, 1, 2]
+            "b": high['b'] + [1, 1, 2, 7],
+            "c": {
+                "c'": high['c']["c'"] + low['c']["c'"]
+            }
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend_rp'), expected)
