@@ -107,7 +107,11 @@ class PullCLI(CLI):
                                       % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
         self.parser.add_argument('--verify-commit', dest='verify', default=False, action='store_true',
                                  help='verify GPG signature of checked out commit, if it fails abort running the playbook. '
+                                      'By default the signature is verified against any public key in the local GPG keyring. '
+                                      'Alternatively the --gpg-whitelist option can be used to explicitly list trusted keys. '
                                       'This needs the corresponding VCS module to support such an operation')
+        self.parser.add_argument('--gpg-whitelist', dest='gpg_fingerprints', default=None, action='append',
+                                 help='An optional list of GPG fingerprints, designating trusted keys for the --verify-commit option.')
         self.parser.add_argument('--clean', dest='clean', default=False, action='store_true',
                                  help='modified files in the working repository will be discarded')
         self.parser.add_argument('--track-subs', dest='tracksubs', default=False, action='store_true',
@@ -143,6 +147,13 @@ class PullCLI(CLI):
 
         if options.module_name not in self.SUPPORTED_REPO_MODULES:
             raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
+
+        if options.gpg_fingerprints:
+            gpg_fingerprints = set()
+            for fingerprints in options.gpg_fingerprints:
+                for fingerprint in fingerprints.split(u','):
+                    gpg_fingerprints.add(fingerprint.strip())
+            options.gpg_fingerprints = list(gpg_fingerprints)
 
         display.verbosity = options.verbosity
         self.validate_conflicts(options)
@@ -190,6 +201,9 @@ class PullCLI(CLI):
 
             if context.CLIARGS['verify']:
                 repo_opts += ' verify_commit=yes'
+
+            if context.CLIARGS['gpg_fingerprints']:
+                repo_opts += ' gpg_whitelist=%s' % to_native(u','.join(context.CLIARGS['gpg_fingerprints']))
 
             if context.CLIARGS['tracksubs']:
                 repo_opts += ' track_submodules=yes'

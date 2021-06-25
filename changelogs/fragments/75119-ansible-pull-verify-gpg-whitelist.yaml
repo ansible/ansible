@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-pull - add ``--gpg-whitelist`` option to ``ansible-pull --verify-commit`` (https://github.com/ansible/ansible/pull/75119).
