@@ -1,0 +1,2 @@
+bugfixes:
+  - module_common - handle exception when multiple workers try to create the cache directory
