@@ -359,7 +359,7 @@ def enable_linger(module):
         loginctl = module.get_bin_path('loginctl', required=True)
         rc, out, err = module.run_command([loginctl, 'enable-linger', user])
         if rc != 0:
-            module.warn("Unable to force linger (rc=%s): %s" % (rc, err)
+            module.warn("Unable to force linger (rc=%s): %s" % (rc, err))
         enabled = True
 
     return enabled
