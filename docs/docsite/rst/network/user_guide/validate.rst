@@ -56,7 +56,7 @@ The following example fetches the operational state of some network (Cisco NXOS)
 
 This results in the following structured data.
 
-.. code-block:: bash
+.. code-block:: text
 
   ok: [nxos] => {
   "changed": false,
@@ -89,7 +89,7 @@ This example uses the `jsonschema <https://pypi.org/project/jsonschema/>`_ valid
 
 The criteria for ``jsonschema`` in this example is as follows:
 
-.. code-block:: bash
+.. code-block:: text
 
   $cat criteria/nxos_show_interface_admin_criteria.json
   {
@@ -144,7 +144,7 @@ In these tasks, we have:
 
 The tasks output a list of errors indicating interfaces that do not have admin value in ``up`` state.
 
-.. code-block:: bash
+.. code-block:: text
 
   TASK [Validate interface for admin state] ***********************************************************************************************************
   fatal: [nxos02]: FAILED! => {"changed": false, "errors": [{"data_path": "Ethernet2/1.admin_state", "expected": "up", "found": "down", "json_path": "$.Ethernet2/1.admin_state", "message": "'down' does not match 'up'", "relative_schema": {"pattern": "up", "type": "string"}, "schema_path": "patternProperties.^.*.properties.admin_state.pattern", "validator": "pattern"}, {"data_path": "Ethernet2/10.admin_state", "expected": "up", "found": "down", "json_path": "$.Ethernet2/10.admin_state", "message": "'down' does not match 'up'", "relative_schema": {"pattern": "up", "type": "string"}, "schema_path": "patternProperties.^.*.properties.admin_state.pattern", "validator": "pattern"}], "msg": "Validation errors were found.\nAt 'patternProperties.^.*.properties.admin_state.pattern' 'down' does not match 'up'. \nAt 'patternProperties.^.*.properties.admin_state.pattern' 'down' does not match 'up'. \nAt 'patternProperties.^.*.properties.admin_state.pattern' 'down' does not match 'up'. "}
