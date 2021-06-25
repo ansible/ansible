@@ -1,10 +1,10 @@
-.. validate:
+.. _validate_data:
 
 *************************************************
-Validate data with provided criteria with Ansible
+Validate data against set criteria with Ansible
 *************************************************
 
-The :ref:`validate <ansible_collections.ansible.utils.validate>`. Validate data with provided criteria based on the validation engine.
+The :ref:`validate <ansible_collections.ansible.utils.validate_module>` module validates data against your predefined criteria using a validation engine. You can pull this data from a device or file, validate it against your defined criteria, and use the results to identify configuration or operational state drift and optionally take remedial action.
 
 
 .. contents::
@@ -13,258 +13,152 @@ The :ref:`validate <ansible_collections.ansible.utils.validate>`. Validate data 
 Understanding the validate plugin
 ==================================
 
-The `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection version 1.0.0 or later  includes the :ref:`validate <ansible_collections.ansible.utils.validate>` plugin that Validate data with provided criteria based on the validation engine.
+The `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection includes the :ref:`validate <ansible_collections.ansible.utils.validate_module>` module.
 
-Parameters
-==========
+To validate data:
 
-.. raw:: html
+#. Pull in structured data or convert your data to structured format with the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module.
+#. Define the criteria to test that data against.
+#. Select a validation engine and test the data to see if it is valid based on the selected criteria and validation engine.
 
-    <table  border=0 cellpadding=0 class="documentation-table">
-        <tr>
-            <th colspan="1">Parameter</th>
-            <th>Choices/<font color="blue">Defaults</font></th>
-                <th>Configuration</th>
-            <th width="100%">Comments</th>
-        </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="parameter-"></div>
-                    <b>criteria</b>
-                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
-                    <div style="font-size: small">
-                        <span style="color: purple">raw</span>
-                         / <span style="color: red">required</span>
-                    </div>
-                </td>
-                <td>
-                </td>
-                    <td>
-                    </td>
-                <td>
-                        <div>The criteria used for validation of value that represents <em>data</em> options.</div>
-                        <div>This option represents the second argument passed in the lookup plugin For example <code>lookup(config_data, config_criteria, engine=&#x27;ansible.utils.jsonschema&#x27;</code>), in this case the value of <code>config_criteria</code> represents this option.</div>
-                        <div>For the type of <em>criteria</em> that represents this value refer to the documentation of individual validate plugins.</div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="parameter-"></div>
-                    <b>data</b>
-                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
-                    <div style="font-size: small">
-                        <span style="color: purple">raw</span>
-                         / <span style="color: red">required</span>
-                    </div>
-                </td>
-                <td>
-                </td>
-                    <td>
-                    </td>
-                <td>
-                        <div>Data that will be validated against <em>criteria</em>.</div>
-                        <div>This option represents the value that is passed to the lookup plugin as the first argument. For example <code>lookup(config_data, config_criteria, engine=&#x27;ansible.utils.jsonschema&#x27;</code>), in this case <code>config_data</code> represents this option.</div>
-                        <div>For the type of <em>data</em> that represents this value refer to the documentation of individual validate plugins.</div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="parameter-"></div>
-                    <b>engine</b>
-                    <a class="ansibleOptionLink" href="#parameter-" title="Permalink to this option"></a>
-                    <div style="font-size: small">
-                        <span style="color: purple">string</span>
-                    </div>
-                </td>
-                <td>
-                        <b>Default:</b><br/><div style="color: blue">"ansible.utils.jsonschema"</div>
-                </td>
-                    <td>
-                    </td>
-                <td>
-                        <div>The name of the validate plugin to use.</div>
-                        <div>This option can be passed in lookup plugin as a key, value pair. For example <code>lookup(config_data, config_criteria, engine=&#x27;ansible.utils.jsonschema&#x27;</code>), in this case the value <code>ansible.utils.jsonschema</code> represents the engine to be use for data validation. If the value is not provided the default value that is <code>ansible.uitls.jsonschema</code> will be used.</div>
-                        <div>The value should be in fully qualified collection name format that is <code>&lt;org-name&gt;.&lt;collection-name&gt;.&lt;validate-plugin-name&gt;</code>.</div>
-                </td>
-            </tr>
-    </table>
-    <br/>
+The structure of the data and the criteria depends on the validation engine you select. The examples here use the ``jsonschema`` validation engine provided in the `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection.
+
+Structuring the data
+=====================
+
+You can pull previously structured data from a file, or use the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module to structure your data.
+
+The following example fetches the operational state of some network (Cisco NXOS) interfaces and translates that state to structured data using the ``ansible.netcommon.pyats`` parser.
+
+.. code-block:: yaml
+
+  ---
+  - hosts: nxos
+    connection: ansible.netcommon.network_cli
+    gather_facts: false
+    vars:
+      ansible_network_os: cisco.nxos.nxos
+      ansible_user: "changeme"
+      ansible_password: "changeme"
+
+    tasks:
+    - name: "Fetch interface state and parse with pyats"
+      ansible.utils.cli_parse:
+        command: show interface
+        parser:
+          name: ansible.netcommon.pyats
+      register: nxos_pyats_show_interface
+
+    - name: print structured interface state data
+      ansible.builtin.debug:
+        msg: "{{ nxos_pyats_show_interface['parsed'] }}"
+  ----
+
+This results in the following structured data.
+
+.. code-block:: bash
+
+  ok: [nxos] => {
+  "changed": false,
+  "parsed": {
+      "Ethernet2/1": {
+          "admin_state": "down",
+          "auto_mdix": "off",
+          "auto_negotiate": false,
+          "bandwidth": 1000000,
+          "beacon": "off"
+          <--output omitted-->
+      },
+      "Ethernet2/10": {
+          "admin_state": "down",
+          "auto_mdix": "off",
+          "auto_negotiate": false,
+          "bandwidth": 1000000,
+          "beacon": "off",
+          <--output omitted-->
+      }
+    }
+  }
+
+See :ref:`cli_parsing` for details on how to parse semi-structured data into structured data.
+
+Defining the criteria to validate against
+=========================================
+
+This example uses the `jsonschema <https://pypi.org/project/jsonschema/>`_ validation engine to parse the JSON structured data we created in the prior section. the criteria defines the state we want the data to conform to. In this instance, we can validate against a desired admin state of ``up`` for all the interfaces.
+
+The criteria for ``jsonschema`` in this example is as follows:
+
+.. code-block:: bash
+
+  $cat criteria/nxos_show_interface_admin_criteria.json
+  {
+        "type" : "object",
+        "patternProperties": {
+                "^.*": {
+                        "type": "object",
+                        "properties": {
+                                "admin_state": {
+                                        "type": "string",
+                                        "pattern": "up"
+                                }
+                        }
+                }
+        }
+   }
+
+Validating the data
+====================
+
+Now that we have the structured data and the criteria, we can validate this data with the :ref:`validate <ansible_collections.ansible.utils.validate_module>` module.
+
+The following tasks check if the current state of the interfaces match the desired state defined in the criteria file.
+
+.. code-block:: yaml
+
+  - name: Validate interface admin state
+    ansible.utils.validate:
+      data: "{{ nxos_pyats_show_interface['parsed'] }}"
+      criteria:
+        - "{{ lookup('file',  './criteria/nxos_show_interface_admin_criteria.json') | from_json }}"
+      engine: ansible.utils.jsonschema
+    ignore_errors: true
+    register: result
+
+  - name: Print the interface names that do not satisfy the desired state
+    ansible.builtin.debug:
+      msg: "{{ item['data_path'].split('.')[0] }}"
+    loop: "{{ result['errors'] }}"
+    when: "'errors' in result"
 
 
-Notes
-=====
+In these tasks, we have:
+
+#. Set ``data`` to  the structured JSON data from the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module.
+#. Set ``criteria`` to the JSON criteria file we defined.
+#. Set the validate engine to ``jsonschema``.
 
 .. note::
-   - For the type of options *data* and *criteria* refer to the individual validate plugin documentation that is represented in the value of *engine* option.
-   - For additional plugin configuration options refer to the individual validate plugin documentation that is represented by the value of *engine* option.
-   - The plugin configuration option can be either passed as ``key=value`` pairs within filter plugin or environment variables.
-   - The precedence of the *validate* plugin configurable option is the variable passed within filter plugin as ``key=value`` pairs followed by the environment variables.
 
-Examples with Validate lookup plugin
-====================================
+	The value of the criteria option can be a list and should be in a format that is defined by the validation engine used. You need to install the `jsonschema <https://pypi.org/project/jsonschema/>`_ on the control node for this example.
 
-.. code-block:: yaml
+The tasks output a list of errors indicating interfaces that do not have admin value in ``up`` state.
 
-    - name: set facts for data and criteria
-      ansible.builtin.set_fact:
-        data: "{{ lookup('ansible.builtin.file', './validate/data/show_interfaces_iosxr.json')}}"
-        criteria: "{{ lookup('ansible.builtin.file', './validate/criteria/jsonschema/show_interfaces_iosxr.json')}}"
+.. code-block:: bash
 
-    - name: validate data in json format using jsonschema with lookup plugin by passing plugin configuration variable as key/value pairs
-      ansible.builtin.set_fact:
-        data_criteria_checks: "{{ lookup(data, criteria, engine='ansible.utils.jsonschema', draft='draft7') }}"
-
-    - name: validate data in json format using jsonschema with lookup plugin by passing plugin configuration variable as task variable
-      ansible.builtin.set_fact:
-        data_criteria_checks: "{{ lookup('ansible.utils.validate', data, criteria, engine='ansible.utils.jsonschema', draft='draft7') }}"
-      vars:
-        ansible_validate_jsonschema_draft: draft3
+  TASK [Validate interface for admin state] ***********************************************************************************************************
+  fatal: [nxos02]: FAILED! => {"changed": false, "errors": [{"data_path": "Ethernet2/1.admin_state", "expected": "up", "found": "down", "json_path": "$.Ethernet2/1.admin_state", "message": "'down' does not match 'up'", "relative_schema": {"pattern": "up", "type": "string"}, "schema_path": "patternProperties.^.*.properties.admin_state.pattern", "validator": "pattern"}, {"data_path": "Ethernet2/10.admin_state", "expected": "up", "found": "down", "json_path": "$.Ethernet2/10.admin_state", "message": "'down' does not match 'up'", "relative_schema": {"pattern": "up", "type": "string"}, "schema_path": "patternProperties.^.*.properties.admin_state.pattern", "validator": "pattern"}], "msg": "Validation errors were found.\nAt 'patternProperties.^.*.properties.admin_state.pattern' 'down' does not match 'up'. \nAt 'patternProperties.^.*.properties.admin_state.pattern' 'down' does not match 'up'. \nAt 'patternProperties.^.*.properties.admin_state.pattern' 'down' does not match 'up'. "}
+  ...ignoring
 
 
-
-Return Values with validate lookup plugin
-=========================================
-Common return values are documented `here <https://docs.ansible.com/ansible/latest/reference_appendices/common_return_values.html#common-return-values>`_, the following are the fields unique to this lookup:
-
-.. raw:: html
-
-    <table border=0 cellpadding=0 class="documentation-table">
-        <tr>
-            <th colspan="1">Key</th>
-            <th>Returned</th>
-            <th width="100%">Description</th>
-        </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="return-"></div>
-                    <b>_raw</b>
-                    <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
-                    <div style="font-size: small">
-                      <span style="color: purple">-</span>
-                    </div>
-                </td>
-                <td></td>
-                <td>
-                            <div>If data is valid returns empty list.</div>
-                            <div>If data is invalid returns list of errors in data.</div>
-                    <br/>
-                </td>
-            </tr>
-    </table>
-    <br/><br/>
-
-Examples with validate module
-=============================
-
-.. code-block:: yaml
-
-    - name: set facts for data and criteria
-      ansible.builtin.set_fact:
-        data: "{{ lookup('ansible.builtin.file', './validate/data/show_interfaces_iosxr.json')}}"
-        criteria: "{{ lookup('ansible.builtin.file', './validate/criteria/jsonschema/show_interfaces_iosxr.json')}}"
-
-    - name: validate data in with jsonschema engine (by passing task vars as configurable plugin options)
-      ansible.utils.validate:
-        data: "{{ data }}"
-        criteria: "{{ criteria }}"
-        engine: ansible.utils.jsonschema
-      vars:
-        ansible_jsonschema_draft: draft7
+  TASK [Print the interface names that do not satisfy the desired state] ****************************************************************************
+  Monday 14 December 2020  11:05:38 +0530 (0:00:01.661)       0:00:28.676 *******
+  ok: [nxos] => {
+     "msg": "Ethernet2/1"
+  }
+  ok: [nxos] => {
+     "msg": "Ethernet2/10"
+  }
 
 
-
-Return Values with Validate module
-==================================
-Common return values are documented `here <https://docs.ansible.com/ansible/latest/reference_appendices/common_return_values.html#common-return-values>`_, the following are the fields unique to this module:
-
-.. raw:: html
-
-    <table border=0 cellpadding=0 class="documentation-table">
-        <tr>
-            <th colspan="1">Key</th>
-            <th>Returned</th>
-            <th width="100%">Description</th>
-        </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="return-"></div>
-                    <b>errors</b>
-                    <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
-                    <div style="font-size: small">
-                      <span style="color: purple">list</span>
-                       / <span style="color: purple">elements=string</span>
-                    </div>
-                </td>
-                <td>when <em>data</em> value is invalid</td>
-                <td>
-                            <div>The list of errors in <em>data</em> based on the <em>criteria</em>.</div>
-                    <br/>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="return-"></div>
-                    <b>msg</b>
-                    <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
-                    <div style="font-size: small">
-                      <span style="color: purple">string</span>
-                    </div>
-                </td>
-                <td>always</td>
-                <td>
-                            <div>The msg indicates if the <em>data</em> is valid as per the <em>criteria</em>.</div>
-                            <div>In case data is valid return success message <b>all checks passed</b>.</div>
-                            <div>In case data is invalid return error message <b>Validation errors were found</b> along with more information on error is available.</div>
-                    <br/>
-                </td>
-            </tr>
-    </table>
-    <br/><br/>
-
-Examples with validate test plugin
-==================================
-
-.. code-block:: yaml
-
-    - name: set facts for data and criteria
-      ansible.builtin.set_fact:
-        data: "{{ lookup('ansible.builtin.file', './validate/data/show_interfaces_iosxr.json')}}"
-        criteria: "{{ lookup('ansible.builtin.file', './validate/criteria/jsonschema/show_interfaces_iosxr.json')}}"
-
-    - name: validate data in json format using jsonschema with test plugin
-      ansible.builtin.set_fact:
-        is_data_valid: "{{ data is ansible.utils.validate(engine='ansible.utils.jsonschema', criteria=criteria, draft='draft7') }}"
-
-
-
-Return Values with validate test plugin
-========================================
-
-Common return values are documented `here <https://docs.ansible.com/ansible/latest/reference_appendices/common_return_values.html#common-return-values>`_, the following are the fields unique to this test:
-
-.. raw:: html
-
-    <table border=0 cellpadding=0 class="documentation-table">
-        <tr>
-            <th colspan="1">Key</th>
-            <th>Returned</th>
-            <th width="100%">Description</th>
-        </tr>
-            <tr>
-                <td colspan="1">
-                    <div class="ansibleOptionAnchor" id="return-"></div>
-                    <b>_raw</b>
-                    <a class="ansibleOptionLink" href="#return-" title="Permalink to this return value"></a>
-                    <div style="font-size: small">
-                      <span style="color: purple">-</span>
-                    </div>
-                </td>
-                <td></td>
-                <td>
-                            <div>If data is valid return <code>true</code></div>
-                            <div>If data is invalid return <code>false</code></div>
-                    <br/>
-                </td>
-            </tr>
-    </table>
-    <br/><br/>
+This shows Ethernet2/1 and Ethernet2/10 are not in the desired state based on the defined criteria. You can create a report or take further action to remediate this to bring the interfaces to the desired state based on the defined criteria.
