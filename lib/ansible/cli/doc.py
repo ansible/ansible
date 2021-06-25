@@ -422,11 +422,9 @@ class DocCLI(CLI, RoleMixin):
 
         # modifiers
         exclusive = self.parser.add_mutually_exclusive_group()
-        # TODO: warn if not used with -t roles
         exclusive.add_argument("-e", "--entry-point", dest="entry_point",
                                help="Select the entry point for role(s).")
 
-        # TODO: warn with --json as it is incompatible
         exclusive.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                                help='Show playbook snippet for these plugin types: %s' % ', '.join(SNIPPETS))
 
@@ -442,6 +440,13 @@ class DocCLI(CLI, RoleMixin):
         options = super(DocCLI, self).post_process_args(options)
 
         display.verbosity = options.verbosity
+
+        if options.json_format and options.show_snippet:
+            # --snippet and --json are incompatible
+            raise AnsibleOptionsError("Conflicting options used, only one of --snippet or --json can be used at the same time.")
+
+        if options.entry_point is not None and options.type not in ('role',):
+            raise AnsibleOptionsError("Option --entry-point can only be used with --type=role.")
 
         return options
 
