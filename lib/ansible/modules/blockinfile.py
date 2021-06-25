@@ -279,10 +279,11 @@ def main():
         insertafter = 'EOF'
 
     multiline_search = False
-    if insertbefore is not None or (insertafter is not None and insertafter != 'EOF'):
-        regex = re.compile(r'[\$|\^]')
-        if re.match(regex, insertafter) or re.match(regex, insertbefore):
-            multiline_search = True
+    regex = re.compile(r'[\$|\^]')
+    if insertafter is not None and insertafter != 'EOF' and re.match(regex, insertafter):
+        multiline_search = True
+    if insertbefore is not None and re.match(regex, insertbefore):
+        multiline_search = True
 
     flags = re.MULTILINE if multiline_search else 0
     if insertafter not in (None, 'EOF'):
