@@ -407,10 +407,11 @@ def main():
     systemctl = module.get_bin_path('systemctl', True)
 
     xdg = os.getenv('XDG_RUNTIME_DIR')
-    xdg_path = '/run/user/%s' % os.geteuid()
+    euid = os.geteuid()
+    xdg_path = '/run/user/%s' % euid
     lingered = False
     if xdg is None:
-        if not os.path.exists(to_bytes(xdg_path)):
+        if not os.path.exists(to_bytes(xdg_path)) and euid != 0:
             lingered = enable_linger(module)
             if lingered:
                 module.warn("No dbus session found, forcing loginctl to enable linger")
@@ -421,7 +422,7 @@ def main():
             module.warn("Setting missing XDG_RUNTIME_DIR to %s" % to_text(xdg_path))
     elif not os.path.exists(to_bytes(xdg)):
         msg = "Existing XDG_RUNTIME_DIR (%s) pointed at non existing/accessible path, " % to_text(xdg)
-        if not os.path_exists(to_bytes(xdg_path)):
+        if not os.path_exists(to_bytes(xdg_path)) and euid != 0:
             lingered = enable_linger(module)
             if lingered:
                 module.warn(msg + "forcing loginctl to enable linger")
