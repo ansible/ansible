@@ -359,7 +359,7 @@ def enable_linger(module):
         loginctl = module.get_bin_path('loginctl', required=True)
         rc, out, err = module.run_command([loginctl, 'enable-linger', user])
         if rc != 0:
-            module.fail_json(msg="Cannot continue, no dbus session available and failed to create one", stdout=out, stderr=err, rc=rc)
+            module.warn("Unable to force linger (rc=%s): %s" % (rc, err)
         enabled = True
 
     return enabled
@@ -370,7 +370,7 @@ def disable_linger(module):
     loginctl = module.get_bin_path('loginctl')
     rc, out, err = module.run_command([loginctl, 'disable-linger', getpass.getuser()])
     if rc != 0:
-        module.warning("Failed to disable session lingerng rc=%s: %s" % (rc, err))
+        module.warn("Failed to disable session lingerng (rc=%s): %s" % (rc, err))
 
 
 # ===========================================
