@@ -35,13 +35,15 @@ If you are looking to add local functionality to Ansible, you might wonder wheth
 
 Adding a module locally
 =======================
-Ansible automatically loads all executable files found in certain directories as modules.
+
+Ansible automatically loads all executable files from certain directories adjacent to your playbook or role as modules. If you want to store custom modules in other directories, you can configure Ansible to load modules from those directories also.
 
 For local modules, use the name of the file as the module name: for example, if the module file is ``~/.ansible/plugins/modules/local_users.py``, use ``local_users`` as the module name.
 
 To load your local modules automatically and make them available to all playbooks and roles, add them in any of these locations:
 
 * any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)
+????? TODO are these two locations merely the defaults for the ANSIBLE_LIBRARY config setting?
 * ``~/.ansible/plugins/modules/``
 * ``/usr/share/ansible/plugins/modules/``
 
@@ -69,7 +71,8 @@ You can limit the availability of your local module. If you want to use a local 
 
 Adding a plugin locally
 =======================
-Ansible loads plugins automatically too, and loads each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
+
+Ansible automatically loads all plugins from certain directories adjacent to your playbook or role, loading each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
 
     * action_plugins*
     * cache_plugins
@@ -82,6 +85,8 @@ Ansible loads plugins automatically too, and loads each type of plugin separatel
     * strategy_plugins
     * test_plugins*
     * vars_plugins
+
+If you want to store custom plugins in different directories, you can configure Ansible to load plugins from those directories also.
 
 .. note::
 
