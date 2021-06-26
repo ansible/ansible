@@ -766,6 +766,9 @@ class VaultLib:
             which were read from the vault map file
         '''
 
+        if vault_map_file_path == None:
+            return []
+
         vault_map_file_path = os.path.realpath(os.path.expanduser(vault_map_file_path))
 
         if not os.path.exists(vault_map_file_path):
