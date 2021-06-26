@@ -179,6 +179,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         #
         # the criteria to be a vault map file are...
         #
+        # - the slug must contain both an id and a value
+        #
         # - the existence of a file with the path vault_id_value
         #
         # - at least one other secret using the path vault_id_value
@@ -188,6 +190,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         vault_map_files = []
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
+            if vault_id_name is None:
+                continue
             if os.path.isfile(vault_id_value):
                 possible_vault_map_files.add(vault_id_value)
 
