@@ -50,8 +50,8 @@ options:
     - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
-    - If multiline regex flags (^|$) are specified in the regular expression, a multiline search will be executed by searching the whole file
-      instead of searching per line.
+    - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
+      This behaviour was added in ansible-core 2.12.
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -60,8 +60,8 @@ options:
     - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
-    - If multiline regex flags (^|$) are specified in the regular expression, a multiline search will be executed by searching the whole file
-      instead of searching per line.
+    - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
+      This behaviour was added in ansible-core 2.12.
     type: str
     choices: [ BOF, '*regex*' ]
   create:
@@ -167,7 +167,7 @@ EXAMPLES = r'''
   blockinfile:
     path: listener.ora
     block: "{{ listener_line | indent(width=8, first=True) }}"
-    insertafter: '^SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
 '''
@@ -278,18 +278,10 @@ def main():
     if insertbefore is None and insertafter is None:
         insertafter = 'EOF'
 
-    multiline_search = False
-    regex = re.compile(r'[\$|\^]')
-    if insertafter is not None and insertafter != 'EOF' and re.match(regex, insertafter):
-        multiline_search = True
-    if insertbefore is not None and re.match(regex, insertbefore):
-        multiline_search = True
-
-    flags = re.MULTILINE if multiline_search else 0
     if insertafter not in (None, 'EOF'):
-        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'), flags=flags)
+        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
     elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'), flags=flags)
+        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
     else:
         insertre = None
 
@@ -312,8 +304,8 @@ def main():
     if None in (n0, n1):
         n0 = None
         if insertre is not None:
-            if multiline_search:
-                match = re.search(insertre, original)
+            if insertre.flags & re.MULTILINE:
+                match = insertre.search(original)
                 if match:
                     if insertafter:
                         n0 = original.decode().count('\n', 0, match.end())

@@ -36,24 +36,24 @@
   blockinfile:
     path: "{{ output_dir }}/listener.ora"
     block: "{{ listener_line }}"
-    insertafter: '^SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
-    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 1-->"
   register: multiline_search1
 
 - name: Add block using multiline_search enabled again
   blockinfile:
     path: "{{ output_dir }}/listener.ora"
     block: "{{ listener_line }}"
-    insertafter: '^SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
-    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 1-->"
   register: multiline_search2
 
-- name: Try to add block using without multiline_search==True but with multiline search string
+- name: Try to add block using without multiline flag in regex should add block add end of file
   blockinfile:
     path: "{{ output_dir }}/listener.ora"
     block: "{{ listener_line }}"
-    insertafter: '^SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
-    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+    insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 2-->"
   register: multiline_search3
 
 - name: Stat the listener.ora file
@@ -66,5 +66,5 @@
     that:
       - multiline_search1 is changed
       - multiline_search2 is not changed
-      - multiline_search3 is not changed
-      - listener_ora_file.stat.checksum == 'd5445ede440fe42b060a03d488421095f1e4eda9'
+      - multiline_search3 is changed
+      - listener_ora_file.stat.checksum == '5a8010ac4a2fad7c822e6aeb276931657cee75c0'
