@@ -113,17 +113,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         return ret
 
     @staticmethod
-    def split_vault_map(vault_map):
-        # return (before_@, after_@)
-        # if no @, return None
-        if '@' not in vault_map:
-            return (None, None)
-
-        parts = vault_map.split('@', 1)
-        ret = tuple(parts)
-        return ret
-
-    @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
@@ -151,7 +140,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     # TODO: remove the now unused args
     @staticmethod
-    def setup_vault_secrets(loader, vault_ids, vault_map_files=None, vault_password_files=None,
+    def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
                             auto_prompt=True):
         # list of tuples
@@ -186,8 +175,94 @@ class CLI(with_metaclass(ABCMeta, object)):
                                         create_new_password,
                                         auto_prompt=auto_prompt)
 
+        # generate a set of possible vault map files
+        #
+        # the criteria to be a vault map file are...
+        #
+        # - the existence of a file with the path vault_id_value
+        #
+        # - at least one other secret using the path vault_id_value
+        #   as its secret
+
+        possible_vault_map_files = set()
+        vault_map_files = []
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
+            if os.path.isfile(vault_id_value):
+                possible_vault_map_files.add(vault_id_value)
+
+        # generate vault map slugs which will be loaded before
+        # any other slugs not being vault map slugs
+
+        vault_map_slugs = [vis for vis in vault_ids if len([v for v in possible_vault_map_files if vis.startswith(v)])]
+
+        # generate a list of vault map files which
+        vault_map_files = [CLI.split_vault_id(vms)[0] for vms in vault_map_slugs]
+
+        for vault_map_slug in vault_map_slugs:
+            vault_map_file, vault_map_value = CLI.split_vault_id(vault_map_slug)
+            if vault_map_value in ['prompt', 'prompt_ask_vault_pass']:
+
+                # choose the prompt based on --vault-id=prompt or --ask-vault-pass. --ask-vault-pass
+                # always gets the old format for Tower compatibility.
+                # ie, we used --ask-vault-pass, so we need to use the old vault password prompt
+                # format since Tower needs to match on that format.
+                prompted_vault_secret = PromptVaultSecret(prompt_formats=prompt_formats[vault_map_value],
+                                                          vault_id=vault_map_file)
+
+                # a empty or invalid password from the prompt will warn and continue to the next
+                # without erroring globally
+                try:
+                    prompted_vault_secret.load()
+                except AnsibleError as exc:
+                    display.warning('Error in vault password prompt (%s): %s' % (vault_map_file, exc))
+                    raise
+
+                vault_secrets.extend(
+                    loader._vault.load_map_file(
+                        loader=loader,
+                        vault_map_file_path=vault_map_file,
+                        vault_map_file_secret=prompted_vault_secret
+                    )
+                )
+
+                loader.set_vault_secrets(vault_secrets)
+
+                continue
+
+            # assuming anything else is a password file
+            display.vvvvv('Reading vault password file: %s' % vault_map_value)
+            # read vault_pass from a file
+            file_vault_secret = get_file_vault_secret(filename=vault_map_value,
+                                                      vault_id=vault_map_file,
+                                                      loader=loader)
+
+            # an invalid password file will error globally
+            try:
+                file_vault_secret.load()
+            except AnsibleError as exc:
+                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, to_text(exc)))
+                raise
+
+            vault_secrets.extend(
+                loader._vault.load_map_file(
+                    loader=loader,
+                    vault_map_file_path=vault_map_file,
+                    vault_map_file_secret=file_vault_secret
+                )
+            )
+
+            loader.set_vault_secrets(vault_secrets)
+
+        for vault_id_slug in vault_ids:
+
+            # if the secret was already loaded as a vault map file
+            # there's no need to load it again
+            if vault_id_slug in vault_map_slugs:
+                continue
+
+            vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
+
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 
                 # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
@@ -216,6 +291,9 @@ class CLI(with_metaclass(ABCMeta, object)):
                 loader.set_vault_secrets(vault_secrets)
                 continue
 
+            if vault_id_value in vault_map_files:
+                continue
+
             # assuming anything else is a password file
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
@@ -237,60 +315,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
-
-        vault_map_files = vault_map_files or []
-        for vault_map_slug in vault_map_files:
-
-            vault_map_file_path, vault_map_value = CLI.split_vault_map(vault_map_slug)
-
-            # error globally if the vault map definition passed via the CLI args is invalid
-
-            if vault_map_file_path is None:
-                raise AnsibleError(u'Invalid vault map definition. Expected [vault-map-file]@[prompt|file] but got "%s"' %
-                                   vault_map_slug)
-
-            vault_map_file_path = unfrackpath(vault_map_file_path)
-            if vault_map_value in ['prompt', 'prompt_ask_vault_pass']:
-                prompted_vault_secret = PromptVaultSecret(
-                    prompt_formats=prompt_formats[vault_map_value],
-                    vault_id=vault_map_file_path
-                )
-
-                # an empty or invalid password from the prompt will error globally
-
-                try:
-                    prompted_vault_secret.load()
-                except AnsibleError as exc:
-                    raise AnsibleError('Error in vault password prompt (%s): %s' % (vault_map_file_path, exc))
-
-                vault_secrets.extend(
-                    loader.load_vault_map_file_secrets(
-                        vault_map_file_path=vault_map_file_path,
-                        vault_map_file_secret=prompted_vault_secret
-                    )
-                )
-                continue
-
-            display.vvvvv('Reading vault password file: %s' % vault_map_value)
-            file_vault_secret = get_file_vault_secret(filename=vault_map_value,
-                                                      loader=loader)
-
-            # error globally when loading the secret from the file fails
-
-            try:
-                file_vault_secret.load()
-            except AnsibleError as exc:
-                raise AnsibleError('Error in vault password file loading (%s): %s' % (vault_map_file_path, to_text(exc)))
-
-            # extend the existing secrets with the secrets parsed from the
-            # vault map file. a separate secret will be added for every vault id
-
-            vault_secrets.extend(
-                loader.load_vault_map_file_secrets(
-                    vault_map_file_path=vault_map_file_path,
-                    vault_map_file_secret=file_vault_secret
-                )
-            )
 
         return vault_secrets
 
@@ -526,7 +550,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         vault_secrets = CLI.setup_vault_secrets(loader,
                                                 vault_ids=vault_ids,
-                                                vault_map_files=options['vault_map_files'],
                                                 vault_password_files=list(options['vault_password_files']),
                                                 ask_vault_pass=options['ask_vault_pass'],
                                                 auto_prompt=False)
