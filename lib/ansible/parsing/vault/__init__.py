@@ -753,20 +753,23 @@ class VaultLib:
 
         return b_plaintext, vault_id_used, vault_secret_used
 
-    def load_map_file(self, data_loader, vault_map_file_path, vault_map_file_secret):
+    def load_map_file(self, loader, vault_map_file_path, vault_map_file_secret):
 
         '''Load and decrypt a vault map file.
-
-        :arg data_loader: the DataLoader instance this method was called from.
+        :arg loader: the Loader instance to use.
             It is used to interpret the loaded data as JSON/YAML.
         :arg vault_map_file_path: the filename of the vault map file to decrypt.
             This specifies which file should be decrypted
         :arg vault_map_file_secret: the secret (a tuple of the vault_map_file_path and a
             suitable Secret to decrypt it) to decrypt the file with
-
         :returns: a list of secrets (tuples) structured like (vault_id, vault_secret)
             which were read from the vault map file
         '''
+
+        vault_map_file_path = os.path.realpath(os.path.expanduser(vault_map_file_path))
+
+        if not os.path.exists(vault_map_file_path):
+            raise AnsibleError("The vault map file %s was not found" % vault_map_file_path)
 
         try:
             with open(vault_map_file_path, 'rb') as f:
@@ -776,17 +779,16 @@ class VaultLib:
                                (vault_map_file_path, e))
 
         return self.decrypt_map_file_content(
-            data_loader=data_loader,
+            loader=loader,
             vault_map_file_path=vault_map_file_path,
             vault_map_file_secret=vault_map_file_secret,
             vault_map_vaulttext=vault_map_ciphertext
         )
 
-    def decrypt_map_file_content(self, data_loader, vault_map_file_path, vault_map_file_secret, vault_map_vaulttext):
+    def decrypt_map_file_content(self, loader, vault_map_file_path, vault_map_file_secret, vault_map_vaulttext):
 
         '''Decrypt a vault map file.
-
-        :arg data_loader: the DataLoader instance this method was called from.
+        :arg loader: the Loader instance to use.
             It is used to interpret the loaded data as JSON/YAML.
         :arg vault_map_file_path: the filename of the vault map file to decrypt.
             This specifies which file should be decrypted. It is only used for
@@ -801,7 +803,8 @@ class VaultLib:
         b_vaulttext = to_bytes(vault_map_vaulttext, errors='strict', encoding='utf-8')
 
         if not is_encrypted(b_vaulttext):
-            raise AnsibleError(u'input is not vault encrypted data. %s is not a vault encrypted file' % vault_map_file_path)
+            msg = 'input is not vault encrypted data. %s is not a vault encrypted file' % vault_map_file_path
+            raise AnsibleError(msg)
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
                                                                              filename=vault_map_file_path)
@@ -820,9 +823,9 @@ class VaultLib:
                          (to_text(vault_map_file_secret), vault_map_file_path))
             b_plaintext = this_cipher.decrypt(b_vaulttext, vault_map_file_secret)
         except AnsibleVaultFormatError as exc:
-            display.warning(
-                u'There was a vault format error in %s: %s' % (vault_map_file_path, to_text(exc)),
-                formatted=True)
+            exc.obj = obj
+            msg = u'There was a vault format error in %s: %s' % (vault_map_file_path, to_text(exc))
+            display.warning(msg, formatted=True)
             raise
         except AnsibleError as e:
             display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
@@ -837,13 +840,12 @@ class VaultLib:
             (vault_map_file_path, to_text(vault_map_file_secret))
         )
 
-        vault_map = data_loader.load(
+        vault_map = loader.load(
             data=b_plaintext,
             file_name=vault_map_file_path,
             json_only=False if HAS_YAML else True
         )
-
-        if not hasattr(vault_map, 'keys'):  # ensure the vault map is a dictionary
+        if not hasattr(vault_map, 'keys'): # ensure the vault map is a dictionary
             raise AnsibleError(
                 u'Vault map file "%s" contains no valid JSON or YAML array.' % vault_map_file_path
             )
@@ -865,7 +867,7 @@ class VaultLib:
             vault_secret = VaultSecret(_bytes=vault_password.encode('utf-8'))
 
             display.display(
-                u'Imported password for vault "%s" from vault map file "%s"' %
+                u'Vault password (%s) was imported from vault map file "%s".' %
                 (vault_id, vault_map_file_path)
             )
             display.vvvvv(
