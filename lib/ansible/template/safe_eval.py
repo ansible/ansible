@@ -47,6 +47,10 @@ _OUR_GLOBALS = {
 
     # Callables
     'AnsibleUndefined': ansible_undefined,
+
+    # Example for calling staticmethod/classmethod
+    # 'Foo': Foo,
+    # 'Foo.bar': Foo.bar,
 }
 
 if PY2:
@@ -79,6 +83,7 @@ for _name in ('Set', 'NameConstant', 'Constant', 'Str', 'Num'):
 # visitor class defined below.
 _SAFE_NODES = frozenset(
     (
+        ast.Attribute,
         ast.Call,
         ast.Dict,
         ast.Expression,
@@ -102,7 +107,7 @@ class CleansingNodeVisitor(ast.NodeVisitor):
 
     def __init__(self, expr):
         self._expr = expr
-        self._inside_call = False
+        self._is_call = False
 
     def generic_visit(self, node):
         if type(node) not in _SAFE_NODES:
@@ -110,29 +115,30 @@ class CleansingNodeVisitor(ast.NodeVisitor):
         super(CleansingNodeVisitor, self).generic_visit(node)
 
     def visit_Attribute(self, node):
-        # ast.Attribute isn't in _SAFE_NODES, so this will never be called
-        # added just for safety, and reference if we ever allow it
-        if self._inside_call:
+        if isinstance(node.value, ast.Name):
+            name = '{0}.{1}'.format(node.value.id, node.attr)
+        else:
+            raise Exception("invalid object: %s" % node.value.__class__.__name__)
+        if self._is_call and name not in _CALL_ENABLED:
             # Disallow calls to any attribute
-            raise Exception("invalid function: %s" % node.attr)
+            raise Exception("invalid function: %s" % name)
+        if self._is_call:
+            self._is_call = False
         self.generic_visit(node)
 
     def visit_Name(self, node):
-        if self._inside_call and node.id not in _CALL_ENABLED:
+        if self._is_call and node.id not in _CALL_ENABLED:
             # Disallow calls to functions that we have not vetted
             # as safe.  Other functions are excluded by setting locals in
             # the call to eval() later on
             raise Exception("invalid function: %s" % node.id)
-        if self._inside_call:
-            self._inside_call = False
+        if self._is_call:
+            self._is_call = False
         self.generic_visit(node)
 
     def visit_Call(self, node):
-        try:
-            self._inside_call = True
-            self.generic_visit(node)
-        finally:
-            self._inside_call = False
+        self._is_call = True
+        self.generic_visit(node)
 
 
 def safe_eval(expr, locals=None, include_exceptions=False):
