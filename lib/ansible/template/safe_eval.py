@@ -120,7 +120,9 @@ class CleansingNodeVisitor(ast.NodeVisitor):
         else:
             raise Exception("invalid object: %s" % node.value.__class__.__name__)
         if self._is_call and name not in _CALL_ENABLED:
-            # Disallow calls to any attribute
+            # Disallow calls to functions that we have not vetted
+            # as safe.  Other functions are excluded by setting locals in
+            # the call to eval() later on
             raise Exception("invalid function: %s" % name)
         if self._is_call:
             self._is_call = False
