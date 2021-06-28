@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Make sure var is loaded
+      assert:
+        that:
+          - my is defined
+          - my == 'var'
+
+    - name: Reload inventory, forces extra vars re-eval from diff basedir
+      meta: refresh_inventory
