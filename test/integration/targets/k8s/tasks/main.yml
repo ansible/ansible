@@ -17,6 +17,8 @@
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - include_tasks: validate_not_installed.yml
   vars:
@@ -37,6 +39,8 @@
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - include_tasks: validate_installed.yml
   vars:
@@ -58,6 +62,8 @@
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - include_tasks: older_openshift_fail.yml
   vars:
@@ -80,6 +86,8 @@
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - include_tasks: basic_validation.yml
 
@@ -96,6 +104,8 @@
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - include_tasks: basic_validation.yml
 
@@ -113,6 +123,8 @@
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - include_tasks: full_test.yml
   vars:
