@@ -169,12 +169,13 @@ class Host:
             self.vars = None
         self._vars.maps.insert(0, value)
 
-    @property
-    def vars(self):
+    def _get_vars(self):
         if self.vars is not None:
             return self.vars
         else:
             return self._flatten_vars()
+
+    vars = property(_get_vars, _set_vars)
 
     def _flatten_vars(self, permanent=False):
 
