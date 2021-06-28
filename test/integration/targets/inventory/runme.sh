@@ -89,7 +89,8 @@ fi
 # ensure we don't traceback on inventory due to variables with int as key
 ansible-inventory  -i inv_with_int.yml --list "$@"
 
+# test in subshell relative paths work mid play for extra vars in inventory refresh
 {
- cd 1/2
- ansible-playbook -e @../vars.yaml -i inventory.yaml 3/playbook.yaml "$@"
+	cd 1/2
+	ansible-playbook -e @../vars.yml -i inventory.yml 3/extra_vars_relative.yml "$@"
 }
