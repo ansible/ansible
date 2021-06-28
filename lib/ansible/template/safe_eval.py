@@ -123,6 +123,8 @@ class CleansingNodeVisitor(ast.NodeVisitor):
             # as safe.  Other functions are excluded by setting locals in
             # the call to eval() later on
             raise Exception("invalid function: %s" % node.id)
+        if self._inside_call:
+            self._inside_call = False
         self.generic_visit(node)
 
     def visit_Call(self, node):
