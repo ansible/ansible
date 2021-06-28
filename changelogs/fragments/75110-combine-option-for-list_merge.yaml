@@ -1,4 +1,3 @@
-
 minor_changes:
   - >
     list_merge@combine/merge_hash - ``lib.ansible.utils.vars.merge_hash`` now accepts a `combine` opiton for its `list_merge` parameters, which treats lists as hashes with numeric keys.
