@@ -462,7 +462,7 @@ This would result in::
     b: patch
     c: default
 
-If ``list_merge='combine'`` (SHOULD be the default), arrays from the right hash will "combine" with the ones in the left hash in exactly the same way keys in hashes "combine" (i.e. this option essentially treats arrays as hashes with numeric keys)::
+If ``list_merge='combine'`` (not the default), arrays from the right hash will "combine" with the ones in the left hash in exactly the same way keys in hashes "combine" (i.e. this option essentially treats arrays as hashes with numeric keys)::
 
     default:
       a:
