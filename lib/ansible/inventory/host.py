@@ -147,7 +147,7 @@ class Host:
     def set_variable(self, key, value, source=None):
         # clear cache
         self.vars = None
-        self._vars.maps.insert(0,{key: value})
+        self._vars.maps.insert(0, {key: value})
 
     def get_groups(self):
         return self.groups
