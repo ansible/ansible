@@ -30,6 +30,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -42,6 +43,18 @@ from ansible.utils.vars import merge_hash
 display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+
+def from_json(data, *args, **kwargs):
+
+    filtered = kwargs.pop('filtered', None)
+    if filtered:
+        try:
+            data, warnings = _filter_non_json_lines(data, objects_only=True)
+        except ValueError as e:
+            display.warning("from_json - Unable to filter input: %s" % to_text(e))
+
+    return json.loads(data, *args, **kwargs)
 
 
 def to_yaml(a, *args, **kw):
@@ -578,7 +591,7 @@ class FilterModule(object):
             # json
             'to_json': to_json,
             'to_nice_json': to_nice_json,
-            'from_json': json.loads,
+            'from_json': from_json,
 
             # yaml
             'to_yaml': to_yaml,
