@@ -88,3 +88,8 @@ fi
 
 # ensure we don't traceback on inventory due to variables with int as key
 ansible-inventory  -i inv_with_int.yml --list "$@"
+
+{
+ cd 1/2
+ ansible-playbook -e @../vars.yaml -i inventory.yaml 3/playbook.yaml "$@"
+}

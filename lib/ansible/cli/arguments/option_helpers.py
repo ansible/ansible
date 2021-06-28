@@ -103,7 +103,7 @@ def unfrack_path(pathsep=False):
 def maybe_unfrack_path(beacon, pathsep=False):
 
     def inner(value):
-        if value.startswith(beacon)
+        if value.startswith(beacon):
             return beacon + unfrackpath(value[1:], pathsep=pathsep)
         else:
             return value
