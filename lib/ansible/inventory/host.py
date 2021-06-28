@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import ChainMap
+
 from ansible.inventory.group import Group
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.utils.vars import combine_vars, get_unique_id
@@ -61,7 +63,7 @@ class Host:
 
         return dict(
             name=self.name,
-            vars=self.vars.copy(),
+            _vars=self._flatten_vars(),
             address=self.address,
             uuid=self._uuid,
             groups=groups,
@@ -72,7 +74,7 @@ class Host:
         self.__init__(gen_uuid=False)
 
         self.name = data.get('name')
-        self.vars = data.get('vars', dict())
+        self._vars = ChainMap(data.get('vars', dict()))
         self.address = data.get('address', '')
         self._uuid = data.get('uuid', None)
         self.implicit = data.get('implicit', False)
@@ -85,7 +87,8 @@ class Host:
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
-        self.vars = {}
+        self.vars = None
+        self._vars = ChainMap()
         self.groups = []
         self._uuid = None
 
@@ -142,10 +145,9 @@ class Host:
         return removed
 
     def set_variable(self, key, value):
-        if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
-            self.vars = combine_vars(self.vars, {key: value})
-        else:
-            self.vars[key] = value
+        # clear cache
+        self.vars = None
+        self._vars.maps.insert(0,{key: value})
 
     def get_groups(self):
         return self.groups
@@ -159,4 +161,30 @@ class Host:
         return results
 
     def get_vars(self):
-        return combine_vars(self.vars, self.get_magic_vars())
+        return combine_vars(self._flatten_vars, self.get_magic_vars())
+
+    @vars.setter
+    def _set_vars(self, value):
+        if self.vars and not self._vars.maps:
+            self._vars.maps.append(self.vars)
+            self.vars = None
+        self._vars.maps.insert(0, value)
+
+    @property
+    def vars(self):
+        if self.vars is not None:
+            return self.vars
+        else:
+            return self._flatten_vars()
+
+    def _flatten_vars(self, permanent=False):
+
+        flat = {}
+        for m in reversed(self.vars.maps):
+            flat = combine_vars(flat, m)
+
+        if permanent:
+            self._vars.maps = []
+            self.vars = flat
+
+        return flat
