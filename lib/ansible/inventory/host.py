@@ -144,7 +144,7 @@ class Host:
                         self.remove_group(oldg)
         return removed
 
-    def set_variable(self, key, value):
+    def set_variable(self, key, value, source=None):
         # clear cache
         self.vars = None
         self._vars.maps.insert(0,{key: value})
@@ -163,7 +163,6 @@ class Host:
     def get_vars(self):
         return combine_vars(self._flatten_vars, self.get_magic_vars())
 
-    @vars.setter
     def _set_vars(self, value):
         if self.vars and not self._vars.maps:
             self._vars.maps.append(self.vars)
