@@ -87,7 +87,7 @@ class Host:
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
-        self.vars = None
+        self._flat_vars = None
         self._vars = ChainMap()
         self.groups = []
         self._uuid = None
@@ -146,7 +146,7 @@ class Host:
 
     def set_variable(self, key, value, source=None):
         # clear cache
-        self.vars = None
+        self._flat_vars = None
         self._vars.maps.insert(0, {key: value})
 
     def get_groups(self):
@@ -164,14 +164,14 @@ class Host:
         return combine_vars(self._flatten_vars, self.get_magic_vars())
 
     def _set_vars(self, value):
-        if self.vars and not self._vars.maps:
-            self._vars.maps.append(self.vars)
-            self.vars = None
+        if self._flat_vars and not self._vars.maps:
+            self._vars.maps.append(self._flat_vars)
+            self._flat_vars = None
         self._vars.maps.insert(0, value)
 
     def _get_vars(self):
-        if self.vars is not None:
-            return self.vars
+        if self._flat_vars is not None:
+            return self._flat_vars
         else:
             return self._flatten_vars()
 
@@ -180,11 +180,11 @@ class Host:
     def _flatten_vars(self, permanent=False):
 
         flat = {}
-        for m in reversed(self.vars.maps):
+        for m in reversed(self._flat_vars.maps):
             flat = combine_vars(flat, m)
 
         if permanent:
             self._vars.maps = []
-            self.vars = flat
+            self._flat_vars = flat
 
         return flat
