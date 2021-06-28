@@ -21,11 +21,19 @@ __metaclass__ = type
 import ast
 import copy
 
+from jinja2 import StrictUndefined, UndefinedError
+
 from ansible.module_utils.common.text.converters import container_to_text, to_native
 from ansible.module_utils.six import PY2, string_types
 from ansible.utils.display import Display
 
 display = Display()
+
+
+def ansible_undefined(*args, **kwargs):
+    """Short circuit to raise undefined when evaling ``AnsibleUndefined``"""
+    bool(StrictUndefined(*args, **kwargs))
+
 
 # Define globals that we understand and can convert to a Python type
 # or are used to limit functionality
@@ -36,6 +44,9 @@ _OUR_GLOBALS = {
     'false': False,
     'null': None,
     'true': True,
+
+    # Callables
+    'AnsibleUndefined': ansible_undefined,
 }
 
 if PY2:
@@ -174,6 +185,8 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         if include_exceptions:
             return (expr, None)
         return expr
+    except UndefinedError:
+        raise
     except Exception as e:
         display.warning('Unable to safely evaluate %r: %s' % (expr, e))
         if include_exceptions:

@@ -325,7 +325,11 @@ class AnsibleUndefined(StrictUndefined):
         return self
 
     def __repr__(self):
-        return 'AnsibleUndefined'
+        return 'AnsibleUndefined(hint={0!r}, obj={1!r}, name={2!r})'.format(
+            self._undefined_hint,
+            self._undefined_obj,
+            self._undefined_name
+        )
 
     def __contains__(self, item):
         # Return original Undefined object to preserve the first failure context
