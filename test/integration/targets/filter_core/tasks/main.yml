@@ -629,3 +629,39 @@
     splitty:
       - "1,2,3"
       - "4,5,6"
+
+
+- name: from_json tests
+  block:
+    - name: bad json fails
+      debug: msg={{unfiltered}}
+      register: badstuff
+      ignore_errors: True
+
+    - name: bad json fails, unfiltered
+      debug: msg={{filtered}}
+
+    - assert:
+        that:
+          - clean['json'] == "really"
+          - badstuff is failed
+          - "'json.decoder.JSONDecodeError' in badstuff['msg']"
+          - filtered['json'] == "really"
+          - clean == filtered
+  vars:
+    clean: '{{ clean_src|from_json }}'
+    filtered: '{{ junk_src|from_json(filtered=True) }}'
+    unfiltered: '{{ junk_src|from_json }}'
+    clean_src: |
+      {
+       "json": "really",
+       "issues": "maybe"
+      }
+    junk_src: |
+      trolling the parser
+      {
+       "json": "really",
+       "issues": "maybe"
+      }
+      yolo!
+~

@@ -54,7 +54,7 @@ def from_json(data, *args, **kwargs):
         except ValueError as e:
             display.warning("from_json - Unable to filter input: %s" % to_text(e))
 
-    return json.loads(data, *args, **kwargs)
+    return json.loads(data, **kwargs)
 
 
 def to_yaml(a, *args, **kw):
