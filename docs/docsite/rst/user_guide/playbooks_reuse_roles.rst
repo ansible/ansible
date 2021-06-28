@@ -78,10 +78,13 @@ Roles may also include modules and other plugin types in a directory called ``li
 Storing and finding roles
 =========================
 
-By default, Ansible looks for roles in two locations:
+By default, Ansible looks for roles in a number of locations:
 
 - in a directory called ``roles/``, relative to the playbook file
-- in ``/etc/ansible/roles``
+- in the ``DEFAULT_ROLES_PATH``. this defaults to:
+  - ``~/.ansible/roles``
+  - ``/usr/share/ansible/roles``
+  - ``/etc/ansible/roles``
 
 If you store your roles in a different location, set the :ref:`roles_path <DEFAULT_ROLES_PATH>` configuration option so Ansible can find your roles. Checking shared roles into a single location makes them easier to use in multiple playbooks. See :ref:`intro_configuration` for details about managing settings in ansible.cfg.
 
