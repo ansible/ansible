@@ -645,7 +645,6 @@
         that:
           - clean['json'] == "really"
           - badstuff is failed
-          - "'json.decoder.JSONDecodeError' in badstuff['msg']"
           - filtered['json'] == "really"
           - clean == filtered
   vars:

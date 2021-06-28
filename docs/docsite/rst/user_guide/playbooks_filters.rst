@@ -242,6 +242,24 @@ for example::
       ansible.builtin.set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
+To remove preceeding and trailing unwanted data from the JSON string, pass the parameter `filtered=True` to the filter::
+
+    - name: Using filtered=True
+      ansible.builtin.set_fact:
+        myvar: "{{ junk_src | from_json(filtered=True) }}"
+      vars:
+        junk_src: |
+          first line
+          {
+            "one": "1"
+          }
+          last line
+
+will return::
+
+    {
+      "one": "1"
+    }
 
 Filter `to_json` and Unicode support
 ------------------------------------
