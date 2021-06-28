@@ -78,6 +78,7 @@ _SAFE_NODES = frozenset(
         ast.USub,
         ast.Tuple,
         ast.UnaryOp,
+        ast.keyword,
     ) + tuple(_optional_nodes)
 )
 
