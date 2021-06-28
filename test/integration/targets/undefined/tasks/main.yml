@@ -8,11 +8,11 @@
           - name: two
           - notname: three
           - name: four
+      ignore_errors: true
+      register: undefined_set_fact
 
     - assert:
         that:
-          - '"%r"|format(undef) == "AnsibleUndefined"'
-          # The existence of AnsibleUndefined in a templating result
-          # prevents safe_eval from turning the value into a python object
-          - names is string
-          - '", AnsibleUndefined," in names'
+          - '("%r"|format(undef)).startswith("AnsibleUndefined")'
+          - undefined_set_fact is failed
+          - undefined_set_fact.msg is contains 'undefined variable'
