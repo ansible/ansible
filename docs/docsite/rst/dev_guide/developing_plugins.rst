@@ -39,6 +39,7 @@ You should return errors encountered during plugin execution by raising ``Ansibl
 Since Ansible evaluates variables only when they are needed, filter and test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
 
 .. code-block:: python
+
    try:
        cause_an_exception(with_undefined_variable)
    except jinja2.exceptions.UndefinedError as e:
