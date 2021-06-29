@@ -191,14 +191,14 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # TODO: Maybe provide a note here that this is likely due to some
         #       repr that cannot be safely evaluated, either a callable, or something like
         #       a generator repr
-        display.warning('Unable to safely evaluate {0!r}: {1}'.format((expr, e)))
+        display.warning('Unable to safely evaluate {0!r}: {1}'.format(expr, e))
         if include_exceptions:
             return (expr, None)
         return expr
     except UndefinedError:
         raise
     except Exception as e:
-        display.warning('Unable to safely evaluate {0!r}: {1}'.format((expr, e)))
+        display.warning('Unable to safely evaluate {0!r}: {1}'.format(expr, e))
         if include_exceptions:
             return (expr, e)
         return expr
