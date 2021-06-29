@@ -1349,6 +1349,30 @@ Hash type 'blowfish' (BCrypt) provides the facility to specify the version of th
 
 .. versionadded:: 2.12
 
+You can also use Ansible Vault compatible filter to encrypt data::
+
+  # simply encrypt my key in a vault
+  vars:
+    myvaultedkey: "{{ keyrawdata|vault(passphrase) }} "
+
+  - name: save templated vaulted data
+    template: src=dump_template_data.j2 dest=/some/key/vault.txt
+    vars:
+      mysalt: '{{2**256|random(seed=inventory_hostname)}}'
+      template_data: '{{ secretdata|vault(vaultsecret, salt=mysalt) }}'
+
+
+And then decrypt it via unvault::
+
+  # simply decrypt my key from a vault
+  vars:
+    mykey: "{{ myvaultedkey|unvault(passphrase) }} "
+  - name: save templated unvaulted data
+    template: src=dump_template_data.j2 dest=/some/key/clear.txt
+    vars:
+      template_data: '{{ secretdata|uvault(vaultsecret) }}'
+
+
 .. _other_useful_filters:
 
 Manipulating text
