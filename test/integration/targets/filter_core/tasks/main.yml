@@ -649,7 +649,7 @@
           - clean == filtered
   vars:
     clean: '{{ clean_src|from_json }}'
-    filtered: '{{ junk_src|clean_json|from_json(filtered=True) }}'
+    filtered: '{{ junk_src|clean_json|from_json }}'
     unfiltered: '{{ junk_src|from_json }}'
     clean_src: |
       {
