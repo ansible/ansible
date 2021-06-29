@@ -13,6 +13,6 @@ rstcheck
 sphinx
 sphinx-notfound-page >= 0.6
 sphinx-intl
-sphinx_ansible_theme === 0.6.0
+sphinx-ansible-theme >= 0.7.0
 resolvelib
 straight.plugin # Needed for hacking/build-ansible.py which is the backend build script
