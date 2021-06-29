@@ -21,11 +21,11 @@ __metaclass__ = type
 import ast
 import copy
 
-from jinja2 import StrictUndefined, UndefinedError
-
 from ansible.module_utils.common.text.converters import container_to_text, to_native
 from ansible.module_utils.six import PY2, string_types
 from ansible.utils.display import Display
+
+from jinja2 import StrictUndefined, UndefinedError
 
 display = Display()
 
@@ -111,19 +111,19 @@ class CleansingNodeVisitor(ast.NodeVisitor):
 
     def generic_visit(self, node):
         if type(node) not in _SAFE_NODES:
-            raise Exception("invalid expression (%s)" % self._expr)
+            raise Exception("invalid expression ({0})".format(self._expr))
         super(CleansingNodeVisitor, self).generic_visit(node)
 
     def visit_Attribute(self, node):
         if isinstance(node.value, ast.Name):
             name = '{0}.{1}'.format(node.value.id, node.attr)
         else:
-            raise Exception("invalid object: %s" % node.value.__class__.__name__)
+            raise Exception("invalid object: {0}".format(node.value.__class__.__name__))
         if self._is_call and name not in _CALL_ENABLED:
             # Disallow calls to functions that we have not vetted
             # as safe.  Other functions are excluded by setting locals in
             # the call to eval() later on
-            raise Exception("invalid function: %s" % name)
+            raise Exception("invalid function: {0}".format(name))
         if self._is_call:
             self._is_call = False
         self.generic_visit(node)
@@ -133,7 +133,7 @@ class CleansingNodeVisitor(ast.NodeVisitor):
             # Disallow calls to functions that we have not vetted
             # as safe.  Other functions are excluded by setting locals in
             # the call to eval() later on
-            raise Exception("invalid function: %s" % node.id)
+            raise Exception("invalid function: {0}".format(node.id))
         if self._is_call:
             self._is_call = False
         self.generic_visit(node)
@@ -170,7 +170,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     try:
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
-        compiled = compile(parsed_tree, '<expr %s>' % to_native(expr), 'eval')
+        compiled = compile(parsed_tree, '<expr {0}>'.format(to_native(expr)), 'eval')
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of callables done in CleansingNodeVisitor
@@ -191,14 +191,14 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # TODO: Maybe provide a note here that this is likely due to some
         #       repr that cannot be safely evaluated, either a callable, or something like
         #       a generator repr
-        display.warning('Unable to safely evaluate %r: %s' % (expr, e))
+        display.warning('Unable to safely evaluate {0!r}: {1}'.format((expr, e)))
         if include_exceptions:
             return (expr, None)
         return expr
     except UndefinedError:
         raise
     except Exception as e:
-        display.warning('Unable to safely evaluate %r: %s' % (expr, e))
+        display.warning('Unable to safely evaluate {0!r}: {1}'.format((expr, e)))
         if include_exceptions:
             return (expr, e)
         return expr
