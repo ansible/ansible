@@ -179,7 +179,7 @@ In this example, you must pass the ``key_name`` and ``value_name`` arguments to 
 
     {{ tags | items2dict(key_name='fruit', value_name='color') }}
 
-If you do not pass these arguments, or do not pass the correct values for your list, you will see ``KeyError: key`` or ``KeyError: my_typo`` prior to 2.12 and ``items2dict failed`` from 2.12 and onwards.
+If you do not pass these arguments, or do not pass the correct values for your list, you will see ``items2dict failed``.
 
 Forcing the data type
 ---------------------
