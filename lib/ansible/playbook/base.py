@@ -23,7 +23,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
+from ansible.utils.collection_loader._collection_meta import _validate_action_group_metadata
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -330,13 +331,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 # fully qualified entries.
                 if defaults_entry.startswith('group/'):
                     group_name = defaults_entry.split('group/')[-1]
-                    if len(group_name.split('.')) < 3:
-                        group_name = 'ansible.builtin.' + group_name
 
                     # The resolved action_groups cache is associated saved on the current Play
                     if self.play is not None:
-                        collection_name = '.'.join(group_name.split('.')[0:2])
-                        self._resolve_group(group_name, collection_name)
+                        group_name, dummy = self._resolve_group(group_name)
 
                     defaults_entry = 'group/' + group_name
                     validated_defaults_dict[defaults_entry] = defaults
@@ -375,12 +373,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return play
 
-    def _resolve_group(self, group, collection_name, mandatory=True):
-        # The group should be part of the current collection
-        if not group.startswith(collection_name + '.'):
-            fq_group_name = collection_name + '.' + group
+    def _resolve_group(self, fq_group_name, mandatory=True):
+        if not AnsibleCollectionRef.is_valid_fqcr(fq_group_name):
+            collection_name = 'ansible.builtin'
+            fq_group_name = collection_name + '.' + fq_group_name
         else:
-            fq_group_name = group
+            collection_name = '.'.join(fq_group_name.split('.')[0:2])
 
         # Check if the group has already been resolved and cached
         if fq_group_name in self.play._group_actions:
@@ -397,10 +395,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         # The collection may or may not use the fully qualified name
         # Don't fail if the group doesn't exist in the collection
-        short_name = fq_group_name.split(collection_name + '.')[-1]
+        resource_name = fq_group_name.split(collection_name + '.')[-1]
         action_group = action_groups.get(
             fq_group_name,
-            action_groups.get(short_name)
+            action_groups.get(resource_name)
         )
         if action_group is None:
             if not mandatory:
@@ -412,46 +410,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         include_groups = []
 
         found_group_metadata = False
-        valid_metadata = {
-            'extend_group': {
-                'types': (list, string_types,),
-                'errortype': 'list',
-            },
-        }
         for action in action_group:
             # Everything should be a string except the metadata entry
             if not isinstance(action, string_types):
-                metadata_warnings = []
-
-                validate = C.VALIDATE_ACTION_GROUP_METADATA
-                metadata_only = isinstance(action, dict) and 'metadata' in action and len(action) == 1
-
-                if validate and not metadata_only:
-                    found_keys = ', '.join(sorted(list(action)))
-                    metadata_warnings.append("The only expected key is metadata, but got keys: {keys}".format(keys=found_keys))
-                elif validate:
-                    if found_group_metadata:
-                        metadata_warnings.append("The group contains multiple metadata entries.")
-                    if not isinstance(action['metadata'], dict):
-                        metadata_warnings.append("The metadata is not a dictionary. Got {metadata}".format(metadata=action['metadata']))
-                    else:
-                        unexpected_keys = set(action['metadata'].keys()) - set(valid_metadata.keys())
-                        if unexpected_keys:
-                            metadata_warnings.append("The metadata contains unexpected keys: {0}".format(', '.join(unexpected_keys)))
-
-                        unexpected_types = []
-                        for field, requirement in valid_metadata.items():
-                            if field not in action['metadata']:
-                                continue
-                            value = action['metadata'][field]
-                            if not isinstance(value, requirement['types']):
-                                unexpected_types.append("%s is %s (expected type %s)" % (field, value, requirement['errortype']))
-                        if unexpected_types:
-                            metadata_warnings.append("The metadata contains unexpected key types: {0}".format(', '.join(unexpected_types)))
-
-                if metadata_warnings:
-                    metadata_warnings.insert(0, "Invalid metadata was found for action_group {0} while loading module_defaults.".format(fq_group_name))
-                    display.warning(" ".join(metadata_warnings))
+                _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
 
                 if isinstance(action['metadata'], dict):
                     found_group_metadata = True
@@ -466,38 +428,33 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
             # The collection may or may not use the fully qualified name.
             # If not, it's part of the current collection.
-            action_names = []
-            if len(action.split('.')) == 3:
-                action_names.append(action)
-            else:
-                action_names.append(collection_name + '.' + action)
-
-            for action_name in action_names:
-                resolved_action = self._resolve_action(action_name, mandatory=False)
-                if resolved_action:
-                    resolved_actions.append(resolved_action)
+            if not AnsibleCollectionRef.is_valid_fqcr(action):
+                action = collection_name + '.' + action
+            resolved_action = self._resolve_action(action, mandatory=False)
+            if resolved_action:
+                resolved_actions.append(resolved_action)
 
         for action in resolved_actions:
-            if action in self.play._action_groups:
-                self.play._action_groups[action].append(fq_group_name)
-            else:
-                self.play._action_groups[action] = [fq_group_name]
+            if action not in self.play._action_groups:
+                self.play._action_groups[action] = []
+            self.play._action_groups[action].append(fq_group_name)
 
         self.play._group_actions[fq_group_name] = resolved_actions
 
         # Resolve extended groups last, after caching the group in case they recursively refer to each other
         for include_group in include_groups:
-            if len(include_group.split('.')) == 3:
-                include_group_collection = '.'.join(include_group.split('.')[0:2])
-            else:
+            if not AnsibleCollectionRef.is_valid_fqcr(include_group):
                 include_group_collection = collection_name
-            dummy, group_actions = self._resolve_group(include_group, include_group_collection, mandatory=False)
+                include_group = collection_name + '.' + include_group
+            else:
+                include_group_collection = '.'.join(include_group.split('.')[0:2])
+
+            dummy, group_actions = self._resolve_group(include_group, mandatory=False)
 
             for action in group_actions:
-                if action in self.play._action_groups:
-                    self.play._action_groups[action].append(fq_group_name)
-                else:
-                    self.play._action_groups[action] = [fq_group_name]
+                if action not in self.play._action_groups:
+                    self.play._action_groups[action] = []
+                self.play._action_groups[action].append(fq_group_name)
 
             self.play._group_actions[fq_group_name].extend(group_actions)
             resolved_actions.extend(group_actions)
