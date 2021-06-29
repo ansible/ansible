@@ -264,7 +264,7 @@
 - set_fact:
     find_test3_list: >-
       [ {% for f in find_test3.files %}
-      {{ f.path }}
+      "{{ f.path }}"
       {% if not loop.last %},{% endif %}
       {% endfor %}
       ]
@@ -305,7 +305,7 @@
 - set_fact:
     astest_list: >-
       [ {% for f in result.files %}
-      {{ f.path }}
+      "{{ f.path }}"
       {% if not loop.last %},{% endif %}
       {% endfor %}
       ]
@@ -325,7 +325,7 @@
 - set_fact:
     astest_list: >-
       [ {% for f in result.files %}
-      {{ f.path }}
+      "{{ f.path }}"
       {% if not loop.last %},{% endif %}
       {% endfor %}
       ]
@@ -350,7 +350,7 @@
 - set_fact:
     astest_list: >-
       [ {% for f in result.files %}
-      {{ f.path }}
+      "{{ f.path }}"
       {% if not loop.last %},{% endif %}
       {% endfor %}
       ]
@@ -374,7 +374,7 @@
 - set_fact:
     astest_list: >-
       [ {% for f in result.files %}
-      {{ f.path }}
+      "{{ f.path }}"
       {% if not loop.last %},{% endif %}
       {% endfor %}
       ]
