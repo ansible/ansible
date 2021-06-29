@@ -137,29 +137,6 @@ EXAMPLES = '''
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
 
-- name: ensure we have a session for the systemd scoped user
-  become: yes
-  become_user: '{{username}}'
-  block:
-    - name: Ensure lingering is enabled (can be run as same user that is being enabled or root)
-      command: "loginctl enable-linger '{{ username }}'"
-      args:
-        creates: '"/var/lib/systemd/linger/{{ username }}"'
-      register: linger
-      # Optional conditionals that require other tasks (setup/stat) to be run
-      # when: "'XDG_RUNTIME_DIR' not in ansible_env and not stat_run_user.exists"
-
-    - name: Run a user service, now that we KNOW we have a session
-      systemd:
-        name: the_service
-        state: started
-        scope: user
-  always:
-    - name: "remove it now that it is not needed, still, now I have The cranberries' song in head all day"
-      command: "loginctl disable-linger '{{ username }}'"
-      args:
-        removes: '"/var/lib/systemd/linger/{{ username }}"'
-      when: linger is changed
 '''
 
 RETURN = '''
