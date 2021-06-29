@@ -1,2 +1,2 @@
 minor_changes:
-  - from_json filter now has filtered option, which if enabled removes junk around the JSON object to be parsed.
+  - clean_json - a new filter, which if enabled removes junk around the JSON object to be parsed.
