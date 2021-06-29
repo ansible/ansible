@@ -688,7 +688,7 @@ To select a single element or a data subset from a complex data structure in JSO
 	This filter has migrated to the `community.general <https://galaxy.ansible.com/community/general>`_ collection. Follow the installation instructions to install that collection.
 
 
-.. note:: You must manually install the **jmespath** dependency on the Ansible controller before using this filter. This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
+.. note:: You must manually install the **jmespath** dependency on the Ansible controller before using this filter. This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <https://jmespath.org/examples.html>`_.
 
 Consider this data structure::
 
