@@ -40,12 +40,12 @@ Testing strings
 To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` tests::
 
     vars:
-      url: "http://example.com/users/foo/resources/bar"
+      url: "https://example.com/users/foo/resources/bar"
 
     tasks:
         - debug:
             msg: "matched pattern 1"
-          when: url is match("http://example.com/users/.*/resources/")
+          when: url is match("https://example.com/users/.*/resources/")
 
         - debug:
             msg: "matched pattern 2"

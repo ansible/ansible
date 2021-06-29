@@ -111,5 +111,5 @@ If you have any questions or content you would like to share, please reach out t
 
 Read past issues `here <https://github.com/ansible/community/wiki/News>`_.
 
-`Subscribe <http://eepurl.com/gZmiEP>`_ to receive it.
+`Subscribe <https://eepurl.com/gZmiEP>`_ to receive it.
 
