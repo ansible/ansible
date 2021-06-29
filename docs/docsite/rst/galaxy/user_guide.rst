@@ -348,7 +348,7 @@ Below are the contents of the :file:`webserver.yml` file:
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
 The following shows the contents of the :file:`requirements.yml` file that now includes the :file:`webserver.yml` file:
