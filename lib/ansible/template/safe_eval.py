@@ -119,14 +119,13 @@ class CleansingNodeVisitor(ast.NodeVisitor):
             name = '{0}.{1}'.format(node.value.id, node.attr)
         else:
             raise Exception("invalid object: {0}".format(node.value.__class__.__name__))
-        if self._is_call and name not in _CALL_ENABLED:
-            # Disallow calls to functions that we have not vetted
-            # as safe.  Other functions are excluded by setting locals in
-            # the call to eval() later on
-            raise Exception("invalid function: {0}".format(name))
-        if self._is_call:
+        if self._is_call and name in _CALL_ENABLED:
             self._is_call = False
-        self.generic_visit(node)
+            return self.generic_visit(node)
+        # Disallow calls to functions that we have not vetted
+        # as safe.  Other functions are excluded by setting locals in
+        # the call to eval() later on
+        raise Exception("invalid attribute: {0}".format(name))
 
     def visit_Name(self, node):
         if self._is_call and node.id not in _CALL_ENABLED:
@@ -134,8 +133,9 @@ class CleansingNodeVisitor(ast.NodeVisitor):
             # as safe.  Other functions are excluded by setting locals in
             # the call to eval() later on
             raise Exception("invalid function: {0}".format(node.id))
-        if self._is_call:
-            self._is_call = False
+        if node.id == '__builtins__':
+            raise Exception("invalid name: __builtins__")
+        self._is_call = False
         self.generic_visit(node)
 
     def visit_Call(self, node):
@@ -158,7 +158,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
-    locals = {} if locals is None else copy.deepcopy(locals)
+    locals = {} if locals is None else copy.deepcopy(dict(locals))
 
     if not isinstance(expr, string_types):
         # already templated to a datastructure, perhaps?
