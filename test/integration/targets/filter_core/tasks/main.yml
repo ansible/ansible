@@ -631,7 +631,7 @@
       - "4,5,6"
 
 
-- name: from_json tests
+- name: from_json/clean_json  tests
   block:
     - name: bad json fails
       debug: msg={{unfiltered}}
@@ -649,7 +649,7 @@
           - clean == filtered
   vars:
     clean: '{{ clean_src|from_json }}'
-    filtered: '{{ junk_src|from_json(filtered=True) }}'
+    filtered: '{{ junk_src|clean_json|from_json(filtered=True) }}'
     unfiltered: '{{ junk_src|from_json }}'
     clean_src: |
       {

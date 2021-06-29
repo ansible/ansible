@@ -45,16 +45,12 @@ display = Display()
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
-def from_json(data, *args, **kwargs):
-
-    filtered = kwargs.pop('filtered', None)
-    if filtered:
-        try:
-            data, warnings = _filter_non_json_lines(data, objects_only=True)
-        except ValueError as e:
-            display.warning("from_json - Unable to filter input: %s" % to_text(e))
-
-    return json.loads(data, **kwargs)
+def clean_json(data, objects_only=False):
+    try:
+        data, warnings = _filter_non_json_lines(data, objects_only=objects_only)
+    except ValueError as e:
+        raise AnsibleFilterError("Unable to filter input: %s" % to_text(e))
+    return data
 
 
 def to_yaml(a, *args, **kw):
@@ -591,7 +587,8 @@ class FilterModule(object):
             # json
             'to_json': to_json,
             'to_nice_json': to_nice_json,
-            'from_json': from_json,
+            'from_json': json.loads,
+            'clean_json': clean_json,
 
             # yaml
             'to_yaml': to_yaml,

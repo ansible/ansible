@@ -242,11 +242,14 @@ for example::
       ansible.builtin.set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
-To remove preceeding and trailing unwanted data from the JSON string, pass the parameter `filtered=True` to the filter::
+.. versionadded:: '2.12'
+
+To remove preceeding and trailing unwanted lines from the a string that contains JSON, use the 'clean_json' filter.
+Very useful when dealing with output from applications that mix in messages with the data::
 
     - name: Using filtered=True
       ansible.builtin.set_fact:
-        myvar: "{{ junk_src | from_json(filtered=True) }}"
+        myvar: "{{ junk_src|clean_json|from_json }}"
       vars:
         junk_src: |
           first line
