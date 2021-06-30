@@ -580,7 +580,7 @@ class VaultLib:
     def is_encrypted(vaulttext):
         return is_encrypted(vaulttext)
 
-    def encrypt(self, plaintext, secret=None, vault_id=None):
+    def encrypt(self, plaintext, secret=None, vault_id=None, salt=None):
         """Vault encrypt a piece of data.
 
         :arg plaintext: a text or byte string to encrypt.
@@ -618,7 +618,7 @@ class VaultLib:
         else:
             display.vvvvv(u'Encrypting without a vault_id using vault secret %s' % to_text(secret))
 
-        b_ciphertext = this_cipher.encrypt(b_plaintext, secret)
+        b_ciphertext = this_cipher.encrypt(b_plaintext, secret, salt)
 
         # format the data for output to the file
         b_vaulttext = format_vaulttext_envelope(b_ciphertext,
@@ -1198,10 +1198,18 @@ class VaultAES256:
         return to_bytes(hexlify(b_hmac), errors='surrogate_or_strict'), hexlify(b_ciphertext)
 
     @classmethod
-    def encrypt(cls, b_plaintext, secret):
+    def encrypt(cls, b_plaintext, secret, salt=None):
+
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
-        b_salt = os.urandom(32)
+
+        if salt is None:
+            b_salt = os.urandom(32)
+        elif not salt:
+            raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
+        else:
+            b_salt = to_bytes(salt)
+
         b_password = secret.bytes
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
 
