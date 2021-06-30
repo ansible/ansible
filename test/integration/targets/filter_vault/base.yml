@@ -1,0 +1,37 @@
+- hosts: localhost
+  gather_facts: true
+  vars:
+    data: secret
+    dvault: '{{ "secret"|vault("test")}}'
+    password: test
+    s_32: '{{(2**31-1)}}'
+    s_64: '{{(2**63-1)}}'
+    vaultedstring_32: "$ANSIBLE_VAULT;1.2;AES256;filter_default\n33360a30386436633031333665316161303732656333373131373935623033393964633637346464\n6234613765313539306138373564366363306533356464613334320a666339363037303764636538\n3131633564326637303237313463613864626231\n"
+    vaultedstring_64: "$ANSIBLE_VAULT;1.2;AES256;filter_default\n33370a34333734353636633035656232613935353432656132646533346233326431346232616261\n6133383034376566366261316365633931356133633337396363370a376664386236313834326561\n6338373864623763613165366636633031303739\n"
+    vault: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        33323332333033383335333533383338333333303339333733323339333833303334333133313339
+        33373339333133323331333833373335333933323338333633343338333133343334333733383334
+        33333335333433383337333133303339333433353332333333363339333733363335333233303330
+        3337333733353331333633313335333733373334333733320a373938666533366165653830313163
+        62386564343438653437333564383664646538653364343138303831613039313232636437336530
+        3438376662373764650a633366646563386335623161646262366137393635633464333265613938
+        6661
+    # allow testing against 32b/64b limited archs, normally you can set higher values for random (2**256)
+    is_64: '{{ "64" in ansible_facts["architecture"] }}'
+    salt: '{{ is_64|bool|ternary(s_64, s_32)|random(seed=inventory_hostname)}}'
+    vaultedstring: '{{ is_64|bool|ternary(vaultedstring_64, vaultedstring_32) }}'
+
+  tasks:
+    - name: check vaulting
+      assert:
+        that:
+          - data|vault(password, salt=salt) == vaultedstring
+          - "data|vault(password, salt=salt)|type_debug != 'AnsibleVaultEncryptedUnicode'"
+          - "data|vault(password, salt=salt, wrap_object=True)|type_debug == 'AnsibleVaultEncryptedUnicode'"
+
+    - name: check unvaulting
+      assert:
+        that:
+          - vaultedstring|unvault(password) == data
+          - vault|unvault(password) == data
