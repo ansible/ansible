@@ -399,7 +399,7 @@ def main():
             module.warn("Setting missing XDG_RUNTIME_DIR to %s" % to_text(xdg_path))
     elif not os.path.exists(to_bytes(xdg)):
         msg = "Existing XDG_RUNTIME_DIR (%s) pointed at non existing/accessible path, " % to_text(xdg)
-        if not os.path_exists(to_bytes(xdg_path)) and euid != 0:
+        if not os.path_exists(to_bytes(xdg_path, errors='surrogate_or_strict')) and euid != 0:
             lingered = enable_linger(module)
             if lingered:
                 module.warn(msg + "forcing loginctl to enable linger")
