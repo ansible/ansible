@@ -100,6 +100,15 @@ def unfrack_path(pathsep=False):
     return inner
 
 
+def maybe_unfrack_path(beacon):
+
+    def inner(value):
+        if value.startswith(beacon):
+            return beacon + unfrackpath(value[1:])
+        return value
+    return inner
+
+
 def _git_repo_info(repo_path):
     """ returns a string containing git branch, commit id and commit date """
     result = None
@@ -340,7 +349,7 @@ def add_runas_prompt_options(parser, runas_group=None):
 
 def add_runtask_options(parser):
     """Add options for commands that run a task"""
-    parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append",
+    parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append", type=maybe_unfrack_path('@'),
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
 
 

@@ -1,0 +1,3 @@
+plugin: constructed
+groups:
+  webservers: inventory_hostname.startswith('web')
