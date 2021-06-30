@@ -43,7 +43,7 @@ def _fail_on_undefined(data):
     return data
 
 
-def ansible_native_concat(nodes):
+def ansible_native_concat(nodes, eval=True):
     """Return a native Python type from the list of compiled nodes. If the
     result is a single node, its value is returned. Otherwise, the nodes are
     concatenated as strings. If the result can be parsed with
@@ -78,11 +78,17 @@ def ansible_native_concat(nodes):
             nodes = chain(head, nodes)
         out = u''.join([to_text(_fail_on_undefined(v)) for v in nodes])
 
-    try:
-        out = literal_eval(out)
-        if PY2:
-            # ensure bytes are not returned back into Ansible from templating
-            out = container_to_text(out)
-        return out
-    except (ValueError, SyntaxError, MemoryError):
-        return out
+    if eval:
+        try:
+            out = literal_eval(out)
+            if PY2:
+                # ensure bytes are not returned back into Ansible from templating
+                out = container_to_text(out)
+            return out
+        except (ValueError, SyntaxError, MemoryError):
+            return out
+
+    return out
+
+def preserve_concat(nodes):
+    pass

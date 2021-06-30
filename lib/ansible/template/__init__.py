@@ -82,19 +82,17 @@ JINJA2_OVERRIDE = '#jinja2:'
 
 from jinja2 import __version__ as j2_version
 from jinja2 import Environment
-from jinja2.utils import concat as j2_concat
 
+# FIXME: Need to account for older Jinja versions here if this is always needed
+from ansible.utils.native_jinja import NativeJinjaText
+from ansible.template.native_helpers import ansible_native_concat
 
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
     try:
         from jinja2.nativetypes import NativeEnvironment
-        from ansible.template.native_helpers import ansible_native_concat
-        from ansible.utils.native_jinja import NativeJinjaText
         USE_JINJA2_NATIVE = True
     except ImportError:
-        from jinja2 import Environment  # noqa: F811
-        from jinja2.utils import concat as j2_concat  # noqa: F811
         display.warning(
             'jinja2_native requires Jinja 2.10 and above. '
             'Version detected: %s. Falling back to default.' % j2_version
@@ -1114,7 +1112,7 @@ class Templar:
                 if self.jinja2_native:
                     res = ansible_native_concat(rf)
                 else:
-                    res = j2_concat(rf)
+                    res = ansible_native_concat(rf, False)
                 if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
