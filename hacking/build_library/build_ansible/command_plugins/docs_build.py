@@ -143,6 +143,8 @@ def generate_full_docs(args):
         # this would be the place to do it.
 
         build_data_working = os.path.join(tmp_dir, 'ansible-build-data')
+        if args.ansible_build_data:
+            build_data_working = args.ansible_build_data
 
         ansible_version = args.ansible_version
         if ansible_version is None:
@@ -211,6 +213,10 @@ class CollectionPluginDocs(Command):
                             dest='ansible_version', default=None,
                             help='The version of the ansible package to make documentation for.'
                             '  This only makes sense when used with full.')
+        parser.add_argument('--ansible-build-data', action='store',
+                            dest='ansible_build_data', default=None,
+                            help='A checkout of the ansible-build-data repo.  Useful for'
+                            ' debugging.')
 
     @staticmethod
     def main(args):
