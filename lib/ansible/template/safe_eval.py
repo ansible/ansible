@@ -58,6 +58,7 @@ if PY2:
     _OUR_GLOBALS.update({
         'True': True,
         'False': False,
+        'None': None,
     })
 
 # Set of global names for callables that we will allow
@@ -133,8 +134,8 @@ class CleansingNodeVisitor(ast.NodeVisitor):
             # as safe.  Other functions are excluded by setting locals in
             # the call to eval() later on
             raise Exception("invalid function: {0}".format(node.id))
-        if node.id == '__builtins__':
-            raise Exception("invalid name: __builtins__")
+        if node.id == '__builtins__' or node.id not in _OUR_GLOBALS:
+            raise Exception("invalid name: {0}".format(node.id))
         self._is_call = False
         self.generic_visit(node)
 

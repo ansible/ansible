@@ -43,6 +43,12 @@ TESTS = [v + (l,) for v in [
     ('{"foo": "bar"}', {"foo": "bar"}, None),
     ('{0}', set([0]), None),
 
+    # Globals
+    ('__name__', '__name__', 'invalid name: __name__'),
+    ('true', True, None),
+    ('false', False, None),
+    ('null', None, None),
+
     # Invalid
     ('[1] + [2]', '[1] + [2]', 'invalid expression ([1] + [2])'),
     ('len("foo")', 'len("foo")', 'invalid function: len'),
