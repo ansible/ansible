@@ -1,0 +1,5 @@
+add plugin.filter:
+  - name: vault
+    description: Create Ansible Vault to encrypt your data
+  - name: unvault
+    description: Open an Ansible Vault to retrieve your data
