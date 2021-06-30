@@ -1218,6 +1218,9 @@ class User(object):
 
     def create_homedir(self, path):
         if not os.path.exists(path):
+            if path == "/dev/null":
+                return
+
             if self.skeleton is not None:
                 skeleton = self.skeleton
             else:
