@@ -1362,7 +1362,7 @@ You can also use Ansible Vault compatible filter to encrypt data::
       template_data: '{{ secretdata|vault(vaultsecret, salt=mysalt) }}'
 
 
-And then decrypt it via unvault::
+And then decrypt it using the unvault filter::
 
   # simply decrypt my key from a vault
   vars:
