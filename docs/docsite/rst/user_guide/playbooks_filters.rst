@@ -244,7 +244,7 @@ for example::
 
 .. versionadded:: '2.12'
 
-To remove preceding and trailing unwanted lines from the string that contains JSON, use the 'clean_json' filter.
+To remove preceding and trailing unwanted lines from the string that contains a JSON object or a JSON list, use the 'clean_json' filter.
 Very useful when dealing with output from applications that mix in messages with the data::
 
     - name: Using filtered=True
