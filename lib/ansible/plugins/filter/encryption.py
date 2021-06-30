@@ -7,7 +7,7 @@ __metaclass__ = type
 from jinja2.runtime import Undefined
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError, AnsibleUndefined
+from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import string_types, binary_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
