@@ -184,25 +184,25 @@ clean:
 .PHONY: docs clean
 
 collections_meta: ../templates/collections_galaxy_meta.rst.j2
-	$(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/dev_guide/ ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
+	$(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/dev_guide/ $(EXTRA_COLLECTION_META_ARGS) ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
 
 # TODO: make generate_man output dir cli option
 cli:
 	mkdir -p rst/cli
-	$(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst ../../lib/ansible/cli/*.py
+	$(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst $(EXTRA_CLI_DUMPER_ARGS) ../../lib/ansible/cli/*.py
 
 keywords: ../templates/playbooks_keywords.rst.j2
-	$(KEYWORD_DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ ../../lib/ansible/keyword_desc.yml
+	$(KEYWORD_DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ ../../lib/ansible/keyword_desc.yml $(EXTRA_KEYWORD_DUMPER_ARGS)
 
 config: ../templates/config.rst.j2
-	$(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ ../../lib/ansible/config/base.yml
+	$(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ $(EXTRA_CONFIG_DUMPER_ARGS) ../../lib/ansible/config/base.yml
 
 plugins:
-	$(PLUGIN_FORMATTER) full -o rst $(ANSIBLE_VERSION_ARGS) $(PLUGIN_ARGS);\
+	$(PLUGIN_FORMATTER) full -o rst $(ANSIBLE_VERSION_ARGS) $(EXTRA_PLUGIN_FORMATTER_ARGS) $(PLUGIN_ARGS)
 
 # This only builds the plugin docs included with ansible-core
 base_plugins:
-	$(PLUGIN_FORMATTER) base -o rst $(PLUGIN_ARGS);\
+	$(PLUGIN_FORMATTER) base -o rst $(EXTRA_PLUGIN_FORMATTER_ARGS) $(PLUGIN_ARGS)
 
 testing:
 	$(TESTING_FORMATTER)
