@@ -388,7 +388,7 @@ def main():
     xdg_path = '/run/user/%s' % euid
     lingered = False
     if xdg is None:
-        if not os.path.exists(to_bytes(xdg_path)) and euid != 0:
+        if not os.path.exists(to_bytes(xdg_path, errors='surrogate_or_strict')) and euid != 0:
             lingered = enable_linger(module)
             if lingered:
                 module.warn("No dbus session found, forcing loginctl to enable linger")
