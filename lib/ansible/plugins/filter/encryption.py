@@ -4,9 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.runtime import Undefined
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError, AnsibleUndefined
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import string_types, binary_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -18,10 +19,10 @@ display = Display()
 
 def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=False):
 
-    if not isinstance(secret, (string_types, binary_type)):
+    if not isinstance(secret, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
 
-    if not isinstance(data, (string_types, binary_type)):
+    if not isinstance(data, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Can only vault strings, instead we got: %s" % type(data))
 
     vault = ''
@@ -44,10 +45,10 @@ def do_vault(data, secret, salt=None, vaultid='filter_default', wrap_object=Fals
 
 def do_unvault(vault, secret, vaultid='filter_default'):
 
-    if not isinstance(secret, (string_types, binary_type)):
+    if not isinstance(secret, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Secret passed is required to be as string, instead we got: %s" % type(secret))
 
-    if not isinstance(vault, (string_types, binary_type, AnsibleVaultEncryptedUnicode)):
+    if not isinstance(vault, (string_types, binary_type, AnsibleVaultEncryptedUnicode, Undefined)):
         raise AnsibleFilterTypeError("Vault should be in the form of a string, instead we got: %s" % type(vault))
 
     data = ''
