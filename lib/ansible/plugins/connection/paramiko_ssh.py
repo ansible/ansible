@@ -44,6 +44,8 @@ DOCUMENTATION = """
             - section: paramiko_connection
               key: remote_user
               version_added: '2.5'
+        keyword:
+            - name: remote_user
       password:
         description:
           - Secret used to either login the ssh server or as a passphrase for ssh keys that require it
