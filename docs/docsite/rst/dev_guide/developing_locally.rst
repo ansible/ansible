@@ -83,11 +83,11 @@ Adding local plugins for all playbooks and roles
 To load local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/<plugin_type>/:/usr/share/ansible/plugins/<plugin_type>/``. You have two options:
 
 * Add your local plugin to one of the default configured locations:
-   * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback``
-   * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/action``
+   * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback/``
+   * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/action/``
 * Add the location of your local plugin to an environment variable or configuration:
    * the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable - for example, ``$ANSIBLE_INVENTORY_PLUGINS`` or ``$ANSIBLE_VARS_PLUGINS``
-   * the relevant ``DEFAULT_plugin_type_PATH`` configuration setting, such as ``DEFAULT_CALLBACK_PLUGIN_PATH`` or ``DEFAULT_FILTER_PLUGIN_PATH``
+   * the relevant ``DEFAULT_plugin_type_PATH`` configuration setting - for example, ``DEFAULT_CALLBACK_PLUGIN_PATH`` or ``DEFAULT_FILTER_PLUGIN_PATH``
 
 After your plugin file is located in one of these locations, Ansible loads it and you can use it in any local module, task, playbook, or role. For more information on environment variables and configuration settings, see :ref:`ansible_configuration_settings`.
 
