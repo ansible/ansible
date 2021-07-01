@@ -5,9 +5,11 @@
 Adding modules and plugins locally
 **********************************
 
-The easiest, quickest, and the most popular way to extend Ansible is to use a local module or a plugin. You can create them or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share a local plugin or module by including it in a collection or embedding it in a role, then publishing the collection or role on Ansible Galaxy. If you are using roles on Ansible Galaxy, then you are already using local modules and plugins without realizing it.
+The easiest, quickest, and the most popular way to extend Ansible is to use a local module or a plugin. You can create them or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share a local plugin or module by including it in a collection, then publishing the collection on Ansible Galaxy. If you are using collections from Ansible Galaxy, then you are already using local modules and plugins without realizing it.
 
-If you are using an existing module or plugin but Ansible can't find it, this page is all you need. However, if you want to create a plugin or a module, go to :ref:`developing_plugins` and :ref:`developing_modules_general` topics and then return to this page to know how to add it locally.
+If you are using a legacy, standalone module or plugin but Ansible can't find it, this page is all you need.
+
+If you want to create a plugin or a module, see :ref:`developing_plugins`, :ref:`developing_modules_general` and :ref:`developing_collections`.
 
 Extending Ansible with local modules and plugins offers lots of shortcuts such as:
 
@@ -48,9 +50,9 @@ You can configure Ansible to load standalone local modules in a specified locati
 Adding standalone local modules for all playbooks and roles
 -----------------------------------------------------------
 
-To load standalone local modules automatically and make them available to all playbooks and roles, use the :ref:`DEFAULT_MODULE_PATH` configuration setting or the ``ANSIBLE_LIBRARY`` environment variable. The configuration setting and environment variable take a colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/modules/:/usr/share/ansible/plugins/modules/``. You have two options:
+To load standalone local modules automatically and make them available to all playbooks and roles, use the :ref:`DEFAULT_MODULE_PATH` configuration setting or the ``ANSIBLE_LIBRARY`` environment variable. The configuration setting and environment variable take a colon-separated list, similar to ``$PATH``. You have two options:
 
-* Add your standalone local module to one of the default configured locations:
+* Add your standalone local module to one of the default configured locations. These locations may change without notice in future versions. Current defaults are:
    * ``~/.ansible/plugins/modules/``
    * ``/usr/share/ansible/plugins/modules/``
 * Add the location of your standalone local module to an environment variable or configuration:
@@ -74,7 +76,7 @@ Adding standalone local modules for selected playbooks or a single role
 Ansible automatically loads all executable files from certain directories adjacent to your playbook or role as modules. Standalone modules in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
 
 * To use a standalone module only in a selected playbook or playbooks, store the module in a subdirectory called ``library`` in the directory that contains the playbook or playbooks.
-* To use a standalone module only in a single role, store the module in a subdirectory called ``library`` within that role.
+* To use a standalone module only in a single role, store the module in a subdirectory called ``library`` within that role. If you are developing new modules, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
 
 .. _distributing_plugins:
 .. _local_plugins:
@@ -87,9 +89,9 @@ You can configure Ansible to load standalone local plugins in a specified locati
 Adding local plugins for all playbooks and roles
 -------------------------------------------------
 
-To load standalone local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/<plugin_type>/:/usr/share/ansible/plugins/<plugin_type>/``. You have two options:
+To load standalone local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take colon-separated list, similar to ``$PATH``. You have two options:
 
-* Add your local plugin to one of the default configured locations:
+* Add your local plugin to one of the default configured locations. These locations may change without notice in future versions. Current defaults are:
    * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback/``
    * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/action/``
 * Add the location of your local plugin to an environment variable or configuration:
@@ -110,4 +112,4 @@ Adding standalone local plugins for selected playbooks or a single role
 Ansible automatically loads all plugins from certain directories adjacent to your playbook or role, loading each type of plugin separately from a directory named for the type of plugin. Standalone plugins in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
 
 * To use a standalone plugin only in a selected playbook or playbooks, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``callback_plugins`` or ``inventory_plugins``) in the directory that contains the playbooks. These directories must use the `_plugins` suffix. For a full list of plugin types, see :ref:`working_with_plugins`.
-* To use a standalone plugin only in a single role, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role. When shipped as part of a role, the plugin is available as soon as the role is executed. These directories must use the `_plugins` suffix. For a full list of plugin types, see :ref:`working_with_plugins`.
+* To use a standalone plugin only in a single role, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role. When shipped as part of a role, the plugin is available as soon as the role is executed. These directories must use the `_plugins` suffix. For a full list of plugin types, see :ref:`working_with_plugins`. If you are developing new plugins, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
