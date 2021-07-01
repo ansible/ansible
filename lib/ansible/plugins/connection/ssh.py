@@ -169,7 +169,7 @@ DOCUMENTATION = '''
             - name: ssh_extra_args
       retries:
           description: Number of attempts to connect.
-          default: 3
+          default: 0
           type: integer
           env:
             - name: ANSIBLE_SSH_RETRIES
