@@ -36,32 +36,32 @@ Adding a module locally
 
 For local modules, use the name of the file as the module name. For example, if the module file is ``~/.ansible/plugins/modules/local_users.py``, use ``local_users`` as the module name.
 
-You can configure Ansible to load custom modules in a specified location or locations and make them available to all playbooks and roles. Alternatively, you can make a custom module available only to specific playbooks or roles.
+You can configure Ansible to load local modules in a specified location or locations and make them available to all playbooks and roles. Alternatively, you can make a local module available only to specific playbooks or roles.
 
-Adding custom modules for all playbooks and roles
+Adding local modules for all playbooks and roles
 -------------------------------------------------
 
-To load custom modules automatically and make them available to all playbooks and roles, use the :ref:`DEFAULT_MODULE_PATH` configuration setting or the ``ANSIBLE_LIBRARY`` environment variable. The configuration setting and environment variable take a colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/modules/:/usr/share/ansible/plugins/modules/``. You have two options:
+To load local modules automatically and make them available to all playbooks and roles, use the :ref:`DEFAULT_MODULE_PATH` configuration setting or the ``ANSIBLE_LIBRARY`` environment variable. The configuration setting and environment variable take a colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/modules/:/usr/share/ansible/plugins/modules/``. You have two options:
 
-* Add your custom module to one of the default configured locations:
+* Add your local module to one of the default configured locations:
    * ``~/.ansible/plugins/modules/``
    * ``/usr/share/ansible/plugins/modules/``
-* Add the location of your custom module to an environment variable or configuration:
+* Add the location of your local module to an environment variable or configuration:
    * the ``ANSIBLE_LIBRARY`` environment variable
    * the :ref:`DEFAULT_MODULE_PATH` configuration setting
 
 After you save your module file in one of these locations, Ansible loads it and you can use it in any local task, playbook, or role.
 
-To confirm that ``my_custom_module`` is available:
+To confirm that ``my_local_module`` is available:
 
-* type ``ansible localhost -m my_custom_module`` to see the output for that module, or
-* type ``ansible-doc -t module my_custom_module`` to see the documentation for that module
+* type ``ansible localhost -m my_local_module`` to see the output for that module, or
+* type ``ansible-doc -t module my_local_module`` to see the documentation for that module
 
 .. note::
 
    Currently, the ``ansible-doc`` command can parse module documentation only from modules written in Python. If you have a module written in a programming language other than Python, please write the documentation in a Python file adjacent to the module file.
 
-Adding custom modules for selected playbooks or a single role
+Adding local modules for selected playbooks or a single role
 -------------------------------------------------------------
 
 Ansible automatically loads all executable files from certain directories adjacent to your playbook or role as modules. Modules in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
@@ -75,29 +75,29 @@ Ansible automatically loads all executable files from certain directories adjace
 Adding a plugin locally
 =======================
 
-You can configure Ansible to load custom plugins in a specified location or locations and make them available to all playbooks and roles. Alternatively, you can make a custom plugin available only to specific playbooks or roles.
+You can configure Ansible to load local plugins in a specified location or locations and make them available to all playbooks and roles. Alternatively, you can make a local plugin available only to specific playbooks or roles.
 
-Adding custom plugins for all playbooks and roles
+Adding local plugins for all playbooks and roles
 -------------------------------------------------
 
-To load custom plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/<plugin_type>/:/usr/share/ansible/plugins/<plugin_type>/``. You have two options:
+To load local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take colon-separated list, similar to ``$PATH``, and default to ``~/.ansible/plugins/<plugin_type>/:/usr/share/ansible/plugins/<plugin_type>/``. You have two options:
 
-* Add your custom plugin to one of the default configured locations:
+* Add your local plugin to one of the default configured locations:
    * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback``
    * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/action``
-* Add the location of your custom plugin to an environment variable or configuration:
+* Add the location of your local plugin to an environment variable or configuration:
    * the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable - for example, ``$ANSIBLE_INVENTORY_PLUGINS`` or ``$ANSIBLE_VARS_PLUGINS``
    * the relevant ``DEFAULT_plugin_type_PATH`` configuration setting, such as ``DEFAULT_CALLBACK_PLUGIN_PATH`` or ``DEFAULT_FILTER_PLUGIN_PATH``
 
 After your plugin file is located in one of these locations, Ansible loads it and you can use it in any local module, task, playbook, or role. For more information on environment variables and configuration settings, see :ref:`ansible_configuration_settings`.
 
-To confirm that ``plugins/plugin_type/my_custom_plugin`` is available:
+To confirm that ``plugins/plugin_type/my_local_plugin`` is available:
 
-* type ``ansible-doc -t <plugin_type> my_custom_lookup_plugin`` to see the documentation for that plugin - for example, ``ansible-doc -t lookup my_custom_lookup_plugin``
+* type ``ansible-doc -t <plugin_type> my_local_lookup_plugin`` to see the documentation for that plugin - for example, ``ansible-doc -t lookup my_local_lookup_plugin``
 
 The ``ansible-doc`` command works for most plugin types, but not for action, filter, or test plugins. See :ref:`ansible-doc` for more details.
 
-Adding custom plugins for selected playbooks or a single role
+Adding local plugins for selected playbooks or a single role
 -------------------------------------------------------------
 
 Ansible automatically loads all plugins from certain directories adjacent to your playbook or role, loading each type of plugin separately from a directory named for the type of plugin. Plugins in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
