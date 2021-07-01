@@ -81,13 +81,17 @@ Ansible automatically loads all executable files from certain directories adjace
 .. _distributing_plugins:
 .. _local_plugins:
 
-Adding a plugin locally outside of a collection
-===============================================
+Adding a non-module plugin locally outside of a collection
+==========================================================
 
 You can configure Ansible to load standalone local plugins in a specified location or locations and make them available to all playbooks and roles. Alternatively, you can make a standalone local plugin available only to specific playbooks or roles.
 
-Adding local plugins for all playbooks and roles
--------------------------------------------------
+.. note::
+
+   Although modules are plugins, the naming patterns for directory names and environment variables that apply to other plugin types do not apply to modules. See :ref:`local_modules`.
+
+Adding local non-module plugins for all playbooks and roles
+-----------------------------------------------------------
 
 To load standalone local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take colon-separated list, similar to ``$PATH``. You have two options:
 
@@ -111,5 +115,5 @@ Adding standalone local plugins for selected playbooks or a single role
 
 Ansible automatically loads all plugins from certain directories adjacent to your playbook or role, loading each type of plugin separately from a directory named for the type of plugin. Standalone plugins in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
 
-* To use a standalone plugin only in a selected playbook or playbooks, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``callback_plugins`` or ``inventory_plugins``) in the directory that contains the playbooks. These directories must use the `_plugins` suffix. For a full list of plugin types, see :ref:`working_with_plugins`.
-* To use a standalone plugin only in a single role, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role. When shipped as part of a role, the plugin is available as soon as the role is executed. These directories must use the `_plugins` suffix. For a full list of plugin types, see :ref:`working_with_plugins`. If you are developing new plugins, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
+* To use a standalone plugin only in a selected playbook or playbooks, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``callback_plugins`` or ``inventory_plugins``) in the directory that contains the playbooks. These directories must use the ``_plugins`` suffix. For a full list of plugin types, see :ref:`working_with_plugins`.
+* To use a standalone plugin only in a single role, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role. When shipped as part of a role, the plugin is available as soon as the role is executed. These directories must use the ``_plugins`` suffix. For a full list of plugin types, see :ref:`working_with_plugins`. If you are developing new plugins, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
