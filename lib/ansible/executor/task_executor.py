@@ -1020,6 +1020,11 @@ class TaskExecutor:
             # config system instead of directly accessing play_context.
             task_keys['password'] = self._play_context.password
 
+        # The connection retries will use the default for task retries and not from
+        # connection config if there is no 'retries' key. Setting it to None here
+        # will allow the value from connection config to be used when appropriate.
+        task_keys['retries'] = getattr(self._play_context, 'retries', None)
+
         # set options with 'templated vars' specific to this plugin and dependent ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))

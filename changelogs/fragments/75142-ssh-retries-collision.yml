@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    task_exector/ssh_connection - use the ``retries`` value from ``ssh_connection`` settings,
+    not the default from the ``Task`` field attributes
