@@ -167,7 +167,7 @@ DOCUMENTATION = '''
               version_added: '2.7'
           cli:
             - name: ssh_extra_args
-      retries:
+      reconnection_retries:
           description: Number of attempts to connect.
           default: 0
           type: integer
@@ -453,7 +453,7 @@ def _ssh_retry(func):
     """
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        remaining_tries = int(self.get_option('retries')) + 1
+        remaining_tries = int(self.get_option('reconnection_retries')) + 1
         cmd_summary = u"%s..." % to_text(args[0])
         conn_password = self.get_option('password') or self._play_context.password
         for attempt in range(remaining_tries):
