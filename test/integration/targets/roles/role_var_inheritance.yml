@@ -2,5 +2,5 @@
   gather_facts: false
   roles:
     - common_dep
-    - A
-    - B
+    - RoleA
+    - RoleB
