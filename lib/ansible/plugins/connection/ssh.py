@@ -692,7 +692,7 @@ class Connection(ConnectionBase):
             self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
 
         # Now we add various arguments that have their own specific settings defined in docs above.
-        if self.get_option('host_key_checking') == False:
+        if self.get_option('host_key_checking') is False:
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
