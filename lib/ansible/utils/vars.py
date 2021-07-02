@@ -161,7 +161,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
                 x_hash, y_hash = [dict(enumerate(_list)) for _list in (x_value, y_value)]
                 merged = merge_hash(x_hash, y_hash, recursive, list_merge)
                 # transform back to list
-                x[key] = [merged[i] for i in sorted(merged)]
+                x[key] = [merged[i] for i in range(len(merged))]
             elif list_merge == 'replace':
                 # replace x value by y's one as it has higher priority
                 x[key] = y_value
