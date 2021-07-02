@@ -29,3 +29,6 @@ fi
 
 # ensure vars scope is correct
 ansible-playbook vars_scope.yml -i ../../inventory "$@"
+
+# test nested includes get parent roles greater than a depth of 3
+[ "$(ansible-playbook 47023.yml -i ../../inventory "$@" | grep '\<\(Default\|Var\)\>' | grep -c 'is defined')" = "2" ]
