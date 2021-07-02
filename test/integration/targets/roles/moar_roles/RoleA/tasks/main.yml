@@ -1,0 +1,5 @@
+- debug:
+    msg: 'RoleA'
+
+- include_role:
+    name: RoleB

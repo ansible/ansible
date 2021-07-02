@@ -1,6 +1,0 @@
-- hosts: all
-  gather_facts: false
-  roles:
-    - common_dep
-    - RoleA
-    - RoleB
