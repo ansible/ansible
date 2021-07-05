@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test - restrict ``packaging`` to ``< 21.0`` for Python ``< 3.6`` (https://github.com/ansible/ansible/pull/75186)."
