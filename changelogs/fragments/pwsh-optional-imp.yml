@@ -1,0 +1,2 @@
+minor_changes:
+- PowerShell - Added support for optional module_util imports by scanning for ``-Optional`` at the end of the import declaration
