@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"POT-Creation-Date: 2021-06-10 10:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,34 +96,34 @@ msgstr "2020 年 09 月 22 日: Ansible-2.10 GA リリース日。"
 msgid "Ansible-2.10.x patch releases will occur roughly every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-base-2.10.x.  Ansible-2.10.x patch releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed (example: Ansible-2.10 ships with community-crypto-1.1.0; ansible-2.10.1 may ship with community-crypto-1.2.0 but would not ship with community-crypto-2.0.0)."
 msgstr "コレクションに変更が加えられた場合、または後で ansible-base-2.10.x へのアップグレードを強制する必要があると見なされた場合、Ansible-2.10.x パッチのリリースは約 3 週間ごとに行われます。Ansible-2.10.x パッチリリースには新機能が含まれている可能性がありますが、後方互換性は含まれていません。実際には、これは、パッチまたはマイナーバージョン番号のいずれかが変更されたにもかかわらず、メジャー番号が変更されたときは変更されない新しいコレクションバージョンを含めることを意味します。たとえば、Ansible-2.10 が community-crypto-1.1.0 に同梱されると、ansible-2.10.1 は community-crypto-1.2.0 に同梱される場合がありますが、community-crypto-2.0.0 には同梱されません。"
 
-#: ../../rst/roadmap/COLLECTIONS_2_10.rst:42
-msgid "Breaking changes may be introduced in ansible-2.11.0 although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly."
-msgstr "ansible-2.11.0 で重大な変更が導入される可能性がありますが、コレクションの所有者は、非互換性になる前に少なくとも 1 つの Ansible リリースに含まれる非推奨期間を使用することが推奨されます。"
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:45
+msgid "Minor releases will stop when :ref:`Ansible-3 <ansible_3_roadmap>` is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information."
+msgstr ":ref:`Ansible-3 <ansible_3_roadmap>` がリリースされると、マイナーリリースは停止します。詳細は「:ref:`リリースおよびメンテナンスページ <release_and_maintenance>`」を参照してください。"
 
-#: ../../rst/roadmap/COLLECTIONS_2_10.rst:44
-msgid "The rough schedule for Ansible-2.11 and beyond (such as how many months we'll aim for between versions) is still to be discussed and likely will be made after 2.10.0 has been released."
-msgstr "Ansible-2.11 以降の大まかなスケジュール (バージョン間の目標数など) は依然として検討されており、2.10.0 のリリース後に行われる可能性があります。"
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:48
+msgid "Breaking changes may be introduced in ansible-3.0 although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly."
+msgstr "ansible-3.0 で重大な変更が導入される可能性がありますが、コレクションの所有者は、非互換性になる前に少なくとも 1 つの Ansible リリースに含まれる非推奨期間を使用することが推奨されます。"
 
-#: ../../rst/roadmap/COLLECTIONS_2_10.rst:46
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:45
-#: ../../rst/roadmap/COLLECTIONS_4.rst:48
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:51
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:52
+#: ../../rst/roadmap/COLLECTIONS_4.rst:55
 msgid "For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details."
 msgstr "詳細は、メーリングリストまたは IRC チャンネルをご利用ください。「:ref:`communication`」を参照してください。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:3
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:5
 msgid "Ansible project 3.0"
 msgstr "Ansible プロジェクト 3.0"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:5
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:7
 msgid "This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. Ansible 3.x.x includes ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for the most recent updates on ``ansible-base``."
 msgstr "本リリーススケジュールには、`ansible <https://pypi.org/project/ansible/>`_ パッケージの日付が含まれており、`ansible-base <https://pypi.org/project/ansible-base/>`_ パッケージの日付もいくつか含まれています。この日付はすべて変更する可能性があります。Ansible 3.x.x には ``ansible-base`` 2.10 が含まれます。``ansible-base`` の最新の更新については、「:ref:`base_roadmap_2_10`」を参照してください。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:11
-#: ../../rst/roadmap/COLLECTIONS_4.rst:12
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:13
+#: ../../rst/roadmap/COLLECTIONS_4.rst:14
 msgid "Release schedule"
 msgstr "リリーススケジュール"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:15
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:17
 msgid "Ansible is switching from its traditional versioning scheme to `semantic versioning <https://semver.org/>`_ starting with this release.  So this version is 3.0.0 instead of 2.11.0."
 msgstr "Ansible は、本リリース以降の従来のバージョン管理スキームから `semantic versioning <https://semver.org/>`_ に切り替えるため、このバージョンは 2.11.0 ではなく 3.0.0 になります。"
 
@@ -131,7 +131,7 @@ msgstr "Ansible は、本リリース以降の従来のバージョン管理ス�
 msgid "2020-12-16"
 msgstr "2020 年 12 月 16 日"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:19
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:21
 msgid "Finalize rules for net-new collections submitted for the ansible release."
 msgstr "Ansible リリースに送信された net-new コレクションのルールのファイナライズ。"
 
@@ -139,7 +139,7 @@ msgstr "Ansible リリースに送信された net-new コレクションのル�
 msgid "2021-01-27"
 msgstr "2021 年 01 月 27 日"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:20
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:22
 msgid "Final day for new collections to be **reviewed and approved**. They MUST be submitted prior to this to give reviewers a chance to look them over and for collection owners to fix any problems."
 msgstr "新しいコレクションの **レビューおよび承認** の最終日。レビュー担当者が新しいコレクションを確認し、コレクションの所有者が問題を修正する機会を得るために、この日付までに提出する必要があります。"
 
@@ -147,7 +147,7 @@ msgstr "新しいコレクションの **レビューおよび承認** の最終
 msgid "2021-02-02"
 msgstr "2021 年 02 月 02 日"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:23
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:25
 msgid "Ansible-3.0.0-beta1 -- feature freeze [1]_"
 msgstr "ansible-3.0.0-beta1 -- 機能フリーズ [1]_"
 
@@ -155,7 +155,7 @@ msgstr "ansible-3.0.0-beta1 -- 機能フリーズ [1]_"
 msgid "2021-02-09"
 msgstr "2021 年 02 月 09 日"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:24
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:26
 msgid "Ansible-3.0.0-rc1 -- final freeze [2]_ [3]_"
 msgstr "Ansible-3.0.0-rc1 -- 最終フリーズ [2]_ [3]_"
 
@@ -163,7 +163,7 @@ msgstr "Ansible-3.0.0-rc1 -- 最終フリーズ [2]_ [3]_"
 msgid "2021-02-16"
 msgstr "2021 年 02 月 16 日"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:25
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:27
 msgid "Release of Ansible-3.0.0"
 msgstr "Ansible-3.0.0 のリリース"
 
@@ -171,51 +171,54 @@ msgstr "Ansible-3.0.0 のリリース"
 msgid "2021-03-09"
 msgstr "2021 年 03 月 09 日"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:26
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:28
 msgid "Release of Ansible-3.1.0 (bugfix + compatible features: every three weeks)"
 msgstr "Ansible-3.1.0 のリリース (バグ修正 + 互換性のある機能: 3 週間ごと)"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:28
-#: ../../rst/roadmap/COLLECTIONS_4.rst:31
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:30
 msgid "No new modules or major features accepted after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-2.1.0; ansible-3.0.0 could ship with community-crypto-2.1.1.  It would not ship with community-crypto-2.2.0."
 msgstr "この日付以降は、新しいモジュールやメジャー機能は追加されません。実際には、semver コレクションのバージョンは互換性のあるリリースバージョンにフリーズします。たとえば、この日付の community.crypto のバージョンが community-crypto-2.1.0 であれば、ansible-3.0.0 は community-crypto-2.1.1 に同梱される可能性がありました。community-crypto-2.2.0 は同梱されません。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:30
-#: ../../rst/roadmap/COLLECTIONS_4.rst:33
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:32
+#: ../../rst/roadmap/COLLECTIONS_4.rst:35
 msgid "After this date only changes blocking a release are accepted.  Accepted changes require creating a new rc and may slip the final release date."
 msgstr "この日付以降は、リリースをブロックする変更のみが許可されます。受け入れ可能な変更には、新しい rc を作成する必要があり、最終リリース日は処理されない可能性があります。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:31
-#: ../../rst/roadmap/COLLECTIONS_4.rst:34
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:33
+#: ../../rst/roadmap/COLLECTIONS_4.rst:36
 msgid "Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_."
 msgstr "コレクションは、ブロッカーが承認された場合にのみ新しいバージョンに更新されます。コレクションの所有者は、(フリーズの前に) 修正のためにコレクションのバージョンを上げるかどうかを決定するために、コミュニティー IRC ミーティングのブロッカーについて検討する必要があります。`コミュニティー IRC ミーティングの議題 <https://github.com/ansible/community/issues/539>`_ を参照してください。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:36
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:38
 msgid "Breaking changes may be introduced in Ansible 3.0.0, although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before the breaking change happens."
 msgstr "Ansible3.0.0 で重大な変更が導入される可能性がありますが、コレクションの所有者は、重大な変更が発生する前に少なくとも 1 つの Ansible リリースに含まれる非推奨期間を使用することが推奨されます。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:40
-#: ../../rst/roadmap/COLLECTIONS_4.rst:43
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:42
+#: ../../rst/roadmap/COLLECTIONS_4.rst:45
 msgid "Ansible minor releases"
 msgstr "Ansible マイナーリリース"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:42
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:44
 msgid "Ansible 3.x.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-base-2.10.x.  Ansible 3.x.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-3.0.0 ships with community-crypto-2.1.0; Ansible-3.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0)."
 msgstr "コレクションに変更が加えられた場合、または後で ansible-base-2.10.x へのアップグレードを強制する必要があると見なされた場合、Ansible 3.x.x マイナーリリースは約 3 週間ごとに行われます。Ansible 3.x.x マイナーリリースには新機能が含まれている可能性がありますが、後方互換性は含まれていません。実際には、これは、パッチまたはマイナーバージョン番号のいずれかが変更されたにもかかわらず、メジャー番号が変更されたときに変更されない新しいコレクションバージョンを含めることを意味します。たとえば、Ansible-3.0.0 が community-crypto-2.1.0 に同梱されると、Ansible-3.1.0 は community-crypto-2.2.0 に同梱される場合がありますが、community-crypto-3.0.0 には同梱されません。"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:48
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:49
+msgid "Minor releases will stop when :ref:`Ansible-4 <ansible_4_roadmap>` is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information."
+msgstr ":ref:`Ansible-4 <ansible_4_roadmap>` がリリースされると、マイナーリリースは停止します。詳細は「:ref:`リリースおよびメンテナンスページ <release_and_maintenance>`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:56
 msgid "ansible-base release"
 msgstr "ansible-base リリース"
 
-#: ../../rst/roadmap/COLLECTIONS_3_0.rst:50
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:58
 msgid "Ansible 3.x.x works with ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for details."
 msgstr "Ansible 3.x.x は ``ansible-base`` 2.10 で動作します。詳細は、「:ref:`base_roadmap_2_10`」を参照してください。"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:3
+#: ../../rst/roadmap/COLLECTIONS_4.rst:5
 msgid "Ansible project 4.0"
 msgstr "Ansible プロジェクト 4.0"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:5
+#: ../../rst/roadmap/COLLECTIONS_4.rst:7
 msgid "This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-core <https://pypi.org/project/ansible-core/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_11` for the most recent updates on ``ansible-core``."
 msgstr "本リリーススケジュールには、`ansible <https://pypi.org/project/ansible/>`_ パッケージの日付が含まれており、`ansible-core <https://pypi.org/project/ansible-core/>`_ パッケージの日付もいくつか含まれています。この日付はすべて変更される可能性があります。``ansible-core`` の最新の更新については「:ref:`base_roadmap_2_11`」を参照してください。"
 
@@ -223,15 +226,15 @@ msgstr "本リリーススケジュールには、`ansible <https://pypi.org/pro
 msgid "2021-01-26"
 msgstr "2021 年 01 月 26日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:15
-msgid "New Collections will be reviewed for inclusion in Ansible 4."
-msgstr "新しいコレクションは、Ansible 4 に含まれるようにレビューされています。"
+#: ../../rst/roadmap/COLLECTIONS_4.rst:17
+msgid "New Collections will be reviewed for inclusion in Ansible 4. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_."
+msgstr "新しいコレクションは、Ansible 4 に含まれるようにレビューされます。この `GitHub ディスカッション <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_ に新しいコレクションを追加するリクエストを送信してください。"
 
 #: ../../rst/roadmap/COLLECTIONS_4.rst
 msgid "2021-03-03"
 msgstr "2021 年 03 月 03 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:16
+#: ../../rst/roadmap/COLLECTIONS_4.rst:18
 msgid "Ansible-4.0.0 alpha1 (biweekly ``ansible`` alphas.  These are timed to coincide with the start of the ``ansible-core-2.11`` pre-releases)."
 msgstr "Ansible-4.0.0 alpha1 (``ansible`` Alpha は隔週)。これらは ``ansible-core-2.11`` プレリリースの開始と合致するようにタイミングが調整されます。"
 
@@ -239,7 +242,7 @@ msgstr "Ansible-4.0.0 alpha1 (``ansible`` Alpha は隔週)。これらは ``ansi
 msgid "2021-03-16"
 msgstr "2021 年 03 月 16 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:17
+#: ../../rst/roadmap/COLLECTIONS_4.rst:19
 msgid "Ansible-4.0.0 alpha2"
 msgstr "Ansible-4.0.0 alpha2"
 
@@ -247,7 +250,7 @@ msgstr "Ansible-4.0.0 alpha2"
 msgid "2021-03-30"
 msgstr "2021 年 03 月 30 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:18
+#: ../../rst/roadmap/COLLECTIONS_4.rst:20
 msgid "Ansible-4.0.0 alpha3"
 msgstr "Ansible-4.0.0 alpha3"
 
@@ -255,11 +258,11 @@ msgstr "Ansible-4.0.0 alpha3"
 msgid "2021-04-13"
 msgstr "2021 年 04 月 13 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:19
+#: ../../rst/roadmap/COLLECTIONS_4.rst:21
 msgid "Last day for new collections to be submitted for inclusion in Ansible 4. Note that collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion."
 msgstr "Ansible 4 に含めるために新しいコレクションを送信する最終日。コレクションを含める前に、コレクションをレビューして承認する必要があることに注意してください。すべてのコレクションをレビューする保証はありません。コレクションが早く提出されるほど、コレクションがレビューされ、必要なフィードバックが含まれるのに間に合うように対処される可能性が高くなります。"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:20
+#: ../../rst/roadmap/COLLECTIONS_4.rst:22
 msgid "Ansible-4.0.0 alpha4"
 msgstr "Ansible-4.0.0 alpha4"
 
@@ -267,7 +270,7 @@ msgstr "Ansible-4.0.0 alpha4"
 msgid "2021-04-14"
 msgstr "2021 年 04 月 14 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:21
+#: ../../rst/roadmap/COLLECTIONS_4.rst:23
 msgid "Community IRC Meeting topic: list any new collection reviews which block release.  List any backwards incompatible collection releases that beta1 should try to accommodate."
 msgstr "コミュニティー IRC ミーティングのトピック: リリースをブロックする新しいコレクションレビューを一覧表示します。beta1 が対応しようとする後方互換性のないコレクションリリースの一覧を表示します。"
 
@@ -275,7 +278,7 @@ msgstr "コミュニティー IRC ミーティングのトピック: リリー�
 msgid "2021-04-21"
 msgstr "2021 年 04 月 21 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:22
+#: ../../rst/roadmap/COLLECTIONS_4.rst:24
 msgid "Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline."
 msgstr "コミュニティー IRC ミーティングのトピック: 期限に間に合わないブロッカーに対してアクティブにする不測の事態を決定します。"
 
@@ -283,11 +286,11 @@ msgstr "コミュニティー IRC ミーティングのトピック: 期限に�
 msgid "2021-04-26"
 msgstr "2021 年 04 月 26 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:23
+#: ../../rst/roadmap/COLLECTIONS_4.rst:25
 msgid "Last day for new collections to be **reviewed and approved** for inclusion in Ansible 4."
 msgstr "新しいコレクションを Ansible 4 に含めるために **レビューおよび承認** される最終日。"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:24
+#: ../../rst/roadmap/COLLECTIONS_4.rst:26
 msgid "Last day for collections to make backwards incompatible releases that will be accepted into Ansible 4."
 msgstr "コレクションが Ansible 4 に受け入れられる後方互換性のないリリースを作成する最終日。"
 
@@ -295,7 +298,7 @@ msgstr "コレクションが Ansible 4 に受け入れられる後方互換性�
 msgid "2021-04-27"
 msgstr "2021 年 04 月 27 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:25
+#: ../../rst/roadmap/COLLECTIONS_4.rst:27
 msgid "Ansible-4.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users should test for bugs)."
 msgstr "Ansible-4.0.0 beta1 -- 機能フリーズ [1]_ (週次 Beta リリース)。コレクションの所有者と対象のユーザーはバグについてテストする必要があります。"
 
@@ -303,7 +306,7 @@ msgstr "Ansible-4.0.0 beta1 -- 機能フリーズ [1]_ (週次 Beta リリース
 msgid "2021-05-04"
 msgstr "2021 年 05 月 04 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:26
+#: ../../rst/roadmap/COLLECTIONS_4.rst:28
 msgid "Ansible-4.0.0 beta2"
 msgstr "Ansible-4.0.0 beta2"
 
@@ -311,7 +314,7 @@ msgstr "Ansible-4.0.0 beta2"
 msgid "2021-05-11"
 msgstr "2021 年 05 月 11 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:27
+#: ../../rst/roadmap/COLLECTIONS_4.rst:29
 msgid "Ansible-4.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed.  Test and alert us to any blocker bugs)."
 msgstr "Ansible-4.0.0 rc1 [2]_ [3]_ (必要に応じて週次リリース候補。すべてのブロッカーバグに対してテストし、警告します)"
 
@@ -319,7 +322,7 @@ msgstr "Ansible-4.0.0 rc1 [2]_ [3]_ (必要に応じて週次リリース候補�
 msgid "2021-05-18"
 msgstr "2021 年 05 月 18 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:28
+#: ../../rst/roadmap/COLLECTIONS_4.rst:30
 msgid "Ansible-4.0.0 release"
 msgstr "Ansible-4.0.0 リリース"
 
@@ -327,17 +330,25 @@ msgstr "Ansible-4.0.0 リリース"
 msgid "2021-06-08"
 msgstr "2021 年 06 月 08 日"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:29
+#: ../../rst/roadmap/COLLECTIONS_4.rst:31
 msgid "Release of Ansible-4.1.0 (bugfix + compatible features: every three weeks)"
 msgstr "Ansible-4.1.0 のリリース (バグ修正 + 互換性のある機能: 3 週間ごと)"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:39
+#: ../../rst/roadmap/COLLECTIONS_4.rst:33
+msgid "No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-2.1.0; ansible-3.0.0 could ship with community-crypto-2.1.1.  It would not ship with community-crypto-2.2.0."
+msgstr "この日付以降は、新しいモジュールやメジャー機能は追加されません。実際には、semver コレクションのバージョンは互換性のあるリリースバージョンにフリーズします。たとえば、この日付の community.crypto のバージョンが community-crypto-2.1.0 であれば、ansible-3.0.0 は community-crypto-2.1.1 に同梱される可能性がありました。community-crypto-2.2.0 には同梱されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:41
 msgid "Breaking changes will be introduced in Ansible 4.0.0, although we encourage the use of deprecation periods that will show up in at least one Ansible release before the breaking change happens, this is not guaranteed."
 msgstr "Ansible 4.0.0 で 重大な変更が導入されますが、重大な変更が発生する前に少なくとも 1 つの Ansible リリースに表示される非推奨期間の使用が推奨されますが、これは保証されません。"
 
-#: ../../rst/roadmap/COLLECTIONS_4.rst:45
+#: ../../rst/roadmap/COLLECTIONS_4.rst:47
 msgid "Ansible 4.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-core-2.11.x.  Ansible 4.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-4.0.0 ships with community-crypto-2.1.0; Ansible-4.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0)."
 msgstr "コレクションに変更が加えられた場合、または後で ansible-core-2.11.x へのアップグレードを強制する必要があると見なされた場合、Ansible 4.x マイナーリリースは約 3 週間ごとに行われます。Ansible 4.x マイナーリリースには新機能が含まれている可能性がありますが、後方互換性は含まれていません。実際には、これは、パッチまたはマイナーバージョン番号のいずれかが変更されたにもかかわらず、メジャー番号が変更されたときに変更されない新しいコレクションバージョンを含めることを意味します。たとえば、Ansible-4.0.0 が community-crypto-2.1.0 に同梱されると、Ansible-4.1.0 は community-crypto-2.2.0 に同梱される場合がありますが、community-crypto-3.0.0 には同梱されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:52
+msgid "Minor releases will stop when Ansible-5 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information."
+msgstr "Ansible-5 がリリースされると、マイナーリリースは停止します。詳細は「:ref:`リリースおよびメンテナンスページ <release_and_maintenance>`」を参照してください。"
 
 #: ../../rst/roadmap/ROADMAP_2_10.rst:5
 msgid "Ansible-base 2.10"
@@ -1348,4 +1359,10 @@ msgstr "Ansible プロジェクトの履歴は、以下に示す以前のロー�
 #: ../../rst/roadmap/old_roadmap_index.rst:8
 msgid "See :ref:`roadmaps` to find current Ansible and ``ansible-base`` roadmaps."
 msgstr "現在の Ansible および ``ansible-base`` のロードマップを確認するには、「:ref:`roadmaps`」を参照してください。"
+
+#~ msgid "The rough schedule for Ansible-2.11 and beyond (such as how many months we'll aim for between versions) is still to be discussed and likely will be made after 2.10.0 has been released."
+#~ msgstr "Ansible-2.11 以降の大まかなスケジュール (バージョン間の目標数など) は依然として検討されており、2.10.0 のリリース後に行われる可能性があります。"
+
+#~ msgid "New Collections will be reviewed for inclusion in Ansible 4."
+#~ msgstr "新しいコレクションは、Ansible 4 に含まれるようにレビューされています。"
 
