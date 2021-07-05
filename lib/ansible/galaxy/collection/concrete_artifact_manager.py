@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from hashlib import sha256
 from shutil import rmtree
 from tempfile import mkdtemp
+import ansible.constants as C
 
 try:
     from typing import TYPE_CHECKING
@@ -347,7 +348,26 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         dir=b_path,
         prefix=to_bytes(name, errors='surrogate_or_strict'),
     )  # type: bytes
-    git_clone_cmd = 'git', 'clone', git_url, to_text(b_checkout_path)
+
+    git_cache = os.path.join(C.GALAXY_CACHE_DIR, 'git')
+    git_dir = os.path.join(git_cache, sha256(git_url.encode()).hexdigest())
+
+    if os.path.exists(git_dir):
+        git_update_cmd = 'git', '-C', git_dir, 'remote', 'update'
+    else:
+        git_clone_mirror_cmd = 'git', 'clone', git_url, git_dir
+        try:
+            subprocess.check_call(git_clone_mirror_cmd)
+        except subprocess.CalledProcessError as proc_err:
+            raise_from(
+                AnsibleError(  # should probably be LookupError
+                    'Failed to clone a Git repository from `{repo_url!s}`.'.
+                    format(repo_url=to_native(git_url)),
+                ),
+                proc_err,
+            )
+
+    git_clone_cmd = 'git', 'clone', git_dir, to_text(b_checkout_path)
     # FIXME: '--depth', '1', '--branch', version
     try:
         subprocess.check_call(git_clone_cmd)
