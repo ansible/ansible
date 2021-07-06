@@ -1,0 +1,7 @@
+bugfixes:
+  - >-
+    task_executor/ssh_connection - use the ``retries`` value from ``ssh_connection`` settings,
+    not the default from the ``Task`` field attributes (https://github.com/ansible/ansible/issues/75142).
+
+  - ssh_connection - set the default for ``reconnection_retries`` back to ``0`` (https://github.com/ansible/ansible/issues/75142).
+  - ssh_connection - rename ``retries`` to ``reconnection_retries`` to avoid conflicts with task vars (https://github.com/ansible/ansible/issues/75142).
