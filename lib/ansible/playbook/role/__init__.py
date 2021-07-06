@@ -456,6 +456,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         if dep_chain:
             for parent in dep_chain:
+                inherited_vars = combine_vars(inherited_vars, parent.vars)
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
