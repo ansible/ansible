@@ -1,0 +1,2 @@
+bugfixes:
+  - user - set expiration value correctly when unable to retrieve the current value from the system (https://github.com/ansible/ansible/issues/71916)
