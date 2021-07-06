@@ -1,0 +1,4 @@
+dependencies:
+  - role: common_dep
+    vars:
+      test_var: A
