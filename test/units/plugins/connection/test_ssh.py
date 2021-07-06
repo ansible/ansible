@@ -234,7 +234,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.return_value = (0, '', '')
         conn.host = "some_host"
 
-        conn.set_option('retries', 9)
+        conn.set_option('reconnection_retries', 9)
         conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
 
         # Test with SCP_IF_SSH set to smart
@@ -292,7 +292,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.return_value = (0, '', '')
         conn.host = "some_host"
 
-        conn.set_option('retries', 9)
+        conn.set_option('reconnection_retries', 9)
         conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
 
         # Test with SCP_IF_SSH set to smart
@@ -535,7 +535,7 @@ class TestSSHConnectionRun(object):
 class TestSSHConnectionRetries(object):
     def test_incorrect_password(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('retries', 5)
+        self.conn.set_option('reconnection_retries', 5)
         monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.mock_popen_res.stdout.read.side_effect = [b'']
@@ -560,7 +560,7 @@ class TestSSHConnectionRetries(object):
 
     def test_retry_then_success(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('retries', 3)
+        self.conn.set_option('reconnection_retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -589,7 +589,7 @@ class TestSSHConnectionRetries(object):
 
     def test_multiple_failures(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('retries', 9)
+        self.conn.set_option('reconnection_retries', 9)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -612,7 +612,7 @@ class TestSSHConnectionRetries(object):
 
     def test_abitrary_exceptions(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('retries', 9)
+        self.conn.set_option('reconnection_retries', 9)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -625,7 +625,7 @@ class TestSSHConnectionRetries(object):
 
     def test_put_file_retries(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('retries', 3)
+        self.conn.set_option('reconnection_retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
         monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
@@ -656,7 +656,7 @@ class TestSSHConnectionRetries(object):
 
     def test_fetch_file_retries(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('retries', 3)
+        self.conn.set_option('reconnection_retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
         monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
