@@ -244,10 +244,10 @@ for example::
 
 .. versionadded:: '2.12'
 
-To remove preceding and trailing unwanted lines from the string that possibly contains JSON, use the 'clean_json' filter.
-Very useful when dealing with output from applications that mix in messages with the data::
+To remove preceding and trailing unwanted lines from the string that possibly contains a JSON object ``{ }`` or list ``[ ]``, use the 'clean_json' filter.
+If no JSON delimiters are found it returns an error. Very useful when dealing with output from applications that mix in messages with the data::
 
-    - name: Using filtered=True
+    - name: Using clean_json
       ansible.builtin.set_fact:
         myvar: "{{ junk_src|clean_json|from_json }}"
       vars:
