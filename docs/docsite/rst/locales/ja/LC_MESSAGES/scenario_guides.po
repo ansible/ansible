@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"POT-Creation-Date: 2021-06-10 10:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -256,7 +256,7 @@ msgid "Name of the certificate in the ACI Web GUI. This defaults to either the `
 msgstr "ACI Web GUI の証明書の名前。デフォルトは ``username`` 値または ``private_key`` ファイルのベース名になります。*バージョン 2.5 の新機能* です。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:217
-#: ../../rst/scenario_guides/guide_docker.rst:53
+#: ../../rst/scenario_guides/guide_docker.rst:59
 msgid "timeout"
 msgstr "timeout"
 
@@ -282,7 +282,7 @@ msgid "Use HTTPS or HTTP for APIC REST communication. (Defaults to ``yes``)"
 msgstr "APIC REST 通信には HTTPS または HTTP を使用します (``yes`` にデフォルト設定)。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:226
-#: ../../rst/scenario_guides/guide_docker.rst:59
+#: ../../rst/scenario_guides/guide_docker.rst:65
 #: ../../rst/scenario_guides/guide_meraki.rst:74
 msgid "validate_certs"
 msgstr "validate_certs"
@@ -345,7 +345,7 @@ msgstr "previous"
 
 #: ../../rst/scenario_guides/guide_aci.rst:256
 msgid "The original state of the managed object (before any change was made)."
-msgstr "管理オブジェクトの元の状態 (変更を行う前)。"
+msgstr "管理対象オブジェクトの元の状態 (変更が行われる前の状態)。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:259
 msgid "proposed"
@@ -353,7 +353,7 @@ msgstr "proposed"
 
 #: ../../rst/scenario_guides/guide_aci.rst:259
 msgid "The proposed config payload, based on user-supplied values."
-msgstr "ユーザーが指定した値に基づく、提案された設定ペイロード。"
+msgstr "ユーザーが指定した値に基づいた、提案された設定ペイロード。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:262
 msgid "sent"
@@ -397,7 +397,7 @@ msgstr "status"
 
 #: ../../rst/scenario_guides/guide_aci.rst:276
 msgid "The HTTP status code for the request."
-msgstr "要求の HTTP ステータスコード。"
+msgstr "リクエストの HTTP ステータスコード。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:279
 msgid "url"
@@ -651,11 +651,11 @@ msgstr "運用例"
 
 #: ../../rst/scenario_guides/guide_aci.rst:541
 msgid "Here is a small overview of useful operational tasks to reuse in your playbooks."
-msgstr "以下は、Playbook で再利用するのに役立つ運用タスクの概要です。"
+msgstr "以下は、Playbook で再利用する有用な運用タスクのいくつかの概要です。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:543
 msgid "Feel free to contribute more useful snippets."
-msgstr "より有用なスニペットを自由に投稿してください。"
+msgstr "より便利なスニペットを自由に投稿してください。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:547
 msgid "Waiting for all controllers to be ready"
@@ -679,7 +679,7 @@ msgstr "APIC エラーメッセージ"
 
 #: ../../rst/scenario_guides/guide_aci.rst:591
 msgid "The following error messages may occur and this section can help you understand what exactly is going on and how to fix/avoid them."
-msgstr "以下のエラーメッセージが発生する場合があります。本セクションは、正確な状況と、その修正方法や回避方法を理解するのに役立ちます。"
+msgstr "以下のエラーメッセージが表示される場合があります。本セクションは、何が起っているのか、およびそのエラーを修正または回避する方法を正確に理解するのに役立ちます。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:595
 msgid "APIC Error 122: unknown managed object class 'polUni'"
@@ -826,7 +826,7 @@ msgid "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/scenario_guides/guide_aci.rst:661
-#: ../../rst/scenario_guides/guide_aws.rst:279
+#: ../../rst/scenario_guides/guide_aws.rst:282
 msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
@@ -881,7 +881,7 @@ msgid "Normally, you'll use the following pattern for plays that provision Alicl
 msgstr "通常、Alicloud リソースをプロビジョニングするプレイには次のパターンを使用します。"
 
 #: ../../rst/scenario_guides/guide_alicloud.rst:28
-#: ../../rst/scenario_guides/guide_aws.rst:28
+#: ../../rst/scenario_guides/guide_aws.rst:31
 #: ../../rst/scenario_guides/guide_vultr.rst:45
 msgid "Authentication"
 msgstr "認証"
@@ -903,7 +903,7 @@ msgid "Note that if you store your credentials in a vars_file, you need to refer
 msgstr "認証情報を vars_file に保存する場合は、各 Alicloud モジュールで認証情報を参照する必要があることに注意してください。以下に例を示します。"
 
 #: ../../rst/scenario_guides/guide_alicloud.rst:54
-#: ../../rst/scenario_guides/guide_aws.rst:54
+#: ../../rst/scenario_guides/guide_aws.rst:57
 #: ../../rst/scenario_guides/guide_rax.rst:86
 msgid "Provisioning"
 msgstr "プロビジョニング"
@@ -941,200 +941,204 @@ msgid "Requirements for the AWS modules are minimal."
 msgstr "AWS モジュールの要件は最小限です。"
 
 #: ../../rst/scenario_guides/guide_aws.rst:14
-msgid "All of the modules require and are tested against recent versions of boto, usually boto3. Check the module documentation for the minimum required version for each module. You must have the boto3 Python module installed on your control machine. You may also need the original boto package. You can install these modules from your OS distribution or using the python package installer: ``pip install boto3``."
-msgstr "モジュールはすべて必要で、最新バージョンの boto、通常は boto3 に対してテストされています。各モジュールに必要な最小バージョンについては、そのモジュールのドキュメントを確認します。boto3 の Python モジュールをコントロールマシンにインストールする必要があります。元の boto パッケージもインストールする必要があります。これらのモジュールは、OS のディストリビューションからインストールするか、Python パッケージインストーラー ``pip install boto3`` を使用してインストールすることができます。"
+msgid "All of the modules require and are tested against recent versions of botocore and boto3.  Starting with the 2.0 AWS collection releases, it is generally the policy of the collections to support the versions of these libraries released 12 months prior to the most recent major collection revision. Individual modules may require a more recent library version to support specific features or may require the boto library, check the module documentation for the minimum required version for each module. You must have the boto3 Python module installed on your control machine. You can install these modules from your OS distribution or using the python package installer: ``pip install boto3``."
+msgstr "すべてのモジュールは、botocore および boto3 の最新バージョンを必要とし、それらに対してテストされています。2.0 AWS コレクションリリース以降、通常、コレクションのポリシーは、最新のメジャーコレクションリビジョンの 12 カ月前にリリースされたこれらのライブラリーのバージョンをサポートすることです。個々のモジュールでは、特定の機能をサポートするために最新のライブラリーバージョンが必要な場合や、boto ライブラリーが必要な場合があります。モジュールのドキュメントで、各モジュールに必要な最低バージョンを確認してください。制御マシンに boto3 Python モジュールがインストールされている必要があります。これらのモジュールは、OS ディストリビューションから、または python パッケージインストーラーを使用してインストールできます (``pip install boto3``)。"
 
 #: ../../rst/scenario_guides/guide_aws.rst:16
+msgid "Starting with the 2.0 releases of both collections, Python 2.7 support will be ended in accordance with AWS' `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ and Python 3.6 or greater will be required."
+msgstr "両方のコレクションで 2.0 リリース以降、Python 2.7 サポートは AWS の `Python 2.7 サポートの終了 <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ と Python 3.6 以上に応じて終了します。"
+
+#: ../../rst/scenario_guides/guide_aws.rst:19
 msgid "Whereas classically Ansible will execute tasks in its host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control."
 msgstr "従来、Ansible はホストループ内のタスクを複数のリモートマシンに対して実行しますが、ほとんどのクラウド制御手順は、制御するリージョンを参照するローカルマシンで実行します。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:18
+#: ../../rst/scenario_guides/guide_aws.rst:21
 msgid "In your playbook steps we'll typically be using the following pattern for provisioning steps::"
 msgstr "Playbook の手順では、通常、プロビジョニング手順に以下のパターンを使用します::"
 
-#: ../../rst/scenario_guides/guide_aws.rst:30
+#: ../../rst/scenario_guides/guide_aws.rst:33
 msgid "Authentication with the AWS-related modules is handled by either specifying your access and secret key as ENV variables or module arguments."
 msgstr "AWS 関連のモジュールを使用した認証は、ENV 変数またはモジュール引数としてアクセスおよび秘密鍵を指定することにより処理されます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:33
+#: ../../rst/scenario_guides/guide_aws.rst:36
 msgid "For environment variables::"
 msgstr "環境変数の場合::"
 
-#: ../../rst/scenario_guides/guide_aws.rst:38
+#: ../../rst/scenario_guides/guide_aws.rst:41
 msgid "For storing these in a vars_file, ideally encrypted with ansible-vault::"
 msgstr "vars_file に保存するには、ansible-vault で暗号化することが理想的です::"
 
-#: ../../rst/scenario_guides/guide_aws.rst:44
+#: ../../rst/scenario_guides/guide_aws.rst:47
 msgid "Note that if you store your credentials in vars_file, you need to refer to them in each AWS-module. For example::"
 msgstr "認証情報を vars_file に保存する場合は、各 AWS モジュールで認証情報を参照する必要があることに注意してください。以下に例を示します。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:56
+#: ../../rst/scenario_guides/guide_aws.rst:59
 msgid "The ec2 module provisions and de-provisions instances within EC2."
 msgstr "ec2 モジュールは、EC2 内でインスタンスのプロビジョニングおよびプロビジョニング解除を行います。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:58
+#: ../../rst/scenario_guides/guide_aws.rst:61
 msgid "An example of making sure there are only 5 instances tagged 'Demo' in EC2 follows."
 msgstr "EC2 で「Demo」とタグ付けされたインスタンスが 5 個になるようにする例を以下に示します。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:60
+#: ../../rst/scenario_guides/guide_aws.rst:63
 msgid "In the example below, the \"exact_count\" of instances is set to 5.  This means if there are 0 instances already existing, then 5 new instances would be created.  If there were 2 instances, only 3 would be created, and if there were 8 instances, 3 instances would be terminated."
 msgstr "以下の例では、インスタンスの「exact_count」は 5 に設定されます。これは、インスタンスがない場合は、新規インスタンスが 5 個作成されることを示しています。インスタンスが 2 個ある場合は、3 個作成され、インスタンスが 8 個ある場合は、3 個のインスタンスが終了します。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:64
+#: ../../rst/scenario_guides/guide_aws.rst:67
 msgid "What is being counted is specified by the \"count_tag\" parameter.  The parameter \"instance_tags\" is used to apply tags to the newly created instance.::"
 msgstr "カウントされるものは「count_tag」パラメーターで指定します。「instance_tags」パラメーターは、新たに作成されたインスタンスをタグに適用するために使用されます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:88
+#: ../../rst/scenario_guides/guide_aws.rst:91
 msgid "The data about what instances are created is being saved by the \"register\" keyword in the variable named \"ec2\"."
 msgstr "作成されるインスタンスに関するデータは、「ec2」という変数の「register」キーワードによって保存されます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:90
+#: ../../rst/scenario_guides/guide_aws.rst:93
 msgid "From this, we'll use the add_host module to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task.::"
 msgstr "このモジュールから add_host モジュールを使用し、これらの新規インスタンスで構成されるホストグループを動的に作成します。これにより、後続のタスクで、ホストでの設定アクションをすぐに実行できます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:117
+#: ../../rst/scenario_guides/guide_aws.rst:120
 msgid "With the host group now created, a second play at the bottom of the same provisioning playbook file might now have some configuration steps::"
 msgstr "これでホストグループが作成されたので、同じプロビジョニング Playbook ファイルの下部にある2つ目のプレイでは、以下のような設定ステップが必要になります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:138
+#: ../../rst/scenario_guides/guide_aws.rst:141
 msgid "Security Groups"
 msgstr "セキュリティーグループ"
 
-#: ../../rst/scenario_guides/guide_aws.rst:140
+#: ../../rst/scenario_guides/guide_aws.rst:143
 msgid "Security groups on AWS are stateful. The response of a request from your instance is allowed to flow in regardless of inbound security group rules and vice-versa. In case you only want allow traffic with AWS S3 service, you need to fetch the current IP ranges of AWS S3 for one region and apply them as an egress rule.::"
 msgstr "AWS のセキュリティーグループはステートフルです。インスタンスからの要求の応答は、受信セキュリティーグループルールに関係なく流入が許可され、その逆も同様です。AWS S3 サービスを使用するトラフィックのみを許可する場合は、あるリージョンに対して AWS S3 の現在の IP 範囲を取得し、それを egress ルールとして適用する必要があります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:169
+#: ../../rst/scenario_guides/guide_aws.rst:172
 #: ../../rst/scenario_guides/guide_rax.rst:155
 msgid "Host Inventory"
 msgstr "ホストインベントリー"
 
-#: ../../rst/scenario_guides/guide_aws.rst:171
+#: ../../rst/scenario_guides/guide_aws.rst:174
 msgid "Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames in text files.  Rather, the best way to handle this is to use the aws_ec2 inventory plugin. See :ref:`dynamic_inventory`."
 msgstr "ノードが起動したら、おそらく再通信するようにしたいでしょう。クラウド設定では、テキストファイルに、クラウドホスト名の静的リストを維持しないことが推奨されます。これを処理する最善の方法は、aws_ec2 インベントリープラグインを使用することです。:ref:`dynamic_inventory` を参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:174
+#: ../../rst/scenario_guides/guide_aws.rst:177
 msgid "The plugin will also return instances that were created outside of Ansible and allow Ansible to manage them."
 msgstr "このプラグインにより、Ansible 外で作成されたインスタンスも選択され、Ansible がインスタンスを管理できるようになります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:179
+#: ../../rst/scenario_guides/guide_aws.rst:182
 msgid "Tags And Groups And Variables"
 msgstr "タグ、グループ、および変数"
 
-#: ../../rst/scenario_guides/guide_aws.rst:181
+#: ../../rst/scenario_guides/guide_aws.rst:184
 msgid "When using the inventory plugin, you can configure extra inventory structure based on the metadata returned by AWS."
 msgstr "インベントリープラグインを使用する場合は、AWS により返されるメタデータに基づいて追加のインベントリー構造を設定できます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:183
+#: ../../rst/scenario_guides/guide_aws.rst:186
 msgid "For instance, you might use ``keyed_groups`` to create groups from instance tags::"
 msgstr "たとえば、``keyed_groups`` を使用してインスタンスタグからグループを作成することができます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:191
+#: ../../rst/scenario_guides/guide_aws.rst:194
 msgid "You can then target all instances with a \"class\" tag where the value is \"webserver\" in a play::"
 msgstr "次に、「class」タグの付いたすべてのインスタンスをターゲットにすることができます。ここで、値はプレイ内の「webserver」になります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:197
+#: ../../rst/scenario_guides/guide_aws.rst:200
 msgid "You can also use these groups with 'group_vars' to set variables that are automatically applied to matching instances.  See :ref:`splitting_out_vars`."
 msgstr "「group_vars」でこれらのグループを使用して、一致するインスタンスに自動的に適用される変数を設定することもできます。「:ref:`splitting_out_vars`」を参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:202
+#: ../../rst/scenario_guides/guide_aws.rst:205
 msgid "Autoscaling with Ansible Pull"
 msgstr "Ansible Pull を使用した自動スケーリング"
 
-#: ../../rst/scenario_guides/guide_aws.rst:204
+#: ../../rst/scenario_guides/guide_aws.rst:207
 msgid "Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible modules shown in the cloud documentation that can configure autoscaling policy."
 msgstr "Amazon Autoscaling 機能は、負荷に応じて容量を自動的に増減します。また、クラウドドキュメントで説明されるように、自動スケーリングポリシーを設定する Ansible モジュールがあります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:207
+#: ../../rst/scenario_guides/guide_aws.rst:210
 msgid "When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node."
 msgstr "ノードがオンラインになると、ansible コマンドの次のサイクルが反映されてそのノードを設定するのを待つことができない可能性があります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:209
+#: ../../rst/scenario_guides/guide_aws.rst:212
 msgid "To do this, pre-bake machine images which contain the necessary ansible-pull invocation.  Ansible-pull is a command line tool that fetches a playbook from a git server and runs it locally."
 msgstr "そのためには、必要な ansible-pull 呼び出しを含むマシンイメージを事前に作成します。ansible-pull は、git サーバーから Playbook を取得し、ローカルで実行するコマンドラインツールです。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:211
+#: ../../rst/scenario_guides/guide_aws.rst:214
 msgid "One of the challenges of this approach is that there needs to be a centralized way to store data about the results of pull commands in an autoscaling context. For this reason, the autoscaling solution provided below in the next section can be a better approach."
 msgstr "このアプローチの課題の 1 つとして、pull コマンドの結果に関するデータを自動スケーリングコンテキストに保存する集中的な方法が必要になります。このため、次のセクションで提供される自動スケーリングソリューションの方が適切です。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:214
+#: ../../rst/scenario_guides/guide_aws.rst:217
 msgid "Read :ref:`ansible-pull` for more information on pull-mode playbooks."
 msgstr "pull モードの Playbook の詳細は、「:ref:`ansible-pull`」を参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:219
+#: ../../rst/scenario_guides/guide_aws.rst:222
 msgid "Autoscaling with Ansible Tower"
 msgstr "Ansible Tower を使用した自動スケーリング"
 
-#: ../../rst/scenario_guides/guide_aws.rst:221
+#: ../../rst/scenario_guides/guide_aws.rst:224
 msgid ":ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call a defined URL and the server will \"dial out\" to the requester and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.  See the Tower install and product documentation for more details."
 msgstr "また、:ref:`ansible_tower` は、自動スケーリングのユースケースには非常に優れた機能も含まれています。このモードでは、簡単な curl スクリプトは定義された URL を呼び出すことができ、サーバーは要求元に対して「ダイヤルアウト」し、起動しているインスタンスを構成します。これは、一時ノードを再設定する優れた方法になります。詳細は、Tower のインストールと製品のドキュメントを参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:225
+#: ../../rst/scenario_guides/guide_aws.rst:228
 #: ../../rst/scenario_guides/guide_rax.rst:793
 msgid "A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded and less information has to be shared with remote hosts."
 msgstr "pull モードで Tower のコールバックを使用する利点は、ジョブの結果が引き続き中央で記録され、リモートホストと共有する必要のある情報が少なくなることです。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:231
+#: ../../rst/scenario_guides/guide_aws.rst:234
 msgid "Ansible With (And Versus) CloudFormation"
 msgstr "CloudFormation を使用した Ansible (Ansible と CloudFormation の比較)"
 
-#: ../../rst/scenario_guides/guide_aws.rst:233
+#: ../../rst/scenario_guides/guide_aws.rst:236
 msgid "CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document."
 msgstr "CloudFormation は、クラウドスタックを JSON または YAML のドキュメントとして定義する Amazon テクノロジーです。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:235
+#: ../../rst/scenario_guides/guide_aws.rst:238
 msgid "Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON/YAML document. This is recommended for most users."
 msgstr "Ansible モジュールは、複雑な JSON/YAML ドキュメントを定義せずに、多くの例で CloudFormation よりも簡単にインターフェースを使用できます。これは、ほとんどのユーザーに推奨されます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:238
+#: ../../rst/scenario_guides/guide_aws.rst:241
 msgid "However, for users that have decided to use CloudFormation, there is an Ansible module that can be used to apply a CloudFormation template to Amazon."
 msgstr "ただし、CloudFormation を使用するユーザーには、CloudFormation テンプレートを Amazon に適用するのに使用できる Ansible モジュールがあります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:241
+#: ../../rst/scenario_guides/guide_aws.rst:244
 msgid "When using Ansible with CloudFormation, typically Ansible will be used with a tool like Packer to build images, and CloudFormation will launch those images, or ansible will be invoked through user data once the image comes online, or a combination of the two."
 msgstr "CloudFormation で Ansible を使用する場合は、通常、Ansible を Packer などのツールで使用してイメージを作成し、CloudFormation がそのイメージを起動するか、イメージがオンラインになると、ユーザーデータを通じて ansible が呼び出されるか、その組み合わせとなります。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:244
+#: ../../rst/scenario_guides/guide_aws.rst:247
 msgid "Please see the examples in the Ansible CloudFormation module for more details."
 msgstr "詳細は、Ansible CloudFormation モジュールのサンプルを参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:249
+#: ../../rst/scenario_guides/guide_aws.rst:252
 msgid "AWS Image Building With Ansible"
 msgstr "Ansible での AWS イメージの構築"
 
-#: ../../rst/scenario_guides/guide_aws.rst:251
+#: ../../rst/scenario_guides/guide_aws.rst:254
 msgid "Many users may want to have images boot to a more complete configuration rather than configuring them entirely after instantiation.  To do this, one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get its own AMI ID for usage with the ec2 module or other Ansible AWS modules such as ec2_asg or the cloudformation module.   Possible tools include Packer, aminator, and Ansible's ec2_ami module."
 msgstr "多くの場合、インスタンス化後にイメージを完全に設定するのではなく、より完全な設定での起動を望みます。これを行うには、Ansible Playbook とともに多くのプログラムの中から 1 つ使用してベースイメージを定義し、アップロードできます。これにより、ec2 モジュール、ec2_asg モジュールや cloudformation モジュールなどのその他の Ansible AWS モジュールと使用するため、独自の AMI ID を取得します。ツールには Packer、aminator、および Ansible の ec2_ami モジュールが含まれます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:256
+#: ../../rst/scenario_guides/guide_aws.rst:259
 msgid "Generally speaking, we find most users using Packer."
 msgstr "一般的には、Packer が使用されます。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:258
+#: ../../rst/scenario_guides/guide_aws.rst:261
 msgid "See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible-local.html>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible.html>`_."
 msgstr "`Ansible ローカル Packer プロビジョナー <https://www.packer.io/docs/provisioners/ansible-local.html>`_ および `Ansible リモート Packer プロビジョナー <https://www.packer.io/docs/provisioners/ansible.html>`_ の Packer ドキュメントを参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:260
+#: ../../rst/scenario_guides/guide_aws.rst:263
 msgid "If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable."
 msgstr "現時点では、Packer を使用しない場合は、プロビジョニング後に (上記のように) Ansible を使用したベースイメージの設定が可能です。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:265
+#: ../../rst/scenario_guides/guide_aws.rst:268
 msgid "Next Steps: Explore Modules"
 msgstr "次のステップ: モジュールの検証"
 
-#: ../../rst/scenario_guides/guide_aws.rst:267
+#: ../../rst/scenario_guides/guide_aws.rst:270
 msgid "Ansible ships with lots of modules for configuring a wide array of EC2 services.  Browse the \"Cloud\" category of the module documentation for a full list with examples."
 msgstr "Ansible には、さまざまな EC2 サービスを設定するモジュールが多数同梱されています。例を含む完全な一覧については、モジュールドキュメントの「クラウド」カテゴリーを参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:272
+#: ../../rst/scenario_guides/guide_aws.rst:275
 msgid ":ref:`list_of_collections`"
 msgstr ":ref:`list_of_collections`"
 
-#: ../../rst/scenario_guides/guide_aws.rst:273
+#: ../../rst/scenario_guides/guide_aws.rst:276
 msgid "Browse existing collections, modules, and plugins"
 msgstr "既存のコレクション、モジュール、およびプラグインの閲覧"
 
-#: ../../rst/scenario_guides/guide_aws.rst:274
+#: ../../rst/scenario_guides/guide_aws.rst:277
 #: ../../rst/scenario_guides/guide_vagrant.rst:135
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:92
 #: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:87
@@ -1146,7 +1150,7 @@ msgstr "既存のコレクション、モジュール、およびプラグイン
 msgid ":ref:`working_with_playbooks`"
 msgstr ":ref:`working_with_playbooks`"
 
-#: ../../rst/scenario_guides/guide_aws.rst:275
+#: ../../rst/scenario_guides/guide_aws.rst:278
 #: ../../rst/scenario_guides/guide_vagrant.rst:136
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:93
 #: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:88
@@ -1158,23 +1162,23 @@ msgstr ":ref:`working_with_playbooks`"
 msgid "An introduction to playbooks"
 msgstr "Playbook の概要"
 
-#: ../../rst/scenario_guides/guide_aws.rst:276
+#: ../../rst/scenario_guides/guide_aws.rst:279
 msgid ":ref:`playbooks_delegation`"
 msgstr ":ref:`playbooks_delegation`"
 
-#: ../../rst/scenario_guides/guide_aws.rst:277
+#: ../../rst/scenario_guides/guide_aws.rst:280
 msgid "Delegation, useful for working with loud balancers, clouds, and locally executed steps."
 msgstr "委譲 (ロードバランサー、クラウド、ローカルで実行した手順を使用する際に役に立ちます)"
 
-#: ../../rst/scenario_guides/guide_aws.rst:278
+#: ../../rst/scenario_guides/guide_aws.rst:281
 msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-devel>`_"
 
-#: ../../rst/scenario_guides/guide_aws.rst:280
+#: ../../rst/scenario_guides/guide_aws.rst:283
 msgid "`irc.freenode.net <http://irc.freenode.net>`_"
 msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
 
-#: ../../rst/scenario_guides/guide_aws.rst:281
+#: ../../rst/scenario_guides/guide_aws.rst:284
 msgid "#ansible IRC chat channel"
 msgstr "IRC チャットチャンネル (#ansible)"
 
@@ -1280,7 +1284,7 @@ msgstr "Settings、Administrator の順に移動します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:60
 msgid "Click on Add and enter the email of the new user."
-msgstr "Add をクリックして、新規ユーザーの電子メールを入力します。"
+msgstr "追加をクリックして、新規ユーザーのメールを入力します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:61
 msgid "Check the checkbox of the subscription you want to test with this user."
@@ -1327,7 +1331,7 @@ msgstr "AZURE_TENANT"
 
 #: ../../rst/scenario_guides/guide_azure.rst:83
 msgid "To pass Active Directory username/password via the environment, define the following variables:"
-msgstr "環境経由で Active Directory のユーザー名/パスワードのペアを渡すには、以下の変数を定義します。"
+msgstr "環境経由で Active Directory のユーザー名/パスワードを渡すには、以下の変数を定義します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:85
 #: ../../rst/scenario_guides/guide_azure.rst:91
@@ -1396,7 +1400,7 @@ msgstr "tenant"
 
 #: ../../rst/scenario_guides/guide_azure.rst:129
 msgid "Or, pass the following parameters for Active Directory username/password:"
-msgstr "または、Active Directory のユーザー名/パスワードについて以下のパラメーターを渡します。"
+msgstr "または Active Directory のユーザー名/パスワードについての以下のパラメーターを渡します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:131
 #: ../../rst/scenario_guides/guide_azure.rst:137
@@ -1490,8 +1494,8 @@ msgid "If you are not familiar with Ansible's dynamic inventory scripts, check o
 msgstr "Ansible の動的インベントリースクリプトに慣れていない場合は、「:ref:`動的インベントリーの概要 <intro_dynamic_inventory>`」を参照してください。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:289
-msgid "The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_, create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command line options execute the following:"
-msgstr "Azure Resource Manager インベントリースクリプトは `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py>`_ と呼ばれます。Azure API での認証は Azure モジュールと同じになります。つまり、「`環境変数の使用`_」で説明されている環境変数と同じ環境変数を定義するか、``$HOME/.azure/credentials`` ファイルを作成するか (「`ファイルの保存`_」を参照)、またはコマンドラインパラメーターを渡します。利用可能なコマンドラインオプションを表示するには、以下のコマンドを実行します。"
+msgid "The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_, create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command line options execute the following:"
+msgstr "Azure Resource Manager インベントリースクリプトは `azure_rm.py  <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/azure_rm.py>`_ と呼ばれます。Azure API での認証は Azure モジュールと同じになります。つまり、「`Using Environment Variables`_」で説明されている環境変数と同じ環境変数を定義するか、``$HOME/.azure/credentials`` ファイルを作成するか (「`Storing in a File`_」を参照)、またはコマンドラインパラメーターを渡します。利用可能なコマンドラインオプションを表示するには、以下のコマンドを実行します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:299
 msgid "As with all dynamic inventory scripts, the script can be executed directly, passed as a parameter to the ansible command, or passed directly to ansible-playbook using the -i option. No matter how it is executed the script produces JSON representing all of the hosts found in your Azure subscription. You can narrow this down to just hosts found in a specific set of Azure resource groups, or even down to a specific host."
@@ -1511,27 +1515,27 @@ msgstr "デフォルトでは、ホストは以下のようにグループ化さ
 
 #: ../../rst/scenario_guides/guide_azure.rst:354
 msgid "azure (all hosts)"
-msgstr "azure (全ホスト)"
+msgstr "azure (全てのホスト)"
 
 #: ../../rst/scenario_guides/guide_azure.rst:355
 msgid "location name"
-msgstr "location name"
+msgstr "ロケーション名"
 
 #: ../../rst/scenario_guides/guide_azure.rst:356
 msgid "resource group name"
-msgstr "resource group name"
+msgstr "リソースグループ名"
 
 #: ../../rst/scenario_guides/guide_azure.rst:357
 msgid "security group name"
-msgstr "security group name"
+msgstr "セキュリティーグループ名"
 
 #: ../../rst/scenario_guides/guide_azure.rst:358
 msgid "tag key"
-msgstr "tag key"
+msgstr "タグキー"
 
 #: ../../rst/scenario_guides/guide_azure.rst:359
 msgid "tag key_value"
-msgstr "tag key_value"
+msgstr "タグの key_value"
 
 #: ../../rst/scenario_guides/guide_azure.rst:360
 msgid "os_disk operating_system_type (Windows/Linux)"
@@ -1575,7 +1579,7 @@ msgstr "AZURE_GROUP_BY_OS_FAMILY=yes"
 
 #: ../../rst/scenario_guides/guide_azure.rst:379
 msgid "Select hosts within specific resource groups by assigning a comma separated list to:"
-msgstr "コンマ区切りリストを以下に割り当てて、特定のリソースグループ内のホストを選択します。"
+msgstr "コンマ区切りリストを割り当てて、特定のリソースグループ内のホストを選択します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:381
 msgid "AZURE_RESOURCE_GROUPS=resource_group_a,resource_group_b"
@@ -1583,7 +1587,7 @@ msgstr "AZURE_RESOURCE_GROUPS=resource_group_a,resource_group_b"
 
 #: ../../rst/scenario_guides/guide_azure.rst:383
 msgid "Select hosts for specific tag key by assigning a comma separated list of tag keys to:"
-msgstr "タグキーのコンマ区切りリストを以下に割り当てて、特定のタグキーのホストを選択します。"
+msgstr "タグキーのコンマ区切りリストを割り当てて、定のタグキーのホストを選択します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:385
 msgid "AZURE_TAGS=key1,key2,key3"
@@ -1591,7 +1595,7 @@ msgstr "AZURE_TAGS=key1,key2,key3"
 
 #: ../../rst/scenario_guides/guide_azure.rst:387
 msgid "Select hosts for specific locations by assigning a comma separated list of locations to:"
-msgstr "場所のコンマ区切りリストを割り当てて、特定の場所のホストを選択します。"
+msgstr "ロケーションのコンマ区切りリストを割り当てて、特定のロケーションのホストを選択します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:389
 msgid "AZURE_LOCATIONS=eastus,eastus2,westus"
@@ -1599,7 +1603,7 @@ msgstr "AZURE_LOCATIONS=eastus,eastus2,westus"
 
 #: ../../rst/scenario_guides/guide_azure.rst:391
 msgid "Or, select hosts for specific tag key:value pairs by assigning a comma separated list key:value pairs to:"
-msgstr "または、コンマ区切りリストの key:value ペアを以下に割り当てることで、特定のタグ key:value ペアのホストを選択します。"
+msgstr "または、コンマ区切りのリスト key:value ペアを割り当て、特定のタグ key:value ペアのホストを選択します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:393
 msgid "AZURE_TAGS=key1:value1,key2:value2"
@@ -1607,15 +1611,15 @@ msgstr "AZURE_TAGS=key1:value1,key2:value2"
 
 #: ../../rst/scenario_guides/guide_azure.rst:395
 msgid "If you don't need the powerstate, you can improve performance by turning off powerstate fetching:"
-msgstr "電力状態が必要ない場合は、powerstate 取得をオフにすることでパフォーマンスを向上させることができます。"
+msgstr "電源状態を必要としない場合は、電源状態の取得をオフにしてパフォーマンスを向上させることができます。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:397
 msgid "AZURE_INCLUDE_POWERSTATE=no"
 msgstr "AZURE_INCLUDE_POWERSTATE=no"
 
 #: ../../rst/scenario_guides/guide_azure.rst:399
-msgid "A sample azure_rm.ini file is included along with the inventory script in `here <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.ini>`_. An .ini file will contain the following:"
-msgstr "azure_rm.ini ファイルのサンプルは、`こちら <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.ini>`_ のインベントリースクリプトとともに含まれています。.ini ファイルには、以下が含まれます。"
+msgid "A sample azure_rm.ini file is included along with the inventory script in `here <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/azure_rm.ini>`_. An .ini file will contain the following:"
+msgstr "azure_rm.ini ファイルのサンプルは、`here <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/azure_rm.ini>`_ のインベントリースクリプトとともに含まれています。.ini ファイルには、以下が含まれます。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:428
 #: ../../rst/scenario_guides/guide_oracle.rst:73
@@ -1884,427 +1888,431 @@ msgid "Note that plugins (inventory plugins and connection plugins) are always e
 msgstr "プラグイン (インベントリープラグインおよび接続プラグイン) は常に Ansible のコンテキストで実行されます。Python 用の Docker SDK を必要とするプラグインを使用する場合は、``ansible`` または ``ansible-playbook`` を実行しているマシンにプラグインをインストールする必要があります。使用する Python を確認するには、``ansible --version`` を実行します。"
 
 #: ../../rst/scenario_guides/guide_docker.rst:18
-msgid "You can install the Docker SDK for Python for Python 2.7 or Python 3 as follows:"
-msgstr "Python 2.7 または Python 3 用の Docker SDK は、以下のようにインストールできます。"
+msgid "You can install the Docker SDK for Python for Python 3.6 or later as follows:"
+msgstr "Python 3.6 以降の Python の Docker SDK は、以下のようにインストールできます。"
 
 #: ../../rst/scenario_guides/guide_docker.rst:24
-msgid "For Python 2.6, you need a version before 2.0. For these versions, the SDK was called ``docker-py``, so you need to install it as follows:"
-msgstr "Python 2.6 では 2.0 よりも前のバージョンが必要です。これらのバージョンでは、SDK は ``docker-py`` と呼ばれ、以下のようにインストールする必要があります。"
+msgid "For Python 2.7, you need to use a version between 2.0.0 and 4.4.4 since the Python package for Docker removed support for Python 2.7 on 5.0.0. You can install the specific version of the Docker SDK for Python as follows:"
+msgstr "Python 2.7 の場合、Docker の Python パッケージが 5.0.0 での Python 2.7 のサポートを削除したため、2.0.0 から 4.4.4 の間のバージョンを使用する必要があります。次のように、Docker SDK for Python の特定のバージョンをインストールできます。"
 
 #: ../../rst/scenario_guides/guide_docker.rst:30
+msgid "For Python 2.6, you need a version before 2.0.0. For these versions, the SDK was called ``docker-py``, so you need to install it as follows:"
+msgstr "Python 2.6 では 2.0.0 よりも前のバージョンが必要です。これらのバージョンでは、SDK は ``docker-py`` と呼ばれ、以下のようにインストールする必要があります。"
+
+#: ../../rst/scenario_guides/guide_docker.rst:36
 msgid "Please install only one of ``docker`` or ``docker-py``. Installing both will result in a broken installation. If this happens, Ansible will detect it and inform you about it. If that happens, you must uninstall both and reinstall the correct version."
 msgstr "``docker`` または ``docker-py`` のいずれかをインストールするには、インストールが破損します。これがインストールされると、Ansible によって検出され、それについて通知されます。その場合は、両方をアンインストールして再インストールする必要があります。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:32
+#: ../../rst/scenario_guides/guide_docker.rst:38
 msgid "If in doubt, always install ``docker`` and never ``docker-py``."
 msgstr "不明な場合は、常に ``docker`` をインストールし、``docker-py`` はインストールしません。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:36
+#: ../../rst/scenario_guides/guide_docker.rst:42
 msgid "Connecting to the Docker API"
 msgstr "Docker API への接続"
 
-#: ../../rst/scenario_guides/guide_docker.rst:38
+#: ../../rst/scenario_guides/guide_docker.rst:44
 msgid "You can connect to a local or remote API using parameters passed to each task or by setting environment variables. The order of precedence is command line parameters and then environment variables. If neither a command line option nor an environment variable is found, Ansible uses the default value  provided under `Parameters`_."
 msgstr "各タスクに渡されるパラメーターを使用するか、環境変数を設定してローカルまたはリモートの API に接続できます。優先順位の順番はコマンドラインパラメーターとその環境変数です。コマンドラインオプションも環境変数も見つからない場合、Ansible は `Parameters`_ で指定したデフォルト値を使用します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:42
+#: ../../rst/scenario_guides/guide_docker.rst:48
 msgid "Parameters"
 msgstr "パラメーター"
 
-#: ../../rst/scenario_guides/guide_docker.rst:44
+#: ../../rst/scenario_guides/guide_docker.rst:50
 msgid "Most plugins and modules can be configured by the following parameters:"
 msgstr "ほとんどのプラグインおよびモジュールは、以下のパラメーターで設定できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:47
+#: ../../rst/scenario_guides/guide_docker.rst:53
 msgid "docker_host"
 msgstr "docker_host"
 
-#: ../../rst/scenario_guides/guide_docker.rst:47
+#: ../../rst/scenario_guides/guide_docker.rst:53
 msgid "The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``. To connect to a remote host, provide the TCP connection string (for example: ``tcp://192.0.2.23:2376``). If TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the connection URL with 'https'."
 msgstr "Docker API への接続に使用される URL または Unix ソケットパス。デフォルトは ``unix://var/run/docker.sock`` です。リモートホストに接続するには、TCP 接続文字列を指定します (例: ``tcp://192.0.2.23:2376``)。TLS を使用して API への接続を暗号化すると、モジュールは、接続 URL の 「tcp」を自動的に「https」に置き換えます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:50
+#: ../../rst/scenario_guides/guide_docker.rst:56
 msgid "api_version"
 msgstr "api_version"
 
-#: ../../rst/scenario_guides/guide_docker.rst:50
+#: ../../rst/scenario_guides/guide_docker.rst:56
 msgid "The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by the Docker SDK for Python installed."
 msgstr "Docker Host 上で実行される Docker API のバージョンです。デフォルトでは、Python 用の Docker SDK によってサポートされる API の最新バージョンに設定されます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:53
+#: ../../rst/scenario_guides/guide_docker.rst:59
 msgid "The maximum amount of time in seconds to wait on a response from the API. Defaults to 60 seconds."
 msgstr "API からのレスポンスで待機する最大時間 (秒単位)。デフォルトは 60 秒です。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:56
+#: ../../rst/scenario_guides/guide_docker.rst:62
 msgid "tls"
 msgstr "tls"
 
-#: ../../rst/scenario_guides/guide_docker.rst:56
+#: ../../rst/scenario_guides/guide_docker.rst:62
 msgid "Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Defaults to ``false``."
 msgstr "Docker ホストサーバーの信頼性を検証せずに TLS を使用して API への接続を保護します。デフォルトは ``false`` です。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:59
+#: ../../rst/scenario_guides/guide_docker.rst:65
 msgid "Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server. Default is ``false``."
 msgstr "TLS を使用し、Docker ホストサーバーの信頼性を検証して、API への接続を保護します。デフォルトは``false`` です。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:62
+#: ../../rst/scenario_guides/guide_docker.rst:68
 msgid "cacert_path"
 msgstr "cacert_path"
 
-#: ../../rst/scenario_guides/guide_docker.rst:62
+#: ../../rst/scenario_guides/guide_docker.rst:68
 msgid "Use a CA certificate when performing server verification by providing the path to a CA certificate file."
-msgstr "CA 証明書ファイルへのパスを指定してサーバーの検証を実行する際に CA 証明書を使用します。"
+msgstr "CA 証明書ファイルへのパスを指定して、サーバー検証の実行時に CA 証明書を使用します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:65
+#: ../../rst/scenario_guides/guide_docker.rst:71
 msgid "cert_path"
 msgstr "cert_path"
 
-#: ../../rst/scenario_guides/guide_docker.rst:65
+#: ../../rst/scenario_guides/guide_docker.rst:71
 msgid "Path to the client's TLS certificate file."
-msgstr "クライアントの TLS 証明書ファイルへのパスです。"
+msgstr "クライアントの TLS 証明書ファイルへのパス。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:68
+#: ../../rst/scenario_guides/guide_docker.rst:74
 msgid "key_path"
 msgstr "key_path"
 
-#: ../../rst/scenario_guides/guide_docker.rst:68
+#: ../../rst/scenario_guides/guide_docker.rst:74
 msgid "Path to the client's TLS key file."
-msgstr "クライアントの TLS キーファイルへのパスです。"
+msgstr "クライアントの TLS キーファイルへのパス。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:71
+#: ../../rst/scenario_guides/guide_docker.rst:77
 msgid "tls_hostname"
 msgstr "tls_hostname"
 
-#: ../../rst/scenario_guides/guide_docker.rst:71
+#: ../../rst/scenario_guides/guide_docker.rst:77
 msgid "When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults to ``localhost``."
 msgstr "Docker Host サーバーの信頼性を確認する際に、予想されるサーバー名を提供します。デフォルトは ``localhost`` です。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:75
+#: ../../rst/scenario_guides/guide_docker.rst:81
 msgid "ssl_version"
 msgstr "ssl_version"
 
-#: ../../rst/scenario_guides/guide_docker.rst:74
+#: ../../rst/scenario_guides/guide_docker.rst:80
 msgid "Provide a valid SSL version number. The default value is determined by the Docker SDK for Python."
 msgstr "有効な SSL バージョン番号を提供します。デフォルト値は、Python の Docker SDK により決定されます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:78
+#: ../../rst/scenario_guides/guide_docker.rst:84
 #: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:17
 msgid "Environment variables"
 msgstr "環境変数"
 
-#: ../../rst/scenario_guides/guide_docker.rst:80
+#: ../../rst/scenario_guides/guide_docker.rst:86
 msgid "You can also control how the plugins and modules connect to the Docker API by setting the following environment variables."
 msgstr "以下の環境変数を設定して、プラグインおよびモジュールが Docker API に接続する方法を制御することもできます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:82
+#: ../../rst/scenario_guides/guide_docker.rst:88
 msgid "For plugins, they have to be set for the environment Ansible itself runs in. For modules, they have to be set for the environment the modules are executed in. For modules running on remote machines, the environment variables have to be set on that machine for the user used to execute the modules with."
 msgstr "プラグインには、Ansible 自体が実行する環境に合わせて設定する必要があります。モジュールの場合は、モジュールが実行する環境に設定する必要があります。リモートマシンで実行しているモジュールの場合は、モジュールを実行するユーザーのマシンに環境変数を設定する必要があります。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:85
+#: ../../rst/scenario_guides/guide_docker.rst:91
 msgid "DOCKER_HOST"
 msgstr "DOCKER_HOST"
 
-#: ../../rst/scenario_guides/guide_docker.rst:85
+#: ../../rst/scenario_guides/guide_docker.rst:91
 msgid "The URL or Unix socket path used to connect to the Docker API."
 msgstr "Docker API への接続に使用される URL または Unix ソケットパス。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:89
+#: ../../rst/scenario_guides/guide_docker.rst:95
 msgid "DOCKER_API_VERSION"
 msgstr "DOCKER_API_VERSION"
 
-#: ../../rst/scenario_guides/guide_docker.rst:88
+#: ../../rst/scenario_guides/guide_docker.rst:94
 msgid "The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by docker-py."
 msgstr "Docker Host 上で実行する Docker API のバージョンです。デフォルトでは、docker-py でサポートされる API の最新バージョンに設定されます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:92
+#: ../../rst/scenario_guides/guide_docker.rst:98
 msgid "DOCKER_TIMEOUT"
 msgstr "DOCKER_TIMEOUT"
 
-#: ../../rst/scenario_guides/guide_docker.rst:92
+#: ../../rst/scenario_guides/guide_docker.rst:98
 msgid "The maximum amount of time in seconds to wait on a response from the API."
-msgstr "API からの応答で待機する最大時間 (秒単位)。"
+msgstr "API からの応答を待つ最大時間 (秒単位)。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:95
+#: ../../rst/scenario_guides/guide_docker.rst:101
 msgid "DOCKER_CERT_PATH"
 msgstr "DOCKER_CERT_PATH"
 
-#: ../../rst/scenario_guides/guide_docker.rst:95
+#: ../../rst/scenario_guides/guide_docker.rst:101
 msgid "Path to the directory containing the client certificate, client key and CA certificate."
 msgstr "クライアント証明書、クライアントキー、および CA 証明書を含むディレクトリーへのパス。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:98
+#: ../../rst/scenario_guides/guide_docker.rst:104
 msgid "DOCKER_SSL_VERSION"
 msgstr "DOCKER_SSL_VERSION"
 
-#: ../../rst/scenario_guides/guide_docker.rst:98
+#: ../../rst/scenario_guides/guide_docker.rst:104
 msgid "Provide a valid SSL version number."
 msgstr "有効な SSL バージョン番号を指定します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:101
+#: ../../rst/scenario_guides/guide_docker.rst:107
 msgid "DOCKER_TLS"
 msgstr "DOCKER_TLS"
 
-#: ../../rst/scenario_guides/guide_docker.rst:101
+#: ../../rst/scenario_guides/guide_docker.rst:107
 msgid "Secure the connection to the API by using TLS without verifying the authenticity of the Docker Host."
 msgstr "Docker ホストの信頼性を検証せずに TLS を使用して API への接続のセキュリティーを保護します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:105
+#: ../../rst/scenario_guides/guide_docker.rst:111
 msgid "DOCKER_TLS_VERIFY"
 msgstr "DOCKER_TLS_VERIFY"
 
-#: ../../rst/scenario_guides/guide_docker.rst:104
+#: ../../rst/scenario_guides/guide_docker.rst:110
 msgid "Secure the connection to the API by using TLS and verify the authenticity of the Docker Host."
 msgstr "TLS を使用して API への接続のセキュリティーを確保し、Docker ホストの信頼性を検証します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:108
+#: ../../rst/scenario_guides/guide_docker.rst:114
 msgid "Plain Docker daemon: images, networks, volumes, and containers"
 msgstr "単純な Docker デーモン: イメージ、ネットワーク、ボリューム、およびコンテナー"
 
-#: ../../rst/scenario_guides/guide_docker.rst:110
+#: ../../rst/scenario_guides/guide_docker.rst:116
 msgid "For working with a plain Docker daemon, that is without Swarm, there are connection plugins, an inventory plugin, and several modules available:"
 msgstr "Swarm を使用しないプレーンな Docker デーモンを使用する場合は、接続プラグイン、インベントリープラグイン、および複数のモジュールが利用できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:113
+#: ../../rst/scenario_guides/guide_docker.rst:119
 msgid "docker connection plugin"
 msgstr "Docker 接続プラグイン"
 
-#: ../../rst/scenario_guides/guide_docker.rst:113
+#: ../../rst/scenario_guides/guide_docker.rst:119
 msgid "The :ref:`community.docker.docker connection plugin <ansible_collections.community.docker.docker_connection>` uses the Docker CLI utility to connect to Docker containers and execute modules in them. It essentially wraps ``docker exec`` and ``docker cp``. This connection plugin is supported by the :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>`."
 msgstr ":ref:`community.docker.docker 接続プラグイン <ansible_collections.community.docker.docker_connection>` は、Docker CLI ユーティリティーを使用して Docker コンテナーに接続し、そのコンテナーでモジュールを実行します。基本的に ``docker exec`` と ``docker cp`` をラップします。この接続プラグインは :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>` によりサポートされます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:116
+#: ../../rst/scenario_guides/guide_docker.rst:122
 msgid "docker_api connection plugin"
 msgstr "docker_api connection プラグイン"
 
-#: ../../rst/scenario_guides/guide_docker.rst:116
+#: ../../rst/scenario_guides/guide_docker.rst:122
 msgid "The :ref:`community.docker.docker_api connection plugin <ansible_collections.community.docker.docker_api_connection>` talks directly to the Docker daemon to connect to Docker containers and execute modules in them."
 msgstr ":ref:`community.docker.docker_api 接続プラグイン <ansible_collections.community.docker.docker_api_connection>` は Docker デーモンに直接対話し、Docker コンテナーに接続し、そのコンテナーでモジュールを実行します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:121
+#: ../../rst/scenario_guides/guide_docker.rst:127
 msgid "docker_containers inventory plugin"
 msgstr "docker_containers インベントリープラグイン"
 
-#: ../../rst/scenario_guides/guide_docker.rst:119
+#: ../../rst/scenario_guides/guide_docker.rst:125
 msgid "The :ref:`community.docker.docker_containers inventory plugin <ansible_collections.community.docker.docker_containers_inventory>` allows you to dynamically add Docker containers from a Docker Daemon to your Ansible inventory. See :ref:`dynamic_inventory` for details on dynamic inventories."
 msgstr ":ref:`community.docker.docker_containers インベントリープラグイン <ansible_collections.community.docker.docker_containers_inventory>` では、Docker Daemon から Ansible インベントリーに Docker コンテナーを動的に追加できます。動的インベントリーの詳細は、「:ref:`dynamic_inventory`」を参照してください。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:121
-msgid "The `docker inventory script <https://github.com/ansible-collections/community.general/blob/main/scripts/inventory/docker.py>`_ is deprecated. Please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect Docker containers from multiple Docker daemons, you need to add every Docker daemon as an individual inventory source."
-msgstr "`Docker インベントリースクリプト <https://github.com/ansible-collections/community.general/blob/main/scripts/inventory/docker.py>`_ は非推奨になりました。代わりにインベントリープラグインを使用してください。インベントリープラグインには、複数の互換性オプションがあります。複数の Docker デーモンから Docker コンテナーを収集する必要がある場合は、すべての Docker デーモンを個別のインベントリーソースとして追加する必要があります。"
+#: ../../rst/scenario_guides/guide_docker.rst:127
+msgid "The `docker inventory script <https://github.com/ansible-community/contrib-scripts/blob/main/inventory/docker.py>`_ is deprecated. Please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect Docker containers from multiple Docker daemons, you need to add every Docker daemon as an individual inventory source."
+msgstr "`docker インベントリースクリプト <https://github.com/ansible-community/contrib-scripts/blob/main/inventory/docker.py>`_ は非推奨になりました。代わりにインベントリープラグインを使用してください。インベントリープラグインには、複数の互換性オプションがあります。複数の Docker デーモンから Docker コンテナーを収集する必要がある場合は、すべての Docker デーモンを個別のインベントリーソースとして追加する必要があります。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:124
+#: ../../rst/scenario_guides/guide_docker.rst:130
 msgid "docker_host_info module"
 msgstr "docker_host_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:124
+#: ../../rst/scenario_guides/guide_docker.rst:130
 msgid "The :ref:`community.docker.docker_host_info module <ansible_collections.community.docker.docker_host_info_module>` allows you to retrieve information on a Docker daemon, such as all containers, images, volumes, networks and so on."
 msgstr ":ref:`community.docker.docker_host_info モジュール <ansible_collections.community.docker.docker_host_info_module>` では、すべてのコンテナー、イメージ、ボリューム、ネットワークなど、Docker デーモンの情報を取得できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:127
+#: ../../rst/scenario_guides/guide_docker.rst:133
 msgid "docker_login module"
 msgstr "docker_login モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:127
+#: ../../rst/scenario_guides/guide_docker.rst:133
 msgid "The :ref:`community.docker.docker_login module <ansible_collections.community.docker.docker_login_module>` allows you to log in and out of a remote registry, such as Docker Hub or a private registry. It provides similar functionality to the ``docker login`` and ``docker logout`` CLI commands."
 msgstr ":ref:`community.docker.docker_login モジュール <ansible_collections.community.docker.docker_login_module>` では、Docker Hub、プライベートレジストリーなどのリモートレジストリーへのログイン、およびリモートレジストリーからのログアウトできます。CLI コマンド ``docker login`` および ``docker logout`` と同様の機能を提供します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:130
+#: ../../rst/scenario_guides/guide_docker.rst:136
 msgid "docker_prune module"
 msgstr "docker_prune モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:130
+#: ../../rst/scenario_guides/guide_docker.rst:136
 msgid "The :ref:`community.docker.docker_prune module <ansible_collections.community.docker.docker_prune_module>` allows  you to prune no longer needed containers, images, volumes and so on. It provides similar functionality to the ``docker prune`` CLI command."
 msgstr ":ref:`community.docker.docker_prune モジュール <ansible_collections.community.docker.docker_prune_module>` では、コンテナー、イメージ、ボリュームなどは取り除くことができなくなり、CLI コマンド ``docker prune`` と同様の機能を提供します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:133
+#: ../../rst/scenario_guides/guide_docker.rst:139
 msgid "docker_image module"
 msgstr "docker_image モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:133
+#: ../../rst/scenario_guides/guide_docker.rst:139
 msgid "The :ref:`community.docker.docker_image module <ansible_collections.community.docker.docker_image_module>` provides full control over images, including: build, pull, push, tag and remove."
 msgstr ":ref:`community.docker.docker_image モジュール <ansible_collections.community.docker.docker_image_module>` は、build、pull、push、tag、remove などのイメージを完全に制御します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:136
+#: ../../rst/scenario_guides/guide_docker.rst:142
 msgid "docker_image_info module"
 msgstr "docker_image_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:136
+#: ../../rst/scenario_guides/guide_docker.rst:142
 msgid "The :ref:`community.docker.docker_image_info module <ansible_collections.community.docker.docker_image_info_module>` allows you to list and inspect images."
 msgstr ":ref:`community.docker.docker_image_info モジュール <ansible_collections.community.docker.docker_image_info_module>` を使用すると、イメージを一覧表示し、検査することができます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:139
+#: ../../rst/scenario_guides/guide_docker.rst:145
 msgid "docker_network module"
 msgstr "docker_network モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:139
+#: ../../rst/scenario_guides/guide_docker.rst:145
 msgid "The :ref:`community.docker.docker_network module <ansible_collections.community.docker.docker_network_module>` provides full control over Docker networks."
 msgstr ":ref:`community.docker.docker_network モジュール <ansible_collections.community.docker.docker_network_module>` は、Docker ネットワークを完全に制御します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:142
+#: ../../rst/scenario_guides/guide_docker.rst:148
 msgid "docker_network_info module"
 msgstr "docker_network_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:142
+#: ../../rst/scenario_guides/guide_docker.rst:148
 msgid "The :ref:`community.docker.docker_network_info module <ansible_collections.community.docker.docker_network_info_module>` allows you to inspect Docker networks."
 msgstr ":ref:`community.docker.docker_network_info モジュール <ansible_collections.community.docker.docker_network_info_module>` では、Docker ネットワークを調べることができます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:145
+#: ../../rst/scenario_guides/guide_docker.rst:151
 msgid "docker_volume_info module"
 msgstr "docker_volume_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:145
+#: ../../rst/scenario_guides/guide_docker.rst:151
 msgid "The :ref:`community.docker.docker_volume_info module <ansible_collections.community.docker.docker_volume_info_module>` provides full control over Docker volumes."
 msgstr ":ref:`community.docker.docker_volume_info モジュール <ansible_collections.community.docker.docker_volume_info_module>` は、Docker ボリュームを完全に制御します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:148
+#: ../../rst/scenario_guides/guide_docker.rst:154
 msgid "docker_volume module"
 msgstr "docker_volume モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:148
+#: ../../rst/scenario_guides/guide_docker.rst:154
 msgid "The :ref:`community.docker.docker_volume module <ansible_collections.community.docker.docker_volume_module>` allows you to inspect Docker volumes."
 msgstr ":ref:`community.docker.docker_volume モジュール <ansible_collections.community.docker.docker_volume_module>` を使用すると、Docker ボリュームを検査できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:151
+#: ../../rst/scenario_guides/guide_docker.rst:157
 msgid "docker_container module"
 msgstr "docker_container モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:151
+#: ../../rst/scenario_guides/guide_docker.rst:157
 msgid "The :ref:`community.docker.docker_container module <ansible_collections.community.docker.docker_container_module>` manages the container lifecycle by providing the ability to create, update, stop, start and destroy a Docker container."
 msgstr ":ref:`community.docker.docker_container モジュール <ansible_collections.community.docker.docker_container_module>` は、Docker コンテナーの作成、更新、停止、開始、および破棄の機能を提供することで、コンテナーのライフサイクルを管理します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:155
+#: ../../rst/scenario_guides/guide_docker.rst:161
 msgid "docker_container_info module"
 msgstr "docker_container_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:154
+#: ../../rst/scenario_guides/guide_docker.rst:160
 msgid "The :ref:`community.docker.docker_container_info module <ansible_collections.community.docker.docker_container_info_module>` allows you to inspect a Docker container."
 msgstr ":ref:`community.docker.docker_container_info モジュール <ansible_collections.community.docker.docker_container_info_module>` では、Docker コンテナーを検査できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:158
+#: ../../rst/scenario_guides/guide_docker.rst:164
 msgid "Docker Compose"
 msgstr "Docker Compose"
 
-#: ../../rst/scenario_guides/guide_docker.rst:160
+#: ../../rst/scenario_guides/guide_docker.rst:166
 msgid "The :ref:`community.docker.docker_compose module <ansible_collections.community.docker.docker_compose_module>` allows you to use your existing Docker compose files to orchestrate containers on a single Docker daemon or on Swarm. Supports compose versions 1 and 2."
 msgstr ":ref:`community.docker.docker_compose モジュール <ansible_collections.community.docker.docker_compose_module>` では、既存の Docker Compose ファイルを使用して、単一の Docker デーモンまたは Swarm でコンテナーをオーケストレーションできます。Compose のバージョン 1 および 2 をサポートします。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:164
+#: ../../rst/scenario_guides/guide_docker.rst:170
 msgid "Next to Docker SDK for Python, you need to install `docker-compose <https://github.com/docker/compose>`_ on the remote machines to use the module."
 msgstr "モジュールを使用するには、Python の Docker SDK の次に、リモートマシンに `docker-compose <https://github.com/docker/compose>`_ をインストールする必要があります。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:168
+#: ../../rst/scenario_guides/guide_docker.rst:174
 msgid "Docker Machine"
 msgstr "Docker マシン"
 
-#: ../../rst/scenario_guides/guide_docker.rst:170
+#: ../../rst/scenario_guides/guide_docker.rst:176
 msgid "The :ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` allows you to dynamically add Docker Machine hosts to your Ansible inventory."
 msgstr ":ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` では、Docker マシンホストを Ansible インベントリーに動的に追加できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:174
+#: ../../rst/scenario_guides/guide_docker.rst:180
 msgid "Docker stack"
 msgstr "Docker スタック"
 
-#: ../../rst/scenario_guides/guide_docker.rst:176
+#: ../../rst/scenario_guides/guide_docker.rst:182
 msgid "The :ref:`community.docker.docker_stack module <ansible_collections.community.docker.docker_stack_module>` module allows you to control Docker stacks. Information on stacks can be retrieved by the :ref:`community.docker.docker_stack_info module <ansible_collections.community.docker.docker_stack_info_module>`, and information on stack tasks can be retrieved by the :ref:`community.docker.docker_stack_task_info module <ansible_collections.community.docker.docker_stack_task_info_module>`."
 msgstr ":ref:`community.docker.docker_stack モジュール <ansible_collections.community.docker.docker_stack_module>` モジュールにより、Docker スタックを制御できます。スタックの情報は、:ref:`community.docker.docker_stack_info モジュール <ansible_collections.community.docker.docker_stack_info_module>` で取得でき、スタックタスクに関する情報は :ref:`community.docker.docker_stack_task_info モジュール <ansible_collections.community.docker.docker_stack_task_info_module>` で取得できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:180
+#: ../../rst/scenario_guides/guide_docker.rst:186
 msgid "Docker Swarm"
 msgstr "Docker Swarm"
 
-#: ../../rst/scenario_guides/guide_docker.rst:182
+#: ../../rst/scenario_guides/guide_docker.rst:188
 msgid "The community.docker collection provides multiple plugins and modules for managing Docker Swarms."
 msgstr "community.docker コレクションは、Docker Swarm を管理するための複数のプラグインとモジュールを提供します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:185
+#: ../../rst/scenario_guides/guide_docker.rst:191
 msgid "Swarm management"
 msgstr "Swarm 管理"
 
-#: ../../rst/scenario_guides/guide_docker.rst:187
+#: ../../rst/scenario_guides/guide_docker.rst:193
 msgid "One inventory plugin and several modules are provided to manage Docker Swarms:"
 msgstr "Docker Swarms を管理するために、インベントリープラグインと複数のモジュールが提供されます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:190
+#: ../../rst/scenario_guides/guide_docker.rst:196
 msgid "docker_swarm inventory plugin"
 msgstr "docker_swarm インベントリープラグイン"
 
-#: ../../rst/scenario_guides/guide_docker.rst:190
+#: ../../rst/scenario_guides/guide_docker.rst:196
 msgid "The :ref:`community.docker.docker_swarm inventory plugin <ansible_collections.community.docker.docker_swarm_inventory>` allows  you to dynamically add all Docker Swarm nodes to your Ansible inventory."
 msgstr ":ref:`community.docker.docker_swarm インベントリープラグイン <ansible_collections.community.docker.docker_swarm_inventory>` により、すべての Docker Swarm ノードを Ansible インベントリーに動的に追加できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:193
+#: ../../rst/scenario_guides/guide_docker.rst:199
 msgid "docker_swarm module"
 msgstr "docker_swarm モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:193
+#: ../../rst/scenario_guides/guide_docker.rst:199
 msgid "The :ref:`community.docker.docker_swarm module <ansible_collections.community.docker.docker_swarm_module>` allows you to globally configure Docker Swarm manager nodes to join and leave swarms, and to change the Docker Swarm configuration."
 msgstr ":ref:`community.docker.docker_swarm モジュール <ansible_collections.community.docker.docker_swarm_module>` では、Docker Swarm マネージャーノードをグローバルに設定し、swarm に参加および swarm から離脱し、Docker Swarm 設定の変更を行うことができます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:196
+#: ../../rst/scenario_guides/guide_docker.rst:202
 msgid "docker_swarm_info module"
 msgstr "docker_swarm_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:196
+#: ../../rst/scenario_guides/guide_docker.rst:202
 msgid "The :ref:`community.docker.docker_swarm_info module <ansible_collections.community.docker.docker_swarm_info_module>` allows  you to retrieve information on Docker Swarm."
 msgstr ":ref:`community.docker.docker_swarm_info モジュール <ansible_collections.community.docker.docker_swarm_info_module>` では、Docker Swarm に関する情報を取得できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:199
+#: ../../rst/scenario_guides/guide_docker.rst:205
 msgid "docker_node module"
 msgstr "docker_node モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:199
+#: ../../rst/scenario_guides/guide_docker.rst:205
 msgid "The :ref:`community.docker.docker_node module <ansible_collections.community.docker.docker_node_module>` allows you to manage Docker Swarm nodes."
 msgstr ":ref:`community.docker.docker_node モジュール <ansible_collections.community.docker.docker_node_module>` では、Docker Swarm ノードを管理できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:202
+#: ../../rst/scenario_guides/guide_docker.rst:208
 msgid "docker_node_info module"
 msgstr "docker_node_info モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:202
+#: ../../rst/scenario_guides/guide_docker.rst:208
 msgid "The :ref:`community.docker.docker_node_info module <ansible_collections.community.docker.docker_node_info_module>` allows you to retrieve information on Docker Swarm nodes."
 msgstr ":ref:`community.docker.docker_node_info モジュール <ansible_collections.community.docker.docker_node_info_module>` では、Docker Swarm ノードの情報を取得できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:205
+#: ../../rst/scenario_guides/guide_docker.rst:211
 msgid "Configuration management"
 msgstr "設定管理"
 
-#: ../../rst/scenario_guides/guide_docker.rst:207
+#: ../../rst/scenario_guides/guide_docker.rst:213
 msgid "The community.docker collection offers modules to manage Docker Swarm configurations and secrets:"
 msgstr "community.docker コレクションは、Docker Swarm 設定およびシークレットを管理するモジュールを提供します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:210
+#: ../../rst/scenario_guides/guide_docker.rst:216
 msgid "docker_config module"
 msgstr "docker_config モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:210
+#: ../../rst/scenario_guides/guide_docker.rst:216
 msgid "The :ref:`community.docker.docker_config module <ansible_collections.community.docker.docker_config_module>` allows you to create and modify Docker Swarm configs."
 msgstr ":ref:`community.docker.docker_config モジュール <ansible_collections.community.docker.docker_config_module>` を使用すると、Docker Swarm 設定を作成および変更できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:214
+#: ../../rst/scenario_guides/guide_docker.rst:220
 msgid "docker_secret module"
 msgstr "docker_secret モジュール"
 
-#: ../../rst/scenario_guides/guide_docker.rst:213
+#: ../../rst/scenario_guides/guide_docker.rst:219
 msgid "The :ref:`community.docker.docker_secret module <ansible_collections.community.docker.docker_secret_module>` allows you to create and modify Docker Swarm secrets."
 msgstr ":ref:`community.docker.docker_secret モジュール <ansible_collections.community.docker.docker_secret_module>` では、Docker Swarm シークレットを作成および変更できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:217
+#: ../../rst/scenario_guides/guide_docker.rst:223
 msgid "Swarm services"
 msgstr "Swarm サービス"
 
-#: ../../rst/scenario_guides/guide_docker.rst:219
+#: ../../rst/scenario_guides/guide_docker.rst:225
 msgid "Docker Swarm services can be created and updated with the :ref:`community.docker.docker_swarm_service module <ansible_collections.community.docker.docker_swarm_service_module>`, and information on them can be queried by the :ref:`community.docker.docker_swarm_service_info module <ansible_collections.community.docker.docker_swarm_service_info_module>`."
 msgstr "Docker Swarm サービスは、:ref:`community.docker.docker_swarm_service モジュール <ansible_collections.community.docker.docker_swarm_service_module>` で作成および更新でき、その情報は、:ref:`community.docker.docker_swarm_service_info モジュール <ansible_collections.community.docker.docker_swarm_service_info_module>` でクエリーできます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:223
+#: ../../rst/scenario_guides/guide_docker.rst:229
 msgid "Helpful links"
 msgstr "便利なリンク"
 
-#: ../../rst/scenario_guides/guide_docker.rst:225
+#: ../../rst/scenario_guides/guide_docker.rst:231
 msgid "Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_, and start building images from your Ansible playbooks."
 msgstr "Dockerfile を使用してイメージを構築していますか。`ansible-bender <https://github.com/ansible-community/ansible-bender>`_ を確認して、Ansible Playbook からイメージの構築を開始します。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:227
+#: ../../rst/scenario_guides/guide_docker.rst:233
 msgid "Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully scalable app in the cloud with Kubernetes in just a few moments."
 msgstr "`Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ を使用して、`OpenShift <https://www.okd.io/>`_ で docker 構成のファイルを起動します。ラップトップ上のアプリケーションから、Kubernetes を使用するクラウド内の完全なスケーラブルなアプリケーション (数分間) に移動します。"
 
@@ -2386,11 +2394,11 @@ msgstr "認証情報を取得したあと、Ansible に提供する方法は 2 �
 
 #: ../../rst/scenario_guides/guide_gce.rst:71
 msgid "by specifying them directly as module parameters"
-msgstr "モジュールパラメーターとして直接指定する"
+msgstr "モジュールパラメーターとして直接指定"
 
 #: ../../rst/scenario_guides/guide_gce.rst:72
 msgid "by setting environment variables"
-msgstr "追加の環境変数を設定する"
+msgstr "環境変数を設定"
 
 #: ../../rst/scenario_guides/guide_gce.rst:75
 msgid "Providing Credentials as Module Parameters"
@@ -2863,12 +2871,12 @@ msgid "You can use the Infoblox dynamic inventory script to import your network 
 msgstr "Infoblox 動的インベントリースクリプトを使用して、Infoblox NIOS でネットワークノードのインベントリーをインポートできます。Infoblox からインベントリーを収集するには、以下の 2 つのファイルが必要です。"
 
 #: ../../rst/scenario_guides/guide_infoblox.rst:251
-msgid "`infoblox.yaml <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters."
-msgstr "`infoblox.yaml <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.yaml>`_ - NIOS プロバイダー引数および任意のフィルターを指定するファイル。"
+msgid "`infoblox.yaml <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/infoblox.yaml>`_ - A file that specifies the NIOS provider arguments and optional filters."
+msgstr "`infoblox.yaml <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/infoblox.yaml>`_ - NIOS プロバイダー引数および任意のフィルターを指定するファイル。"
 
 #: ../../rst/scenario_guides/guide_infoblox.rst:253
-msgid "`infoblox.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory."
-msgstr "`infoblox.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/infoblox.py>`_ - NIOS インベントリーを取得する python スクリプト。"
+msgid "`infoblox.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/infoblox.py>`_ - The python script that retrieves the NIOS inventory."
+msgstr "`infoblox.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/infoblox.py>`_ - NIOS インベントリーを取得する python スクリプト。"
 
 #: ../../rst/scenario_guides/guide_infoblox.rst:257
 msgid "Please note that the inventory script only works when Ansible 2.9, 2.10 or 3 have been installed. The inventory script will eventually be removed from `community.general <https://galaxy.ansible.com/community/general>`_, and will not work if `community.general` is only installed with `ansible-galaxy collection install`. Please use the inventory plugin from `infoblox.nios_modules <https://galaxy.ansible.com/infoblox/nios_modules>`_ instead."
@@ -3268,11 +3276,11 @@ msgstr "一時的なホスト固有の SSH キーペアを生成します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:80
 msgid "Specify the public key from the key pair for connecting to the instance, and then launch the instance."
-msgstr "インスタンスへの接続に使用するキーペアの公開鍵を指定し、インスタンスを起動します。"
+msgstr "インスタンスに接続する鍵ペアから公開鍵を指定し、インスタンスを起動します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:81
 msgid "Connect to the newly launched instance using SSH."
-msgstr "SSH を使用して、新たに起動したインスタンスに接続します。"
+msgstr "SSH を使用して新たに起動したインスタンスに接続します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:84
 msgid "Create and manage Autonomous Data Warehouses"
@@ -3288,15 +3296,15 @@ msgstr "Autonomous Data Warehouse を設定します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:88
 msgid "List all of the Autonomous Data Warehouse instances available in a compartment, filtered by the display name."
-msgstr "表示名で対象を絞った、コンパートメントで利用可能な Autonomous Data Warehouse の一覧を表示します。"
+msgstr "表示名で対象を絞った、コンパートメントで利用可能な Autonomous Data Warehouse インスタンスの一覧を表示します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:89
 msgid "Get the \"facts\" for a specified Autonomous Data Warehouse."
-msgstr "指定された Autonomous Data Warehouse の「ファクト」を取得します。"
+msgstr "指定した Autonomous Data Warehouse の「ファクト」を取得します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:90
 msgid "Stop and start an Autonomous Data Warehouse instance."
-msgstr "Autonomous Data Warehouse インスタンスを停止して開始します。"
+msgstr "Autonomous Data Warehouse インスタンスを停止して起動します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:91
 msgid "Delete an Autonomous Data Warehouse instance."
@@ -3320,7 +3328,7 @@ msgstr "表示名で対象を絞った、コンパートメントで利用可能
 
 #: ../../rst/scenario_guides/guide_oracle.rst:100
 msgid "Get the \"facts\" for a specified Autonomous Transaction Processing instance."
-msgstr "指定された Autonomous Transaction Processing インスタンスの「ファクト」を取得します。"
+msgstr "指定した Autonomous Transaction Processing インスタンスに対して「ファクト」を取得します。"
 
 #: ../../rst/scenario_guides/guide_oracle.rst:101
 msgid "Delete an Autonomous Transaction Processing database instance."
@@ -3482,12 +3490,12 @@ msgid "The dynamic inventory script queries the Packet API for a list of hosts, 
 msgstr "動的インベントリースクリプトは、ホストの一覧に Packet API をクエリーし、これを Ansible に公開して、Packet デバイスを簡単に識別し、操作できるようにします。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:211
-msgid "You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.py>`_."
-msgstr "Ansible Community General Collection の git リポジトリーは、`scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.py>`_ にあります。"
+msgid "You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.py>`_."
+msgstr "Ansible Community General Collection の git リポジトリーは、`scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.py>`_ にあります。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:213
-msgid "The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.ini>`_."
-msgstr "インベントリースクリプトは、`ini file <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.ini>`_ で設定可能です。"
+msgid "The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.ini>`_."
+msgstr "インベントリースクリプトは、`ini ファイル <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.ini>`_ で設定可能です。"
 
 #: ../../rst/scenario_guides/guide_packet.rst:215
 msgid "If you want to use the inventory script, you must first export your Packet API token to a PACKET_API_TOKEN environment variable."
@@ -3783,7 +3791,7 @@ msgstr "ノードのプロビジョニング、ブートストラップ、設定
 
 #: ../../rst/scenario_guides/guide_rax.rst:805
 msgid "A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned"
-msgstr "ノードが非推奨になる前に、アプリケーションログファイルが中央の場所 (Cloud Files など) にアップロードされる手順"
+msgstr "ノードが廃止される前に、アプリのログファイルが Cloud Files などの中央の場所にアップロードされる手順"
 
 #: ../../rst/scenario_guides/guide_rax.rst:806
 msgid "Servers and load balancers that have DNS records created and destroyed on creation and decommissioning, respectively"
@@ -4036,7 +4044,7 @@ msgstr "VMware ガイド"
 
 #: ../../rst/scenario_guides/guide_vmware.rst:7
 msgid "Welcome to the Ansible for VMware Guide!"
-msgstr "VMware 向け Ansible ガイドでようこそ!"
+msgstr "Ansible for VMware ガイドへようこそ!"
 
 #: ../../rst/scenario_guides/guide_vmware.rst:9
 msgid "The purpose of this guide is to teach you everything you need to know about using Ansible with VMware."
@@ -4164,7 +4172,7 @@ msgstr "Ansible には、すべての Vultr モジュールの統合テストが
 
 #: ../../rst/scenario_guides/guide_vultr.rst:143
 msgid "These tests are meant to run against the public Vultr API and that is why they require a valid key to access the API."
-msgstr "このテストは、パブリックの Vultr API に対して実行されることが意図されていますが、これは API にアクセスするために有効なキーを必要とするためです。"
+msgstr "これらのテストは、パブリック Vultr API に対して実行されることが意図されています。これが、API にアクセスするために有効な鍵が必要となる理由です。"
 
 #: ../../rst/scenario_guides/guide_vultr.rst:145
 msgid "Prepare the test setup:"
@@ -4220,8 +4228,8 @@ msgid "`OpenShift Rest Client <https://github.com/openshift/openshift-restclient
 msgstr "`OpenShift Rest クライアント <https://github.com/openshift/openshift-restclient-python>` が、モジュールを実行するホストにインストールされている。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_intro.rst:27
-msgid "The Kubernetes modules are part of the `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_."
-msgstr "Kubernetes モジュールは、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/community.kubernetes>`_ の一部です。"
+msgid "The Kubernetes modules are part of the `Ansible Kubernetes collection <https://github.com/ansible-collections/kubernetes.core>`_."
+msgstr "Kubernetes モジュールは、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/kubernetes.core>`_ の一部です。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_intro.rst:29
 msgid "To install the collection, run the following:"
@@ -4248,8 +4256,8 @@ msgid "Reporting an issue"
 msgstr "問題の報告"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_intro.rst:48
-msgid "If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_. If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_. If you find a bug regarding Kubectl binary, please file issues at `Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_"
-msgstr "バグが見つかった場合やモジュールに関する提案をお寄せいただける場合は、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/community.kubernetes>`_ にファイルの問題を報告してください。OpenShift クライアントに関するバグが見つかった場合は、`OpenShift REST クライアントの問題 <https://github.com/openshift/openshift-restclient-python/issues>`_ に問題を作成してください。Kubectl バイナリーに関するバグは、`Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_ で問題を作成してください。"
+msgid "If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/kubernetes.core>`_. If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_. If you find a bug regarding Kubectl binary, please file issues at `Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_"
+msgstr "バグが見つかった場合やモジュールに関する提案をお寄せいただける場合は、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/kubernetes.core>`_ に問題を報告してください。OpenShift クライアントに関するバグが見つかった場合は、`OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_ に問題を報告してください。Kubectl バイナリーに関するバグは、`Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_ に問題を報告してください。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:5
 msgid "Using Kubernetes dynamic inventory plugin"
@@ -4280,8 +4288,8 @@ msgid "Then, create a file that ends in ``.k8s.yml`` or ``.k8s.yaml`` in your wo
 msgstr "次に、作業ディレクトリーに、名前の末尾が ``.k8s.yml`` または ``.k8s.yaml`` で終わるファイルを作成します。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:37
-msgid "The ``community.kubernetes.k8s`` inventory plugin takes in the same authentication information as any other Kubernetes modules."
-msgstr "``community.kubernetes.k8s`` インベントリープラグインは、他の Kubernetes モジュールと同じ認証情報を取得します。"
+msgid "The ``kubernetes.core.k8s`` inventory plugin takes in the same authentication information as any other Kubernetes modules."
+msgstr "``kubernetes.core.k8s`` インベントリープラグインは、他の Kubernetes モジュールと同じ認証情報を取得します。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:45
 msgid "Executing ``ansible-inventory --list -i <filename>.k8s.yml`` will create a list of Pods that are ready to be configured using Ansible."
@@ -4478,8 +4486,8 @@ msgid "To begin, there are a few bits of information we will need. Here you are 
 msgstr "まず、必要な情報をいくつか紹介します。マシン内で事前設定されている Kubeconfig を使用します。Kubeconfig は通常 ``~/.kube/config`` に置かれます。パスワードやユーザー証明書などの機密情報は、:ref:`ansible-vault` または`Ansible Tower 認証情報 <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_ を使用して、より安全な方法で保存することが強く推奨されます。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:55
-msgid "Now you need to supply the information about the Pod which will be created. Using ``definition`` parameter of the ``community.kubernetes.k8s`` module, you specify `PodTemplate <https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates>`_. This PodTemplate is identical to what you provide to the ``kubectl`` command."
-msgstr "作成される Pod に関する情報を提供する必要があります。``definition`` モジュールの ``community.kubernetes.k8s`` パラメーターを使用して `PodTemplate <https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates>`_ を指定します。この PodTemplate は、``kubectl`` コマンドに指定する内容と同じです。"
+msgid "Now you need to supply the information about the Pod which will be created. Using ``definition`` parameter of the ``kubernetes.core.k8s`` module, you specify `PodTemplate <https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates>`_. This PodTemplate is identical to what you provide to the ``kubectl`` command."
+msgstr "作成される Pod に関する情報を提供する必要があります。``kubernetes.core.k8s`` モジュールの ``definition`` パラメーターを使用して `PodTemplate <https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates>`_ を指定します。この PodTemplate は、``kubectl`` コマンドに指定する内容と同じです。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:58
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_clone_template.rst:115
@@ -4516,7 +4524,7 @@ msgstr "トラブルシューティング"
 #: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:70
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_clone_template.rst:217
 msgid "Things to inspect"
-msgstr "調べること"
+msgstr "検証事項"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:72
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_clone_template.rst:219
@@ -4561,7 +4569,7 @@ msgstr "動的インベントリーの使用"
 
 #: ../../rst/scenario_guides/scenario_template.rst:29
 msgid "If applicable, describe how to use a dynamic inventory plugin for this platform."
-msgstr "該当する場合は、このプラットフォームの動的インベントリープラグインの使用方法を説明します。"
+msgstr "該当する場合は、このプラットフォームで動的インベントリープラグインを使用する方法を記述します。"
 
 #: ../../rst/scenario_guides/scenario_template.rst:33
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_clone_template.rst:81
@@ -5268,7 +5276,7 @@ msgstr "Ansible (またはターゲットサーバー) には、デプロイす�
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_clone_template.rst:34
 msgid "Username and Password"
-msgstr "ユーザー名とパスワード"
+msgstr "ユーザー名およびパスワード"
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_clone_template.rst:36
 msgid "Administrator user with following privileges"
@@ -5588,7 +5596,7 @@ msgstr "Playbook が失敗した場合は、以下を行います。"
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_filters.rst:195
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_hostnames.rst:107
 msgid "Check if the values provided for username and password are correct."
-msgstr "ユーザー名およびパスワードの値が正しいことを確認します。"
+msgstr "ユーザー名およびパスワードの値が正しいかどうかを確認します。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_find_vm_folder.rst:119
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_remove_vm.rst:125
@@ -5598,7 +5606,7 @@ msgstr "指定したデータセンターが利用可能かどうかを確認し
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_find_vm_folder.rst:120
 msgid "Check if the virtual machine specified exists and you have respective permissions to access VMware object."
-msgstr "指定した仮想マシンが存在しているかどうか、および VMware オブジェクトにアクセスする各パーミッションがあるかどうかを確認します。"
+msgstr "指定した仮想マシンが存在し、VMware オブジェクトにアクセスするためのパーミッションがあるかどうかを確認します。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_find_vm_folder.rst:121
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_rename_vm.rst:174
@@ -5932,8 +5940,8 @@ msgid "Ansible provides various modules to manage VMware infrastructure, which i
 msgstr "Ansible は、データセンター、クラスター、ホストシステム、仮想マシンを含む VMware インフラストラクチャーを管理するさまざまなモジュールを提供します。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_intro.rst:19
-msgid "Ansible VMware modules are written on top of `pyVmomi <https://github.com/vmware/pyvmomi>`_. pyVmomi is the Python SDK for the VMware vSphere API that allows user to manage ESX, ESXi, and vCenter infrastructure. You can install pyVmomi using pip:"
-msgstr "Ansible VMware モジュールは `pyVmomi <https://github.com/vmware/pyvmomi>`_ に記述されています。pyVmomi は VMware vSphere API の Python SDK で、ユーザーが ESX、ESXi、および vCenter インフラストラクチャーを管理できるようにします。pip を使用して pyVmomi をインストールできます。"
+msgid "Ansible VMware modules are written on top of `pyVmomi <https://github.com/vmware/pyvmomi>`_. pyVmomi is the Python SDK for the VMware vSphere API that allows user to manage ESX, ESXi, and vCenter infrastructure. You can install pyVmomi using pip (you may need to use pip3, depending on your OS/distro):"
+msgstr "Ansible VMware モジュールは `pyVmomi <https://github.com/vmware/pyvmomi>`_ 上に記述されています。pyVmomi は、ESX、ESXi、および vCenter インフラストラクチャーの管理を可能にする VMware vSphere API の Python SDK です。pip を使用して、pyVmomi をインストールすることができます (OS またはディストリビューションに従って pip3 を使用しないといけない場合があります)。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_intro.rst:27
 msgid "Ansible VMware modules leveraging latest vSphere(6.0+) features are using `vSphere Automation Python SDK <https://github.com/vmware/vsphere-automation-sdk-python>`_. The vSphere Automation Python SDK also has client libraries, documentation, and sample code for VMware Cloud on AWS Console APIs, NSX VMware Cloud on AWS integration APIs, VMware Cloud on AWS site recovery APIs, NSX-T APIs."
@@ -8058,6 +8066,10 @@ msgstr "SSL 証明書にカスタムパスを使用しないといけない場�
 msgid "For example, if ``/var/vmware/certs/vcenter1.crt`` is the SSL certificate for your vCenter Server, you can use the :ref:`environment <playbooks_environment>` keyword to pass it to the modules:"
 msgstr "たとえば、``/var/vmware/certs/vcenter1.crt`` が vCenter Server の SSL 証明書である場合は、:ref:`environment <playbooks_environment>` キーワードを使用してモジュールに渡すことができます。"
 
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_requirements.rst:64
+msgid "There is a `known issue <https://github.com/psf/requests/issues/3829>`_ in ``requests`` library (version 2) which you may want to consider when using this environment variable. Basically, setting ``REQUESTS_CA_BUNDLE`` environment variable on managed nodes overrides the ``validate_certs`` value. This may result in unexpected behavior while running the playbook. Please see `community.vmware issue 601 <https://github.com/ansible-collections/community.vmware/issues/601>`_ and `vmware issue 254 <https://github.com/vmware/vsphere-automation-sdk-python/issues/254>`_ for more information."
+msgstr "``requests`` ライブラリー (バージョン 2 には `既知の問題 <https://github.com/psf/requests/issues/3829>`_ があり、この環境変数を使用する際に検討することができます。基本的に管理ノードで ``REQUESTS_CA_BUNDLE`` 環境変数を設定すると、``validate_certs`` の値が上書きされます。これにより、Playbook の実行中に予期しない動作が発生する可能性があります。詳細は、`community.vmware issue 601 <https://github.com/ansible-collections/community.vmware/issues/601>`_ および `vmware issue 254 <https://github.com/vmware/vsphere-automation-sdk-python/issues/254>`_ を参照してください。"
+
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_scenarios.rst:5
 msgid "Ansible for VMware Scenarios"
 msgstr "VMware シナリオにおける Ansible"
@@ -8343,4 +8355,13 @@ msgstr "``open-vm-tools`` で ``netplan`` がサポートされるのを待ち�
 
 #~ msgid "Here is a basic example of provisioning an instance in ad-hoc mode:"
 #~ msgstr ""
+
+#~ msgid "All of the modules require and are tested against recent versions of boto, usually boto3. Check the module documentation for the minimum required version for each module. You must have the boto3 Python module installed on your control machine. You may also need the original boto package. You can install these modules from your OS distribution or using the python package installer: ``pip install boto3``."
+#~ msgstr "モジュールはすべて必要で、最新バージョンの boto、通常は boto3 に対してテストされています。各モジュールに必要な最小バージョンについては、そのモジュールのドキュメントを確認します。boto3 の Python モジュールをコントロールマシンにインストールする必要があります。元の boto パッケージもインストールする必要があります。これらのモジュールは、OS のディストリビューションからインストールするか、Python パッケージインストーラー ``pip install boto3`` を使用してインストールすることができます。"
+
+#~ msgid "The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_, create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command line options execute the following:"
+#~ msgstr "Azure Resource Manager インベントリースクリプトは `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/azure_rm.py>`_ と呼ばれます。Azure API での認証は Azure モジュールと同じになります。つまり、「`環境変数の使用`_」で説明されている環境変数と同じ環境変数を定義するか、``$HOME/.azure/credentials`` ファイルを作成するか (「`ファイルの保存`_」を参照)、またはコマンドラインパラメーターを渡します。利用可能なコマンドラインオプションを表示するには、以下のコマンドを実行します。"
+
+#~ msgid "If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_. If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_. If you find a bug regarding Kubectl binary, please file issues at `Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_"
+#~ msgstr "バグが見つかった場合やモジュールに関する提案をお寄せいただける場合は、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/community.kubernetes>`_ にファイルの問題を報告してください。OpenShift クライアントに関するバグが見つかった場合は、`OpenShift REST クライアントの問題 <https://github.com/openshift/openshift-restclient-python/issues>`_ に問題を作成してください。Kubectl バイナリーに関するバグは、`Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_ で問題を作成してください。"
 
