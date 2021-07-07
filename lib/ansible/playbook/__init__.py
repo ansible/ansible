@@ -46,14 +46,16 @@ class Playbook:
         self._file_name = None
 
     @staticmethod
-    def load(file_name, variable_manager=None, loader=None):
+    def load(file_name, variable_manager=None, loader=None, basedir=None):
         pb = Playbook(loader=loader)
-        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
+        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager, basedir=basedir)
         return pb
 
-    def _load_playbook_data(self, file_name, variable_manager, vars=None):
+    def _load_playbook_data(self, file_name, variable_manager, vars=None, basedir=None):
 
-        if os.path.isabs(file_name):
+        if basedir:
+            self._basedir = basedir
+        elif os.path.isabs(file_name):
             self._basedir = os.path.dirname(file_name)
         else:
             self._basedir = os.path.normpath(os.path.join(self._basedir, os.path.dirname(file_name)))
@@ -67,7 +69,10 @@ class Playbook:
         self._file_name = file_name
 
         try:
-            ds = self._loader.load_from_file(os.path.basename(file_name))
+            if basedir:
+                ds = self._loader.load_from_file(file_name)
+            else:
+                ds = self._loader.load_from_file(os.path.basename(file_name))
         except UnicodeDecodeError as e:
             raise AnsibleParserError("Could not read playbook (%s) due to encoding issues: %s" % (file_name, to_native(e)))
 

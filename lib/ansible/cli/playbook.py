@@ -46,6 +46,7 @@ class PlaybookCLI(CLI):
         opt_help.add_vault_options(self.parser)
         opt_help.add_fork_options(self.parser)
         opt_help.add_module_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         # ansible playbook specific opts
         self.parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
@@ -132,7 +133,8 @@ class PlaybookCLI(CLI):
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
                                 variable_manager=variable_manager, loader=loader,
-                                passwords=passwords)
+                                passwords=passwords,
+                                basedir=context.CLIARGS['basedir'])
 
         results = pbex.run()
 

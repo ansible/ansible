@@ -47,7 +47,8 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, passwords):
+    def __init__(self, playbooks, inventory, variable_manager, loader, passwords, basedir=None):
+        self._basedir = basedir
         self._playbooks = playbooks
         self._inventory = inventory
         self._variable_manager = variable_manager
@@ -108,7 +109,7 @@ class PlaybookExecutor:
                 else:
                     AnsibleCollectionConfig.default_collection = None
 
-                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
+                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader, basedir=self._basedir)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing
