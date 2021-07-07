@@ -1,3 +1,4 @@
+packaging < 21.0 ; python_version < '3.6' # packaging 21.0 requires Python 3.6 or newer
 coverage >= 4.2, < 5.0.0, != 4.3.2 ; python_version <= '3.7' # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6, coverage 5.0+ incompatible
 coverage >= 4.5.4, < 5.0.0 ; python_version > '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
