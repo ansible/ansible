@@ -1402,8 +1402,9 @@ class GalaxyCLI(CLI):
         collections_in_paths = {}
 
         if context.CLIARGS.get('basedir', None):
-            collections_search_paths.update([context.CLIARGS['basedir']])
-            default_collections_path = [context.CLIARGS['basedir']] + default_collections_path
+            b_basedir = to_bytes(context.CLIARGS['basedir'])
+            collections_search_paths.update([b_basedir])
+            default_collections_path = [b_basedir] + default_collections_path
 
         warnings = []
         path_found = False
