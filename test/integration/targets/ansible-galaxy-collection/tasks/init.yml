@@ -92,10 +92,11 @@
   assert:
     that:
     - '"Collection ansible_test3.my_collection was created successfully" in init_type_community.stdout'
-    - init_type_community_actual.files | length == 5
-    - (init_type_community_actual.files | map(attribute='path') | list)[0] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst']
-    - (init_type_community_actual.files | map(attribute='path') | list)[1] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst']
-    - (init_type_community_actual.files | map(attribute='path') | list)[2] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst']
-    - (init_type_community_actual.files | map(attribute='path') | list)[3] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst']
-    - (init_type_community_actual.files | map(attribute='path') | list)[4] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst']
+    - init_type_community_actual.files | length == 6
+    - (init_type_community_actual.files | map(attribute='path') | list)[0] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'execution-environment.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[1] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'execution-environment.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[2] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'execution-environment.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[3] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'execution-environment.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[4] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'execution-environment.yml']
+    - (init_type_community_actual.files | map(attribute='path') | list)[4] | basename in ['galaxy.yml', 'LICENSE', 'README.md', 'CODE_OF_CONDUCT.md', 'CHANGELOG.rst', 'execution-environment.yml']
     
