@@ -1505,7 +1505,7 @@ To search in a string or extract parts of a string with a regular expression, us
     {{ 'server1/database42' | regex_search('database[0-9]+') }}
     # => 'database42'
 
-    # Returns an empty string if it cannot find a match
+    # Returns none if it cannot find a match
     {{ 'ansible' | regex_search('foobar') }}
     # => ''
 
