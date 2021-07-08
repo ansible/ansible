@@ -95,10 +95,11 @@ if C.DEFAULT_JINJA2_NATIVE:
     except ImportError:
         from jinja2 import Environment
         from jinja2.utils import concat as j2_concat
-        display.warning(
-            'jinja2_native requires Jinja 2.10 and above. '
-            'Version detected: %s. Falling back to default.' % j2_version
-        )
+        if C.JINJA2_NATIVE_WARNING:
+            display.warning(
+                'jinja2_native requires Jinja 2.10 and above. '
+                'Version detected: %s. Falling back to default.' % j2_version
+            )
 
 
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
