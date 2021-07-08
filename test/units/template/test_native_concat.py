@@ -34,6 +34,9 @@ def test_undefined_variable():
 
 def test_cond_eval():
     fake_loader = DictDataLoader({})
+    # True must be stored in a variable to trigger templating. Using True
+    # directly would be caught by optimization for bools to short-circuit
+    # templating.
     variables = {"foo": True}
     templar = Templar(loader=fake_loader, variables=variables)
     assert isinstance(templar.environment, AnsibleNativeEnvironment)
