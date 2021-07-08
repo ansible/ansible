@@ -289,7 +289,6 @@ DOCUMENTATION = '''
           - "Preferred method to use when transfering files over ssh"
           - When set to smart, Ansible will try them until one succeeds or they all fail
           - If set to True, it will force 'scp', if False it will use 'sftp'
-          - It will overriden by ssh_transfer_method, if set
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
@@ -298,7 +297,7 @@ DOCUMENTATION = '''
             version_added: '2.7'
         deprecated:
               why: In favor of the "ssh_transfer_method" option.
-              version: "2.16"
+              version: "2.17"
               alternatives: ssh_transfer_method
       use_tty:
         version_added: '2.5'
