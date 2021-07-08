@@ -71,6 +71,8 @@ DOCUMENTATION = """
             description:
                 - List of localized strings to match for prompt detection
                 - If empty we'll use the built in one
+                - Do NOT add a colon (:) to your custom entries. Ansible adds a colon at the end of each prompt;
+                  if you add another one in your string, your prompt will fail with a "Timeout" error.
             default: []
             type: list
             ini:
