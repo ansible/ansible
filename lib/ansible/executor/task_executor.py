@@ -652,6 +652,11 @@ class TaskExecutor:
                     failed_when_result = False
                 return failed_when_result
 
+            if '_ansible_vars' in result and self._task.action not in C._ACTION_VARS:
+                del result['_ansible_vars']
+            else:
+                vars_copy.update(results['_ansible_vars'])
+
             if 'ansible_facts' in result and self._task.action not in C._ACTION_DEBUG:
                 if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                     vars_copy.update(result['ansible_facts'])
@@ -735,6 +740,9 @@ class TaskExecutor:
         # values and any facts which may have been created
         if self._task.register:
             variables[self._task.register] = result
+
+        if '_ansible_vars' in result and self._task.action not in C._ACTION_VARS:
+            del result['_ansible_vars']
 
         if 'ansible_facts' in result and self._task.action not in C._ACTION_DEBUG:
             if self._task.action in C._ACTION_WITH_CLEAN_FACTS:

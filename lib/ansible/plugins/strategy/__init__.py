@@ -33,7 +33,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
@@ -424,6 +424,15 @@ class StrategyBase:
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
 
+    def get_target_hosts(self, iterator, result, task, facts=False):
+
+        if task.delegate_to is not None and (not facts or task.delegate_facts):
+            host_list = self.get_delegated_hosts(result, task)
+        else:
+            host_list = self.get_task_hosts(iterator, result._host, task)
+
+        return host_list
+
     def _set_always_delegated_facts(self, result, task):
         """Sets host facts for ``delegate_to`` hosts for facts that should
         always be delegated
@@ -662,6 +671,9 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
                         post_process_whens(result_item, original_task, handler_templar)
 
+                        # always clean up
+                        del result_item['_ansible_vars']
+
                     if 'ansible_facts' in result_item and original_task.action not in C._ACTION_DEBUG:
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
@@ -691,6 +703,30 @@ class StrategyBase:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
                                 if is_set_fact:
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
+
+                    if '_ansible_vars' in result_item:
+                        if original_task.action not in C._ACTINON_VARS:
+                            display.warning('Removed unexpected _ansible_vars key from results of "%s", '
+                                            'possibly a result from an attempt to bypass security' % original_task.action)
+                        else:
+                            for scope in result_item['_ansible_vars']:
+                                if scope == 'host':
+                                    host_list = self.get_target_hosts(iterator, result_item, original_task)
+                                    for target_host in host_list:
+                                        for var_name, var_value in iteritems(result_item['_ansible_vars']['host']):
+                                            self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                                elif scope == 'host_facts':
+                                    if original_task.delegate_facts:
+                                        host_list = self.get_target_hosts(iterator, result_item, original_task, facts=True)
+                                    for target_host in host_list:
+                                        self._variable_manager.set_nonpersistent_facts(target_host, result_item['_ansible_vars']['host_facts'])
+                                elif scope == 'play':
+                                    self._variable_manager.set_play_vars(iterator._play, result_item['_ansible_vars']['extra'])
+                                elif scope == 'extra':
+                                    self._variable_manager.set_extra_vars(result_item['_ansible_vars']['extra'])
+                                else:
+                                    # we really should never hit this
+                                    display.warning('Ignoring "%s" as it is an invalid scope for set_var' % scope)
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 

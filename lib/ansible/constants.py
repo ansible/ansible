@@ -84,6 +84,7 @@ _ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
 _ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
 _ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
 _ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
+_ACTION_VARS = add_internal_fqcns(('set_var', ))
 
 # http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
 COLOR_CODES = {
@@ -118,6 +119,7 @@ MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.wi
                                            'ansible.windows.win_shell', 'raw')))
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 TREE_DIR = None
+VALID_VAR_SCOPES = ('extra', 'host', 'host_fact', 'parent', 'play')
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
 
