@@ -299,7 +299,7 @@ DOCUMENTATION = '''
         deprecated:
               why: In favor of the "ssh_transfer_method" option.
               version: "2.16"
-              alternatives: ssh_trasnfer_method
+              alternatives: ssh_transfer_method
       use_tty:
         version_added: '2.5'
         default: 'yes'
