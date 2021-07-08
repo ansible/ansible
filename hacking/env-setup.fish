@@ -47,10 +47,10 @@ end
 
 # Set PYTHON_BIN
 if not set -q PYTHON_BIN
-    if test (which python)
-        set -gx PYTHON_BIN (which python)
-    else if test (which python3)
+    if test (which python3)
         set -gx PYTHON_BIN (which python3)
+    else if test (which python)
+        set -gx PYTHON_BIN (which python)
     else
         echo "No valid Python found"
         exit 1
