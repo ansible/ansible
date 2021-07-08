@@ -139,9 +139,15 @@ class TestCaseRecursiveDiff:
         assert len(recursive_diff(a, b)) == 2
         assert recursive_diff(a, c) is None
 
-    def test_recursive_diff_negative(self):
-        a = [1, 2]
-        b = [2, 3]
-        with pytest.raises(TypeError) as exec_info:
-            recursive_diff(a, b)
-        assert "Unable to diff" in str(exec_info.value)
+    @pytest.mark.parametrize(
+        'p1, p2', (
+            ([1, 2], [2, 3]),
+            ({1: 2}, [2, 3]),
+            ([1, 2], {2: 3}),
+            ({2: 3}, 'notadict'),
+            ('notadict', {2: 3}),
+        )
+    )
+    def test_recursive_diff_negative(self, p1, p2):
+        with pytest.raises(TypeError, match="Unable to diff"):
+            recursive_diff(p1, p2)

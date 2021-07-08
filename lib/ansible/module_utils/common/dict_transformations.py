@@ -134,9 +134,10 @@ def recursive_diff(dict1, dict2):
     :return: Tuple of dictionaries of differences or ``None`` if there are no differences.
     """
 
-    if not isinstance(dict1, MutableMapping) or not isinstance(dict2, MutableMapping):
+    if not all((isinstance(item, MutableMapping) for item in (dict1, dict2))):
         raise TypeError("Unable to diff 'dict1' %s and 'dict2' %s. "
                         "Both must be a dictionary." % (type(dict1), type(dict2)))
+
     left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
     right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
     for k in (set(dict1.keys()) & set(dict2.keys())):
