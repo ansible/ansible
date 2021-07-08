@@ -1640,6 +1640,15 @@ MAX_FILE_SIZE_FOR_DIFF:
   ini:
   - {key: max_diff_size, section: defaults}
   type: int
+JINJA2_NATIVE_WARNING:
+  name: Running older than required Jinja version for jinja2_native warning
+  default: True
+  description: Toggle to control showing warnings related to running a Jinja version
+               older than required for jinja2_native
+  env: [{name: ANSIBLE_JINJA2_NATIVE_WARNING}]
+  ini:
+  - {key: jinja2_native_warning, section: defaults}
+  type: boolean
 NETWORK_GROUP_MODULES:
   name: Network module families
   default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf, exos, voss, slxos]
