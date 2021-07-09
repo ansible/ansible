@@ -65,6 +65,7 @@ Many of our community `Working Groups <https://github.com/ansible/community/wiki
 - `Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``
 - `Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - ``#ansible-community``
 - `DigitalOcean Working Group <https://github.com/ansible/community/wiki/Digital-Ocean>`_ - ``#ansible-digitalocean``
+- `Diversity Working Group <https://github.com/ansible/community/wiki/Diversity>`_ - ``#ansible-diversity``
 - `Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - ``#ansible-devel``
 - `Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``
 - `Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``
