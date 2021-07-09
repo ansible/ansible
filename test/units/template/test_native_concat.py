@@ -18,35 +18,32 @@ from units.mock.loader import DictDataLoader
 
 
 @pytest.fixture
-def enable_jinja2_native(monkeypatch):
+def native_template_mod(monkeypatch):
     monkeypatch.delitem(sys.modules, 'ansible.template')
     monkeypatch.setattr(C, 'DEFAULT_JINJA2_NATIVE', True)
-    mod = importlib.import_module('ansible.template')
-    globals()['Templar'] = mod.Templar
-    globals()['AnsibleNativeEnvironment'] = mod.AnsibleNativeEnvironment
+    return importlib.import_module('ansible.template')
 
 
-@pytest.mark.usefixtures("enable_jinja2_native")
-class TestNativeConcat:
-    # https://github.com/ansible/ansible/issues/52158
-    def test_undefined_variable(self):
-        fake_loader = DictDataLoader({})
-        variables = {}
-        templar = Templar(loader=fake_loader, variables=variables)  # pylint: disable=undefined-variable
-        assert isinstance(templar.environment, AnsibleNativeEnvironment)  # pylint: disable=undefined-variable
+# https://github.com/ansible/ansible/issues/52158
+def test_undefined_variable(native_template_mod):
+    fake_loader = DictDataLoader({})
+    variables = {}
+    templar = native_template_mod.Templar(loader=fake_loader, variables=variables)
+    assert isinstance(templar.environment, native_template_mod.AnsibleNativeEnvironment)
 
-        with pytest.raises(AnsibleUndefinedVariable):
-            templar.template("{{ missing }}")
+    with pytest.raises(AnsibleUndefinedVariable):
+        templar.template("{{ missing }}")
 
-    def test_cond_eval(self):
-        fake_loader = DictDataLoader({})
-        # True must be stored in a variable to trigger templating. Using True
-        # directly would be caught by optimization for bools to short-circuit
-        # templating.
-        variables = {"foo": True}
-        templar = Templar(loader=fake_loader, variables=variables)  # pylint: disable=undefined-variable
-        assert isinstance(templar.environment, AnsibleNativeEnvironment)  # pylint: disable=undefined-variable
 
-        cond = Conditional(loader=fake_loader)
-        cond.when = ["foo"]
-        assert cond.evaluate_conditional(templar, variables)
+def test_cond_eval(native_template_mod):
+    fake_loader = DictDataLoader({})
+    # True must be stored in a variable to trigger templating. Using True
+    # directly would be caught by optimization for bools to short-circuit
+    # templating.
+    variables = {"foo": True}
+    templar = native_template_mod.Templar(loader=fake_loader, variables=variables)
+    assert isinstance(templar.environment, native_template_mod.AnsibleNativeEnvironment)
+
+    cond = Conditional(loader=fake_loader)
+    cond.when = ["foo"]
+    assert cond.evaluate_conditional(templar, variables)
