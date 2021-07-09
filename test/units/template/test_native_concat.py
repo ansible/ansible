@@ -32,8 +32,8 @@ class TestNativeConcat:
     def test_undefined_variable(self):
         fake_loader = DictDataLoader({})
         variables = {}
-        templar = Templar(loader=fake_loader, variables=variables)
-        assert isinstance(templar.environment, AnsibleNativeEnvironment)
+        templar = Templar(loader=fake_loader, variables=variables)  # pylint: disable=undefined-variable
+        assert isinstance(templar.environment, AnsibleNativeEnvironment)  # pylint: disable=undefined-variable
 
         with pytest.raises(AnsibleUndefinedVariable):
             templar.template("{{ missing }}")
@@ -44,8 +44,8 @@ class TestNativeConcat:
         # directly would be caught by optimization for bools to short-circuit
         # templating.
         variables = {"foo": True}
-        templar = Templar(loader=fake_loader, variables=variables)
-        assert isinstance(templar.environment, AnsibleNativeEnvironment)
+        templar = Templar(loader=fake_loader, variables=variables)  # pylint: disable=undefined-variable
+        assert isinstance(templar.environment, AnsibleNativeEnvironment)  # pylint: disable=undefined-variable
 
         cond = Conditional(loader=fake_loader)
         cond.when = ["foo"]
