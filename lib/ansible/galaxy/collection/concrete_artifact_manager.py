@@ -407,7 +407,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None):
         validate_certs=validate_certs,
         headers=None if token is None else token.headers(),
         unredirected_headers=['Authorization'] if "s3.amazonaws" in url else None,
-	    http_agent=user_agent(),
+        http_agent=user_agent(),
     )
 
     with open(b_file_path, 'wb') as download_file:  # type: BinaryIO
