@@ -628,7 +628,9 @@ DEFAULT_FACT_PATH:
   ini:
   - {key: fact_path, section: defaults}
   type: string
-  yaml: {key: facts.gathering.fact_path}
+  vars:
+    - name: ansible_fact_path
+      version_added: '2.12'
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
   default: ~/.ansible/plugins/filter:/usr/share/ansible/plugins/filter

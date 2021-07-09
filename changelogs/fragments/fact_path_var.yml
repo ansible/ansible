@@ -1,0 +1,2 @@
+minor_changes:
+  - gather_facts module, when called via the gather_facts keyword, can now set fact_path via a variable.
