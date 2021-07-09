@@ -401,11 +401,13 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None):
     display.display("Downloading %s to %s" % (url, to_text(b_tarball_dir)))
     # NOTE: Galaxy redirects downloads to S3 which rejects the request
     # NOTE: if an Authorization header is attached so don't redirect it
+    # NOTE: But Authorization header is needed if using on-premise Galaxy, such as "galaxy-ng"
     resp = open_url(
         to_native(url, errors='surrogate_or_strict'),
         validate_certs=validate_certs,
         headers=None if token is None else token.headers(),
-        unredirected_headers=['Authorization'], http_agent=user_agent(),
+        unredirected_headers=['Authorization'] if "s3.amazonaws" in url else None,
+	    http_agent=user_agent(),
     )
 
     with open(b_file_path, 'wb') as download_file:  # type: BinaryIO
