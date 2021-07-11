@@ -259,7 +259,6 @@ options:
             - Requires C(local) is omitted or False.
         type: str
         version_added: "2.12"
-
     base:
         description:
             - Optionally set the user's home base directory.
@@ -267,7 +266,7 @@ options:
             - Mutually exclusive with C(home)
             - Currently supported on Illumos/Solaris.
         type: path
-        version_added: "2.9"
+        version_added: "2.12"
     is_role:
         description:
             - Sets the user to be a role.
@@ -275,7 +274,7 @@ options:
             - Currently supported on Illumos/Solaris.
         type: bool
         default: no
-        version_added: "2.9"
+        version_added: "2.12"
 notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
@@ -556,12 +555,12 @@ class User(object):
         self.role = module.params['role']
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
+        self.base = module.params['base']
+        self.is_role = module.params['is_role']
         self.umask = module.params['umask']
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
-        self.base = module.params['base']
-        self.is_role = module.params['is_role']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
