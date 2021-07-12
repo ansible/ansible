@@ -1,0 +1,79 @@
+- name: "test json output with unicode characters"
+  command: ansible-inventory --list -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
+
+- block:
+  - name: "test json output file with unicode characters"
+    command: ansible-inventory --list --output unicode_inventory.json -i {{ role_path }}/files/unicode.yml
+
+  - set_fact:
+      json_inventory_file: "{{ lookup('file', 'unicode_inventory.json') | string }}"
+
+  - assert:
+      that:
+          - json_inventory_file is contains('příbor')
+  always:
+    - file:
+        name: unicode_inventory.json
+        state: absent
+
+- name: "test yaml output with unicode characters"
+  command: ansible-inventory --list --yaml -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
+
+- block:
+  - name: "test yaml output file with unicode characters"
+    command: ansible-inventory --list --yaml --output unicode_inventory.yaml -i {{ role_path }}/files/unicode.yml
+
+  - set_fact:
+      yaml_inventory_file: "{{ lookup('file', 'unicode_inventory.yaml') | string }}"
+
+  - assert:
+      that:
+          - yaml_inventory_file is contains('příbor')
+  always:
+    - file:
+        name: unicode_inventory.yaml
+        state: absent
+
+- block:
+  - name: Install toml package
+    pip:
+      name:
+        - toml
+      state: present
+
+  - name: "test toml output with unicode characters"
+    command: ansible-inventory --list --toml -i {{ role_path }}/files/unicode.yml
+    register: result
+
+  - assert:
+      that:
+          - result is succeeded
+          - result.stdout is contains('příbor')
+
+  - block:
+    - name: "test toml output file with unicode characters"
+      command: ansible-inventory --list --toml --output unicode_inventory.toml -i {{ role_path }}/files/unicode.yml
+
+    - set_fact:
+        toml_inventory_file: "{{ lookup('file', 'unicode_inventory.toml') | string }}"
+
+    - assert:
+        that:
+            - toml_inventory_file is contains('příbor')
+    always:
+      - file:
+          name: unicode_inventory.toml
+          state: absent
+  when: ansible_python.version.major|int == 3
