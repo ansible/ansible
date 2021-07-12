@@ -779,6 +779,12 @@ class AmazonLinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class MiracleLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Miraclelinux'
+    strategy_class = SystemdStrategy
+
+
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'

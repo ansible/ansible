@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - add MIRACLE LINUX support (https://github.com/ansible/ansible/pull/75232)
