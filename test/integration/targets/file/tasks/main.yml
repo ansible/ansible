@@ -183,11 +183,13 @@
   user:
     name: test1
     uid: 1234
+  notify: remove users
 
 - name: create group
   group:
     name: test1
     gid: 1234
+  notify: remove groups
 
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
@@ -604,6 +606,7 @@
 - name: create owner
   user:
     name: nonexistent
+  notify: remove users
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: owner exist in check_mode
@@ -627,6 +630,7 @@
   user:
     name: test_uid
     uid: 111111
+  notify: remove users
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: owner exists in check_mode, using uid
@@ -650,6 +654,7 @@
 - name: create group
   group:
     name: nonexistent1
+  notify: remove groups
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: group exists in check_mode
@@ -673,6 +678,7 @@
   group:
     name: test_gid
     gid: 111112
+  notify: remove groups
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: group exists in check_mode, using gid
