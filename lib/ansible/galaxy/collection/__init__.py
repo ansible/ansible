@@ -1359,15 +1359,15 @@ def _resolve_depenency_map(
 
         error_msg_lines = [
             (
-                 'Failed to resolve the requested dependencies map. '
-                 'Got the candidate {req.fqcn!s}:{req.ver!s} ({dep_origin!s}) '
-                 'which didn\'t satisfy all of the following requirements:'.
-                 format(
-                     req=dep_exc.candidate,
-                     dep_origin='direct request'
-                     if not parents else 'dependency of {parent!s}'.
-                     format(parent=','.join(parents))
-                 )
+                'Failed to resolve the requested dependencies map. '
+                'Got the candidate {req.fqcn!s}:{req.ver!s} ({dep_origin!s}) '
+                'which didn\'t satisfy all of the following requirements:'.
+                format(
+                    req=dep_exc.candidate,
+                    dep_origin='direct request'
+                    if not parents else 'dependency of {parent!s}'.
+                    format(parent=','.join(parents))
+                )
             )
         ]
 
