@@ -8,4 +8,5 @@ __metaclass__ = type
 
 from resolvelib.resolvers import (
     ResolutionImpossible as CollectionDependencyResolutionImpossible,
+    InconsistentCandidate as CollectionDependencyInconsistentCandidate,
 )
