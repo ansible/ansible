@@ -84,6 +84,7 @@ Settings by Platform
     `Meraki`_                                                                                         ✓
     `MikroTik RouterOS`_             ``community.network.routeros``    ✓
     `Nokia SR OS`_                                                                                    ✓
+    `Palo Alto PAN-OS`_                                                                       ✓       ✓
     `Pluribus Netvisor`_             ``community.network.netvisor``    ✓
     `Ruckus ICX`_                    ``community.network.icx``         ✓
     `VyOS`_ `[†]`_                   ``vyos.vyos.vyos``                ✓                              ✓
@@ -115,6 +116,7 @@ Settings by Platform
 .. _Meraki: https://galaxy.ansible.com/cisco/meraki
 .. _MikroTik RouterOS: https://galaxy.ansible.com/community/network
 .. _Nokia SR OS: https://galaxy.ansible.com/community/network
+.. _Palo Alto PAN-OS: https://galaxy.ansible.com/paloaltonetworks/panos
 .. _Pluribus Netvisor: https://galaxy.ansible.com/community/network
 .. _Ruckus ICX: https://galaxy.ansible.com/community/network
 .. _VyOS: https://galaxy.ansible.com/vyos/vyos
