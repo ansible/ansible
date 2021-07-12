@@ -57,4 +57,4 @@ Requesting a feature
 
 The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`.
 
-You can also submit a feature request through opening an issue in the `ansible/ansible <https://github.com/ansible/ansible/issues>`_ or in a collection repository (refer to the :ref:`Bugs in collections<reporting_bugs_in_collections>` section to learn how to find a proper issue tracker).
+You can also submit a feature request through opening an issue in the `ansible/ansible <https://github.com/ansible/ansible/issues>`_ for ``ansible-core`` or in a corresponding collection repository (refer to the :ref:`Bugs in collections<reporting_bugs_in_collections>` section to learn how to find a proper issue tracker).
