@@ -622,7 +622,7 @@ class AnsibleCodeGenerator(CodeGenerator):
         if isinstance(value, NativeJinjaText):
             return value
 
-        return str
+        return str(value)
 
     def _output_const_repr(self, group):
         return repr(ansible_concat(group))
