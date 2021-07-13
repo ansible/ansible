@@ -98,7 +98,8 @@ grep -q "handler A" <<< "$result"
 grep -q "handler B" <<< "$result"
 
 # Test an undefined variable in another handler name isn't a failure
-ansible-playbook 58841.yml "$@" --tags lazy_evaluation | tee out.txt ; cat out.txt
+ansible-playbook 58841.yml "$@" --tags lazy_evaluation 2>&1 | tee out.txt ; cat out.txt
+grep out.txt -e "\[WARNING\]: Unable to template handler name 'handler name with {{ test_var }}'"
 [ "$(grep out.txt -ce 'handler ran')" = "1" ]
 [ "$(grep out.txt -ce 'handler with var ran')" = "0" ]
 
@@ -110,5 +111,6 @@ ansible-playbook 58841.yml "$@" --tags evaluation_time -e test_var=myvar | tee o
 # Test the handler is not found when the variable is undefined
 ansible-playbook 58841.yml "$@" --tags evaluation_time 2>&1 | tee out.txt ; cat out.txt
 grep out.txt -e "The requested handler 'handler name with myvar' was not found"
+grep out.txt -e "\[WARNING\]: Unable to template handler name 'handler name with {{ test_var }}'"
 [ "$(grep out.txt -ce 'handler ran')" = "0" ]
 [ "$(grep out.txt -ce 'handler with var ran')" = "0" ]

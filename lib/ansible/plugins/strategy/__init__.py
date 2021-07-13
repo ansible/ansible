@@ -514,11 +514,13 @@ class StrategyBase:
 
                             if handler_name in candidates:
                                 return handler_task
-                        except (UndefinedError, AnsibleUndefinedVariable):
+                        except (UndefinedError, AnsibleUndefinedVariable) as e:
                             # We skip this handler due to the fact that it may be using
                             # a variable in the name that was conditionally included via
                             # set_fact or some other method, and we don't want to error
                             # out unnecessarily
+                            if not handler_task.listen:
+                                display.warning("Unable to template handler name '%s': %s" % (handler_task.name, to_text(e)))
                             continue
             return None
 
