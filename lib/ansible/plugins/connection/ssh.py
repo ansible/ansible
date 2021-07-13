@@ -33,6 +33,7 @@ DOCUMENTATION = '''
                - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if ssh should check host keys
+          default: True
           type: boolean
           ini:
               - section: defaults
