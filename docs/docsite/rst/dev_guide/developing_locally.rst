@@ -5,7 +5,7 @@
 Adding modules and plugins locally
 **********************************
 
-You can extend Ansible by adding custom modules or plugins. You can create them or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share plugins and modules by including them in a collection, then publishing the collection on Ansible Galaxy.
+You can extend Ansible by adding custom modules or plugins. You can create them from scratch or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share plugins and modules by including them in a collection, then publishing the collection on Ansible Galaxy.
 
 If you are using a local module or plugin but Ansible cannot find it, this page is all you need.
 
@@ -99,7 +99,7 @@ Adding local non-module plugins for all playbooks and roles
 
 To load standalone local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take a colon-separated list, similar to ``$PATH``. You have two options:
 
-* Add your local plugin to one of the default configured locations. Find the correct configuration setting for the plugin type in the documentation of :ref:`ansible_configuration_settings <configuration settings>` for details. Default locations may change without notice.
+* Add your local plugin to one of the default configured locations. Find the correct configuration setting for the plugin type in the documentation of :ref:`configuration settings <ansible_configuration_settings>` for details. Default locations may change without notice.
 * Add the location of your local plugin to an environment variable or configuration:
    * the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable - for example, ``$ANSIBLE_INVENTORY_PLUGINS`` or ``$ANSIBLE_VARS_PLUGINS``
    * the relevant ``plugin_type_PATH`` configuration setting, most of which begin with ``DEFAULT_`` - for example, ``DEFAULT_CALLBACK_PLUGIN_PATH`` or ``DEFAULT_FILTER_PLUGIN_PATH`` or ``BECOME_PLUGIN_PATH``
