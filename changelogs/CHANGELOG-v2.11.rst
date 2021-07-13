@@ -5,6 +5,36 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-07-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - aws creates and exposes a new tiny_prefix variable to provide a shorter prefix for the AWS tests.
+
+Bugfixes
+--------
+
+- Add unicode support to ``ansible-inventory`` CLI (https://github.com/ansible/ansible/issues/57378)
+- Ensure we get full path for extra vars into cliargs to avoid realpath issues after initial load.
+- ansible-doc - in text output, do not show empty ``version_added_collection`` values (https://github.com/ansible/ansible/pull/74999).
+- ansible-test - restrict ``packaging`` to ``< 21.0`` for Python ``< 3.6`` (https://github.com/ansible/ansible/pull/75186).
+- command - remove unreachable code path when trying to convert the value for ``chdir`` to bytes (https://github.com/ansible/ansible/pull/75036)
+- module_common - handle exception when multiple workers try to create the cache directory
+- roles - make sure argspec validation task templates suboptions (https://github.com/ansible/ansible/issues/75070).
+- slurp - improve the logic in the error handling and remove ``os.stat()`` call (https://github.com/ansible/ansible/pull/75038)
+- ssh_connection - rename ``retries`` to ``reconnection_retries`` to avoid conflicts with task vars (https://github.com/ansible/ansible/issues/75142).
+- ssh_connection - set the default for ``reconnection_retries`` back to ``0`` (https://github.com/ansible/ansible/issues/75142).
+- task_executor/ssh_connection - use the ``retries`` value from ``ssh_connection`` settings, not the default from the ``Task`` field attributes (https://github.com/ansible/ansible/issues/75142).
+
 v2.11.2
 =======
 
