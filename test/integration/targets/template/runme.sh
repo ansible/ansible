@@ -38,3 +38,4 @@ ansible-playbook 72262.yml -v "$@"
 # ensure unsafe is preserved, even with extra newlines
 ansible-playbook unsafe.yml -v "$@"
 
+ansible-playbook string_type_filters.yml -v "$@"

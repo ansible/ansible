@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - assert:
+        that:
+          - item|type_debug == "NativeJinjaText"
+      loop:
+        - "{{ {}|to_nice_json(indent=2) }}\n"
+        - "{{ {}|to_nice_json(indent=(2|int)) }}\n"
+        - "{{ {}|string }}"
+        - "{{ {}|string }}\n"
+        - "{{ {}|ansible.builtin.to_nice_json }}"
+        - "{{ {}|ansible.builtin.to_nice_json }}\n"

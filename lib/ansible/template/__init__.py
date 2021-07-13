@@ -29,6 +29,7 @@ import time
 
 from contextlib import contextmanager
 from ansible.module_utils.compat.version import LooseVersion
+from itertools import islice, chain
 from numbers import Number
 from traceback import format_exc
 
@@ -37,8 +38,10 @@ try:
 except ImportError:
     from sha import sha as sha1
 
+from jinja2.compiler import CodeGenerator
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
+from jinja2.nodes import Filter, Impossible
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
@@ -65,6 +68,7 @@ from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.native_jinja import NativeJinjaText
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
@@ -82,7 +86,6 @@ JINJA2_OVERRIDE = '#jinja2:'
 
 from jinja2 import __version__ as j2_version
 from jinja2 import Environment
-from jinja2.utils import concat as j2_concat
 
 
 USE_JINJA2_NATIVE = False
@@ -90,11 +93,8 @@ if C.DEFAULT_JINJA2_NATIVE:
     try:
         from jinja2.nativetypes import NativeEnvironment
         from ansible.template.native_helpers import ansible_native_concat
-        from ansible.utils.native_jinja import NativeJinjaText
         USE_JINJA2_NATIVE = True
     except ImportError:
-        from jinja2 import Environment
-        from jinja2.utils import concat as j2_concat
         if C.JINJA2_NATIVE_WARNING:
             display.warning(
                 'jinja2_native requires Jinja 2.10 and above. '
@@ -448,7 +448,7 @@ class JinjaPluginIntercept(MutableMapping):
 
         if self._pluginloader.class_name == 'FilterModule':
             for plugin_name, plugin in self._delegatee.items():
-                if self._jinja2_native and plugin_name in C.STRING_TYPE_FILTERS:
+                if plugin_name in C.STRING_TYPE_FILTERS:
                     self._delegatee[plugin_name] = _wrap_native_text(plugin)
                 else:
                     self._delegatee[plugin_name] = _unroll_iterator(plugin)
@@ -563,7 +563,7 @@ class JinjaPluginIntercept(MutableMapping):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
                     if self._pluginloader.class_name == 'FilterModule':
-                        if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
+                        if fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
                                 func_name in C.STRING_TYPE_FILTERS:
                             self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
                         else:
@@ -597,6 +597,84 @@ class JinjaPluginIntercept(MutableMapping):
         return len(self._delegatee)
 
 
+def ansible_concat(nodes):
+    head = list(islice(nodes, 2))
+
+    if not head:
+        return None
+
+    if len(head) == 1:
+        out = head[0]
+
+        if isinstance(out, NativeJinjaText):
+            return out
+        out = to_text(out)
+    else:
+        out = u"".join([to_text(v) for v in chain(head, nodes)])
+
+    return out
+
+
+class AnsibleCodeGenerator(CodeGenerator):
+    @staticmethod
+    def _default_finalize(value):
+        if isinstance(value, NativeJinjaText):
+            return value
+
+        return str
+
+    def _output_const_repr(self, group):
+        return repr(ansible_concat(group))
+
+    def _output_child_to_const(self, node, frame, finalize):
+        const = node.as_const(frame.eval_ctx)
+
+        if frame.eval_ctx.autoescape:
+            const = escape(const)
+
+        if isinstance(const, NativeJinjaText):
+            raise Impossible()
+
+        if isinstance(node, nodes.TemplateData):
+            return str(const)
+
+        return finalize.const(const)
+
+    def _is_string_type_filter(self, node):
+        if not isinstance(node, Filter):
+            return False
+
+        if node.name in C.STRING_TYPE_FILTERS:
+            return True
+
+        for name in C.STRING_TYPE_FILTERS:
+            if node.name in ('ansible.builtin.' + name, 'ansible.legacy.' + name):
+                return True
+
+        return False
+
+    def _output_child_pre(self, node, frame, finalize):
+        if frame.eval_ctx.volatile:
+            # FIXME this could generate a string for _is_string_type_filter
+            self.write("(escape if context.eval_ctx.autoescape else str)(")
+        elif frame.eval_ctx.autoescape:
+            self.write("escape(")
+        else:
+            if not self._is_string_type_filter(node):
+                # preserve NativeJinjaText
+                self.write("str(")
+
+        if finalize.src is not None:
+            self.write(finalize.src)
+
+    def _output_child_post(self, node, frame, finalize):
+        if not self._is_string_type_filter(node):
+            self.write(")")
+
+        if finalize.src is not None:
+            self.write(")")
+
+
 class AnsibleEnvironment(Environment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -605,6 +683,7 @@ class AnsibleEnvironment(Environment):
     NOTE: Any changes to this class must be reflected in
           :class:`AnsibleNativeEnvironment` as well.
     '''
+    code_generator_class = AnsibleCodeGenerator
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
 
@@ -675,8 +754,6 @@ class Templar:
 
         # FIXME these regular expressions should be re-compiled each time variable_start_string and variable_end_string are changed
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
-                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
     @property
     def jinja2_native(self):
@@ -852,7 +929,7 @@ class Templar:
 
             if not self.jinja2_native:
                 unsafe = hasattr(result, '__UNSAFE__')
-                if convert_data and not self._no_type_regex.match(variable):
+                if convert_data and not isinstance(result, NativeJinjaText):
                     # if this looks like a dictionary or list, convert it to such using the safe_eval method
                     if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                             result.startswith("[") or result in ("True", "False"):
@@ -1114,7 +1191,7 @@ class Templar:
                 if self.jinja2_native:
                     res = ansible_native_concat(rf)
                 else:
-                    res = j2_concat(rf)
+                    res = ansible_concat(rf)
                 unsafe = getattr(new_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)

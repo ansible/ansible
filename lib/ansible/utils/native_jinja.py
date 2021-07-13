@@ -10,4 +10,7 @@ from ansible.module_utils.six import text_type
 
 
 class NativeJinjaText(text_type):
-    pass
+    # FIXME more methods to preserve NativeJinjaText?
+    # FIXME the same for NativeJinjaUnsafeText?
+    def __add__(self, other):
+        return NativeJinjaText(super(NativeJinjaText, self).__add__(other))
