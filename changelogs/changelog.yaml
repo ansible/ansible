@@ -1892,6 +1892,35 @@ releases:
     - psrp-reset.yml
     - v2.10.11rc1_summary.yaml
     release_date: '2021-06-14'
+  2.10.12rc1:
+    changes:
+      bugfixes:
+      - ansible-doc - in text output, do not show empty ``version_added_collection``
+        values (https://github.com/ansible/ansible/pull/74999).
+      - ansible-test - restrict ``packaging`` to ``< 21.0`` for Python ``< 3.6`` (https://github.com/ansible/ansible/pull/75186).
+      - get_url - Fixed checksum validation for binary files (leading asterisk) in
+        checksum files (https://github.com/ansible/ansible/pull/74502).
+      minor_changes:
+      - ansible-test - aws creates and exposes a new tiny_prefix variable to provide
+        a shorter prefix for the AWS tests.
+      - get_url - allow checksum urls to point to file:// resources, moving scheme
+        test to function
+      - get_url - handle same SHA sum for checksum file (https://github.com/ansible/ansible/issues/71420).
+      release_summary: '| Release Date: 2021-07-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - 71205_get_url_allow_checksum_file_url.yml
+    - 71420_get_url.yml
+    - 74502-get_url-filx-checksum-binary.yml
+    - 74999-ansible-doc-version_added_collection.yml
+    - 75186-ansible-test-packaging-constraint.yml
+    - aws_tiny_prefix.yaml
+    - v2.10.12rc1_summary.yaml
+    release_date: '2021-07-13'
   2.10.1rc1:
     changes:
       bugfixes:

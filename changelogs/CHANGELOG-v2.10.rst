@@ -5,6 +5,30 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2021-07-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - aws creates and exposes a new tiny_prefix variable to provide a shorter prefix for the AWS tests.
+- get_url - allow checksum urls to point to file:// resources, moving scheme test to function
+- get_url - handle same SHA sum for checksum file (https://github.com/ansible/ansible/issues/71420).
+
+Bugfixes
+--------
+
+- ansible-doc - in text output, do not show empty ``version_added_collection`` values (https://github.com/ansible/ansible/pull/74999).
+- ansible-test - restrict ``packaging`` to ``< 21.0`` for Python ``< 3.6`` (https://github.com/ansible/ansible/pull/75186).
+- get_url - Fixed checksum validation for binary files (leading asterisk) in checksum files (https://github.com/ansible/ansible/pull/74502).
+
 v2.10.11
 ========
 
