@@ -1,0 +1,5 @@
+- debug: msg='notify handler with variable in name'
+  notify: handler name with myvar
+  changed_when: True
+  tags:
+    - evaluation_time

@@ -1,0 +1,11 @@
+- import_role:
+    name: template_handler_names
+    tasks_from: lazy_evaluation
+  tags:
+    - lazy_evaluation
+
+- import_role:
+    name: template_handler_names
+    tasks_from: evaluation_time
+  tags:
+    - evaluation_time
