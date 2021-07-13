@@ -7,7 +7,7 @@ Adding modules and plugins locally
 
 The easiest, quickest, and the most popular way to extend Ansible is to use a local module or a plugin. You can create them or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share a local plugin or module by including it in a collection, then publishing the collection on Ansible Galaxy. If you are using collections from Ansible Galaxy, then you are already using local modules and plugins without realizing it.
 
-If you are using a legacy, standalone module or plugin but Ansible can't find it, this page is all you need.
+If you are using a legacy, standalone module or plugin but Ansible cannot find it, this page is all you need.
 
 If you want to create a plugin or a module, see :ref:`developing_plugins`, :ref:`developing_modules_general` and :ref:`developing_collections`.
 
@@ -29,7 +29,7 @@ Modules and plugins: what is the difference?
 If you are looking to add local functionality to Ansible, you might wonder whether you need a module or a plugin. Here is a quick overview to help you understand what you need:
 
 * Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface. Each module accepts arguments and returns information to Ansible by printing a JSON string to stdout before exiting. Modules execute on the target system (usually that means on a remote system) in separate processes. Modules are technically plugins, but for historical reasons we do not usually talk about "module plugins".
-* :ref:`Plugins <working_with_plugins>` augment Ansible's core functionality and execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more.
+* :ref:`Plugins <working_with_plugins>` extend Ansible's core functionality and execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more.
 
 .. _use_collections:
 
