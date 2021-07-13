@@ -7,7 +7,10 @@
       - sftp_extra_args
       - scp_extra_args
   tasks:
-    - debug: msg='{{lookup("config", *ssh_configs, plugin_type="connection", plugin_name="ssh")}}' verbosity=3
+    - debug:
+        msg: '{{item ~ ": " ~ lookup("config", item, plugin_type="connection", plugin_name="ssh")}}'
+        verbosity: 3
+      loop: '{{ssh_configs}}'
       tags: [ configfile ]
 
     - name: check config from file
