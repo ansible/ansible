@@ -21,38 +21,10 @@
           mode: '0000'
 
 - name: force fact gather to get ansible_local
-  setup:
+  gather_facts:
     fact_path: "{{ fact_dir | expanduser }}"
     filter: "*local*"
   register: setup_result
-
-- name: show gathering results if rerun with -vvv
-  debug: var=setup_result verbosity=3
-
-- name: check for expected results from local facts
-  assert:
-    that:
-        - "'ansible_facts' in setup_result"
-        - "'ansible_local' in setup_result.ansible_facts"
-        - "'ansible_env' not in setup_result.ansible_facts"
-        - "'ansible_user_id' not in setup_result.ansible_facts"
-        - "'preferences' in setup_result.ansible_facts['ansible_local']"
-        - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
-        - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
-        - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
-        - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
-        - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
-        - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
-
-- name: clean out facts
-  meta: clear_facts
-
-- name: force fact gather to get ansible_local, but with var this time
-  setup:
-    filter: "*local*"
-  register: setup_result
-  vars:
-    ansible_fact_path:  "{{ fact_dir | expanduser }}"
 
 - name: show gathering results if rerun with -vvv
   debug: var=setup_result verbosity=3

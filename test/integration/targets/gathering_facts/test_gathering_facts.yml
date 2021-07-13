@@ -430,6 +430,19 @@
         that:
           - '"{{ ansible_local.testfact.fact_dir }}" == "custom"'
 
+- name: same as above but using var
+  hosts: facthost10
+  tags: [ 'fact_local']
+  connection: local
+  gather_facts: yes
+  vars:
+    ansible_fact_path: /tmp/custom_facts.d
+  tasks:
+    - name: Test reading facts from custom fact_path
+      assert:
+        that:
+          - '"{{ ansible_local.testfact.fact_dir }}" == "custom"'
+
 - hosts: facthost20
   tags: [ 'fact_facter_ohai' ]
   connection: local
