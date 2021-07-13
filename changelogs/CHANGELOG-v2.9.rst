@@ -5,6 +5,27 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.24rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-07-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - aws creates and exposes a new tiny_prefix variable to provide a shorter prefix for the AWS tests.
+
+Bugfixes
+--------
+
+- Prevent ``ansible_failed_task`` from further templating (https://github.com/ansible/ansible/issues/74036)
+- ansible-test - restrict ``packaging`` to ``< 21.0`` for Python ``< 3.6`` (https://github.com/ansible/ansible/pull/75186).
+
 v2.9.23
 =======
 

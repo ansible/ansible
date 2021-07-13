@@ -1892,6 +1892,14 @@ releases:
     - fix_unsafe_newline.yml
     - v2.9.23rc1_summary.yaml
     release_date: '2021-06-14'
+  2.9.24rc1:
+    codename: Immigrant Song
+    fragments:
+    - 74036-unsafe-ansible_failed_task.yml
+    - 75186-ansible-test-packaging-constraint.yml
+    - aws_tiny_prefix.yaml
+    - v2.9.24rc1_summary.yaml
+    release_date: '2021-07-13'
   2.9.3:
     codename: Immigrant Song
     fragments:
