@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -353,8 +353,6 @@ msgid "The development mailing list"
 msgstr "開発メーリングリスト"
 
 #: ../../rst/dev_guide/collections_galaxy_meta.rst:337
-#: ../../rst/dev_guide/developing_api.rst:46
-#: ../../rst/dev_guide/developing_collections.rst:47
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:79
 #: ../../rst/dev_guide/developing_collections_contributing.rst:58
 #: ../../rst/dev_guide/developing_collections_creating.rst:56
@@ -363,13 +361,11 @@ msgstr "開発メーリングリスト"
 #: ../../rst/dev_guide/developing_collections_shared.rst:76
 #: ../../rst/dev_guide/developing_collections_structure.rst:240
 #: ../../rst/dev_guide/developing_collections_testing.rst:82
-#: ../../rst/dev_guide/developing_core.rst:20
 #: ../../rst/dev_guide/developing_inventory.rst:476
 #: ../../rst/dev_guide/developing_modules.rst:50
 #: ../../rst/dev_guide/developing_plugins.rst:500
-#: ../../rst/dev_guide/style_guide/index.rst:277
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
 
 #: ../../rst/dev_guide/collections_galaxy_meta.rst:338
 #: ../../rst/dev_guide/developing_api.rst:47
@@ -558,6 +554,13 @@ msgstr "`Development Mailing List <https://groups.google.com/group/ansible-devel
 #: ../../rst/dev_guide/testing_units_modules.rst:554
 msgid "Mailing list for development topics"
 msgstr "開発トピックのメーリングリスト"
+
+#: ../../rst/dev_guide/developing_api.rst:46
+#: ../../rst/dev_guide/developing_collections.rst:47
+#: ../../rst/dev_guide/developing_core.rst:20
+#: ../../rst/dev_guide/style_guide/index.rst:277
+msgid "`irc.libera.chat <https://libera.chat>`_"
+msgstr "`irc.libera.chat <https://libera.chat>`_"
 
 #: ../../rst/dev_guide/developing_collections.rst:11
 msgid "Developing new collections"
@@ -1126,7 +1129,7 @@ msgstr "また、Git リポジトリーからインストールすることで�
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:1
 msgid "You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag)."
-msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``）を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
+msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``) を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:5
 msgid "Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs."
@@ -3100,8 +3103,8 @@ msgid "Additional requirements may apply for certain collections. Review the ind
 msgstr "追加の要件は、特定のコレクションに適用される可能性があります。詳細は、個別のコレクションリポジトリーを参照してください。"
 
 #: ../../rst/dev_guide/developing_modules_checklist.rst:34
-msgid "Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_."
-msgstr "PR/提案を送信する前に、お使いのモジュールがこれらの要件を満たしていることを確認してください。ご質問がある場合は、`Ansible の IRC チャットチャンネル <http://irc.freenode.net>`_ または `Ansible 開発メーリングリスト <https://groups.google.com/group/ansible-devel>`_ までお問い合わせください。"
+msgid "Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via ``#ansible-devel``, Ansible's IRC chat channel on `irc.libera.chat <http://libera.chat>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_."
+msgstr "PR/提案を送信する前に、お使いのモジュールがこれらの要件を満たしていることを確認してください。ご不明な点がございましたら、``#ansible-devel``、`irc.libera.chat <http://libera.chat>`_ における Ansible の IRC チャットチャンネル、または `Ansible 開発メーリングリスト <https://groups.google.com/group/ansible-devel>`_ までお問い合わせください。"
 
 #: ../../rst/dev_guide/developing_modules_checklist.rst:37
 msgid "Contributing to Ansible: subjective requirements"
@@ -4035,8 +4038,8 @@ msgid "Communication and development support"
 msgstr "通信および開発のサポート"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:221
-msgid "Join the IRC channel ``#ansible-devel`` on freenode for discussions surrounding Ansible development."
-msgstr "Ansible 開発に取り組むため、freenode の IRC チャンネル ``#ansible-devel`` に参加します。"
+msgid "Join the IRC channel ``#ansible-devel`` on `irc.libera.chat <https://libera.chat/>`_ for discussions surrounding Ansible development."
+msgstr "Ansible 開発に取り組むため、`irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-devel`` に参加します。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:224
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:696
@@ -5312,8 +5315,8 @@ msgid "Windows communication and development support"
 msgstr "Windows の通信および開発サポート"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:693
-msgid "Join the IRC channel ``#ansible-devel`` or ``#ansible-windows`` on freenode for discussions about Ansible development for Windows."
-msgstr "freenode の IRC チャネル ``#ansible-devel`` または ``#ansible-windows`` に参加し、Windows 用 の Ansible 開発に関する議論を行うこと。"
+msgid "Join the ``#ansible-devel`` or ``#ansible-windows`` irc channels on `irc.libera.chat <https://libera.chat/>`_ for discussions about Ansible development for Windows."
+msgstr "`irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-devel`` または ``#ansible-windows`` に参加し、Windows 用 の Ansible 開発に関する議論を行うこと。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:5
 msgid "Creating a new collection"
@@ -5403,79 +5406,79 @@ msgstr "お問い合わせ"
 msgid "Circulating your ideas before coding helps you adopt good practices and avoid common mistakes. After reading the \"Before you start coding\" section you should have a reasonable idea of the structure of your modules. Write a list of your proposed plugin and/or module names, with a short description of what each one does. Circulate that list on IRC or a mailing list so the Ansible community can review your ideas for consistency and familiarity. Names and functionality that are consistent, predictable, and familiar make your collection easier to use."
 msgstr "コーディングの前にアイデアを出し合うことで、良い習慣を取り入れ、よくある間違いを避けることができます。「コーディングを始める前に」のセクションを読んだ後、モジュールの構造について妥当なアイデアがあるはずです。提案するプラグインやモジュールの名前のリストを書き、それぞれが何をするのかを簡単に説明してください。そのリストを、IRC やメーリングリストで共有して、Ansible コミュニティーが一貫性や親しみやすさの観点からアイデアを検討できるようにします。一貫性があり、予測可能で、親しみやすい名前や機能は、コレクションをより使いやすくします。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:49
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:51
 msgid "Where to get support"
 msgstr "サポートを受ける場所"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:51
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:53
 msgid "Ansible has a thriving and knowledgeable community of module developers that is a great resource for getting your questions answered."
 msgstr "Ansible には、活発で知識が豊富なモジュール開発者のコミュニティーがあり、質問に答えるための素晴らしいリソースとなっています。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:53
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:55
 msgid "In the :ref:`ansible_community_guide` you can find how to:"
 msgstr ":ref:`ansible_community_guide` で、以下の方法を見つけることができます。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:55
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:57
 msgid "Subscribe to the Mailing Lists - We suggest \"Ansible Development List\" and \"Ansible Announce list\""
 msgstr "メーリングリストをサブスクライブすること。「Ansible Development List」および「Ansible Announce list」をお勧めします。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:56
-msgid "``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNode's IRC network works best for developers so we can have an interactive dialogue."
-msgstr "``#ansible-devel`` - FreeNode の IRC ネットワークの IRC ``#ansible-devel`` では、インタラクティブな対話を行うことができるため、モジュール開発者に最適なものであることが分かっています。"
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:58
+msgid "``#ansible-devel`` - We have found that communicating on the IRC channel, ``#ansible-devel`` on `libera.chat's <https://libera.chat/>`_ IRC network works best for developers so we can have an interactive dialogue."
+msgstr "``#ansible-devel`` - `libera.chat's <https://libera.chat/>`_ の IRC ネットワーク ``#ansible-devel`` では、インタラクティブな対話を行うことができるため、開発者に最適なものであることが分かっています。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:57
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:59
 msgid "IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
 msgstr "IRC ミーティング。様々な IRC ミーティング (毎週) に参加してください。「`ミーティングスケジュールおよび議題のページ <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:60
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:62
 msgid "Required files"
 msgstr "必須ファイル"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:62
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:64
 msgid "Your collection should include the following files to be usable:"
 msgstr "コレクションには、使用可能な以下のファイルが含まれているはずです。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:64
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:66
 msgid "an ``__init__.py`` file - An empty file to initialize namespace and allow Python to import the files. *Required*"
 msgstr "``__init__.py`` ファイル - 名前空間を初期化し、Python がファイルをインポートできるようにする空のファイル。*必須*"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:65
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:67
 msgid "at least one plugin, for example, ``/plugins/modules/$your_first_module.py``. *Required*"
 msgstr "少なくとも 1 つのプラグイン (例: ``/plugins/modules/$your_first_module.py``)。*必須*"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:66
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:68
 msgid "if needed, one or more ``/plugins/doc_fragments/$topic.py`` files - Code documentation, such as details regarding common arguments. *Optional*"
 msgstr "必要な場合は、1 つ以上の ``/plugins/doc_fragments/$topic.py`` ファイル - 一般的な引数の詳細などのコードのドキュメント。*任意*"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:67
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:69
 msgid "if needed, one or more ``/plugins/module_utils/$topic.py`` files - Code shared between more than one module, such as common arguments. *Optional*"
 msgstr "必要な場合は、1 つ以上の ``/plugins/module_utils/$topic.py`` ファイル - 一般的な引数などの、複数のモジュール間で共有されるコード。*任意*"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:69
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:71
 msgid "When you have these files ready, review the :ref:`developing_modules_checklist` again. If you are creating a new collection, you are responsible for all procedures related to your repository, including setting rules for contributions, finding reviewers, and testing and maintaining the code in your collection."
 msgstr "これらのファイルの準備が整ったら、:ref:`developing_modules_checklist` を再度確認します。新しいコレクションを作成する場合は、貢献のルール設定、レビュー担当者の見つけ方、コレクションにおけるコードのテストおよび保守など、リポジトリーに関連するすべての手順を担当します。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:71
-msgid "If you need help or advice, consider join the ``#ansible-devel`` IRC channel (see how in the \"Where to get support\")."
-msgstr "さらにヘルプまたはアドバイスが必要な場合は、IRC チャンネル ``#ansible-devel`` に参加することを検討してください (「サポートを得る方法」を参照してください)。"
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:73
+msgid "If you need help or advice, consider joining the ``#ansible-devel`` IRC channel (see how in the :ref:`Where to get support <developing_in_groups_support>` section)."
+msgstr "さらにヘルプまたはアドバイスが必要な場合は、IRC チャンネル ``#ansible-devel`` に参加することを検討してください (「:ref:`サポートを得る方法 <developing_in_groups_support>`」を参照してください)。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:74
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:76
 msgid "New to git or GitHub"
 msgstr "git または GitHub をはじめて使用する場合"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:76
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:78
 msgid "We realize this may be your first use of Git or GitHub. The following guides may be of use:"
 msgstr "ここでは、Git または GitHub を初めて使用するユーザーを対象としています。次のガイドが参考になるかもしれません。"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:78
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:80
 msgid "`How to create a fork of ansible/ansible <https://help.github.com/articles/fork-a-repo/>`_"
 msgstr "`How to create a fork of ansible/ansible <https://help.github.com/articles/fork-a-repo/>`_"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:79
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:81
 msgid "`How to sync (update) your fork <https://help.github.com/articles/syncing-a-fork/>`_"
 msgstr "`How to sync (update) your fork <https://help.github.com/articles/syncing-a-fork/>`_"
 
-#: ../../rst/dev_guide/developing_modules_in_groups.rst:80
+#: ../../rst/dev_guide/developing_modules_in_groups.rst:82
 msgid "`How to create a Pull Request (PR) <https://help.github.com/articles/about-pull-requests/>`_"
 msgstr "`How to create a Pull Request (PR) <https://help.github.com/articles/about-pull-requests/>`_"
 
@@ -7046,8 +7049,8 @@ msgid "Getting help rebasing"
 msgstr "リベースのヘルプ"
 
 #: ../../rst/dev_guide/developing_rebasing.rst:78
-msgid "For help with rebasing your PR, or other development related questions, join us on our #ansible-devel IRC chat channel on `freenode.net <https://freenode.net>`_."
-msgstr "PR のリベースまたはその他の開発関連の質問ついては、`freenode.net <https://freenode.net>`_ で IRC チャットチャンネル #ansible-devel に参加します。"
+msgid "For help with rebasing your PR, or other development related questions, join us on our #ansible-devel IRC chat channel on `irc.libera.chat <https://libera.chat/>`_."
+msgstr "PR またはその他の開発関連の質問を再設定する際には、`irc.libera.chat <https://libera.chat/>`_ で IRC チャットチャンネル #ansible-devel に参加します。"
 
 #: ../../rst/dev_guide/developing_rebasing.rst:82
 msgid ":ref:`community_development_process`"
@@ -8480,8 +8483,8 @@ msgid "Use a search engine."
 msgstr "検索エンジンを使用します。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:764
-msgid "Ask in the Ansible IRC channel #ansible-aws (on freenode IRC)."
-msgstr "Freenode IRC の Ansible IRC チャンネル #ansible-aws に問い合わせます。"
+msgid "Ask in the Ansible IRC channel #ansible-aws (on `irc.libera.chat <https://libera.chat>`_)."
+msgstr "`irc.libera.chat <https://libera.chat>`_ の Ansible IRC チャンネル #ansible-aws に問い合わせます。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:767
 msgid "Unsupported Integration tests"
@@ -9868,8 +9871,8 @@ msgid "Follow the style of the :ref:`Ansible Documentation<ansible_documentation
 msgstr ":ref:`Ansible ドキュメント<ansible_documentation>` のスタイルに従ってください。"
 
 #: ../../rst/dev_guide/style_guide/resources.rst:4
-msgid "Ask for advice on IRC, on the ``#ansible-devel`` Freenode channel"
-msgstr "Freenode チャンネル ``#ansible-devel`` の IRC で質問してください。"
+msgid "Ask for advice on IRC, on the ``#ansible-devel`` `libera.chat channel <https://libera.chat/>`_"
+msgstr "`libera.chat channel <https://libera.chat/>`_ の IRC ``#ansible-devel`` で質問してください。"
 
 #: ../../rst/dev_guide/style_guide/resources.rst:5
 msgid "Review these online style guides:"
@@ -10997,8 +11000,8 @@ msgid "making another change to the PR and pushing to GitHub"
 msgstr "PR に何らかの変更を加えて GitHub にプッシュする"
 
 #: ../../rst/dev_guide/testing.rst:99
-msgid "If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC."
-msgstr "問題が解決しない場合は、Freenode IRC の ``#ansible-devel`` にお問い合わせください。"
+msgid "If the issue persists, please contact us in the ``#ansible-devel`` irc channel on the `irc.libera.chat <https://libera.chat/>`_ IRC network."
+msgstr "問題が解決しない場合は、IRC ネットワーク `irc.libera.chat <https://libera.chat/>` における IRC チャンネル ``#ansible-devel`` までお問い合わせください。"
 
 #: ../../rst/dev_guide/testing.rst:103
 msgid "How to test a PR"
@@ -12242,7 +12245,7 @@ msgstr "Ansible 2.5 以前は、Ansible に含まれる Jinja2 テストは、�
 
 #: ../../rst/dev_guide/testing/sanity/no-tests-as-filters.rst:10
 msgid "Jinja2 tests are used for comparisons, whereas filters are used for data manipulation, and have different applications in Jinja2. This change is to help differentiate the concepts for a better understanding of Jinja2, and where each can be appropriately used."
-msgstr "Jinja2 テストは比較のために使用され、フィルターはデータ操作のために使用され、それぞれ用途が異なります。この変更は、Jinja2 の理解を深めるために概念を区別し、それぞれを適切に使用できるようにするためのものです。"
+msgstr "Jinja2 テストは比較のために使用され、フィルターはデータ操作のために使用され、Jinja2 でそれぞれ用途が異なります。この変更は、Jinja2 の理解を深めるために概念を区別し、それぞれを適切に使用できるようにするためのものです。"
 
 #: ../../rst/dev_guide/testing/sanity/no-tests-as-filters.rst:12
 msgid "As of Ansible 2.5 using an Ansible provided Jinja2 test with filter syntax will display a deprecation error."
@@ -15130,4 +15133,10 @@ msgstr "セマンティックバージョニング仕様 (https://semver.org/)) 
 
 #~ msgid "ubuntu1604"
 #~ msgstr "ubuntu1604"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+
+#~ msgid "Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_."
+#~ msgstr "PR/提案を送信する前に、お使いのモジュールがこれらの要件を満たしていることを確認してください。ご質問がある場合は、`Ansible の IRC チャットチャンネル <http://irc.freenode.net>`_ または `Ansible 開発メーリングリスト <https://groups.google.com/group/ansible-devel>`_ までお問い合わせください。"
 

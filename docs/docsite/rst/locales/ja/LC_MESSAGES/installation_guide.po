@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -729,8 +729,8 @@ msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
 #: ../../rst/installation_guide/intro_installation.rst:663
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
 
 #: ../../rst/installation_guide/intro_installation.rst:664
 msgid "#ansible IRC chat channel"
@@ -806,4 +806,7 @@ msgstr "``paramiko`` は、2.8 以前の Ansible の ``requirements.txt`` に同
 
 #~ msgid "You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if you have a GitHub account. This is also where we keep the issue tracker for sharing bugs and feature ideas."
 #~ msgstr "GitHub アカウントがある場合は、`GitHub project <https://github.com/ansible/ansible>`_ をフォローすることが推奨されます。これは、バグや機能に関するアイディアを共有するための問題追跡システムを維持する場所でもあります。"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1300,8 +1300,8 @@ msgid "Edit the agenda of an IRC `Core Team Meeting <https://github.com/ansible/
 msgstr "IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ の議題を編集 (推奨)"
 
 #: ../../rst/roadmap/ansible_base_roadmap_index.rst:21
-msgid "Post on the ``#ansible-devel`` Freenode IRC channel"
-msgstr "Freenode IRC チャンネル ``#ansible-devel`` で発言"
+msgid "Post on the ``#ansible-devel`` IRC channel on `irc.libera.chat <https://libera.chat/>`_."
+msgstr "`irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-devel`` で発言"
 
 #: ../../rst/roadmap/ansible_base_roadmap_index.rst:22
 msgid "Email the ansible-devel list"
@@ -1336,8 +1336,8 @@ msgid "Edit the agenda of an IRC `Ansible Community Meeting <https://github.com/
 msgstr "IRC `Ansible コミュニティーミーティング <https://github.com/ansible/community/issues/539>`_ の議題を編集 (推奨)"
 
 #: ../../rst/roadmap/ansible_roadmap_index.rst:17
-msgid "Post on the ``#ansible-community`` Freenode IRC channel"
-msgstr "Freenode IRC チャンネル ``#ansible-community`` で発言"
+msgid "Post on the ``#ansible-community`` IRC channel on `irc.libera.chat <https://libera.chat/>`_."
+msgstr "`irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-community`` で発言"
 
 #: ../../rst/roadmap/ansible_roadmap_index.rst:19
 msgid "See :ref:`Ansible communication channels <communication>` for details on how to join and use the IRC channels."
@@ -1365,4 +1365,10 @@ msgstr "現在の Ansible および ``ansible-base`` のロードマップを確
 
 #~ msgid "New Collections will be reviewed for inclusion in Ansible 4."
 #~ msgstr "新しいコレクションは、Ansible 4 に含まれるようにレビューされています。"
+
+#~ msgid "Post on the ``#ansible-devel`` Freenode IRC channel"
+#~ msgstr "Freenode IRC チャンネル ``#ansible-devel`` で発言"
+
+#~ msgid "Post on the ``#ansible-community`` Freenode IRC channel"
+#~ msgstr "Freenode IRC チャンネル ``#ansible-community`` で発言"
 

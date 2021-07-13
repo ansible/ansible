@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -204,31 +204,41 @@ msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
 #: ../../rst/reference_appendices/YAMLSyntax.rst:236
+#: ../../rst/reference_appendices/YAMLSyntax.rst:238
 #: ../../rst/reference_appendices/common_return_values.rst:250
 #: ../../rst/reference_appendices/faq.rst:780
 #: ../../rst/reference_appendices/glossary.rst:530
 #: ../../rst/reference_appendices/release_and_maintenance.rst:31
 #: ../../rst/reference_appendices/test_strategies.rst:273
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
 
 #: ../../rst/reference_appendices/YAMLSyntax.rst:237
-msgid "#ansible IRC chat channel and #yaml for YAML specific questions"
-msgstr "IRC チャットチャンネル (#Ansible) および YAML 固有の質問 (#yaml)"
+#: ../../rst/reference_appendices/common_return_values.rst:251
+#: ../../rst/reference_appendices/faq.rst:781
+#: ../../rst/reference_appendices/glossary.rst:531
+#: ../../rst/reference_appendices/release_and_maintenance.rst:32
+#: ../../rst/reference_appendices/test_strategies.rst:274
+msgid "#ansible IRC chat channel"
+msgstr "IRC チャットチャンネル (#ansible)"
 
 #: ../../rst/reference_appendices/YAMLSyntax.rst:239
+msgid "#yaml for YAML specific questions"
+msgstr "YAML に関する質問 (#yaml)"
+
+#: ../../rst/reference_appendices/YAMLSyntax.rst:241
 msgid "`YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_"
-msgstr "`YAML 1.1 仕様 <https://yaml.org/spec/1.1/>`_"
+msgstr "`YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:239
+#: ../../rst/reference_appendices/YAMLSyntax.rst:241
 msgid "The Specification for YAML 1.1, which PyYAML and libyaml are currently implementing"
 msgstr "PyYAML および libyaml が現在実装されている YAML 1.1 の仕様"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:241
+#: ../../rst/reference_appendices/YAMLSyntax.rst:243
 msgid "`YAML 1.2 Specification <https://yaml.org/spec/1.2/spec.html>`_"
 msgstr "`YAML 1.2 仕様 <https://yaml.org/spec/1.2/spec.html>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:242
+#: ../../rst/reference_appendices/YAMLSyntax.rst:244
 msgid "For completeness, YAML 1.2 is the successor of 1.1"
 msgstr "完全を期すため、YAML 1.2 は 1.1 の後継となります。"
 
@@ -449,14 +459,6 @@ msgstr "`メーリングリスト<https://groups.google.com/group/ansible-devel>
 #: ../../rst/reference_appendices/common_return_values.rst:249
 msgid "Development mailing list"
 msgstr "開発メーリングリスト"
-
-#: ../../rst/reference_appendices/common_return_values.rst:251
-#: ../../rst/reference_appendices/faq.rst:781
-#: ../../rst/reference_appendices/glossary.rst:531
-#: ../../rst/reference_appendices/release_and_maintenance.rst:32
-#: ../../rst/reference_appendices/test_strategies.rst:274
-msgid "#ansible IRC chat channel"
-msgstr "IRC チャットチャンネル (#ansible)"
 
 #: ../../rst/reference_appendices/config.rst:5
 msgid "Ansible Configuration Settings"
@@ -10023,4 +10025,7 @@ msgstr "Ansible Tower は、Red Hat がサポートする Ansible AWX の製品�
 
 #~ msgid "For modules/plugins, we keep the documentation after the removal for users of older versions."
 #~ msgstr "モジュール/プラグインについては、以前のバージョンをご利用の方のために、削除後もドキュメントは保持します。"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
 

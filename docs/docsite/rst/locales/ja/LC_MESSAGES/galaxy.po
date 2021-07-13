@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -245,8 +245,8 @@ msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
 #: ../../rst/galaxy/dev_guide.rst:245
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
 
 #: ../../rst/galaxy/dev_guide.rst:246
 msgid "#ansible IRC chat channel"
@@ -478,7 +478,7 @@ msgstr "git リポジトリーからのコレクションのインストール"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:1
 msgid "You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag)."
-msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからの will-be コレクションアーティファクトデータを生成するのに使用されます。URI の接頭辞には ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``）を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
+msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``) を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:5
 msgid "Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs."
@@ -514,7 +514,7 @@ msgstr "コレクションを検索する場所の指定"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:64
 msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for metadata file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file or ``MANIFEST.json`` file)."
-msgstr "異なるリポジトリー構造がある場合や、コレクションのサブセットのみをインストールする場合は、URI の最後にフラグメントを追加して (任意のコンマ区切りバージョンの前）、ansible-galaxy がメタデータファイルを調べるパスを示すことができます。パスは、(``MANIFEST.json`` ファイルまたは ``galaxy.yml`` ファイルへのパスではなく) コレクションまたは複数のコレクションへのディレクトリーである必要があります。"
+msgstr "異なるリポジトリー構造がある場合や、コレクションのサブセットのみをインストールする場合は、URI の最後にフラグメントを追加して (任意のコンマ区切りバージョンの前)、ansible-galaxy がメタデータファイルを調べるパスを示すことができます。パスは、(``MANIFEST.json`` ファイルまたは ``galaxy.yml`` ファイルへのパスではなく) コレクションまたは複数のコレクションへのディレクトリーである必要があります。"
 
 #: ../../rst/galaxy/user_guide.rst:92
 msgid "Listing installed collections"
@@ -940,4 +940,7 @@ msgstr "既知のディレクトリー構造の再利用可能なタスク、ハ
 
 #~ msgid "`.. versionadded:: 2.10`"
 #~ msgstr ""
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
 
