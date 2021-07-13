@@ -38,10 +38,11 @@ try:
 except ImportError:
     from sha import sha as sha1
 
-from jinja2.compiler import CodeGenerator
+
+import jinja2.nodes
+from jinja2.compiler import CodeGenerator, escape
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
-from jinja2.nodes import Filter, Impossible
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
@@ -633,15 +634,15 @@ class AnsibleCodeGenerator(CodeGenerator):
             const = escape(const)
 
         if isinstance(const, NativeJinjaText):
-            raise Impossible()
+            raise jinja2.nodes.Impossible()
 
-        if isinstance(node, nodes.TemplateData):
+        if isinstance(node, jinja2.nodes.TemplateData):
             return str(const)
 
         return finalize.const(const)
 
     def _is_string_type_filter(self, node):
-        if not isinstance(node, Filter):
+        if not isinstance(node, jinja2.nodes.Filter):
             return False
 
         if node.name in C.STRING_TYPE_FILTERS:
