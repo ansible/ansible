@@ -27,8 +27,8 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks.yml -i inventor
 ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks_tags.yml -i inventory "$@" --tags tasks1,canary1,validate
 
 # Role
-ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i inventory "$@"
-ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i inventory "$@"
+ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i inventory "$@" -e template_tasks_from=canary1.yml
+ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i inventory "$@" -e template_tasks_from=canary1.yml
 
 
 ## Include (dynamic)
