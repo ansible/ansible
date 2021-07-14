@@ -1979,6 +1979,17 @@ STRING_CONVERSION_ACTION:
     - section: defaults
       key: string_conversion_action
   type: string
+VALIDATE_ACTION_GROUP_METADATA:
+  version_added: '2.12'
+  description:
+    - A toggle to disable validating a collection's 'metadata' entry for a module_defaults action group.
+      Metadata containing unexpected fields or value types will produce a warning when this is True.
+  default: True
+  env: [{name: ANSIBLE_VALIDATE_ACTION_GROUP_METADATA}]
+  ini:
+    - section: defaults
+      key: validate_action_group_metadata
+  type: bool
 VERBOSE_TO_STDERR:
   version_added: '2.8'
   description:

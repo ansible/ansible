@@ -77,3 +77,54 @@
     - assert:
         that:
           - "gather_subset == ['min']"
+
+- hosts: localhost
+  gather_facts: no
+  tags:
+    - networking
+  tasks:
+    - name: test that task args aren't used for fqcn network facts
+      gather_facts:
+        gather_subset: min
+      vars:
+        ansible_network_os: 'cisco.ios.ios'
+      register: result
+
+    - assert:
+        that:
+          - "ansible_facts.gather_subset == '!config'"
+
+    - name: test that module_defaults are used for fqcn network facts
+      gather_facts:
+      vars:
+        ansible_network_os: 'cisco.ios.ios'
+      module_defaults:
+        'cisco.ios.ios_facts': {'gather_subset': 'min'}
+      register: result
+
+    - assert:
+        that:
+          - "ansible_facts.gather_subset == 'min'"
+
+    - name: test that task args aren't used for legacy network facts
+      gather_facts:
+        gather_subset: min
+      vars:
+        ansible_network_os: 'ios'
+      register: result
+
+    - assert:
+        that:
+          - "ansible_facts.gather_subset == '!config'"
+
+    - name: test that module_defaults are used for legacy network facts
+      gather_facts:
+      vars:
+        ansible_network_os: 'ios'
+      module_defaults:
+        'ios_facts': {'gather_subset': 'min'}
+      register: result
+
+    - assert:
+        that:
+          - "ansible_facts.gather_subset == 'min'"

@@ -122,7 +122,6 @@ class ModuleArgsParser:
         self._task_attrs = frozenset(self._task_attrs)
 
         self.resolved_action = None
-        self.internal_redirect_list = []
 
     def _split_module_string(self, module_string):
         '''
@@ -271,8 +270,6 @@ class ModuleArgsParser:
         delegate_to = self._task_ds.get('delegate_to', Sentinel)
         args = dict()
 
-        self.internal_redirect_list = []
-
         # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
@@ -308,15 +305,9 @@ class ModuleArgsParser:
             elif skip_action_validation:
                 is_action_candidate = True
             else:
-                # If the plugin is resolved and redirected smuggle the list of candidate names via the task attribute 'internal_redirect_list'
-                # TODO: remove self.internal_redirect_list (and Task._ansible_internal_redirect_list) once TE can use the resolved name for module_defaults
                 context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
                 if not context.resolved:
                     context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                    if context.resolved and context.redirect_list:
-                        self.internal_redirect_list = context.redirect_list
-                elif context.redirect_list:
-                    self.internal_redirect_list = context.redirect_list
 
                 is_action_candidate = context.resolved and bool(context.redirect_list)
 

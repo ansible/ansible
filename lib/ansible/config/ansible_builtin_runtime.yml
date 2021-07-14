@@ -9676,3 +9676,67 @@ import_redirection:
     redirect: ansible.module_utils
   ansible_collections.ansible.builtin.plugins:
     redirect: ansible.plugins
+action_groups:
+  testgroup:
+    # The list items under a group should always be action/module name strings except
+    # for a special 'metadata' dictionary.
+    # The only valid key currently for the metadata dictionary is 'extend_group', which is a
+    # list of other groups, the actions of which will be included in this group.
+    # (Note: it's still possible to also have a module/action named 'metadata' in the list)
+    - metadata:
+        extend_group:
+          - testns.testcoll.testgroup
+          - testns.testcoll.anothergroup
+          - testns.boguscoll.testgroup
+    - ping
+    - legacy_ping  # Includes ansible.builtin.legacy_ping, not ansible.legacy.legacy_ping
+    - formerly_core_ping
+  testlegacy:
+    - ansible.legacy.legacy_ping
+  aws:
+    - metadata:
+        extend_group:
+          - amazon.aws.aws
+          - community.aws.aws
+  acme:
+    - metadata:
+        extend_group:
+          - community.crypto.acme
+  azure:
+    - metadata:
+        extend_group:
+          - azure.azcollection.azure
+  cpm:
+    - metadata:
+        extend_group:
+          - wti.remote.cpm
+  docker:
+    - metadata:
+        extend_group:
+          - community.general.docker
+          - community.docker.docker
+  gcp:
+    - metadata:
+        extend_group:
+          - google.cloud.gcp
+  k8s:
+    - metadata:
+        extend_group:
+          - community.kubernetes.k8s
+          - community.general.k8s
+          - community.kubevirt.k8s
+          - community.okd.k8s
+          - kubernetes.core.k8s
+  os:
+    - metadata:
+        extend_group:
+          - openstack.cloud.os
+  ovirt:
+    - metadata:
+        extend_group:
+          - ovirt.ovirt.ovirt
+          - community.general.ovirt
+  vmware:
+    - metadata:
+        extend_group:
+          - community.vmware.vmware

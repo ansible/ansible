@@ -141,3 +141,25 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
         ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'
+
+In ansible-core 2.12, collections can define their own groups in the ``meta/runtime.yml`` file. ``module_defaults`` does not take the ``collections`` keyword into account, so the fully qualified group name must be used for new groups in ``module_defaults``.
+
+Here is an example ``runtime.yml`` file for a collection and a sample playbook using the group.
+
+.. code-block:: YAML
+
+   # collections/ansible_collections/ns/coll/meta/runtime.yml
+   action_groups:
+     groupname:
+       - module
+       - another.collection.module
+
+.. code-block:: YAML
+
+   - hosts: localhost
+     module_defaults:
+       group/ns.coll.groupname:
+         option_name: option_value
+     tasks:
+       - ns.coll.module:
+       - another.collection.module
