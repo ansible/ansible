@@ -85,7 +85,7 @@ Vagrantfile
 # First used in the `devel` branch during Ansible 2.11 development.
 /lib/ansible_core.egg-info/
 # vendored lib dir
-lib/ansible/_vendor
+lib/ansible/_vendor/
 # test stuff
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
