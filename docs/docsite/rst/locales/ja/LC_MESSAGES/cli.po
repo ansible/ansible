@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1013,8 +1013,8 @@ msgid "URL of the playbook repository"
 msgstr "Playbook リポジトリーの URL"
 
 #: ../../rst/cli/ansible-pull.rst:182
-msgid "directory to checkout repository to"
-msgstr "リポジトリーをチェックアウトするディレクトリー"
+msgid "absolute path of repository checkout directory (relative paths are not supported)"
+msgstr "リポジトリーチェックアウトディレクトリーの絶対パス (相対パスはサポートされません)"
 
 #: ../../rst/cli/ansible-pull.rst:192
 msgid "run the playbook even if the repository could not be updated"
@@ -1140,4 +1140,7 @@ msgstr "rekey の新しい Vault パスワードファイル"
 
 #~ msgid "module arguments"
 #~ msgstr "モジュール引数"
+
+#~ msgid "directory to checkout repository to"
+#~ msgstr "リポジトリーをチェックアウトするディレクトリー"
 

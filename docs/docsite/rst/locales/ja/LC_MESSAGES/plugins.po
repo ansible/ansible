@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -159,13 +159,14 @@ msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
 #: ../../rst/plugins/action.rst:55 ../../rst/plugins/become.rst:66
+#: ../../rst/plugins/cache.rst:139 ../../rst/plugins/callback.rst:100
 #: ../../rst/plugins/cliconf.rst:46 ../../rst/plugins/connection.rst:77
 #: ../../rst/plugins/httpapi.rst:71 ../../rst/plugins/inventory.rst:161
 #: ../../rst/plugins/lookup.rst:158 ../../rst/plugins/netconf.rst:46
 #: ../../rst/plugins/plugins.rst:43 ../../rst/plugins/shell.rst:52
 #: ../../rst/plugins/strategy.rst:78 ../../rst/plugins/vars.rst:78
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
 
 #: ../../rst/plugins/action.rst:56 ../../rst/plugins/become.rst:67
 #: ../../rst/plugins/cache.rst:140 ../../rst/plugins/callback.rst:101
@@ -363,10 +364,6 @@ msgstr "Ansible action プラグイン"
 #: ../../rst/plugins/cache.rst:137 ../../rst/plugins/callback.rst:98
 msgid "`User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_"
 msgstr "`User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_"
-
-#: ../../rst/plugins/cache.rst:139 ../../rst/plugins/callback.rst:100
-msgid "`webchat.freenode.net <https://webchat.freenode.net>`_"
-msgstr "`webchat.freenode.net <https://webchat.freenode.net>`_"
 
 #: ../../rst/plugins/callback.rst:4
 msgid "Callback Plugins"
@@ -966,7 +963,7 @@ msgstr "vars プラグイン"
 
 #: ../../rst/plugins/vars.rst:10
 msgid "Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins."
-msgstr "Vars プラグインは、インベントリーソース、Playbook、またはコマンドラインに組み込まれていない Ansible の実行に、変数データを追加します。「host_vars」や「group_vars」のような Playbook の構成要素は、vars プラグインを使用します。"
+msgstr "vars プラグインは、インベントリーソース、Playbook、またはコマンドラインに組み込まれていない Ansible の実行に、変数データを追加します。「host_vars」や「group_vars」のような Playbook の構成要素は、vars プラグインを使用します。"
 
 #: ../../rst/plugins/vars.rst:12
 msgid "Vars plugins were partially implemented in Ansible 2.0 and rewritten to be fully implemented starting with Ansible 2.4."
@@ -1019,4 +1016,10 @@ msgstr "プラグイン一覧"
 #: ../../rst/plugins/vars.rst:56
 msgid "You can use ``ansible-doc -t vars -l`` to see the list of available plugins. Use ``ansible-doc -t vars <plugin name>`` to see specific plugin-specific documentation and examples."
 msgstr "``ansible-doc -t vars -l`` を使用して、利用可能なプラグインの一覧を表示します。``ansible-doc -t vars <plugin name>`` を使用して、プラグイン固有のドキュメントと例を参照してください。"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+
+#~ msgid "`webchat.freenode.net <https://webchat.freenode.net>`_"
+#~ msgstr "`webchat.freenode.net <https://webchat.freenode.net>`_"
 

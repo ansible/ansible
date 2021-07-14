@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-07-12 10:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -861,106 +861,106 @@ msgid "For more options:"
 msgstr "その他のオプション:"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:714
-msgid "If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode."
-msgstr "本書で示したもの以外にヘルプやフィードバックが必要な場合は、Freenode の ``#ansible-network`` にアクセスしてください。"
+msgid "If you need additional help or feedback, reach out in the ``#ansible-network`` IRC channel on the `irc.libera.chat <https://libera.chat/>`_ IRC network."
+msgstr "本書で示したもの以外にヘルプやフィードバックが必要な場合は、IRC ネットワーク `irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-network`` にアクセスしてください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:717
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:718
 msgid "Unit test requirements"
 msgstr "ユニットテストの要件"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:719
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:720
 msgid "High-level unit test requirements that new resource modules should follow:"
 msgstr "新しいリソースモジュールが従う高レベルのユニットテスト要件は以下のようになります。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:721
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:722
 msgid "Write test cases for all the states with all possible combinations of config values."
 msgstr "設定値の組み合わせ可能なすべての状態についてテストケースを作成します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:722
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:723
 msgid "Write test cases to test the error conditions ( negative scenarios)."
 msgstr "テストケースを作成し、エラー条件 (負のシナリオ) をテストします。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:723
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:724
 msgid "Check the  value of ``changed`` and ``commands`` keys in every test case."
 msgstr "すべてのテストケースで ``changed`` キーおよび ``commands`` キーの値を確認します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:725
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:726
 msgid "We run all unit test cases on our Zuul test suite, on the latest python version supported by our CI setup."
 msgstr "CI 設定でサポートされる最新の python バージョンで、Zuul テストスイートですべてのユニットテストケースを実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:727
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:728
 msgid "Use the :ref:`same procedure <using_zuul_resource_modules>` as the integration tests to view Zuul unit tests reports and logs."
 msgstr ":ref:`同じ手順 <using_zuul_resource_modules>` を統合テストとして使用し、Zuul ユニットテストのレポートおよびログを表示します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:729
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:730
 msgid "See  :ref:`unit module testing <testing_units_modules>` for general unit test details."
 msgstr "一般的なユニットテストの詳細は、「:ref:`ユニットモジュールのテスト <testing_units_modules>`」を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:735
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:736
 msgid "Example: Unit testing Ansible network resource modules"
 msgstr "例: Ansible ネットワークリソースモジュールのユニットテスト"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:738
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:739
 msgid "This section walks through an example of how to develop unit tests for Ansible resource modules."
 msgstr "本セクションでは、Ansible リソースモジュールのユニットテストを開発する方法の例を説明します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:741
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:742
 msgid "See :ref:`testing_units` and :ref:`testing_units_modules` for general documentation on Ansible unit tests for modules. Please read those pages first to understand unit tests and why and when you should use them."
 msgstr "モジュール向けの Ansible ユニットテストの一般的なドキュメントは、「:ref:`testing_units`」および「:ref:`testing_units_modules`」を参照してください。ユニットテスト、および使用する理由およびその方法を理解するには、まずこれらのページをお読みください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:746
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:747
 msgid "Using mock objects to unit test Ansible network resource modules"
 msgstr "モック (模擬) オブジェクトを使用した Ansible ネットワークリソースモジュールのユニットテスト"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:749
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:750
 msgid "`Mock objects <https://docs.python.org/3/library/unittest.mock.html>`_ can be very useful in building unit tests for special or difficult cases, but they can also lead to complex and confusing coding situations.  One good use for mocks would be to simulate an API. The ``mock`` Python package is bundled with Ansible (use ``import units.compat.mock``)."
 msgstr "`モックオブジェクト <https://docs.python.org/3/library/unittest.mock.html>`_ は、特殊なケースや難しいケースのユニットテストを構築するのに非常に便利ですが、複雑で理解しづらいコーディングになってしまうこともあります。モックの使用方法として適切なものの 1 つに、API のシミュレートがあります。``mock`` Python パッケージは、Ansible にバンドルされています (``import units.compat.mock`` を使用)。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:755
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:756
 msgid "You can mock the device connection and output from the device as follows:"
 msgstr "以下のように、デバイスの接続とデバイスからの出力を模倣できます。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:789
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:790
 msgid "The facts file of the module now includes a new method, ``get_device_data``. Call ``get_device_data`` here to emulate the device output."
 msgstr "モジュールのファクトファイルに新しいメソッド ``get_device_data`` が追加されました。ここで ``get_device_data`` を呼び出して、デバイスの出力をエミュレートします。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:793
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:794
 msgid "Mocking device data"
 msgstr "デバイスデータの模倣"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:795
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:796
 msgid "To mock fetching results from devices or provide other complex data structures that come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_."
 msgstr "デバイスからの結果の取得や、外部ライブラリーからの複雑なデータ構造の提供を模倣するために、``fixtures`` を使用して事前に生成されたデータを読み込むことができます。この事前に生成されたデータのテキストファイルは、``test/units/modules/network/PLATFORM/fixtures/`` にあります。たとえば、`eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_ の例を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:798
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:799
 msgid "Load data using the ``load_fixture`` method and set this data as the return value of the ``get_device_data`` method in the facts file:"
 msgstr "``load_fixture`` メソッドを使用してデータを読み込み、このデータをファクトファイルの ``get_device_data`` メソッドの戻り値として設定します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:808
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:809
 msgid "See the unit test file `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ for a practical example."
 msgstr "実用的な例は、ユニットテストファイル `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:814
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:815
 msgid ":ref:`testing_units`"
 msgstr ":ref:`testing_units`"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:815
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:816
 msgid "Deep dive into developing unit tests for Ansible modules"
 msgstr "Ansible モジュールのユニットテスト開発を深く掘り下げて調査"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:816
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:817
 msgid ":ref:`testing_running_locally`"
 msgstr ":ref:`testing_running_locally`"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:817
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:818
 msgid "Running tests locally including gathering and reporting coverage data"
 msgstr "カバレージデータの収集とレポートを含む、ローカルでのテストの実行"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:818
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:819
 msgid ":ref:`developing_modules_general`"
 msgstr ":ref:`developing_modules_general`"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:819
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:820
 msgid "Get started developing a module"
 msgstr "モジュール開発を始める"
 
@@ -1846,8 +1846,8 @@ msgid "Join us on:"
 msgstr "以下に参加してください。"
 
 #: ../../rst/network/getting_started/network_resources.rst:44
-msgid "Freenode IRC - ``#ansible-network`` Freenode channel"
-msgstr "Freenode IRC - ``#ansible-network`` Freenode チャンネル"
+msgid "IRC Channel - ``#ansible-network`` on `irc.libera.chat <https://libera.chat/>`_"
+msgstr "IRC チャンネル - `irc.libera.chat <https://libera.chat/>`_ の ``#ansible-network``"
 
 #: ../../rst/network/getting_started/network_resources.rst:46
 msgid "Slack - `<https://ansiblenetwork.slack.com>`_"
@@ -5600,4 +5600,7 @@ msgstr "設定タスクの例"
 
 #~ msgid "`ad-hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::"
 #~ msgstr ""
+
+#~ msgid "Freenode IRC - ``#ansible-network`` Freenode channel"
+#~ msgstr "Freenode IRC - ``#ansible-network`` Freenode チャンネル"
 

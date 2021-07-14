@@ -284,7 +284,7 @@ msgstr "ansible-1.9.xでは、通常、既存のプラグインをコピーし�
 #: ../../rst/porting_guides/porting_guide_2.0.rst:224
 #: ../../rst/porting_guides/porting_guide_2.0.rst:305
 msgid "Lookup plugins"
-msgstr "Lookup プラグイン"
+msgstr "lookup プラグイン"
 
 #: ../../rst/porting_guides/porting_guide_2.0.rst:226
 msgid "lookup plugins ; import version"
