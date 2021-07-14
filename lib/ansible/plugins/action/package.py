@@ -73,7 +73,8 @@ class ActionModule(ActionBase):
                     # get defaults for specific module
                     context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
                     new_module_args = get_action_args_with_defaults(
-                        module, new_module_args, self._task.module_defaults, self._templar, context.redirect_list
+                        context.resolved_fqcn, new_module_args, self._task.module_defaults, self._templar,
+                        action_groups=self._task._parent._play._action_groups
                     )
 
                     if module in self.BUILTIN_PKG_MGR_MODULES:

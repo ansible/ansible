@@ -582,15 +582,6 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
         #         if redirect.startswith('..'):
         #             redirect =  redirect[2:]
 
-        action_groups = meta_dict.pop('action_groups', {})
-        meta_dict['action_groups'] = {}
-        for group_name in action_groups:
-            for action_name in action_groups[group_name]:
-                if action_name in meta_dict['action_groups']:
-                    meta_dict['action_groups'][action_name].append(group_name)
-                else:
-                    meta_dict['action_groups'][action_name] = [group_name]
-
         return meta_dict
 
 
