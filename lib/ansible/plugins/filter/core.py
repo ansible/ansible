@@ -165,6 +165,7 @@ def regex_search(value, regex, *args, **kwargs):
 
     return ''
 
+
 def ternary(value, true_val, false_val, none_val=None):
     '''  value ? true_val : false_val '''
     if value is None and none_val is not None:
