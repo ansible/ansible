@@ -88,6 +88,7 @@ from ansible.module_utils.common.collections import Mapping
 from ansible.module_utils.six import PY2, PY3, string_types
 from ansible.module_utils.six.moves import cStringIO
 from ansible.module_utils.basic import get_distribution, missing_required_lib
+from ansible.module_utils.splitter import suffixes, split_multiext
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
@@ -1990,8 +1991,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     # download file
     bufsize = 65536
     parts = urlparse(url)
-    file_name, file_ext = os.path.splitext(os.path.basename(parts.path))
-    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
+    file_prefix, file_ext = split_multiext(os.path.basename(parts.path), count=3)
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_prefix, suffix=file_ext, delete=False)
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
