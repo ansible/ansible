@@ -231,6 +231,9 @@ class AnsibleUnwantedChecker(BaseChecker):
         if modname == 'ansible.module_utils' or modname.startswith('ansible.module_utils.'):
             return
 
+        if modname == 'ansible.errors':
+            return
+
         if modname == 'ansible' or modname.startswith('ansible.'):
             self.add_message(self.BAD_MODULE_IMPORT, args=(modname,), node=node)
 
