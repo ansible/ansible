@@ -1,0 +1,2 @@
+bugfixes:
+  - "regex_search: always return an empty string when no match is found"
