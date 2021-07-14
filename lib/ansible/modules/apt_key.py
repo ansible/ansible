@@ -153,14 +153,16 @@ import os
 # FIXME: standardize into module_common
 from traceback import format_exc
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_url
 
 
 apt_key_bin = None
 gpg_bin = None
-lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+locale = get_best_parsable_locale()
+lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
 
 
 def find_needed_binaries(module):
