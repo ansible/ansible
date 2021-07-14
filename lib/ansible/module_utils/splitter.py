@@ -217,3 +217,29 @@ def unquote(data):
     if is_quoted(data):
         return data[1:-1]
     return data
+
+
+def suffix(name):
+    """The final component's last suffix, if any."""
+    i = name.rfind('.')
+    if 0 < i < len(name) - 1:
+        return name[i:]
+    else:
+        return ''
+
+
+def suffixes(name):
+    """A list of the final component's suffixes, if any."""
+    if name.endswith('.'):
+        return []
+    name = name.lstrip('.')
+    return ['.' + s for s in name.split('.')[1:]]
+
+
+def stem(name):
+    """The final path component, minus its last suffix."""
+    i = name.rfind('.')
+    if 0 < i < len(name) - 1:
+        return name[:i]
+    else:
+        return name
