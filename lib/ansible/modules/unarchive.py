@@ -767,7 +767,7 @@ class TgzArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
 
-        locale = get_best_parsable_locale()
+        locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
@@ -812,7 +812,7 @@ class TgzArchive(object):
         cmd.extend(['-f', self.src])
         if self.include_files:
             cmd.extend(self.include_files)
-        locale = get_best_parsable_locale()
+        locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
 
         # Check whether the differences are in something that we're
@@ -866,7 +866,7 @@ class TgzArchive(object):
         cmd.extend(['-f', self.src])
         if self.include_files:
             cmd.extend(self.include_files)
-        locale = get_best_parsable_locale()
+        locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 

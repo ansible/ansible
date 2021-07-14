@@ -320,7 +320,7 @@ def main():
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
-    locale = get_best_parsable_locale()
+    locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_MESSAGES=locale)
 
     if not dest and (checkout or update or export):

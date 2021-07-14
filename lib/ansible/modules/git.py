@@ -1212,7 +1212,7 @@ def main():
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
-    locale = get_best_parsable_locale()
+    locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
 
     if separate_git_dir:

@@ -311,7 +311,7 @@ class PACMAN(CLIMgr):
     CLI = 'pacman'
 
     def list_installed(self):
-        locale = get_best_parsable_locale()
+        locale = get_best_parsable_locale(module)
         rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL=locale))
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))

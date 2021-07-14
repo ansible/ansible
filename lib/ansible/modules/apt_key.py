@@ -161,8 +161,6 @@ from ansible.module_utils.urls import fetch_url
 
 apt_key_bin = None
 gpg_bin = None
-locale = get_best_parsable_locale()
-lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
 
 
 def find_needed_binaries(module):
@@ -407,6 +405,10 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=(('data', 'file', 'keyserver', 'url'),),
     )
+
+    global lang_env
+    locale = get_best_parsable_locale(module)
+    lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
 
     # parameters
     key_id = module.params['id']

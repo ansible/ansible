@@ -225,7 +225,7 @@ class Service(object):
 
     def execute_command(self, cmd, daemonize=False):
 
-        locale = get_best_parsable_locale()
+        locale = get_best_parsable_locale(self.module)
         lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
 
         # Most things don't need to be daemonized

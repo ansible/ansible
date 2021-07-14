@@ -603,7 +603,7 @@ class YumModule(YumDnf):
                 cmd.extend(['--root', self.installroot])
             # rpm localizes messages and we're screen scraping so make sure we use
             # an appropriate locale
-            locale = get_best_paarsable_locale()
+            locale = get_best_parsable_locale(self.module)
             lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
             if rc != 0 and 'is not installed' not in out:
@@ -941,7 +941,7 @@ class YumModule(YumDnf):
         else:
             res['changes'] = dict(installed=pkgs)
 
-        locale = get_best_paarsable_locale()
+        locale = get_best_parsable_locale(self.module)
         lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
         rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
 
@@ -1503,7 +1503,7 @@ class YumModule(YumDnf):
         elif self.update_only:
             if pkgs['update']:
                 cmd = self.yum_basecmd + ['update'] + pkgs['update']
-                locale = get_best_paarsable_locale()
+                locale = get_best_parsable_locale(self.module)
                 lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
                 rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
                 out_lower = out.strip().lower()
@@ -1514,7 +1514,7 @@ class YumModule(YumDnf):
                 rc, out, err = [0, '', '']
         elif pkgs['install'] or will_update and not self.update_only:
             cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
-            locale = get_best_paarsable_locale()
+            locale = get_best_parsable_locale(self.module)
             lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
             out_lower = out.strip().lower()

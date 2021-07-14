@@ -1135,7 +1135,7 @@ class User(object):
             master_out_fd, slave_out_fd = pty.openpty()
             master_err_fd, slave_err_fd = pty.openpty()
             env = os.environ.copy()
-            env['LC_ALL'] = get_best_parsable_locale()
+            env['LC_ALL'] = get_best_parsable_locale(self.module)
             try:
                 p = subprocess.Popen([to_bytes(c) for c in cmd],
                                      stdin=slave_in_fd,
