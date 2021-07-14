@@ -12,6 +12,7 @@ from ansible.modules import apt_key
 def returnc(x):
     return 'C'
 
+
 class AptKeyTestCase(unittest.TestCase):
 
     @mock.patch.object(apt_key, 'apt_key_bin', '/usr/bin/apt-key')
