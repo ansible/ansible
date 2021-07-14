@@ -20,8 +20,10 @@ from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.plugins.loader import module_loader, action_loader
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -75,6 +77,45 @@ def _generic_s(prop_name, self, value):
 
 def _generic_d(prop_name, self):
     del self._attributes[prop_name]
+
+
+def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
+    valid_metadata = {
+        'extend_group': {
+            'types': (list, string_types,),
+            'errortype': 'list',
+        },
+    }
+
+    metadata_warnings = []
+
+    validate = C.VALIDATE_ACTION_GROUP_METADATA
+    metadata_only = isinstance(action, dict) and 'metadata' in action and len(action) == 1
+
+    if validate and not metadata_only:
+        found_keys = ', '.join(sorted(list(action)))
+        metadata_warnings.append("The only expected key is metadata, but got keys: {keys}".format(keys=found_keys))
+    elif validate:
+        if found_group_metadata:
+            metadata_warnings.append("The group contains multiple metadata entries.")
+        if not isinstance(action['metadata'], dict):
+            metadata_warnings.append("The metadata is not a dictionary. Got {metadata}".format(metadata=action['metadata']))
+        else:
+            unexpected_keys = set(action['metadata'].keys()) - set(valid_metadata.keys())
+            if unexpected_keys:
+                metadata_warnings.append("The metadata contains unexpected keys: {0}".format(', '.join(unexpected_keys)))
+            unexpected_types = []
+            for field, requirement in valid_metadata.items():
+                if field not in action['metadata']:
+                    continue
+                value = action['metadata'][field]
+                if not isinstance(value, requirement['types']):
+                    unexpected_types.append("%s is %s (expected type %s)" % (field, value, requirement['errortype']))
+            if unexpected_types:
+                metadata_warnings.append("The metadata contains unexpected key types: {0}".format(', '.join(unexpected_types)))
+    if metadata_warnings:
+        metadata_warnings.insert(0, "Invalid metadata was found for action_group {0} while loading module_defaults.".format(fq_group_name))
+        display.warning(" ".join(metadata_warnings))
 
 
 class BaseMeta(type):
@@ -303,6 +344,171 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                             )
 
         self._validated = True
+
+    def _load_module_defaults(self, name, value):
+        if value is None:
+            return
+
+        if not isinstance(value, list):
+            value = [value]
+
+        validated_module_defaults = []
+        for defaults_dict in value:
+            if not isinstance(defaults_dict, dict):
+                raise AnsibleParserError(
+                    "The field 'module_defaults' is supposed to be a dictionary or list of dictionaries, "
+                    "the keys of which must be static action, module, or group names. Only the values may contain "
+                    "templates. For example: {'ping': \"{{ ping_defaults }}\"}"
+                )
+
+            validated_defaults_dict = {}
+            for defaults_entry, defaults in defaults_dict.items():
+                # module_defaults do not use the 'collections' keyword, so actions and
+                # action_groups that are not fully qualified are part of the 'ansible.legacy'
+                # collection. Update those entries here, so module_defaults contains
+                # fully qualified entries.
+                if defaults_entry.startswith('group/'):
+                    group_name = defaults_entry.split('group/')[-1]
+
+                    # The resolved action_groups cache is associated saved on the current Play
+                    if self.play is not None:
+                        group_name, dummy = self._resolve_group(group_name)
+
+                    defaults_entry = 'group/' + group_name
+                    validated_defaults_dict[defaults_entry] = defaults
+
+                else:
+                    action_names = []
+                    if len(defaults_entry.split('.')) < 3:
+                        defaults_entry = 'ansible.legacy.' + defaults_entry
+                    action_names.append(defaults_entry)
+                    if defaults_entry.startswith('ansible.legacy.'):
+                        action_names.append(defaults_entry.replace('ansible.legacy.', 'ansible.builtin.'))
+
+                    # Replace the module_defaults action entry with the canonical name,
+                    # so regardless of how the action is called, the defaults will apply
+                    for action_name in action_names:
+                        resolved_action = self._resolve_action(action_name)
+                        if resolved_action:
+                            validated_defaults_dict[resolved_action] = defaults
+
+            validated_module_defaults.append(validated_defaults_dict)
+
+        return validated_module_defaults
+
+    @property
+    def play(self):
+        if hasattr(self, '_play'):
+            play = self._play
+        elif hasattr(self, '_parent') and hasattr(self._parent, '_play'):
+            play = self._parent._play
+        else:
+            play = self
+
+        if play.__class__.__name__ != 'Play':
+            # Should never happen, but handle gracefully by returning None, just in case
+            return None
+
+        return play
+
+    def _resolve_group(self, fq_group_name, mandatory=True):
+        if not AnsibleCollectionRef.is_valid_fqcr(fq_group_name):
+            collection_name = 'ansible.builtin'
+            fq_group_name = collection_name + '.' + fq_group_name
+        else:
+            collection_name = '.'.join(fq_group_name.split('.')[0:2])
+
+        # Check if the group has already been resolved and cached
+        if fq_group_name in self.play._group_actions:
+            return fq_group_name, self.play._group_actions[fq_group_name]
+
+        try:
+            action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
+        except ValueError:
+            if not mandatory:
+                display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+                return fq_group_name, []
+
+            raise AnsibleParserError("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+
+        # The collection may or may not use the fully qualified name
+        # Don't fail if the group doesn't exist in the collection
+        resource_name = fq_group_name.split(collection_name + '.')[-1]
+        action_group = action_groups.get(
+            fq_group_name,
+            action_groups.get(resource_name)
+        )
+        if action_group is None:
+            if not mandatory:
+                display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+                return fq_group_name, []
+            raise AnsibleParserError("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+
+        resolved_actions = []
+        include_groups = []
+
+        found_group_metadata = False
+        for action in action_group:
+            # Everything should be a string except the metadata entry
+            if not isinstance(action, string_types):
+                _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
+
+                if isinstance(action['metadata'], dict):
+                    found_group_metadata = True
+
+                    include_groups = action['metadata'].get('extend_group', [])
+                    if isinstance(include_groups, string_types):
+                        include_groups = [include_groups]
+                    if not isinstance(include_groups, list):
+                        # Bad entries may be a warning above, but prevent tracebacks by setting it back to the acceptable type.
+                        include_groups = []
+                continue
+
+            # The collection may or may not use the fully qualified name.
+            # If not, it's part of the current collection.
+            if not AnsibleCollectionRef.is_valid_fqcr(action):
+                action = collection_name + '.' + action
+            resolved_action = self._resolve_action(action, mandatory=False)
+            if resolved_action:
+                resolved_actions.append(resolved_action)
+
+        for action in resolved_actions:
+            if action not in self.play._action_groups:
+                self.play._action_groups[action] = []
+            self.play._action_groups[action].append(fq_group_name)
+
+        self.play._group_actions[fq_group_name] = resolved_actions
+
+        # Resolve extended groups last, after caching the group in case they recursively refer to each other
+        for include_group in include_groups:
+            if not AnsibleCollectionRef.is_valid_fqcr(include_group):
+                include_group_collection = collection_name
+                include_group = collection_name + '.' + include_group
+            else:
+                include_group_collection = '.'.join(include_group.split('.')[0:2])
+
+            dummy, group_actions = self._resolve_group(include_group, mandatory=False)
+
+            for action in group_actions:
+                if action not in self.play._action_groups:
+                    self.play._action_groups[action] = []
+                self.play._action_groups[action].append(fq_group_name)
+
+            self.play._group_actions[fq_group_name].extend(group_actions)
+            resolved_actions.extend(group_actions)
+
+        return fq_group_name, resolved_actions
+
+    def _resolve_action(self, action_name, mandatory=True):
+        context = action_loader.find_plugin_with_context(action_name)
+        if not context.resolved:
+            context = module_loader.find_plugin_with_context(action_name)
+
+        if context.resolved:
+            return context.resolved_fqcn
+        if mandatory:
+            raise AnsibleParserError("Could not resolve action %s in module_defaults" % action_name)
+        display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
 
     def squash(self):
         '''

@@ -1,0 +1,9 @@
+bugfixes:
+  - Fully qualified 'ansible.legacy' and 'ansible.builtin' plugin names work in conjunction with module_defaults.
+breaking_changes:
+  - Action, module, and group names in module_defaults must be static values. Their values can still be templates.
+  - Unresolvable groups, action plugins, and modules in module_defaults are an error.
+  - Fully qualified 'ansible.legacy' plugin names are not included implicitly in action_groups.
+minor_changes:
+  - Collections can define action_groups in ``meta/runtime.yml``.
+  - action_groups can include actions from other groups by using the special ``metadata`` dictionary field.

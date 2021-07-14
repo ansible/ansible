@@ -246,6 +246,24 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
        ansible.module_utils.old_utility:
          redirect: ansible_collections.namespace_name.collection_name.plugins.module_utils.new_location
 
+- *action_groups*
+
+  A mapping of groups and the list of action plugin and module names they contain. They may also have a special 'metadata' dictionary in the list, which can be used to include actions from other groups.
+
+  .. code:: yaml
+
+     action_groups:
+       groupname:
+         # The special metadata dictionary. All action/module names should be strings.
+         - metadata:
+             extend_group:
+               - another.collection.groupname
+               - another_group
+         - my_action
+       another_group:
+         - my_module
+         - another.collection.another_module
+
 .. seealso::
 
    :ref:`distributing_collections`
