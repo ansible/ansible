@@ -251,7 +251,8 @@ def split_multiext(name, min=3, max=4, count=2):
     Returns '(root, extension)'.
 
     Define the valid extension length (including the '.') with 'min' and 'max',
-    The number of extensions, counting from the end, to evaluate.
+    'count' sets the number of extensions, counting from the end, to evaluate.
+    Evaluation stops on the first file extenios that is outside the min and max range.
 
     :arg name: File name or path
     :kwarg min: Minimum length of a valid file extension.
