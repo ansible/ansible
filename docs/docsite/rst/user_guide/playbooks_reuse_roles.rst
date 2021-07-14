@@ -353,7 +353,7 @@ Ansible always executes role dependencies before the role that includes them. An
 Running role dependencies multiple times in one playbook
 --------------------------------------------------------
 
-Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
+The ``roles`` keyword deduplicates identical role dependencies and only executes role dependencies once, even if defined multiple times. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 For example, a role named ``car`` depends on a role named ``wheel`` as follows:
 
@@ -404,6 +404,27 @@ The resulting order of execution would be as follows:
     car
 
 To use ``allow_duplicates: true`` with role dependencies, you must specify it for the dependent role, not for the parent role. In the example above, ``allow_duplicates: true`` appears in the ``meta/main.yml`` of the ``tire`` and ``brake`` roles. The ``wheel`` role does not require ``allow_duplicates: true``, because each instance defined by ``car`` uses different parameter values.
+
+Role deduplication also affects ``tasks`` and ``post_tasks``, which run after ``roles``, but not subsequent plays. For example, if role A and role B have the common dependency role C, in the following example role C will run only once:
+
+.. code-block:: yaml
+
+   ---
+   - hosts: all
+     roles:
+       - A
+     tasks:
+       - include_role: name=B
+
+Note that in ansible-core versions before 2.11, ``include_role`` and ``import_role`` do not deduplicate dependencies. In this example, the common dependency role C will run twice:
+
+.. code-block:: yaml
+
+   ---
+   - hosts: all
+     tasks:
+       - include_role: name=A
+       - include_role: name=B
 
 .. note::
    See :ref:`playbooks_variables` for details on how Ansible chooses among variable values defined in different places (variable inheritance and scope).
