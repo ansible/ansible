@@ -96,9 +96,14 @@ DOCUMENTATION = """
         description:
         - A list of environment variables to pass through to C(kinit) when getting the Kerberos authentication ticket.
         - By default no environment variables are passed through and C(kinit) is run with a blank slate.
+        - The environment variable C(KRB5CCNAME) cannot be specified here as it's used to store the temp Kerberos
+          ticket used by WinRM.
         type: list
         elements: str
         default: []
+        ini:
+        - section: winrm
+          key: kinit_env_vars
         vars:
           - name: ansible_winrm_kinit_env_vars
         version_added: '2.12'
@@ -319,7 +324,7 @@ class Connection(ConnectionBase):
         # Add any explicit environment vars into the krb5env block
         kinit_env_vars = self.get_option('kinit_env_vars')
         for var in kinit_env_vars:
-            if var in os.environ:
+            if var not in krb5env and var in os.environ:
                 krb5env[var] = os.environ[var]
 
         # Stores various flags to call with kinit, these could be explicit args set by 'ansible_winrm_kinit_args' OR
