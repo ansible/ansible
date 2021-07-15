@@ -343,6 +343,7 @@ from ansible.module_utils.six import PY2, text_type
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
@@ -531,8 +532,11 @@ class DnfModule(YumDnf):
         return rc
 
     def _ensure_dnf(self):
-        if HAS_DNF:
+        best_parsable_locale = get_best_parsable_locale(self.module)
+        if HAS_DNF and os.environ.get('LC_ALL') == best_parsable_locale:
             return
+
+        os.environ['LC_ALL'] = best_parsable_locale
 
         system_interpreters = ['/usr/libexec/platform-python',
                                '/usr/bin/python3',
