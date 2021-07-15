@@ -132,6 +132,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             templar = Templar(loader=self._loader, variables=all_vars)
             role_name = templar.template(role_name)
 
+        # check if role name contains any illegal characters
+        self._validate_role_name(role_name)
+
         return role_name
 
     def _load_role_path(self, role_name):
@@ -227,6 +230,22 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
                 role_def[key] = value
 
         return (role_def, role_params)
+
+    def _validate_role_name(self, role_name):
+        '''
+        split role_name into parts and validate independently for criteria documented in
+        https://docs.ansible.com/ansible/latest/dev_guide/developing_collections_structure.html#roles-directory and
+        raise a distinct AnsibleError in case of violation
+        '''
+
+        parts = role_name.split(".")
+        for part in parts:
+            # make sure each part starts alphanumerical
+            # remove legal special character before checking if it's alphanumerical
+            # make sure each part is fully lowercase
+            if not part.startswith('_') and not part.replace('_', '').isalnum() and part.islower():
+                # raise more distinct error in case of name violates
+                raise AnsibleError("the role '%s' must consist of only alphanumerical characters" % role_name, obj=self._ds)
 
     def get_role_params(self):
         return self._role_params.copy()
