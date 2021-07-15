@@ -236,15 +236,6 @@ def suffixes(name):
     return ['.' + s for s in name.split('.')[1:]]
 
 
-def stem(name):
-    """The final path component, minus its last suffix."""
-    i = name.rfind('.')
-    if 0 < i < len(name) - 1:
-        return name[:i]
-    else:
-        return name
-
-
 def split_multiext(name, min=3, max=4, count=2):
     """Split a multi-part extension from a file name.
 
@@ -260,7 +251,6 @@ def split_multiext(name, min=3, max=4, count=2):
     :kwarg count: Number of suffixes from the end to evaluate.
 
     """
-    basename = stem(name)
     extension = ''
     for i, sfx in enumerate(reversed(suffixes(name))):
         if i >= count:
@@ -268,9 +258,9 @@ def split_multiext(name, min=3, max=4, count=2):
 
         if min <= len(sfx) <= max:
             extension = '%s%s' % (sfx, extension)
-            basename = basename.rstrip(sfx)
+            name = name.rstrip(sfx)
         else:
             # Stop on the first invalid extension
             break
 
-    return basename, extension
+    return name, extension
