@@ -1,0 +1,2 @@
+bugfixes:
+  - set ssh host_key_checking defaults to True, restoring original behaviour (https://github.com/ansible/ansible/issues/75168)
