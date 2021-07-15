@@ -520,7 +520,10 @@ class StrategyBase:
                             # set_fact or some other method, and we don't want to error
                             # out unnecessarily
                             if not handler_task.listen:
-                                display.warning("Unable to template handler name '%s': %s" % (handler_task.name, to_text(e)))
+                                display.warning(
+                                    "Handler '%s' is unusable because it has no listen topics and "
+                                    "the name could not be templated: %s" % (handler_task.name, to_text(e))
+                                )
                             continue
             return None
 
