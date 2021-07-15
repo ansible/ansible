@@ -1021,7 +1021,7 @@ def main():
 
     src = module.params['src']
     dest = module.params['dest']
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    b_dest = os.path.abspath(to_bytes(dest, errors='surrogate_or_strict'))
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 
