@@ -211,6 +211,16 @@ options:
         default: []
         version_added: "2.9"
 
+    config:
+        description:
+           - A list configuration variables used with clone command.
+             Example user.name My Name
+             is passed on as --config user.name=My Name
+        type: list
+        elements: str
+        default: []
+        version_added: "2.12"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -517,7 +527,8 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
+          reference, refspec, git_version_used, verify_commit, separate_git_dir,
+          result, gpg_whitelist, single_branch, config):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -567,6 +578,10 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             needs_separate_git_dir_fallback = True
         else:
             cmd.append('--separate-git-dir=%s' % separate_git_dir)
+
+    for c in config:
+        pos=c.find(" ")
+        cmd.extend(['--config', "{}={}".format(c[:pos], c[pos+1:])])
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
@@ -1146,6 +1161,7 @@ def main():
             archive=dict(type='path'),
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
+            config=dict(default=[], type='list', elements='str'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
@@ -1173,6 +1189,7 @@ def main():
     archive = module.params['archive']
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
+    config = module.params['config']
 
     result = dict(changed=False, warnings=list())
 
@@ -1272,7 +1289,8 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
-              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
+              refspec, git_version_used, verify_commit, separate_git_dir, result,
+              gpg_whitelist, single_branch, config)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
