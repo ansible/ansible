@@ -5,8 +5,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import signal
+import sys
 
 from ansible.module_utils.common.file import is_executable
+from ansible.module_utils.six import PY2
 
 
 def get_bin_path(arg, opt_dirs=None, required=None):
@@ -42,3 +45,9 @@ def get_bin_path(arg, opt_dirs=None, required=None):
         raise ValueError('Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
 
     return bin_path
+
+
+def restore_signal_handlers():
+    ''' Reset SIGPIPE to SIG_DFL, otherwise in Python2.7 it gets ignored in subprocesses. '''
+    if PY2 and sys.platform != 'win32':
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
