@@ -70,7 +70,7 @@ Each time you publish a collection you must specify the API token and the distri
 
 .. _galaxy_token_ansible_cfg:
 
-Specifying the distribution server and token in configuration
+Specifying the token and distribution server in configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can specify your API token in configuration by creating a ``galaxy_server_list`` section to configure one or more distribution servers in your :file:`ansible.cfg` file. This is the most secure way to manage authentication for distribution servers. Specify a URL and token for each server. For example:
