@@ -33,6 +33,7 @@ DOCUMENTATION = '''
                - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if ssh should check host keys
+          default: True
           type: boolean
           ini:
               - section: defaults
@@ -692,7 +693,7 @@ class Connection(ConnectionBase):
             self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
 
         # Now we add various arguments that have their own specific settings defined in docs above.
-        if not self.get_option('host_key_checking'):
+        if self.get_option('host_key_checking') is False:
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
