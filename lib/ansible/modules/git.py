@@ -580,8 +580,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             cmd.append('--separate-git-dir=%s' % separate_git_dir)
 
     for c in config:
-        pos=c.find(" ")
-        cmd.extend(['--config', "{}={}".format(c[:pos], c[pos+1:])])
+        pos = c.find(" ")
+        cmd.extend(['--config', "{0}={1}".format(c[:pos], c[pos + 1:])])
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
