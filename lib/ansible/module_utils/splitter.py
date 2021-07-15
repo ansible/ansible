@@ -239,13 +239,16 @@ def suffixes(name):
 def split_multiext(name, min=3, max=4, count=2):
     """Split a multi-part extension from a file name.
 
-    Returns '(root, extension)'.
+    Returns '([name minus extension], extension)'.
 
     Define the valid extension length (including the '.') with 'min' and 'max',
     'count' sets the number of extensions, counting from the end, to evaluate.
-    Evaluation stops on the first file extenios that is outside the min and max range.
+    Evaluation stops on the first file extension that is outside the min and max range.
 
-    :arg name: File name or path
+    If no valid extensions are found, the original ``name`` is returned
+    and ``extension`` is empty.
+
+    :arg name: File name or path.
     :kwarg min: Minimum length of a valid file extension.
     :kwarg max: Maximum length of a valid file extension.
     :kwarg count: Number of suffixes from the end to evaluate.
