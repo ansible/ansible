@@ -10,7 +10,8 @@ import pytest
 from ansible.module_utils.splitter import split_multiext
 
 
-@pytest.mark.parametrize('name, expected',
+@pytest.mark.parametrize(
+    'name, expected',
     (
         ('', ('', '')),
         ('a', ('a', '')),
@@ -31,7 +32,8 @@ def test_split_multiext(name, expected):
     assert expected == split_multiext(name)
 
 
-@pytest.mark.parametrize('args, expected',
+@pytest.mark.parametrize(
+    'args, expected',
     (
         (('base-v0.26.0-linux64.tar.gz', 4, 4), ('base-v0.26.0-linux64.tar.gz', '')),
         (('base-v0.26.0.hidden', 1, 7), ('base-v0.26', '.0.hidden')),
@@ -59,7 +61,8 @@ def test_split_multiext_count(kwargs, expected):
     assert expected == split_multiext(**kwargs)
 
 
-@pytest.mark.parametrize('name',
+@pytest.mark.parametrize(
+    'name',
     (
         list(),
         tuple(),
