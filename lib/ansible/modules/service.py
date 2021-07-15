@@ -156,6 +156,7 @@ if platform.system() != 'SunOS':
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.service import fail_if_missing
 from ansible.module_utils.six import PY2, b
@@ -224,11 +225,13 @@ class Service(object):
 
     def execute_command(self, cmd, daemonize=False):
 
+        locale = get_best_parsable_locale(self.module)
+        lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
+
         # Most things don't need to be daemonized
         if not daemonize:
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
@@ -273,7 +276,6 @@ class Service(object):
 
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
             stdout = b("")
             stderr = b("")

@@ -325,10 +325,11 @@ import shutil
 import tempfile
 from ansible.module_utils.compat.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.six import b, string_types
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
@@ -1201,7 +1202,7 @@ def main():
             umask = int(umask, 8)
         except Exception:
             module.fail_json(msg="umask must be an octal integer",
-                             details=str(sys.exc_info()[1]))
+                             details=to_text(sys.exc_info()[1]))
         os.umask(umask)
 
     # Certain features such as depth require a file:/// protocol for path based urls
@@ -1211,7 +1212,8 @@ def main():
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale = get_best_parsable_locale(module)
+    module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
 
     if separate_git_dir:
         separate_git_dir = os.path.realpath(separate_git_dir)

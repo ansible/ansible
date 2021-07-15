@@ -85,6 +85,7 @@ ansible_facts:
 import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 
 
 class BaseService(object):
@@ -308,7 +309,8 @@ class OpenBSDScanService(BaseService):
 
 def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
-    module.run_command_environ_update = dict(LANG="C", LC_ALL="C")
+    locale = get_best_parsable_locale(module)
+    module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
     service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService)
     all_services = {}
     incomplete_warning = False

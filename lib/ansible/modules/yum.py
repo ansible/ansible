@@ -376,6 +376,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, respawn_module
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
@@ -601,8 +602,9 @@ class YumModule(YumDnf):
             if self.installroot != '/':
                 cmd.extend(['--root', self.installroot])
             # rpm localizes messages and we're screen scraping so make sure we use
-            # the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            # an appropriate locale
+            locale = get_best_parsable_locale(self.module)
+            lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
             if rc != 0 and 'is not installed' not in out:
                 self.module.fail_json(msg='Error from rpm: %s: %s' % (cmd, err))
@@ -939,7 +941,8 @@ class YumModule(YumDnf):
         else:
             res['changes'] = dict(installed=pkgs)
 
-        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        locale = get_best_parsable_locale(self.module)
+        lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
         rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
 
         if rc == 1:
@@ -1500,7 +1503,8 @@ class YumModule(YumDnf):
         elif self.update_only:
             if pkgs['update']:
                 cmd = self.yum_basecmd + ['update'] + pkgs['update']
-                lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+                locale = get_best_parsable_locale(self.module)
+                lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
                 rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
                 out_lower = out.strip().lower()
                 if not out_lower.endswith("no packages marked for update") and \
@@ -1510,7 +1514,8 @@ class YumModule(YumDnf):
                 rc, out, err = [0, '', '']
         elif pkgs['install'] or will_update and not self.update_only:
             cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            locale = get_best_parsable_locale(self.module)
+            lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
             out_lower = out.strip().lower()
             if not out_lower.endswith("no packages marked for update") and \

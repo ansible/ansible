@@ -128,9 +128,9 @@ RETURN = r'''#'''
 import os
 import re
 
-from ansible.module_utils.compat.version import LooseVersion
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.compat.version import LooseVersion
 
 
 class Subversion(object):
@@ -320,7 +320,8 @@ def main():
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C')
+    locale = get_best_parsable_locale(module)
+    module.run_command_environ_update = dict(LANG=locale, LC_MESSAGES=locale)
 
     if not dest and (checkout or update or export):
         module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")

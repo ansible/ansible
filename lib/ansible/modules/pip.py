@@ -275,8 +275,9 @@ except ImportError:
     HAS_SETUPTOOLS = False
     SETUPTOOLS_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.six import PY3
 
 
@@ -354,7 +355,8 @@ def _get_packages(module, pip, chdir):
     '''Return results of pip command to get packages.'''
     # Try 'pip list' command first.
     command = '%s list --format=freeze' % pip
-    lang_env = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
+    locale = get_best_parsable_locale(module)
+    lang_env = {'LANG': locale, 'LC_ALL': locale, 'LC_MESSAGES': locale}
     rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
 
     # If there was an error (pip version too old) then use 'pip freeze'.
