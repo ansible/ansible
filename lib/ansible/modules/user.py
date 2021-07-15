@@ -461,6 +461,7 @@ import math
 from ansible.module_utils import distro
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 
 try:
@@ -1134,7 +1135,7 @@ class User(object):
             master_out_fd, slave_out_fd = pty.openpty()
             master_err_fd, slave_err_fd = pty.openpty()
             env = os.environ.copy()
-            env['LC_ALL'] = 'C'
+            env['LC_ALL'] = get_best_parsable_locale(self.module)
             try:
                 p = subprocess.Popen([to_bytes(c) for c in cmd],
                                      stdin=slave_in_fd,

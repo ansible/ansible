@@ -1245,10 +1245,7 @@ class AnsibleModule(object):
             # fallback to the 'best' locale, per the function
             # final fallback is 'C', which may cause unicode issues
             # but is preferable to simply failing on unknown locale
-            try:
-                best_locale = get_best_parsable_locale(self)
-            except RuntimeError:
-                best_locale = 'C'
+            best_locale = get_best_parsable_locale(self)
 
             # need to set several since many tools choose to ignore documented precedence and scope
             locale.setlocale(locale.LC_ALL, best_locale)

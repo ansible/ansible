@@ -153,14 +153,24 @@ import os
 # FIXME: standardize into module_common
 from traceback import format_exc
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_url
 
 
 apt_key_bin = None
 gpg_bin = None
-lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+locale = None
+
+
+def lang_env(module):
+
+    if not hasattr(lang_env, 'result'):
+        locale = get_best_parsable_locale(module)
+        lang_env.result = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
+
+    return lang_env.result
 
 
 def find_needed_binaries(module):
@@ -288,12 +298,11 @@ def get_key_id_from_file(module, filename, data=None):
     native_data = to_native(data)
     is_armored = native_data.find("-----BEGIN PGP PUBLIC KEY BLOCK-----") >= 0
 
-    global lang_env
     key = None
 
     cmd = [gpg_bin, '--with-colons', filename]
 
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=(native_data if is_armored else data), binary_data=not is_armored)
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env(module), data=(native_data if is_armored else data), binary_data=not is_armored)
     if rc != 0:
         module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is not None else filename), stdout=out, stderr=err)
 
@@ -311,7 +320,6 @@ def get_key_id_from_data(module, data):
 
 def import_key(module, keyring, keyserver, key_id):
 
-    global lang_env
     if keyring:
         cmd = "%s --keyring %s adv --no-tty --keyserver %s" % (apt_key_bin, keyring, keyserver)
     else:
@@ -324,17 +332,17 @@ def import_key(module, keyring, keyserver, key_id):
     cmd = "%s --recv %s" % (cmd, key_id)
 
     for retry in range(5):
-        (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
+        (rc, out, err) = module.run_command(cmd, environ_update=lang_env(module))
         if rc == 0:
             break
     else:
         # Out of retries
         if rc == 2 and 'not found on keyserver' in out:
             msg = 'Key %s not found on keyserver %s' % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env)
+            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env(module))
         else:
             msg = "Error fetching key %s from keyserver: %s" % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env, rc=rc, stdout=out, stderr=err)
+            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env(module), rc=rc, stdout=out, stderr=err)
     return True
 
 
