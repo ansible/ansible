@@ -235,10 +235,11 @@ import traceback
 from functools import partial
 from zipfile import ZipFile, BadZipfile
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_file
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.urls import fetch_file
 
 try:  # python 3.3+
     from shlex import quote
@@ -766,7 +767,8 @@ class TgzArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
 
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        locale = get_best_parsable_locale(self.module)
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -810,7 +812,8 @@ class TgzArchive(object):
         cmd.extend(['-f', self.src])
         if self.include_files:
             cmd.extend(self.include_files)
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        locale = get_best_parsable_locale(self.module)
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
 
         # Check whether the differences are in something that we're
         # setting anyway
@@ -863,7 +866,8 @@ class TgzArchive(object):
         cmd.extend(['-f', self.src])
         if self.include_files:
             cmd.extend(self.include_files)
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        locale = get_best_parsable_locale(self.module)
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):

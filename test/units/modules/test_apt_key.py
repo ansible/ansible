@@ -9,9 +9,14 @@ from units.compat import unittest
 from ansible.modules import apt_key
 
 
+def returnc(x):
+    return 'C'
+
+
 class AptKeyTestCase(unittest.TestCase):
 
     @mock.patch.object(apt_key, 'apt_key_bin', '/usr/bin/apt-key')
+    @mock.patch.object(apt_key, 'lang_env', returnc)
     @mock.patch.dict(os.environ, {'HTTP_PROXY': 'proxy.example.com'})
     def test_import_key_with_http_proxy(self):
         m_mock = mock.Mock()

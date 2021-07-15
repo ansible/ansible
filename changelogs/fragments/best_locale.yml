@@ -1,0 +1,2 @@
+minor_changes:
+  - move all builtin modules to use the best possible locale function instead of hardcoding 'C'.

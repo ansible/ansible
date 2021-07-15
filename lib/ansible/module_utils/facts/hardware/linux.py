@@ -29,11 +29,12 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
+from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
@@ -85,7 +86,8 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
-        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
+        locale = get_best_parsable_locale(self.module)
+        self.module.run_command_environ_update = {'LANG': locale, 'LC_ALL': locale, 'LC_NUMERIC': locale}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
