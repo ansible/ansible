@@ -166,6 +166,7 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     env_fallback,
+    heuristic_parameter_sanitize as heuristic_log_sanitize,
     remove_values,
     sanitize_keys,
     DEFAULT_TYPE_VALIDATORS,

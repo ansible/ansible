@@ -901,22 +901,24 @@ def remove_values(value, no_log_strings):
     return new_value
 
 
-def heuristic_log_sanitize(data, no_log_values=None):
-    ''' Remove strings that look like passwords from log messages '''
-    # Currently filters:
-    # user:pass@foo/whatever and http://username:pass@wherever/foo
-    # This code has false positives and consumes parts of logs that are
-    # not passwds
+def heuristic_parameter_sanitize(data, no_log_values=None):
+    '''
+        Remove known secret values and strings that look like secrets from data
+        Currently filters:
+            user:pass@foo/whatever and http://username:pass@wherever/foo
 
-    # begin: start of a passwd containing string
-    # end: end of a passwd containing string
-    # sep: char between user and passwd
-    # prev_begin: where in the overall string to start a search for
-    #   a passwd
-    # sep_search_end: where in the string to end a search for the sep
+        This code has false positives and consumes parts of data that are not secret,
+        but match the values
+    '''
     data = to_native(data)
-
     output = []
+    '''
+        begin: start of a passwd containing string
+        end: end of a passwd containing string
+        sep: char between user and passwd
+        prev_begin: where in the overall string to start a search for a passwd
+        sep_search_end: where in the string to end a search for the sep
+    '''
     begin = len(data)
     prev_begin = begin
     sep = 1
