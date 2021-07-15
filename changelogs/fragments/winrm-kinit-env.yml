@@ -1,0 +1,2 @@
+minor_changes:
+- winrm - Allow explicit environment variables to be passed through to the ``kinit`` call for Kerberos authentication
