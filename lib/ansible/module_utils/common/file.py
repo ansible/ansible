@@ -4,29 +4,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import errno
-import os
-import stat
-import re
-import pwd
-import grp
-import time
-import shutil
-import traceback
 import fcntl
+import grp
+import os
+import pwd
+import re
+import stat
 import sys
+import time
 
 from contextlib import contextmanager
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import b, binary_type
-from ansible.module_utils.common.warnings import deprecate
-
-try:
-    import selinux
-    HAVE_SELINUX = True
-except ImportError:
-    HAVE_SELINUX = False
-
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.warnings import deprecate, warn
+from ansible.module_utils.common.selinux import is_selinux_enabled, get_selinux_context
 
 FILE_ATTRIBUTES = {
     'A': 'noatime',
@@ -61,6 +51,8 @@ PERMS_RE = re.compile(r'[^rwxXstugo]')
 _PERM_BITS = 0o7777          # file mode permission bits
 _EXEC_PERM_BITS = 0o0111     # execute permission bits
 _DEFAULT_PERM = 0o0666       # default file permission bits
+
+_cleanup_files = set()
 
 
 def is_executable(path):
@@ -109,6 +101,102 @@ def get_file_arg_spec():
         attributes=dict(aliases=['attr']),
     )
     return arg_spec
+
+
+def remove_file(path, fail=False):
+    '''
+    Will try to remove a file if it exists/is visible for the current user,
+    It will write an error
+
+    :path: Byte string containing the path to remove
+    :fail: If it should raise an exception on failiure, otherwise it will warn
+    '''
+    if os.path.exists(path):
+        try:
+            os.unlink(path)
+        except OSError as e:
+            if fail:
+                raise
+            warn("could not cleanup %s: %s" % (to_text(path), to_text(e)))
+
+
+def add_to_file_cleanup(path):
+    ''' Add path to cleanup global for later removal '''
+
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if os.path.exists(b_path):
+        global _cleanup_files
+        _cleanup_files.add(b_path)
+
+
+def cleanup_files():
+    ''' Remove all files that were queued up in cleanup global '''
+
+    for rmfile in _cleanup_files:
+        remove_file(rmfile, False)
+
+
+def get_path_uid_and_gid(path, expand=True):
+    ''' get uid and gid ownership from path '''
+
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if expand:
+        b_path = os.path.expanduser(os.path.expandvars(b_path))
+    st = os.lstat(b_path)
+    uid = st.st_uid
+    gid = st.st_gid
+
+    return (uid, gid)
+
+
+def get_path_type(path):
+    ''' return type of file from given path byte string '''
+    ptype = None
+    if os.path.islink(path):
+        ptype = 'link'
+    elif os.path.isdir(path):
+        ptype = 'directory'
+    elif os.stat(path).st_nlink > 1:
+        ptype = 'hard'
+    else:
+        ptype = 'file'
+
+    return ptype
+
+
+def get_info_from_path(path):
+    '''
+    for results that are files, supplement the info about the file
+    in the return path with stats about the file path.
+    '''
+
+    b_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
+    info = {}
+
+    if os.path.exists(b_path):
+
+        st = os.lstat(b_path)
+
+        info['uid'] = st.st_uid
+        info['gid'] = st.st_gid
+        try:
+            user = pwd.getpwuid(info['uid'])[0]
+        except KeyError:
+            user = to_text(info['uid'])
+        try:
+            group = grp.getgrgid(info['gid'])[0]
+        except KeyError:
+            group = to_text(info['gid'])
+        info['owner'] = user
+        info['group'] = group
+
+        info['mode'] = '0%03o' % stat.S_IMODE(st[stat.ST_MODE])
+        info['size'] = st[stat.ST_SIZE]
+        info['state'] = get_path_type(b_path)
+        if is_selinux_enabled():
+            info['secontext'] = ':'.join(get_selinux_context(path))
+
+    return info
 
 
 class LockTimeout(Exception):

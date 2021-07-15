@@ -83,15 +83,22 @@ NoneType = type(None)
 
 from ansible.module_utils.compat import selectors
 
-from ._text import to_native, to_bytes, to_text
+from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
+from ansible.module_utils.common.files import add_to_file_cleanup, cleanup_files, get_path_uid_and_gid, remove_file
+from ansible.module_utils.common.sexlinux import (
+    get_selinux_default_context,
+    get_selinux_initial_context,
+    is_selinux_enabled,
+    is_selinux_mls_enabled,
+)
 from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
     container_to_text as json_dict_bytes_to_unicode,
+    to_bytes,
+    to_native,
+    to_text,
 )
-
-from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
-
 from ansible.module_utils.common.text.formatters import (
     lenient_lowercase,
     bytes_to_human,
@@ -464,7 +471,6 @@ class AnsibleModule(object):
         self.required_one_of = required_one_of
         self.required_if = required_if
         self.required_by = required_by
-        self.cleanup_files = []
         self._debug = False
         self._diff = False
         self._socket_path = None
@@ -532,8 +538,6 @@ class AnsibleModule(object):
             self._log_invocation()
 
         # selinux state caching
-        self._selinux_enabled = None
-        self._selinux_mls_enabled = None
         self._selinux_initial_context = None
 
         # finally, make sure we're in a sane working dir
@@ -627,7 +631,7 @@ class AnsibleModule(object):
         selevel = params.get('selevel', None)
         secontext = [seuser, serole, setype]
 
-        if self.selinux_mls_enabled():
+        if is_selinux_mls_enabled():
             secontext.append(selevel)
 
         default_secontext = self.selinux_default_context(path)
@@ -649,68 +653,27 @@ class AnsibleModule(object):
     # by selinux.lgetfilecon().
 
     def selinux_mls_enabled(self):
-        if self._selinux_mls_enabled is None:
-            self._selinux_mls_enabled = HAVE_SELINUX and selinux.is_selinux_mls_enabled() == 1
-
-        return self._selinux_mls_enabled
+        return is_selinux_mls_enabled()
 
     def selinux_enabled(self):
-        if self._selinux_enabled is None:
-            self._selinux_enabled = HAVE_SELINUX and selinux.is_selinux_enabled() == 1
-
-        return self._selinux_enabled
+        return is_selinux_enabled()
 
     # Determine whether we need a placeholder for selevel/mls
     def selinux_initial_context(self):
-        if self._selinux_initial_context is None:
-            self._selinux_initial_context = [None, None, None]
-            if self.selinux_mls_enabled():
-                self._selinux_initial_context.append(None)
-
-        return self._selinux_initial_context
+        return get_selinux_initial_context()
 
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
-        context = self.selinux_initial_context()
-        if not self.selinux_enabled():
-            return context
-        try:
-            ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
-        except OSError:
-            return context
-        if ret[0] == -1:
-            return context
-        # Limit split to 4 because the selevel, the last in the list,
-        # may contain ':' characters
-        context = ret[1].split(':', 3)
-        return context
+        return get_selinux_default_context(path, mode)
 
     def selinux_context(self, path):
-        context = self.selinux_initial_context()
-        if not self.selinux_enabled():
-            return context
         try:
-            ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
+            return get_selinux_context(path)
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.fail_json(path=path, msg='path %s does not exist' % path)
-            else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
-        if ret[0] == -1:
-            return context
-        # Limit split to 4 because the selevel, the last in the list,
-        # may contain ':' characters
-        context = ret[1].split(':', 3)
-        return context
+            self.fail_json(msg=to_text(e), path=path)
 
     def user_and_group(self, path, expand=True):
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        if expand:
-            b_path = os.path.expanduser(os.path.expandvars(b_path))
-        st = os.lstat(b_path)
-        uid = st.st_uid
-        gid = st.st_gid
-        return (uid, gid)
+        return get_path_uid_and_gid(path, expand)
 
     def find_mount_point(self, path):
         '''
@@ -745,26 +708,32 @@ class AnsibleModule(object):
             if to_bytes(path_mount_point) == to_bytes(mount_point):
                 for fs in self._selinux_special_fs:
                     if fs in fstype:
-                        special_context = self.selinux_context(path_mount_point)
+                        try:
+                            special_context = get_selinux_context(path_mount_point)
+                        except OSError as e:
+                            self.fail_json(msg=to_text(e), path=path_mount_point)
                         return (True, special_context)
 
         return (False, None)
 
     def set_default_selinux_context(self, path, changed):
-        if not self.selinux_enabled():
+        if not is_selinux_enabled():
             return changed
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
 
     def set_context_if_different(self, path, context, changed, diff=None):
 
-        if not self.selinux_enabled():
+        if not is_selinux_enabled():
             return changed
 
         if self.check_file_absent_if_check_mode(path):
             return True
 
-        cur_context = self.selinux_context(path)
+        try:
+            cur_context = get_selinux_context(path)
+        except OSError as e:
+            self.fail_json(msg=to_text(e), path=path)
         new_context = list(cur_context)
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
@@ -813,7 +782,7 @@ class AnsibleModule(object):
         if self.check_file_absent_if_check_mode(b_path):
             return True
 
-        orig_uid, orig_gid = self.user_and_group(b_path, expand)
+        orig_uid, orig_gid = get_path_uid_and_gid(b_path, expand)
         try:
             uid = int(owner)
         except ValueError:
@@ -854,7 +823,7 @@ class AnsibleModule(object):
         if self.check_file_absent_if_check_mode(b_path):
             return True
 
-        orig_uid, orig_gid = self.user_and_group(b_path, expand)
+        orig_uid, orig_gid = get_path_uid_and_gid(b_path, expand)
         try:
             gid = int(group)
         except ValueError:
@@ -1193,44 +1162,10 @@ class AnsibleModule(object):
         return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
     def add_path_info(self, kwargs):
-        '''
-        for results that are files, supplement the info about the file
-        in the return path with stats about the file path.
-        '''
 
-        path = kwargs.get('path', kwargs.get('dest', None))
-        if path is None:
-            return kwargs
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        if os.path.exists(b_path):
-            (uid, gid) = self.user_and_group(path)
-            kwargs['uid'] = uid
-            kwargs['gid'] = gid
-            try:
-                user = pwd.getpwuid(uid)[0]
-            except KeyError:
-                user = str(uid)
-            try:
-                group = grp.getgrgid(gid)[0]
-            except KeyError:
-                group = str(gid)
-            kwargs['owner'] = user
-            kwargs['group'] = group
-            st = os.lstat(b_path)
-            kwargs['mode'] = '0%03o' % stat.S_IMODE(st[stat.ST_MODE])
-            # secontext not yet supported
-            if os.path.islink(b_path):
-                kwargs['state'] = 'link'
-            elif os.path.isdir(b_path):
-                kwargs['state'] = 'directory'
-            elif os.stat(b_path).st_nlink > 1:
-                kwargs['state'] = 'hard'
-            else:
-                kwargs['state'] = 'file'
-            if self.selinux_enabled():
-                kwargs['secontext'] = ':'.join(self.selinux_context(path))
-            kwargs['size'] = st[stat.ST_SIZE]
-        return kwargs
+        path = info.get('path', info.get('dest', None))
+        path_info = get_info_from_path(path)
+        return kwargs.update(path_info)
 
     def _check_locale(self):
         '''
@@ -1469,16 +1404,16 @@ class AnsibleModule(object):
         return json.loads(data)
 
     def add_cleanup_file(self, path):
-        if path not in self.cleanup_files:
-            self.cleanup_files.append(path)
+        add_to_file_cleanup(path)
 
     def do_cleanup_files(self):
-        for path in self.cleanup_files:
-            self.cleanup(path)
+        cleanup_files()
 
     def _return_formatted(self, kwargs):
 
-        self.add_path_info(kwargs)
+        path = info.get('path', info.get('dest', None))
+        path_info = get_info_from_path(path)
+        kwargs.update(path_info)
 
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
@@ -1486,9 +1421,9 @@ class AnsibleModule(object):
         if 'warnings' in kwargs:
             if isinstance(kwargs['warnings'], list):
                 for w in kwargs['warnings']:
-                    self.warn(w)
+                    warn(w)
             else:
-                self.warn(kwargs['warnings'])
+                warn(kwargs['warnings'])
 
         warnings = get_warning_messages()
         if warnings:
@@ -1498,26 +1433,26 @@ class AnsibleModule(object):
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
-                        self.deprecate(d[0], version=d[1])
+                        deprecate(d[0], version=d[1])
                     elif isinstance(d, Mapping):
-                        self.deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
+                        deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
                                        collection_name=d.get('collection_name'))
                     else:
-                        self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
+                        deprecate(d)  # pylint: disable=ansible-deprecated-no-version
             else:
-                self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
+                deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
         deprecations = get_deprecation_messages()
         if deprecations:
             kwargs['deprecations'] = deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
-        print('\n%s' % self.jsonify(kwargs))
+        print('\n%s' % jsonify(kwargs))
 
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
-        self.do_cleanup_files()
+        cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(0)
 
@@ -1537,7 +1472,7 @@ class AnsibleModule(object):
             else:
                 kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
-        self.do_cleanup_files()
+        cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)
 
@@ -1617,11 +1552,7 @@ class AnsibleModule(object):
         return backupdest
 
     def cleanup(self, tmpfile):
-        if os.path.exists(tmpfile):
-            try:
-                os.unlink(tmpfile)
-            except OSError as e:
-                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, to_native(e)))
+        return remove_file(tmpfile)
 
     def preserved_copy(self, src, dest):
         """Copy a file with preserved ownership, permissions and context"""
@@ -1639,8 +1570,11 @@ class AnsibleModule(object):
         shutil.copy2(src, dest)
 
         # Set the context
-        if self.selinux_enabled():
-            context = self.selinux_context(src)
+        if is_selinux_enabled():
+            try:
+                context = get_selinux_context(src)
+            except OSError as e:
+                self.fail_json(msg=to_text(e), path=src)
             self.set_context_if_different(dest, context, False)
 
         # chown it
@@ -1687,11 +1621,14 @@ class AnsibleModule(object):
             except OSError as e:
                 if e.errno != errno.EPERM:
                     raise
-            if self.selinux_enabled():
-                context = self.selinux_context(dest)
+            if is_selinux_enabled():
+                try:
+                    context = get_selinux_context(dest)
+                except OSError as e:
+                    self.fail_json(msg=to_text(e), path=dest)
         else:
-            if self.selinux_enabled():
-                context = self.selinux_default_context(dest)
+            if is_selinux_enabled():
+                context = get_selinux_default_context(dest)
 
         creating = not os.path.exists(b_dest)
 
@@ -1745,7 +1682,7 @@ class AnsibleModule(object):
                                 # copy2 will preserve some metadata
                                 shutil.copy2(b_src, b_tmp_dest_name)
 
-                            if self.selinux_enabled():
+                            if is_selinux_enabled():
                                 self.set_context_if_different(
                                     b_tmp_dest_name, context, False)
                             try:
@@ -1769,7 +1706,7 @@ class AnsibleModule(object):
                             else:
                                 self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
                     finally:
-                        self.cleanup(b_tmp_dest_name)
+                        remove_file(b_tmp_dest_name)
 
         if creating:
             # make sure the file has the correct permissions
@@ -1784,7 +1721,7 @@ class AnsibleModule(object):
                 # root (or old Unices) they won't be able to chown.
                 pass
 
-        if self.selinux_enabled():
+        if is_selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
