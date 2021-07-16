@@ -1168,6 +1168,8 @@ class DnfModule(YumDnf):
                     if '*' in pkg_spec:
                         try:
                             self.base.remove(pkg_spec)
+                        except dnf.exceptions.PackagesNotInstalledError:
+                            response['results'].append("Ignore packages not installed: {0}".format(pkg_spec))
                         except dnf.exceptions.MarkingError as e:
                             is_failure, handled_remove_error = self._sanitize_dnf_error_msg_remove(pkg_spec, to_native(e))
                             if is_failure:
