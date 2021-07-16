@@ -10,6 +10,7 @@ cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for
 deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
 jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.7 or later
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
+urllib3 < 1.26 , >= 1.20; python_version >= '3.4' # dependency from botocore
 pywinrm >= 0.3.0 # message encryption support
 sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 or later
 sphinx <= 2.1.2 ; python_version >= '2.7' # docs team hasn't  tested beyond 2.1.2 yet
@@ -48,3 +49,5 @@ setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require pyth
 gssapi < 1.6.0 ; python_version <= '2.7' # gssapi 1.6.0 and later require python 3 or later
 pyspnego >= 0.1.6 ; python_version >= '3.10' # bug in older releases breaks on Python 3.10
 MarkupSafe < 2.0.0 ; python_version < '3.6' # MarkupSafe >= 2.0.0. requires Python >= 3.6
+validators >= 0.18.0 ; python_version >= '3.4' # base requirement from validators
+validators < 0.11.0 ; python_version <= '2.7' # base requirement from validators
