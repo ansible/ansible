@@ -17,6 +17,7 @@ import os.path
 import pkgutil
 import re
 import sys
+import warnings
 from keyword import iskeyword
 from tokenize import Name as _VALID_IDENTIFIER_REGEX
 
@@ -739,6 +740,9 @@ class AnsibleCollectionRef:
         self.n_python_collection_package_name = to_native('.'.join(package_components))
 
         if self.ref_type == u'role':
+            if not self.is_valid_role_name(resource):
+                warnings.warn("Role names are now limited to contain only lowercase alphanumeric characters, "
+                              "plus _ and start with an alpha character. Please check %s" % resource)
             package_components.append(u'roles')
         elif self.ref_type == u'playbook':
             package_components.append(u'playbooks')
@@ -875,6 +879,18 @@ class AnsibleCollectionRef:
             not iskeyword(ns_or_name) and is_python_identifier(ns_or_name)
             for ns_or_name in collection_name.split(u'.')
         )
+
+    @staticmethod
+    def is_valid_role_name(role_name):
+        """
+        Validates if the given string is a well-formed role name
+        :param role_name: name of the individual role within the collection
+        (a valid role name only contains lowercase alphanumeric characters, plus _ and start with an alpha character.)
+        :return: True if the role passed is well-formed, False otherwise
+        """
+
+        # NOTE: keywords and identifiers are different in different Pythons
+        return not iskeyword(role_name) and is_python_identifier(role_name)
 
 
 def _get_collection_playbook_path(playbook):
