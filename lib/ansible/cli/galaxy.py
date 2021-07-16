@@ -12,6 +12,8 @@ import shutil
 import sys
 import textwrap
 import time
+import validators
+import urllib2
 
 from yaml.error import YAMLError
 
@@ -247,7 +249,7 @@ class GalaxyCLI(CLI):
                                      default='./collections',
                                      help='The directory to download the collections to.')
         download_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                                     help='A file containing a list of collections to be downloaded.')
+                                     help='A file or url to a file containing a list of collections to be downloaded.')
         download_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
                                      help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
 
@@ -367,7 +369,7 @@ class GalaxyCLI(CLI):
                                    help='Validate collection integrity locally without contacting server for '
                                         'canonical manifest hash.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                                   help='A file containing a list of collections to be verified.')
+                                   help='A file or url to a file containing a list of collections to be verified.')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -403,14 +405,14 @@ class GalaxyCLI(CLI):
                                         default=self._get_default_collection_path(),
                                         help='The path to the directory containing your collections.')
             install_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                                        help='A file containing a list of collections to be installed.')
+                                        help='A file or url to a file containing a list of collections to be installed.')
             install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
                                         help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
             install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
                                         help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
-                                        help='A file containing a list of roles to be installed.')
+                                        help='A file or url to a file containing a list of roles to be installed.')
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                         default=False,
                                         help='Use tar instead of the scm archive option when packaging the role.')
@@ -596,7 +598,7 @@ class GalaxyCLI(CLI):
               source: the URL or a predefined source name that relates to C.GALAXY_SERVER_LIST
               type: git|file|url|galaxy
 
-        :param requirements_file: The path to the requirements file.
+        :param requirements_file: The path or url to the requirements file.
         :param allow_old_format: Will fail if a v1 requirements file is found and this is set to False.
         :param artifacts_manager: Artifacts manager.
         :return: a dict containing roles and collections to found in the requirements file.
@@ -607,17 +609,26 @@ class GalaxyCLI(CLI):
         }
 
         b_requirements_file = to_bytes(requirements_file, errors='surrogate_or_strict')
-        if not os.path.exists(b_requirements_file):
-            raise AnsibleError("The requirements file '%s' does not exist." % to_native(requirements_file))
-
-        display.vvv("Reading requirement file at '%s'" % requirements_file)
-        with open(b_requirements_file, 'rb') as req_obj:
+        file_requirements = None
+        if validators.url(b_requirements_file):
+            response = urllib2.urlopen(b_requirements_file)
             try:
-                file_requirements = yaml_load(req_obj)
+                file_requirements = yaml_load(response.read())
             except YAMLError as err:
                 raise AnsibleError(
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
                     % (to_native(requirements_file), to_native(err)))
+        elif not os.path.exists(b_requirements_file):
+            raise AnsibleError("The requirements file '%s' does not exist." % to_native(requirements_file))
+        else:
+            display.vvv("Reading requirement file at '%s'" % requirements_file)
+            with open(b_requirements_file, 'rb') as req_obj:
+                try:
+                    file_requirements = yaml_load(req_obj)
+                except YAMLError as err:
+                    raise AnsibleError(
+                        "Failed to parse the requirements yml at '%s' with the following error:\n%s"
+                        % (to_native(requirements_file), to_native(err)))
 
         if file_requirements is None:
             raise AnsibleError("No requirements found in file '%s'" % to_native(requirements_file))
