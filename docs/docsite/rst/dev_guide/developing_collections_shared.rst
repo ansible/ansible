@@ -67,10 +67,10 @@ The optional import behavior also applies to module_utils imported from collecti
 
 .. _collection_dependencies:
 
-Adding collection dependencies
-==============================
+Listing collection dependencies
+===============================
 
-If your collection depends on features and functionality from another collection, ????
+We recommend that collections work as standalone, independent units, depending only on ansible-core. However, if your collection must depend on features and functionality from another collection, list the other collection or collections under ``dependencies`` in your collection's :file:`galaxy.yml` file. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
 
 You can use git repositories for collection dependencies during local development and testing. For example:
 
@@ -78,7 +78,9 @@ You can use git repositories for collection dependencies during local developmen
 
    dependencies: {'git@github.com:organization/repo_name.git': 'devel'}
 
-Do not use git repositories as dependencies for published collections. Dependencies for published collections must be other published collections.
+.. warning
+
+   Do not use git repositories as dependencies for published collections. Dependencies for published collections must be other published collections.
 
 .. seealso::
 

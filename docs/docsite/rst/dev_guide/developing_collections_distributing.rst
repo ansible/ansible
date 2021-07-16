@@ -8,9 +8,13 @@ A collection is a distribution format for Ansible content. A typical collection 
 
 To distribute your collection and allow others to use it, you can publish your collection on one or more distribution servers. Distribution servers include:
 
-* Ansible Galaxy (accepts all collections)
-* Red Hat Automation Hub (accepts only collections certified by Red Hat)
-* privately hosted Automation Hub instances (accepts collections authorized by the owners)
+================================= ========================================================
+Distribution server               Collections accepted
+================================= ========================================================
+Ansible Galaxy                    All collections
+Red Hat Automation Hub            Only collections certified by Red Hat
+Privately hosted Automation Hub   Collections authorized by the owners
+================================= ========================================================
 
 Distributing collections involves four major steps:
 
@@ -30,7 +34,7 @@ Initial configuration of your distribution server or servers
 
 Configure a connection to one or more distribution servers so you can publish collections there. You only need to configure each distribution server once. You must repeat the other steps (building your collection tarball, preparing to publish, and publishing your collection) every time you publish a new collection or a new version of an existing collection.
 
-1. Create a namespace on each distribution server you want to use (Galaxy, private Automation Hub, Red Hat Automation Hub).
+1. Create a namespace on each distribution server you want to use.
 2. Get an API token for each distribution server you want to use.
 3. Specify the API token for each distribution server you want to use.
 
@@ -39,7 +43,7 @@ Configure a connection to one or more distribution servers so you can publish co
 Creating a namespace
 --------------------
 
-You must have a namespace on each distribution server (Galaxy, Red Hat Automation Hub, private Automation Hub) to upload your collection. To create a namespace:
+You must upload your collection into a namespace on each distribution server. If you have a login for Ansible Galaxy, your Galaxy username is also a Galaxy namespace. You can create additional namespaces on Ansible Galaxy if you choose. For Red Hat Automation Hub and private Automation Hub you must create a namespace before you can upload your collection. To create a namespace:
 
 * To create a namespace on Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
 * To create a namespace on Red Hat Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_.
@@ -73,7 +77,7 @@ Each time you publish a collection, you must specify the API token and the distr
 Specifying the token and distribution server in configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can specify your API token in configuration by creating a ``galaxy_server_list`` section to configure one or more distribution servers in your :file:`ansible.cfg` file. This is the most secure way to manage authentication for distribution servers. Specify a URL and token for each server. For example:
+By default, Ansible Galaxy is configured as the only distribution server. You can add other distribution servers and specify your API token or tokens in configuration by editing the ``galaxy_server_list`` section of your :file:`ansible.cfg` file. This is the most secure way to manage authentication for distribution servers. Specify a URL and token for each server. For example:
 
 .. code-block:: ini
 
@@ -112,7 +116,7 @@ For example:
 Building your collection tarball
 ================================
 
-After you configure one or more distribution servers, you must build a collection tarball. To build a collection tarball:
+After configuring one or more distribution servers, build a collection tarball. The collection tarball is the published artifact, the object that you upload and other users download to install your collection. To build a collection tarball:
 
 #. Review the version number in your :file:`galaxy.yaml` file. Each time you publish your collection, it must have a new version number. You cannot make changes to existing versions of your collection on a distribution server. If you try to upload the same collection version more than once, the distribution server returns the error ``Code: conflict.collection_exists``. Collections follow semantic versioning rules. For more information on versions, see :ref:`collection_versions`. For more information on the :file:`galaxy.yaml` file, see :ref:`collections_galaxy_meta`.
 #. Run ``ansible-galaxy collection build`` from inside the top-level directory of the collection. For example:
@@ -131,7 +135,6 @@ This command builds a tarball of the collection in the current directory, which 
 
 .. note::
    * To reduce the size of collections, certain files and folders are excluded from the collection tarball by default. See :ref:`ignoring_files_and_folders_collections` if your collection directory contains other files you want to exclude.
-   * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete all files that Mazer added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
    * The current Galaxy maximum tarball size is 2 MB.
 
 You can upload your tarball to one or more distribution servers. You can also distribute your collection locally by copying the tarball to install your collection directly on target systems.
@@ -164,6 +167,8 @@ For example, to exclude the :file:`sensitive` folder within the ``playbooks`` fo
      build_ignore:
      - playbooks/sensitive
      - '*.tar.gz'
+
+For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
 
 .. note::
      The ``build_ignore`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.10 or newer.
@@ -213,7 +218,7 @@ To install your collection locally from a git repository, specify the repository
 Reviewing your collection
 -------------------------
 
-Next, review the collection:
+Review the collection:
 
 * Run a playbook that uses the modules and plugins in your collection. Verify that new features and functionality work as expected. For examples and more details see :ref:`Using collections <using_collections>`. 
 * Check the documentation for typos.
@@ -229,9 +234,9 @@ The only way to change a collection is to release a new version. The latest vers
 
 Follow semantic versioning when setting the version for your collection. In summary:
 
-* Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
-* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
-* Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
+* Increment the major version number, ``x`` of ``x.y.z``, for an incompatible API change.
+* Increment the minor version number, ``y`` of ``x.y.z``, for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
+* Increment the patch version number, ``z`` of ``x.y.z``, for backwards compatible bug fixes.
 
 Read the official `Semantic Versioning <https://semver.org/>`_ documentation for details and examples.
 
@@ -259,7 +264,7 @@ To upload the collection tarball from the command line using ``ansible-galaxy``:
 
 .. note::
 
-	The above command assumes you have retrieved and stored your API token in configuration. See :ref:`galaxy_specify_token` for details.
+	This ansible-galaxy command assumes you have retrieved and stored your API token in configuration. See :ref:`galaxy_specify_token` for details.
 
 The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website. The command waits until the import process completes before reporting the status back. If you want to continue without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
@@ -281,6 +286,8 @@ After Galaxy uploads and accepts a collection, the website shows you the **My Im
 
    :ref:`collections`
        Learn how to install and use collections.
+   :ref:`collections_galaxy_meta`
+       Table of fields used in the :file:`galaxy.yml` file 
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    `irc.libera.chat <https://libera.chat/>`_
