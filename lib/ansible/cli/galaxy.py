@@ -1129,8 +1129,8 @@ class GalaxyCLI(CLI):
         requirements_file = context.CLIARGS['requirements']
         collection_path = None
 
-        if not validators.url(requirements_file):
-            if requirements_file:
+        if requirements_file:
+            if not validators.url(requirements_file):
                 requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
         two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
