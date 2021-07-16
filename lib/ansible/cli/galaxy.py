@@ -13,7 +13,6 @@ import sys
 import textwrap
 import time
 import validators
-import urllib3
 
 from yaml.error import YAMLError
 
