@@ -4,11 +4,15 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import errno
+
 try:
     import ansible.module_utils.compat.selinux as selinux
     HAS_SELINUX = True
-except:
+except ImportError:
     HAS_SELINUX = False
+
+from ansible.module_utils._text import to_native
 
 
 def do_we_have_selinux():
@@ -36,7 +40,7 @@ def is_selinux_mls_enabled():
     return is_selinux_mls_enabled.is_enabled
 
 
-def get_selinux_initial_contex():
+def get_selinux_initial_context():
     if not hasattr(get_selinux_initial_context, 'context'):
         get_selinux_initial_context.context = [None, None, None]
         if is_selinux_mls_enabled():
@@ -74,8 +78,6 @@ def get_selinux_context(path):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 raise OSError('path %s does not exist' % path)
-            else:
-                raise OSError('failed to retrieve selinux context')
+            raise OSError('failed to retrieve selinux context')
 
     return context
-

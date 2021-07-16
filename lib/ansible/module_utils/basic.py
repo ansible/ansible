@@ -85,7 +85,7 @@ from ansible.module_utils.compat import selectors
 
 from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
 from ansible.module_utils.common.file import add_to_file_cleanup, cleanup_files, get_path_uid_and_gid, remove_file
-from ansible.module_utils.common.sexlinux import (
+from ansible.module_utils.common.selinux import (
     get_selinux_default_context,
     get_selinux_initial_context,
     is_selinux_enabled,
@@ -1372,7 +1372,7 @@ class AnsibleModule(object):
                         deprecate(d[0], version=d[1])
                     elif isinstance(d, Mapping):
                         deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
-                                       collection_name=d.get('collection_name'))
+                                  collection_name=d.get('collection_name'))
                     else:
                         deprecate(d)  # pylint: disable=ansible-deprecated-no-version
             else:
