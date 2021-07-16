@@ -63,7 +63,7 @@ To get your API token:
 Specifying your API token and distribution server
 -------------------------------------------------
 
-Each time you publish a collection you must specify the API token and the distribution server to create a secure connection. You have two options for specifying the token and distribution server:
+Each time you publish a collection, you must specify the API token and the distribution server to create a secure connection. You have two options for specifying the token and distribution server:
 
 * You can configure the token in configuration, as part of a ``galaxy_server_list`` entry in your :file:`ansible.cfg` file. Using configuration is the most secure option.
 * You can pass the token at the command line as an argument to the ``ansible-galaxy`` command. If you pass the token at the command line, you can specify the server at the command line, by using the default setting, or by setting the server in configuration. Passing the token at the command line is insecure, because typing secrets at the command line may expose them to other users on the system.

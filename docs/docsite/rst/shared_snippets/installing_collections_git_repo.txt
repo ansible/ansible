@@ -22,7 +22,7 @@ For example:
 
 .. warning::
 
-   Embedding credentials into a git URI is not secure. Use safe authentication options to prevent your credentials from being exposed in logs or elsewhere. Safe authentication options include:
+   Embedding credentials into a git URI is not secure. Use safe authentication options to prevent your credentials from being exposed in logs or elsewhere. 
    
    * Use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ authentication
    * Use `netrc <https://linux.die.net/man/5/netrc>`_ authentication
