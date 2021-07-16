@@ -1,2 +1,5 @@
 jinja2  # ansible-core requirement
 pyyaml  # ansible-core requirement
+validators  # ansible-galaxy requirement
+urllib3  # ansible-galaxy requirement
+

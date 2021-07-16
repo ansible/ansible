@@ -9,3 +9,5 @@ packaging
 pypsrp
 pywinrm[credssp]
 pyyaml
+validators
+urllib3
