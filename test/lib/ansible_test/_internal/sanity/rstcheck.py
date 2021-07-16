@@ -87,7 +87,7 @@ class RstcheckTest(SanitySingleVersion):
             level=r['level'],
         ) for r in results]
 
-        settings.process_errors(results, paths)
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)
