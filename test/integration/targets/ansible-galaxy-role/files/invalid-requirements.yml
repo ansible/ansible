@@ -1,0 +1,2 @@
+- 'src': '{{ remote_tmp_dir }}/invalid-role.tar'
+  'name': 'invalid-testrole'

@@ -56,3 +56,14 @@
 
 - name: Uninstall invalid role
   command: ansible-galaxy role remove invalid-testrole
+
+- name: Install invalid role from remote requirements.yml
+  command: ansible-galaxy install -r https://github.com/eryx12o45/ansible/tree/add_new_galaxy_option/test/integration/targets/ansible-galaxy-role/files/invalid-requirements.yml
+  ignore_errors: yes
+  register: invalid
+
+- assert:
+    that: "invalid.rc != 0"
+
+- name: Uninstall invalid role
+  command: ansible-galaxy role remove invalid-testrole
