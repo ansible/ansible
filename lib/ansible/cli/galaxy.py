@@ -13,7 +13,7 @@ import sys
 import textwrap
 import time
 import validators
-import urllib2
+import urllib3
 
 from yaml.error import YAMLError
 
@@ -608,19 +608,20 @@ class GalaxyCLI(CLI):
             'collections': [],
         }
 
-        b_requirements_file = to_bytes(requirements_file, errors='surrogate_or_strict')
         file_requirements = None
-        if validators.url(b_requirements_file):
-            response = urllib2.urlopen(b_requirements_file)
+        if validators.url(requirements_file):
+            http = urllib3.PoolManager()
+            response = http.request('GET', requirements_file)
             try:
-                file_requirements = yaml_load(response.read())
+                file_requirements = yaml_load(response.data)
             except YAMLError as err:
                 raise AnsibleError(
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
                     % (to_native(requirements_file), to_native(err)))
-        elif not os.path.exists(b_requirements_file):
+        elif not os.path.exists(requirements_file):
             raise AnsibleError("The requirements file '%s' does not exist." % to_native(requirements_file))
         else:
+            b_requirements_file = to_bytes(requirements_file, errors='surrogate_or_strict')
             display.vvv("Reading requirement file at '%s'" % requirements_file)
             with open(b_requirements_file, 'rb') as req_obj:
                 try:
@@ -1128,8 +1129,9 @@ class GalaxyCLI(CLI):
         requirements_file = context.CLIARGS['requirements']
         collection_path = None
 
-        if requirements_file:
-            requirements_file = GalaxyCLI._resolve_path(requirements_file)
+        if not validators.url(requirements_file):
+            if requirements_file:
+                requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
         two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
                            "run 'ansible-galaxy {0} install -r' or to install both at the same time run " \
