@@ -17,7 +17,7 @@ import os.path
 import pkgutil
 import re
 import sys
-import warnings
+from ansible.utils.display import Display
 from keyword import iskeyword
 from tokenize import Name as _VALID_IDENTIFIER_REGEX
 
@@ -30,6 +30,8 @@ from ._collection_config import AnsibleCollectionConfig
 
 from contextlib import contextmanager
 from types import ModuleType
+
+display = Display()
 
 try:
     from importlib import import_module
@@ -741,8 +743,8 @@ class AnsibleCollectionRef:
 
         if self.ref_type == u'role':
             if not self.is_valid_role_name(resource):
-                warnings.warn("Role names are now limited to contain only lowercase alphanumeric characters, "
-                              "plus _ and start with an alpha character. Please check %s" % resource)
+                display.warning("Role names are now limited to contain only lowercase alphanumeric characters, "
+                                "plus _ and start with an alpha character. Please check %s" % resource)
             package_components.append(u'roles')
         elif self.ref_type == u'playbook':
             package_components.append(u'playbooks')
