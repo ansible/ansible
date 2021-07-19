@@ -12,9 +12,6 @@ import shutil
 import sys
 import textwrap
 import time
-import validators
-import urllib3
-
 from yaml.error import YAMLError
 
 import ansible.constants as C
@@ -53,6 +50,13 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
+
+try:
+    # python3
+    import urllib.request as urllib
+except ImportError:
+    # python2
+    import urllib2 as urllib
 
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse
@@ -609,11 +613,12 @@ class GalaxyCLI(CLI):
         }
 
         file_requirements = None
-        if validators.url(requirements_file):
-            http = urllib3.PoolManager()
-            response = http.request('GET', requirements_file)
+        parsed_url = urlparse(requirements_file)
+        if parsed_url.scheme in ('http', 'https'):
+            with urllib.urlopen(requirements_file) as http:
+                response = http.read()
             try:
-                file_requirements = yaml_load(response.data)
+                file_requirements = yaml_load(response)
             except YAMLError as err:
                 raise AnsibleError(
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
@@ -1130,7 +1135,8 @@ class GalaxyCLI(CLI):
         collection_path = None
 
         if requirements_file:
-            if not validators.url(requirements_file):
+            parsed_url = urlparse(requirements_file)
+            if parsed_url.scheme not in ('http', 'https'):
                 requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
         two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \

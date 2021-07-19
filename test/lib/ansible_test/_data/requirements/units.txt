@@ -6,5 +6,3 @@ pytest-mock
 pytest-xdist
 pyyaml
 resolvelib
-validators
-urllib3
