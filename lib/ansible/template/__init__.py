@@ -189,6 +189,25 @@ def _escape_backslashes(data, jinja_env):
     return data
 
 
+def is_possibly_template(data, jinja_env):
+    """Determines if a string looks like a template, by seeing if it
+    contains a jinja2 start delimiter. Does not guarantee that the string
+    is actually a template.
+
+    This is different than ``is_template`` which is more strict.
+    This method may return ``True`` on a string that is not templatable.
+
+    Useful when guarding passing a string for templating, but when
+    you want to allow the templating engine to make the final
+    assessment which may result in ``TemplateSyntaxError``.
+    """
+    if isinstance(data, string_types):
+        for marker in (jinja_env.block_start_string, jinja_env.variable_start_string, jinja_env.comment_start_string):
+            if marker in data:
+                return True
+    return False
+
+
 def is_template(data, jinja_env):
     """This function attempts to quickly detect whether a value is a jinja2
     template. To do so, we look for the first 2 matching jinja2 tokens for
@@ -198,6 +217,11 @@ def is_template(data, jinja_env):
     start = True
     comment = False
     d2 = jinja_env.preprocess(data)
+
+    # Quick check to see if this is remotely like a template before doing
+    # more expensive investigation.
+    if not is_possibly_template(d2, jinja_env):
+        return False
 
     # This wraps a lot of code, but this is due to lex returning a generator
     # so we may get an exception at any part of the loop
@@ -915,23 +939,7 @@ class Templar:
     templatable = is_template
 
     def is_possibly_template(self, data):
-        '''Determines if a string looks like a template, by seeing if it
-        contains a jinja2 start delimiter. Does not guarantee that the string
-        is actually a template.
-
-        This is different than ``is_template`` which is more strict.
-        This method may return ``True`` on a string that is not templatable.
-
-        Useful when guarding passing a string for templating, but when
-        you want to allow the templating engine to make the final
-        assessment which may result in ``TemplateSyntaxError``.
-        '''
-        env = self.environment
-        if isinstance(data, string_types):
-            for marker in (env.block_start_string, env.variable_start_string, env.comment_start_string):
-                if marker in data:
-                    return True
-        return False
+        return is_possibly_template(data, self.environment)
 
     def _convert_bare_variable(self, variable):
         '''
