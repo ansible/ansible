@@ -44,6 +44,30 @@
 
   - debug: var=echo1_fq
 
+  - legacy_ping:
+    register: legacy_ping_1
+    module_defaults:
+      legacy_ping:
+        data: from task
+
+  - legacy_ping:
+    register: legacy_ping_2
+    module_defaults:
+      ansible.legacy.legacy_ping:
+        data: from task
+
+  - ansible.legacy.legacy_ping:
+    register: legacy_ping_3
+    module_defaults:
+      legacy_ping:
+        data: from task
+
+  - ansible.legacy.legacy_ping:
+    register: legacy_ping_4
+    module_defaults:
+      ansible.legacy.legacy_ping:
+        data: from task
+
   - assert:
       that:
         - "echoaction_fq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
@@ -56,5 +80,9 @@
         - "other_echoaction_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
         - "other_echo1_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
         - "other_echo1_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "legacy_ping_1.ping == 'from task'"
+        - "legacy_ping_2.ping == 'from task'"
+        - "legacy_ping_3.ping == 'from task'"
+        - "legacy_ping_4.ping == 'from task'"
 
   - include_tasks: tasks/main.yml

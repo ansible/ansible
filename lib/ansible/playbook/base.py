@@ -381,16 +381,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     action_names = []
                     if len(defaults_entry.split('.')) < 3:
                         defaults_entry = 'ansible.legacy.' + defaults_entry
-                    action_names.append(defaults_entry)
-                    if defaults_entry.startswith('ansible.legacy.'):
-                        action_names.append(defaults_entry.replace('ansible.legacy.', 'ansible.builtin.'))
 
                     # Replace the module_defaults action entry with the canonical name,
                     # so regardless of how the action is called, the defaults will apply
-                    for action_name in action_names:
-                        resolved_action = self._resolve_action(action_name)
-                        if resolved_action:
-                            validated_defaults_dict[resolved_action] = defaults
+                    resolved_action = self._resolve_action(defaults_entry)
+                    if resolved_action:
+                        validated_defaults_dict[resolved_action] = defaults
 
             validated_module_defaults.append(validated_defaults_dict)
 
