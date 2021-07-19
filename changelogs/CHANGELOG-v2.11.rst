@@ -5,13 +5,13 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
-v2.11.3rc1
-==========
+v2.11.3
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-07-13
+| Release Date: 2021-07-19
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 

@@ -1830,6 +1830,17 @@ releases:
     - v2.11.2rc1_summary.yaml
     - version_compare-error-on-empty.yml
     release_date: '2021-06-14'
+  2.11.3:
+    changes:
+      release_summary: '| Release Date: 2021-07-19
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - v2.11.3_summary.yaml
+    release_date: '2021-07-19'
   2.11.3rc1:
     changes:
       bugfixes:
