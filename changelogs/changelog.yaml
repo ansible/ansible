@@ -1892,6 +1892,17 @@ releases:
     - psrp-reset.yml
     - v2.10.11rc1_summary.yaml
     release_date: '2021-06-14'
+  2.10.12:
+    changes:
+      release_summary: '| Release Date: 2021-07-19
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.12_summary.yaml
+    release_date: '2021-07-19'
   2.10.12rc1:
     changes:
       bugfixes:
