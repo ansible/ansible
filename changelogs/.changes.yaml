@@ -1892,6 +1892,11 @@ releases:
     - fix_unsafe_newline.yml
     - v2.9.23rc1_summary.yaml
     release_date: '2021-06-14'
+  2.9.24:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.24_summary.yaml
+    release_date: '2021-07-19'
   2.9.24rc1:
     codename: Immigrant Song
     fragments:
