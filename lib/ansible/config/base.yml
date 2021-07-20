@@ -1484,7 +1484,9 @@ INTERPRETER_PYTHON_FALLBACK:
   - /usr/bin/python
   - /usr/libexec/platform-python
   - python
-  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
+  vars:
+    - name: ansible_interpreter_python_fallback
+  type: list
   version_added: "2.8"
 TRANSFORM_INVALID_GROUP_CHARS:
   name: Transform invalid characters in group names
