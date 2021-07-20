@@ -1,0 +1,2 @@
+bugfixes:
+  - correclty inherit vars from parent in block.
