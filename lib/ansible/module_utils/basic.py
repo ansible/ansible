@@ -84,7 +84,7 @@ NoneType = type(None)
 from ansible.module_utils.compat import selectors
 
 from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
-from ansible.module_utils.common.file import add_to_file_cleanup, cleanup_files, get_path_uid_and_gid, remove_file
+from ansible.module_utils.common.file import add_to_file_cleanup, cleanup_files, get_path_uid_and_gid, remove_file, get_info_from_path
 from ansible.module_utils.common.selinux import (
     get_selinux_context,
     get_selinux_default_context,
@@ -1098,11 +1098,11 @@ class AnsibleModule(object):
     def set_file_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
-    def add_path_info(self, kwargs):
+    def add_path_info(self, info):
 
         path = info.get('path', info.get('dest', None))
         path_info = get_info_from_path(path)
-        return kwargs.update(path_info)
+        return info.update(path_info)
 
     def _check_locale(self):
         '''
