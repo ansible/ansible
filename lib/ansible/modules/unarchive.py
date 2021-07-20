@@ -336,10 +336,7 @@ class ZipArchive(object):
     def _legacy_file_list(self):
         rc, out, err = self.module.run_command([self.cmd_path, '-v', self.src])
         if rc:
-            msg = 'Neither python zipfile nor unzip can read {src}.'.format(src=self.src)
-            if self.module._verbosity >= 3:
-                msg = '{msg}: {err}'.format(msg=msg.rstrip('.'), err=to_native(err, errors='surrogate_or_replace'))
-            raise UnarchiveError(msg)
+            raise UnarchiveError('Neither python zipfile nor unzip can read %s' % self.src)
 
         for line in out.splitlines()[3:-2]:
             fields = line.split(None, 7)
@@ -797,9 +794,6 @@ class TgzArchive(object):
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive: %s' % err)
-            if self.module._verbosity >= 3:
-                msg = '{msg}: {err}'.format(msg=msg, err=to_native(err, errors='surrogate_or_replace'))
-            raise UnarchiveError(msg)
 
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
@@ -920,9 +914,6 @@ class TgzArchive(object):
                 return True, None
         except UnarchiveError as e:
             return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, to_native(e))
-            if self.module._verbosity >= 3:
-                msg = '{msg}: {err}'.format(msg=msg.rstrip('.'), err=to_native(ue, errors='surrogate_or_replace'))
-            return False, msg
         # Errors and no files in archive assume that we weren't able to
         # properly unarchive it
         return False, 'Command "%s" found no files in archive. Empty archive files are not supported.' % self.cmd_path
@@ -996,9 +987,6 @@ def pick_handler(src, dest, file_args, module):
         if can_handle:
             return obj
         reasons.add(reason)
-    joiner = ' '
-    if module._verbosity >= 3:
-        joiner = '\n'
     reason_msg = '\n'.join(reasons)
     module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed.\n%s' % (src, reason_msg))
 
