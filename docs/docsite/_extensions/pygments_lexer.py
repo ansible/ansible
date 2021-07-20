@@ -178,7 +178,7 @@ def setup(app):
         See http://www.sphinx-doc.org/en/stable/extdev/index.html#dev-extensions.
     """
     for lexer in [
-        AnsibleOutputLexer(startinline=True)
+        AnsibleOutputLexer
     ]:
         app.add_lexer(lexer.name, lexer)
         for alias in lexer.aliases:
