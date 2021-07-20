@@ -21,4 +21,6 @@
   assert:
     that:
       - relative_dest_1 is changed
+      - relative_dest_1.warnings | length > 0
+      - relative_dest_1.warnings[0] is search('absolute path')
       - relative_dest_2 is not changed
