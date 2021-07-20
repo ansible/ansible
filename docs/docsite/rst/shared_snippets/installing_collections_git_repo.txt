@@ -34,8 +34,8 @@ Specifying the collection location within the git repository
 
 When you install a collection from a git repository, Ansible uses the collection ``galaxy.yml`` or ``MANIFEST.json`` metadata file to build the collection. By default, Ansible searches two paths for collection ``galaxy.yml`` or ``MANIFEST.json`` metadata files:
 
-* the top level of the repository
-* each directory in the repository path (one level deep)
+* The top level of the repository.
+* Each directory in the repository path (one level deep).
 
 If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in the top level of the repository, Ansible uses the collection metadata in that file to install an individual collection.
 

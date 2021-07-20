@@ -43,7 +43,13 @@ Configure a connection to one or more distribution servers so you can publish co
 Creating a namespace
 --------------------
 
-You must upload your collection into a namespace on each distribution server. If you have a login for Ansible Galaxy, your Galaxy username is also a Galaxy namespace. You can create additional namespaces on Ansible Galaxy if you choose. For Red Hat Automation Hub and private Automation Hub you must create a namespace before you can upload your collection. To create a namespace:
+You must upload your collection into a namespace on each distribution server. If you have a login for Ansible Galaxy, your Ansible Galaxy username is usually also an Ansible Galaxy namespace.
+
+.. warning::
+
+   Namespaces on Ansible Galaxy cannot include hyphens. If you have a login for Ansible Galaxy that includes a hyphen, your Galaxy username is not also a Galaxy namespace. For example, ``awesome-user`` is a valid username for Ansible Galaxy, but it is not a valid namespace.
+
+You can create additional namespaces on Ansible Galaxy if you choose. For Red Hat Automation Hub and private Automation Hub you must create a namespace before you can upload your collection. To create a namespace:
 
 * To create a namespace on Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
 * To create a namespace on Red Hat Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_.
@@ -186,10 +192,10 @@ Each time you publish your collection, you must create a :ref:`new version <coll
 Installing your collection locally
 ----------------------------------
 
-You can install your collection locally in two ways:
+You have two options for installing your collection locally:
 
-  * from the tarball
-  * from your git repository
+  * Install your collection locally from the tarball.
+  * Install your collection locally from your git repository.
 
 Installing your collection locally from the tarball
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
