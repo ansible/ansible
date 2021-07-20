@@ -19,9 +19,9 @@ from ansible.module_utils import basic
 
 @pytest.fixture
 def atomic_am(am, mocker):
-    am.selinux_enabled = mocker.MagicMock()
-    am.selinux_context = mocker.MagicMock()
-    am.selinux_default_context = mocker.MagicMock()
+    am.selinux_enabled = mocker.patch('ansible.module_utils.common.selinux.is_selinux_enabled')
+    am.selinux_context = mocker.patch('ansible.module_utils.common.selinux.get_selinux_context')
+    am.selinux_default_context = mocker.patch('ansible.module_utils.common.selinux.get_selinux_default_context')
     am.set_context_if_different = mocker.MagicMock()
     am._unsafe_writes = mocker.MagicMock()
 
