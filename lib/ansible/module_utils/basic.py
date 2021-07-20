@@ -86,6 +86,7 @@ from ansible.module_utils.compat import selectors
 from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator
 from ansible.module_utils.common.file import add_to_file_cleanup, cleanup_files, get_path_uid_and_gid, remove_file
 from ansible.module_utils.common.selinux import (
+    get_selinux_context,
     get_selinux_default_context,
     get_selinux_initial_context,
     is_selinux_enabled,
