@@ -1716,7 +1716,7 @@ class AnsibleModule(object):
         return self._clean
 
     def _restore_signal_handlers(self):
-        Restore_signal_handlers()
+        restore_signal_handlers()
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
