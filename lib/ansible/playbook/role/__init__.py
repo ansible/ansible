@@ -263,11 +263,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
 
-        tasks_from = templar.template(self._from_files.get('tasks', 'main'))
+        tasks_from = templar.template(self._from_files.get('tasks'))
         task_data = self._load_role_yaml('tasks', main=tasks_from)
 
         if self._should_validate:
             role_argspecs = self._get_role_argspecs()
+            if tasks_from is None:
+                tasks_from = 'main'
             task_data = self._prepend_validation_task(task_data, role_argspecs, tasks_from)
 
         if task_data:
