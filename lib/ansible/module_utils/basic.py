@@ -1348,7 +1348,7 @@ class AnsibleModule(object):
 
     def _return_formatted(self, kwargs):
 
-        path = info.get('path', info.get('dest', None))
+        path = kwargs.get('path', kwargs.get('dest', None))
         path_info = get_info_from_path(path)
         kwargs.update(path_info)
 
