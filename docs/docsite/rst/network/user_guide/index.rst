@@ -19,6 +19,7 @@ If you're new to Ansible, or new to using Ansible for network automation, start 
    network_resource_modules
    network_best_practices_2.5
    cli_parsing
+   validate
    network_debug_troubleshooting
    network_working_with_command_output
    faq
