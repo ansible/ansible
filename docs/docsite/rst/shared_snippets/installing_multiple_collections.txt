@@ -1,5 +1,5 @@
 
-You can also setup a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:
+You can set up a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:
 
 .. code-block:: yaml+jinja
 
@@ -13,14 +13,27 @@ You can also setup a ``requirements.yml`` file to install multiple collections i
      version: 'version range identifiers (default: ``*``)'
      source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
-The supported keys for collection requirement entries are ``name``, ``version``, ``source``, and ``type``.
+You can specify four keys for each collection entry:
 
-The ``version`` key can take in the same range identifier format documented above. If you're installing a collection from a git repository instead of a built collection artifact, the ``version`` key refers to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_.
+  * ``name``
+  * ``version``
+  * ``source``
+  * ``type``
+
+The ``version`` key uses the same range identifier format documented in :ref:`collections_older_version`. 
 
 The ``type`` key can be set to ``galaxy``, ``url``, ``file``, and ``git``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection.
 
-Roles can also be specified and placed under the ``roles`` key. The values follow the same format as a requirements
-file used in older Ansible releases.
+When you install a collection with ``type: git``, the ``version`` key can refer to a branch or to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ object (commit or tag). For example:
+
+.. code-block:: yaml
+
+   collections:
+     - name: https://github.com/organization/repo_name.git
+       type: git
+       version: devel
+
+You can also add roles to a ``requirements.yml`` file, under the ``roles`` key. The values follow the same format as a requirements file used in older Ansible releases.
 
 .. code-block:: yaml
 
@@ -42,10 +55,7 @@ To install both roles and collections at the same time with one command, run the
 
     $ ansible-galaxy install -r requirements.yml
 
-Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections,
-or roles respectively.
+Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections, or roles respectively.
 
 .. note::
-    Installing both roles and collections from the same requirements file will not work when specifying a custom
-    collection or role install path. In this scenario the collections will be skipped and the command will process
-    each like ``ansible-galaxy role install`` would.
+    Installing both roles and collections from the same requirements file will not work when specifying a custom collection or role install path. In this scenario the collections will be skipped and the command will process each like ``ansible-galaxy role install`` would.
