@@ -1,0 +1,36 @@
+name: Docs build
+# HACK May wish to change to cron, or on release (git tag)
+on:
+  push:
+
+jobs:
+  docs:
+    name: Build Ansible docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: pip install -r ./docs/docsite/requirements.txt
+
+# HACK: For speed, only make a single page
+      - name: make webdocs
+        run: make htmlsingle rst=dev_guide/developing_modules_documenting.rst
+        working-directory: docs/docsite
+
+# HACK: Replace with SCP/RSYNC to server
+      - name: Publish website to GitHub pages https://gundalow.github.io/docs-test/
+        #if: github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          force_orphan: true
+          deploy_key: ${{ secrets.GHA_DOCS_KEY }} # SSH Deploy key
+          external_repository: gundalow/docs-test
+          publish_dir: docs/docsite/_build/html
+
