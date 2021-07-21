@@ -22,6 +22,7 @@ To validate data:
 #. Select a validation engine and test the data to see if it is valid based on the selected criteria and validation engine.
 
 The structure of the data and the criteria depends on the validation engine you select. The examples here use the ``jsonschema`` validation engine provided in the `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection.
+Red Hat Ansible Automation Platform subscription supports limited use if jsonschema public APIs as documented.
 
 Structuring the data
 =====================
