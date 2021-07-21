@@ -249,7 +249,7 @@ The result on the Cisco IOS XE router will only contain the highest precedence s
    rtr3#sh run | i name-server
    ip name-server 192.168.1.1
 
-How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with Red Hat Ansible Tower and the Survey feature.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser. See `Ansible Tower Job Template Surveys <https://docs.ansible.com/ansible-tower/latest/html/userguide/workflow_templates.html#surveys>`_ for more details.
+How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with the Job Template Survey feature on AWX or the :ref:`ansible_platform`.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser.
 
 
 Update an installed role
