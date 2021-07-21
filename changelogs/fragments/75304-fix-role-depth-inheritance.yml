@@ -1,0 +1,2 @@
+bugfixes:
+  - IncludeRole - fix an issue with depth of role var inheritance (https://github.com/ansible/ansible/issues/47023).
