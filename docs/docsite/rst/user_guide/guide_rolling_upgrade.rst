@@ -306,7 +306,7 @@ Now that you have an automated way to deploy updates to your application, how do
 
 Depending on your environment, you might be deploying continuously to a test environment, running an integration test battery against that environment, and then deploying automatically into production.  Or you could keep it simple and just use the rolling-update for on-demand deployment into test or production specifically.  This is all up to you.
 
-For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using :ref:`ansible_tower`, the ``tower-cli`` or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
+For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using AWX, the ``tower-cli`` command or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
 
 This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous delivery to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
 
