@@ -4,7 +4,7 @@
 Parsing semi-structured text with Ansible
 *****************************************
 
-The :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module parses semi-structured data such as network configurations into structured data to allow programmatic use of the data from that device. You can pull information from a network device and update a CMDB in one playbook. Use cases include automated troubleshooting, creating dynamic documentation, updating IPAM (IP address management) tools and so on.
+The :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module parses semi-structured data such as network configurations into structured data to allow programmatic use of the data from that device. You can pull information from a network device and update a CMDB in one playbook. Use cases include automated troubleshooting, creating dynamic documentation, updating IPAM (IP address management) tools and so on.
 
 
 .. contents::
@@ -14,7 +14,7 @@ The :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` mo
 Understanding the CLI parser
 =============================
 
-The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module that can run CLI commands and parse the semi-structured text output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text. The ``cli_parse`` module can either run a CLI command on a device and return a parsed result or can simply parse any text document. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines.
+The `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection version 1.0.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module that can run CLI commands and parse the semi-structured text output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text. The ``cli_parse`` module can either run a CLI command on a device and return a parsed result or can simply parse any text document. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines.
 
 Why parse the text?
 --------------------
@@ -67,7 +67,7 @@ Because ``cli_parse`` uses a plugin based architecture, it can use additional pa
 
 .. note::
 
-	The ``ansible.netcommon.native``  and ``ansible.netcommon.json`` parsing engines are fully supported with a Red Hat Ansible Automation Platform subscription. Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates``, pyATS, ``textfsm``, ``xmltodict``, public APIs as documented.
+	The ``ansible.netcommon.native``  and ``ansible.utils.json`` parsing engines are fully supported with a Red Hat Ansible Automation Platform subscription. Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates``, pyATS, ``textfsm``, ``xmltodict``, public APIs as documented.
 
 Parsing with the native parsing engine
 --------------------------------------
@@ -145,7 +145,7 @@ The following example task uses ``cli_parse`` with the native parser and the exa
 .. code-block:: yaml
 
    - name: "Run command and parse with native"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface
        parser:
          name: ansible.netcommon.native
@@ -247,7 +247,7 @@ The following example task uses ``cli_parse`` with the native parser and the exa
 .. code-block:: yaml
 
    - name: Run command and parse
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: ip addr show
        parser:
          name: ansible.netcommon.native
@@ -293,10 +293,10 @@ Example task:
 .. code-block:: yaml
 
    - name: "Run command and parse as json"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface | json
        parser:
-         name: ansible.netcommon.json
+         name: ansible.utils.json
        register: interfaces
 
 Taking a deeper dive into this task:
@@ -319,7 +319,7 @@ Example task:
 .. code-block:: yaml
 
    - name: "Run command and parse with ntc_templates"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface
        parser:
          name: ansible.netcommon.ntc_templates
@@ -378,7 +378,7 @@ Example task:
 .. code-block:: yaml
 
    - name: "Run command and parse with pyats"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface
        parser:
          name: ansible.netcommon.pyats
@@ -488,10 +488,10 @@ The following task uses the example template for ``textfsm`` with the ``cli_pars
 .. code-block:: yaml
 
    - name: "Run command and parse with textfsm"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface
        parser:
-         name: ansible.netcommon.textfsm
+         name: ansible.utils.textfsm
        set_fact: interfaces
 
 Taking a deeper dive into this task:
@@ -552,10 +552,10 @@ The following task uses this template to parse the ``show interface`` command ou
 .. code-block:: yaml
 
    - name: "Run command and parse with ttp"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface
        parser:
-         name: ansible.netcommon.ttp
+         name: ansible.utils.ttp
        set_fact: interfaces
 
 Taking a deeper dive in this task:
@@ -618,10 +618,10 @@ This example task runs the ``show interface`` command and parses the output as X
 .. code-block:: yaml
 
    - name: "Run command and parse as xml"
-       ansible.netcommon.cli_parse:
+       ansible.utils.cli_parse:
          command: show interface | xml
          parser:
-           name: ansible.netcommon.xml
+           name: ansible.utils.xml
      set_fact: interfaces
 
 .. note::
@@ -663,7 +663,7 @@ Use the ``template_path`` option to override the default template path in the ta
 .. code-block:: yaml
 
    - name: "Run command and parse with native"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show interface
        parser:
          name: ansible.netcommon.native
@@ -678,7 +678,7 @@ Use the ``command`` suboption for the ``parser`` to configure the command the pa
 .. code-block:: yaml
 
    - name: "Run command and parse with native"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: sho int
        parser:
          name: ansible.netcommon.native
@@ -692,14 +692,14 @@ Use the ``os`` suboption to the parser to directly set the OS instead of using `
 .. code-block:: yaml
 
    - name: Use ios instead of iosxe for pyats
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: show something
        parser:
          name: ansible.netcommon.pyats
          os: ios
 
    - name: Use linux instead of fedora from ansible_distribution
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        command: ps -ef
        parser:
          name: ansible.netcommon.native
@@ -715,7 +715,7 @@ Use the ``text`` option  instead of ``command`` to parse text collected earlier 
 
    # using /home/user/templates/filename.yaml
    - name: "Parse text from previous task"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        text: "{{ output['stdout'] }}"
        parser:
          name: ansible.netcommon.native
@@ -723,7 +723,7 @@ Use the ``text`` option  instead of ``command`` to parse text collected earlier 
 
     # using /home/user/templates/filename.yaml
    - name: "Parse text from file"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        text: "{{ lookup('file', 'path/to/file.txt') }}"
        parser:
          name: ansible.netcommon.native
@@ -731,7 +731,7 @@ Use the ``text`` option  instead of ``command`` to parse text collected earlier 
 
    # using templates/nxos_show_version.yaml
    - name: "Parse text from previous task"
-     ansible.netcommon.cli_parse:
+     ansible.utils.cli_parse:
        text: "{{ sho_version['stdout'] }}"
        parser:
          name: ansible.netcommon.native
