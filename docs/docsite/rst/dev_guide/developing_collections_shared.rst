@@ -4,7 +4,7 @@
 Using shared resources in collections
 *************************************
 
-Although developing Ansible modules contained in collections is similar to developing standalone Ansible modules, you use shared resources like documentation fragments and module utilities differently in collections. You can use documentation fragments within and across collections. You can use optional module utilities to support multiple versions of ansible-core in your collection.
+Although developing Ansible modules contained in collections is similar to developing standalone Ansible modules, you use shared resources like documentation fragments and module utilities differently in collections. You can use documentation fragments within and across collections. You can use optional module utilities to support multiple versions of ansible-core in your collection. Collections can also depend on other collections.
 
 .. contents::
    :local:
@@ -64,6 +64,23 @@ By wrapping the import statement in a ``try`` block, the payload builder will om
            module.fail_json('respawn is not available in Ansible < 2.11, ensure that foopkg is installed')
 
 The optional import behavior also applies to module_utils imported from collections.
+
+.. _collection_dependencies:
+
+Listing collection dependencies
+===============================
+
+We recommend that collections work as standalone, independent units, depending only on ansible-core. However, if your collection must depend on features and functionality from another collection, list the other collection or collections under ``dependencies`` in your collection's :file:`galaxy.yml` file. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
+
+You can use git repositories for collection dependencies during local development and testing. For example:
+
+.. code-block:: yaml
+
+   dependencies: {'git@github.com:organization/repo_name.git': 'devel'}
+
+.. warning
+
+   Do not use git repositories as dependencies for published collections. Dependencies for published collections must be other published collections.
 
 .. seealso::
 
