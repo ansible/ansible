@@ -68,6 +68,15 @@ class IncludeRole(TaskInclude):
         ''' return the name of the task '''
         return self.name or "%s : %s" % (self.action, self._role_name)
 
+    def get_all_role_parents(self, parents, resolved=None):
+        if resolved is None:
+            resolved = []
+        for parent in parents:
+            if parent._parents:
+                self.get_all_role_parents(parent._parents, resolved)
+            resolved.append(parent)
+        return resolved
+
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
@@ -92,10 +101,9 @@ class IncludeRole(TaskInclude):
 
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
-        if not self._parent_role:
-            dep_chain = []
-        else:
-            dep_chain = list(self._parent_role._parents)
+        dep_chain = []
+        if self._parent_role:
+            dep_chain = self.get_all_role_parents(self._parent_role._parents)
             dep_chain.append(self._parent_role)
 
         p_block = self.build_parent_block()
