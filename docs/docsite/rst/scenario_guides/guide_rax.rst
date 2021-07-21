@@ -167,7 +167,7 @@ To use the Rackspace dynamic inventory script, copy ``rax.py`` into your invento
 
 .. note:: Dynamic inventory scripts (like ``rax.py``) are saved in ``/usr/share/ansible/inventory`` if Ansible has been installed globally.  If installed to a virtualenv, the inventory scripts are installed to ``$VIRTUALENV/share/inventory``.
 
-.. note:: Users of :ref:`ansible_tower` will note that dynamic inventory is natively supported by Tower, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
+.. note:: Users of :ref:`ansible_platform` will note that dynamic inventory is natively supported by the controller in the platform, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i rax.py -m setup
 
@@ -782,15 +782,14 @@ Advanced Usage
 
 .. _awx_autoscale:
 
-Autoscaling with Tower
-++++++++++++++++++++++
+Autoscaling with AWX or Red Hat Ansible Automation Platform
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  
-In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
-and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.
-See the Tower documentation for more details.  
+The GUI component of :ref:`Red Hat Ansible Automation Platform <ansible_tower>` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
+a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
+to reconfigure ephemeral nodes.  See `the documentation on provisioning callbacks <https://docs.ansible.com/ansible-tower/latest/html/userguide/job_templates.html#provisioning-callbacks>`_ for more details.
 
-A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded 
+A benefit of using the callback approach over pull mode is that job results are still centrally recorded 
 and less information has to be shared with remote hosts.
 
 .. _pending_information:

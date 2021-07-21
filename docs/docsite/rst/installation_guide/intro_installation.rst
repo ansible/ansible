@@ -443,7 +443,7 @@ New features are added to ``ansible-core`` on a branch called ``devel``. If you 
 
 .. note::
 
-   If you want to use Ansible Tower as the control node, do not install or run the ``devel`` branch of Ansible. Use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version.
+   If you want to use Ansible AWX as the control node, do not install or run the ``devel`` branch of Ansible. Use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version.
 
 If you are running Ansible from source, you may also wish to follow the `Ansible GitHub project <https://github.com/ansible/ansible>`_. We track issues, document bugs, and share feature ideas in this and other related repositories.
 
