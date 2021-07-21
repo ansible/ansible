@@ -132,6 +132,25 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.3.0
+========================
+
+Major Changes
+-------------
+
+netapp.cloudmanager
+~~~~~~~~~~~~~~~~~~~
+
+- Adding stage environment to all modules in cloudmanager
+
+Deprecated Features
+-------------------
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- hashi_vault collection - support for Python 3.5 will be dropped in version ``2.0.0`` of ``community.hashi_vault`` (https://github.com/ansible-collections/community.hashi_vault/issues/81).
+
 Porting Guide for v4.2.0
 ========================
 
