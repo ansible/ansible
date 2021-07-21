@@ -16,7 +16,7 @@ Inventory plugins take advantage of the most recent updates to the Ansible core 
 
 You can still use inventory scripts if you choose. When we implemented inventory plugins, we ensured backwards compatibility through the script inventory plugin. The examples below illustrate how to use inventory scripts.
 
-If you prefer a GUI for handling dynamic inventory, the :ref:`ansible_tower` inventory database syncs with all your dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, you can correlate past event history and see which hosts have had failures on their last playbook runs.
+If you prefer a GUI for handling dynamic inventory, the inventory database on AWX or :ref:`ansible_platform` syncs with all your dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, you can correlate past event history and see which hosts have had failures on their last playbook runs.
 
 .. _cobbler_example:
 

@@ -460,7 +460,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too. Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable. (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable. (If you are using AWX or the :ref:`Red Hat Ansible Automation Platform <ansible_platform>`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -628,7 +628,7 @@ We also offer free web-based training classes on a regular basis. See our
 Is there a web interface / REST API / GUI?
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Yes! Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
+Yes! The open-source web interface is Ansible AWX. The supported Red Hat product that makes Ansible even more powerful and easy to use is :ref:`Red Hat Ansible Automation Platform <ansible_platform>`.
 
 
 .. _keep_secret_data:
@@ -751,7 +751,7 @@ tend to have very short expiration periods so it requires frequent reauthorizati
 a long set of tasks.
 
 In such environments we recommend securing around Ansible's execution but still allowing it to use an 'automation user' that does not require such measures.
-This is something that Tower/AWX excels at by allowing administrators to set up RBAC access to inventory, along with managing credentials and job execution.
+With AWX or the :ref:`Red Hat Ansible Automation Platform <ansible_platform>`, administrators can set up RBAC access to inventory, along with managing credentials and job execution.
 
 
 .. _complex_configuration_validation:

@@ -65,7 +65,7 @@ To create an Active Directory username/password:
 Providing Credentials to Azure Modules
 ......................................
 
-The modules offer several ways to provide your credentials. For a CI/CD tool such as Ansible Tower or Jenkins, you will
+The modules offer several ways to provide your credentials. For a CI/CD tool such as Ansible AWX or Jenkins, you will
 most likely want to use environment variables. For local development you may wish to store your credentials in a file
 within your home directory. And of course, you can always pass credentials as parameters to a task within a playbook. The
 order of precedence is parameters, then environment variables, and finally a file found in your home directory.

@@ -37,7 +37,7 @@ General guidelines & tips
 * If you have a local module that returns information specific to your installations, a good name for this module is ``site_info``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
 * Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
-* Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+* Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server, AWX, or the Red Hat Ansible Automation Platform); do not try to build it into modules.
 * If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
 Functions and Methods
