@@ -21,7 +21,8 @@ jobs:
 
 # HACK: For speed, only make a single page
       - name: make webdocs
-        run: make htmlsingle rst=dev_guide/developing_modules_documenting.rst
+        #run: make htmlsingle rst=dev_guide/developing_modules_documenting.rst
+        run: make webdocs
         working-directory: docs/docsite
 
 # HACK: Replace with SCP/RSYNC to server
