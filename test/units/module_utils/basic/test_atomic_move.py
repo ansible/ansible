@@ -19,9 +19,10 @@ from ansible.module_utils import basic
 
 @pytest.fixture
 def atomic_am(am, mocker):
-    am.selinux_enabled = mocker.patch('ansible.module_utils.common.selinux.is_selinux_enabled')
-    am.selinux_context = mocker.patch('ansible.module_utils.common.selinux.get_selinux_context')
-    am.selinux_default_context = mocker.patch('ansible.module_utils.common.selinux.get_selinux_default_context')
+    am.selinux_enabled = mocker.patch('ansible.module_utils.basic.is_selinux_enabled')
+    am.selinux_context = mocker.patch('ansible.module_utils.basic.get_selinux_context')
+    am.selinux_default_context = mocker.patch('ansible.module_utils.basic.get_selinux_default_context')
+    am.get_info_from_path = mocker.patch('ansible.module_utils.basic.get_info_from_path')
     am.set_context_if_different = mocker.MagicMock()
     am._unsafe_writes = mocker.MagicMock()
 
@@ -165,6 +166,7 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     """Test os.rename fails with EIO, causing it to bail out"""
     atomic_mocks['path_exists'].side_effect = [False, False]
     atomic_mocks['rename'].side_effect = OSError(errno.EIO, 'failing with EIO')
+    atomic_am.get_info_from_path.return_value = {}
 
     with pytest.raises(SystemExit):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
