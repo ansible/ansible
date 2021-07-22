@@ -172,6 +172,7 @@ options:
         headers such as C(Authorization) here to avoid potential credential exposure.
     default: []
     type: list
+    elements: str
     version_added: '2.12'
   use_gssapi:
     description:
