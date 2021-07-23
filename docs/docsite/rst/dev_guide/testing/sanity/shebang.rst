@@ -6,6 +6,7 @@ Most executable files should only use one of the following shebangs:
 - ``#!/bin/sh``
 - ``#!/bin/bash``
 - ``#!/usr/bin/make``
+- ``#!/usr/bin/env node``
 - ``#!/usr/bin/env python``
 - ``#!/usr/bin/env bash``
 
