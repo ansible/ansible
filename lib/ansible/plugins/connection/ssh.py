@@ -93,6 +93,7 @@ DOCUMENTATION = '''
               - name: ansible_ssh_common_args
           cli:
               - name: ssh_common_args
+          default: ''
       ssh_executable:
           default: ssh
           description:
@@ -142,6 +143,7 @@ DOCUMENTATION = '''
               version_added: '2.7'
           cli:
             - name: scp_extra_args
+          default: ''
       sftp_extra_args:
           description: Extra exclusive to the ``sftp`` CLI
           vars:
@@ -155,6 +157,7 @@ DOCUMENTATION = '''
               version_added: '2.7'
           cli:
             - name: sftp_extra_args
+          default: ''
       ssh_extra_args:
           description: Extra exclusive to the 'ssh' CLI
           vars:
@@ -168,6 +171,7 @@ DOCUMENTATION = '''
               version_added: '2.7'
           cli:
             - name: ssh_extra_args
+          default: ''
       reconnection_retries:
           description: Number of attempts to connect.
           default: 0
