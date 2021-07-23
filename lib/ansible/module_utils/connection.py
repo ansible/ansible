@@ -74,7 +74,7 @@ def send_data(s, data):
 
 def recv_data(s):
     header_len = 8  # size of a packed unsigned long long
-    data = to_bytes("")
+    data = b""
     while len(data) < header_len:
         d = s.recv(header_len - len(data))
         if not d:
@@ -171,8 +171,6 @@ class Connection(object):
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
-        if "result_type" in response:
-            response["result"] = cPickle.loads(to_bytes(response["result"]))
 
         return response
 
@@ -194,7 +192,11 @@ class Connection(object):
             code = err['code']
             raise ConnectionError(to_text(msg, errors='surrogate_then_replace'), code=code)
 
-        return response['result']
+        if "result" in response:
+            if response["result"]["data_type"] == "pickle":
+                response["result"]["data"] = cPickle.loads(to_bytes(response["result"]["data"]))
+
+        return response['result']["data"]
 
     def send(self, data):
         try:
