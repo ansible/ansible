@@ -1,2 +1,2 @@
 bugfixes:
-  - correclty inherit vars from parent in block.
+  - correctly inherit vars from parent in block.
