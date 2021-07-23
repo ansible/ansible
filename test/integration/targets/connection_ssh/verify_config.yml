@@ -1,0 +1,21 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    ssh_configs:
+      - ssh_common_args
+      - ssh_extra_args
+      - sftp_extra_args
+      - scp_extra_args
+  tasks:
+    - debug:
+        msg: '{{item ~ ": " ~ lookup("config", item, plugin_type="connection", plugin_name="ssh")}}'
+        verbosity: 3
+      loop: '{{ssh_configs}}'
+      tags: [ configfile ]
+
+    - name: check config from file
+      assert:
+        that:
+          - 'lookup("config", item, plugin_type="connection", plugin_name="ssh") == "fromconfig"'
+      loop: '{{ssh_configs}}'
+      tags: [ configfile ]
