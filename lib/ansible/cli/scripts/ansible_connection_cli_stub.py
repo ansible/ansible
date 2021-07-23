@@ -135,31 +135,36 @@ class ConnectionProcess(object):
 
                 self.exception = None
                 (s, addr) = self.sock.accept()
-                signal.alarm(0)
-                signal.signal(signal.SIGALRM, self.command_timeout)
-                while True:
-                    data = recv_data(s)
-                    if not data:
-                        break
-
-                    if log_messages:
-                        display.display("jsonrpc request: %s" % data, log_only=True)
-
-                    request = json.loads(to_text(data, errors='surrogate_or_strict'))
-                    if request.get('method') == "exec_command" and not self.connection.connected:
-                        self.connection._connect()
-
-                    signal.alarm(self.connection.get_option('persistent_command_timeout'))
-
-                    resp = self.srv.handle_request(data)
+                try:
                     signal.alarm(0)
+                    signal.signal(signal.SIGALRM, self.command_timeout)
+                    while True:
+                        data = recv_data(s)
+                        if not data:
+                            break
 
-                    if log_messages:
-                        display.display("jsonrpc response: %s" % resp, log_only=True)
+                        if log_messages:
+                            display.display("jsonrpc request: %s" % data, log_only=True)
 
-                    send_data(s, to_bytes(resp))
+                        request = json.loads(to_text(data, errors='surrogate_or_strict'))
+                        if request.get('method') == "exec_command" and not self.connection.connected:
+                            self.connection._connect()
 
-                s.close()
+                        signal.alarm(self.connection.get_option('persistent_command_timeout'))
+
+                        resp = self.srv.handle_request(data)
+                        signal.alarm(0)
+
+                        if log_messages:
+                            display.display("jsonrpc response: %s" % resp, log_only=True)
+
+                        send_data(s, to_bytes(resp))
+
+                except Exception as exc:
+                    error = self.srv.make_error(data, to_text(exc))
+                    send_data(s, to_bytes(error))
+                finally:
+                    s.close()
 
         except Exception as e:
             # socket.accept() will raise EINTR if the socket.close() is called

@@ -72,6 +72,24 @@ class JsonRpcServer(object):
 
         return response
 
+    def make_error(self, request, error_msg):
+        """Produce a correct error payload based on request
+
+        This is here to allow a caller to produce an error response with the
+        correct format and response id outside of handle_request, say if an
+        error has occurred before handle_request could be called.
+        """
+        request = json.loads(to_text(request, errors='surrogate_then_replace'))
+
+        setattr(self, '_identifier', request.get('id'))
+
+        error = self.internal_error(data=to_text(error_msg))
+        response = json.dumps(error)
+
+        delattr(self, '_identifier')
+
+        return response
+
     def register(self, obj):
         self._objects.add(obj)
 
