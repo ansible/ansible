@@ -256,13 +256,13 @@ def add_connect_options(parser):
                                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
 
     # ssh only
-    connect_group.add_argument('--ssh-common-args', default='', dest='ssh_common_args',
+    connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',
                                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
-    connect_group.add_argument('--sftp-extra-args', default='', dest='sftp_extra_args',
+    connect_group.add_argument('--sftp-extra-args', default=None, dest='sftp_extra_args',
                                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
-    connect_group.add_argument('--scp-extra-args', default='', dest='scp_extra_args',
+    connect_group.add_argument('--scp-extra-args', default=None, dest='scp_extra_args',
                                help="specify extra arguments to pass to scp only (e.g. -l)")
-    connect_group.add_argument('--ssh-extra-args', default='', dest='ssh_extra_args',
+    connect_group.add_argument('--ssh-extra-args', default=None, dest='ssh_extra_args',
                                help="specify extra arguments to pass to ssh only (e.g. -R)")
 
     parser.add_argument_group(connect_group)
