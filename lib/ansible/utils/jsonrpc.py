@@ -80,12 +80,24 @@ class JsonRpcServer(object):
 
     def response(self, result=None):
         response = self.header()
+        response['result'] = self.package_result(result)
+        return response
+
+    def package_result(self, result):
+        response = dict(data_type="text", messages=[])
         if isinstance(result, binary_type):
-            result = to_text(result)
+            response["data"] = to_text(result)
         if not isinstance(result, text_type):
-            response["result_type"] = "pickle"
-            result = to_text(cPickle.dumps(result, protocol=0))
-        response['result'] = result
+            response["data_type"] = "pickle"
+            response["data"] = to_text(cPickle.dumps(result, protocol=0))
+
+        # Gather any messages that have been created as well
+        for obj in self._objects:
+            try:
+                response["messages"].extend(obj.pop_messages())
+            except AttributeError:
+                pass
+
         return response
 
     def error(self, code, message, data=None):
