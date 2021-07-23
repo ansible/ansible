@@ -159,6 +159,7 @@ DOCUMENTATION = '''
           default: ''
       ssh_extra_args:
           description: Extra exclusive to the 'ssh' CLI
+          default: ''
           vars:
               - name: ansible_ssh_extra_args
           env:
@@ -170,7 +171,6 @@ DOCUMENTATION = '''
               version_added: '2.7'
           cli:
             - name: ssh_extra_args
-          default: ''
       reconnection_retries:
           description: Number of attempts to connect.
           default: 3
