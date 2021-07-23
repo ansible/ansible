@@ -68,3 +68,6 @@ ANSIBLE_SSH_TRANSFER_METHOD=piped ./posix.sh "$@"
 
 # test config defaults override
 ansible-playbook check_ssh_defaults.yml "$@" -i test_connection.inventory
+
+# ensure we can load from ini cfg
+ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
