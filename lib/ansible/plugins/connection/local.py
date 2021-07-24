@@ -23,10 +23,10 @@ import pty
 import shutil
 import subprocess
 import fcntl
-import getpass
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.basic import get_username
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -47,7 +47,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
         self.cwd = None
-        self.default_user = getpass.getuser()
+        self.default_user = get_username()
 
     def _connect(self):
         ''' connect to the local host; nothing to do here '''

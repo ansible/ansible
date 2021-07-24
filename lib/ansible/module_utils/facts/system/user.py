@@ -16,10 +16,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import getpass
 import os
 import pwd
 
+from ansible.module_utils.basic import get_username
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -33,10 +33,10 @@ class UserFactCollector(BaseFactCollector):
     def collect(self, module=None, collected_facts=None):
         user_facts = {}
 
-        user_facts['user_id'] = getpass.getuser()
+        user_facts['user_id'] = get_username()
 
         try:
-            pwent = pwd.getpwnam(getpass.getuser())
+            pwent = pwd.getpwnam(get_username())
         except KeyError:
             pwent = pwd.getpwuid(os.getuid())
 

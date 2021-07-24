@@ -36,6 +36,7 @@ from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.module_utils.basic import get_username
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.six import with_metaclass, text_type
 from ansible.utils.color import stringc
@@ -158,11 +159,7 @@ class FilterUserInjector(logging.Filter):
     to all logger handlers so that 3rd party libraries won't print an exception due to user not being defined.
     """
 
-    try:
-        username = getpass.getuser()
-    except KeyError:
-        # people like to make containers w/o actual valid passwd/shadow and use host uids
-        username = 'uid=%s' % os.getuid()
+    username = get_username()
 
     def filter(self, record):
         record.user = FilterUserInjector.username

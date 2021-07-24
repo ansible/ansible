@@ -8,7 +8,6 @@ __metaclass__ = type
 
 import atexit
 import cmd
-import getpass
 import readline
 import os
 import sys
@@ -18,6 +17,7 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.module_utils.basic import get_username
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
@@ -133,7 +133,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             self.do_exit(self)
 
     def set_prompt(self):
-        login_user = self.remote_user or getpass.getuser()
+        login_user = self.remote_user or get_username()
         self.selected = self.inventory.list_hosts(self.cwd)
         prompt = "%s@%s (%d)[f:%s]" % (login_user, self.cwd, len(self.selected), self.forks)
         if self.become and self.become_user in [None, 'root']:

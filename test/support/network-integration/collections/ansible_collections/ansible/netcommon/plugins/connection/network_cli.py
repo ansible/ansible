@@ -258,7 +258,6 @@ options:
 """
 
 from functools import wraps
-import getpass
 import json
 import logging
 import re
@@ -270,6 +269,7 @@ import traceback
 from io import BytesIO
 
 from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils.basic import get_username
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.utils import (
@@ -384,7 +384,7 @@ class Connection(NetworkConnectionBase):
         return self._paramiko_conn
 
     def _get_log_channel(self):
-        name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
+        name = "p=%s u=%s | " % (os.getpid(), get_username())
         name += "paramiko [%s]" % self._play_context.remote_addr
         return name
 
