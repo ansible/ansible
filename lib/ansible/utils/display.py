@@ -130,7 +130,7 @@ def get_text_width(text):
             w = 0
         width += w
 
-    if width == 0 and counter and _LOCALE_INITIALIZED_ERR:
+    if width == 0 and counter and _LOCALE_INITIALIZATION_ERR:
         raise EnvironmentError(
             'ansible.utils.display.initialize_locale failed, '
             'and get_text_width could not calculate text width of %r' % text
