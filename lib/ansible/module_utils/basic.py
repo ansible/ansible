@@ -36,6 +36,7 @@ import __main__
 import atexit
 import errno
 import datetime
+import getpass
 import grp
 import fcntl
 import locale
@@ -2145,3 +2146,16 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def get_username():
+    ''' Returns "login name" of current user.
+
+    Synthetises one if passwd file doesn't contain the name for current uid,
+    which may happen in containerized environments.
+    '''
+
+    try:
+        return getpass.getuser()
+    except KeyError:
+        return 'uid=%s' % os.getuid()

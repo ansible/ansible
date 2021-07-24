@@ -1,0 +1,2 @@
+bugfixes:
+  - Use ``uid=…`` as username when there is none in ``/etc/passwd`` (https://github.com/ansible/ansible/pull/75177)
