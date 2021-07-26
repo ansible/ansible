@@ -1,0 +1,28 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    var_a: "value"
+    var_b: "{{ var_a }}"
+    var_c: "<< var_a >>"
+  tasks:
+    - set_fact:
+        var_d: "{{ var_a }}"
+
+    - block:
+        - template:
+            src: in_template_overrides.j2
+            dest: out.txt
+
+        - command: cat out.txt
+          register: out
+
+        - assert:
+            that:
+              - "'var_a: value' in out.stdout"
+              - "'var_b: value' in out.stdout"
+              - "'var_c: << var_a >>' in out.stdout"
+              - "'var_d: value' in out.stdout"
+      always:
+        - file:
+            path: out.txt
+            state: absent

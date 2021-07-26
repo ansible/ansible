@@ -1079,15 +1079,21 @@ class Templar:
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
+        has_template_overrides = data.startswith(JINJA2_OVERRIDE)
+
         try:
-            # allows template header overrides to change jinja2 options.
-            if overrides is None:
-                myenv = self.environment
-            else:
+            # NOTE Creating an overlay that lives only inside do_template means that overrides are not applied
+            # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
+            # This is historic behavior that is kept for backwards compatibility.
+            if overrides:
                 myenv = self.environment.overlay(overrides)
+            elif has_template_overrides:
+                myenv = self.environment.overlay()
+            else:
+                myenv = self.environment
 
             # Get jinja env overrides from template
-            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
+            if has_template_overrides:
                 eol = data.find('\n')
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol + 1:]
