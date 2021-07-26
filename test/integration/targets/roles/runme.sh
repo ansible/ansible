@@ -19,7 +19,7 @@ ansible-playbook data_integrity.yml -i ../../inventory "$@"
 
 
 # ensure role vars are inherited correctly
-ANSIBLE_PRIVATE_ROLE_VARS=True ANSIBLE_ROLES_PATH=./moar_roles ansible-playbook test_role_parents.yml -i ../../inventory "$@" | tee out.txt
-test "$(grep '"msg": "RoleA"' -c out.txt)" = "1"
-test "$(grep '"msg": "RoleB"' -c out.txt)" = "1"
-test "$(grep '"msg": "RoleC"' -c out.txt)" = "0"
+ANSIBLE_PRIVATE_ROLE_VARS=True ansible-playbook 39543.yml -i ../../inventory "$@" | tee out.txt
+test "$(grep '"msg": "role1"' -c out.txt)" = "1"
+test "$(grep '"msg": "role2"' -c out.txt)" = "1"
+test "$(grep '"msg": "role3"' -c out.txt)" = "0"
