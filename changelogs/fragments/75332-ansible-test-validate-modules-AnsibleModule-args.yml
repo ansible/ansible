@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test validate-modules - correctly validate positional parameters to ``AnsibleModules`` (https://github.com/ansible/ansible/pull/75332)."
