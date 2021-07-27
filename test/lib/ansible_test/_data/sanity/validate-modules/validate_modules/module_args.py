@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import runpy
+import inspect
 import json
 import os
 import subprocess
@@ -27,17 +28,14 @@ import sys
 from contextlib import contextmanager
 
 from ansible.executor.powershell.module_manifest import PSModuleDepFinder
-from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS, AnsibleModule
 from ansible.module_utils.six import reraise
 from ansible.module_utils._text import to_bytes, to_text
 
 from .utils import CaptureStd, find_executable, get_module_name_from_filename
 
 
-ANSIBLE_MODULE_CONSTURCTOR_ARGS = (
-    'argument_spec', 'bypass_checks', 'no_log', 'mutually_exclusive', 'required_together',
-    'required_one_of', 'add_file_common_args', 'supports_check_mode', 'required_if', 'required_by',
-)
+ANSIBLE_MODULE_CONSTURCTOR_ARGS = tuple(list(inspect.signature(AnsibleModule.__init__).parameters)[1:])
 
 
 class AnsibleModuleCallError(RuntimeError):
