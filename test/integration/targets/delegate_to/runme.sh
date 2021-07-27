@@ -4,7 +4,7 @@ set -eux
 
 platform="$(uname)"
 
-function setup() {
+setup() {
     if [[ "${platform}" == "FreeBSD" ]] || [[ "${platform}" == "Darwin" ]]; then
         ifconfig lo0
 
@@ -24,7 +24,7 @@ function setup() {
     fi
 }
 
-function teardown() {
+teardown() {
     if [[ "${platform}" == "FreeBSD" ]] || [[ "${platform}" == "Darwin" ]]; then
         for i in 3 4 254; do
             ip="127.0.0.${i}"
