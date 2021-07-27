@@ -167,7 +167,7 @@ shuffle:
     Randomly ordered on each run
 
 .. note::
-    The 'inventory' order does not equate to the order in which hosts/groups are defined in the inventory source file, but the 'order in which a selection is returned from the compiled inventory'. This is a backwards compatible option and while reproducilbe it is not normally predictable. Due to the nature of inventory, host patterns, limits, inventory plugins and the ability to allow multiple sources it is almost impossible to return such an order. While for simple cases this might happen to match the file definition order, it is not guaranteed.
+    The 'inventory' order does not equate to the order in which hosts/groups are defined in the inventory source file, but the 'order in which a selection is returned from the compiled inventory'. This is a backwards compatible option and while reproducible it is not normally predictable. Due to the nature of inventory, host patterns, limits, inventory plugins and the ability to allow multiple sources it is almost impossible to return such an order. While for simple cases this might happen to match the file definition order, it is not guaranteed.
 
 .. _run_once:
 
