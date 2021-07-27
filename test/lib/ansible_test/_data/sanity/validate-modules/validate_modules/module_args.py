@@ -130,7 +130,7 @@ def get_ps_argument_spec(filename, collection):
     # the validate-modules code expects the options spec to be under the argument_spec key not options as set in PS
     kwargs['argument_spec'] = kwargs.pop('options', {})
 
-    return kwargs['argument_spec'], (), kwargs
+    return kwargs['argument_spec'], kwargs
 
 
 def get_py_argument_spec(filename, collection):
@@ -162,9 +162,9 @@ def get_py_argument_spec(filename, collection):
             for k, v in FILE_COMMON_ARGUMENTS.items():
                 if k not in argument_spec:
                     argument_spec[k] = v
-        return argument_spec, [], fake.kwargs
+        return argument_spec, fake.kwargs
     except (TypeError, IndexError):
-        return {}, (), {}
+        return {}, {}
 
 
 def get_argument_spec(filename, collection):
