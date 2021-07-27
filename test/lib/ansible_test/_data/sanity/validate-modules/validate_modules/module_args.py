@@ -154,7 +154,7 @@ def get_py_argument_spec(filename, collection):
         for arg, arg_name in zip(fake.args, ANSIBLE_MODULE_CONSTURCTOR_ARGS):
             fake.kwargs[arg_name] = arg
         # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
-        argument_spec = fake.kwargs['argument_spec']
+        argument_spec = fake.kwargs.get('argument_spec') or {}
         # If add_file_common_args is truish, add options from FILE_COMMON_ARGUMENTS when not present.
         # This is the only modification to argument_spec done by AnsibleModule itself, and which is
         # not caught by setup_env's AnsibleModule replacement
