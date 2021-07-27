@@ -34,7 +34,6 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
-from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.vars import combine_vars
 
@@ -208,22 +207,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             else:
                 self._attributes[attr_name] = role_include._attributes[attr_name]
 
-        if self._variable_manager is not None:
-            available_vars = self._variable_manager.get_vars()
-        else:
-            available_vars = {}
-        templar = Templar(loader=self._loader, variables=available_vars)
-
         # vars and default vars are regular dictionaries
-        vars_from = templar.template(self._from_files.get('vars'))
-        self._role_vars = self._load_role_yaml('vars', main=vars_from, allow_dir=True)
+        self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
         if self._role_vars is None:
             self._role_vars = {}
         elif not isinstance(self._role_vars, Mapping):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        defaults_from = templar.template(self._from_files.get('defaults'))
-        self._default_vars = self._load_role_yaml('defaults', main=defaults_from, allow_dir=True)
+        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
             self._default_vars = {}
         elif not isinstance(self._default_vars, Mapping):
@@ -263,14 +254,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
 
-        tasks_from = templar.template(self._from_files.get('tasks'))
-        task_data = self._load_role_yaml('tasks', main=tasks_from)
+        task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
         if self._should_validate:
             role_argspecs = self._get_role_argspecs()
-            if tasks_from is None:
-                tasks_from = 'main'
-            task_data = self._prepend_validation_task(task_data, role_argspecs, tasks_from)
+            task_data = self._prepend_validation_task(task_data, role_argspecs)
 
         if task_data:
             try:
@@ -279,8 +267,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=task_data, orig_exc=e)
 
-        handlers_from = templar.template(self._from_files.get('handlers'))
-        handler_data = self._load_role_yaml('handlers', main=handlers_from)
+        handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
@@ -314,7 +301,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # have the 'argument_specs' attribute, but earlier versions will not.
         return getattr(self._metadata, 'argument_specs', {})
 
-    def _prepend_validation_task(self, task_data, argspecs, tasks_from):
+    def _prepend_validation_task(self, task_data, argspecs):
         '''Insert a role validation task if we have a role argument spec.
 
         This method will prepend a validation task to the front of the role task
@@ -329,7 +316,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if argspecs:
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
-            entrypoint = tasks_from
+            entrypoint = self._from_files.get('tasks', 'main')
             entrypoint_arg_spec = argspecs.get(entrypoint)
 
             if entrypoint_arg_spec:

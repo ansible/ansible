@@ -27,8 +27,8 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks.yml -i inventor
 ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks_tags.yml -i inventory "$@" --tags tasks1,canary1,validate
 
 # Role
-ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i inventory "$@" -e template_tasks_from=canary1.yml
-ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i inventory "$@" -e template_tasks_from=canary1.yml
+ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i inventory "$@"
 
 
 ## Include (dynamic)
@@ -128,3 +128,10 @@ ansible-playbook test_include_loop.yml "$@"
 ansible-playbook test_include_loop_fqcn.yml "$@"
 
 ansible-playbook include_role_omit/playbook.yml "$@"
+
+# Test templating import_playbook, import_tasks, and import_role files
+ansible-playbook playbook/test_templated_filenames.yml -e "pb=validate_templated_playbook.yml tasks=validate_templated_tasks.yml tasks_from=templated.yml" "$@" | tee out.txt
+cat out.txt
+test "$(grep out.txt -ce 'In imported playbook')" = 2
+test "$(grep out.txt -ce 'In imported tasks')" = 3
+test "$(grep out.txt -ce 'In imported role')" = 3

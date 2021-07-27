@@ -25,7 +25,7 @@
     - name: Test conditional role include
       import_role:
         name: role1
-        tasks_from: "{{ template_tasks_from }}"
+        tasks_from: canary1.yml
       when: run_role
 
     - name: Assert that role ran

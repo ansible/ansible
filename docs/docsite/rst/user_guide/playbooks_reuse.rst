@@ -33,6 +33,15 @@ You can incorporate multiple playbooks into a main playbook. However, you can on
 
 Importing incorporates playbooks in other playbooks statically. Ansible runs the plays and tasks in each imported playbook in the order they are listed, just as if they had been defined directly in the main playbook.
 
+Imported playbook filenames can use variables defined with ``--extra-vars`` or the ``vars`` keyword:
+
+.. code-block:: yaml
+
+   - import_playbook: "/path/to/{{ extra_var }}"
+   - import_playbook: "{{ playbook }}"
+     vars:
+       playbook: /path/to/playbook.yml
+
 Re-using files and roles
 ========================
 
@@ -52,6 +61,8 @@ Ansible offers two ways to re-use files and roles in a playbook: dynamic and sta
 Task include and import statements can be used at arbitrary depth.
 
 You can still use the bare :ref:`roles <roles_keyword>` keyword at the play level to incorporate a role in a playbook statically. However, the bare :ref:`include <include_module>` keyword, once used for both task files and playbook-level includes, is now deprecated.
+
+Included and imported task files and roles support templating filenames. ``import_*`` actions need the variables to be available at playbook parse time (which can be done by defining them with ``--extra-vars``, for example), whereas ``include_*`` actions need the variables at runtime.
 
 Includes: dynamic re-use
 ------------------------
