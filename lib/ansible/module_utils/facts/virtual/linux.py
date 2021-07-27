@@ -68,6 +68,14 @@ class LinuxVirtual(Virtual):
                         virtual_facts['virtualization_role'] = 'guest'
                         found_virt = True
 
+        # docker does not always appear in cgroups anymore but does always create the file '/.dockerenv'
+        if os.path.exists('/.dockerenv'):
+            guest_tech.add('docker')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'docker'
+                virtual_facts['virtualization_role'] = 'guest'
+                found_virt = True
+
         # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
         if os.path.exists('/proc/1/environ'):
             for line in get_file_lines('/proc/1/environ', line_sep='\x00'):
