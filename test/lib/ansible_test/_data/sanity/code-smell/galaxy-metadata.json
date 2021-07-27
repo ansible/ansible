@@ -1,0 +1,7 @@
+{
+    "prefixes": "galaxy.yml",
+    "extensions": [
+        ".yml"
+    ],
+    "output": "path-line-column-message"
+}
