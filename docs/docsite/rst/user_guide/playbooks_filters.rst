@@ -1505,10 +1505,6 @@ To search in a string or extract parts of a string with a regular expression, us
     {{ 'server1/database42' | regex_search('database[0-9]+') }}
     # => 'database42'
 
-    # Returns an empty string if it cannot find a match
-    {{ 'ansible' | regex_search('foobar') }}
-    # => ''
-
     # Example for a case insensitive search in multiline mode
     {{ 'foo\nBAR' | regex_search('^bar', multiline=True, ignorecase=True) }}
     # => 'BAR'
@@ -1521,6 +1517,19 @@ To search in a string or extract parts of a string with a regular expression, us
     {{ '21/42' | regex_search('(?P<dividend>[0-9]+)/(?P<divisor>[0-9]+)', '\\g<dividend>', '\\g<divisor>') }}
     # => ['21', '42']
 
+The ``regex_search`` filter returns an empty string if it cannot find a match::
+
+    {{ 'ansible' | regex_search('foobar') }}
+    # => ''
+
+Note that due to historic behavior and custom re-implementation of some of the Jinja internals in Ansible there is an exception to the behavior. When used in a Jinja expression (for example in conjunction with operators, other filters, and so no) the return value differs, in those situations the return value is ``none``. See the two examples below::
+
+    {{ 'ansible' | regex_search('foobar') == '' }}
+    # => False
+    {{ 'ansible' | regex_search('foobar') == none }}
+    # => True
+
+When ``jinja2_native`` setting is enabled, the ``regex_search`` filter always returns ``none`` if it cannot find a match.
 
 To extract all occurrences of regex matches in a string, use the ``regex_findall`` filter::
 
