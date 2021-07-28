@@ -169,28 +169,57 @@ class StrategyModule(StrategyBase):
             display.debug("done advancing hosts to next task")
             return rvals
 
+        def _advance_failed_hosts(hostnames, inventory, cur_block, cur_state):
+            # Continue iterating over failed hosts to keep tasks in sync since
+            # they might be brought back into play with clear_host_errors.
+            for hostname in hostnames:
+                preserve_failed = iterator._host_states[hostname].copy()
+                try:
+                    host = inventory.hosts[hostname]
+                except KeyError:
+                    host = inventory.get_host(hostname)
+
+                # FIXME: remove
+                if host.restore_state is None:
+                    raise Exception("No restore_state found for {0}".format(hostname))
+
+                if host.restore_state.run_state == cur_state and host.restore_state.cur_block == cur_block:
+                    iterator._host_states[hostname] = host.restore_state
+                    iterator._host_states[hostname].fail_state = iterator.FAILED_NONE
+                    s, t = iterator.get_next_task_for_host(host)
+                    host.restore_state = s
+                iterator._host_states[hostname].fail_state = preserve_failed.fail_state
+
         # if any hosts are in ITERATING_SETUP, return the setup task
         # while all other hosts get a noop
         if num_setups:
             display.debug("advancing hosts in ITERATING_SETUP")
+            _advance_failed_hosts(self._tqm._failed_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_SETUP)
+            _advance_failed_hosts(self._tqm._unreachable_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_SETUP)
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_SETUP)
 
         # if any hosts are in ITERATING_TASKS, return the next normal
         # task for these hosts, while all other hosts get a noop
         if num_tasks:
             display.debug("advancing hosts in ITERATING_TASKS")
+            _advance_failed_hosts(self._tqm._failed_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_TASKS)
+            _advance_failed_hosts(self._tqm._unreachable_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_TASKS)
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_TASKS)
 
         # if any hosts are in ITERATING_RESCUE, return the next rescue
         # task for these hosts, while all other hosts get a noop
         if num_rescue:
             display.debug("advancing hosts in ITERATING_RESCUE")
+            _advance_failed_hosts(self._tqm._failed_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_RESCUE)
+            _advance_failed_hosts(self._tqm._unreachable_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_RESCUE)
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_RESCUE)
 
         # if any hosts are in ITERATING_ALWAYS, return the next always
         # task for these hosts, while all other hosts get a noop
         if num_always:
             display.debug("advancing hosts in ITERATING_ALWAYS")
+            _advance_failed_hosts(self._tqm._failed_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_ALWAYS)
+            _advance_failed_hosts(self._tqm._unreachable_hosts, self._inventory, lowest_cur_block, PlayIterator.ITERATING_ALWAYS)
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_ALWAYS)
 
         # at this point, everything must be ITERATING_COMPLETE, so we
@@ -414,6 +443,7 @@ class StrategyModule(StrategyBase):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
+                        host.restore_state = iterator._host_states[res._host.name].copy()
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):

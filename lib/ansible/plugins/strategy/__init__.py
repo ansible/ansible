@@ -586,6 +586,7 @@ class StrategyBase:
             elif task_result.is_unreachable():
                 ignore_unreachable = original_task.ignore_unreachable
                 if not ignore_unreachable:
+                    original_host.restore_state = iterator._host_states[original_host.name].copy()
                     self._tqm._unreachable_hosts[original_host.name] = True
                     iterator._play._removed_hosts.append(original_host.name)
                 else:
@@ -1149,9 +1150,15 @@ class StrategyBase:
         elif meta_action == 'clear_host_errors':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
+                    failed = iterator.is_failed(host)
                     self._tqm._failed_hosts.pop(host.name, False)
-                    self._tqm._unreachable_hosts.pop(host.name, False)
+                    unreachable = self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
+                    if host.name in iterator._play._removed_hosts:  # Occurs when the host failed a previous play
+                        iterator._play._removed_hosts.remove(host.name)
+                    if (failed or unreachable) and host.restore_state:
+                        iterator._host_states[host.name] = host.restore_state
+                    host.restore_state = None
                 msg = "cleared host errors"
             else:
                 skipped = True

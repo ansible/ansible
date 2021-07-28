@@ -459,7 +459,8 @@ class PlayIterator:
                 state.run_state = self.ITERATING_COMPLETE
         return state
 
-    def mark_host_failed(self, host):
+    def mark_host_failed(self, host, save_restore_state=False):
+        host.restore_state = self._host_states[host.name].copy()
         s = self.get_host_state(host)
         display.debug("marking host %s failed, current state: %s" % (host, s))
         s = self._set_failed_state(s)
