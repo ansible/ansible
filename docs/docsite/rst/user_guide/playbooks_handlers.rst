@@ -23,28 +23,28 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler.
         max_clients: 200
       remote_user: root
       tasks:
-      - name: Ensure apache is at the latest version
-        ansible.builtin.yum:
-          name: httpd
-          state: latest
+        - name: Ensure apache is at the latest version
+          ansible.builtin.yum:
+            name: httpd
+            state: latest
 
-      - name: Write the apache config file
-        ansible.builtin.template:
-          src: /srv/httpd.j2
-          dest: /etc/httpd.conf
-        notify:
-        - Restart apache
+        - name: Write the apache config file
+          ansible.builtin.template:
+            src: /srv/httpd.j2
+            dest: /etc/httpd.conf
+          notify:
+          - Restart apache
 
-      - name: Ensure apache is running
-        ansible.builtin.service:
-          name: httpd
-          state: started
-
-      handlers:
-        - name: Restart apache
+        - name: Ensure apache is running
           ansible.builtin.service:
             name: httpd
-            state: restarted
+            state: started
+
+        handlers:
+          - name: Restart apache
+            ansible.builtin.service:
+              name: httpd
+              state: restarted
 
 In this example playbook, the second task notifies the handler. A single task can notify more than one handler.
 
