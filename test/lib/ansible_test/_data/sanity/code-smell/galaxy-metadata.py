@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-"""Schema validation of ansible-core's ansible_builtin_runtime.yml and collection's meta/runtime.yml"""
+"""Validates the required keys (namespace, name, version, readme, authors) for the collection galaxy.yml metadata file"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
 import sys
 import yaml
 
@@ -11,6 +12,7 @@ from voluptuous import Required, Schema, Optional
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
+
 
 def validate_galaxy_metadata_file(path):
     """Validate explicit galaxy.yml metadata file"""
@@ -63,6 +65,7 @@ def main():
     for path in paths:
         if path == collection_galaxy_file:
             validate_galaxy_metadata_file(path)
+
 
 if __name__ == '__main__':
     main()
