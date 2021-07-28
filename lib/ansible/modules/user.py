@@ -493,6 +493,7 @@ class User(object):
     platform = 'Generic'
     distribution = None
     PASSWORDFILE = '/etc/passwd'
+    GROUPFILE = '/etc/group'
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
@@ -532,6 +533,7 @@ class User(object):
         self.expires = None
         self.password_lock = module.params['password_lock']
         self.groups = None
+        self.local_groups = None
         self.local = module.params['local']
         self.profile = module.params['profile']
         self.authorization = module.params['authorization']
@@ -930,7 +932,36 @@ class User(object):
                 return (rc, out, err)
         return (rc, out, err)
 
+    def parse_local_groups(self):
+        if not os.path.exists(self.GROUPFILE):
+            self.module.fail_json(msg="'local: true' specified but unable to find local group file {0} to parse.".format(self.GROUPFILE))
+        groups = {}
+        with open(self.GROUPFILE, 'r') as f:
+            for x, line in enumerate(f.readlines()):
+                entry = line[:-1].split(':')
+                if len(entry) != 4:
+                    self.module.fail_json(msg="unable to parse group file {0}: line {1}: incorrect number of fields".format(self.GROUPFILE, x))
+                groups[entry[0]] = entry[2]
+        if len(groups) == 0:
+            self.module.warn("'local: true' specified but found 0 local groups in file {0}".format(self.GROUPFILE))
+        self.local_groups = groups
+
+    def local_group_exists(self, group):
+        if self.local_groups is None:
+            self.parse_local_groups()
+        try:
+            # Try group as a gid first
+            gid = int(group)
+            for v in self.local_groups.values():
+                if v == gid:
+                    return True
+            return False
+        except ValueError:
+            return group in self.local_groups
+
     def group_exists(self, group):
+        if self.local:
+            return self.local_group_exists(group)
         try:
             # Try group as a gid first
             grp.getgrgid(int(group))
@@ -969,6 +1000,8 @@ class User(object):
         info = self.get_pwd_info()
         for group in grp.getgrall():
             if self.name in group.gr_mem:
+                if self.local and not self.local_group_exists(group[0]):
+                    continue
                 # Exclude the user's primary group by default
                 if not exclude_primary:
                     groups.append(group[0])
