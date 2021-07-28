@@ -579,6 +579,35 @@
       - '(result.content | b64decode) == "ansible.http.tests:SUCCESS"'
   when: has_httptester
 
+- name: test unredirected_headers
+  get_url:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    username: user
+    password: passwd
+    force_basic_auth: true
+    unredirected_headers:
+      - authorization
+    dest: "{{ remote_tmp_dir }}/doesnt_matter"
+  ignore_errors: true
+  register: unredirected_headers
+
+- name: test unredirected_headers
+  get_url:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    username: user
+    password: passwd
+    force_basic_auth: true
+    dest: "{{ remote_tmp_dir }}/doesnt_matter"
+  register: redirected_headers
+
+- name: ensure unredirected_headers caused auth to fail
+  assert:
+    that:
+      - unredirected_headers is failed
+      - unredirected_headers.status_code == 401
+      - redirected_headers is successful
+      - redirected_headers.status_code == 200
+
 - name: Test use_gssapi=True
   include_tasks:
     file: use_gssapi.yml

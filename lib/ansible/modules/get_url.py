@@ -165,6 +165,15 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  unredirected_headers:
+    description:
+      - A list of header names that will not be sent on subsequent redirected requests. This list is case
+        insensitive. By default all headers will be redirected. In some cases it may be beneficial to list
+        headers such as C(Authorization) here to avoid potential credential exposure.
+    default: []
+    type: list
+    elements: str
+    version_added: '2.12'
   use_gssapi:
     description:
       - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
@@ -357,7 +366,7 @@ def url_filename(url):
     return fn
 
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET'):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None):
     """
     Download data from the url and store in a temporary file.
 
@@ -365,7 +374,8 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     """
 
     start = datetime.datetime.utcnow()
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
+                          unredirected_headers=unredirected_headers)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
@@ -450,6 +460,7 @@ def main():
         timeout=dict(type='int', default=10),
         headers=dict(type='dict'),
         tmp_dest=dict(type='path'),
+        unredirected_headers=dict(type='list', elements='str', default=[]),
     )
 
     module = AnsibleModule(
@@ -478,6 +489,7 @@ def main():
     timeout = module.params['timeout']
     headers = module.params['headers']
     tmp_dest = module.params['tmp_dest']
+    unredirected_headers = module.params['unredirected_headers']
 
     result = dict(
         changed=False,
@@ -505,7 +517,8 @@ def main():
         if is_url(checksum):
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
-            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
+                                                     unredirected_headers=unredirected_headers)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
@@ -576,7 +589,7 @@ def main():
     # download to tmpsrc
     start = datetime.datetime.utcnow()
     method = 'HEAD' if module.check_mode else 'GET'
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method, unredirected_headers=unredirected_headers)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
 
