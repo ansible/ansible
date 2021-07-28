@@ -181,6 +181,15 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  unredirected_headers:
+    description:
+      - A list of header names that will not be sent on subsequent redirected requests. This list is case
+        insensitive. By default all headers will be redirected. In some cases it may be beneficial to list
+        headers such as C(Authorization) here to avoid potential credential exposure.
+    default: []
+    type: list
+    elements: str
+    version_added: '2.12'
   use_gssapi:
     description:
       - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
@@ -553,7 +562,7 @@ def form_urlencoded(body):
     return body
 
 
-def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path):
+def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
     redirected = False
@@ -598,7 +607,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
-                           ca_path=ca_path,
+                           ca_path=ca_path, unredirected_headers=unredirected_headers,
                            **kwargs)
 
     try:
@@ -642,6 +651,7 @@ def main():
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
         ca_path=dict(type='path', default=None),
+        unredirected_headers=dict(type='list', elements='str', default=[]),
     )
 
     module = AnsibleModule(
@@ -666,6 +676,7 @@ def main():
     socket_timeout = module.params['timeout']
     ca_path = module.params['ca_path']
     dict_headers = module.params['headers']
+    unredirected_headers = module.params['unredirected_headers']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -708,7 +719,7 @@ def main():
     # Make the request
     start = datetime.datetime.utcnow()
     resp, content, dest = uri(module, url, dest, body, body_format, method,
-                              dict_headers, socket_timeout, ca_path)
+                              dict_headers, socket_timeout, ca_path, unredirected_headers)
     resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     resp['status'] = int(resp['status'])
     resp['changed'] = False
