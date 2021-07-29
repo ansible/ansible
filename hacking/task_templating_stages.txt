@@ -92,6 +92,7 @@ port: *_l 25
 
 _conninfo: become, become_exe, become_flags, become_user, become_method, connection, remote_user, port
 
+# these are 'module options', processed both as the explicit task keyword or if specified directly set to the action/module
 args: *action, *conninfo 20
 
 # This section is only relevant if there is a loop, otherwise it is skipped and processing is moved to 'task final'
