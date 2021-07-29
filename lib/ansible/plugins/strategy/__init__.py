@@ -522,7 +522,8 @@ class StrategyBase:
                             if not handler_task.listen:
                                 display.warning(
                                     "Handler '%s' is unusable because it has no listen topics and "
-                                    "the name could not be templated: %s" % (handler_task.name, to_text(e))
+                                    "the name could not be templated (host-specific variables are "
+                                    "not supported in handler names). The error: %s" % (handler_task.name, to_text(e))
                                 )
                             continue
             return None
