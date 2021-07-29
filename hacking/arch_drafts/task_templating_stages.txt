@@ -12,7 +12,12 @@
 
 # '!static' means this is not a templatable keyword
 
-# TODO: add callback: <event> to show when we call send_callback() to said plugins
+# #C@ <event> are callback entrtries
+
+# playbook_executor handles play/playbook callbacks, all named playbook but only 1/2 are:
+# v2_playbook_on_vars_prompt, v2_playbook_on_play_start, v2_playbook_on_no_hosts_matched, v2_playbook_on_stats v2_playbook_on_no_hosts_remaining
+
+# note: imports have their own path and should have happened by now and meta tasks are processed pre fork and have their own logic depending on which one it is.
 
 #####################
 ##### pre execution
@@ -32,14 +37,29 @@ throttle: *_templ 95
 name: *_templ 90
 tags: *_templ 90
 
+# task/handler is ready to run
+# C@: v2_playbook_on_task_start
+
+# host task/handler is queued, yes kind of redundant with previous,
+# C@: v2_runner_on_start
+
+# here we star reading from task/host queue
 # controls host selection by iterator (run on first), in post it controls setting facts/register for all
 run_once: *_templ 80
+
+# process includes, create blocks for new tasks, start again at pre execution for each (except include_vars, which is normal task)
+#C@: v2_playbook_on_include
+
+#### from here main process goes continues loop to process results, queue tasks/pull from queue (pre fork)
+### FORK
+#### below we are forked and in worker (post fork)
 
 # not really needed here, but we process early, both are only really used inside loop, but we don't allow 'per loop item' setting
 async: *_templ 80
 poll: *_templ 80
 
 _templ2 : *host vars, *collections
+
 
 loop: *_templ2 70
 loop_control: *_templ2 70
@@ -98,6 +118,9 @@ args: *action, *conninfo 20
 # This section is only relevant if there is a loop, otherwise it is skipped and processing is moved to 'task final'
 # all items are x2 processed this way
 # TODO: x2 check _when/ignore_ ordering, might be diff inside loop to final task handling
+
+
+
 ########################
 ####### task item result
 #######################
@@ -115,10 +138,20 @@ ignore_unreachable: * register, *failed_when 0
 
 notify: *register, *changed_when 0
 
+#C@: v2_playbook_on_notify
+
+#C@ v2_runner_item_on_{ok|failed|skipped}
+#C@ v2_on_file_diff
+
 # loop has ended or been skipped, now we sumarize per task
 ########################
 ####### task final
 #######################
+
+####  worker above becomes free
+### POST FORK
+#### below we are back in main process in 'processing_results' thread
+
 # if loop, has 'results' list with each item return in order, sumarized states accessible as normal
 register: !static *_results
 
@@ -132,4 +165,15 @@ ignore_unreachable: * register, *failed_when 0
 
 notify: *register, *changed_when 0
 
+#C@: v2_playbook_on_notify
+
+# async polling happens here if needed as it's own task
+#C@ v2_runner_on_poll
+#C@ v2_runner_on_async_{ok|failed}
+
+# this is where until loop gets triggerd and can rerun task from start, start again
 until: *register, *failed_when, *changed_when 0
+
+#C@ v2_runner_on_retry
+#C@: v2_runner_on_failed v2_runner_on_unreachable v2_runner_on_skipped
+#C@: v2_on_file_diff
