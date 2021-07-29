@@ -35,7 +35,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from .utils import CaptureStd, find_executable, get_module_name_from_filename
 
 
-ANSIBLE_MODULE_CONSTURCTOR_ARGS = tuple(list(inspect.signature(AnsibleModule.__init__).parameters)[1:])
+ANSIBLE_MODULE_CONSTRUCTOR_ARGS = tuple(list(inspect.signature(AnsibleModule.__init__).parameters)[1:])
 
 
 class AnsibleModuleCallError(RuntimeError):
@@ -151,7 +151,7 @@ def get_py_argument_spec(filename, collection):
 
     try:
         # Convert positional arguments to kwargs to make sure that all parameters are actually checked
-        for arg, arg_name in zip(fake.args, ANSIBLE_MODULE_CONSTURCTOR_ARGS):
+        for arg, arg_name in zip(fake.args, ANSIBLE_MODULE_CONSTRUCTOR_ARGS):
             fake.kwargs[arg_name] = arg
         # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
         argument_spec = fake.kwargs.get('argument_spec') or {}
