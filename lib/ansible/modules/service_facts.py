@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 # originally copied from AWX's scan_services module to bring this functionality
 # into Core
 
@@ -201,24 +200,40 @@ class SystemctlScanService(BaseService):
         return False
 
     def gather_services(self):
+        BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
         services = {}
         if not self.systemd_enabled():
             return None
         systemctl_path = self.module.get_bin_path("systemctl", opt_dirs=["/usr/bin", "/usr/local/bin"])
         if systemctl_path is None:
             return None
+
+        # list units as systemd sees them
         rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
-        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
-            service_name = line.split()[0]
-            if "running" in line:
-                state_val = "running"
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
+
+            state_val = "stopped"
+            status_val = "unknown"
+            fields = line.split()
+            for bad in BAD_STATES:
+                if bad in fields:  # dot is 0
+                    status_val = bad
+                    fields = fields[1:]
+                    break
             else:
-                if 'failed' in line:
-                    service_name = line.split()[1]
-                state_val = "stopped"
-            services[service_name] = {"name": service_name, "state": state_val, "status": "unknown", "source": "systemd"}
+                # active/inactive
+                status_val = fields[2]
+
+            # array is normalize so predictable now
+            service_name = fields[0]
+            if fields[3] == "running":
+                state_val = "running"
+
+            services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
+
+        # now try unit files for complete picture and final 'status'
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
-        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
             # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
             try:
                 service_name, status_val = line.split()[:2]
@@ -230,8 +245,9 @@ class SystemctlScanService(BaseService):
                 if not rc and stdout != '':
                     state = stdout.replace('ActiveState=', '').rstrip()
                 services[service_name] = {"name": service_name, "state": state, "status": status_val, "source": "systemd"}
-            else:
+            elif services[service_name]["status"] not in BAD_STATES:
                 services[service_name]["status"] = status_val
+
         return services
 
 
