@@ -1153,7 +1153,7 @@ class ModuleValidator(Validator):
 
     def _validate_ansible_module_call(self, docs):
         try:
-            spec, args, kwargs = get_argument_spec(self.path, self.collection)
+            spec, kwargs = get_argument_spec(self.path, self.collection)
         except AnsibleModuleNotInitialized:
             self.reporter.error(
                 path=self.object_path,
