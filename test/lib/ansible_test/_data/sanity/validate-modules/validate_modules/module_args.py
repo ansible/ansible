@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import runpy
+import inspect
 import json
 import os
 import subprocess
@@ -27,11 +28,14 @@ import sys
 from contextlib import contextmanager
 
 from ansible.executor.powershell.module_manifest import PSModuleDepFinder
-from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS, AnsibleModule
 from ansible.module_utils.six import reraise
 from ansible.module_utils._text import to_bytes, to_text
 
 from .utils import CaptureStd, find_executable, get_module_name_from_filename
+
+
+ANSIBLE_MODULE_CONSTRUCTOR_ARGS = tuple(list(inspect.signature(AnsibleModule.__init__).parameters)[1:])
 
 
 class AnsibleModuleCallError(RuntimeError):
@@ -126,7 +130,7 @@ def get_ps_argument_spec(filename, collection):
     # the validate-modules code expects the options spec to be under the argument_spec key not options as set in PS
     kwargs['argument_spec'] = kwargs.pop('options', {})
 
-    return kwargs['argument_spec'], (), kwargs
+    return kwargs['argument_spec'], kwargs
 
 
 def get_py_argument_spec(filename, collection):
@@ -146,11 +150,11 @@ def get_py_argument_spec(filename, collection):
             raise AnsibleModuleNotInitialized()
 
     try:
+        # Convert positional arguments to kwargs to make sure that all parameters are actually checked
+        for arg, arg_name in zip(fake.args, ANSIBLE_MODULE_CONSTRUCTOR_ARGS):
+            fake.kwargs[arg_name] = arg
         # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
-        if 'argument_spec' in fake.kwargs:
-            argument_spec = fake.kwargs['argument_spec']
-        else:
-            argument_spec = fake.args[0]
+        argument_spec = fake.kwargs.get('argument_spec') or {}
         # If add_file_common_args is truish, add options from FILE_COMMON_ARGUMENTS when not present.
         # This is the only modification to argument_spec done by AnsibleModule itself, and which is
         # not caught by setup_env's AnsibleModule replacement
@@ -158,9 +162,9 @@ def get_py_argument_spec(filename, collection):
             for k, v in FILE_COMMON_ARGUMENTS.items():
                 if k not in argument_spec:
                     argument_spec[k] = v
-        return argument_spec, fake.args, fake.kwargs
+        return argument_spec, fake.kwargs
     except (TypeError, IndexError):
-        return {}, (), {}
+        return {}, {}
 
 
 def get_argument_spec(filename, collection):
