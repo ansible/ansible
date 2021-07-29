@@ -1,0 +1,103 @@
+# format:
+#	keyword: *dependencies <priority>
+#	_<alias>: *dependencies
+
+# 'keyword' maps to an engine keyword on the task playbook object, higher priority means it needs to be templated sooner.
+
+# '*dependencies' declares what other keywords or resouces (like play or host vars) are required to be templated beforehand as they are used as input
+#	for the current keyword,  they are expressed just with direct depedencies, but on execution translate to the full chain, i.e 'action' depends on '_l'
+#	(aka 'loop'), then 'loop' depends on 'host vars' and 'collections' and so on.
+
+# '_' aliases, cause im lazy and don't want to copy lists all over
+
+# TODO: add callback: <event> to show when we call send_callback() to said plugins
+
+#####################
+##### pre execution
+#####################
+
+collections: 100
+vars: 100
+
+_templ: *play vars, *collections
+
+throttle: *_templ 95
+
+name: *_templ 90
+tags: *_templ 90
+
+run_once: *_templ 80
+async: *_templ 80
+poll: *_templ 80
+
+_templ2 : *host vars, *collections
+
+loop: *_templ2 70
+loop_control: *_templ2 70
+with_: *_templ2 70
+
+_l: *loop, *loop_control
+
+#######################
+#######  loop prep
+#######################
+
+when: *_l 60
+
+no_log: *_l 50
+
+retry: *_l 40
+delay: *_l 40
+timeout: *_l 40
+
+check_mode: *_l 35
+delegate_to: *_l 35
+debugger: *_l 35
+diff: *_l 35
+environment: *_l 35
+module_defaults: *_l 35
+
+#######################
+#######  task (item) executes
+#######################
+
+action: *_l 30
+local_action: *_l 30
+
+become: *_l 25
+become_exe: *_l 25
+become_flags: *_l 25
+become_user: *_l 25
+become_method: *_l 25
+connection: *_l 25
+remote_user: *_l 25
+
+_conninfo: become, become_exe, become_flags, become_user, become_method, connection, remote_user
+
+args: *action, *conninfo 20
+
+########################
+####### task item result
+#######################
+
+register: !static *_item_result  #shows previus item in loop, requires |default for first item
+
+delegate_facts: *_l, *register 5
+failed_when: *_l, *register 5
+changed_when: *_l, *register 5
+
+notify: *register, *changed_when 0
+
+########################
+####### task final
+#######################
+
+register: !static *_results # if loop, has 'results' list with each item return in order, sumarized states accessible as normal
+
+failed_when: *register 5
+changed_when: *register 5
+
+any_errors_fatal: *register, *failed_when 0
+ignore_errors: *register, *failed_when 0
+notify: *register, *changed_when 0
+until: *register, *failed_when, *changed_when 0
