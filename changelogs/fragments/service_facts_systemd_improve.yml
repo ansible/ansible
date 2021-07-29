@@ -1,0 +1,2 @@
+minor_changes:
+  - service_facts now handles more states/statuses from systemd and in a more reliable way (failed, not-found, masked).
