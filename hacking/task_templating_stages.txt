@@ -10,23 +10,32 @@
 
 # '_' aliases, cause im lazy and don't want to copy lists all over
 
+# '!static' means this is not a templatable keyword
+
 # TODO: add callback: <event> to show when we call send_callback() to said plugins
 
 #####################
 ##### pre execution
 #####################
 
-collections: 100
+# these are 'task' vars which includes parent resolution (block/role/play) but does not tempalte the var values themselves
+# variables are still only templated on consumption
 vars: 100
+collections: !static 100
 
-_templ: *play vars, *collections
+_templ: *vars, *collections
 
+# required early for iterator task/host selection
 throttle: *_templ 95
 
+# iterator must handle --start-at-task and tag evaluation to decide on task being selected for execution
 name: *_templ 90
 tags: *_templ 90
 
+# controls host selection by iterator (run on first), in post it controls setting facts/register for all
 run_once: *_templ 80
+
+# not really needed here, but we process early, both are only really used inside loop, but we don't allow 'per loop item' setting
 async: *_templ 80
 poll: *_templ 80
 
@@ -42,12 +51,15 @@ _l: *loop, *loop_control
 #######  loop prep
 #######################
 
+# both these get special outside loop evaluation and treatment, on outside loop template error both default to 'true' and then can evaluate again per item
 when: *_l 60
-
 no_log: *_l 50
 
+# until/retry handling
 retry: *_l 40
 delay: *_l 40
+
+# task timeout, not to be confused with connection timeout
 timeout: *_l 40
 
 check_mode: *_l 35
@@ -61,43 +73,62 @@ module_defaults: *_l 35
 #######  task (item) executes
 #######################
 
+# actual action plugin/module to execute, these cannot coexists as local_action is basically an alias of 'action + delegate_to: localhost'
 action: *_l 30
 local_action: *_l 30
+# TODO:  need to check if it local_action bomb with delegate_to
 
+# become plugin settings
 become: *_l 25
 become_exe: *_l 25
 become_flags: *_l 25
 become_user: *_l 25
 become_method: *_l 25
+
+# connection plugin selection/settings
 connection: *_l 25
 remote_user: *_l 25
+port: *_l 25
 
-_conninfo: become, become_exe, become_flags, become_user, become_method, connection, remote_user
+_conninfo: become, become_exe, become_flags, become_user, become_method, connection, remote_user, port
 
 args: *action, *conninfo 20
 
+# This section is only relevant if there is a loop, otherwise it is skipped and processing is moved to 'task final'
+# all items are x2 processed this way
+# TODO: x2 check _when/ignore_ ordering, might be diff inside loop to final task handling
 ########################
 ####### task item result
 #######################
-
-register: !static *_item_result  #shows previus item in loop, requires |default for first item
+# here (per loop item) it shows previus item in loop and no 'results' key
+# if using as input in the following 'still in loop' requires |default for first loop item as there is no 'previous result'
+register: !static *_item_result
 
 delegate_facts: *_l, *register 5
 failed_when: *_l, *register 5
 changed_when: *_l, *register 5
 
+any_errors_fatal: *register, *failed_when 0
+ignore_errors: *register, *failed_when 0
+ignore_unreachable: * register, *failed_when 0
+
 notify: *register, *changed_when 0
 
+# loop has ended or been skipped, now we sumarize per task
 ########################
 ####### task final
 #######################
+# if loop, has 'results' list with each item return in order, sumarized states accessible as normal
+register: !static *_results
 
-register: !static *_results # if loop, has 'results' list with each item return in order, sumarized states accessible as normal
-
-failed_when: *register 5
-changed_when: *register 5
+delegate_facts: *_l, *register 5
+failed_when: *_l, *register 5
+changed_when: *_l, *register 5
 
 any_errors_fatal: *register, *failed_when 0
 ignore_errors: *register, *failed_when 0
+ignore_unreachable: * register, *failed_when 0
+
 notify: *register, *changed_when 0
+
 until: *register, *failed_when, *changed_when 0
