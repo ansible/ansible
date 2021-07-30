@@ -283,6 +283,7 @@
     multi_line: "{{ 'hello\nworld' | regex_search('^world', multiline=true) }}"
     named_groups: "{{ 'goodbye' | regex_search('(?P<first>good)(?P<second>bye)', '\\g<second>', '\\g<first>') }}"
     numbered_groups: "{{ 'goodbye' | regex_search('(good)(bye)', '\\2', '\\1') }}"
+    no_match_is_none_inline: "{{ 'hello' | regex_search('world') == none }}"
 
 - name: regex_search unknown argument (failure expected)
   set_fact:
@@ -299,6 +300,7 @@
       - multi_line == 'world'
       - named_groups == ['bye', 'good']
       - numbered_groups == ['bye', 'good']
+      - no_match_is_none_inline
       - failure is failed
 
 - name: Verify to_bool
