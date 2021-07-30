@@ -1757,13 +1757,13 @@ class AnsibleModule(object):
                             except (shutil.Error, OSError, IOError) as e:
                                 if unsafe_writes and e.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
-                                else:
+                                elif not self._copy_wo_attribs(b_tmp_dest_name, b_dest):
                                     self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
                                                        (src, dest, b_tmp_dest_name, to_native(e)), exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError) as e:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
-                            else:
+                            elif not self._copy_wo_attribs(b_src, b_dest):
                                 self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
                     finally:
                         self.cleanup(b_tmp_dest_name)
@@ -1784,6 +1784,13 @@ class AnsibleModule(object):
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
+
+    def _copy_wo_attribs(self, src, dest):
+        try:
+            shutil.copy(src, dest)
+        except:
+            return False
+        return True
 
     def _unsafe_writes(self, src, dest):
         # sadly there are some situations where we cannot ensure atomicity, but only if
