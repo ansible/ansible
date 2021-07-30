@@ -28,7 +28,7 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
 
@@ -181,8 +181,15 @@ class Conditional:
                 raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
 
             # and finally we generate and template the presented string and look at the resulting string
+            # NOTE The spaces around True and False are intentional to short-circuit safe_eval and avoid
+            #      its expensive calls.
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            val = templar.template(presented, disable_lookups=disable_lookups).strip()
+            # NOTE Convert the result to text to account for both native and non-native jinja.
+            # NOTE The templated result of `presented` is string on native jinja as well prior to Python 3.10.
+            #      ast.literal_eval on Python 3.10 removes leading whitespaces so " True " becomes bool True
+            #      as opposed to Python 3.9 and lower where the same would result in IndentationError and
+            #      string " True " would be returned by Templar.
+            val = to_text(templar.template(presented, disable_lookups=disable_lookups)).strip()
             if val == "True":
                 return True
             elif val == "False":
