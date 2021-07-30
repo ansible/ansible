@@ -172,6 +172,11 @@ delta:
   returned: always
   type: str
   sample: '0:00:00.001529'
+delta_seconds:
+  description: The command execution delta time in seconds.
+  returned: always
+  type: float
+  sample: 0.001529
 stdout:
   description: The command standard output.
   returned: always
@@ -366,7 +371,10 @@ def main():
     # convert to text for jsonization and usability
     if r['start'] is not None and r['end'] is not None:
         # these are datetime objects, but need them as strings to pass back
-        r['delta'] = to_text(r['end'] - r['start'])
+        td = r['end'] - r['start']
+        r['delta'] = to_text(td)
+        # Copied from Python docs for total_seconds() describing backwards compatibility with Python 2.6
+        r['delta_seconds'] = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
         r['end'] = to_text(r['end'])
         r['start'] = to_text(r['start'])
 
