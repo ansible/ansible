@@ -14,6 +14,7 @@ import os.path
 import re
 import sys
 import time
+import toml
 import uuid
 import yaml
 
@@ -579,6 +580,10 @@ class FilterModule(object):
             'to_json': to_json,
             'to_nice_json': to_nice_json,
             'from_json': json.loads,
+
+            # toml
+            'to_toml': toml.dumps,
+            'from_toml': toml.loads,
 
             # yaml
             'to_yaml': to_yaml,
