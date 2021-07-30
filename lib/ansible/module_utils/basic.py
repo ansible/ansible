@@ -1788,7 +1788,7 @@ class AnsibleModule(object):
     def _copy_wo_attribs(self, src, dest):
         try:
             shutil.copy(src, dest)
-        except:
+        except Exception:
             return False
         return True
 
