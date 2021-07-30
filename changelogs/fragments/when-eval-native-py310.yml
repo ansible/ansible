@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix ``when`` evaluation on Native Jinja and Python 3.10.
