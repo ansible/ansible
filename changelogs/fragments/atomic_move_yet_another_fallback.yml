@@ -1,0 +1,2 @@
+bugfixes:
+  - atomic_move, another fallback case for when the failure to copy is due to incompatible fs attributes, use shutil.copy, which ignores these.
