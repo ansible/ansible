@@ -207,7 +207,9 @@ notes:
   - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 seealso:
 - module: ansible.builtin.get_url
+  description: Download files from HTTP, HTTPS, or FTP on a target.
 - module: ansible.windows.win_uri
+  description: Interact with webservices on a Windows target.
 author:
 - Romeo Theriault (@romeotheriault)
 extends_documentation_fragment: files

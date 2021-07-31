@@ -44,8 +44,11 @@ notes:
      - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.debug
+  description: Print a text or the content of a variable during a play.
 - module: ansible.builtin.fail
+  description: Fail a play under a condition.
 - module: ansible.builtin.meta
+  description: Trigger special actions in a play.
 author:
     - Ansible Core Team
     - Michael DeHaan

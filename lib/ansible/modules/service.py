@@ -90,6 +90,7 @@ notes:
     - Supports C(check_mode).
 seealso:
     - module: ansible.windows.win_service
+      description: Manage a service on a Windows target.
 author:
     - Ansible Core Team
     - Michael DeHaan

@@ -29,8 +29,11 @@ notes:
 - For Windows you can use M(ansible.windows.win_template) which uses '\\r\\n' as C(newline_sequence) by default.
 seealso:
 - module: ansible.builtin.copy
+  description: Copy a file from the controller to a target.
 - module: ansible.windows.win_copy
+  description: Copy a file from the controller to a Windows target.
 - module: ansible.windows.win_template
+  description: Template a file out to a target host with '\\r\\n' as C(newline_sequence) by default.
 author:
 - Ansible Core Team
 - Michael DeHaan

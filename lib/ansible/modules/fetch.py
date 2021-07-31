@@ -74,7 +74,9 @@ notes:
 - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.copy
+  description: Copy a file from the controller to a target.
 - module: ansible.builtin.slurp
+  description: Retrieve a file encoded in base64 from a target.
 author:
 - Ansible Core Team
 - Michael DeHaan

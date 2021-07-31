@@ -128,8 +128,11 @@ notes:
     - Supports C(check_mode).
 seealso:
 - module: community.general.archive
+  description: Create a compressed archive.
 - module: community.general.iso_extract
+  description: Extract files from an ISO image.
 - module: community.windows.win_unzip
+  description: Unzip compressed files and archives on the Windows target.
 author: Michael DeHaan
 '''
 

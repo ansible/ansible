@@ -59,7 +59,9 @@ options:
         version_added: "2.8"
 seealso:
 - module: ansible.builtin.user
+  description: Manage users on a target.
 - module: ansible.windows.win_group
+  description: Manage groups on a target.
 author:
 - Stephen Fromm (@sfromm)
 notes:

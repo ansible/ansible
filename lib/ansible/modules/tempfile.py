@@ -43,7 +43,9 @@ options:
     default: ""
 seealso:
 - module: ansible.builtin.file
+  description: Create a file or set a file properties.
 - module: ansible.windows.win_tempfile
+  description: Create a temporary file on a Windows target.
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
 '''

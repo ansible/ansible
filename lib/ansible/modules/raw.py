@@ -51,9 +51,13 @@ notes:
     - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.command
+  description: Execute a command.
 - module: ansible.builtin.shell
+  description: Execute a command interpreted by a shell.
 - module: ansible.windows.win_command
+  description: Execute a command on a Windows target.
 - module: ansible.windows.win_shell
+  description: Execute a command on a Windows target interpreted by a shell.
 author:
     - Ansible Core Team
     - Michael DeHaan

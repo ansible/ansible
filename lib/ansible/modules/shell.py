@@ -89,9 +89,13 @@ notes:
   - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
 seealso:
 - module: ansible.builtin.command
+  description: Execute a command.
 - module: ansible.builtin.raw
+  description: Run a command directly from SSH.
 - module: ansible.builtin.script
+  description: Run a local script on a target after transferring it.
 - module: ansible.windows.win_shell
+  description: Execute a command on a Windows target interpreted by a shell.
 author:
     - Ansible Core Team
     - Michael DeHaan

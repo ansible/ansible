@@ -31,6 +31,7 @@ notes:
    - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.fetch
+  description: Retrieve a file from a target on the controller.
 author:
     - Ansible Core Team
     - Michael DeHaan (@mpdehaan)

@@ -76,8 +76,11 @@ options:
     version_added: '2.0'
 seealso:
 - module: ansible.builtin.copy
+  description: Copy a file from the controller to a target.
 - module: ansible.builtin.template
+  description: Write file from a Jinja template in a target.
 - module: ansible.windows.win_copy
+  description: Copy a file from the controller to a Windows target.
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:

@@ -42,7 +42,9 @@ notes:
     - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.assert
+  description: Assert expression is true.
 - module: ansible.builtin.fail
+  description: Fail a play under a condition.
 author:
 - Dag Wieers (@dagwieers)
 - Michael DeHaan

@@ -275,8 +275,11 @@ notes:
   - Supports C(check_mode).
 seealso:
 - module: ansible.posix.authorized_key
+  description: Manage keys in SSH authorized key file.
 - module: ansible.builtin.group
+  description: Manage groups on a target.
 - module: ansible.windows.win_user
+  description: Manage users on a Windows target.
 author:
 - Stephen Fromm (@sfromm)
 '''

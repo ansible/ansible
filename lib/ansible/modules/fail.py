@@ -28,8 +28,11 @@ notes:
     - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.assert
+  description: Assert expression is true.
 - module: ansible.builtin.debug
+  description: Print a text or the content of a variable during a play.
 - module: ansible.builtin.meta
+  description: Trigger special actions in a play.
 author:
 - Dag Wieers (@dagwieers)
 '''

@@ -30,7 +30,9 @@ options:
     default: pong
 seealso:
   - module: ansible.netcommon.net_ping
+    description: Test host reachability using ping from a network device.
   - module: ansible.windows.win_ping
+    description: Ping a host from a Windows target.
 author:
   - Ansible Core Team
   - Michael DeHaan

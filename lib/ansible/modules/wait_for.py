@@ -108,8 +108,11 @@ notes:
     so operations on the path using other modules may not work exactly as expected.
 seealso:
 - module: ansible.builtin.wait_for_connection
+  description: Wait until remote system is reachable/usable.
 - module: ansible.windows.win_wait_for
+  description: Wait until a condition is met on a Windows target.
 - module: community.windows.win_wait_for_process
+  description: Wait until a condition is met on processes on a Windows target.
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)

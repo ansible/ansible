@@ -82,6 +82,7 @@ options:
     version_added: '2.11'
 seealso:
 - module: ansible.windows.win_reboot
+  description: Reboot a Windows target.
 author:
     - Matt Davis (@nitzmahone)
     - Sam Doran (@samdoran)

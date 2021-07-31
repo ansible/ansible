@@ -107,10 +107,15 @@ options:
     version_added: '2.7'
 seealso:
 - module: ansible.builtin.assemble
+  description: Create a file out of text fragments.
 - module: ansible.builtin.copy
+  description: Copy a file from the controller to a target.
 - module: ansible.builtin.stat
+  description: Retrieve state of a file on a filesystem.
 - module: ansible.builtin.template
+  description: Write file from a Jinja template in a target.
 - module: ansible.windows.win_file
+  description: Create a file or set a file properties for Windows target.
 notes:
 - Supports C(check_mode).
 author:

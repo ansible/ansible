@@ -75,7 +75,9 @@ notes:
     or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation).
 seealso:
 - module: ansible.builtin.script
+  description: Run a local script on a target after transferring it.
 - module: ansible.builtin.shell
+  description: Execute a command interpreted by a shell.
 author: "Matt Martz (@sivel)"
 '''
 

@@ -47,9 +47,13 @@ notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 seealso:
 - module: ansible.builtin.import_role
+  description: Import a role into a play.
 - module: ansible.builtin.import_tasks
+  description: Import a file containing tasks into a play.
 - module: ansible.builtin.include_role
+  description: Include an ansible role into a play.
 - module: ansible.builtin.include_tasks
+  description: Include a file containing tasks into a play.
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

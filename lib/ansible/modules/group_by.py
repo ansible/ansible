@@ -36,6 +36,7 @@ notes:
   for those trying to track inventory changes.
 seealso:
 - module: ansible.builtin.add_host
+  description: Add a host to the in-memory Ansible inventory.
 author:
 - Jeroen Hoekx (@jhoekx)
 '''

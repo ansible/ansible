@@ -42,6 +42,7 @@ notes:
   They are still available from hostvars and for delegation as a normal part of the inventory.
 seealso:
 - module: ansible.builtin.group_by
+  description: Create in-memory Ansible group based on facts.
 author:
 - Ansible Core Team
 - Seth Vidal (@skvidal)

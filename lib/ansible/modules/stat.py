@@ -63,7 +63,9 @@ options:
     version_added: "2.3"
 seealso:
 - module: ansible.builtin.file
+  description: Create a file or set a file properties.
 - module: ansible.windows.win_stat
+  description: Retrieve state of a file on a filesystem on a Windows target.
 notes:
 - Supports C(check_mode).
 author: Bruce Pennypacker (@bpennypacker)

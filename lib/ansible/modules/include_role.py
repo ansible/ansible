@@ -81,9 +81,13 @@ notes:
   - After Ansible 2.4, you can use M(ansible.builtin.import_role) for C(static) behaviour and this action for C(dynamic) one.
 seealso:
 - module: ansible.builtin.import_playbook
+  description: Import a playbook.
 - module: ansible.builtin.import_role
+  description: Import a role into a play.
 - module: ansible.builtin.import_tasks
+  description: Import a file containing tasks into a play.
 - module: ansible.builtin.include_tasks
+  description: Include a file containing tasks into a play.
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

@@ -50,6 +50,7 @@ notes:
     - This action does not use a connection and always executes on the controller.
 seealso:
 - module: ansible.builtin.include_vars
+  description: Load variables from a file.
 - ref: ansible_variable_precedence
   description: More information related to variable precedence and which type of variable wins over others.
 author:

@@ -131,6 +131,7 @@ options:
         version_added: "2.6"
 seealso:
 - module: ansible.windows.win_find
+  description: Find files on a Windows target.
 '''
 
 

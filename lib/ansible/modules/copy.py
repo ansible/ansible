@@ -126,11 +126,17 @@ notes:
 - The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
 seealso:
 - module: ansible.builtin.assemble
+  description: Create a file out of text fragments.
 - module: ansible.builtin.fetch
+  description: Retrieve a file from a target on the controller.
 - module: ansible.builtin.file
+  description: Create a file or set a file properties.
 - module: ansible.builtin.template
+  description: Write file from a Jinja template in a target.
 - module: ansible.posix.synchronize
+  description: Copy several files using rsync.
 - module: ansible.windows.win_copy
+  description: Copy a file from the controller to a Windows target.
 author:
 - Ansible Core Team
 - Michael DeHaan

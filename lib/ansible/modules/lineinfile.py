@@ -139,12 +139,18 @@ notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
   - Supports C(check_mode).
 seealso:
-- module: ansible.builtin.blockinfile
-- module: ansible.builtin.copy
-- module: ansible.builtin.file
 - module: ansible.builtin.replace
+  description: Replace all occurences of a line in a file.
+- module: ansible.builtin.blockinfile
+  description: Insert a block of text in a file.
+- module: ansible.builtin.copy
+  description: Copy a file from controller to target.
+- module: ansible.builtin.file
+  description: Create a file or set a file properties.
 - module: ansible.builtin.template
+  description: Write a file out of a Jinja template.
 - module: community.windows.win_lineinfile
+  description: Manage a specific line in a file on Windows target.
 author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)

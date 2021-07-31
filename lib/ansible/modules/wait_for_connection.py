@@ -44,8 +44,11 @@ notes:
 - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.wait_for
+  description: Wait until a condition is met.
 - module: ansible.windows.win_wait_for
+  description: Wait until a condition is met on a Windows target.
 - module: community.windows.win_wait_for_process
+  description: Wait until a condition is met on processes on a Windows target.
 author:
 - Dag Wieers (@dagwieers)
 '''
