@@ -258,7 +258,7 @@ ec2_ami module.
 
 Generally speaking, we find most users using Packer.
 
-See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible-local.html>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible.html>`_.
+See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible-local>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible>`_.
 
 If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable.
 
