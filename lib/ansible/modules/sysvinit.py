@@ -68,6 +68,13 @@ options:
         default: no
 notes:
     - One option other than name is required.
+seealso:
+- module: ansible.builtin.systemd
+  description: Manage unit (including service) using systemd.
+- module: ansible.builtin.service
+  description: Generic module to manage a service.
+- module: ansible.windows.win_service
+  description: Manage a service on a Windows target.
 requirements:
     - That the service managed has a corresponding init script.
 '''

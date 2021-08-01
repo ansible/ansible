@@ -83,8 +83,15 @@ notes:
     - Before 2.4 you always required C(name).
     - Globs are not supported in name, i.e ``postgres*.service``.
     - Supports C(check_mode).
+seealso:
+- module: ansible.builtin.sysvinit
+  description: Manage SysV services.
+- module: ansible.windows.win_service
+  description: Manage a service on a Windows target.
+- module: ansible.builtin.service
+  description: Generic module to manage a service.
 requirements:
-    - A system managed by systemd.
+    - The target must be managed by systemd.
 '''
 
 EXAMPLES = '''

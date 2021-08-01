@@ -267,6 +267,11 @@ notes:
     command directly, namely "command: yum clean all"
     https://github.com/ansible/ansible/pull/31450#issuecomment-352889579'
 # informational: requirements for nodes
+seealso:
+- module: ansible.builtin.dnf
+  description: Manage packages with dnf package manager.
+- module: ansible.builtin.package
+  description: Manage packages using the discovered package manager of the target.
 requirements:
 - yum
 author:

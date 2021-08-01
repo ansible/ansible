@@ -87,8 +87,6 @@ notes:
 seealso:
 - module: ansible.builtin.import_playbook
   description: Import a playbook.
-- module: ansible.builtin.import_role
-  description: Import a role into a play.
 - module: ansible.builtin.import_tasks
   description: Import a file containing tasks into a play.
 - module: ansible.builtin.include_role

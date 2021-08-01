@@ -246,6 +246,11 @@ requirements:
   - "python >= 2.6"
   - python-dnf
   - for the autoremove option you need dnf >= 2.0.1"
+seealso:
+- module: ansible.builtin.yum
+  description: Manage packages with the yum package manager.
+- module: ansible.builtin.package
+  description: Manage packages using the discovered package manager of the target.
 author:
   - Igor Gnatenko (@ignatenkobrain) <i.gnatenko.brain@gmail.com>
   - Cristian van Ee (@DJMuggs) <cristian at cvee.org>

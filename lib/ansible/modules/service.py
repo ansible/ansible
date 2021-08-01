@@ -89,8 +89,12 @@ notes:
     - For AIX, group subsystem names can be used.
     - Supports C(check_mode).
 seealso:
-    - module: ansible.windows.win_service
-      description: Manage a service on a Windows target.
+- module: ansible.builtin.sysvinit
+  description: Manage SysV services.
+- module: ansible.builtin.systemd
+  description: Manage unit (including service) using systemd.
+- module: ansible.windows.win_service
+  description: Manage a service on a Windows target.
 author:
     - Ansible Core Team
     - Michael DeHaan

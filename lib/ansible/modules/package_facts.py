@@ -41,6 +41,9 @@ author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
   - Adam Miller (@maxamillion)
+seealso:
+- module: ansible.builtin.package
+  description: Manage packages using the discovered package manager of the target.
 notes:
   - Supports C(check_mode).
 '''

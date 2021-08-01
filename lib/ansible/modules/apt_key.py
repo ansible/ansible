@@ -72,6 +72,9 @@ options:
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
+seealso:
+- module: ansible.builtin.apt
+  description: Manage packages using apt package manager.
 '''
 
 EXAMPLES = '''
