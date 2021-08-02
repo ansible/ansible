@@ -154,6 +154,7 @@ def create_ssh_command(
         LogLevel='ERROR',
         ServerAliveCountMax=4,
         ServerAliveInterval=15,
+        TCPKeepAlive='no',
         StrictHostKeyChecking='no',
         UserKnownHostsFile='/dev/null',
     )

@@ -63,6 +63,7 @@ class ManageWindowsCI:
             UserKnownHostsFile='/dev/null',
             ServerAliveInterval=15,
             ServerAliveCountMax=4,
+            TCPKeepAlive='no',
         )
 
         for ssh_option in sorted(ssh_options):
@@ -212,6 +213,7 @@ class ManagePosixCI:
             UserKnownHostsFile='/dev/null',
             ServerAliveInterval=15,
             ServerAliveCountMax=4,
+            TCPKeepAlive='no',
         )
 
         for ssh_option in sorted(ssh_options):
