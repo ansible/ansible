@@ -31,15 +31,9 @@ cleanup() {
 
 trap 'cleanup' EXIT
 
-diff_failure() {
-    if [[ $INIT = 0 ]]; then
-        echo "FAILURE...diff mismatch!"
-        exit 1
-    fi
-}
 # check a-c init per format
 for format in "vars" "ini" "env"
 do
 	ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f "${format}" > "files/types.new.${format}"
-	diff -u "files/types.${format}" "files/types.new.${format}"|| diff_failure
+	diff -u "files/types.${format}" "files/types.new.${format}"
 done
