@@ -678,7 +678,7 @@ class SubprocessError(ApplicationError):
         :type stdout: str | None
         :type stderr: str | None
         :type runtime: float | None
-        :type error_callback: t.Callable[[SubprocessError], None]
+        :type error_callback: t.Optional[t.Callable[[SubprocessError], None]]
         """
         message = 'Command "%s" returned exit status %s.\n' % (' '.join(cmd_quote(c) for c in cmd), status)
 
@@ -697,7 +697,7 @@ class SubprocessError(ApplicationError):
         self.stderr = stderr
         self.runtime = runtime
 
-        if callable(error_callback):
+        if error_callback:
             error_callback(self)
 
         self.message = self.message.strip()
