@@ -45,7 +45,7 @@ class ActionModule(ActionBase):
     def do_until_success_or_timeout(self, what, timeout, ping_connect_timeout, what_desc, sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
-        error = None
+        error = ValueError("already timed out with timeout %s" % timeout)
         # We check that there is at least 1 second remaining,
         # since that's the minimum we can specify to a timeout to ping.
         # If we pass 0 seconds as the timeout to ping, it never times out.
