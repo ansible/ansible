@@ -211,7 +211,7 @@ The following sample shows the start of a custom cli_parser plugin:
        """ Sample cli_parser plugin
        """
 
-       # Use the follow extention when loading a template
+       # Use the follow extension when loading a template
        DEFAULT_TEMPLATE_EXTENSION = "txt"
        # Provide the contents of the template to the parse function
        PROVIDE_TEMPLATE_CONTENTS = True
