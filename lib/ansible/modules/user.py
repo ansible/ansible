@@ -3195,12 +3195,12 @@ def main():
             result['ssh_public_key'] = user.get_ssh_public_key()
 
     # deal with password expire max
-    if user.password_expire_max:
+    if user.password_expire_max is not None:
         if user.user_exists():
             (rc, out, err) = user.set_password_expire_max()
 
     # deal with password expire min
-    if user.password_expire_min:
+    if user.password_expire_min is not None:
         if user.user_exists():
             (rc, out, err) = user.set_password_expire_min()
 
