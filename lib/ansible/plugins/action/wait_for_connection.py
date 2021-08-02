@@ -42,13 +42,13 @@ class ActionModule(ActionBase):
     DEFAULT_SLEEP = 1
     DEFAULT_TIMEOUT = 600
 
-    def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
+    def do_until_success_or_timeout(self, what, timeout, ping_connect_timeout, what_desc, sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
         e = None
         while datetime.utcnow() < max_end_time:
             try:
-                what(connect_timeout)
+                what(ping_connect_timeout)
                 if what_desc:
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
@@ -76,7 +76,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        def ping_module_test(connect_timeout):
+        def ping_module_test(ping_connect_timeout):
             ''' Test ping module, if available '''
             display.vvv("wait_for_connection: attempting ping module test")
             # re-run interpreter discovery if we ran it in the first iteration
@@ -87,6 +87,9 @@ class ActionModule(ActionBase):
                 self._connection.reset()
             except AttributeError:
                 pass
+
+            self._connection.set_option('timeout', ping_connect_timeout)
+            self._connection.set_option('retries', False)
 
             ping_result = self._execute_module(module_name='ansible.legacy.ping', module_args=dict(), task_vars=task_vars)
 
