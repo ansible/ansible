@@ -1,0 +1,4 @@
+bugfixes:
+  - wait_for_connection - fix `timeout` parameter being ignored
+  - wait_for_connection - truncates last connection attempt timeout (of length `connect_timeout`) to have task not exceed total `timeout`
+  - wait_for_connection - will no longer wait forever when `timeout` <= 0
