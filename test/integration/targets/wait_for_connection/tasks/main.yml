@@ -28,3 +28,17 @@
     that:
     - invalid_parameter is failed
     - "invalid_parameter.msg == 'Invalid options for wait_for_connection: foo'"
+
+
+- name: Test timeout with unreachable host
+  wait_for_connection:
+    timeout: 3
+    connect_timeout: 1
+  register: timeout_unreachable
+  delegate_to: 198.51.100.2  # address is in TEST-NET-2 (RFC-5737), which should not have hosts in it
+  ignore_errors: true
+
+- name: Verify timeout honoured
+  assert:
+    that:
+      - timeout_unreachable.elapsed < 4
