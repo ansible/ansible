@@ -49,7 +49,7 @@ class ActionModule(ActionBase):
         # We check that there is at least 1 second remaining,
         # since that's the minimum we can specify to a timeout to ping.
         # If we pass 0 seconds as the timeout to ping, it never times out.
-        while (max_end_time - datetime.utcnow()).seconds > 0:
+        while (max_end_time - datetime.utcnow()) > timedelta(seconds=0):
             # The effective timeout ensures that we don't exceed the timeout value
             # as an example without it, if timeout is 10 and connect_timeout is 8,
             # 2 attempts will be made with a timeout of 8s for a total of 16s, > timeout
