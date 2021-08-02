@@ -697,7 +697,8 @@ class SubprocessError(ApplicationError):
         self.stderr = stderr
         self.runtime = runtime
 
-        error_callback(self)
+        if callable(error_callback):
+            error_callback(self)
 
         self.message = self.message.strip()
 
