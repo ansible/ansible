@@ -57,7 +57,7 @@ attributes:
         details: As long as there is a connection plugin
         platforms: all
 notes:
-- The reported C(elapsed) may be slightly less than the C(timeout) because of integer truncation (for example, reporting C("elpased": 2) for a C(timeout) of 3) 
+- The reported C(elapsed) may be slightly less than the C(timeout) because of integer truncation; for example, reporting elpased of 2 for a C(timeout) of 3
 seealso:
 - module: ansible.builtin.wait_for
 - module: ansible.windows.win_wait_for
