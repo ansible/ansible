@@ -46,7 +46,10 @@ class ActionModule(ActionBase):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
         e = None
-        while datetime.utcnow() < max_end_time:
+        # We check that there is at least 1 second remaining,
+        # since that's the minimum we can specify to a timeout to ping.
+        # If we pass 0 seconds as the timeout to ping, it never times out.
+        while (max_end_time - datetime.utcnow()).seconds > 0:
             try:
                 what(ping_connect_timeout)
                 if what_desc:
