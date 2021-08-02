@@ -274,7 +274,7 @@ class ConfigCLI(CLI):
                 if subkey == 'env':
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper, default_flow_style=False), errors='surrogate_or_strict'))
                 data.append('')
 
         return data
