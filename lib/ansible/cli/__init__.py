@@ -251,13 +251,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         try:
             become_prompt = "%s password: " % become_prompt_method
             if op['ask_pass']:
-                sshpass = self._get_secret("SSH password: ")
+                sshpass = CLI._get_secret("SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
             elif op['connection_password_file']:
                 sshpass = CLI.get_password_from_file(op['connection_password_file'])
 
             if op['become_ask_pass']:
-                becomepass = self._get_secret(become_prompt)
+                becomepass = CLI._get_secret(become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
             elif op['become_password_file']:
