@@ -817,7 +817,10 @@
           - nonexisting is success
           - nonexisting.msg == 'Nothing to do'
 
-- block:
+# running on RHEL which is --remote where .mo language files are present
+# for dnf as opposed to in --docker
+- when: ansible_distribution == 'RedHat'
+  block:
     - dnf:
         name: langpacks-ja
         state: present
@@ -831,4 +834,3 @@
     - dnf:
         name: langpacks-ja
         state: absent
-  when: ansible_distribution == 'RedHat'
