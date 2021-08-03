@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - allow the same listening port on all container interfaces

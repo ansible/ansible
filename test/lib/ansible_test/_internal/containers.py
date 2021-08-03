@@ -524,7 +524,7 @@ class ContainerDescriptor:
             # inspect the support container to locate the published ports
             tcp_ports = dict((port, container.get_tcp_port(port)) for port in self.ports)
 
-            if any(not config or len(config) != 1 for config in tcp_ports.values()):
+            if any(not config or len(set(conf['HostPort'] for conf in config)) != 1 for config in tcp_ports.values()):
                 raise ApplicationError('Unexpected `docker inspect` results for published TCP ports:\n%s' % json.dumps(tcp_ports, indent=4, sort_keys=True))
 
             published_ports = dict((port, int(config[0]['HostPort'])) for port, config in tcp_ports.items())
