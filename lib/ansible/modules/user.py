@@ -3196,11 +3196,25 @@ def main():
     if user.password_expire_max is not None:
         if user.user_exists():
             (rc, out, err) = user.set_password_expire_max()
+            if rc is None:
+                pass  # target state reached, nothing to do
+            else:
+                if rc != 0:
+                    module.fail_json(name=user.name, msg=err, rc=rc)
+                else:
+                    result['changed'] = True
 
     # deal with password expire min
     if user.password_expire_min is not None:
         if user.user_exists():
             (rc, out, err) = user.set_password_expire_min()
+            if rc is None:
+                pass  # target state reached, nothing to do
+            else:
+                if rc != 0:
+                    module.fail_json(name=user.name, msg=err, rc=rc)
+                else:
+                    result['changed'] = True
 
     module.exit_json(**result)
 
