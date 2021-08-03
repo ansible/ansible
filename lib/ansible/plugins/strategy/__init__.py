@@ -492,16 +492,16 @@ class StrategyBase:
             for handler_block in reversed(handler_blocks):
                 for handler_task in handler_block.block:
                     if handler_task.name:
-                        if not handler_task.cached_name:
-                            if handler_templar.is_template(handler_task.name):
-                                handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
-                                                                                                      task=handler_task,
-                                                                                                      _hosts=self._hosts_cache,
-                                                                                                      _hosts_all=self._hosts_cache_all)
-                                handler_task.name = handler_templar.template(handler_task.name)
-                            handler_task.cached_name = True
-
                         try:
+                            if not handler_task.cached_name:
+                                if handler_templar.is_template(handler_task.name):
+                                    handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
+                                                                                                          task=handler_task,
+                                                                                                          _hosts=self._hosts_cache,
+                                                                                                          _hosts_all=self._hosts_cache_all)
+                                    handler_task.name = handler_templar.template(handler_task.name)
+                                handler_task.cached_name = True
+
                             # first we check with the full result of get_name(), which may
                             # include the role name (if the handler is from a role). If that
                             # is not found, we resort to the simple name field, which doesn't
@@ -514,11 +514,17 @@ class StrategyBase:
 
                             if handler_name in candidates:
                                 return handler_task
-                        except (UndefinedError, AnsibleUndefinedVariable):
+                        except (UndefinedError, AnsibleUndefinedVariable) as e:
                             # We skip this handler due to the fact that it may be using
                             # a variable in the name that was conditionally included via
                             # set_fact or some other method, and we don't want to error
                             # out unnecessarily
+                            if not handler_task.listen:
+                                display.warning(
+                                    "Handler '%s' is unusable because it has no listen topics and "
+                                    "the name could not be templated (host-specific variables are "
+                                    "not supported in handler names). The error: %s" % (handler_task.name, to_text(e))
+                                )
                             continue
             return None
 
