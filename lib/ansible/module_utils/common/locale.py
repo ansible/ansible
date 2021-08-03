@@ -4,7 +4,17 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import os
+
 from ansible.module_utils._text import to_native
+
+# new POSIX standard or English cause those are messages core team expects
+# yes, the last 2 are the same but some systems are weird
+PARSABLE_LOCALES = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
+
+# not only ones, but by default the ones most programs should use,
+#  many violate the standard though, so callers should send their own list then
+LOCALE_VARS = ['LC_ALL', 'LANG']
 
 
 def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
@@ -30,9 +40,7 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
         available = []
 
         if preferences is None:
-            # new POSIX standard or English cause those are messages core team expects
-            # yes, the last 2 are the same but some systems are weird
-            preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
+            preferences = PARSABLE_LOCALES
 
         rc, out, err = module.run_command([locale, '-a'])
 
@@ -55,3 +63,42 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
             raise
 
     return found
+
+
+def set_parsable_locale(module, envvars=None, preferences=None):
+    '''
+        Optimially set locale vars to best or any of the parsable locales if not already.
+
+        :param module: an AnsibleModule instance
+        :param preferences: A list of preferred locales, in order of preference
+
+        This modifies the current environment via os.environ
+
+        :returns: dictionary of modified environment variables with their original values
+    '''
+
+    def _get_best():
+        ''' cache best locale '''
+        if not hasattr(_get_best, 'best'):
+            _get_best.best = get_best_parsable_locale(module, preferences)
+        return _get_best.best
+
+    if envvars is None:
+        envvars = LOCALE_VARS
+
+    if preferences is None:
+        preferences = PARSABLE_LOCALES
+
+    old_environ = {}
+    for envvar in envvars:
+
+        if not (envvar.startswith('LC_') or envvar == 'LANG'):
+            raise RuntimeWarning("'%s' is not a valid locale related environment variable!" % (envvar))
+
+        if os.environ.get(envvar) in preferences:
+            continue
+
+        old_environ[envvar] = os.environ.get(envvar)
+        os.environ[envvar] = _get_best()
+
+    return old_environ
