@@ -1031,11 +1031,9 @@ class User(object):
         cmd.append(self.password_expire_max)
         cmd.append(self.name)
         if self.password_expire_max == spwd.getspnam(self.name).sp_max:
-            return (0, '', '')
-            # self.module.exit_json(changed=False)
+            return (None, '', '')
         else:
             return self.execute_command(cmd)
-            # self.module.exit_json(changed=True)
 
     def set_password_expire_min(self):
         command_name = 'chage'
@@ -1044,11 +1042,9 @@ class User(object):
         cmd.append(self.password_expire_min)
         cmd.append(self.name)
         if self.password_expire_min == spwd.getspnam(self.name).sp_min:
-            return (0, '', '')
-            # self.module.exit_json(changed=False)
+            return (None, '', '')
         else:
             return self.execute_command(cmd)
-            # self.module.exit_json(changed=True)
 
     def user_password(self):
         passwd = ''
