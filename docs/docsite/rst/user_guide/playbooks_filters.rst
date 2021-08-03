@@ -1821,7 +1821,7 @@ The ``regex_search`` filter returns an empty string if it cannot find a match:
 .. note::
 
 
-  The ``regex_search`` filter returns ``none`` when used in a Jinja expression (for example in conjunction with operators, other filters, and so on). See the two examples below.
+  The ``regex_search`` filter returns ``None`` when used in a Jinja expression (for example in conjunction with operators, other filters, and so on). See the two examples below.
 
   .. code-block:: Jinja
 
@@ -1830,7 +1830,7 @@ The ``regex_search`` filter returns an empty string if it cannot find a match:
     {{ 'ansible' | regex_search('foobar') is none }}
     # => True
 
-  This is due to historic behavior and the custom re-implementation of some of the Jinja internals in Ansible. Enable the ``jinja2_native`` setting if you want the ``regex_search`` filter to  always return ``none`` if it cannot find a match.
+  This is due to historic behavior and the custom re-implementation of some of the Jinja internals in Ansible. Enable the ``jinja2_native`` setting if you want the ``regex_search`` filter to  always return ``None`` if it cannot find a match.
 
 To extract all occurrences of regex matches in a string, use the ``regex_findall`` filter:
 
