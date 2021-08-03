@@ -65,16 +65,14 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
     return found
 
 
-def set_parsable_locale(module, envvars=None, preferences=None):
+def get_parsable_locale_envvars(module, envvars=None, preferences=None):
     '''
         Optimially set locale vars to best or any of the parsable locales if not already.
 
         :param module: an AnsibleModule instance
         :param preferences: A list of preferred locales, in order of preference
 
-        This modifies the current environment via os.environ
-
-        :returns: dictionary of modified environment variables with their original values
+        :returns: 2 dicts, one with env vars and new values, another with env vars and existing values.
     '''
 
     def _get_best():
@@ -89,7 +87,8 @@ def set_parsable_locale(module, envvars=None, preferences=None):
     if preferences is None:
         preferences = PARSABLE_LOCALES
 
-    old_environ = {}
+    newvars = {}
+    oldvars = {}
     for envvar in envvars:
 
         if not (envvar.startswith('LC_') or envvar == 'LANG'):
@@ -98,7 +97,7 @@ def set_parsable_locale(module, envvars=None, preferences=None):
         if os.environ.get(envvar) in preferences:
             continue
 
-        old_environ[envvar] = os.environ.get(envvar)
-        os.environ[envvar] = _get_best()
+        oldvars[envvar] = os.environ.get(envvar)
+        newvars[envvar] = _get_best()
 
-    return old_environ
+    return newvars, oldvars
