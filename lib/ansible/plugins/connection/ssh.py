@@ -171,7 +171,7 @@ DOCUMENTATION = '''
               version_added: '2.7'
           cli:
             - name: ssh_extra_args
-      reconnection_retries:
+      retries:
           description: Number of attempts to connect.
           default: 3
           type: integer
