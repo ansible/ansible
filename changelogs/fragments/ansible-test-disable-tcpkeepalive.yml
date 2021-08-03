@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - disable ``TCPKeepAlive`` to remote instances to prevent connection failures (https://github.com/ansible/ansible/pull/75395)
