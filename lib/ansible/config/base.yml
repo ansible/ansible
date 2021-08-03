@@ -1479,10 +1479,10 @@ INTERPRETER_PYTHON_FALLBACK:
   - python3.6
   - python3.5
   - /usr/bin/python3
+  - /usr/libexec/platform-python
   - python2.7
   - python2.6
   - /usr/bin/python
-  - /usr/libexec/platform-python
   - python
   vars:
     - name: ansible_interpreter_python_fallback
