@@ -1522,7 +1522,7 @@ The ``regex_search`` filter returns an empty string if it cannot find a match::
     {{ 'ansible' | regex_search('foobar') }}
     # => ''
 
-Note that due to historic behavior and custom re-implementation of some of the Jinja internals in Ansible there is an exception to the behavior. When used in a Jinja expression (for example in conjunction with operators, other filters, and so no) the return value differs, in those situations the return value is ``none``. See the two examples below::
+Note that due to historic behavior and custom re-implementation of some of the Jinja internals in Ansible there is an exception to the behavior. When used in a Jinja expression (for example in conjunction with operators, other filters, and so on) the return value differs, in those situations the return value is ``none``. See the two examples below::
 
     {{ 'ansible' | regex_search('foobar') == '' }}
     # => False
