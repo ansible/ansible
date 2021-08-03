@@ -606,8 +606,8 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=
 
     interpreter_out = None
 
-    # looking for python or variants
-    if 'python' in interpreter_name:
+    # looking for python, rest rely on matching vars
+    if interpreter_name == 'python':
         # skip detection for network os execution, use playbook supplied one if possible
         if remote_is_local:
             interpreter_out = task_vars['ansible_playbook_python']
@@ -626,9 +626,7 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=
 
                 if discovered_interpreter_config not in facts_from_task_vars:
                     # interpreter discovery is desired, but has not been run for this host
-                    raise InterpreterDiscoveryRequiredError("interpreter discovery needed",
-                                                            interpreter_name=interpreter_name,
-                                                            discovery_mode=interpreter_out)
+                    raise InterpreterDiscoveryRequiredError("interpreter discovery needed", interpreter_name=interpreter_name, discovery_mode=interpreter_out)
                 else:
                     interpreter_out = facts_from_task_vars[discovered_interpreter_config]
         else:
