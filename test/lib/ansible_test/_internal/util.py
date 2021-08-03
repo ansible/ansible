@@ -269,7 +269,7 @@ def generate_pip_command(python):
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
-                cmd_verbosity=1, str_errors='strict'):
+                cmd_verbosity=1, str_errors='strict', error_callback=None):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -281,6 +281,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type stdout: file | None
     :type cmd_verbosity: int
     :type str_errors: str
+    :type error_callback: t.Callable[[SubprocessError], None]
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -361,7 +362,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     if status == 0:
         return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime, error_callback)
 
 
 def common_environment():
@@ -670,13 +671,14 @@ class ApplicationWarning(Exception):
 
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
-    def __init__(self, cmd, status=0, stdout=None, stderr=None, runtime=None):
+    def __init__(self, cmd, status=0, stdout=None, stderr=None, runtime=None, error_callback=None):
         """
         :type cmd: list[str]
         :type status: int
         :type stdout: str | None
         :type stderr: str | None
         :type runtime: float | None
+        :type error_callback: t.Optional[t.Callable[[SubprocessError], None]]
         """
         message = 'Command "%s" returned exit status %s.\n' % (' '.join(cmd_quote(c) for c in cmd), status)
 
@@ -688,16 +690,19 @@ class SubprocessError(ApplicationError):
             message += '>>> Standard Output\n'
             message += '%s%s\n' % (stdout.strip(), Display.clear)
 
-        message = message.strip()
-
-        super(SubprocessError, self).__init__(message)
-
         self.cmd = cmd
         self.message = message
         self.status = status
         self.stdout = stdout
         self.stderr = stderr
         self.runtime = runtime
+
+        if error_callback:
+            error_callback(self)
+
+        self.message = self.message.strip()
+
+        super(SubprocessError, self).__init__(self.message)
 
 
 class MissingEnvironmentVariable(ApplicationError):

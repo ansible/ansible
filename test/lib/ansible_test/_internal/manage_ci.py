@@ -2,6 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import functools
 import os
 import tempfile
 import time
@@ -15,6 +16,7 @@ from .io import (
 from .util import (
     SubprocessError,
     ApplicationError,
+    Display,
     cmd_quote,
     display,
     ANSIBLE_TEST_DATA_ROOT,
@@ -340,12 +342,45 @@ class ManagePosixCI:
         if not data:
             options.append('-tt')
 
-        return run_command(self.core_ci.args,
-                           ['ssh'] + self.ssh_args +
-                           options +
-                           ['-p', str(self.core_ci.connection.port),
-                            '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                           self.become + [command], capture=capture, data=data)
+        # Capture SSH debug logs
+        with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
+            options.extend(['-vvv', '-E', ssh_logfile.name])
+
+            return run_command(self.core_ci.args,
+                               ['ssh'] + self.ssh_args +
+                               options +
+                               ['-p', str(self.core_ci.connection.port),
+                                '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
+                               self.become + [command], capture=capture, data=data,
+                               error_callback=functools.partial(self.capture_log_details, ssh_logfile.name))
+
+    def capture_log_details(self, path, ex):  # type: (str, SubprocessError) -> None
+        """Reads ssh log file and returns relevant error."""
+        if ex.status != 255:
+            return
+
+        markers = [
+            'debug1: Connection Established',
+            'debug1: Authentication successful',
+            'debug1: Entering interactive session',
+            'debug1: Sending command',
+            'debug2: PTY allocation request accepted',
+            'debug2: exec request accepted',
+        ]
+
+        file_contents = read_text_file(path)
+        messages = []
+
+        for line in reversed(file_contents.splitlines()):
+            messages.append(line)
+
+            if any(line.startswith(marker) for marker in markers):
+                break
+
+        message = '\n'.join(reversed(messages))
+
+        ex.message += '>>> SSH Debug Output\n'
+        ex.message += '%s%s\n' % (message.strip(), Display.clear)
 
     def scp(self, src, dst):
         """

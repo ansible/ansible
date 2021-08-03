@@ -31,6 +31,7 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
     ApplicationError,
     cmd_quote,
+    SubprocessError,
 )
 
 from .io import (
@@ -457,7 +458,7 @@ def resolve_csharp_ps_util(import_name, path):
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
-                cmd_verbosity=1, str_errors='strict'):
+                cmd_verbosity=1, str_errors='strict', error_callback=None):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -470,8 +471,9 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type stdout: file | None
     :type cmd_verbosity: int
     :type str_errors: str
+    :type error_callback: t.Callable[[SubprocessError], None]
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity, str_errors=str_errors)
+                       cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
