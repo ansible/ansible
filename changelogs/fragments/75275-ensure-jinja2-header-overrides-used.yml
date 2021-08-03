@@ -1,0 +1,2 @@
+bugfixes:
+  - template - ensure Jinja2 overrides from template header are used (https://github.com/ansible/ansible/issues/75275)

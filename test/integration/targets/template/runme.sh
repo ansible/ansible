@@ -38,3 +38,5 @@ ansible-playbook 72262.yml -v "$@"
 # ensure unsafe is preserved, even with extra newlines
 ansible-playbook unsafe.yml -v "$@"
 
+# ensure Jinja2 overrides from a template are used
+ansible-playbook in_template_overrides.yml -v "$@"
