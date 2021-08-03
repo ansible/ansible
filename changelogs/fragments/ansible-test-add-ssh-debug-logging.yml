@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - display recent ``ssh`` debug logs after connection failures (https://github.com/ansible/ansible/pull/75374)
