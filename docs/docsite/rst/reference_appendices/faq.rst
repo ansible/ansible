@@ -21,7 +21,7 @@ In July, 2019, we announced that collections would be the `future of Ansible con
 Where did this specific module go?
 ++++++++++++++++++++++++++++++++++
 
-IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`IRC channels <communication_irc>`.
+IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`chat channels <communication_irc>`.
 
 .. _set_environment:
 
@@ -806,7 +806,7 @@ for contributing can be found in the docs README `viewable on GitHub <https://gi
 I don't see my question here
 ++++++++++++++++++++++++++++
 
-Please see the section below for a link to IRC and the Google Group, where you can ask your question there.
+If you have not found an answer to your questions, you can ask on one of our mailing lists or chat channels. For instructions on subscribing to a list or joining a chat channel, see :ref:`communication`.
 
 .. seealso::
 
@@ -816,5 +816,3 @@ Please see the section below for a link to IRC and the Google Group, where you c
        Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel

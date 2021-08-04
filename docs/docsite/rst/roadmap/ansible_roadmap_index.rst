@@ -13,10 +13,10 @@ Each roadmap is published both as an idea of what is upcoming in Ansible, and as
 
 You can submit feedback on the current roadmap in multiple ways:
 
-- Edit the agenda of an IRC `Ansible Community Meeting <https://github.com/ansible/community/issues/539>`_ (preferred)
-- Post on the ``#ansible-community`` IRC channel on `irc.libera.chat <https://libera.chat/>`_.
+- Edit the agenda of an `Ansible Community Meeting <https://github.com/ansible/community/issues/539>`_ (preferred)
+- Post on the ``#ansible-community`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_)
 
-See :ref:`Ansible communication channels <communication>` for details on how to join and use the IRC channels.
+See :ref:`Ansible communication channels <communication>` for details on how to join and use our chat channels.
 
 .. toctree::
    :maxdepth: 1

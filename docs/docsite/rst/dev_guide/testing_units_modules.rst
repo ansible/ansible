@@ -18,7 +18,7 @@ The document doesn't apply to other parts of Ansible for which the recommendatio
 normally closer to the Python standard. There is basic documentation for Ansible unit
 tests in the developer guide :ref:`testing_units`. This document should
 be readable for a new Ansible module author. If you find it incomplete or confusing,
-please open a bug or ask for help on Ansible IRC.
+please open a bug or ask for help on the #ansible-devel chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_).
 
 What Are Unit Tests?
 ====================
@@ -269,8 +269,8 @@ Ansible special cases for unit testing
 
 There are a number of special cases for unit testing the environment of an Ansible module.
 The most common are documented below, and suggestions for others can be found by looking
-at the source code of the existing unit tests or asking on the Ansible IRC channel or mailing
-lists.
+at the source code of the existing unit tests or asking on the Ansible chat channel or mailing
+lists. For more infomration on joining chat channels and subscribing to mailing lists, see :ref:`communication`.
 
 Module argument processing
 --------------------------

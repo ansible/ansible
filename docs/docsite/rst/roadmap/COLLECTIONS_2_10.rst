@@ -31,7 +31,7 @@ Release Schedule
 - 2020-09-15: ansible-2.10.0 rc1 and final freeze.
 
   - After this date only changes blocking a release are accepted.
-  - Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at the community IRC meeting (on 9-17) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
+  - Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at the community meeting (on 9-17) to decide whether to bump the version of the collection for a fix. See the `Community meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
 ** Additional release candidates to be published as needed as blockers are fixed **
 
@@ -48,4 +48,4 @@ Ansible-2.10.x patch releases will occur roughly every three weeks if changes to
 Breaking changes may be introduced in ansible-3.0 although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly.
 
 
-For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
+For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
