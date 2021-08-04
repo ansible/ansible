@@ -46,3 +46,10 @@ def test_fail_throws_if_invoked():
     with pytest.raises(AnsibleFilterError) as e:
         fail(msg)
     assert msg in to_native(e.value)
+
+
+def test_fail_falls_back_to_generic_message():
+    msg = "Mandatory variable has not been overridden"
+    with pytest.raises(AnsibleFilterError) as e:
+        fail(None)
+    assert msg in to_native(e.value)

@@ -299,7 +299,9 @@ def mandatory(a, msg=None):
     return a
 
 
-def fail(msg="Mandatory variable has not been overridden"):
+def fail(msg=None):
+    if msg is None:
+        msg = "Mandatory variable has not been overridden"
     raise AnsibleFilterError(to_native(msg))
 
 
