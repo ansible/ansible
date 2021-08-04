@@ -3,12 +3,14 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from jinja2.runtime import Undefined
+from jinja2.exceptions import UndefinedError
 __metaclass__ = type
 
 import pytest
 
 from ansible.module_utils._text import to_native
-from ansible.plugins.filter.core import to_uuid
+from ansible.plugins.filter.core import fail, to_uuid
 from ansible.errors import AnsibleFilterError
 
 
@@ -39,3 +41,12 @@ def test_to_uuid_invalid_namespace():
     with pytest.raises(AnsibleFilterError) as e:
         to_uuid('example.com', namespace='11111111-2222-3333-4444-555555555')
     assert 'Invalid value' in to_native(e.value)
+
+
+@pytest.mark.parametrize('msg, expected', (("Expected failure", "Expected failure"), (None, "Mandatory variable has not been overridden")))
+def test_fail_returns_undefined_with_expected_message(msg, expected):
+    ret = fail(msg)
+    assert isinstance(ret, Undefined)
+    with pytest.raises(UndefinedError) as e:
+        str(ret)
+    assert expected in to_native(e.value)
