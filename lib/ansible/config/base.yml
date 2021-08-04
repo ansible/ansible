@@ -422,7 +422,7 @@ DEFAULT_ALLOW_UNSAFE_LOOKUPS:
     - "When enabled, this option allows lookup plugins (whether used in variables as ``{{lookup('foo')}}`` or as a loop as with_foo)
       to return data that is not marked 'unsafe'."
     - By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language,
-      as this could represent a security risk.  This option is provided to allow for backwards-compatibility,
+      as this could represent a security risk. This option is provided to allow for backward compatibility,
       however users should first consider adding allow_unsafe=True to any lookups which may be expected to contain data which may be run
       through the templating engine late
   env: []
@@ -1441,7 +1441,7 @@ HOST_PATTERN_MISMATCH:
   version_added: "2.8"
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution
-  default: auto_legacy
+  default: auto
   env: [{name: ANSIBLE_PYTHON_INTERPRETER}]
   ini:
   - {key: interpreter_python, section: defaults}
@@ -1450,14 +1450,13 @@ INTERPRETER_PYTHON:
   version_added: "2.8"
   description:
   - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
-    Supported discovery modes are ``auto``, ``auto_silent``, and ``auto_legacy`` (the default). All discovery modes
-    employ a lookup table to use the included system Python (on distributions known to include one), falling back to a
-    fixed ordered list of well-known Python interpreter locations if a platform-specific default is not available. The
-    fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters installed
-    later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``. The default
-    value of ``auto_legacy`` provides all the same behavior, but for backwards-compatibility with older Ansible releases
-    that always defaulted to ``/usr/bin/python``, will use that interpreter if present (and issue a warning that the
-    default behavior will change to that of ``auto`` in a future Ansible release.
+    Supported discovery modes are ``auto`` (the default), ``auto_silent``, ``auto_legacy``, and ``auto_legacy_silent``.
+    All discovery modes employ a lookup table to use the included system Python (on distributions known to include one),
+    falling back to a fixed ordered list of well-known Python interpreter locations if a platform-specific default is not
+    available. The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
+    installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent`` or
+    ``auto_legacy_silent``. The value of ``auto_legacy`` provides all the same behavior, but for backwards-compatibility
+    with older Ansible releases that always defaulted to ``/usr/bin/python``, will use that interpreter if present.
 INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
   default:
@@ -1482,18 +1481,21 @@ INTERPRETER_PYTHON_DISTRO_MAP:
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
-  - /usr/bin/python
+  - python3.10
   - python3.9
   - python3.8
   - python3.7
   - python3.6
   - python3.5
+  - /usr/bin/python3
+  - /usr/libexec/platform-python
   - python2.7
   - python2.6
-  - /usr/libexec/platform-python
-  - /usr/bin/python3
+  - /usr/bin/python
   - python
-  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
+  vars:
+    - name: ansible_interpreter_python_fallback
+  type: list
   version_added: "2.8"
 TRANSFORM_INVALID_GROUP_CHARS:
   name: Transform invalid characters in group names
