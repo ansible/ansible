@@ -1,0 +1,2 @@
+bugfixes:
+  - do not trigger interpreter discovery in the forced_local module path as they should use the ansible playbook python unless otherwise configured.
