@@ -474,4 +474,4 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

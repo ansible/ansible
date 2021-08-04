@@ -80,4 +80,4 @@ You can specify multiple target names. Each target name is the name of a directo
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

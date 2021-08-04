@@ -136,4 +136,4 @@ Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and exa
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

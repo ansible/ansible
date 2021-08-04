@@ -56,4 +56,4 @@ You can test your changes by using this checkout of ``community.general`` in pla
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

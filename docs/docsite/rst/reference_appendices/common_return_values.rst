@@ -248,4 +248,4 @@ This key contains a list of dictionaries that will be presented to the user. Key
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        Development mailing list
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

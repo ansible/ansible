@@ -754,4 +754,4 @@ Limitations of become on Windows
    `Mailing List <https://groups.google.com/forum/#!forum/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

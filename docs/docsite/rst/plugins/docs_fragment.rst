@@ -32,4 +32,4 @@ Only collection developers and maintainers use docs fragments. For more informat
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

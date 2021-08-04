@@ -430,4 +430,4 @@ If you run or skip certain tags by default, you can use the :ref:`TAGS_RUN` and 
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

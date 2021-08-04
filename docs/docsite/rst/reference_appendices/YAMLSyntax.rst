@@ -234,7 +234,7 @@ value::
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    :ref:`communication_irc`
-       How to join ansible chat channels (join #yaml for yaml-specific questions)
+       How to join Ansible chat channels (join #yaml for yaml-specific questions)
    `YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing

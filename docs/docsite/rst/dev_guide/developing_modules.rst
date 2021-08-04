@@ -48,4 +48,4 @@ If your use case isn't covered by an existing module, an action plugin, or a rol
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        Development mailing list
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

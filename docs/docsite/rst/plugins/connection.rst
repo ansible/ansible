@@ -75,4 +75,4 @@ Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation an
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

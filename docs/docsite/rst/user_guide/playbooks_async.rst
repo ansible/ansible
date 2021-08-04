@@ -172,4 +172,4 @@ To run multiple asynchronous tasks while limiting the number of tasks running co
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

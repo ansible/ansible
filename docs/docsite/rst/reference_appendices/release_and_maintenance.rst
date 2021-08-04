@@ -235,4 +235,4 @@ The deprecation cycle in ``ansible-core`` is normally across 4 feature releases 
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

@@ -54,4 +54,4 @@ To learn more about the ``ansible-galaxy`` command-line tool, see the :ref:`ansi
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

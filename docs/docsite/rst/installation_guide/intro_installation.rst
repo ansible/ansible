@@ -659,6 +659,6 @@ See the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_.
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels
 
 .. [1] ``paramiko`` was included in Ansible's ``requirements.txt`` prior to 2.8.

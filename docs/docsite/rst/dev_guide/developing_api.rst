@@ -44,4 +44,4 @@ command line tools (``lib/ansible/cli/``) is `available on GitHub <https://githu
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels

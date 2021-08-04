@@ -45,4 +45,4 @@ For instructions on developing modules, see :ref:`developing_modules_general`.
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
    :ref:`communication_irc`
-       How to join ansible chat channels
+       How to join Ansible chat channels
