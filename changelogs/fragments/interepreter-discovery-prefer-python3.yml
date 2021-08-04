@@ -1,0 +1,3 @@
+minor_changes:
+  - interpreter discovery - prefer Python 3 over Python 2
+  - interpreter discovery - allow the default list of ``INTERPRETER_PYTHON_FALLBACK`` to be changed using a variable
