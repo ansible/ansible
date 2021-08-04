@@ -32,7 +32,7 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.template import recursive_check_defined
+from ansible.template import AnsibleUndefined, recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -297,6 +297,12 @@ def mandatory(a, msg=None):
             raise AnsibleFilterError("Mandatory variable %s not defined." % name)
 
     return a
+
+
+def fail(msg=None):
+    if msg is None:
+        msg = "Mandatory variable has not been overridden"
+    return AnsibleUndefined(msg)
 
 
 def combine(*terms, **kwargs):
@@ -638,6 +644,7 @@ class FilterModule(object):
 
             # undefined
             'mandatory': mandatory,
+            'fail': fail,
 
             # comment-style decoration
             'comment': comment,
