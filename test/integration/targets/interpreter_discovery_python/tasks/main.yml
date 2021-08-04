@@ -76,10 +76,10 @@
     ping:
     register: legacy
 
-  - name: check for dep warning (only on platforms where auto result is not /usr/bin/python and legacy is)
+  - name: check for warning (only on platforms where auto result is not /usr/bin/python and legacy is)
     assert:
       that:
-      - legacy.deprecations | default([]) | length > 0
+      - legacy.warnings | default([]) | length > 0
     # only check for a dep warning if legacy returned /usr/bin/python and auto didn't
     when: legacy.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and
           auto_out.ansible_facts.discovered_interpreter_python != '/usr/bin/python'
