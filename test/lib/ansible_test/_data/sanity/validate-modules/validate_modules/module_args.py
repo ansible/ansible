@@ -57,7 +57,12 @@ class _FakeAnsibleModuleInit:
         self.called = False
 
     def __call__(self, *args, **kwargs):
-        self.args = args
+        if args and isinstance(args[0], AnsibleModule):
+            # Make sure, due to creative calling, that we didn't end up with
+            # ``self`` in ``args``
+            self.args = args[1:]
+        else:
+            self.args = args
         self.kwargs = kwargs
         self.called = True
         raise AnsibleModuleCallError('AnsibleModuleCallError')
