@@ -61,8 +61,8 @@ class ManageWindowsCI:
             BatchMode='yes',
             StrictHostKeyChecking='no',
             UserKnownHostsFile='/dev/null',
-            ServerAliveInterval=15,
-            ServerAliveCountMax=4,
+            ServerAliveInterval=12,
+            ServerAliveCountMax=5,
             TCPKeepAlive='no',
         )
 
@@ -211,8 +211,8 @@ class ManagePosixCI:
             BatchMode='yes',
             StrictHostKeyChecking='no',
             UserKnownHostsFile='/dev/null',
-            ServerAliveInterval=15,
-            ServerAliveCountMax=4,
+            ServerAliveInterval=12,
+            ServerAliveCountMax=5,
             TCPKeepAlive='no',
         )
 
