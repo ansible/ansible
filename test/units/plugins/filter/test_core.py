@@ -8,7 +8,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils._text import to_native
-from ansible.plugins.filter.core import to_uuid
+from ansible.plugins.filter.core import fail, to_uuid
 from ansible.errors import AnsibleFilterError
 
 
@@ -39,3 +39,10 @@ def test_to_uuid_invalid_namespace():
     with pytest.raises(AnsibleFilterError) as e:
         to_uuid('example.com', namespace='11111111-2222-3333-4444-555555555')
     assert 'Invalid value' in to_native(e.value)
+
+
+def test_fail_throws_if_invoked():
+    msg = "Expected failure"
+    with pytest.raises(AnsibleFilterError) as e:
+        fail(msg)
+    assert msg in to_native(e.value)
