@@ -159,7 +159,8 @@ class TestActionBase(unittest.TestCase):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
                 (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args,
-                                                                             task_vars=dict(ansible_python_interpreter='/usr/bin/python'))
+                                                                             task_vars=dict(ansible_python_interpreter='/usr/bin/python',
+                                                                                            ansible_playbook_python='/usr/bin/python'))
                 self.assertEqual(style, "new")
                 self.assertEqual(shebang, u"#!/usr/bin/python")
 

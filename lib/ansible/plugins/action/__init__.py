@@ -234,6 +234,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
+                                                                            remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                                                                             **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
