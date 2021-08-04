@@ -587,7 +587,7 @@ def _slurp(path):
     return data
 
 
-def _get_shebang(interpreter, task_vars, templar, args=tuple()):
+def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=False):
     """
     Note not stellar API:
        Returns None instead of always returning a shebang line.  Doing it this
@@ -595,44 +595,59 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_name = os.path.basename(interpreter).strip()
-
     # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
-    # check for first-class interpreter config
+    interpreter_name = os.path.basename(interpreter).strip()
+
+    # name for interpreter var
+    interpreter_config = u'ansible_%s_interpreter' % interpreter_name
+    # key for config
     interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
 
-    if C.config.get_configuration_definitions().get(interpreter_config_key):
+    interpreter_out = None
+
+    # looking for python, rest rely on matching vars
+    if interpreter_name == 'python':
+        # skip detection for network os execution, use playbook supplied one if possible
+        if remote_is_local:
+            interpreter_out = task_vars['ansible_playbook_python']
+
         # a config def exists for this interpreter type; consult config for the value
-        interpreter_out = C.config.get_config_value(interpreter_config_key, variables=task_vars)
-        discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+        elif C.config.get_configuration_definition(interpreter_config_key):
 
-        interpreter_out = templar.template(interpreter_out.strip())
+            interpreter_from_config = C.config.get_config_value(interpreter_config_key, variables=task_vars)
+            interpreter_out = templar.template(interpreter_from_config.strip())
 
-        facts_from_task_vars = task_vars.get('ansible_facts', {})
+            # handle interpreter discovery if requested or empty interpreter was provided
+            if not interpreter_out or interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
 
-        # handle interpreter discovery if requested
-        if interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
-            if discovered_interpreter_config not in facts_from_task_vars:
-                # interpreter discovery is desired, but has not been run for this host
-                raise InterpreterDiscoveryRequiredError("interpreter discovery needed",
-                                                        interpreter_name=interpreter_name,
-                                                        discovery_mode=interpreter_out)
-            else:
-                interpreter_out = facts_from_task_vars[discovered_interpreter_config]
+                discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+                facts_from_task_vars = task_vars.get('ansible_facts', {})
+
+                if discovered_interpreter_config not in facts_from_task_vars:
+                    # interpreter discovery is desired, but has not been run for this host
+                    raise InterpreterDiscoveryRequiredError("interpreter discovery needed", interpreter_name=interpreter_name, discovery_mode=interpreter_out)
+                else:
+                    interpreter_out = facts_from_task_vars[discovered_interpreter_config]
+        else:
+            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
+
+    elif interpreter_config in task_vars:
+        # for non python we consult vars for a possible direct override
+        interpreter_out = templar.template(task_vars.get(interpreter_config).strip())
+
+    if not interpreter_out:
+        # nothing matched(None) or in case someone configures empty string or empty intepreter
+        interpreter_out = interpreter
+        shebang = None
+    elif interpreter_out == interpreter:
+        # no change, no new shebang
+        shebang = None
     else:
-        # a config def does not exist for this interpreter type; consult vars for a possible direct override
-        interpreter_config = u'ansible_%s_interpreter' % interpreter_name
-
-        if interpreter_config not in task_vars:
-            return None, interpreter
-
-        interpreter_out = templar.template(task_vars[interpreter_config].strip())
-
-    shebang = u'#!' + interpreter_out
-
-    if args:
-        shebang = shebang + u' ' + u' '.join(args)
+        # set shebang cause we changed interpreter
+        shebang = u'#!' + interpreter_out
+        if args:
+            shebang = shebang + u' ' + u' '.join(args)
 
     return shebang, interpreter_out
 
@@ -1067,7 +1082,7 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment):
+                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -1221,7 +1236,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                        'Look at traceback for that process for debugging information.')
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
-        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars, templar)
+        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars, templar, remote_is_local=remote_is_local)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
 
@@ -1313,7 +1328,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
 
 def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1345,7 +1360,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment)
+                                                                environment=environment, remote_is_local=remote_is_local)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
@@ -1359,7 +1374,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
             # _get_shebang() takes text strings
             args = [to_text(a, errors='surrogate_or_strict') for a in args]
             interpreter = args[0]
-            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0],
+            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:], remote_is_local=remote_is_local)[0],
                                      errors='surrogate_or_strict', nonstring='passthru')
 
             if b_new_shebang:
