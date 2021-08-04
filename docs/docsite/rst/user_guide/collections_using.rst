@@ -379,5 +379,5 @@ This will have an implied entry in the ``collections:`` keyword of ``my_namespac
        Understand the collections metadata structure.
   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-  `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join ansible chat channels

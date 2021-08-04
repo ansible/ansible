@@ -66,5 +66,5 @@ All plugins that remain in ``ansible-core`` and all collections hosted in Automa
        Examples of using modules with /usr/bin/ansible-playbook
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join ansible chat channels

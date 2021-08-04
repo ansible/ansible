@@ -739,5 +739,5 @@ the filter ``slaac()`` generates an IPv6 address for a given network and a MAC A
          Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+	 :ref:`communication_irc`
+       How to join ansible chat channels
