@@ -299,6 +299,10 @@ def mandatory(a, msg=None):
     return a
 
 
+def fail(msg="Mandatory variable has not been overridden"):
+    raise AnsibleFilterError(to_native(msg))
+
+
 def combine(*terms, **kwargs):
     recursive = kwargs.pop('recursive', False)
     list_merge = kwargs.pop('list_merge', 'replace')
@@ -638,6 +642,7 @@ class FilterModule(object):
 
             # undefined
             'mandatory': mandatory,
+            'fail': fail,
 
             # comment-style decoration
             'comment': comment,
