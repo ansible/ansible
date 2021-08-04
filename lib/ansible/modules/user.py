@@ -3205,9 +3205,8 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 
-        # deal with password expire max
-        if user.password_expire_max is not None:
-            (rc, out, err) = user.set_password_expire_max()
+        def _handle_set_password_expire_return(command_return):
+            (rc, out, err) = command_return
             if rc is None:
                 pass  # target state reached, nothing to do
             else:
@@ -3216,16 +3215,10 @@ def main():
                 else:
                     result['changed'] = True
 
-        # deal with password expire min
+        if user.password_expire_max is not None:
+            _handle_set_password_expire_return(user.set_password_expire_max())
         if user.password_expire_min is not None:
-            (rc, out, err) = user.set_password_expire_min()
-            if rc is None:
-                pass  # target state reached, nothing to do
-            else:
-                if rc != 0:
-                    module.fail_json(name=user.name, msg=err, rc=rc)
-                else:
-                    result['changed'] = True
+            _handle_set_password_expire_return(user.set_password_expire_min())
 
     module.exit_json(**result)
 
