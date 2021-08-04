@@ -1,0 +1,3 @@
+add plugin.filter:
+  - name: fail
+    description: Fails if invoked. Useful for requiring a variable to be overridden
