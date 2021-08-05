@@ -164,6 +164,35 @@ options:
     type: str
     version_added: "2.8"
     choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
+  nflog_group:
+    description:
+      - The netlink group (0 - 2^16-1) to which packets are (only applicable for nfnetlink_log). 
+        The default value is 0. Only make sense with a NFLOG jump.
+    type: int
+    version_added: "2.11.4"
+  nflog_prefix:
+    description:
+      - A prefix string to include in the log message, 
+        up to 64 characters long, useful for distinguishing 
+        messages in the logs. Only make sense with a NFLOG jump.
+    type: str
+    version_added: "2.11.4"
+  nflog_size:
+    description:
+      - The number of bytes to be copied to userspace 
+        (only applicable for nfnetlink_log). nfnetlink_log 
+        instances may specify their own range, this option overrides it.
+        Only make sense with a NFLOG jump.
+    type: int
+    version_added: "2.11.4"
+  nflog_threshold:
+    description:
+      - Number of packets to queue inside the kernel before 
+        sending them to userspace (only applicable for nfnetlink_log). 
+        Higher values result in less overhead per packet, but increase 
+        delay until the packets reach userspace. The default value is 1.
+    type: int
+    version_added: "2.11.4"
   goto:
     description:
       - This specifies that the processing should continue in a user specified chain.
@@ -497,6 +526,14 @@ EXAMPLES = r'''
     log_prefix: "IPTABLES:INFO: "
     log_level: info
 
+- name: Log all incoming packets using NFLOG backend
+  ansible.builtin.iptables:
+    chain: INPUT
+    action: append
+    state: present
+    jump: NFLOG
+    nflog_group: 2
+
 - name: Allow connections on multiple ports
   ansible.builtin.iptables:
     chain: INPUT
@@ -588,6 +625,11 @@ def construct_rule(params):
         append_param(rule, params['gateway'], '--gateway', False)
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
+    if params.get('jump') and params['jump'].lower() == 'nflog':
+        append_param(rule, params['nflog_group'], '--nflog-group', False)
+        append_param(rule, params['nflog_prefix'], '--nflog-prefix', False)
+        append_param(rule, params['nflog_size'], '--nflog-size', False)
+        append_param(rule, params['nflog_threshold'], '--nflog-threshold', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
     append_match(rule, params['destination_ports'], 'multiport')
     append_csv(rule, params['destination_ports'], '--dports')
@@ -740,6 +782,10 @@ def main():
                                     'warning', 'notice', 'info', 'debug'],
                            default=None,
                            ),
+            nflog_group=dict(type='str'),
+            nflog_prefix=dict(type='str'),
+            nflog_size=dict(type='str'),
+            nflog_threshold=dict(type='str'),
             goto=dict(type='str'),
             in_interface=dict(type='str'),
             out_interface=dict(type='str'),
@@ -799,6 +845,13 @@ def main():
             module.params['jump'] = 'LOG'
         elif module.params['jump'] != 'LOG':
             module.fail_json(msg="Logging options can only be used with the LOG jump target.")
+
+    if module.params.get('nflog_group', None) or module.params.get('nflog_prefix', None) \
+            or module.params.get('nflog_size', None) or module.params.get('nflog_threshold', None):
+        if module.params['jump'] is None:
+            module.params['jump'] = 'NFLOG'
+        elif module.params['jump'] != 'NFLOG':
+            module.fail_json(msg="NFLOG logging options can only be used with the NFLOG jump target.")
 
     # Check if wait option is supported
     iptables_version = LooseVersion(get_iptables_version(iptables_path, module))

@@ -730,6 +730,40 @@ class TestIptables(ModuleTestCase):
                     '--log-level', log_lvl
                 ])
 
+    def test_nflog_flags(self):
+        """ Test various ways of nflog target flags """
+
+        set_module_args({
+            'chain': 'INPUT',
+            'action': 'append',
+            'jump': 'NFLOG',
+            'nflog_group': '1',
+            'nflog_prefix': '**accepted input**',
+            'nflog_size': '20000',
+            'nflog_threshold': '2',
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+            self.assertEqual(run_command.call_count, 1)
+            self.assertEqual(run_command.call_args_list[0][0][0], [
+                '/sbin/iptables',
+                '-t', 'filter',
+                '-C', 'INPUT',
+                '-j', 'NFLOG',
+                '--nflog-group', '1',
+                '--nflog-prefix', '**accepted input**',
+                '--nflog-size', '20000',
+                '--nflog-threshold', '2',
+            ])
+
     def test_iprange(self):
         """ Test iprange module with its flags src_range and dst_range """
         set_module_args({
