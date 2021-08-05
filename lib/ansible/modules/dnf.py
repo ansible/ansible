@@ -738,9 +738,6 @@ class DnfModule(YumDnf):
     def _is_installed(self, pkg):
         installed = self.base.sack.query().installed()
 
-        if pkg[-4:] == '.rpm':
-            pkg = pkg[:-4]
-
         package_spec = {}
         name, arch = self._split_package_arch(pkg)
         if arch:
