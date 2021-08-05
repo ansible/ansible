@@ -98,6 +98,19 @@
         allow_downgrade: true
         disable_gpg_check: true
 
+    - name: Verify toaster is not upgraded with state=installed
+      dnf:
+        name: "{{ item }}"
+        state: installed
+      register: installed
+      loop:
+        - toaster
+        - toaster.noarch
+        - toaster-1.2.3.4-1.el8.noarch
+
+    - assert:
+        that: "[0, 1, 2] | map('extract', installed.results, 'changed') == [False, False, False]"
+
     - name: Ask for pending updates with bugfix=true and security=true
       dnf:
         name: '*'
@@ -117,6 +130,21 @@
           - '"Removed: toaster-1.2.3.4-1.el8.noarch" in update_bugfix.results'
           - '"Installed: oven-1.2.3.5-1.el8.noarch" in update_bugfix.results'
           - '"Removed: oven-1.2.3.4-1.el8.noarch" in update_bugfix.results'
+
+    - name: Install old version of toaster again
+      dnf:
+        name: "{{ updateinfo_repo }}/toaster-1.2.3.4-1.el8.noarch.rpm"
+        allow_downgrade: true
+        disable_gpg_check: true
+
+    - name: Verify toaster is upgraded with state=latest
+      dnf:
+        name: toaster.noarch
+        state: latest
+      register: result
+
+    - assert:
+        that: result.changed
 
   always:
     - name: Remove installed packages
