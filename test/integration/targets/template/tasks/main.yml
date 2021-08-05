@@ -715,5 +715,16 @@
   assert:
     that: "\"'y' is undefined\" in error.msg"
 
+- template:
+    src: template_import_macro_globals.j2
+    dest: "{{ output_dir }}/template_import_macro_globals.templated"
+
+- command: "cat {{ output_dir }}/template_import_macro_globals.templated"
+  register: out
+
+- assert:
+    that:
+      - out.stdout == "bar=lookedup_bar"
+
 # aliases file requires root for template tests so this should be safe
 - import_tasks: backup_test.yml
