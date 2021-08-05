@@ -450,10 +450,9 @@ class DnfModule(YumDnf):
             "sparc", "sparcv8", "sparcv9", "sparcv9v", "x86_64"
         ]
 
-        rpm_arch_re = re.compile(r'(.*)\.(.*)')
-        rpm_arch_match = rpm_arch_re.match(packagename)
-        if rpm_arch_match and rpm_arch_match.groups()[1] in redhat_rpm_arches:
-            return rpm_arch_match.groups()
+        name, delimiter, arch = packagename.rpartition('.')
+        if name and arch and arch in redhat_rpm_arches:
+            return name, arch
         return packagename, None
 
     def _packagename_dict(self, packagename):
