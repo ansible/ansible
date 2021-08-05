@@ -1,0 +1,2 @@
+bugfixes:
+  - find action, correctly convert path to text when warning about skiping.
