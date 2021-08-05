@@ -512,8 +512,8 @@ def main():
                 if not params['recurse']:
                     break
         except Exception as e:
-            module.warn("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
             skipped[npath] = to_text(e)
+            module.warn("Skipped '%s' path due to this access issue: %s\n" % (to_text(npath), skipped[npath]))
             has_warnings = True
 
     if has_warnings:
