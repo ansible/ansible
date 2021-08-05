@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test validate-modules - enforce that ``_info`` and ``_facts`` modules set ``supports_check_mode=True`` (https://github.com/ansible/ansible/pull/75324)."

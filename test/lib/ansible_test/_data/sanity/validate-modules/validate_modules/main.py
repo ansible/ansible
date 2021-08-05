@@ -1173,8 +1173,8 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(for_collection=bool(self.collection)),
-                                   'AnsibleModule', 'invalid-ansiblemodule-schema')
+        schema = ansible_module_kwargs_schema(self.object_name.split('.')[0], for_collection=bool(self.collection))
+        self._validate_docs_schema(kwargs, schema, 'AnsibleModule', 'invalid-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 

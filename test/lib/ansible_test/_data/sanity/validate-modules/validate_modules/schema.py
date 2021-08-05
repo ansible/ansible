@@ -253,7 +253,7 @@ def argument_spec_schema(for_collection):
     return Schema(schemas)
 
 
-def ansible_module_kwargs_schema(for_collection):
+def ansible_module_kwargs_schema(module_name, for_collection):
     schema = {
         'argument_spec': argument_spec_schema(for_collection),
         'bypass_checks': bool,
@@ -262,6 +262,9 @@ def ansible_module_kwargs_schema(for_collection):
         'add_file_common_args': bool,
         'supports_check_mode': bool,
     }
+    if module_name.endswith(('_info', '_facts')):
+        del schema['supports_check_mode']
+        schema[Required('supports_check_mode')] = True
     schema.update(argument_spec_modifiers)
     return Schema(schema)
 
