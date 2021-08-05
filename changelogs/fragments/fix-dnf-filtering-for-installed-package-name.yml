@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf module - Use all components of a package name to determine if it's installed (https://github.com/ansible/ansible/issues/75311).
