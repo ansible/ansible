@@ -169,14 +169,14 @@ options:
       - The netlink group (0 - 2^16-1) to which packets are (only applicable for nfnetlink_log).
         The default value is 0. Only make sense with a NFLOG jump.
     type: str
-    version_added: "2.11.4"
+    version_added: "2.12"
   nflog_prefix:
     description:
       - A prefix string to include in the log message,
         up to 64 characters long, useful for distinguishing
         messages in the logs. Only make sense with a NFLOG jump.
     type: str
-    version_added: "2.11.4"
+    version_added: "2.12"
   nflog_size:
     description:
       - The number of bytes to be copied to userspace
@@ -184,7 +184,7 @@ options:
         instances may specify their own range, this option overrides it.
         Only make sense with a NFLOG jump.
     type: str
-    version_added: "2.11.4"
+    version_added: "2.12"
   nflog_threshold:
     description:
       - Number of packets to queue inside the kernel before
@@ -192,7 +192,7 @@ options:
         Higher values result in less overhead per packet, but increase
         delay until the packets reach userspace. The default value is 1.
     type: str
-    version_added: "2.11.4"
+    version_added: "2.12"
   goto:
     description:
       - This specifies that the processing should continue in a user specified chain.
