@@ -166,30 +166,30 @@ options:
     choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
   nflog_group:
     description:
-      - The netlink group (0 - 2^16-1) to which packets are (only applicable for nfnetlink_log). 
+      - The netlink group (0 - 2^16-1) to which packets are (only applicable for nfnetlink_log).
         The default value is 0. Only make sense with a NFLOG jump.
     type: str
     version_added: "2.11.4"
   nflog_prefix:
     description:
-      - A prefix string to include in the log message, 
-        up to 64 characters long, useful for distinguishing 
+      - A prefix string to include in the log message,
+        up to 64 characters long, useful for distinguishing
         messages in the logs. Only make sense with a NFLOG jump.
     type: str
     version_added: "2.11.4"
   nflog_size:
     description:
-      - The number of bytes to be copied to userspace 
-        (only applicable for nfnetlink_log). nfnetlink_log 
+      - The number of bytes to be copied to userspace
+        (only applicable for nfnetlink_log). nfnetlink_log
         instances may specify their own range, this option overrides it.
         Only make sense with a NFLOG jump.
     type: str
     version_added: "2.11.4"
   nflog_threshold:
     description:
-      - Number of packets to queue inside the kernel before 
-        sending them to userspace (only applicable for nfnetlink_log). 
-        Higher values result in less overhead per packet, but increase 
+      - Number of packets to queue inside the kernel before
+        sending them to userspace (only applicable for nfnetlink_log).
+        Higher values result in less overhead per packet, but increase
         delay until the packets reach userspace. The default value is 1.
     type: str
     version_added: "2.11.4"
