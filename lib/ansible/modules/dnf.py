@@ -435,15 +435,7 @@ class DnfModule(YumDnf):
 
         return result
 
-    def _packagename_dict(self, packagename):
-        """
-        Return a dictionary of information for a package name string or None
-        if the package name doesn't contain at least all NVR elements
-        """
-
-        if packagename[-4:] == '.rpm':
-            packagename = packagename[:-4]
-
+    def _split_package_arch(self, packagename):
         # This list was auto generated on a Fedora 28 system with the following one-liner
         #   printf '[ '; for arch in $(ls /usr/lib/rpm/platform); do  printf '"%s", ' ${arch%-linux}; done; printf ']\n'
         redhat_rpm_arches = [
@@ -458,15 +450,26 @@ class DnfModule(YumDnf):
             "sparc", "sparcv8", "sparcv9", "sparcv9v", "x86_64"
         ]
 
-        rpm_arch_re = re.compile(r'(.*)\.(.*)')
+        name, delimiter, arch = packagename.rpartition('.')
+        if name and arch and arch in redhat_rpm_arches:
+            return name, arch
+        return packagename, None
+
+    def _packagename_dict(self, packagename):
+        """
+        Return a dictionary of information for a package name string or None
+        if the package name doesn't contain at least all NVR elements
+        """
+
+        if packagename[-4:] == '.rpm':
+            packagename = packagename[:-4]
+
         rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
         try:
             arch = None
-            rpm_arch_match = rpm_arch_re.match(packagename)
-            if rpm_arch_match:
-                nevr, arch = rpm_arch_match.groups()
-                if arch in redhat_rpm_arches:
-                    packagename = nevr
+            nevr, arch = self._split_package_arch(packagename)
+            if arch:
+                packagename = nevr
             rpm_nevr_match = rpm_nevr_re.match(packagename)
             if rpm_nevr_match:
                 name, epoch, version, release = rpm_nevr_re.match(packagename).groups()
@@ -734,7 +737,20 @@ class DnfModule(YumDnf):
 
     def _is_installed(self, pkg):
         installed = self.base.sack.query().installed()
-        if installed.filter(name=pkg):
+
+        package_spec = {}
+        name, arch = self._split_package_arch(pkg)
+        if arch:
+            package_spec['arch'] = arch
+
+        package_details = self._packagename_dict(pkg)
+        if package_details:
+            package_details['epoch'] = int(package_details['epoch'])
+            package_spec.update(package_details)
+        else:
+            package_spec['name'] = name
+
+        if installed.filter(**package_spec):
             return True
         else:
             return False
