@@ -168,7 +168,7 @@ options:
     description:
       - The netlink group (0 - 2^16-1) to which packets are (only applicable for nfnetlink_log). 
         The default value is 0. Only make sense with a NFLOG jump.
-    type: int
+    type: str
     version_added: "2.11.4"
   nflog_prefix:
     description:
@@ -183,7 +183,7 @@ options:
         (only applicable for nfnetlink_log). nfnetlink_log 
         instances may specify their own range, this option overrides it.
         Only make sense with a NFLOG jump.
-    type: int
+    type: str
     version_added: "2.11.4"
   nflog_threshold:
     description:
@@ -191,7 +191,7 @@ options:
         sending them to userspace (only applicable for nfnetlink_log). 
         Higher values result in less overhead per packet, but increase 
         delay until the packets reach userspace. The default value is 1.
-    type: int
+    type: str
     version_added: "2.11.4"
   goto:
     description:
