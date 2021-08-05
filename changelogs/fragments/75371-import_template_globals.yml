@@ -1,0 +1,2 @@
+bugfixes:
+  - Jinja2 globals should be accessible even when importing a template without the context (https://github.com/ansible/ansible/issues/75371)
