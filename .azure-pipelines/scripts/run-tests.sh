@@ -31,4 +31,7 @@ if [ "${BUILD_REASON}" = "Schedule" ]; then
     fi
 fi
 
+sudo apt update
+sudo apt install -y tcpdump
+
 "${entry_point}" "${test}" 2>&1 | "$(dirname "$0")/time-command.py"
