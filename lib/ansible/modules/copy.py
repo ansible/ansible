@@ -138,11 +138,12 @@ attributes:
   action:
     support: full
   check_mode:
-    version_added: '0.9'
     support: full
   diff_mode:
     support: full
-    version_added: '0.9'
+  vault:
+    support: full
+    version_added: '2.2'
 '''
 
 EXAMPLES = r'''
