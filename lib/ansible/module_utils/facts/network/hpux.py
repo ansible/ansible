@@ -47,7 +47,7 @@ class HPUXNetwork(Network):
 
     def get_default_interfaces(self):
         default_interfaces = {}
-        rc, out, err = self.module.run_command("/usr/bin/netstat -nr")
+        rc, out, err = self.module.run_command("/usr/bin/netstat -nrw")
         lines = out.splitlines()
         for line in lines:
             words = line.split()
@@ -60,7 +60,7 @@ class HPUXNetwork(Network):
 
     def get_interfaces_info(self):
         interfaces = {}
-        rc, out, err = self.module.run_command("/usr/bin/netstat -ni")
+        rc, out, err = self.module.run_command("/usr/bin/netstat -niw")
         lines = out.splitlines()
         for line in lines:
             words = line.split()
