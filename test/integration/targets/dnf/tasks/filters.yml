@@ -109,7 +109,7 @@
         - toaster-1.2.3.4-1.el8.noarch
 
     - assert:
-        that: "[0, 1, 2] | map('extract', installed.results, 'changed') == [False, False, False]"
+        that: "installed.results | map(attribute='changed') is not any"
 
     - name: Ask for pending updates with bugfix=true and security=true
       dnf:
