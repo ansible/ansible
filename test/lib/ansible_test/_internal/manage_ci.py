@@ -372,7 +372,7 @@ class ManagePosixCI:
         finally:
             run_command(self.core_ci.args, ['sudo', 'kill', '-KILL', tcpdump_process.pid])
 
-    def show_ssh_debug_logs(self, path, ex):  # type: (str, SubprocessError) -> None
+    def show_ssh_debug_logs(self, path, ex, wat):  # type: (str, SubprocessError) -> None
         """Reads ssh log file and returns relevant error."""
         markers = [
             'debug1: Connection Established',
