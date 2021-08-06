@@ -370,8 +370,7 @@ class ManagePosixCI:
                                    self.become + [command], capture=capture, data=data,
                                    error_callback=functools.partial(self.capture_log_details, ssh_logfile.name, tcpdump_process))
         finally:
-            tcpdump_process.kill()
-            tcpdump_process.wait()
+            run_command(self.core_ci.args, ['sudo', 'kill', '-KILL', tcpdump_process.pid])
 
     def show_ssh_debug_logs(self, path, ex):  # type: (str, SubprocessError) -> None
         """Reads ssh log file and returns relevant error."""
@@ -400,8 +399,7 @@ class ManagePosixCI:
 
     def show_captured_packets(self, ex, process):
         # Make sure tcpdump is not still writing to the pcap files
-        process.terminate()
-        process.wait()
+        run_command(self.core_ci.args, ['sudo', 'kill', '-TERM', process.pid])
 
         tcpdump_bin = '/usr/sbin/tcpdump'
         cmd = ['/usr/bin/sudo', tcpdump_bin, '-r']
