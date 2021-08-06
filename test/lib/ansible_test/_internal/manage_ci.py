@@ -348,6 +348,7 @@ class ManagePosixCI:
 
         # Run tcpdump
         cmd = [
+            '/usr/bin/sudo',
             '/usr/sbin/tcpdump',
             '-w', '/root/%s.pcap',
             '-G', '20',
@@ -403,7 +404,7 @@ class ManagePosixCI:
         process.wait()
 
         tcpdump_bin = '/usr/sbin/tcpdump'
-        cmd = [tcpdump_bin, '-r']
+        cmd = ['/usr/bin/sudo', tcpdump_bin, '-r']
         pcap_files = glob.glob('/root/*.pcap')
 
         output = []
