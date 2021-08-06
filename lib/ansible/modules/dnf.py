@@ -352,6 +352,7 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 # because we need AnsibleModule object to use get_best_parsable_locale()
 # to set proper locale before importing dnf to be able to scrape
 # the output in some cases (FIXME?).
+dnf = None
 
 
 class DnfModule(YumDnf):
