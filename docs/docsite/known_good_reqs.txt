@@ -1,7 +1,8 @@
 # pip packages required to build docsite
 # tested June 9 2021
 
-antsibull==0.34.0
+antsibull
+# version floats free, since we control features and releases
 docutils==0.16
 # check unordered lists when testing more recent docutils versions
 # see https://github.com/readthedocs/sphinx_rtd_theme/issues/1115
