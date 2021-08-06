@@ -18,6 +18,7 @@ __metaclass__ = type
 
 import os
 import re
+import time
 
 from ansible.module_utils.six.moves import reduce
 
@@ -39,6 +40,7 @@ class NetBSDHardware(Hardware):
     - processor_cores
     - processor_count
     - devices
+    - uptime_seconds
     """
     platform = 'NetBSD'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
@@ -56,11 +58,13 @@ class NetBSDHardware(Hardware):
             pass
 
         dmi_facts = self.get_dmi_facts()
+        uptime_facts = self.get_uptime_facts()
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
         hardware_facts.update(mount_facts)
         hardware_facts.update(dmi_facts)
+        hardware_facts.update(uptime_facts)
 
         return hardware_facts
 
@@ -155,6 +159,24 @@ class NetBSDHardware(Hardware):
                 dmi_facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
         return dmi_facts
+
+    def get_uptime_facts(self):
+        # On NetBSD, we need to call sysctl with -n to get this value as an int.
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd, '-n', 'kern.boottime']
+
+        rc, out, err = self.module.run_command(cmd)
+
+        if rc != 0:
+            return {}
+
+        kern_boottime = out.strip()
+        if not kern_boottime.isdigit():
+            return {}
+
+        return {
+            'uptime_seconds': int(time.time() - int(kern_boottime)),
+        }
 
 
 class NetBSDHardwareCollector(HardwareCollector):
