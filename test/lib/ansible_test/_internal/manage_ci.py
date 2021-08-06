@@ -3,7 +3,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import functools
+import glob
 import os
+import subprocess
 import tempfile
 import time
 
@@ -344,23 +346,34 @@ class ManagePosixCI:
         if not data:
             options.append('-tt')
 
-        # Capture SSH debug logs
-        with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
-            options.extend(['-vvv', '-E', ssh_logfile.name])
+        # Run tcpdump
+        cmd = [
+            '/usr/sbin/tcpdump',
+            '-w', '/root/%s.pcap',
+            '-G', '20',
+            '-s', '200',
+            '-Z', 'root',
+        ]
+        tcpdump_process = subprocess.Popen(cmd)
 
-            return run_command(self.core_ci.args,
-                               ['ssh'] + self.ssh_args +
-                               options +
-                               ['-p', str(self.core_ci.connection.port),
-                                '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                               self.become + [command], capture=capture, data=data,
-                               error_callback=functools.partial(self.capture_log_details, ssh_logfile.name))
+        try:
+            # Capture SSH debug logs
+            with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
+                options.extend(['-vvv', '-E', ssh_logfile.name])
 
-    def capture_log_details(self, path, ex):  # type: (str, SubprocessError) -> None
+                return run_command(self.core_ci.args,
+                                   ['ssh'] + self.ssh_args +
+                                   options +
+                                   ['-p', str(self.core_ci.connection.port),
+                                    '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
+                                   self.become + [command], capture=capture, data=data,
+                                   error_callback=functools.partial(self.capture_log_details, ssh_logfile.name, tcpdump_process))
+        finally:
+            tcpdump_process.kill()
+            tcpdump_process.wait()
+
+    def show_ssh_debug_logs(self, path, ex):  # type: (str, SubprocessError) -> None
         """Reads ssh log file and returns relevant error."""
-        if ex.status != 255:
-            return
-
         markers = [
             'debug1: Connection Established',
             'debug1: Authentication successful',
@@ -383,6 +396,30 @@ class ManagePosixCI:
 
         ex.message += '>>> SSH Debug Output\n'
         ex.message += '%s%s\n' % (message.strip(), Display.clear)
+
+    def show_captured_packets(self, ex, process):
+        # Make sure tcpdump is not still writing to the pcap files
+        process.terminate()
+        process.wait()
+
+        tcpdump_bin = '/usr/sbin/tcpdump'
+        cmd = [tcpdump_bin, '-r']
+        pcap_files = glob.glob('/root/*.pcap')
+
+        output = []
+        for file in pcap_files[-2:]:
+            output.append(self.run_command(self.core_ci.args, cmd + [file], capture=True).splitlines())
+
+        message = '\n'.join(output[-20:])
+
+        ex.message += '>>> Packet Capture\n'
+        ex.message += '%s%s\n' % (message.strip(), Display.clear)
+
+    def capture_log_details(self, path, ex, process):  # type: (str, SubprocessError) -> None
+        # Always run this for testing just to see if it's working
+        # if ex.status !=255:
+        self.show_ssh_debug_logs(self, path, ex)
+        self.show_captured_packets(self, ex, process)
 
     def scp(self, src, dst):
         """
