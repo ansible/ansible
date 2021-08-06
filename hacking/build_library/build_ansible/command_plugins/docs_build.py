@@ -147,7 +147,7 @@ def generate_full_docs(args):
             build_data_working = args.ansible_build_data
 
         ansible_version = args.ansible_version
-        if ansible_version is None:
+        if ansible_version in (None, 'devel'):
             ansible_version = find_latest_ansible_dir(build_data_working)
             params = ['devel', '--pieces-file', os.path.join(ansible_version, 'ansible.in')]
         else:
@@ -210,6 +210,8 @@ class CollectionPluginDocs(Command):
                             help="Limit building module documentation to comma-separated list of"
                             " plugins. Specify non-existing plugin name for no plugins.")
         parser.add_argument('--ansible-version', action='store',
+                            # Note: Can't set this to 'devel' since we check that this is not set
+                            # with action=('base' or 'named').
                             dest='ansible_version', default=None,
                             help='The version of the ansible package to make documentation for.'
                             '  This only makes sense when used with full.')
