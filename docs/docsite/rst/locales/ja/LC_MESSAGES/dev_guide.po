@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-12 10:48+0200\n"
+"POT-Creation-Date: 2021-08-05 13:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1153,7 +1153,7 @@ msgstr "デフォルトでは、コレクション用のリポジトリーで 2 
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:38
 msgid "The first is the ``galaxy.yml`` or ``MANIFEST.json`` file in the top level of the repository path. If the file exists it's used as the collection metadata and the individual collection will be installed."
-msgstr "1 つ目は、リポジトリーパスの最上位にある ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ファイルが存在する場合は、コレクションのメタデータとして使用され、個々のコレクションがインストールされます。"
+msgstr "1 つ目は、リポジトリーパスのトップレベルにある ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ファイルが存在する場合は、コレクションのメタデータとして使用され、個々のコレクションがインストールされます。"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:49
 msgid "The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection."
@@ -1756,8 +1756,8 @@ msgid "Adding unit tests"
 msgstr "ユニットテストの追加"
 
 #: ../../rst/dev_guide/developing_collections_testing.rst:32
-msgid "You must place unit tests in the appropriate``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_."
-msgstr "ユニットテストを適切な ``tests/unit/plugins/`` ディレクトリーに置く必要があります。たとえば、``tests/unit/plugins/module_utils/foo/test_bar.py`` または ``tests/unit/plugins/module_utils/foo/bar/test_bar.py`` の ``plugins/module_utils/foo/bar.py`` にテストを置きます。たとえば、`community.general のユニットテスト <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_ を参照してください。"
+msgid "You must place unit tests in the appropriate ``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_."
+msgstr "ユニットテストを適切な ``tests/unit/plugins/`` ディレクトリーに置く必要があります。たとえば、``tests/unit/plugins/module_utils/foo/test_bar.py`` または ``tests/unit/plugins/module_utils/foo/bar/test_bar.py`` の ``plugins/module_utils/foo/bar.py`` にテストを置きます。たとえば、`unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_ を参照してください。"
 
 #: ../../rst/dev_guide/developing_collections_testing.rst:34
 msgid "To run all unit tests for all supported Python versions::"
@@ -3370,7 +3370,7 @@ msgstr "不明な場合は、他のモジュールを探して、同じ目的で
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:144
 msgid "Detailed explanation of what this option does. It should be written in full sentences."
-msgstr "* このオプションの機能の詳細な説明。これは、完全な文章で記述する必要があります。"
+msgstr "このオプションの機能の詳細な説明。これは、完全な文章で記述する必要があります。"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:145
 msgid "The first entry is a description of the option itself; subsequent entries detail its use, dependencies, or format of possible values."
@@ -3420,7 +3420,7 @@ msgstr "choices"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:165
 msgid "List of option values."
-msgstr "* オプション値のリスト。"
+msgstr "オプション値のリスト。"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:166
 msgid "Should be absent if empty."
@@ -3483,7 +3483,7 @@ msgstr "suboptions"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:190
 msgid "If this option takes a dict or list of dicts, you can define the structure here."
-msgstr "このオプションがディクショナリーまたはディクショナリーの一覧を取る場合は、ここで構造を定義できます。"
+msgstr "このオプションがディクショナリーまたはディクショナリーのリストを取る場合は、ここで構造を定義できます。"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:191
 msgid "See :ref:`ansible_collections.azure.azcollection.azure_rm_securitygroup_module`, :ref:`ansible_collections.azure.azcollection.azure_rm_azurefirewall_module`, and :ref:`ansible_collections.openstack.cloud.baremetal_node_action_module` for examples."
@@ -9788,7 +9788,7 @@ msgstr "Ansible 2.10 以降は、リンクの一部として、拡張された�
 
 #: ../../rst/dev_guide/style_guide/index.rst:214
 msgid "For example:"
-msgstr "たとえば、以下のようになります。"
+msgstr "例:"
 
 #: ../../rst/dev_guide/style_guide/index.rst:220
 msgid "displays as :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`."
