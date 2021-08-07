@@ -1,0 +1,145 @@
+---
+# (c) 2020 Thales Netherlands
+# (c) 2021 Ansible Project
+
+- name: Test merge_variables lookup plugin
+  hosts: localhost
+  vars:
+    testlist_initial_value: "{{ testlist2 }}"
+    testlist1__merge_list:
+      - item1
+    testlist2:
+      - item2
+    testlist3__merge_list:
+      - item3
+
+    testdict1__merge_dict:
+      item1: test
+      list_item:
+        - test1
+    testdict2__merge_dict:
+      item2: test
+      list_item:
+        - test2
+
+    override_warning_init:
+      key_to_override: Initial value
+    override__override_warning:
+      key_to_override: Override value
+
+    override_error_init:
+      key_to_override: Initial value
+    override__override_error:
+      key_to_override: Override value
+
+    logging_output_file: /tmp/ansible-test-merge-variables  # The Ansible log output is available in this file
+  tasks:
+    - name: Test merge list
+      block:
+        - name: Print the merged list
+          debug:
+            msg: "{{ merged_list }}"
+
+        - name: Validate that the list is complete
+          assert:
+            that:
+              - "(merged_list | length) == 2"
+              - "'item1' in merged_list"
+              - "'item3' in merged_list"
+      vars:
+        merged_list: "{{ lookup('merge_variables', '__merge_list') }}"
+
+    - name: Test merge dict
+      block:
+        - name: Print the merged list
+          debug:
+            msg: "{{ merged_dict }}"
+
+        - name: Validate that dict is complete
+          assert:
+            that:
+              - "'item1' in merged_dict"
+              - "'item2' in merged_dict"
+              - "'list_item' in merged_dict"
+              - "(merged_dict.list_item | length) == 2"
+              - "'test1' in (merged_dict.list_item)"
+              - "'test2' in (merged_dict.list_item)"
+      vars:
+        merged_dict: "{{ lookup('merge_variables', '__merge_dict') }}"
+
+    - name: Test merge without results
+      block:
+        - debug:
+            msg: "{{ not_found }}"
+        - name: Validate that the variable defaults to an empty list
+          vars:
+          assert:
+            that:
+              - "(not_found | default('default-used', True)) == 'default-used'"
+      vars:
+        not_found: "{{ lookup('merge_variables', '__merge_not_found') }}"
+
+    - name: Test merge without results but with initial value
+      block:
+        - name: Print the merged list
+          debug:
+            msg: "{{ not_found_initial_value }}"
+
+        - name: Validate that the variable only contains the initial value
+          vars:
+          assert:
+            that:
+              - "(not_found_initial_value | count) == 1"
+              - "(not_found_initial_value | first) == 'item2'"
+      vars:
+        not_found_initial_value: "{{ lookup('merge_variables', '__merge_not_found', initial_value=testlist_initial_value) }}"
+
+    - name: Test merge start with an initial value
+      block:
+        - name: Print the merged list
+          debug:
+            msg: "{{ merged_list_with_initial_value }}"
+
+        - name: Validate that the list is complete
+          assert:
+            that:
+              - "(merged_list_with_initial_value | length) == 3"
+              - "'item1' in merged_list_with_initial_value"
+              - "'item2' in merged_list_with_initial_value"
+              - "'item3' in merged_list_with_initial_value"
+      vars:
+        merged_list_with_initial_value: "{{ lookup('merge_variables', '__merge_list', initial_value=testlist_initial_value) }}"
+
+    - name: Test that an override prints a warning
+      block:
+        - name: Print the merged list
+          debug:
+            msg: "{{ merged_with_override_warning }}"
+
+        - name: Validate that the dict is complete and the warning is printed
+          assert:
+            that:
+              - "'key_to_override' in merged_with_override_warning"
+              - "merged_with_override_warning.key_to_override == 'Override value'"
+              - "'key_to_override' in lookup('file', logging_output_file)"  # Check if a message is given
+              - "'[WARNING]' in lookup('file', logging_output_file)"        # and verify that the message is a WARNING
+      vars:
+        merged_with_override_warning: "{{ lookup('merge_variables', '__override_warning', initial_value=override_warning_init, override_warning=True) }}"
+
+    - name: Test that an override result in an error
+      block:
+        - name: Validate that an override result in an error
+          debug:
+            msg: "{{ lookup('merge_variables', '__override_error', initial_value=override_error_init, override_error=True) }}"
+          ignore_errors: true  # Do not stop the playbook
+          register: _override_error_result
+
+        - name: Print the output
+          debug:
+            msg: "{{ _override_error_result }}"
+
+        - name: Validate that the error is reported
+          assert:
+            that:
+              - "_override_error_result.failed"
+              - "'key_to_override' in _override_error_result.msg"
