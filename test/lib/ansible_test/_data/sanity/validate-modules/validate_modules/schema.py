@@ -550,13 +550,13 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
             Schema({
                 any_string_types: add_default_attributes(),
                 'action_group': add_default_attributes({
-                    'membership': list_string_types,
+                    Required('membership'): list_string_types,
                 }),
                 'forced_action_plugin': add_default_attributes({
-                    'action_plugin': any_string_types,
+                    Required('action_plugin'): any_string_types,
                 }),
                 'proprietary': add_default_attributes({
-                    'platforms': list_string_types,
+                    Required('platforms'): list_string_types,
                 }),
             }, extra=PREVENT_EXTRA),
         )
