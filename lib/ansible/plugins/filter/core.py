@@ -300,7 +300,9 @@ def mandatory(a, msg=None):
 
 
 def fail(msg=None):
-    if msg is None:
+    from jinja2.runtime import Undefined
+
+    if msg is None or isinstance(msg, Undefined) or msg == '':
         msg = "Mandatory variable has not been overridden"
     return AnsibleUndefined(msg)
 
