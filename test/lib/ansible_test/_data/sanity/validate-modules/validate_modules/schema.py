@@ -524,6 +524,18 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         }
 
         doc_schema_dict.update(deprecation_required_scheme)
+
+    def add_default_attributes(more=None):
+        schema = {
+            'description': any_string_types,
+            'support': any_string_types,
+            'version_added_collection': any_string_types,
+            'version_added': any_string_types,
+        }
+        if more:
+            schema.update(more)
+        return schema
+
     doc_schema_dict['attributes'] = Schema(
         All(
             Schema({
@@ -532,9 +544,21 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
                     Required('support'): Any('full', 'partial', 'none'),
                     'version_added_collection': collection_name,
                     'version_added': version(for_collection=for_collection),
-                }
-            }, extra=PREVENT_EXTRA),
+                },
+            }, extra=ALLOW_EXTRA),
             partial(version_added, error_code='attribute-invalid-version-added', accept_historical=False),
+            Schema({
+                any_string_types: add_default_attributes(),
+                'action_group': add_default_attributes({
+                    'membership': list_string_types,
+                }),
+                'forced_action_plugin': add_default_attributes({
+                    'action_plugin': any_string_types,
+                }),
+                'proprietary': add_default_attributes({
+                    'platforms': list_string_types,
+                }),
+            }, extra=PREVENT_EXTRA),
         )
     )
     return Schema(
