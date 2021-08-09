@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc can now dump kewyords with --metadata-dump (still just for internal use)
