@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-08-05 13:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -395,222 +395,218 @@ msgid "`Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_
 msgstr "`Ansible AWX List <https://groups.google.com/forum/#!forum/awx-project>`_ は、 `Ansible AWX <https://github.com/ansible/awx>`_ です。"
 
 #: ../../rst/community/communication.rst:22
-msgid "`Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ is for users and developers of the Ansible Container project."
-msgstr "`Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ は、Ansible Container プロジェクトのユーザーおよび開発者向けです。"
-
-#: ../../rst/community/communication.rst:23
 msgid "`Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for learning how to develop on Ansible, asking about prospective feature design, or discussions about extending ansible or features in progress."
 msgstr "`Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ は、Ansible での開発方法を学ぶため、将来の機能設計について質問するため、あるいは進行中の Ansible または機能の拡張について議論するためのものです。"
 
-#: ../../rst/community/communication.rst:24
+#: ../../rst/community/communication.rst:23
 msgid "`Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks."
 msgstr "`Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ は、DISA STIG オートメーションや CIS ベンチマークなど、Ansible Lockdown プロジェクトに関連するものを対象としています。"
 
-#: ../../rst/community/communication.rst:25
+#: ../../rst/community/communication.rst:24
 msgid "`Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://ansible.meetup.com/>`_"
 msgstr "`Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ は、Ansible および `Ansible Meetups <https://ansible.meetup.com/>`_ のプロモーションを支援します。"
 
-#: ../../rst/community/communication.rst:26
+#: ../../rst/community/communication.rst:25
 msgid "`Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions, and general user discussion."
 msgstr "`Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ は、Ansible のヒントを共有したり、質問に答えたり、一般的なユーザーディスカッションを行うためのものです。"
 
-#: ../../rst/community/communication.rst:27
+#: ../../rst/community/communication.rst:26
 msgid "`Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ is designed to aid with the development and testing of Ansible roles with Molecule."
 msgstr "`Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ は、Molecule を使用した Ansible ロールの開発とテストを支援するためのものです。"
 
-#: ../../rst/community/communication.rst:29
+#: ../../rst/community/communication.rst:28
 msgid "To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``"
 msgstr "Google 以外のアカウントからグループをサブスクライブするには、サブスクリプションを依頼するメールをサブスクリプションのアドレス (例: ``ansible-devel+subscribe@googlegroups.com``) に送信します。"
 
-#: ../../rst/community/communication.rst:34
+#: ../../rst/community/communication.rst:33
 msgid "IRC channels"
 msgstr "IRC チャネル"
 
-#: ../../rst/community/communication.rst:36
-msgid "Ansible has several IRC channels on `Freenode <https://freenode.net/>`_."
-msgstr "Ansible には、`Freenode <https://freenode.net/>`_ に複数の IRC チャンネルがあります。"
+#: ../../rst/community/communication.rst:35
+msgid "Ansible has several IRC channels on `irc.libera.chat <https://libera.chat/>`_."
+msgstr "Ansible には、`irc.libera.chat <https://libera.chat/>`_ に複数の IRC チャンネルがあります。"
 
-#: ../../rst/community/communication.rst:38
-msgid "Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_ for instructions."
-msgstr "この IRC チャネルでは、ニックネームの登録が必要になる場合があります。接続時にエラーが発生する場合は、「`Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_」を参照してください。"
+#: ../../rst/community/communication.rst:37
+msgid "Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions."
+msgstr "この IRC チャネルでは、ニックネームの登録が必要になる場合があります。接続時にエラーが発生する場合は、「`libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_」を参照してください。"
 
-#: ../../rst/community/communication.rst:40
-msgid "To find all ``ansible`` specific channels on a freenode network, use the following command in your IRC client::"
-msgstr "freenode ネットワークですべての ``ansible`` 固有のチャンネルを見つけるには、IRC クライアントで以下のコマンドを使用します。"
+#: ../../rst/community/communication.rst:39
+msgid "To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client::"
+msgstr "libera.chat ネットワークですべての ``ansible`` 固有のチャンネルを見つけるには、IRC クライアントで以下のコマンドを使用します。"
 
-#: ../../rst/community/communication.rst:44
-msgid "as described in `freenode docs <https://freenode.net/kb/answer/findingchannels>`_."
-msgstr "`freenode ドキュメント <https://freenode.net/kb/answer/findingchannels>`_ に記載のとおり。"
+#: ../../rst/community/communication.rst:43
+msgid "as described in the `libera.chat docs <https://libera.chat/guides/findingchannels>`_."
+msgstr "`libera.chat ドキュメント <https://libera.chat/guides/findingchannels>`_ に記載のとおり。"
 
-#: ../../rst/community/communication.rst:47
+#: ../../rst/community/communication.rst:46
 msgid "General channels"
 msgstr "一般的なチャンネル"
 
-#: ../../rst/community/communication.rst:49
+#: ../../rst/community/communication.rst:48
 msgid "``#ansible`` - For general use questions and support."
 msgstr "``#ansible`` - 一般的な使い方の質問やサポートに使用。"
 
-#: ../../rst/community/communication.rst:50
+#: ../../rst/community/communication.rst:49
 msgid "``#ansible-devel`` - For discussions on developer topics and code related to features or bugs."
 msgstr "``#ansible-devel`` - 開発者のトピックや機能やバグに関連するコードについて議論する場。"
 
-#: ../../rst/community/communication.rst:51
+#: ../../rst/community/communication.rst:50
 msgid "``#ansible-community`` - For discussions on community and collections related topics."
 msgstr "``#ansible-community`` - コミュニティーおよびコレクションに関連するトピックについて議論する場。"
 
-#: ../../rst/community/communication.rst:52
+#: ../../rst/community/communication.rst:51
 msgid "``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
 msgstr "``#ansible-meeting`` - コミュニティーの公開ミーティング用。通常は、上記のメーリングリストで告知されます。「`ミーティングのスケジュールおよび議題のページ <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
 
-#: ../../rst/community/communication.rst:57
+#: ../../rst/community/communication.rst:56
 msgid "Working groups"
 msgstr "ワーキンググループ"
 
-#: ../../rst/community/communication.rst:59
-msgid "Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda."
-msgstr "Ansible コミュニティーの `ワーキンググループ <https://github.com/ansible/community/wiki#working-groups>`_ の多くが、Freenode IRC チャンネルで活動しています。ワーキンググループに参加したい場合は、そのワーキンググループが活動しているチャンネルに参加したり、議題にコメントしたりしてください。"
+#: ../../rst/community/communication.rst:58
+msgid "Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on libera.chat IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda."
+msgstr "Ansible コミュニティーの `ワーキンググループ <https://github.com/ansible/community/wiki#working-groups>`_ の多くが、libera.chat IRC チャンネルで活動しています。ワーキンググループに参加したい場合は、そのワーキンググループが活動しているチャンネルに参加したり、議題にコメントしたりしてください。"
 
-#: ../../rst/community/communication.rst:61
+#: ../../rst/community/communication.rst:60
 msgid "`Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``"
 msgstr "`Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``"
 
-#: ../../rst/community/communication.rst:62
+#: ../../rst/community/communication.rst:61
 msgid "`Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles"
 msgstr "`Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- セキュリティー Playbook およびロール"
 
-#: ../../rst/community/communication.rst:63
+#: ../../rst/community/communication.rst:62
 msgid "`AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx``"
 msgstr "`AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx``"
 
-#: ../../rst/community/communication.rst:64
+#: ../../rst/community/communication.rst:63
 msgid "`Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - ``#ansible-azure``"
 msgstr "`Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - ``#ansible-azure``"
 
-#: ../../rst/community/communication.rst:65
+#: ../../rst/community/communication.rst:64
 msgid "`Community Working Group <https://github.com/ansible/community/wiki/Community>`_ - ``#ansible-community`` - Including Meetups"
 msgstr "`Community Working Group <https://github.com/ansible/community/wiki/Community>`_ - ``#ansible-community`` - Meetup を含みます。"
 
-#: ../../rst/community/communication.rst:66
+#: ../../rst/community/communication.rst:65
 msgid "`Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``"
 msgstr "`Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``"
 
-#: ../../rst/community/communication.rst:67
+#: ../../rst/community/communication.rst:66
 msgid "`Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - ``#ansible-community``"
 msgstr "`Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - ``#ansible-community``"
 
-#: ../../rst/community/communication.rst:68
+#: ../../rst/community/communication.rst:67
 msgid "`DigitalOcean Working Group <https://github.com/ansible/community/wiki/Digital-Ocean>`_ - ``#ansible-digitalocean``"
 msgstr "`DigitalOcean Working Group <https://github.com/ansible/community/wiki/Digital-Ocean>`_ - ``#ansible-digitalocean``"
 
-#: ../../rst/community/communication.rst:69
+#: ../../rst/community/communication.rst:68
 msgid "`Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - ``#ansible-devel``"
 msgstr "`Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - ``#ansible-devel``"
 
-#: ../../rst/community/communication.rst:70
+#: ../../rst/community/communication.rst:69
 msgid "`Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``"
 msgstr "`Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``"
 
-#: ../../rst/community/communication.rst:71
+#: ../../rst/community/communication.rst:70
 msgid "`Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``"
 msgstr "`Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``"
 
-#: ../../rst/community/communication.rst:72
+#: ../../rst/community/communication.rst:71
 msgid "`JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - ``#ansible-jboss``"
 msgstr "`JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - ``#ansible-jboss``"
 
-#: ../../rst/community/communication.rst:73
+#: ../../rst/community/communication.rst:72
 msgid "`Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - ``#ansible-kubernetes``"
 msgstr "`Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - ``#ansible-kubernetes``"
 
-#: ../../rst/community/communication.rst:74
+#: ../../rst/community/communication.rst:73
 msgid "`Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible training"
 msgstr "`Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible トレーニング"
 
-#: ../../rst/community/communication.rst:75
+#: ../../rst/community/communication.rst:74
 msgid "`Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - ``#ansible-linode``"
 msgstr "`Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - ``#ansible-linode``"
 
-#: ../../rst/community/communication.rst:76
+#: ../../rst/community/communication.rst:75
 msgid "`Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ | `molecule.io <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles"
 msgstr "`Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ | `molecule.io <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - Ansible Playbook およびロール用テストプラットフォーム"
 
-#: ../../rst/community/communication.rst:77
+#: ../../rst/community/communication.rst:76
 msgid "`Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - ``#ansible-network``"
 msgstr "`Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - ``#ansible-network``"
 
-#: ../../rst/community/communication.rst:78
+#: ../../rst/community/communication.rst:77
 msgid "`Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - ``#ansible-devel``"
 msgstr "`Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - ``#ansible-devel``"
 
-#: ../../rst/community/communication.rst:79
+#: ../../rst/community/communication.rst:78
 msgid "`Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - ``#ansible-devel``"
 msgstr "`Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - ``#ansible-devel``"
 
-#: ../../rst/community/communication.rst:80
+#: ../../rst/community/communication.rst:79
 msgid "`VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - ``#ansible-vmware``"
 msgstr "`VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - ``#ansible-vmware``"
 
-#: ../../rst/community/communication.rst:81
+#: ../../rst/community/communication.rst:80
 msgid "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - ``#ansible-windows``"
 msgstr "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - ``#ansible-windows``"
 
-#: ../../rst/community/communication.rst:83
+#: ../../rst/community/communication.rst:82
 msgid "Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?"
 msgstr "`新しいワーキンググループを作りたい <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_ ですか?"
 
-#: ../../rst/community/communication.rst:86
+#: ../../rst/community/communication.rst:85
 msgid "Regional and Language-specific channels"
 msgstr "地域および言語固有のチャンネル"
 
-#: ../../rst/community/communication.rst:88
+#: ../../rst/community/communication.rst:87
 msgid "``#ansible-es`` - Channel for Spanish speaking Ansible community."
 msgstr "``#ansible-es`` - スペイン語の Ansible コミュニティー向けチャンネル。"
 
-#: ../../rst/community/communication.rst:89
+#: ../../rst/community/communication.rst:88
 msgid "``#ansible-eu`` - Channel for the European Ansible Community."
 msgstr "``#ansible-eu`` - ヨーロッパの Ansible コミュニティー向けのチャンネル。"
 
-#: ../../rst/community/communication.rst:90
+#: ../../rst/community/communication.rst:89
 msgid "``#ansible-fr`` - Channel for French speaking Ansible community."
 msgstr "``#ansible-fr`` - フランス語の Ansible コミュニティー向けのチャンネル。"
 
-#: ../../rst/community/communication.rst:91
+#: ../../rst/community/communication.rst:90
 msgid "``#ansiblezh`` - Channel for Zurich/Swiss Ansible community."
 msgstr "``#ansiblezh`` - チューリッヒ/スイスの Ansible コミュニティー向けのチャンネル。"
 
-#: ../../rst/community/communication.rst:94
+#: ../../rst/community/communication.rst:93
 msgid "IRC meetings"
 msgstr "IRC ミーティング"
 
-#: ../../rst/community/communication.rst:96
+#: ../../rst/community/communication.rst:95
 msgid "The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
 msgstr "Ansible コミュニティーは、さまざまなトピックに関する定期的な IRC ミーティングを開いており、興味のある人は誰でも参加することができます。Ansible ミーティングの詳細は、「`meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
 
-#: ../../rst/community/communication.rst:100
+#: ../../rst/community/communication.rst:99
 msgid "Ansible Automation Platform support questions"
 msgstr "Ansible Automation Platform サポートに関する質問"
 
-#: ../../rst/community/communication.rst:102
+#: ../../rst/community/communication.rst:101
 msgid "Red Hat Ansible `Automation Platform <https://www.ansible.com/products/automation-platform>`_ is a subscription that contains support, certified content, and tooling for Ansible including content management, a controller, UI and REST API."
 msgstr "Red Hat Ansible `Automation Platform <https://www.ansible.com/products/automation-platform>`_ は、コンテンツ管理、コントローラー、UI および REST API などの Ansible のサポート、認定コンテンツ、およびツールが含まれるサブスクリプションです。"
 
-#: ../../rst/community/communication.rst:105
+#: ../../rst/community/communication.rst:104
 msgid "If you have a question about Ansible Automation Platform, visit `Red Hat support <https://access.redhat.com/products/red-hat-ansible-automation-platform/>`_ rather than using the IRC channel or the general project mailing list."
 msgstr "Ansible Automation Platform に関するご質問は、IRC チャンネルまたは一般的なプロジェクトメーリングリストではなく、`Red Hat サポート <https://access.redhat.com/products/red-hat-ansible-automation-platform/>`_ にお問い合わせください。"
 
-#: ../../rst/community/communication.rst:108
+#: ../../rst/community/communication.rst:107
 msgid "The Bullhorn"
 msgstr "The Bullhorn"
 
-#: ../../rst/community/communication.rst:110
+#: ../../rst/community/communication.rst:109
 msgid "**The Bullhorn** is our newsletter for the Ansible developer community. If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues."
 msgstr "**The Bullhorn** は、Ansible 開発者コミュニティーのニュースレターです。共有したい質問やコンテンツがある場合は、Red Hat にアクセスしてください (the-bullhorn@redhat.com,)。また、今後発行する版については、`contribute/suggest content <https://github.com/ansible/community/issues/546>`_ に直接お問い合わせください。"
 
-#: ../../rst/community/communication.rst:113
+#: ../../rst/community/communication.rst:112
 msgid "Read past issues `here <https://github.com/ansible/community/wiki/News>`_."
 msgstr "これまで発行した版については、`こちら <https://github.com/ansible/community/wiki/News>`_ をお読みください。"
 
-#: ../../rst/community/communication.rst:115
+#: ../../rst/community/communication.rst:114
 msgid "`Subscribe <http://eepurl.com/gZmiEP>`_ to receive it."
 msgstr "これを受け取るには、`サブスクライブ <http://eepurl.com/gZmiEP>`_ します。"
 
@@ -1095,198 +1091,214 @@ msgid "Some collections require a changelog fragment for every pull request. The
 msgstr "一部のコレクションでは、プル要求ごとに changelog フラグメントが必要です。上記のエントリーについて ``trivial:`` セクションを使用します。これは、リリースの変更ログの構築時にスキップされます。"
 
 #: ../../rst/community/development_process.rst:156
-msgid "More precisely: * Every bugfix PR must have a changelog fragment. The only exception are fixes to a change that has not yet been included in a release. * Every feature PR must have a changelog fragment. * New modules and plugins (except jinja2 filter and test plugins) must have ``versions_added`` set correctly, and do not need a changelog fragment. The tooling detects new modules and plugins by their ``versions_added`` value and announces them in the next release's changelog automatically. * New jinja2 filter and test plugins, and also new roles and playbooks (for collections) must have a changelog fragment. See :ref:`changelogs_how_to_format_j2_roles_playbooks` or the `antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>_` for information on how the fragments should look like."
-msgstr "具体的には、* すべてのバグ修正のプル要求には changelog フラグメントが必要です。唯一の例外は、リリースに含まれていない変更に対する修正です。* すべての機能プル要求には、changelog フラグメントが必要です。* (jinja2 フィルターとテストプラグインを除く) 新しいモジュールおよびプラグインには、``versions_added`` を正しく設定する必要があり、changelog フラグメントは必要ありません。ツールは、新しいモジュールとプラグインをその ``versions_added`` 値によって検出し、次のリリースの変更ログで自動的に通知します。* 新しい jinja2 フィルターおよびテストのプラグイン、ならびに新しいロールと Playbook (コレクション用) には、changelog フラグメントが必要です。フラグメントがどのように見えるかについての詳細は、:ref:`changelogs_how_to_format_j2_roles_playbooks` または`antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>_` を参照してください。"
+msgid "More precisely:"
+msgstr "具体的には、以下のようになります。"
 
-#: ../../rst/community/development_process.rst:162
+#: ../../rst/community/development_process.rst:158
+msgid "Every bugfix PR must have a changelog fragment. The only exception are fixes to a change that has not yet been included in a release."
+msgstr "すべてのバグ修正プル要求には changelog フラグメントが必要です。唯一の例外は、リリースに含まれていない変更の修正です。"
+
+#: ../../rst/community/development_process.rst:159
+msgid "Every feature PR must have a changelog fragment."
+msgstr "すべての機能のプル要求には changelog フラグメントが必要です。"
+
+#: ../../rst/community/development_process.rst:160
+msgid "New modules and plugins (except jinja2 filter and test plugins) must have ``versions_added`` set correctly, and do not need a changelog fragment. The tooling detects new modules and plugins by their ``versions_added`` value and announces them in the next release's changelog automatically."
+msgstr "(jinja2 フィルターと test プラグインを除く) 新しいモジュールおよびプラグインには、``versions_added`` を正しく設定する必要があり、changelog フラグメントは必要ありません。ツールは、新しいモジュールおよびプラグインをその ``versions_added`` 値によって検出し、次のリリースの changelog で自動的に通知します。"
+
+#: ../../rst/community/development_process.rst:161
+msgid "New jinja2 filter and test plugins, and also new roles and playbooks (for collections) must have a changelog fragment. See :ref:`changelogs_how_to_format_j2_roles_playbooks` or the `antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_ for information on how the fragments should look like."
+msgstr "新しい jinja2 フィルターおよびテストプラグインも、新しいロールおよび Playbook (コレクション用) には changelog フラグメントが必要です。フラグメントの挙動については、「:ref:`changelogs_how_to_format_j2_roles_playbooks`」または「`antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_」を参照してください。"
+
+#: ../../rst/community/development_process.rst:163
 msgid "We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR."
 msgstr "マイナーリリースとメジャーリリースの両方に、短い概要を示した changelog を作成します。バグ修正をバックポートする場合には、バックポートのプル要求に changelog フラグメントを追加してください。"
 
-#: ../../rst/community/development_process.rst:167
+#: ../../rst/community/development_process.rst:168
 msgid "Creating a changelog fragment"
 msgstr "changelog フラグメントの作成"
 
-#: ../../rst/community/development_process.rst:169
+#: ../../rst/community/development_process.rst:170
 msgid "A basic changelog fragment is a ``.yaml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it."
 msgstr "基本的な changelog フラグメントは ``changelogs/fragments/`` ディレクトリーにある ``.yaml`` ファイルです。それぞれのファイルには、``bugfixes``、``major_changes`` などのキーを持つ yaml ディクショナリーが含まれており、その後にバグ修正または機能の changelog エントリーの一覧が続きます。それぞれの changelog エントリーは yaml ファイルが組み込まれている rst です。つまり、特定の構成は、yaml ではなく rst で解釈できるようにエスケープする必要があります (yaml と rst の両方にエスケープされていることが望ましい場合は、両方エスケープします)。各プル要求は、既存のものに追加するのではなく、新しいフラグメントファイルを使用する **必要があります**。したがって、変更を加えたプル要求までさかのぼることができます。"
 
-#: ../../rst/community/development_process.rst:171
+#: ../../rst/community/development_process.rst:172
 msgid "PRs which add a new module or plugin do not necessarily need a changelog fragment. See the previous section :ref:`community_changelogs`. Also see the next section :ref:`changelogs_how_to_format` for the precise format changelog fragments should have."
 msgstr "新しいモジュールまたはプラグインを追加するプル要求は必ずしも changelog フラグメントを必要としません。前のセクション「:ref:`community_changelogs`」を参照してください。また、changelog フラグメントの正確な形式は、「:ref:`changelogs_how_to_format`」を参照してください。"
 
-#: ../../rst/community/development_process.rst:173
+#: ../../rst/community/development_process.rst:174
 msgid "To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``"
 msgstr "changelog エントリーを作成するには、対応するリポジトリーの ``changelogs/fragments/`` ディレクトリーに一意の名前を持つ新しいファイルを作成します。ファイル名には、PR 番号と変更の説明を含める必要があります。拡張子 ``.yaml`` で終了する必要があります。たとえば、``40696-user-backup-shadow-file.yaml`` です。"
 
-#: ../../rst/community/development_process.rst:175
+#: ../../rst/community/development_process.rst:176
 msgid "A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:"
 msgstr "1 つの changelog フラグメントには複数のセクションが含まれる場合がありますが、ほとんどの場合はセクションが 1 つしか含まれていません。最上位キー (bugfixes、major_changes など) は、`リリースノートツール <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_ の `設定ファイル <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ で定義されています。有効なセクションとその説明を以下に示します。"
 
-#: ../../rst/community/development_process.rst:178
+#: ../../rst/community/development_process.rst:179
 msgid "**breaking_changes**"
 msgstr "**breaking_changes**"
 
-#: ../../rst/community/development_process.rst:178
+#: ../../rst/community/development_process.rst:179
 msgid "Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
 msgstr "既存の Playbook またはロールを破損する変更。これには、ユーザーにタスクの更新を強制する既存の動作の変更が含まれます。changelog と :ref:`移植ガイド <porting_guides>` の両方に記載されます。"
 
-#: ../../rst/community/development_process.rst:181
+#: ../../rst/community/development_process.rst:182
 msgid "**major_changes**"
 msgstr "**major_changes**"
 
-#: ../../rst/community/development_process.rst:181
+#: ../../rst/community/development_process.rst:182
 msgid "Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
 msgstr "Ansible 自体への大規模な変更。通常、モジュールやプラグインの変更は含まれません。changelog と :ref:`移植ガイド <porting_guides>` の両方に記載されます。"
 
-#: ../../rst/community/development_process.rst:184
+#: ../../rst/community/development_process.rst:185
 msgid "**minor_changes**"
 msgstr "**minor_changes**"
 
-#: ../../rst/community/development_process.rst:184
+#: ../../rst/community/development_process.rst:185
 msgid "Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters."
 msgstr "Ansible、モジュール、またはプラグインへの小規模な変更。これには、新機能、モジュールに追加された新しいパラメーター、または既存のパラメーターに対する動作の変更が含まれます。"
 
-#: ../../rst/community/development_process.rst:187
+#: ../../rst/community/development_process.rst:188
 msgid "**deprecated_features**"
 msgstr "**deprecated_features**"
 
-#: ../../rst/community/development_process.rst:187
+#: ../../rst/community/development_process.rst:188
 msgid "Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
 msgstr "非推奨となり、今後のリリースで削除される予定です。changelog と :ref:`移植ガイド <porting_guides>` の両方に記載されます。"
 
-#: ../../rst/community/development_process.rst:190
+#: ../../rst/community/development_process.rst:191
 msgid "**removed_features**"
 msgstr "**removed_features**"
 
-#: ../../rst/community/development_process.rst:190
+#: ../../rst/community/development_process.rst:191
 msgid "Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`."
 msgstr "以前非推奨となり、削除された機能。changelogs と :ref:`移植ガイド <porting_guides>` の両方に表示されます。"
 
-#: ../../rst/community/development_process.rst:193
+#: ../../rst/community/development_process.rst:194
 msgid "**security_fixes**"
 msgstr "**security_fixes**"
 
-#: ../../rst/community/development_process.rst:193
+#: ../../rst/community/development_process.rst:194
 msgid "Fixes that address CVEs or resolve security concerns. Include links to CVE information."
 msgstr "CVE に対応するか、セキュリティー上の懸念を解決してください。CVE 情報へのリンクが含まれます。"
 
-#: ../../rst/community/development_process.rst:196
+#: ../../rst/community/development_process.rst:197
 msgid "**bugfixes**"
 msgstr "**bugfixes**"
 
-#: ../../rst/community/development_process.rst:196
+#: ../../rst/community/development_process.rst:197
 msgid "Fixes that resolve issues."
 msgstr "問題を解決するための修正。"
 
-#: ../../rst/community/development_process.rst:199
+#: ../../rst/community/development_process.rst:200
 msgid "**known_issues**"
 msgstr "**known_issues**"
 
-#: ../../rst/community/development_process.rst:199
+#: ../../rst/community/development_process.rst:200
 msgid "Known issues that are currently not fixed or will not be fixed."
 msgstr "現在修正されていない、または修正される予定のない既知の問題。"
 
-#: ../../rst/community/development_process.rst:201
+#: ../../rst/community/development_process.rst:202
 msgid "Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself."
 msgstr "各 changelog エントリーには、最後に括弧内に、その問題へのリンクが含まれていなければなりません。対応する問題がない場合は、エントリーにプル要求自体へのリンクが含まれている必要があります。"
 
-#: ../../rst/community/development_process.rst:203
+#: ../../rst/community/development_process.rst:204
 msgid "Most changelog entries are ``bugfixes`` or ``minor_changes``."
 msgstr "ほとんどの changelog エントリーは、``bugfixes`` または ``minor_changes`` です。"
 
-#: ../../rst/community/development_process.rst:208
+#: ../../rst/community/development_process.rst:209
 msgid "Changelog fragment entry format"
 msgstr "changelog フラグメントのエントリー形式"
 
-#: ../../rst/community/development_process.rst:210
+#: ../../rst/community/development_process.rst:211
 msgid "When writing a changelog entry, use the following format:"
 msgstr "changelog エントリーを作成する場合は、以下の形式を使用します。"
 
-#: ../../rst/community/development_process.rst:216
+#: ../../rst/community/development_process.rst:217
 msgid "The scope is usually a module or plugin name or group of modules or plugins, for example, ``lookup plugins``. While module names can (and should) be mentioned directly (``foo_module``), plugin names should always be followed by the type (``foo inventory plugin``)."
 msgstr "範囲は通常、モジュールまたはプラグインの名前、またはモジュールまたはプラグインのグループです (例: ``lookup plugins``)。モジュール名は直接言及することができます (そして言及する必要があります) (``foo_module``) が、プラグイン名の後には常にタイプを追加する必要があります (``foo inventory plugin``)。"
 
-#: ../../rst/community/development_process.rst:218
+#: ../../rst/community/development_process.rst:219
 msgid "For changes that are not really scoped (for example, which affect a whole collection), use the following format:"
 msgstr "スコープ指定ロールがない変更 (コレクション全体に影響するなど) については、以下の形式を使用します。"
 
-#: ../../rst/community/development_process.rst:225
+#: ../../rst/community/development_process.rst:226
 msgid "Here are some examples:"
 msgstr "以下に例を示します。"
 
-#: ../../rst/community/development_process.rst:245
+#: ../../rst/community/development_process.rst:246
 msgid "You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.11/changelogs/fragments>`_ for the 2.11 release."
 msgstr "changelog フラグメントの例は、2.11 リリースの `changelog ディレクトリー <https://github.com/ansible/ansible/tree/stable-2.11/changelogs/fragments>`_ にもあります。"
 
-#: ../../rst/community/development_process.rst:247
+#: ../../rst/community/development_process.rst:248
 msgid "After you have written the changelog fragment for your PR, commit the file and include it with the pull request."
 msgstr "プル要求用に changelog フラグメントを作成したら、ファイルをコミットし、プル要求に追加します。"
 
-#: ../../rst/community/development_process.rst:252
+#: ../../rst/community/development_process.rst:253
 msgid "Changelog fragment entry format for new jinja2 plugins, roles, and playbooks"
 msgstr "新しい jinja2 プラグイン、ロール、および Playbook の変更ログ フラグメントエントリーの形式"
 
-#: ../../rst/community/development_process.rst:254
+#: ../../rst/community/development_process.rst:255
 msgid "While new modules and plugins that are not jinja2 filter or test plugins are mentioned automatically in the generated changelog, jinja2 filter and test plugins, roles, and playbooks are not. To make sure they are mentioned, a changelog fragment in a specific format is needed:"
 msgstr "jinja2 フィルターまたはテストプラグインではない新しいモジュールおよびプラグインは、生成された変更ログ、jinja2 フィルターおよびテストプラグイン、ロール、および Playbook に自動的に記述されます。記述されていることを確認するには、特定の形式の changelog フラグメントが必要です。"
 
-#: ../../rst/community/development_process.rst:299
+#: ../../rst/community/development_process.rst:300
 msgid "Backporting merged PRs in ``ansible-core``"
 msgstr "``ansible-core`` にマージされたプル要求のバックポート"
 
-#: ../../rst/community/development_process.rst:301
+#: ../../rst/community/development_process.rst:302
 msgid "All ``ansible-core`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch."
 msgstr "``ansible-core`` のプル要求はすべて、最初に ``devel`` ブランチにマージする必要があります。プル要求を受け入れて、``devel`` ブランチにマージした後、以下の手順でプル要求を作成して、変更を以前の安定したブランチにバックポートします。"
 
-#: ../../rst/community/development_process.rst:303
+#: ../../rst/community/development_process.rst:304
 msgid "We do **not** backport features."
 msgstr "機能のバックポートは **行いません**。"
 
-#: ../../rst/community/development_process.rst:307
+#: ../../rst/community/development_process.rst:308
 msgid "These instructions assume that:"
 msgstr "これらの手順は、以下を前提としています。"
 
-#: ../../rst/community/development_process.rst:309
+#: ../../rst/community/development_process.rst:310
 msgid "``stable-2.11`` is the targeted release branch for the backport"
 msgstr "``stable-2.11`` は、バックポートのターゲットリリースブランチです。"
 
-#: ../../rst/community/development_process.rst:310
+#: ../../rst/community/development_process.rst:311
 msgid "``https://github.com/ansible/ansible.git`` is configured as a ``git remote`` named ``upstream``. If you do not use a ``git remote`` named ``upstream``, adjust the instructions accordingly."
 msgstr "``https://github.com/ansible/ansible.git`` は、``upstream`` という名前の ``git remote`` として設定されます。``upstream`` という名前の ``git remote`` を使用しない場合は、適切に手順を調整します。"
 
-#: ../../rst/community/development_process.rst:311
+#: ../../rst/community/development_process.rst:312
 msgid "``https://github.com/<yourgithubaccount>/ansible.git`` is configured as a ``git remote`` named ``origin``. If you do not use a ``git remote`` named ``origin``, adjust the instructions accordingly."
 msgstr "``https://github.com/<yourgithubaccount>/ansible.git`` は、``origin`` という名前の ``git remote`` として設定されます。``origin`` という名前の ``git remote`` を使用しない場合は、適切に手順を調整します。"
 
-#: ../../rst/community/development_process.rst:313
+#: ../../rst/community/development_process.rst:314
 msgid "Prepare your devel, stable, and feature branches:"
 msgstr "devel、stable、および feature のブランチを準備します。"
 
-#: ../../rst/community/development_process.rst:320
+#: ../../rst/community/development_process.rst:321
 msgid "Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:"
 msgstr "devel ブランチから関連するコミットの SHA を自身の feature ブランチに選別して、必要に応じてマージの競合を処理します。"
 
-#: ../../rst/community/development_process.rst:326
+#: ../../rst/community/development_process.rst:327
 msgid "Add a :ref:`changelog fragment <changelogs_how_to>` for the change, and commit it."
 msgstr "変更には :ref:`changelog フラグメント <changelogs_how_to>` を追加し、コミットします。"
 
-#: ../../rst/community/development_process.rst:328
+#: ../../rst/community/development_process.rst:329
 msgid "Push your feature branch to your fork on GitHub:"
 msgstr "feature ブランチを GitHub のフォークにプッシュします。"
 
-#: ../../rst/community/development_process.rst:334
+#: ../../rst/community/development_process.rst:335
 msgid "Submit the pull request for ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.11`` branch"
 msgstr "``stable-2.11`` ブランチに、``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` のプル要求を送信します。"
 
-#: ../../rst/community/development_process.rst:336
+#: ../../rst/community/development_process.rst:337
 msgid "The Release Manager will decide whether to merge the backport PR before the next minor release. There isn't any need to follow up. Just ensure that the automated tests (CI) are green."
 msgstr "次のマイナーリリースまでにバックポートのプル要求をマージするかどうかはリリースマネージャーが判断します。フォローアップの必要はありません。自動テスト (CI) に問題が発生していないことを確認するだけです。"
 
-#: ../../rst/community/development_process.rst:340
+#: ../../rst/community/development_process.rst:341
 msgid "The branch name ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches."
 msgstr "ブランチ名 ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` はやや恣意的ですが、ブランチの目的についての意味を伝えます。このブランチ名の形式は必須ではありませんが、特に複数の安定したブランチに対して複数のバックポートプル要求を作成する場合に役立ちます。"
 
-#: ../../rst/community/development_process.rst:344
+#: ../../rst/community/development_process.rst:345
 msgid "If you prefer, you can use CPython's cherry-picker tool (``pip install --user 'cherry-picker >= 1.3.2'``) to backport commits from devel to stable branches in Ansible. Take a look at the `cherry-picker documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for details on installing, configuring, and using it."
 msgstr "必要に応じて、CPython の cherry-picker ツール (``pip install --user 'cherry-picker >= 1.3.2'``) を使用して、Ansible の devel から安定したブランチへのコミットをバックポートすることができます。インストール、設定、および使用方法の詳細は、「`cherry-picker のドキュメント <https://pypi.org/p/cherry-picker#cherry-picking>`_」を参照してください。"
 
@@ -1440,171 +1452,127 @@ msgid "To build documentation locally, ensure you have a working :ref:`developme
 msgstr "ローカルにドキュメントをビルドするには、:ref:`開発環境 <environment_setup>` が有効であることを確認します。"
 
 #: ../../rst/community/documentation_contributions.rst:77
-msgid "To work with documentation on your local machine, you need to have python-3.5 or greater and the following packages installed:"
-msgstr "ローカルマシンでドキュメントを扱うには、python-3.5 以降と、以下のパッケージがインストールされている必要があります。"
-
-#: ../../rst/community/documentation_contributions.rst:80
-msgid "gcc"
-msgstr "gcc"
-
-#: ../../rst/community/documentation_contributions.rst:81
-msgid "jinja2"
-msgstr "jinja2"
-
-#: ../../rst/community/documentation_contributions.rst:82
-msgid "libyaml"
-msgstr "libyaml"
-
-#: ../../rst/community/documentation_contributions.rst:83
-msgid "Pygments >= 2.4.0"
-msgstr "Pygments >= 2.4.0"
-
-#: ../../rst/community/documentation_contributions.rst:84
-msgid "pyparsing"
-msgstr "pyparsing"
-
-#: ../../rst/community/documentation_contributions.rst:85
-msgid "PyYAML"
-msgstr "PyYAML"
-
-#: ../../rst/community/documentation_contributions.rst:86
-msgid "rstcheck"
-msgstr "rstcheck"
+msgid "To work with documentation on your local machine, you need to have python-3.5 or greater and install the `Ansible dependencies`_ and `documentation dependencies`_, which are listed in two :file:`requirements.txt` files to make installation easier:"
+msgstr "ローカルマシンでドキュメントを使用するには、インストールを容易にするために、python-3.5 以降を使用し、2 つの :file:`requirements.txt` ファイルに記載されている `Ansible dependencies`_ および `documentation dependencies`_ をインストールする必要があります。"
 
 #: ../../rst/community/documentation_contributions.rst:87
-msgid "six"
-msgstr "six"
+msgid "The :file:`docs/docsite/requirements.txt` file allows a wide range of versions and may install new releases of required packages. New releases of these packages may cause problems with the Ansible docs build. If you want to install tested versions of these dependencies, use :file:`docs/docsite/known_good_reqs.txt` instead:"
+msgstr ":file:`docs/docsite/requirements.txt` ファイルにより、幅広いバージョンを使用でき、必要なパッケージの新しいリリースをインストールできます。これらのパッケージの新規リリースをインストールすると、Ansible ドキュメントのビルドで問題が発生する可能性があります。これらの依存関係のテスト済みバージョンをインストールする場合は、代わりに :file:`docs/docsite/known_good_reqs.txt` を使用します。"
 
-#: ../../rst/community/documentation_contributions.rst:88
-msgid "sphinx"
-msgstr "sphinx"
-
-#: ../../rst/community/documentation_contributions.rst:89
-msgid "sphinx-notfound-page"
-msgstr "sphinx-notfound-page"
-
-#: ../../rst/community/documentation_contributions.rst:90
-msgid "straight.plugin"
-msgstr "straight.plugin"
-
-#: ../../rst/community/documentation_contributions.rst:92
-msgid "These required packages are listed in two :file:`requirements.txt` files to make installation easier:"
-msgstr "これらの必要なパッケージは、インストールを容易にするために、2 つの :file:`requirements.txt` ファイルに一覧表示されています。"
-
-#: ../../rst/community/documentation_contributions.rst:99
+#: ../../rst/community/documentation_contributions.rst:94
 msgid "You can drop ``--user`` if you have set up a virtual environment (venv/virtenv)."
 msgstr "仮想環境 (venv/virtenv) を設定している場合は、``--user`` を削除することができます。"
 
-#: ../../rst/community/documentation_contributions.rst:103
-msgid "On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``."
-msgstr "Xcode を使用する macOS では、``--ignore-installed`` を使用して ``six`` および ``pyparsing`` をインストールして、``sphinx``. に対応するバージョンを取得しないといけない場合があります。"
+#: ../../rst/community/documentation_contributions.rst:98
+msgid "You may need to install these general pre-requisites separately on some systems: - ``gcc`` - ``libyaml`` - ``make`` - ``pyparsing`` - ``six`` On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``."
+msgstr "これらの一般的な前提条件を、一部のシステムに個別にインストールしないといけない場合があります ( - ``gcc`` - ``libyaml`` - ``make`` - ``pyparsing`` - ``six``) Xcode を使用する macOS では、``--ignore-installed`` で ``six`` および ``pyparsing`` を使用して、``sphinx`` と連携するバージョンを取得します。"
 
-#: ../../rst/community/documentation_contributions.rst:107
+#: ../../rst/community/documentation_contributions.rst:108
 msgid "After checking out ``ansible/ansible``, make sure the ``docs/docsite/rst`` directory has strict enough permissions. It should only be writable by the owner's account. If your default ``umask`` is not 022, you can use ``chmod go-w docs/docsite/rst`` to set the permissions correctly in your new branch.  Optionally, you can set your ``umask`` to 022 to make all newly created files on your system (including those created by ``git clone``) have the correct permissions."
 msgstr "``ansible/ansible`` をチェックアウトしたら、``docs/docsite/rst`` ディレクトリーに十分なパーミッションが付与されていることを確認します。所有者のアカウントのみが書き込み可能でなければなりません。デフォルトの ``umask`` が 022 ではない場合は、``chmod go-w docs/docsite/rst`` を使用して新規ブランチにパーミッションを正しく設定することができます。必要に応じて、``umask`` を 022 に設定して、システムで新に作成されるすべてのファイル (``git clone`` が作成したファイルを含む) に正しいパーミッションを設定することができます。"
 
-#: ../../rst/community/documentation_contributions.rst:112
+#: ../../rst/community/documentation_contributions.rst:113
 msgid "Testing the documentation locally"
 msgstr "ドキュメントのローカルでのテスト"
 
-#: ../../rst/community/documentation_contributions.rst:114
+#: ../../rst/community/documentation_contributions.rst:115
 msgid "To test an individual file for rST errors:"
 msgstr "rST エラーに対して個別のファイルをテストするには、以下を行います。"
 
-#: ../../rst/community/documentation_contributions.rst:121
+#: ../../rst/community/documentation_contributions.rst:122
 msgid "Building the documentation locally"
 msgstr "ローカルでのドキュメントのビルド"
 
-#: ../../rst/community/documentation_contributions.rst:123
+#: ../../rst/community/documentation_contributions.rst:124
 msgid "Building the documentation is the best way to check for errors and review your changes. Once `rstcheck` runs with no errors, navigate to ``ansible/docs/docsite`` and then build the page(s) you want to review."
 msgstr "ドキュメントのビルドは、エラーと変更を確認するのに最適な方法です。エラーなしで `rstcheck` を実行したら、``ansible/docs/docsite`` に移動し、確認するページをビルドします。"
 
-#: ../../rst/community/documentation_contributions.rst:126
+#: ../../rst/community/documentation_contributions.rst:127
 msgid "Building a single rST page"
 msgstr "単一の rST ページのビルド"
 
-#: ../../rst/community/documentation_contributions.rst:128
+#: ../../rst/community/documentation_contributions.rst:129
 msgid "To build a single rST file with the make utility:"
 msgstr "make ユーティリティーで単一の RST ファイルをビルドするには、以下を実行します。"
 
-#: ../../rst/community/documentation_contributions.rst:134
-#: ../../rst/community/documentation_contributions.rst:187
+#: ../../rst/community/documentation_contributions.rst:135
+#: ../../rst/community/documentation_contributions.rst:188
 msgid "For example:"
 msgstr "例:"
 
-#: ../../rst/community/documentation_contributions.rst:140
+#: ../../rst/community/documentation_contributions.rst:141
 msgid "This process compiles all the links but provides minimal log output. If you're writing a new page or want more detailed log output, refer to the instructions on :ref:`build_with_sphinx-build`"
 msgstr "このプロセスはすべてのリンクをコンパイルしますが、ログ出力は最小限になります。新しいページを作成する場合や、より詳細なログ出力が必要な場合は、「:ref:`build_with_sphinx-build`」の手順を参照してください。"
 
-#: ../../rst/community/documentation_contributions.rst:144
+#: ../../rst/community/documentation_contributions.rst:145
 msgid "``make htmlsingle`` adds ``rst/`` to the beginning of the path you provide in ``rst=``, so you can't type the filename with autocomplete. Here are the error messages you will see if you get this wrong:"
 msgstr "``make htmlsingle`` は、``rst=`` で提供されるパスの先頭に ``rst/`` を追加するため、自動補完でファイル名を入力することができません。これが間違っている場合は、以下のようなエラーメッセージが表示されます。"
 
-#: ../../rst/community/documentation_contributions.rst:146
+#: ../../rst/community/documentation_contributions.rst:147
 msgid "If you run ``make htmlsingle`` from the ``docs/docsite/rst/`` directory: ``make: *** No rule to make target `htmlsingle'.  Stop.``"
 msgstr "``docs/docsite/rst/`` ディレクトリーから ``make htmlsingle`` を実行した場合は、``make: *** No rule to make target `htmlsingle'.  Stop.`` メッセージが表示されます。"
 
-#: ../../rst/community/documentation_contributions.rst:147
+#: ../../rst/community/documentation_contributions.rst:148
 msgid "If you run ``make htmlsingle`` from the ``docs/docsite/`` directory with the full path to your rST document: ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``."
 msgstr "rST ドキュメントへの完全パスを使用して ``docs/docsite/`` ディレクトリーから ``make htmlsingle`` を実行した場合は、``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']`` メッセージが表示されます。"
 
-#: ../../rst/community/documentation_contributions.rst:151
+#: ../../rst/community/documentation_contributions.rst:152
 msgid "Building all the rST pages"
 msgstr "すべての rST ページのビルド"
 
-#: ../../rst/community/documentation_contributions.rst:153
+#: ../../rst/community/documentation_contributions.rst:154
 msgid "To build all the rST files without any module documentation:"
 msgstr "モジュールのドキュメント以外のすべての rST ファイルをビルドするには、以下を実行します。"
 
-#: ../../rst/community/documentation_contributions.rst:160
+#: ../../rst/community/documentation_contributions.rst:161
 msgid "Building module docs and rST pages"
 msgstr "モジュールドキュメントと rST ページのビルド"
 
-#: ../../rst/community/documentation_contributions.rst:162
+#: ../../rst/community/documentation_contributions.rst:163
 msgid "To build documentation for a few modules included in ``ansible/ansible`` plus all the rST files, use a comma-separated list:"
 msgstr "``ansible/ansible`` に含まれるいくつかのモジュールとすべての rST ファイルを使用してドキュメントをビルドするには、コンマ区切りリストを使用します。"
 
-#: ../../rst/community/documentation_contributions.rst:168
+#: ../../rst/community/documentation_contributions.rst:169
 msgid "To build all the module documentation plus all the rST files:"
 msgstr "すべてのモジュールドキュメントとすべての rST ファイルをビルドするには、以下を実行します。"
 
-#: ../../rst/community/documentation_contributions.rst:177
+#: ../../rst/community/documentation_contributions.rst:178
 msgid "Building rST files with ``sphinx-build``"
 msgstr "``sphinx-build`` で rST ファイルのビルド"
 
-#: ../../rst/community/documentation_contributions.rst:179
+#: ../../rst/community/documentation_contributions.rst:180
 msgid "Advanced users can build one or more rST files with the sphinx utility directly. ``sphinx-build`` returns misleading ``undefined label`` warnings if you only build a single page, because it does not create internal links. However, ``sphinx-build`` returns more extensive syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings. This can be useful, especially if you're creating a new page from scratch. To build a page or pages with ``sphinx-build``:"
 msgstr "上級ユーザーは、sphinx ユーティリティーを直接使用して 1 つ以上の rST ファイルをビルドすることができます。``sphinx-build`` は、内部リンクが作成されないため、1 ページのみをビルドする場合は、誤解を招く ``undefined label`` 警告を返します。ただし、``sphinx-build`` は、インデントエラーや ``x-string without end-string`` 警告など、より広範な構文のフィードバックを返します。これは特に、ゼロから新しいページを作成している場合に役に立ちます。``sphinx-build`` でページをビルドするには、以下のようにします。"
 
-#: ../../rst/community/documentation_contributions.rst:185
+#: ../../rst/community/documentation_contributions.rst:186
 msgid "You can specify filenames, or ``–a`` for all files, or omit both to compile only new/changed files."
 msgstr "ファイル名を指定することもできますし、すべてのファイルに ``–a`` を指定することもできます。もしくは、両方を省略して新しいまたは変更されたファイルだけをコンパイルすることもできます。"
 
-#: ../../rst/community/documentation_contributions.rst:194
+#: ../../rst/community/documentation_contributions.rst:195
 msgid "Running the final tests"
 msgstr "最終テストの実行"
 
-#: ../../rst/community/documentation_contributions.rst:196
+#: ../../rst/community/documentation_contributions.rst:197
 msgid "When you submit a documentation pull request, automated tests are run. Those same tests can be run locally. To do so, navigate to the repository's top directory and run:"
 msgstr "ドキュメントのプル要求を送信すると、自動テストが実行します。同じテストをローカルで実行できます。これを行うには、リポジトリーの最上位ディレクトリーに移動し、以下を実行します。"
 
-#: ../../rst/community/documentation_contributions.rst:204
+#: ../../rst/community/documentation_contributions.rst:205
 msgid "Unfortunately, leftover rST-files from previous document-generating can occasionally confuse these tests. It is therefore safest to run them on a clean copy of the repository, which is the purpose of ``make clean``. If you type these three lines one at a time and manually check the success of each, you do not need the ``&&``."
 msgstr "ただし、以前ドキュメントを生成した時の rST ファイルが残っていると、このテストを混乱させることがあります。そのため、リポジトリーのクリーンコピー上で実行するのが最も安全です。これが、``make clean`` の目的でもあります。この 3 つの行を一度に 1 行ずつ入力して、各行が成功したことを手動で確認する場合、``&&`` は必要ありません。"
 
-#: ../../rst/community/documentation_contributions.rst:207
+#: ../../rst/community/documentation_contributions.rst:208
 msgid "Joining the documentation working group"
 msgstr "ドキュメントワーキンググループへの参加"
 
-#: ../../rst/community/documentation_contributions.rst:209
-msgid "The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on freenode IRC. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_."
-msgstr "ドキュメントワーキンググループ (DaWGs)は、freenode IRC 上の #ansible-docs チャンネルで、毎週木曜日に集まっています。議題へのリンクや、カレンダーの招待状などの詳細は、「`コミュニティーレポジトリーのワーキンググループページ <https://github.com/ansible/community/wiki/Docs>`_」をご覧ください。"
+#: ../../rst/community/documentation_contributions.rst:210
+msgid "The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on the `libera.chat IRC network <https://libera.chat/>`_. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_."
+msgstr "ドキュメントワーキンググループ (DaWGs)は、`libera.chat IRC ネットワーク <https://libera.chat/>`_ 上の #ansible-docs チャンネルで、毎週木曜日に集まっています。議題へのリンクや、カレンダーの招待状などの詳細は、「`コミュニティーリポジトリーに関するワーキンググループページ <https://github.com/ansible/community/wiki/Docs>`_」をご覧ください。"
 
-#: ../../rst/community/documentation_contributions.rst:212
+#: ../../rst/community/documentation_contributions.rst:213
 msgid ":ref:`More about testing module documentation <testing_module_documentation>`"
 msgstr ":ref:`More about testing module documentation <testing_module_documentation>`"
 
-#: ../../rst/community/documentation_contributions.rst:214
+#: ../../rst/community/documentation_contributions.rst:215
 msgid ":ref:`More about documenting modules <module_documenting>`"
 msgstr ":ref:`More about documenting modules <module_documenting>`"
 
@@ -1786,7 +1754,7 @@ msgstr "**多様性を受け入れるオープンソースの強化**"
 
 #: ../../rst/community/index.rst:11
 msgid "Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_."
-msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>` を参照してください。"
+msgstr "Red Hat では、コード、ドキュメント、Web プロパティーにおける配慮に欠ける用語の置き換えに取り組んでいます。まずは、マスター (master)、スレーブ (slave)、ブラックリスト (blacklist)、ホワイトリスト (whitelist) の 4 つの用語の置き換えから始めます。問題のある用語を見つけた場合は、問題を作成するか、プル要求を作成してください。詳細は、`弊社 の CTO、Chris Wright のメッセージ <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_ を参照してください。"
 
 #: ../../rst/community/index.rst:13
 msgid "Welcome to the Ansible Community Guide!"
@@ -2746,4 +2714,58 @@ msgstr "Ansibot によるトリアージプロセスの管理方法に関する�
 
 #~ msgid "Ansible Tower team"
 #~ msgstr "Ansible Tower チーム"
+
+#~ msgid "`Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ is for users and developers of the Ansible Container project."
+#~ msgstr "`Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ は、Ansible Container プロジェクトのユーザーおよび開発者向けです。"
+
+#~ msgid "Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda."
+#~ msgstr "Ansible コミュニティーの `ワーキンググループ <https://github.com/ansible/community/wiki#working-groups>`_ の多くが、Freenode IRC チャンネルで活動しています。ワーキンググループに参加したい場合は、そのワーキンググループが活動しているチャンネルに参加したり、議題にコメントしたりしてください。"
+
+#~ msgid "More precisely: * Every bugfix PR must have a changelog fragment. The only exception are fixes to a change that has not yet been included in a release. * Every feature PR must have a changelog fragment. * New modules and plugins (except jinja2 filter and test plugins) must have ``versions_added`` set correctly, and do not need a changelog fragment. The tooling detects new modules and plugins by their ``versions_added`` value and announces them in the next release's changelog automatically. * New jinja2 filter and test plugins, and also new roles and playbooks (for collections) must have a changelog fragment. See :ref:`changelogs_how_to_format_j2_roles_playbooks` or the `antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>_` for information on how the fragments should look like."
+#~ msgstr "具体的には、* すべてのバグ修正のプル要求には changelog フラグメントが必要です。唯一の例外は、リリースに含まれていない変更に対する修正です。* すべての機能プル要求には、changelog フラグメントが必要です。* (jinja2 フィルターとテストプラグインを除く) 新しいモジュールおよびプラグインには、``versions_added`` を正しく設定する必要があり、changelog フラグメントは必要ありません。ツールは、新しいモジュールとプラグインをその ``versions_added`` 値によって検出し、次のリリースの変更ログで自動的に通知します。* 新しい jinja2 フィルターおよびテストのプラグイン、ならびに新しいロールと Playbook (コレクション用) には、changelog フラグメントが必要です。フラグメントがどのように見えるかについての詳細は、:ref:`changelogs_how_to_format_j2_roles_playbooks` または`antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>_` を参照してください。"
+
+#~ msgid "To work with documentation on your local machine, you need to have python-3.5 or greater and the following packages installed:"
+#~ msgstr "ローカルマシンでドキュメントを扱うには、python-3.5 以降と、以下のパッケージがインストールされている必要があります。"
+
+#~ msgid "gcc"
+#~ msgstr "gcc"
+
+#~ msgid "jinja2"
+#~ msgstr "jinja2"
+
+#~ msgid "libyaml"
+#~ msgstr "libyaml"
+
+#~ msgid "Pygments >= 2.4.0"
+#~ msgstr "Pygments >= 2.4.0"
+
+#~ msgid "pyparsing"
+#~ msgstr "pyparsing"
+
+#~ msgid "PyYAML"
+#~ msgstr "PyYAML"
+
+#~ msgid "rstcheck"
+#~ msgstr "rstcheck"
+
+#~ msgid "six"
+#~ msgstr "six"
+
+#~ msgid "sphinx"
+#~ msgstr "sphinx"
+
+#~ msgid "sphinx-notfound-page"
+#~ msgstr "sphinx-notfound-page"
+
+#~ msgid "straight.plugin"
+#~ msgstr "straight.plugin"
+
+#~ msgid "These required packages are listed in two :file:`requirements.txt` files to make installation easier:"
+#~ msgstr "これらの必要なパッケージは、インストールを容易にするために、2 つの :file:`requirements.txt` ファイルに一覧表示されています。"
+
+#~ msgid "On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``."
+#~ msgstr "Xcode を使用する macOS では、``--ignore-installed`` を使用して ``six`` および ``pyparsing`` をインストールして、``sphinx``. に対応するバージョンを取得しないといけない場合があります。"
+
+#~ msgid "The Documentation Working Group (DaWGs) meets weekly on Tuesdays on the #ansible-docs channel on freenode IRC. For more information, including links to our agenda and a calendar invite, please visit the `working group page in the community repo <https://github.com/ansible/community/wiki/Docs>`_."
+#~ msgstr "ドキュメントワーキンググループ (DaWGs)は、freenode IRC 上の #ansible-docs チャンネルで、毎週木曜日に集まっています。議題へのリンクや、カレンダーの招待状などの詳細は、「`コミュニティーレポジトリーのワーキンググループページ <https://github.com/ansible/community/wiki/Docs>`_」をご覧ください。"
 

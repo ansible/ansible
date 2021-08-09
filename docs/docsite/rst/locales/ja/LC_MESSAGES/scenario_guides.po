@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-08-05 13:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -256,7 +256,6 @@ msgid "Name of the certificate in the ACI Web GUI. This defaults to either the `
 msgstr "ACI Web GUI の証明書の名前。デフォルトは ``username`` 値または ``private_key`` ファイルのベース名になります。*バージョン 2.5 の新機能* です。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:217
-#: ../../rst/scenario_guides/guide_docker.rst:59
 msgid "timeout"
 msgstr "timeout"
 
@@ -282,7 +281,6 @@ msgid "Use HTTPS or HTTP for APIC REST communication. (Defaults to ``yes``)"
 msgstr "APIC REST 通信には HTTPS または HTTP を使用します (``yes`` にデフォルト設定)。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:226
-#: ../../rst/scenario_guides/guide_docker.rst:65
 #: ../../rst/scenario_guides/guide_meraki.rst:74
 msgid "validate_certs"
 msgstr "validate_certs"
@@ -814,16 +812,16 @@ msgid "The Ansible Network community page, includes contact information and meet
 msgstr "Ansible Network コミュニティーページ。連絡先情報およびミーティング情報が含まれます。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:658
-msgid "`#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_"
-msgstr "`#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_"
+msgid "``#ansible-network`` on `irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_ の ``#ansible-network``"
 
 #: ../../rst/scenario_guides/guide_aci.rst:659
-msgid "The #ansible-network IRC chat channel on Freenode.net."
-msgstr "Freenode.net の IRC チャットチャンネル (#ansible-network)"
+msgid "The #ansible-network IRC chat channel on libera.chat."
+msgstr "libera.chat の IRC チャットチャンネル (#ansible-network)。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:660
 msgid "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
-msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-project>`_"
+msgstr "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/scenario_guides/guide_aci.rst:661
 #: ../../rst/scenario_guides/guide_aws.rst:282
@@ -1175,8 +1173,8 @@ msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
 msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-devel>`_"
 
 #: ../../rst/scenario_guides/guide_aws.rst:283
-msgid "`irc.freenode.net <http://irc.freenode.net>`_"
-msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+msgid "`irc.libera.chat <https://libera.chat/>`_"
+msgstr "`irc.libera.chat <https://libera.chat/>`_"
 
 #: ../../rst/scenario_guides/guide_aws.rst:284
 msgid "#ansible IRC chat channel"
@@ -1191,7 +1189,6 @@ msgid "Ansible includes a suite of modules for interacting with Azure Resource M
 msgstr "Ansible には、Azure Resource Manager と対話するためのモジュールのスイートが含まれており、簡単に作成し、Microsoft Azure Cloud 上のインフラストラクチャーを調整するツールを提供します。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:8
-#: ../../rst/scenario_guides/guide_docker.rst:12
 #: ../../rst/scenario_guides/guide_oracle.rst:13
 #: ../../rst/scenario_guides/guide_packet.rst:16
 #: ../../rst/scenario_guides/guide_scaleway.rst:26
@@ -1871,450 +1868,13 @@ msgstr "最初のプレイでは、セキュリティグループを設定し、
 msgid "In the last task we wait for SSH to be accessible, so any later play would be able to access the VM by SSH without failure."
 msgstr "最後のタスクでは、SSH がアクセス可能になるのを待ちます。したがって、後続のプレイでは、SSH で仮想マシンにアクセスする際に失敗せずに実行できます。"
 
-#: ../../rst/scenario_guides/guide_docker.rst:2
+#: ../../rst/scenario_guides/guide_docker.rst:4
 msgid "Docker Guide"
 msgstr "Docker ガイド"
 
-#: ../../rst/scenario_guides/guide_docker.rst:4
-msgid "The `community.docker collection <https://galaxy.ansible.com/community/docker>`_ offers several modules and plugins for orchestrating Docker containers and Docker Swarm."
-msgstr "`community.docker collection <https://galaxy.ansible.com/community/docker>`_ は、複数のモジュールと、Docker コンテナーおよび Docker Swarm のオーケストレーション用のプラグインを提供します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:14
-msgid "Most of the modules and plugins in community.docker require the `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_. The SDK needs to be installed on the machines where the modules and plugins are executed, and for the Python version(s) with which the modules and plugins are executed. You can use the :ref:`community.general.python_requirements_info module <ansible_collections.community.general.python_requirements_info_module>` to make sure that the Docker SDK for Python is installed on the correct machine and for the Python version used by Ansible."
-msgstr "community.docker におけるほとんどのモジュールおよびプラグインには `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_ が必要です。モジュールとプラグインが実行するマシンに SDK をインストールする必要があり、モジュールおよびプラグインが実行する Python バージョンで :ref:`community.general.python_requirements_info module <ansible_collections.community.general.python_requirements_info_module>` を使用して、Docker SDK for Python が正しいマシンに、Ansible が使用する Python バージョン用にインストールされているようにすることができます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:16
-msgid "Note that plugins (inventory plugins and connection plugins) are always executed in the context of Ansible itself. If you use a plugin that requires the Docker SDK for Python, you need to install it on the machine running ``ansible`` or ``ansible-playbook`` and for the same Python interpreter used by Ansible. To see which Python is used, run ``ansible --version``."
-msgstr "プラグイン (インベントリープラグインおよび接続プラグイン) は常に Ansible のコンテキストで実行されます。Python 用の Docker SDK を必要とするプラグインを使用する場合は、``ansible`` または ``ansible-playbook`` を実行しているマシンにプラグインをインストールする必要があります。使用する Python を確認するには、``ansible --version`` を実行します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:18
-msgid "You can install the Docker SDK for Python for Python 3.6 or later as follows:"
-msgstr "Python 3.6 以降の Python の Docker SDK は、以下のようにインストールできます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:24
-msgid "For Python 2.7, you need to use a version between 2.0.0 and 4.4.4 since the Python package for Docker removed support for Python 2.7 on 5.0.0. You can install the specific version of the Docker SDK for Python as follows:"
-msgstr "Python 2.7 の場合、Docker の Python パッケージが 5.0.0 での Python 2.7 のサポートを削除したため、2.0.0 から 4.4.4 の間のバージョンを使用する必要があります。次のように、Docker SDK for Python の特定のバージョンをインストールできます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:30
-msgid "For Python 2.6, you need a version before 2.0.0. For these versions, the SDK was called ``docker-py``, so you need to install it as follows:"
-msgstr "Python 2.6 では 2.0.0 よりも前のバージョンが必要です。これらのバージョンでは、SDK は ``docker-py`` と呼ばれ、以下のようにインストールする必要があります。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:36
-msgid "Please install only one of ``docker`` or ``docker-py``. Installing both will result in a broken installation. If this happens, Ansible will detect it and inform you about it. If that happens, you must uninstall both and reinstall the correct version."
-msgstr "``docker`` または ``docker-py`` のいずれかをインストールするには、インストールが破損します。これがインストールされると、Ansible によって検出され、それについて通知されます。その場合は、両方をアンインストールして再インストールする必要があります。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:38
-msgid "If in doubt, always install ``docker`` and never ``docker-py``."
-msgstr "不明な場合は、常に ``docker`` をインストールし、``docker-py`` はインストールしません。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:42
-msgid "Connecting to the Docker API"
-msgstr "Docker API への接続"
-
-#: ../../rst/scenario_guides/guide_docker.rst:44
-msgid "You can connect to a local or remote API using parameters passed to each task or by setting environment variables. The order of precedence is command line parameters and then environment variables. If neither a command line option nor an environment variable is found, Ansible uses the default value  provided under `Parameters`_."
-msgstr "各タスクに渡されるパラメーターを使用するか、環境変数を設定してローカルまたはリモートの API に接続できます。優先順位の順番はコマンドラインパラメーターとその環境変数です。コマンドラインオプションも環境変数も見つからない場合、Ansible は `Parameters`_ で指定したデフォルト値を使用します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:48
-msgid "Parameters"
-msgstr "パラメーター"
-
-#: ../../rst/scenario_guides/guide_docker.rst:50
-msgid "Most plugins and modules can be configured by the following parameters:"
-msgstr "ほとんどのプラグインおよびモジュールは、以下のパラメーターで設定できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:53
-msgid "docker_host"
-msgstr "docker_host"
-
-#: ../../rst/scenario_guides/guide_docker.rst:53
-msgid "The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``. To connect to a remote host, provide the TCP connection string (for example: ``tcp://192.0.2.23:2376``). If TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the connection URL with 'https'."
-msgstr "Docker API への接続に使用される URL または Unix ソケットパス。デフォルトは ``unix://var/run/docker.sock`` です。リモートホストに接続するには、TCP 接続文字列を指定します (例: ``tcp://192.0.2.23:2376``)。TLS を使用して API への接続を暗号化すると、モジュールは、接続 URL の 「tcp」を自動的に「https」に置き換えます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:56
-msgid "api_version"
-msgstr "api_version"
-
-#: ../../rst/scenario_guides/guide_docker.rst:56
-msgid "The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by the Docker SDK for Python installed."
-msgstr "Docker Host 上で実行される Docker API のバージョンです。デフォルトでは、Python 用の Docker SDK によってサポートされる API の最新バージョンに設定されます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:59
-msgid "The maximum amount of time in seconds to wait on a response from the API. Defaults to 60 seconds."
-msgstr "API からのレスポンスで待機する最大時間 (秒単位)。デフォルトは 60 秒です。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:62
-msgid "tls"
-msgstr "tls"
-
-#: ../../rst/scenario_guides/guide_docker.rst:62
-msgid "Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Defaults to ``false``."
-msgstr "Docker ホストサーバーの信頼性を検証せずに TLS を使用して API への接続を保護します。デフォルトは ``false`` です。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:65
-msgid "Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server. Default is ``false``."
-msgstr "TLS を使用し、Docker ホストサーバーの信頼性を検証して、API への接続を保護します。デフォルトは``false`` です。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:68
-msgid "cacert_path"
-msgstr "cacert_path"
-
-#: ../../rst/scenario_guides/guide_docker.rst:68
-msgid "Use a CA certificate when performing server verification by providing the path to a CA certificate file."
-msgstr "CA 証明書ファイルへのパスを指定して、サーバー検証の実行時に CA 証明書を使用します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:71
-msgid "cert_path"
-msgstr "cert_path"
-
-#: ../../rst/scenario_guides/guide_docker.rst:71
-msgid "Path to the client's TLS certificate file."
-msgstr "クライアントの TLS 証明書ファイルへのパス。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:74
-msgid "key_path"
-msgstr "key_path"
-
-#: ../../rst/scenario_guides/guide_docker.rst:74
-msgid "Path to the client's TLS key file."
-msgstr "クライアントの TLS キーファイルへのパス。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:77
-msgid "tls_hostname"
-msgstr "tls_hostname"
-
-#: ../../rst/scenario_guides/guide_docker.rst:77
-msgid "When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults to ``localhost``."
-msgstr "Docker Host サーバーの信頼性を確認する際に、予想されるサーバー名を提供します。デフォルトは ``localhost`` です。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:81
-msgid "ssl_version"
-msgstr "ssl_version"
-
-#: ../../rst/scenario_guides/guide_docker.rst:80
-msgid "Provide a valid SSL version number. The default value is determined by the Docker SDK for Python."
-msgstr "有効な SSL バージョン番号を提供します。デフォルト値は、Python の Docker SDK により決定されます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:84
-#: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:17
-msgid "Environment variables"
-msgstr "環境変数"
-
-#: ../../rst/scenario_guides/guide_docker.rst:86
-msgid "You can also control how the plugins and modules connect to the Docker API by setting the following environment variables."
-msgstr "以下の環境変数を設定して、プラグインおよびモジュールが Docker API に接続する方法を制御することもできます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:88
-msgid "For plugins, they have to be set for the environment Ansible itself runs in. For modules, they have to be set for the environment the modules are executed in. For modules running on remote machines, the environment variables have to be set on that machine for the user used to execute the modules with."
-msgstr "プラグインには、Ansible 自体が実行する環境に合わせて設定する必要があります。モジュールの場合は、モジュールが実行する環境に設定する必要があります。リモートマシンで実行しているモジュールの場合は、モジュールを実行するユーザーのマシンに環境変数を設定する必要があります。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:91
-msgid "DOCKER_HOST"
-msgstr "DOCKER_HOST"
-
-#: ../../rst/scenario_guides/guide_docker.rst:91
-msgid "The URL or Unix socket path used to connect to the Docker API."
-msgstr "Docker API への接続に使用される URL または Unix ソケットパス。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:95
-msgid "DOCKER_API_VERSION"
-msgstr "DOCKER_API_VERSION"
-
-#: ../../rst/scenario_guides/guide_docker.rst:94
-msgid "The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by docker-py."
-msgstr "Docker Host 上で実行する Docker API のバージョンです。デフォルトでは、docker-py でサポートされる API の最新バージョンに設定されます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:98
-msgid "DOCKER_TIMEOUT"
-msgstr "DOCKER_TIMEOUT"
-
-#: ../../rst/scenario_guides/guide_docker.rst:98
-msgid "The maximum amount of time in seconds to wait on a response from the API."
-msgstr "API からの応答を待つ最大時間 (秒単位)。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:101
-msgid "DOCKER_CERT_PATH"
-msgstr "DOCKER_CERT_PATH"
-
-#: ../../rst/scenario_guides/guide_docker.rst:101
-msgid "Path to the directory containing the client certificate, client key and CA certificate."
-msgstr "クライアント証明書、クライアントキー、および CA 証明書を含むディレクトリーへのパス。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:104
-msgid "DOCKER_SSL_VERSION"
-msgstr "DOCKER_SSL_VERSION"
-
-#: ../../rst/scenario_guides/guide_docker.rst:104
-msgid "Provide a valid SSL version number."
-msgstr "有効な SSL バージョン番号を指定します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:107
-msgid "DOCKER_TLS"
-msgstr "DOCKER_TLS"
-
-#: ../../rst/scenario_guides/guide_docker.rst:107
-msgid "Secure the connection to the API by using TLS without verifying the authenticity of the Docker Host."
-msgstr "Docker ホストの信頼性を検証せずに TLS を使用して API への接続のセキュリティーを保護します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:111
-msgid "DOCKER_TLS_VERIFY"
-msgstr "DOCKER_TLS_VERIFY"
-
-#: ../../rst/scenario_guides/guide_docker.rst:110
-msgid "Secure the connection to the API by using TLS and verify the authenticity of the Docker Host."
-msgstr "TLS を使用して API への接続のセキュリティーを確保し、Docker ホストの信頼性を検証します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:114
-msgid "Plain Docker daemon: images, networks, volumes, and containers"
-msgstr "単純な Docker デーモン: イメージ、ネットワーク、ボリューム、およびコンテナー"
-
-#: ../../rst/scenario_guides/guide_docker.rst:116
-msgid "For working with a plain Docker daemon, that is without Swarm, there are connection plugins, an inventory plugin, and several modules available:"
-msgstr "Swarm を使用しないプレーンな Docker デーモンを使用する場合は、接続プラグイン、インベントリープラグイン、および複数のモジュールが利用できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:119
-msgid "docker connection plugin"
-msgstr "Docker 接続プラグイン"
-
-#: ../../rst/scenario_guides/guide_docker.rst:119
-msgid "The :ref:`community.docker.docker connection plugin <ansible_collections.community.docker.docker_connection>` uses the Docker CLI utility to connect to Docker containers and execute modules in them. It essentially wraps ``docker exec`` and ``docker cp``. This connection plugin is supported by the :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>`."
-msgstr ":ref:`community.docker.docker 接続プラグイン <ansible_collections.community.docker.docker_connection>` は、Docker CLI ユーティリティーを使用して Docker コンテナーに接続し、そのコンテナーでモジュールを実行します。基本的に ``docker exec`` と ``docker cp`` をラップします。この接続プラグインは :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>` によりサポートされます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:122
-msgid "docker_api connection plugin"
-msgstr "docker_api connection プラグイン"
-
-#: ../../rst/scenario_guides/guide_docker.rst:122
-msgid "The :ref:`community.docker.docker_api connection plugin <ansible_collections.community.docker.docker_api_connection>` talks directly to the Docker daemon to connect to Docker containers and execute modules in them."
-msgstr ":ref:`community.docker.docker_api 接続プラグイン <ansible_collections.community.docker.docker_api_connection>` は Docker デーモンに直接対話し、Docker コンテナーに接続し、そのコンテナーでモジュールを実行します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:127
-msgid "docker_containers inventory plugin"
-msgstr "docker_containers インベントリープラグイン"
-
-#: ../../rst/scenario_guides/guide_docker.rst:125
-msgid "The :ref:`community.docker.docker_containers inventory plugin <ansible_collections.community.docker.docker_containers_inventory>` allows you to dynamically add Docker containers from a Docker Daemon to your Ansible inventory. See :ref:`dynamic_inventory` for details on dynamic inventories."
-msgstr ":ref:`community.docker.docker_containers インベントリープラグイン <ansible_collections.community.docker.docker_containers_inventory>` では、Docker Daemon から Ansible インベントリーに Docker コンテナーを動的に追加できます。動的インベントリーの詳細は、「:ref:`dynamic_inventory`」を参照してください。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:127
-msgid "The `docker inventory script <https://github.com/ansible-community/contrib-scripts/blob/main/inventory/docker.py>`_ is deprecated. Please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect Docker containers from multiple Docker daemons, you need to add every Docker daemon as an individual inventory source."
-msgstr "`docker インベントリースクリプト <https://github.com/ansible-community/contrib-scripts/blob/main/inventory/docker.py>`_ は非推奨になりました。代わりにインベントリープラグインを使用してください。インベントリープラグインには、複数の互換性オプションがあります。複数の Docker デーモンから Docker コンテナーを収集する必要がある場合は、すべての Docker デーモンを個別のインベントリーソースとして追加する必要があります。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:130
-msgid "docker_host_info module"
-msgstr "docker_host_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:130
-msgid "The :ref:`community.docker.docker_host_info module <ansible_collections.community.docker.docker_host_info_module>` allows you to retrieve information on a Docker daemon, such as all containers, images, volumes, networks and so on."
-msgstr ":ref:`community.docker.docker_host_info モジュール <ansible_collections.community.docker.docker_host_info_module>` では、すべてのコンテナー、イメージ、ボリューム、ネットワークなど、Docker デーモンの情報を取得できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:133
-msgid "docker_login module"
-msgstr "docker_login モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:133
-msgid "The :ref:`community.docker.docker_login module <ansible_collections.community.docker.docker_login_module>` allows you to log in and out of a remote registry, such as Docker Hub or a private registry. It provides similar functionality to the ``docker login`` and ``docker logout`` CLI commands."
-msgstr ":ref:`community.docker.docker_login モジュール <ansible_collections.community.docker.docker_login_module>` では、Docker Hub、プライベートレジストリーなどのリモートレジストリーへのログイン、およびリモートレジストリーからのログアウトできます。CLI コマンド ``docker login`` および ``docker logout`` と同様の機能を提供します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:136
-msgid "docker_prune module"
-msgstr "docker_prune モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:136
-msgid "The :ref:`community.docker.docker_prune module <ansible_collections.community.docker.docker_prune_module>` allows  you to prune no longer needed containers, images, volumes and so on. It provides similar functionality to the ``docker prune`` CLI command."
-msgstr ":ref:`community.docker.docker_prune モジュール <ansible_collections.community.docker.docker_prune_module>` では、コンテナー、イメージ、ボリュームなどは取り除くことができなくなり、CLI コマンド ``docker prune`` と同様の機能を提供します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:139
-msgid "docker_image module"
-msgstr "docker_image モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:139
-msgid "The :ref:`community.docker.docker_image module <ansible_collections.community.docker.docker_image_module>` provides full control over images, including: build, pull, push, tag and remove."
-msgstr ":ref:`community.docker.docker_image モジュール <ansible_collections.community.docker.docker_image_module>` は、build、pull、push、tag、remove などのイメージを完全に制御します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:142
-msgid "docker_image_info module"
-msgstr "docker_image_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:142
-msgid "The :ref:`community.docker.docker_image_info module <ansible_collections.community.docker.docker_image_info_module>` allows you to list and inspect images."
-msgstr ":ref:`community.docker.docker_image_info モジュール <ansible_collections.community.docker.docker_image_info_module>` を使用すると、イメージを一覧表示し、検査することができます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:145
-msgid "docker_network module"
-msgstr "docker_network モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:145
-msgid "The :ref:`community.docker.docker_network module <ansible_collections.community.docker.docker_network_module>` provides full control over Docker networks."
-msgstr ":ref:`community.docker.docker_network モジュール <ansible_collections.community.docker.docker_network_module>` は、Docker ネットワークを完全に制御します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:148
-msgid "docker_network_info module"
-msgstr "docker_network_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:148
-msgid "The :ref:`community.docker.docker_network_info module <ansible_collections.community.docker.docker_network_info_module>` allows you to inspect Docker networks."
-msgstr ":ref:`community.docker.docker_network_info モジュール <ansible_collections.community.docker.docker_network_info_module>` では、Docker ネットワークを調べることができます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:151
-msgid "docker_volume_info module"
-msgstr "docker_volume_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:151
-msgid "The :ref:`community.docker.docker_volume_info module <ansible_collections.community.docker.docker_volume_info_module>` provides full control over Docker volumes."
-msgstr ":ref:`community.docker.docker_volume_info モジュール <ansible_collections.community.docker.docker_volume_info_module>` は、Docker ボリュームを完全に制御します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:154
-msgid "docker_volume module"
-msgstr "docker_volume モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:154
-msgid "The :ref:`community.docker.docker_volume module <ansible_collections.community.docker.docker_volume_module>` allows you to inspect Docker volumes."
-msgstr ":ref:`community.docker.docker_volume モジュール <ansible_collections.community.docker.docker_volume_module>` を使用すると、Docker ボリュームを検査できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:157
-msgid "docker_container module"
-msgstr "docker_container モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:157
-msgid "The :ref:`community.docker.docker_container module <ansible_collections.community.docker.docker_container_module>` manages the container lifecycle by providing the ability to create, update, stop, start and destroy a Docker container."
-msgstr ":ref:`community.docker.docker_container モジュール <ansible_collections.community.docker.docker_container_module>` は、Docker コンテナーの作成、更新、停止、開始、および破棄の機能を提供することで、コンテナーのライフサイクルを管理します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:161
-msgid "docker_container_info module"
-msgstr "docker_container_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:160
-msgid "The :ref:`community.docker.docker_container_info module <ansible_collections.community.docker.docker_container_info_module>` allows you to inspect a Docker container."
-msgstr ":ref:`community.docker.docker_container_info モジュール <ansible_collections.community.docker.docker_container_info_module>` では、Docker コンテナーを検査できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:164
-msgid "Docker Compose"
-msgstr "Docker Compose"
-
-#: ../../rst/scenario_guides/guide_docker.rst:166
-msgid "The :ref:`community.docker.docker_compose module <ansible_collections.community.docker.docker_compose_module>` allows you to use your existing Docker compose files to orchestrate containers on a single Docker daemon or on Swarm. Supports compose versions 1 and 2."
-msgstr ":ref:`community.docker.docker_compose モジュール <ansible_collections.community.docker.docker_compose_module>` では、既存の Docker Compose ファイルを使用して、単一の Docker デーモンまたは Swarm でコンテナーをオーケストレーションできます。Compose のバージョン 1 および 2 をサポートします。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:170
-msgid "Next to Docker SDK for Python, you need to install `docker-compose <https://github.com/docker/compose>`_ on the remote machines to use the module."
-msgstr "モジュールを使用するには、Python の Docker SDK の次に、リモートマシンに `docker-compose <https://github.com/docker/compose>`_ をインストールする必要があります。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:174
-msgid "Docker Machine"
-msgstr "Docker マシン"
-
-#: ../../rst/scenario_guides/guide_docker.rst:176
-msgid "The :ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` allows you to dynamically add Docker Machine hosts to your Ansible inventory."
-msgstr ":ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` では、Docker マシンホストを Ansible インベントリーに動的に追加できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:180
-msgid "Docker stack"
-msgstr "Docker スタック"
-
-#: ../../rst/scenario_guides/guide_docker.rst:182
-msgid "The :ref:`community.docker.docker_stack module <ansible_collections.community.docker.docker_stack_module>` module allows you to control Docker stacks. Information on stacks can be retrieved by the :ref:`community.docker.docker_stack_info module <ansible_collections.community.docker.docker_stack_info_module>`, and information on stack tasks can be retrieved by the :ref:`community.docker.docker_stack_task_info module <ansible_collections.community.docker.docker_stack_task_info_module>`."
-msgstr ":ref:`community.docker.docker_stack モジュール <ansible_collections.community.docker.docker_stack_module>` モジュールにより、Docker スタックを制御できます。スタックの情報は、:ref:`community.docker.docker_stack_info モジュール <ansible_collections.community.docker.docker_stack_info_module>` で取得でき、スタックタスクに関する情報は :ref:`community.docker.docker_stack_task_info モジュール <ansible_collections.community.docker.docker_stack_task_info_module>` で取得できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:186
-msgid "Docker Swarm"
-msgstr "Docker Swarm"
-
-#: ../../rst/scenario_guides/guide_docker.rst:188
-msgid "The community.docker collection provides multiple plugins and modules for managing Docker Swarms."
-msgstr "community.docker コレクションは、Docker Swarm を管理するための複数のプラグインとモジュールを提供します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:191
-msgid "Swarm management"
-msgstr "Swarm 管理"
-
-#: ../../rst/scenario_guides/guide_docker.rst:193
-msgid "One inventory plugin and several modules are provided to manage Docker Swarms:"
-msgstr "Docker Swarms を管理するために、インベントリープラグインと複数のモジュールが提供されます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:196
-msgid "docker_swarm inventory plugin"
-msgstr "docker_swarm インベントリープラグイン"
-
-#: ../../rst/scenario_guides/guide_docker.rst:196
-msgid "The :ref:`community.docker.docker_swarm inventory plugin <ansible_collections.community.docker.docker_swarm_inventory>` allows  you to dynamically add all Docker Swarm nodes to your Ansible inventory."
-msgstr ":ref:`community.docker.docker_swarm インベントリープラグイン <ansible_collections.community.docker.docker_swarm_inventory>` により、すべての Docker Swarm ノードを Ansible インベントリーに動的に追加できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:199
-msgid "docker_swarm module"
-msgstr "docker_swarm モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:199
-msgid "The :ref:`community.docker.docker_swarm module <ansible_collections.community.docker.docker_swarm_module>` allows you to globally configure Docker Swarm manager nodes to join and leave swarms, and to change the Docker Swarm configuration."
-msgstr ":ref:`community.docker.docker_swarm モジュール <ansible_collections.community.docker.docker_swarm_module>` では、Docker Swarm マネージャーノードをグローバルに設定し、swarm に参加および swarm から離脱し、Docker Swarm 設定の変更を行うことができます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:202
-msgid "docker_swarm_info module"
-msgstr "docker_swarm_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:202
-msgid "The :ref:`community.docker.docker_swarm_info module <ansible_collections.community.docker.docker_swarm_info_module>` allows  you to retrieve information on Docker Swarm."
-msgstr ":ref:`community.docker.docker_swarm_info モジュール <ansible_collections.community.docker.docker_swarm_info_module>` では、Docker Swarm に関する情報を取得できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:205
-msgid "docker_node module"
-msgstr "docker_node モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:205
-msgid "The :ref:`community.docker.docker_node module <ansible_collections.community.docker.docker_node_module>` allows you to manage Docker Swarm nodes."
-msgstr ":ref:`community.docker.docker_node モジュール <ansible_collections.community.docker.docker_node_module>` では、Docker Swarm ノードを管理できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:208
-msgid "docker_node_info module"
-msgstr "docker_node_info モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:208
-msgid "The :ref:`community.docker.docker_node_info module <ansible_collections.community.docker.docker_node_info_module>` allows you to retrieve information on Docker Swarm nodes."
-msgstr ":ref:`community.docker.docker_node_info モジュール <ansible_collections.community.docker.docker_node_info_module>` では、Docker Swarm ノードの情報を取得できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:211
-msgid "Configuration management"
-msgstr "設定管理"
-
-#: ../../rst/scenario_guides/guide_docker.rst:213
-msgid "The community.docker collection offers modules to manage Docker Swarm configurations and secrets:"
-msgstr "community.docker コレクションは、Docker Swarm 設定およびシークレットを管理するモジュールを提供します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:216
-msgid "docker_config module"
-msgstr "docker_config モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:216
-msgid "The :ref:`community.docker.docker_config module <ansible_collections.community.docker.docker_config_module>` allows you to create and modify Docker Swarm configs."
-msgstr ":ref:`community.docker.docker_config モジュール <ansible_collections.community.docker.docker_config_module>` を使用すると、Docker Swarm 設定を作成および変更できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:220
-msgid "docker_secret module"
-msgstr "docker_secret モジュール"
-
-#: ../../rst/scenario_guides/guide_docker.rst:219
-msgid "The :ref:`community.docker.docker_secret module <ansible_collections.community.docker.docker_secret_module>` allows you to create and modify Docker Swarm secrets."
-msgstr ":ref:`community.docker.docker_secret モジュール <ansible_collections.community.docker.docker_secret_module>` では、Docker Swarm シークレットを作成および変更できます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:223
-msgid "Swarm services"
-msgstr "Swarm サービス"
-
-#: ../../rst/scenario_guides/guide_docker.rst:225
-msgid "Docker Swarm services can be created and updated with the :ref:`community.docker.docker_swarm_service module <ansible_collections.community.docker.docker_swarm_service_module>`, and information on them can be queried by the :ref:`community.docker.docker_swarm_service_info module <ansible_collections.community.docker.docker_swarm_service_info_module>`."
-msgstr "Docker Swarm サービスは、:ref:`community.docker.docker_swarm_service モジュール <ansible_collections.community.docker.docker_swarm_service_module>` で作成および更新でき、その情報は、:ref:`community.docker.docker_swarm_service_info モジュール <ansible_collections.community.docker.docker_swarm_service_info_module>` でクエリーできます。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:229
-msgid "Helpful links"
-msgstr "便利なリンク"
-
-#: ../../rst/scenario_guides/guide_docker.rst:231
-msgid "Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_, and start building images from your Ansible playbooks."
-msgstr "Dockerfile を使用してイメージを構築していますか。`ansible-bender <https://github.com/ansible-community/ansible-bender>`_ を確認して、Ansible Playbook からイメージの構築を開始します。"
-
-#: ../../rst/scenario_guides/guide_docker.rst:233
-msgid "Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully scalable app in the cloud with Kubernetes in just a few moments."
-msgstr "`Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ を使用して、`OpenShift <https://www.okd.io/>`_ で docker 構成のファイルを起動します。ラップトップ上のアプリケーションから、Kubernetes を使用するクラウド内の完全なスケーラブルなアプリケーション (数分間) に移動します。"
+#: ../../rst/scenario_guides/guide_docker.rst:6
+msgid "The content on this page has moved. Please see the updated :ref:`ansible_collections.community.docker.docsite.scenario_guide` in the `community.docker collection <https://galaxy.ansible.com/community/docker>`_."
+msgstr "このページのコンテンツは移動しました。`community.docker collection <https://galaxy.ansible.com/community/docker>`_ にある更新された :ref:`ansible_collections.community.docker.docsite.scenario_guide` をご覧ください。"
 
 #: ../../rst/scenario_guides/guide_gce.rst:2
 msgid "Google Cloud Platform Guide"
@@ -4620,6 +4180,10 @@ msgstr "vmware_rest コレクションの設定方法"
 #: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:14
 msgid "The vcenter_rest modules need to be authenticated. There are two different"
 msgstr "vcenter_rest モジュールを認証する必要があります。2 つの異なるモジュールがあります。"
+
+#: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:17
+msgid "Environment variables"
+msgstr "環境変数"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:20
 msgid "This solution requires that you call the modules from the local machine."
@@ -8364,4 +7928,337 @@ msgstr "``open-vm-tools`` で ``netplan`` がサポートされるのを待ち�
 
 #~ msgid "If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_. If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_. If you find a bug regarding Kubectl binary, please file issues at `Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_"
 #~ msgstr "バグが見つかった場合やモジュールに関する提案をお寄せいただける場合は、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/community.kubernetes>`_ にファイルの問題を報告してください。OpenShift クライアントに関するバグが見つかった場合は、`OpenShift REST クライアントの問題 <https://github.com/openshift/openshift-restclient-python/issues>`_ に問題を作成してください。Kubectl バイナリーに関するバグは、`Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_ で問題を作成してください。"
+
+#~ msgid "`#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_"
+#~ msgstr "`#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_"
+
+#~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
+#~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+
+#~ msgid "The `community.docker collection <https://galaxy.ansible.com/community/docker>`_ offers several modules and plugins for orchestrating Docker containers and Docker Swarm."
+#~ msgstr "`community.docker collection <https://galaxy.ansible.com/community/docker>`_ は、複数のモジュールと、Docker コンテナーおよび Docker Swarm のオーケストレーション用のプラグインを提供します。"
+
+#~ msgid "Most of the modules and plugins in community.docker require the `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_. The SDK needs to be installed on the machines where the modules and plugins are executed, and for the Python version(s) with which the modules and plugins are executed. You can use the :ref:`community.general.python_requirements_info module <ansible_collections.community.general.python_requirements_info_module>` to make sure that the Docker SDK for Python is installed on the correct machine and for the Python version used by Ansible."
+#~ msgstr "community.docker におけるほとんどのモジュールおよびプラグインには `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_ が必要です。モジュールとプラグインが実行するマシンに SDK をインストールする必要があり、モジュールおよびプラグインが実行する Python バージョンで :ref:`community.general.python_requirements_info module <ansible_collections.community.general.python_requirements_info_module>` を使用して、Docker SDK for Python が正しいマシンに、Ansible が使用する Python バージョン用にインストールされているようにすることができます。"
+
+#~ msgid "Note that plugins (inventory plugins and connection plugins) are always executed in the context of Ansible itself. If you use a plugin that requires the Docker SDK for Python, you need to install it on the machine running ``ansible`` or ``ansible-playbook`` and for the same Python interpreter used by Ansible. To see which Python is used, run ``ansible --version``."
+#~ msgstr "プラグイン (インベントリープラグインおよび接続プラグイン) は常に Ansible のコンテキストで実行されます。Python 用の Docker SDK を必要とするプラグインを使用する場合は、``ansible`` または ``ansible-playbook`` を実行しているマシンにプラグインをインストールする必要があります。使用する Python を確認するには、``ansible --version`` を実行します。"
+
+#~ msgid "You can install the Docker SDK for Python for Python 3.6 or later as follows:"
+#~ msgstr "Python 3.6 以降の Python の Docker SDK は、以下のようにインストールできます。"
+
+#~ msgid "For Python 2.7, you need to use a version between 2.0.0 and 4.4.4 since the Python package for Docker removed support for Python 2.7 on 5.0.0. You can install the specific version of the Docker SDK for Python as follows:"
+#~ msgstr "Python 2.7 の場合、Docker の Python パッケージが 5.0.0 での Python 2.7 のサポートを削除したため、2.0.0 から 4.4.4 の間のバージョンを使用する必要があります。次のように、Docker SDK for Python の特定のバージョンをインストールできます。"
+
+#~ msgid "For Python 2.6, you need a version before 2.0.0. For these versions, the SDK was called ``docker-py``, so you need to install it as follows:"
+#~ msgstr "Python 2.6 では 2.0.0 よりも前のバージョンが必要です。これらのバージョンでは、SDK は ``docker-py`` と呼ばれ、以下のようにインストールする必要があります。"
+
+#~ msgid "Please install only one of ``docker`` or ``docker-py``. Installing both will result in a broken installation. If this happens, Ansible will detect it and inform you about it. If that happens, you must uninstall both and reinstall the correct version."
+#~ msgstr "``docker`` または ``docker-py`` のいずれかをインストールするには、インストールが破損します。これがインストールされると、Ansible によって検出され、それについて通知されます。その場合は、両方をアンインストールして再インストールする必要があります。"
+
+#~ msgid "If in doubt, always install ``docker`` and never ``docker-py``."
+#~ msgstr "不明な場合は、常に ``docker`` をインストールし、``docker-py`` はインストールしません。"
+
+#~ msgid "Connecting to the Docker API"
+#~ msgstr "Docker API への接続"
+
+#~ msgid "You can connect to a local or remote API using parameters passed to each task or by setting environment variables. The order of precedence is command line parameters and then environment variables. If neither a command line option nor an environment variable is found, Ansible uses the default value  provided under `Parameters`_."
+#~ msgstr "各タスクに渡されるパラメーターを使用するか、環境変数を設定してローカルまたはリモートの API に接続できます。優先順位の順番はコマンドラインパラメーターとその環境変数です。コマンドラインオプションも環境変数も見つからない場合、Ansible は `Parameters`_ で指定したデフォルト値を使用します。"
+
+#~ msgid "Parameters"
+#~ msgstr "パラメーター"
+
+#~ msgid "Most plugins and modules can be configured by the following parameters:"
+#~ msgstr "ほとんどのプラグインおよびモジュールは、以下のパラメーターで設定できます。"
+
+#~ msgid "docker_host"
+#~ msgstr "docker_host"
+
+#~ msgid "The URL or Unix socket path used to connect to the Docker API. Defaults to ``unix://var/run/docker.sock``. To connect to a remote host, provide the TCP connection string (for example: ``tcp://192.0.2.23:2376``). If TLS is used to encrypt the connection to the API, then the module will automatically replace 'tcp' in the connection URL with 'https'."
+#~ msgstr "Docker API への接続に使用される URL または Unix ソケットパス。デフォルトは ``unix://var/run/docker.sock`` です。リモートホストに接続するには、TCP 接続文字列を指定します (例: ``tcp://192.0.2.23:2376``)。TLS を使用して API への接続を暗号化すると、モジュールは、接続 URL の 「tcp」を自動的に「https」に置き換えます。"
+
+#~ msgid "api_version"
+#~ msgstr "api_version"
+
+#~ msgid "The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by the Docker SDK for Python installed."
+#~ msgstr "Docker Host 上で実行される Docker API のバージョンです。デフォルトでは、Python 用の Docker SDK によってサポートされる API の最新バージョンに設定されます。"
+
+#~ msgid "The maximum amount of time in seconds to wait on a response from the API. Defaults to 60 seconds."
+#~ msgstr "API からのレスポンスで待機する最大時間 (秒単位)。デフォルトは 60 秒です。"
+
+#~ msgid "tls"
+#~ msgstr "tls"
+
+#~ msgid "Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Defaults to ``false``."
+#~ msgstr "Docker ホストサーバーの信頼性を検証せずに TLS を使用して API への接続を保護します。デフォルトは ``false`` です。"
+
+#~ msgid "Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server. Default is ``false``."
+#~ msgstr "TLS を使用し、Docker ホストサーバーの信頼性を検証して、API への接続を保護します。デフォルトは``false`` です。"
+
+#~ msgid "cacert_path"
+#~ msgstr "cacert_path"
+
+#~ msgid "Use a CA certificate when performing server verification by providing the path to a CA certificate file."
+#~ msgstr "CA 証明書ファイルへのパスを指定して、サーバー検証の実行時に CA 証明書を使用します。"
+
+#~ msgid "cert_path"
+#~ msgstr "cert_path"
+
+#~ msgid "Path to the client's TLS certificate file."
+#~ msgstr "クライアントの TLS 証明書ファイルへのパス。"
+
+#~ msgid "key_path"
+#~ msgstr "key_path"
+
+#~ msgid "Path to the client's TLS key file."
+#~ msgstr "クライアントの TLS キーファイルへのパス。"
+
+#~ msgid "tls_hostname"
+#~ msgstr "tls_hostname"
+
+#~ msgid "When verifying the authenticity of the Docker Host server, provide the expected name of the server. Defaults to ``localhost``."
+#~ msgstr "Docker Host サーバーの信頼性を確認する際に、予想されるサーバー名を提供します。デフォルトは ``localhost`` です。"
+
+#~ msgid "ssl_version"
+#~ msgstr "ssl_version"
+
+#~ msgid "Provide a valid SSL version number. The default value is determined by the Docker SDK for Python."
+#~ msgstr "有効な SSL バージョン番号を提供します。デフォルト値は、Python の Docker SDK により決定されます。"
+
+#~ msgid "You can also control how the plugins and modules connect to the Docker API by setting the following environment variables."
+#~ msgstr "以下の環境変数を設定して、プラグインおよびモジュールが Docker API に接続する方法を制御することもできます。"
+
+#~ msgid "For plugins, they have to be set for the environment Ansible itself runs in. For modules, they have to be set for the environment the modules are executed in. For modules running on remote machines, the environment variables have to be set on that machine for the user used to execute the modules with."
+#~ msgstr "プラグインには、Ansible 自体が実行する環境に合わせて設定する必要があります。モジュールの場合は、モジュールが実行する環境に設定する必要があります。リモートマシンで実行しているモジュールの場合は、モジュールを実行するユーザーのマシンに環境変数を設定する必要があります。"
+
+#~ msgid "DOCKER_HOST"
+#~ msgstr "DOCKER_HOST"
+
+#~ msgid "The URL or Unix socket path used to connect to the Docker API."
+#~ msgstr "Docker API への接続に使用される URL または Unix ソケットパス。"
+
+#~ msgid "DOCKER_API_VERSION"
+#~ msgstr "DOCKER_API_VERSION"
+
+#~ msgid "The version of the Docker API running on the Docker Host. Defaults to the latest version of the API supported by docker-py."
+#~ msgstr "Docker Host 上で実行する Docker API のバージョンです。デフォルトでは、docker-py でサポートされる API の最新バージョンに設定されます。"
+
+#~ msgid "DOCKER_TIMEOUT"
+#~ msgstr "DOCKER_TIMEOUT"
+
+#~ msgid "The maximum amount of time in seconds to wait on a response from the API."
+#~ msgstr "API からの応答を待つ最大時間 (秒単位)。"
+
+#~ msgid "DOCKER_CERT_PATH"
+#~ msgstr "DOCKER_CERT_PATH"
+
+#~ msgid "Path to the directory containing the client certificate, client key and CA certificate."
+#~ msgstr "クライアント証明書、クライアントキー、および CA 証明書を含むディレクトリーへのパス。"
+
+#~ msgid "DOCKER_SSL_VERSION"
+#~ msgstr "DOCKER_SSL_VERSION"
+
+#~ msgid "Provide a valid SSL version number."
+#~ msgstr "有効な SSL バージョン番号を指定します。"
+
+#~ msgid "DOCKER_TLS"
+#~ msgstr "DOCKER_TLS"
+
+#~ msgid "Secure the connection to the API by using TLS without verifying the authenticity of the Docker Host."
+#~ msgstr "Docker ホストの信頼性を検証せずに TLS を使用して API への接続のセキュリティーを保護します。"
+
+#~ msgid "DOCKER_TLS_VERIFY"
+#~ msgstr "DOCKER_TLS_VERIFY"
+
+#~ msgid "Secure the connection to the API by using TLS and verify the authenticity of the Docker Host."
+#~ msgstr "TLS を使用して API への接続のセキュリティーを確保し、Docker ホストの信頼性を検証します。"
+
+#~ msgid "Plain Docker daemon: images, networks, volumes, and containers"
+#~ msgstr "単純な Docker デーモン: イメージ、ネットワーク、ボリューム、およびコンテナー"
+
+#~ msgid "For working with a plain Docker daemon, that is without Swarm, there are connection plugins, an inventory plugin, and several modules available:"
+#~ msgstr "Swarm を使用しないプレーンな Docker デーモンを使用する場合は、接続プラグイン、インベントリープラグイン、および複数のモジュールが利用できます。"
+
+#~ msgid "docker connection plugin"
+#~ msgstr "Docker 接続プラグイン"
+
+#~ msgid "The :ref:`community.docker.docker connection plugin <ansible_collections.community.docker.docker_connection>` uses the Docker CLI utility to connect to Docker containers and execute modules in them. It essentially wraps ``docker exec`` and ``docker cp``. This connection plugin is supported by the :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>`."
+#~ msgstr ":ref:`community.docker.docker 接続プラグイン <ansible_collections.community.docker.docker_connection>` は、Docker CLI ユーティリティーを使用して Docker コンテナーに接続し、そのコンテナーでモジュールを実行します。基本的に ``docker exec`` と ``docker cp`` をラップします。この接続プラグインは :ref:`ansible.posix.synchronize module <ansible_collections.ansible.posix.synchronize_module>` によりサポートされます。"
+
+#~ msgid "docker_api connection plugin"
+#~ msgstr "docker_api connection プラグイン"
+
+#~ msgid "The :ref:`community.docker.docker_api connection plugin <ansible_collections.community.docker.docker_api_connection>` talks directly to the Docker daemon to connect to Docker containers and execute modules in them."
+#~ msgstr ":ref:`community.docker.docker_api 接続プラグイン <ansible_collections.community.docker.docker_api_connection>` は Docker デーモンに直接対話し、Docker コンテナーに接続し、そのコンテナーでモジュールを実行します。"
+
+#~ msgid "docker_containers inventory plugin"
+#~ msgstr "docker_containers インベントリープラグイン"
+
+#~ msgid "The :ref:`community.docker.docker_containers inventory plugin <ansible_collections.community.docker.docker_containers_inventory>` allows you to dynamically add Docker containers from a Docker Daemon to your Ansible inventory. See :ref:`dynamic_inventory` for details on dynamic inventories."
+#~ msgstr ":ref:`community.docker.docker_containers インベントリープラグイン <ansible_collections.community.docker.docker_containers_inventory>` では、Docker Daemon から Ansible インベントリーに Docker コンテナーを動的に追加できます。動的インベントリーの詳細は、「:ref:`dynamic_inventory`」を参照してください。"
+
+#~ msgid "The `docker inventory script <https://github.com/ansible-community/contrib-scripts/blob/main/inventory/docker.py>`_ is deprecated. Please use the inventory plugin instead. The inventory plugin has several compatibility options. If you need to collect Docker containers from multiple Docker daemons, you need to add every Docker daemon as an individual inventory source."
+#~ msgstr "`docker インベントリースクリプト <https://github.com/ansible-community/contrib-scripts/blob/main/inventory/docker.py>`_ は非推奨になりました。代わりにインベントリープラグインを使用してください。インベントリープラグインには、複数の互換性オプションがあります。複数の Docker デーモンから Docker コンテナーを収集する必要がある場合は、すべての Docker デーモンを個別のインベントリーソースとして追加する必要があります。"
+
+#~ msgid "docker_host_info module"
+#~ msgstr "docker_host_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_host_info module <ansible_collections.community.docker.docker_host_info_module>` allows you to retrieve information on a Docker daemon, such as all containers, images, volumes, networks and so on."
+#~ msgstr ":ref:`community.docker.docker_host_info モジュール <ansible_collections.community.docker.docker_host_info_module>` では、すべてのコンテナー、イメージ、ボリューム、ネットワークなど、Docker デーモンの情報を取得できます。"
+
+#~ msgid "docker_login module"
+#~ msgstr "docker_login モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_login module <ansible_collections.community.docker.docker_login_module>` allows you to log in and out of a remote registry, such as Docker Hub or a private registry. It provides similar functionality to the ``docker login`` and ``docker logout`` CLI commands."
+#~ msgstr ":ref:`community.docker.docker_login モジュール <ansible_collections.community.docker.docker_login_module>` では、Docker Hub、プライベートレジストリーなどのリモートレジストリーへのログイン、およびリモートレジストリーからのログアウトできます。CLI コマンド ``docker login`` および ``docker logout`` と同様の機能を提供します。"
+
+#~ msgid "docker_prune module"
+#~ msgstr "docker_prune モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_prune module <ansible_collections.community.docker.docker_prune_module>` allows  you to prune no longer needed containers, images, volumes and so on. It provides similar functionality to the ``docker prune`` CLI command."
+#~ msgstr ":ref:`community.docker.docker_prune モジュール <ansible_collections.community.docker.docker_prune_module>` では、コンテナー、イメージ、ボリュームなどは取り除くことができなくなり、CLI コマンド ``docker prune`` と同様の機能を提供します。"
+
+#~ msgid "docker_image module"
+#~ msgstr "docker_image モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_image module <ansible_collections.community.docker.docker_image_module>` provides full control over images, including: build, pull, push, tag and remove."
+#~ msgstr ":ref:`community.docker.docker_image モジュール <ansible_collections.community.docker.docker_image_module>` は、build、pull、push、tag、remove などのイメージを完全に制御します。"
+
+#~ msgid "docker_image_info module"
+#~ msgstr "docker_image_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_image_info module <ansible_collections.community.docker.docker_image_info_module>` allows you to list and inspect images."
+#~ msgstr ":ref:`community.docker.docker_image_info モジュール <ansible_collections.community.docker.docker_image_info_module>` を使用すると、イメージを一覧表示し、検査することができます。"
+
+#~ msgid "docker_network module"
+#~ msgstr "docker_network モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_network module <ansible_collections.community.docker.docker_network_module>` provides full control over Docker networks."
+#~ msgstr ":ref:`community.docker.docker_network モジュール <ansible_collections.community.docker.docker_network_module>` は、Docker ネットワークを完全に制御します。"
+
+#~ msgid "docker_network_info module"
+#~ msgstr "docker_network_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_network_info module <ansible_collections.community.docker.docker_network_info_module>` allows you to inspect Docker networks."
+#~ msgstr ":ref:`community.docker.docker_network_info モジュール <ansible_collections.community.docker.docker_network_info_module>` では、Docker ネットワークを調べることができます。"
+
+#~ msgid "docker_volume_info module"
+#~ msgstr "docker_volume_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_volume_info module <ansible_collections.community.docker.docker_volume_info_module>` provides full control over Docker volumes."
+#~ msgstr ":ref:`community.docker.docker_volume_info モジュール <ansible_collections.community.docker.docker_volume_info_module>` は、Docker ボリュームを完全に制御します。"
+
+#~ msgid "docker_volume module"
+#~ msgstr "docker_volume モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_volume module <ansible_collections.community.docker.docker_volume_module>` allows you to inspect Docker volumes."
+#~ msgstr ":ref:`community.docker.docker_volume モジュール <ansible_collections.community.docker.docker_volume_module>` を使用すると、Docker ボリュームを検査できます。"
+
+#~ msgid "docker_container module"
+#~ msgstr "docker_container モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_container module <ansible_collections.community.docker.docker_container_module>` manages the container lifecycle by providing the ability to create, update, stop, start and destroy a Docker container."
+#~ msgstr ":ref:`community.docker.docker_container モジュール <ansible_collections.community.docker.docker_container_module>` は、Docker コンテナーの作成、更新、停止、開始、および破棄の機能を提供することで、コンテナーのライフサイクルを管理します。"
+
+#~ msgid "docker_container_info module"
+#~ msgstr "docker_container_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_container_info module <ansible_collections.community.docker.docker_container_info_module>` allows you to inspect a Docker container."
+#~ msgstr ":ref:`community.docker.docker_container_info モジュール <ansible_collections.community.docker.docker_container_info_module>` では、Docker コンテナーを検査できます。"
+
+#~ msgid "Docker Compose"
+#~ msgstr "Docker Compose"
+
+#~ msgid "The :ref:`community.docker.docker_compose module <ansible_collections.community.docker.docker_compose_module>` allows you to use your existing Docker compose files to orchestrate containers on a single Docker daemon or on Swarm. Supports compose versions 1 and 2."
+#~ msgstr ":ref:`community.docker.docker_compose モジュール <ansible_collections.community.docker.docker_compose_module>` では、既存の Docker Compose ファイルを使用して、単一の Docker デーモンまたは Swarm でコンテナーをオーケストレーションできます。Compose のバージョン 1 および 2 をサポートします。"
+
+#~ msgid "Next to Docker SDK for Python, you need to install `docker-compose <https://github.com/docker/compose>`_ on the remote machines to use the module."
+#~ msgstr "モジュールを使用するには、Python の Docker SDK の次に、リモートマシンに `docker-compose <https://github.com/docker/compose>`_ をインストールする必要があります。"
+
+#~ msgid "Docker Machine"
+#~ msgstr "Docker マシン"
+
+#~ msgid "The :ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` allows you to dynamically add Docker Machine hosts to your Ansible inventory."
+#~ msgstr ":ref:`community.docker.docker_machine inventory plugin <ansible_collections.community.docker.docker_machine_inventory>` では、Docker マシンホストを Ansible インベントリーに動的に追加できます。"
+
+#~ msgid "Docker stack"
+#~ msgstr "Docker スタック"
+
+#~ msgid "The :ref:`community.docker.docker_stack module <ansible_collections.community.docker.docker_stack_module>` module allows you to control Docker stacks. Information on stacks can be retrieved by the :ref:`community.docker.docker_stack_info module <ansible_collections.community.docker.docker_stack_info_module>`, and information on stack tasks can be retrieved by the :ref:`community.docker.docker_stack_task_info module <ansible_collections.community.docker.docker_stack_task_info_module>`."
+#~ msgstr ":ref:`community.docker.docker_stack モジュール <ansible_collections.community.docker.docker_stack_module>` モジュールにより、Docker スタックを制御できます。スタックの情報は、:ref:`community.docker.docker_stack_info モジュール <ansible_collections.community.docker.docker_stack_info_module>` で取得でき、スタックタスクに関する情報は :ref:`community.docker.docker_stack_task_info モジュール <ansible_collections.community.docker.docker_stack_task_info_module>` で取得できます。"
+
+#~ msgid "Docker Swarm"
+#~ msgstr "Docker Swarm"
+
+#~ msgid "The community.docker collection provides multiple plugins and modules for managing Docker Swarms."
+#~ msgstr "community.docker コレクションは、Docker Swarm を管理するための複数のプラグインとモジュールを提供します。"
+
+#~ msgid "Swarm management"
+#~ msgstr "Swarm 管理"
+
+#~ msgid "One inventory plugin and several modules are provided to manage Docker Swarms:"
+#~ msgstr "Docker Swarms を管理するために、インベントリープラグインと複数のモジュールが提供されます。"
+
+#~ msgid "docker_swarm inventory plugin"
+#~ msgstr "docker_swarm インベントリープラグイン"
+
+#~ msgid "The :ref:`community.docker.docker_swarm inventory plugin <ansible_collections.community.docker.docker_swarm_inventory>` allows  you to dynamically add all Docker Swarm nodes to your Ansible inventory."
+#~ msgstr ":ref:`community.docker.docker_swarm インベントリープラグイン <ansible_collections.community.docker.docker_swarm_inventory>` により、すべての Docker Swarm ノードを Ansible インベントリーに動的に追加できます。"
+
+#~ msgid "docker_swarm module"
+#~ msgstr "docker_swarm モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_swarm module <ansible_collections.community.docker.docker_swarm_module>` allows you to globally configure Docker Swarm manager nodes to join and leave swarms, and to change the Docker Swarm configuration."
+#~ msgstr ":ref:`community.docker.docker_swarm モジュール <ansible_collections.community.docker.docker_swarm_module>` では、Docker Swarm マネージャーノードをグローバルに設定し、swarm に参加および swarm から離脱し、Docker Swarm 設定の変更を行うことができます。"
+
+#~ msgid "docker_swarm_info module"
+#~ msgstr "docker_swarm_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_swarm_info module <ansible_collections.community.docker.docker_swarm_info_module>` allows  you to retrieve information on Docker Swarm."
+#~ msgstr ":ref:`community.docker.docker_swarm_info モジュール <ansible_collections.community.docker.docker_swarm_info_module>` では、Docker Swarm に関する情報を取得できます。"
+
+#~ msgid "docker_node module"
+#~ msgstr "docker_node モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_node module <ansible_collections.community.docker.docker_node_module>` allows you to manage Docker Swarm nodes."
+#~ msgstr ":ref:`community.docker.docker_node モジュール <ansible_collections.community.docker.docker_node_module>` では、Docker Swarm ノードを管理できます。"
+
+#~ msgid "docker_node_info module"
+#~ msgstr "docker_node_info モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_node_info module <ansible_collections.community.docker.docker_node_info_module>` allows you to retrieve information on Docker Swarm nodes."
+#~ msgstr ":ref:`community.docker.docker_node_info モジュール <ansible_collections.community.docker.docker_node_info_module>` では、Docker Swarm ノードの情報を取得できます。"
+
+#~ msgid "Configuration management"
+#~ msgstr "設定管理"
+
+#~ msgid "The community.docker collection offers modules to manage Docker Swarm configurations and secrets:"
+#~ msgstr "community.docker コレクションは、Docker Swarm 設定およびシークレットを管理するモジュールを提供します。"
+
+#~ msgid "docker_config module"
+#~ msgstr "docker_config モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_config module <ansible_collections.community.docker.docker_config_module>` allows you to create and modify Docker Swarm configs."
+#~ msgstr ":ref:`community.docker.docker_config モジュール <ansible_collections.community.docker.docker_config_module>` を使用すると、Docker Swarm 設定を作成および変更できます。"
+
+#~ msgid "docker_secret module"
+#~ msgstr "docker_secret モジュール"
+
+#~ msgid "The :ref:`community.docker.docker_secret module <ansible_collections.community.docker.docker_secret_module>` allows you to create and modify Docker Swarm secrets."
+#~ msgstr ":ref:`community.docker.docker_secret モジュール <ansible_collections.community.docker.docker_secret_module>` では、Docker Swarm シークレットを作成および変更できます。"
+
+#~ msgid "Swarm services"
+#~ msgstr "Swarm サービス"
+
+#~ msgid "Docker Swarm services can be created and updated with the :ref:`community.docker.docker_swarm_service module <ansible_collections.community.docker.docker_swarm_service_module>`, and information on them can be queried by the :ref:`community.docker.docker_swarm_service_info module <ansible_collections.community.docker.docker_swarm_service_info_module>`."
+#~ msgstr "Docker Swarm サービスは、:ref:`community.docker.docker_swarm_service モジュール <ansible_collections.community.docker.docker_swarm_service_module>` で作成および更新でき、その情報は、:ref:`community.docker.docker_swarm_service_info モジュール <ansible_collections.community.docker.docker_swarm_service_info_module>` でクエリーできます。"
+
+#~ msgid "Helpful links"
+#~ msgstr "便利なリンク"
+
+#~ msgid "Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_, and start building images from your Ansible playbooks."
+#~ msgstr "Dockerfile を使用してイメージを構築していますか。`ansible-bender <https://github.com/ansible-community/ansible-bender>`_ を確認して、Ansible Playbook からイメージの構築を開始します。"
+
+#~ msgid "Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully scalable app in the cloud with Kubernetes in just a few moments."
+#~ msgstr "`Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ を使用して、`OpenShift <https://www.okd.io/>`_ で docker 構成のファイルを起動します。ラップトップ上のアプリケーションから、Kubernetes を使用するクラウド内の完全なスケーラブルなアプリケーション (数分間) に移動します。"
 
