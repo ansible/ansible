@@ -89,6 +89,13 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
             if isinstance(return_value.get('contains'), MutableMapping):
                 process_return_values(return_value['contains'])
 
+    def process_attributes(attributes):
+        for attribute in attributes.values():
+            if not isinstance(attribute, MutableMapping):
+                continue
+            if 'version_added' in attribute:
+                callback(attribute, 'version_added', 'version_added_collection')
+
     if not fragment:
         return
 
@@ -102,6 +109,8 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
         process_deprecation(fragment['deprecated'], top_level=True)
     if isinstance(fragment.get('options'), MutableMapping):
         process_options(fragment['options'])
+    if isinstance(fragment.get('attributes'), MutableMapping):
+        process_attributes(fragment['attributes'])
 
 
 def add_collection_to_versions_and_dates(fragment, collection_name, is_module, return_docs=False):
