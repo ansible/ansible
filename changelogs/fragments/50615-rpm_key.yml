@@ -1,0 +1,7 @@
+minor_changes:
+  - >
+    rpm_key - Check for multiple signing keys in a single GPG key file. 
+    (https://github.com/ansible/ansible/issues/50615).
+  - rpm_key - ``fingerprint`` now allows for a list of key fingerprints to be specified.
+    The fingerprints of all keys in a file should be specified for key import to be successful.
+    (https://github.com/ansible/ansible/issues/50615).
