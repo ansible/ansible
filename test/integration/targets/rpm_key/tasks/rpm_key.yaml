@@ -178,8 +178,7 @@
 
 - name: Issue 50615 - Verify key fingerprints. This should fail due to multiple key signatures
   rpm_key:
-    # TODO: This needs to be rehosted on ansible CI infra
-    key: https://dl.google.com/linux/linux_signing_key.pub
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/linux_signing_key.pub
     fingerprint: EB4C 1BFD 4F04 2F6D DDCC EC91 7721 F63B D38B 4796
   register: result
   ignore_errors: true
@@ -192,8 +191,7 @@
 
 - name: Issue 50615 - Add Google GPG keys to system
   rpm_key:
-    # TODO: This needs to be rehosted on ansible CI infra
-    key: https://dl.google.com/linux/linux_signing_key.pub
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/linux_signing_key.pub
     fingerprint:
       - 4CCA 1EAF 950C EE4A B839 76DC A040 830F 7FAC 5991
       - EB4C 1BFD 4F04 2F6D DDCC EC91 7721 F63B D38B 4796
