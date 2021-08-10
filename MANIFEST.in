@@ -22,7 +22,7 @@ recursive-include lib/ansible/executor/powershell *.ps1
 recursive-include lib/ansible/module_utils/csharp *.cs
 recursive-include lib/ansible/module_utils/powershell *.psm1
 recursive-include lib/ansible/modules/windows *.ps1
-recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep *.rst .gitignore CODE_OF_CONDUCT.md *.yaml *.keep LICENSE execution-environment.yml MAINTAINERS MAINTAINING.md REVIEW_CHECKLIST.md
+recursive-include lib/ansible/galaxy/data *.yml *.j2 README.md ansible.cfg inventory .git_keep *.rst .gitignore CODE_OF_CONDUCT.md *.yaml LICENSE execution-environment.yml MAINTAINERS MAINTAINING.md REVIEW_CHECKLIST.md
 recursive-include lib/ansible/config *.yml
 recursive-include lib/ansible/modules *.yml
 recursive-include lib/ansible/plugins/test *.yml
