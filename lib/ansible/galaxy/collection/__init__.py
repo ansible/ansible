@@ -113,6 +113,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyResolutionImpossible,
+    CollectionDependencyInconsistentCandidate,
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.module_utils.six import raise_from
@@ -1349,6 +1350,36 @@ def _resolve_depenency_map(
             ),
             conflict_causes,
         )
+        raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
+            AnsibleError('\n'.join(error_msg_lines)),
+            dep_exc,
+        )
+    except CollectionDependencyInconsistentCandidate as dep_exc:
+        parents = [
+            "%s.%s:%s" % (p.namespace, p.name, p.ver)
+            for p in dep_exc.criterion.iter_parent()
+            if p is not None
+        ]
+
+        error_msg_lines = [
+            (
+                'Failed to resolve the requested dependencies map. '
+                'Got the candidate {req.fqcn!s}:{req.ver!s} ({dep_origin!s}) '
+                'which didn\'t satisfy all of the following requirements:'.
+                format(
+                    req=dep_exc.candidate,
+                    dep_origin='direct request'
+                    if not parents else 'dependency of {parent!s}'.
+                    format(parent=', '.join(parents))
+                )
+            )
+        ]
+
+        for req in dep_exc.criterion.iter_requirement():
+            error_msg_lines.append(
+                '* {req.fqcn!s}:{req.ver!s}'.format(req=req)
+            )
+
         raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
             AnsibleError('\n'.join(error_msg_lines)),
             dep_exc,
