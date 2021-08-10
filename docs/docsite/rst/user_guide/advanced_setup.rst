@@ -1,4 +1,4 @@
-.. _sample_setup:
+.. _advanced_setup:
 
 ********************
 Advanced Ansible setup
