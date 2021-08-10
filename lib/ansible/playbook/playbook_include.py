@@ -43,6 +43,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
     _import_playbook = FieldAttribute(isa='string')
     _vars = FieldAttribute(isa='dict', default=dict)
+    _keep_search_path = FieldAttribute(isa='bool', default=False)
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
@@ -113,7 +114,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
             if entry._included_path is None:
-                entry._included_path = os.path.dirname(playbook)
+                entry._included_path = basedir if new_obj.keep_search_path else os.path.dirname(playbook)
 
             # Check to see if we need to forward the conditionals on to the included
             # plays. If so, we can take a shortcut here and simply prepend them to

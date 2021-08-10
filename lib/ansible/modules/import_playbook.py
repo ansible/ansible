@@ -22,6 +22,11 @@ options:
   free-form:
     description:
       - The name of the imported playbook is specified directly without any other option.
+  keep_search_path:
+    description:
+      - Whether to keep or not the search path from the current playbook.
+    type: bool
+    default: "no"
 extends_documentation_fragment:
 - action_common_attributes
 attributes:
