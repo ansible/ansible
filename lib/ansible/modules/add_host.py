@@ -29,6 +29,25 @@ options:
     - The groups to add the hostname to.
     type: list
     aliases: [ group, groupname ]
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: full
+    check_mode:
+        support: full
+    connection:
+        support: none
+    delegation:
+        support: none
+    proprietary:
+        support: full
 notes:
 - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
   to iterate use a C(loop) construct. If you need to dynamically add all hosts targeted by a playbook for
