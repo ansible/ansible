@@ -163,6 +163,81 @@
     - '"Installing ''namespace3.name:1.0.0'' to" in install_tarball.stdout'
     - (install_tarball_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
+- name: write a requirements file using the artifact and a conflicting version
+  copy:
+    content: |
+            collections:
+              - name: {{ galaxy_dir }}/namespace3.tar.gz
+                version: 1.2.0
+    dest: '{{ galaxy_dir }}/test_req.yml'
+
+- name: install the requirements file with mismatched versions
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/test_req.yml' {{ galaxy_verbosity }}
+  ignore_errors: True
+  register: result
+
+- name: remove the requirements file
+  file:
+    path: '{{ galaxy_dir }}/test_req.yml'
+    state: absent
+
+- assert:
+    that: error == expected_error
+  vars:
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
+    error: "{{ result.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+    expected_error: >-
+            ERROR! Failed to resolve the requested dependencies map.
+            Got the candidate namespace3.name:1.0.0 (direct request)
+            which didn't satisfy all of the following requirements:
+            * namespace3.name:1.2.0
+
+- name: test error for mismatched dependency versions
+  vars:
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
+    error: "{{ result.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+    expected_error: >-
+            ERROR! Failed to resolve the requested dependencies map.
+            Got the candidate namespace3.name:1.0.0 (dependency of tmp_parent.name:1.0.0)
+            which didn't satisfy all of the following requirements:
+            * namespace3.name:1.2.0
+  block:
+    - name: init a new parent collection
+      command: ansible-galaxy collection init tmp_parent.name --init-path '{{ galaxy_dir }}/scratch'
+
+    - name: replace the dependencies
+      lineinfile:
+        path: "{{ galaxy_dir }}/scratch/tmp_parent/name/galaxy.yml"
+        regexp: "^dependencies:*"
+        line: "dependencies: { '{{ galaxy_dir }}/namespace3.tar.gz': '1.2.0' }"
+
+    - name: build the new artifact
+      command: ansible-galaxy collection build {{ galaxy_dir }}/scratch/tmp_parent/name
+      args:
+        chdir: "{{ galaxy_dir }}"
+
+    - name: install the artifact to verify the error is handled
+      command: ansible-galaxy collection install '{{ galaxy_dir }}/tmp_parent-name-1.0.0.tar.gz'
+      ignore_errors: yes
+      register: result
+
+    - debug: msg="Actual - {{ error }}"
+
+    - debug: msg="Expected - {{ expected_error }}"
+
+    - assert:
+        that: error == expected_error
+  always:
+    - name: clean up collection skeleton and artifact
+      file:
+        state: absent
+        path: "{{ item }}"
+      loop:
+        - "{{ galaxy_dir }}/scratch/tmp_parent/"
+        - "{{ galaxy_dir }}/tmp_parent-name-1.0.0.tar.gz"
+
 - name: setup bad tarball - {{ test_name }}
   script: build_bad_tar.py {{ galaxy_dir | quote }}
 
