@@ -1370,7 +1370,7 @@ def _resolve_depenency_map(
                     req=dep_exc.candidate,
                     dep_origin='direct request'
                     if not parents else 'dependency of {parent!s}'.
-                    format(parent=','.join(parents))
+                    format(parent=', '.join(parents))
                 )
             )
         ]
