@@ -800,7 +800,7 @@ class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
         if PY3:
             self._io = fp
         else:
-            # Py2 ``HTTPResponse`` doesn't support all of the file object
+            # Py2 ``HTTPResponse``/``addinfourl`` doesn't support all of the file object
             # functionality GzipFile requires
             self._io = io.BytesIO()
             for block in iter(functools.partial(fp.read, 65536), b''):
