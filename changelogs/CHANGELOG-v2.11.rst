@@ -5,6 +5,31 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-08-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix ``when`` evaluation on Native Jinja and Python 3.10.
+- Jinja2 globals should be accessible even when importing a template without the context (https://github.com/ansible/ansible/issues/75371)
+- ansible-test - add packaging python module to ``ansible-doc`` sanity test requirements.
+- ansible-test validate-modules - correctly validate positional parameters to ``AnsibleModules`` (https://github.com/ansible/ansible/pull/75332).
+- cli defaults for ssh args set to None as '' was bypassing normal default.
+- dnf module - Use all components of a package name to determine if it's installed (https://github.com/ansible/ansible/issues/75311).
+- do not trigger interpreter discovery in the forced_local module path as they should use the ansible playbook python unless otherwise configured.
+- find action, correctly convert path to text when warning about skiping.
+- remote tmpdir permissions - fix type error in macOS chmod ACL fallback (https://github.com/ansible/ansible/pull/74613).
+- template - ensure Jinja2 overrides from template header are used (https://github.com/ansible/ansible/issues/75275)
+- unarchive - move failure for missing binary to ``can_handle_archive()`` rather than ``__init__()``
+
 v2.11.3
 =======
 

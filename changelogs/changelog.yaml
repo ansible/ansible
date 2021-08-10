@@ -1885,3 +1885,43 @@ releases:
     - slurp-improve-error-handling-readability.yml
     - v2.11.3rc1_summary.yaml
     release_date: '2021-07-13'
+  2.11.4rc1:
+    changes:
+      bugfixes:
+      - Fix ``when`` evaluation on Native Jinja and Python 3.10.
+      - Jinja2 globals should be accessible even when importing a template without
+        the context (https://github.com/ansible/ansible/issues/75371)
+      - ansible-test - add packaging python module to ``ansible-doc`` sanity test
+        requirements.
+      - ansible-test validate-modules - correctly validate positional parameters to
+        ``AnsibleModules`` (https://github.com/ansible/ansible/pull/75332).
+      - cli defaults for ssh args set to None as '' was bypassing normal default.
+      - dnf module - Use all components of a package name to determine if it's installed
+        (https://github.com/ansible/ansible/issues/75311).
+      - do not trigger interpreter discovery in the forced_local module path as they
+        should use the ansible playbook python unless otherwise configured.
+      - find action, correctly convert path to text when warning about skiping.
+      - remote tmpdir permissions - fix type error in macOS chmod ACL fallback (https://github.com/ansible/ansible/pull/74613).
+      - template - ensure Jinja2 overrides from template header are used (https://github.com/ansible/ansible/issues/75275)
+      - unarchive - move failure for missing binary to ``can_handle_archive()`` rather
+        than ``__init__()``
+      release_summary: '| Release Date: 2021-08-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 74613-actionfixup_perms2_macos_remote_paths_ensure_list.yml
+    - 75275-ensure-jinja2-header-overrides-used.yml
+    - 75332-ansible-test-validate-modules-AnsibleModule-args.yml
+    - 75356-add-requirement-to-ansible-test.yml
+    - 75371-import_template_globals.yml
+    - find_error_fix.yml
+    - fix-dnf-filtering-for-installed-package-name.yml
+    - fix_cli_ssh_defaults.yml
+    - skip_local_discovery.yml
+    - unarchive-fix-bin-checking.yml
+    - v2.11.4rc1_summary.yaml
+    - when-eval-native-py310.yml
+    release_date: '2021-08-10'
