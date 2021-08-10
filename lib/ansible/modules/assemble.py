@@ -74,6 +74,18 @@ options:
     - The command is passed securely so shell features like expansion and pipes won't work.
     type: str
     version_added: '2.0'
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    action:
+      support: full
+    async:
+      support: false
+    safe_file_operations:
+      support: full
+    vault:
+      support: full
+      version_added: '2.2'
 seealso:
 - module: ansible.builtin.copy
 - module: ansible.builtin.template
