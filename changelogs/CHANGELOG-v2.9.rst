@@ -5,6 +5,33 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.25rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-08-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Allow unsafe_writes to be set on target via env var, for those targets that need a blanket setting.
+
+Bugfixes
+--------
+
+- Added unsafe_writes test.
+- Enabled unsafe_writes for get_url which was ignoring the paramter.
+- Restored unsafe_writes functionality which was being skipped.
+- Setup virtualization_facts - add RHV type. This change will fully work for VMs in clusters at cluster level 4.4 or newer (https://github.com/ansible/ansible/pull/72876).
+- ansible-test - allow to ignore ``rstcheck`` errors (https://github.com/ansible/ansible/pull/75272).
+- callback default, now uses task delegate_to instead of delegate vars to display delegate to host
+- callbacks, restores missing delegate_vars
+- dnf module - Use all components of a package name to determine if it's installed (https://github.com/ansible/ansible/issues/75311).
+
 v2.9.24
 =======
 
