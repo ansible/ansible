@@ -1,8 +1,8 @@
 .. _advanced_setup:
 
-********************
+**********************
 Advanced Ansible setup
-********************
+**********************
 
 With the introduction of collections, some content can be migrated in your own collection. This is especially useful when important content from multiple sources.
 
@@ -12,7 +12,7 @@ Also, as your ansible repo starts growing, you might not want to mix your invent
    :local:
 
 Advanced directory layout
------------------------
+-------------------------
 
 With this setup, the root of your repo is quiet simple::
 
@@ -29,20 +29,18 @@ With this setup, the root of your repo is quiet simple::
 
 To install and use collections from this folder, you need to update ``ansible.cfg`` with the following::
 
-To and use collections from this folder, you need to update ``ansible.cfg`` with the following::
-
-   [defaults]
-   collections_paths = ./collections
+    [defaults]
+    collections_paths = ./collections
 
 To use a default hosts list, you can update ``ansible.cfg`` with the following configuration::
 
-   [defaults]
-   inventory = ./inventories/{{ default hosts list}}
+    [defaults]
+    inventory = ./inventories/{{ default hosts list}}
 
 .. note: You might notice that the folders ``roles``, ``library``, ``module_utils`` and ``filter_plugins`` are no longer present in this layout. This is because they should now be referenced exclusively from collections.
 
 Organizing your inventory
------------------------
+-------------------------
 
 First, remember to split your variables from your inventory sources (:ref:`splitting_out_vars`).
 
@@ -60,15 +58,15 @@ Using a single inventory folder would look like this::
 Using a multiple inventory folders would look like this::
 
     inventories/
-       production/
-          hosts               # inventory file for production servers
-          group_vars/
-          host_vars/
+      production/
+        hosts               # inventory file for production servers
+        group_vars/
+        host_vars/
 
-       staging/
-          hosts               # inventory file for staging environment
-          group_vars/
-          host_vars/
+      staging/
+        hosts               # inventory file for staging environment
+        group_vars/
+        host_vars/
 
 
 Absolute paths

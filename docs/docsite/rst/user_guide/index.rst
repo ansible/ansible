@@ -131,6 +131,7 @@ If you prefer to read the entire User Guide, here's a list of the pages in order
    complex_data_manipulation
    plugin_filtering_config
    sample_setup
+   advanced_setup
    modules
    ../plugins/plugins
    ../reference_appendices/playbooks_keywords
