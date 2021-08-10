@@ -11,6 +11,10 @@ import time
 
 from . import types as t
 
+from .encoding import (
+    to_text,
+)
+
 from .io import (
     read_text_file,
 )
@@ -350,7 +354,7 @@ class ManagePosixCI:
         cmd = [
             '/usr/bin/sudo',
             '/usr/sbin/tcpdump',
-            '-w', '/root/%s.pcap',
+            '-w', '/tmp/%s.pcap',
             '-G', '20',
             '-s', '200',
             '-Z', 'root',
@@ -370,9 +374,9 @@ class ManagePosixCI:
                                    self.become + [command], capture=capture, data=data,
                                    error_callback=functools.partial(self.capture_log_details, ssh_logfile.name, tcpdump_process))
         finally:
-            run_command(self.core_ci.args, ['sudo', 'kill', '-KILL', tcpdump_process.pid])
+            run_command(self.core_ci.args, ['sudo', 'kill', '-KILL', str(tcpdump_process.pid)])
 
-    def show_ssh_debug_logs(self, path, ex, wat):  # type: (str, SubprocessError) -> None
+    def show_ssh_debug_logs(self, path, ex):  # type: (str, SubprocessError) -> None
         """Reads ssh log file and returns relevant error."""
         markers = [
             'debug1: Connection Established',
@@ -397,28 +401,29 @@ class ManagePosixCI:
         ex.message += '>>> SSH Debug Output\n'
         ex.message += '%s%s\n' % (message.strip(), Display.clear)
 
-    def show_captured_packets(self, ex, process):
+    def show_captured_packets(self, process, ex):
         # Make sure tcpdump is not still writing to the pcap files
-        run_command(self.core_ci.args, ['sudo', 'kill', '-TERM', process.pid])
+        run_command(self.core_ci.args, ['sudo', 'kill', '-TERM', str(process.pid)])
 
         tcpdump_bin = '/usr/sbin/tcpdump'
         cmd = ['/usr/bin/sudo', tcpdump_bin, '-r']
-        pcap_files = glob.glob('/root/*.pcap')
+        pcap_files = sorted(glob.glob('/tmp/*.pcap'))
 
         output = []
         for file in pcap_files[-2:]:
-            output.append(self.run_command(self.core_ci.args, cmd + [file], capture=True).splitlines())
+            out, err = run_command(self.core_ci.args, cmd + [file], capture=True)
+            output.extend(out.splitlines())
 
-        message = '\n'.join(output[-20:])
+        message = '\n'.join(to_text(line) for line in output[-20:])
 
         ex.message += '>>> Packet Capture\n'
         ex.message += '%s%s\n' % (message.strip(), Display.clear)
 
-    def capture_log_details(self, path, ex, process):  # type: (str, SubprocessError) -> None
-        # Always run this for testing just to see if it's working
-        # if ex.status !=255:
-        self.show_ssh_debug_logs(self, path, ex)
-        self.show_captured_packets(self, ex, process)
+    def capture_log_details(self, path, process, ex):  # type: (str, SubprocessError) -> None
+        if ex.status != 255:
+            self.show_ssh_debug_logs(path, ex)
+
+        self.show_captured_packets(process, ex)
 
     def scp(self, src, dst):
         """
