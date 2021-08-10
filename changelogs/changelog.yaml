@@ -1932,6 +1932,34 @@ releases:
     - aws_tiny_prefix.yaml
     - v2.10.12rc1_summary.yaml
     release_date: '2021-07-13'
+  2.10.13rc1:
+    changes:
+      bugfixes:
+      - Setup virtualization_facts - add RHV and oVirt type. This change will fully
+        work for VMs in clusters at cluster level 4.4 or newer (https://github.com/ansible/ansible/pull/72876).
+      - ansible-test - allow to ignore ``rstcheck`` errors (https://github.com/ansible/ansible/pull/75272).
+      - callback default, now uses task delegate_to instead of delegate vars to display
+        delegate to host
+      - callbacks, restores missing delegate_vars
+      - dnf module - Use all components of a package name to determine if it's installed
+        (https://github.com/ansible/ansible/issues/75311).
+      minor_changes:
+      - Allow unsafe_writes to be set on target via env var, for those targets that
+        need a blanket setting.
+      release_summary: '| Release Date: 2021-08-10
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - 72876-setup-facts-add-redhat-vendor.yml
+    - ansible-test-rstcheck-ignore.yml
+    - fix-dnf-filtering-for-installed-package-name.yml
+    - missing_delegate_vars.yml
+    - unsafe_writes_env.yml
+    - v2.10.13rc1_summary.yaml
+    release_date: '2021-08-10'
   2.10.1rc1:
     changes:
       bugfixes:
