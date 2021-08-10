@@ -299,7 +299,8 @@ class GalaxyCLI(CLI):
                                  help='The path in which the skeleton {0} will be created. The default is the '
                                       'current working directory.'.format(galaxy_type))
 
-        init_parser.add_argument('--skeleton', '--{content_type}-skeleton'.format(content_type=galaxy_type), dest='{content_type}_skeleton'.format(content_type=galaxy_type),
+        init_parser.add_argument('--skeleton', '--{content_type}-skeleton'.format(content_type=galaxy_type),
+                                 dest='{content_type}_skeleton'.format(content_type=galaxy_type),
                                  default=C.GALAXY_COLLECTION_SKELETON if galaxy_type == 'collection' else C.GALAXY_ROLE_SKELETON,
                                  help='The path to a {content_type} skeleton that the new {content_type} should be based '
                                       'upon.'.format(content_type=galaxy_type))
