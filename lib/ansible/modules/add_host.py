@@ -48,6 +48,8 @@ attributes:
         support: none
     proprietary:
         support: full
+    windows:
+        support: full
 notes:
 - The alias C(host) of the parameter C(name) is only available on Ansible 2.4 and newer.
 - Since Ansible 2.4, the C(inventory_dir) variable is now set to C(None) instead of the 'global inventory source',
