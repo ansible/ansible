@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - fix parsing of multiple subsequent empty lines from ``yum check-update`` output (https://github.com/ansible/ansible/issues/70949)
