@@ -73,7 +73,7 @@ def open_text_file(path, mode='r'):  # type: (str, str) -> t.TextIO
         raise Exception('mode cannot include "b" for text files: %s' % mode)
 
     # noinspection PyTypeChecker
-    return io.open(to_bytes(path), mode, encoding=ENCODING)
+    return io.open(to_bytes(path), mode, encoding=ENCODING)  # pylint: disable=consider-using-with
 
 
 def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
@@ -82,7 +82,7 @@ def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
     # noinspection PyTypeChecker
-    return io.open(to_bytes(path), mode)
+    return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with
 
 
 class SortedSetEncoder(json.JSONEncoder):
