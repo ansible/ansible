@@ -44,7 +44,7 @@ import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
-import ansible.executor.module_common as module_common
+from ansible.executor import module_common
 import ansible.constants as C
 from ansible.module_utils._text import to_native, to_text
 from ansible.template import Templar
