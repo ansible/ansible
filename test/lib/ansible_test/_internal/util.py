@@ -334,7 +334,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         try:
             cmd_bytes = [to_bytes(c) for c in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
+            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
         except OSError as ex:
             if ex.errno == errno.ENOENT:
                 raise ApplicationError('Required program "%s" not found.' % cmd[0])
