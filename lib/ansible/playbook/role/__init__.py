@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionErr
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
+from ansible.module_utils.splitter import stem
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -316,16 +317,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if argspecs:
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
-            entrypoint = self._from_files.get('tasks', 'main')
-
+            #
             # This could be a filename with an extension or an absolute path.
             # Extract the stem in order to look up the proper spec.
-            entrypoint = os.path.splitext(os.path.basename(entrypoint))[0]
-
-            entrypoint_arg_spec = argspecs.get(entrypoint)
+            entrypoint_name = stem(self._from_files.get('tasks', 'main'))
+            entrypoint_arg_spec = argspecs.get(entrypoint_name)
 
             if entrypoint_arg_spec:
-                validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint)
+                validation_task = self._create_validation_task(entrypoint_arg_spec, entrypoint_name)
 
                 # Prepend our validate_argument_spec action to happen before any tasks provided by the role.
                 # 'any tasks' can and does include 0 or None tasks, in which cases we create a list of tasks and add our
