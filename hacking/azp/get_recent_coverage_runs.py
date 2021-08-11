@@ -63,7 +63,7 @@ def get_coverage_runs():
         artifact_response.raise_for_status()
 
         artifacts = artifact_response.json()['value']
-        if any([a["name"].startswith("Coverage") for a in artifacts]):
+        if any(a["name"].startswith("Coverage") for a in artifacts):
             # TODO wrongfully skipped if all jobs failed.
             coverage_runs.append(run)
 
