@@ -9,7 +9,7 @@ import base64
 import os.path
 import pytest
 
-import ansible.module_utils.urls as urls
+from ansible.module_utils import urls
 
 
 @pytest.mark.skipif(not urls.HAS_CRYPTOGRAPHY, reason='Requires cryptography to be installed')
