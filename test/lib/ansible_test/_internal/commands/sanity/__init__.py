@@ -1050,6 +1050,6 @@ def sanity_init():
     import_plugins('commands/sanity')
     sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityFunc]]
     load_plugins(SanityFunc, sanity_plugins)
-    sanity_tests = tuple([plugin() for plugin in sanity_plugins.values() if data_context().content.is_ansible or not plugin.ansible_only])
+    sanity_tests = tuple(plugin() for plugin in sanity_plugins.values() if data_context().content.is_ansible or not plugin.ansible_only)
     global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
     SANITY_TESTS = tuple(sorted(sanity_tests + collect_code_smell_tests(), key=lambda k: k.name))

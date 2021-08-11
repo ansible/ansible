@@ -241,12 +241,14 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
     def __init__(self, reporter=None):
         self.reporter = reporter
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def object_name(self):
         """Name of the object we validated"""
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def object_path(self):
         """Path of the object we validated"""
         pass

@@ -126,13 +126,13 @@ class AnsibleCoreCI:
         else:
             self.provider = None
 
-            for candidate in self.PROVIDERS:
+            for candidate, platforms in self.PROVIDERS.items():
                 choices = [
                     platform,
                     '%s arch=%s' % (platform, arch),
                 ]
 
-                if any(choice in self.PROVIDERS[candidate] for choice in choices):
+                if any(choice in platforms for choice in choices):
                     # assign default provider based on platform
                     self.provider = candidate
                     break
