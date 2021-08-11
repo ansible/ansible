@@ -130,6 +130,8 @@ lib/ansible/plugins/lookup/sequence.py pylint:disallowed-name
 lib/ansible/plugins/strategy/__init__.py pylint:disallowed-name
 lib/ansible/plugins/strategy/linear.py pylint:disallowed-name
 lib/ansible/vars/hostvars.py pylint:disallowed-name
+lib/ansible/utils/collection_loader/_collection_finder.py pylint:deprecated-class
+lib/ansible/utils/collection_loader/_collection_meta.py pylint:deprecated-class
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
