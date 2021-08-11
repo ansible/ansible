@@ -789,14 +789,14 @@ def parse_content_type(response):
 
 class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
     """A file-like object to decode a response encoded with the gzip
-        method, as described in RFC 1952.
-        
-        Largely copied from ``xmlrpclib``/``xmlrpc.client``
-        """
+    method, as described in RFC 1952.
+
+    Largely copied from ``xmlrpclib``/``xmlrpc.client``
+    """
     def __init__(self, fp):
         if not HAS_GZIP:
             raise NotImplementedError
-        
+
         if PY3:
             self._io = fp
         else:
@@ -808,7 +808,7 @@ class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
             self._io.seek(0)
             fp.close()
         gzip.GzipFile.__init__(self, mode='rb', fileobj=self._io)  # pylint: disable=non-parent-init-called
-    
+
     def close(self):
         try:
             gzip.GzipFile.close(self)
