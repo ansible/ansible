@@ -9,7 +9,7 @@ import fcntl
 import os
 import shlex
 
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 from functools import wraps
 
 from ansible import constants as C
@@ -121,7 +121,8 @@ class ConnectionBase(AnsiblePlugin):
             # In Python3, shlex.split doesn't work on a byte string.
             return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def transport(self):
         """String used to identify this Connection class from other classes"""
         pass

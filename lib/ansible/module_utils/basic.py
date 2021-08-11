@@ -73,7 +73,7 @@ except ImportError:
 
 HAVE_SELINUX = False
 try:
-    import ansible.module_utils.compat.selinux as selinux
+    from ansible.module_utils.compat import selinux
     HAVE_SELINUX = True
 except ImportError:
     pass
