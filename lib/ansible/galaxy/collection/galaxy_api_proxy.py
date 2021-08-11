@@ -24,6 +24,11 @@ if TYPE_CHECKING:
     )
 
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
+from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
+
+
+display = Display()
 
 
 class MultiGalaxyAPIProxy:
@@ -60,6 +65,18 @@ class MultiGalaxyAPIProxy:
                     result.add((version, api))
             except GalaxyError as api_err:
                 last_err = api_err
+            except Exception as err:
+                display.warning(
+                    "Skipping Galaxy server %s. "
+                    "Got an unexpected error when getting "
+                    "available verisons of collection %s.%s: %s"
+                    % (
+                        api.api_server,
+                        requirement.namespace,
+                        requirement.name,
+                        to_text(err),
+                    )
+                )
 
         if last_err and not result:
             raise last_err
