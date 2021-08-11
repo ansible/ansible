@@ -1130,7 +1130,7 @@ class EnvironmentDescription:
 
         versions = ['']
         versions += SUPPORTED_PYTHON_VERSIONS
-        versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
+        versions += list(set(v.split('.', 1)[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
         version_check = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))

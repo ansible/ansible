@@ -173,7 +173,7 @@ class CloudBase(ABC):
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
         self.args = args
-        self.platform = self.__module__.split('.')[-1]
+        self.platform = self.__module__.rsplit('.', 1)[-1]
 
         def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the config file to the payload file list."""
