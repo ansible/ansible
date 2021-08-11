@@ -283,7 +283,8 @@ class _AnsiblePathHookFinder:
                 return spec.loader
             else:
                 # call py2's internal loader
-                return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
+                # noinspection PyDeprecation
+                return pkgutil.ImpImporter(self._pathctx).find_module(fullname)  # pylint: disable=deprecated-class
 
     def iter_modules(self, prefix):
         # NB: this currently represents only what's on disk, and does not handle package redirection
