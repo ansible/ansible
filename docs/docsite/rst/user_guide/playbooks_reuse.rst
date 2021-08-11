@@ -33,14 +33,16 @@ You can incorporate multiple playbooks into a main playbook. However, you can on
 
 Importing incorporates playbooks in other playbooks statically. Ansible runs the plays and tasks in each imported playbook in the order they are listed, just as if they had been defined directly in the main playbook.
 
-Imported playbook filenames can use variables defined with ``--extra-vars`` or the ``vars`` keyword:
+You can select which playbook you want to import at runtime by defining your imported playbook filename with a variable, then passing the variable with either ``--extra-vars`` or the ``vars`` keyword. For example:
 
 .. code-block:: yaml
 
-   - import_playbook: "/path/to/{{ extra_var }}"
-   - import_playbook: "{{ playbook }}"
+   - import_playbook: "/path/to/{{ import_from_extra_var }}"
+   - import_playbook: "{{ import_from_vars }}"
      vars:
-       playbook: /path/to/playbook.yml
+       import_from_vars: /path/to/one_playbook.yml
+
+If you run this playbook with ``ansible-playbook my_playbook -e import_from_extra_var=other_playbook.yml``, Ansible imports both one_playbook.yml and other_playbook.yml.
 
 Re-using files and roles
 ========================

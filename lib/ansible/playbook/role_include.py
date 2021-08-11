@@ -85,7 +85,7 @@ class IncludeRole(TaskInclude):
         else:
             available_variables = {}
         templar = Templar(loader=loader, variables=available_variables)
-        from_files = dict((k, templar.template(v)) for k, v in self._from_files.items())
+        from_files = templar.template(self._from_files)
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
