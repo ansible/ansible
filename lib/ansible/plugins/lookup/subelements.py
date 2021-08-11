@@ -126,7 +126,7 @@ class LookupModule(LookupBase):
         flags = {}
         if len(terms) == 3:
             flags = terms[2]
-        if not isinstance(flags, dict) and not all([isinstance(key, string_types) and key in FLAGS for key in flags]):
+        if not isinstance(flags, dict) and not all(isinstance(key, string_types) and key in FLAGS for key in flags):
             _raise_terms_error("the optional third item must be a dict with flags %s" % FLAGS)
 
         # build_items

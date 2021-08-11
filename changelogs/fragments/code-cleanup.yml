@@ -1,0 +1,6 @@
+minor_changes:
+  - basic module_util - Clean up ``selinux`` compat import.
+  - subelements lookup - Use generator in instance type check.
+  - unicode utils - Fix ``__all__`` which was incorrectly declared as a string instead of a tuple.
+  - connection base - Avoid using deprecated ``@abstractproperty`` decorator.
+  - user module - Remove unused code.
