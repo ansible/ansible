@@ -43,10 +43,10 @@ class TestImports(ModuleTestCase):
 
     @patch.object(builtins, '__import__')
     def test_module_utils_basic_import_selinux(self, mock_import):
-        def _mock_import(name, *args, **kwargs):
-            if name == 'ansible.module_utils.compat.selinux':
+        def _mock_import(name, globals=None, locals=None, fromlist=tuple(), level=0, **kwargs):
+            if name == 'ansible.module_utils.compat' and fromlist == ('selinux',):
                 raise ImportError
-            return realimport(name, *args, **kwargs)
+            return realimport(name, globals=globals, locals=locals, fromlist=fromlist, level=level, **kwargs)
 
         try:
             self.clear_modules(['ansible.module_utils.compat.selinux', 'ansible.module_utils.basic'])
