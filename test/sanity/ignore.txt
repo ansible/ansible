@@ -113,6 +113,12 @@ lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-matc
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/parsing/vault/__init__.py pylint:disallowed-name
+lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
+lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
+lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
+lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
+lib/ansible/plugins/lookup/random_choice.py pylint:arguments-renamed
+lib/ansible/plugins/shell/cmd.py pylint:arguments-renamed
 lib/ansible/playbook/base.py pylint:disallowed-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/helpers.py pylint:disallowed-name
