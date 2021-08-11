@@ -318,10 +318,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             # This comes from the `tasks_from` value to include_role or import_role.
             entrypoint = self._from_files.get('tasks', 'main')
 
-            # Remove the file extension
-            i = entrypoint.rfind('.')
-            if 0 < i < len(entrypoint) - 1:
-                entrypoint = entrypoint[:i]
+            # This could be a filename with an extension or an absolute path.
+            # Extract the stem in order to look up the proper spec.
+            entrypoint = os.path.splitext(os.path.basename(entrypoint))[0]
 
             entrypoint_arg_spec = argspecs.get(entrypoint)
 
