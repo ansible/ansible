@@ -3197,12 +3197,12 @@ def main():
     # deal with password expire max
     if user.password_expire_max:
         if user.user_exists():
-            (rc, out, err) = user.set_password_expire_max()
+            user.set_password_expire_max()
 
     # deal with password expire min
     if user.password_expire_min:
         if user.user_exists():
-            (rc, out, err) = user.set_password_expire_min()
+            user.set_password_expire_min()
 
     module.exit_json(**result)
 

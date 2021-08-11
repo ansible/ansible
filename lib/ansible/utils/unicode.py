@@ -22,7 +22,7 @@ __metaclass__ = type
 from ansible.module_utils._text import to_text
 
 
-__all__ = ('unicode_wrap')
+__all__ = ('unicode_wrap',)
 
 
 def unicode_wrap(func, *args, **kwargs):
