@@ -87,8 +87,8 @@ def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
 
 class SortedSetEncoder(json.JSONEncoder):
     """Encode sets as sorted lists."""
-    def default(self, obj):  # pylint: disable=method-hidden, arguments-differ
-        if isinstance(obj, set):
-            return sorted(obj)
+    def default(self, o):
+        if isinstance(o, set):
+            return sorted(o)
 
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, o)

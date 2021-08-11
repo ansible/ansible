@@ -156,17 +156,17 @@ def categorize_changes(args, paths, verbose_command=None):
     if none_count > 0 and args.verbosity < 2:
         display.notice('Omitted %d file(s) that triggered no tests.' % none_count)
 
-    for command in commands:
-        commands[command].discard('none')
+    for command, targets in commands.items():
+        targets.discard('none')
 
-        if any(target == 'all' for target in commands[command]):
+        if any(target == 'all' for target in targets):
             commands[command] = set(['all'])
 
-    commands = dict((c, sorted(commands[c])) for c in commands if commands[c])
-    focused_commands = dict((c, sorted(focused_commands[c])) for c in focused_commands)
+    commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
+    focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
 
-    for command in commands:
-        if commands[command] == ['all']:
+    for command, targets in commands.items():
+        if targets == ['all']:
             commands[command] = []  # changes require testing all targets, do not filter targets
 
     changes = ChangeDescription()

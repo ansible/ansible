@@ -97,17 +97,17 @@ def get_python_module_utils_imports(compile_targets):
         module_util_imports.remove(module_util)
 
         # add recursive imports to all path entries which import this module_util
-        for target_path in imports_by_target_path:
-            if module_util in imports_by_target_path[target_path]:
+        for target_path, modules in imports_by_target_path.items():
+            if module_util in modules:
                 for module_util_import in sorted(module_util_imports):
-                    if module_util_import not in imports_by_target_path[target_path]:
+                    if module_util_import not in modules:
                         display.info('%s inherits import %s via %s' % (target_path, module_util_import, module_util), verbosity=6)
-                        imports_by_target_path[target_path].add(module_util_import)
+                        modules.add(module_util_import)
 
     imports = dict([(module_util, set()) for module_util in module_utils | virtual_utils])
 
-    for target_path in imports_by_target_path:
-        for module_util in imports_by_target_path[target_path]:
+    for target_path, modules in imports_by_target_path.items():
+        for module_util in modules:
             imports[module_util].add(target_path)
 
     # for purposes of mapping module_utils to paths, treat imports of virtual utils the same as the parent package
