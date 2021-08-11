@@ -4,7 +4,7 @@
 Ansible project 5.0
 ===================
 
-This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-core <https://pypi.org/project/ansible-core/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_12` for the most recent updates on ``ansible-core``.
+This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-core <https://pypi.org/project/ansible-core/>`_ package as well. All dates are subject to change. See :ref:`core_roadmap_2_12` for the most recent updates on ``ansible-core``.
 
 .. contents::
    :local:
