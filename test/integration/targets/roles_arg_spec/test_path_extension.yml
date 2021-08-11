@@ -1,0 +1,32 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    a_int: 100
+    a_str: "100"
+
+  tasks:
+    - name: Tasks from main
+      import_role:
+          name: a
+          tasks_from: main
+
+    - name: Tasks from main.yml
+      import_role:
+          name: a
+          tasks_from: main
+
+    - name: Tasks from tasks/alternate
+      import_role:
+          name: a
+          tasks_from: taks/alternate
+
+    - name: Tasks from tasks/alternate.yml
+      import_role:
+          name: a
+          tasks_from: tasks/alternate.yml
+
+    - name: Tasks from alternate.yml absolute path
+      import_role:
+          name: a
+          tasks_from: "{{ playbook_dir }}/roles/a/tasks/alternate.yml"
