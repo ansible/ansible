@@ -34,5 +34,5 @@ def test_stem(path, expected):
     )
 )
 def test_stem_invalid(path):
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, AttributeError)):
         stem(path)
