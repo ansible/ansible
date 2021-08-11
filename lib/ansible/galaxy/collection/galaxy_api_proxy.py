@@ -69,7 +69,7 @@ class MultiGalaxyAPIProxy:
                 display.warning(
                     "Skipping Galaxy server %s. "
                     "Got an unexpected error when getting "
-                    "available verisons of collection %s.%s: %s"
+                    "available versions of collection %s.%s: %s"
                     % (
                         api.api_server,
                         requirement.namespace,
