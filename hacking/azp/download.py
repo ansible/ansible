@@ -215,9 +215,8 @@ def download_run(args):
 
             path = " ".join(names)
 
-            if os.sep in path:
-                # Some job names have the separator in them.
-                path = path.replace(os.sep, '_')
+            # Some job names have the separator in them.
+            path = path.replace(os.sep, '_')
 
             log_path = os.path.join(output_dir, '%s.log' % path)
             if args.verbose:
