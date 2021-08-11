@@ -4,3 +4,5 @@ minor_changes:
   - unicode utils - Fix ``__all__`` which was incorrectly declared as a string instead of a tuple.
   - connection base - Avoid using deprecated ``@abstractproperty`` decorator.
   - user module - Remove unused code.
+  - cache base - More efficient string splitting.
+  - ansible-test - More efficient string splitting.

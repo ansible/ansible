@@ -246,7 +246,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.netconf_suffix'
-        module_prefix = action.split('_')[0]
+        module_prefix = action.split('_', 1)[0]
         te._task.action = action
 
         handler = te._get_action_handler(mock_connection, mock_templar)
@@ -281,7 +281,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
-        module_prefix = action.split('_')[0]
+        module_prefix = action.split('_', 1)[0]
         te._task.action = action
         handler = te._get_action_handler(mock_connection, mock_templar)
 
