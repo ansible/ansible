@@ -42,7 +42,7 @@ Ansible community on Matrix
 The Ansible community maintains its own Matrix homeserver at ``ansible.im``. To join the community using Matrix, you need two things:
 
 * a Matrix account (from matrix.org or any other Matrix homeserver)
-* a `Matrix client <https://matrix.org/clients/>`_
+* a `Matrix client <https://matrix.org/clients/>`_ (we recommend `Element Webchat <https://app.element.io>`_)
 
 Matrix chat supports:
 
@@ -86,7 +86,7 @@ General channels
 Working groups
 --------------
 
-Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on Matrix/IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda.
+Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet in chat. If you want to get involved in a working group, join the Matrix room or IRC channel where it meets or comment on the agenda.
 
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``
 - `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
