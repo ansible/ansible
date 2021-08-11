@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import pytest
 
-import ansible.module_utils.common.warnings as warnings
+from ansible.module_utils.common import warnings
 
 from ansible.module_utils.common.warnings import warn, get_warning_messages
 from ansible.module_utils.six import PY3

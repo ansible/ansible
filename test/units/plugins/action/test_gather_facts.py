@@ -24,9 +24,8 @@ from units.compat.mock import MagicMock, patch
 from ansible import constants as C
 from ansible.playbook.task import Task
 from ansible.plugins.action.gather_facts import ActionModule as GatherFactsAction
-from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
-import ansible.executor.module_common as module_common
+from ansible.executor import module_common
 
 from units.mock.loader import DictDataLoader
 
