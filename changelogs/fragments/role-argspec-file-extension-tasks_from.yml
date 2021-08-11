@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    role argument spec validation - find the correct spec when the file specified in ``tasks_from`` field
+    contains a file extension
