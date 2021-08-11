@@ -132,15 +132,18 @@ options:
     type: str
     version_added: "2.1"
 requirements:
-  - cron (or cronie on CentOS)
+  - cron (any 'vixie cron' conformant variant, like cronie)
 author:
   - Dane Summers (@dsummersl)
   - Mike Grozak (@rhaido)
   - Patrick Callahan (@dirtyharrycallahan)
   - Evan Kaufman (@EvanK)
   - Luca Berruti (@lberruti)
-notes:
-  - Supports C(check_mode).
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
 '''
 
 EXAMPLES = r'''
