@@ -64,8 +64,6 @@ Task include and import statements can be used at arbitrary depth.
 
 You can still use the bare :ref:`roles <roles_keyword>` keyword at the play level to incorporate a role in a playbook statically. However, the bare :ref:`include <include_module>` keyword, once used for both task files and playbook-level includes, is now deprecated.
 
-Included and imported task files and roles support templating filenames. ``import_*`` actions need the variables to be available at playbook parse time (which can be done by defining them with ``--extra-vars``, for example), whereas ``include_*`` actions need the variables at runtime.
-
 Includes: dynamic re-use
 ------------------------
 
@@ -73,12 +71,16 @@ Including roles, tasks, or variables adds them to a playbook dynamically. Ansibl
 
 The primary advantage of using ``include_*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
 
+The filenames for included roles, tasks, and vars are templated before inclusion.
+
 You can pass variables into includes. See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
 
 Imports: static re-use
 ----------------------
 
 Importing roles, tasks, or playbooks adds them to a playbook statically. Ansible pre-processes imported files and roles before it runs any tasks in a playbook, so imported content is never affected by other tasks within the top-level playbook.
+
+The filenames for imported roles and tasks support templating, but the variables must be available when Ansible is pre-processing the imports. This can be done with the ``vars`` keyword or by using ``--extra-vars``.
 
 You can pass variables to imports. You must pass variables if you want to run an imported file more than once in a playbook. For example:
 
