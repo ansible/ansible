@@ -837,7 +837,7 @@ def load_module(path, name):  # type: (str, str) -> None
         sys.modules[name] = module
     else:
         # noinspection PyDeprecation
-        import imp
+        import imp  # pylint: disable=deprecated-module
 
         # load_source (and thus load_module) require a file opened with `open` in text mode
         with open(to_bytes(path)) as module_file:
