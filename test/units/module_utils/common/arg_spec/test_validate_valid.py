@@ -7,8 +7,6 @@ __metaclass__ = type
 
 import pytest
 
-import ansible.module_utils.common.warnings as warnings
-
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 
 # Each item is id, argument_spec, parameters, expected, valid parameter names
