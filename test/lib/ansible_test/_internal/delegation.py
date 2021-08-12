@@ -49,7 +49,7 @@ from .util import (
     common_environment,
     display,
     ANSIBLE_BIN_PATH,
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     tempdir,
@@ -297,7 +297,7 @@ def delegate_docker(args, exclude, require):
 
             test_id = docker_run(args, test_image, options=test_options)
 
-            setup_sh = read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'docker.sh'))
+            setup_sh = read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'docker.sh'))
 
             ssh_keys_sh = get_ssh_key_setup(SshKey(args))
 

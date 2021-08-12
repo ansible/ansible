@@ -21,6 +21,7 @@ from ...util import (
     CONTROLLER_PYTHON_VERSIONS,
     REMOTE_ONLY_PYTHON_VERSIONS,
     ANSIBLE_LIB_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from ...util_common import (
@@ -203,7 +204,7 @@ def command_units(args):
             plugins.append('ansible_pytest_collections')
 
         if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest/plugins')
+            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
             env['PYTEST_PLUGINS'] = ','.join(plugins)
 
         if args.collect_only:
@@ -262,7 +263,7 @@ def get_units_ansible_python_path(args, test_context):  # type: (UnitsConfig, st
         # legacy collection loader required by all python versions not supported by the controller
         write_text_file(os.path.join(ansible_test_path, '__init__.py'), '', True)
         write_text_file(os.path.join(ansible_test_path, '_internal', '__init__.py'), '', True)
-        os.symlink(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'legacy_collection_loader'), os.path.join(ansible_test_path, '_internal', 'legacy_collection_loader'))
+        os.symlink(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'legacy_collection_loader'), os.path.join(ansible_test_path, '_internal', 'legacy_collection_loader'))
     elif test_context == TestContext.modules:
         # only non-collection ansible module tests should have access to ansible built-in modules
         os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'modules'), os.path.join(ansible_path, 'modules'))

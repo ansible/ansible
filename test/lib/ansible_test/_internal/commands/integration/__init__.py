@@ -72,7 +72,7 @@ from ...util import (
     remove_tree,
     find_executable,
     raw_command,
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TOOLS_ROOT,
     SUPPORTED_PYTHON_VERSIONS,
     get_hash,
 )
@@ -1132,7 +1132,7 @@ class EnvironmentDescription:
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.', 1)[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
-        version_check = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'versions.py')
+        version_check = os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])

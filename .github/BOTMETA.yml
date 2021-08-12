@@ -121,16 +121,16 @@ files:
     notified: mattclay
   test/lib/:
     notified: mattclay
-  test/lib/ansible_test/_data/sanity/validate-modules:
+  test/lib/ansible_test/_util/controller/sanity/validate-modules:
     keywords:
     - validate-modules
     notified:
     - mattclay
-  test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/main.py:
+  test/lib/ansible_test/_util/controller/sanity/validate-modules/validate_modules/main.py:
     notified:
     - gundalow
     - sivel
-  test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/schema.py:
+  test/lib/ansible_test/_util/controller/sanity/validate-modules/validate_modules/schema.py:
     notified:
     - gundalow
     - sivel
