@@ -1271,11 +1271,15 @@ class DnfModule(YumDnf):
                     # Just return them.
                     self.module.exit_json(**response)
                 else:
-                    self.base.do_transaction()
+                    tid = self.base.do_transaction()
+                    if tid is not None:
+                        transaction = self.base.history.old([tid])[0]
+                        if transaction.return_code:
+                            failure_response['failures'].append(transaction.output())
 
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
-                    self.module.exit_json(**response)
+                    self.module.fail_json(**failure_response)
                 self.module.exit_json(**response)
         except dnf.exceptions.DepsolveError as e:
             failure_response['msg'] = "Depsolve Error occurred: {0}".format(to_native(e))
