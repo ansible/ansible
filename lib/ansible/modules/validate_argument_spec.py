@@ -38,14 +38,14 @@ EXAMPLES = r'''
             description: stuff
             type: str
             choices: ['who', 'knows', 'what']
-            default: what
+            default: what 
         but:
             description: i guess we need one
             type: str
-            default: ''
+            required: true
    ...
 
-- name: verify vars needed for this task file are present when included, with spec from a file
+- name: verify vars needed for this task file are present when included, with spec from a spec file
   validate_argument_spec:
         argument_spec: "{{lookup('file', 'myargspec.yml')['specname']['options']}}"
    ...
@@ -55,12 +55,11 @@ EXAMPLES = r'''
     - validate_argument_spec:
         argument_spec: "{{lookup('file', 'nakedoptions.yml'}}"
         provided_arguments:
-            stuff: that is not in play at this point
             but: "that i can define on the include itself, like in it's `vars:` keyword"
 
     - name: the include itself
       vars:
-        stuff: realvalue
+        stuff: knows
         but: nobuts!
     ...
 '''
