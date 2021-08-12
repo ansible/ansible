@@ -69,6 +69,16 @@ options:
     type: str
     default: '}}'
     version_added: '2.4'
+  comment_start_string:
+    description:
+    - The string marking the beginning of a comment statement.
+    type: str
+    version_added: '2.12'
+  comment_end_string:
+    description:
+    - The string marking the end of a comment statement.
+    type: str
+    version_added: '2.12'
   trim_blocks:
     description:
     - Determine when newlines should be removed from blocks.
