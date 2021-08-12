@@ -80,7 +80,11 @@ Adding standalone local modules for selected playbooks or a single role
 Ansible automatically loads all executable files from certain directories adjacent to your playbook or role as modules. Standalone modules in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
 
 * To use a standalone module only in a selected playbook or playbooks, store the module in a subdirectory called ``library`` in the directory that contains the playbook or playbooks.
-* To use a standalone module only in a single role, store the module in a subdirectory called ``library`` within that role. If you are developing new modules, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
+* To use a standalone module only in a single role, store the module in a subdirectory called ``library`` within that role.
+
+.. warning::
+
+   Roles contained in collections cannot contain any modules or other plugins. All plugins in a collection must live in the collection ``plugins`` directory tree. All plugins in that tree are accessible to all roles in the collection. If you are developing new modules, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
 
 .. _distributing_plugins:
 .. _local_plugins:
@@ -124,4 +128,8 @@ Adding standalone local plugins for selected playbooks or a single role
 Ansible automatically loads all plugins from certain directories adjacent to your playbook or role, loading each type of plugin separately from a directory named for the type of plugin. Standalone plugins in these locations are available only to the specific playbook, playbooks, or role in the parent directory.
 
 * To use a standalone plugin only in a selected playbook or playbooks, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``callback_plugins`` or ``inventory_plugins``) in the directory that contains the playbooks. These directories must use the ``_plugins`` suffix. For a full list of plugin types, see :ref:`working_with_plugins`.
-* To use a standalone plugin only in a single role, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role. When shipped as part of a role, the plugin is available as soon as the role is executed. These directories must use the ``_plugins`` suffix. For a full list of plugin types, see :ref:`working_with_plugins`. If you are developing new plugins, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
+* To use a standalone plugin only in a single role, store the plugin in a subdirectory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role. When shipped as part of a role, the plugin is available as soon as the role is executed. These directories must use the ``_plugins`` suffix. For a full list of plugin types, see :ref:`working_with_plugins`.
+
+.. warning::
+
+   Roles contained in collections cannot contain any plugins. All plugins in a collection must live in the collection ``plugins`` directory tree. All plugins in that tree are accessible to all roles in the collection. If you are developing new plugins, we recommend distributing them in :ref:`collections <developing_collections>`, not in roles.
