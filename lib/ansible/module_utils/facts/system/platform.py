@@ -39,6 +39,25 @@ class PlatformFactCollector(BaseFactCollector):
                      'architecture',
                      'machine_id'])
 
+    def _get_hostname_cli_info(self, module):
+        r = {}
+        HOSTNAMES = {'hostname': '-s', 'dnsdomainname': '-f', 'domainname': '-d', 'nisdomainname': '--nis', 'nodename': '-n', 'ypdomainname': '-y', 'ip', '-i'}
+        hostname_bin = module.get_bin_path('hostname')
+        if hostname_bin:
+            r['hostname_cli']['info'] = hostname_bin
+            for name in HOSTNAMES.keys():
+                rc, out, err = module.run_command([hostname_fqcn])
+                if rc !=0 or not data:
+                    r['hostname_cli'][name] = ''
+                else:
+                    data = out.splitlines()
+                    r['hostname_cli'][name]  = data[0]
+        else:
+            r['hostname_cli']['info'] = 'No hostname CLI found'
+            for name in HOSTNAMES.keys():
+                r['hostname_cli'][name] = ''
+        return r
+
     def collect(self, module=None, collected_facts=None):
         platform_facts = {}
         # platform.system() can be Linux, Darwin, Java, or Windows
@@ -54,6 +73,9 @@ class PlatformFactCollector(BaseFactCollector):
         platform_facts['nodename'] = platform.node()
 
         platform_facts['domain'] = '.'.join(platform_facts['fqdn'].split('.')[1:])
+
+        # because every method is inconsistent across platforms, lets try hostname cli also
+        platform_facts['hostname_cli'] = self._get_hostname_cli_info(module)
 
         arch_bits = platform.architecture()[0]
 
