@@ -52,7 +52,7 @@ Adding standalone local modules for all playbooks and roles
 
 To load standalone local modules automatically and make them available to all playbooks and roles, use the :ref:`DEFAULT_MODULE_PATH` configuration setting or the ``ANSIBLE_LIBRARY`` environment variable. The configuration setting and environment variable take a colon-separated list, similar to ``$PATH``. You have two options:
 
-* Add your standalone local module to one of the default configured locations. Read the documentation for the :ref:`DEFAULT_MODULE_PATH` configuration setting for details. Default locations may change without notice.
+* Add your standalone local module to one of the default configured locations. See the :ref:`DEFAULT_MODULE_PATH` configuration setting for details. Default locations may change without notice.
 * Add the location of your standalone local module to an environment variable or configuration:
    * the ``ANSIBLE_LIBRARY`` environment variable
    * the :ref:`DEFAULT_MODULE_PATH` configuration setting
@@ -99,7 +99,7 @@ Adding local non-module plugins for all playbooks and roles
 
 To load standalone local plugins automatically and make them available to all playbooks and roles, use the configuration setting or environment variable for the type of plugin you are adding. These configuration settings and environment variables take a colon-separated list, similar to ``$PATH``. You have two options:
 
-* Add your local plugin to one of the default configured locations. Find the correct configuration setting for the plugin type in the documentation of :ref:`configuration settings <ansible_configuration_settings>` for details. Default locations may change without notice.
+* Add your local plugin to one of the default configured locations. See :ref:`configuration settings <ansible_configuration_settings>` for details on the correct configuration setting for the plugin type. Default locations may change without notice.
 * Add the location of your local plugin to an environment variable or configuration:
    * the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable - for example, ``$ANSIBLE_INVENTORY_PLUGINS`` or ``$ANSIBLE_VARS_PLUGINS``
    * the relevant ``plugin_type_PATH`` configuration setting, most of which begin with ``DEFAULT_`` - for example, ``DEFAULT_CALLBACK_PLUGIN_PATH`` or ``DEFAULT_FILTER_PLUGIN_PATH`` or ``BECOME_PLUGIN_PATH``
