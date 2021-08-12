@@ -47,11 +47,11 @@ DOCUMENTATION = """
         type: dict
       comment_start_string:
         description: The string marking the beginning of a comment statement.
-        version_added: '2.10'
+        version_added: '2.12'
         type: str
       comment_end_string:
         description: The string marking the end of a comment statement.
-        version_added: '2.10'
+        version_added: '2.12'
         type: str
 """
 
