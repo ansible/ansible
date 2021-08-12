@@ -1,0 +1,2 @@
+minor_changes:
+  - add host label to retry print statements
