@@ -1,4 +1,5 @@
 .. _plugins_lookup:
+.. _working_with_plugins:
 
 ********************
 Working with plugins
