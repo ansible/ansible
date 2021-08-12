@@ -95,5 +95,4 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_collections
    migrating_roles
    collections_galaxy_meta
-   migrating_roles
    overview_architecture
