@@ -47,7 +47,6 @@ class PullCLI(CLI):
         1: 'File does not exist',
         2: 'File is not readable',
     }
-    SUPPORTED_REPO_MODULES = ['git']
     ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook.'
                                  'This can be a relative path within the checkout. By default, Ansible will'
                                  "look for a playbook based on the host's fully-qualified domain name,"
@@ -141,8 +140,8 @@ class PullCLI(CLI):
         if not options.url:
             raise AnsibleOptionsError("URL for repository not specified, use -h for help")
 
-        if options.module_name not in self.SUPPORTED_REPO_MODULES:
-            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
+        if options.module_name not in self.REPO_CHOICES:
+            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.REPO_CHOICES)))
 
         display.verbosity = options.verbosity
         self.validate_conflicts(options)
