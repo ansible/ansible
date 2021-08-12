@@ -52,7 +52,7 @@ Help
 Extending validate-modules
 ==========================
 
-The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/sanity/validate-modules/validate_modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
+The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_util/controller/sanity/validate-modules/validate_modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
 
 
 Codes

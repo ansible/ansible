@@ -17,7 +17,7 @@ from ...io import (
 )
 
 from ...util import (
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TOOLS_ROOT,
     display,
     ApplicationError,
 )
@@ -181,7 +181,7 @@ def _command_coverage_combine_powershell(args):
     coverage_files = get_powershell_coverage_files()
 
     def _default_stub_value(source_paths):
-        cmd = ['pwsh', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coverage_stub.ps1')]
+        cmd = ['pwsh', os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'coverage_stub.ps1')]
         cmd.extend(source_paths)
 
         stubs = json.loads(run_command(args, cmd, capture=True, always=True)[0])

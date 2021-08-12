@@ -28,7 +28,7 @@ from ...payload import (
 
 from ...util import (
     ANSIBLE_BIN_PATH,
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 
@@ -57,7 +57,7 @@ class BinSymlinksTest(SanityVersionNeutral):
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)
 
-        injector_root = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector')
+        injector_root = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector')
         injector_names = os.listdir(injector_root)
 
         errors = []  # type: t.List[t.Tuple[str, str]]

@@ -47,7 +47,7 @@ ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible-inventory': 'ansible',
     'ansible-playbook': 'ansible',
     'ansible-pull': 'ansible',
-    'ansible-test': '../test/lib/ansible_test/_data/cli/ansible_test_cli_stub.py',
+    'ansible-test': '../test/lib/ansible_test/_util/controller/cli/ansible_test_cli_stub.py',
     'ansible-vault': 'ansible',
 }
 

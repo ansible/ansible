@@ -804,25 +804,7 @@ class PathMapper:
                 'integration': 'ansible-test',  # run ansible-test self tests
             }
 
-        if path.startswith('test/lib/ansible_test/_data/sanity/'):
-            return {
-                'sanity': 'all',  # test infrastructure, run all sanity checks
-                'integration': 'ansible-test',  # run ansible-test self tests
-            }
-
         if path.startswith('test/lib/ansible_test/_internal/commands/units/'):
-            return {
-                'units': 'all',  # test infrastructure, run all unit tests
-                'integration': 'ansible-test',  # run ansible-test self tests
-            }
-
-        if path.startswith('test/lib/ansible_test/_data/units/'):
-            return {
-                'units': 'all',  # test infrastructure, run all unit tests
-                'integration': 'ansible-test',  # run ansible-test self tests
-            }
-
-        if path.startswith('test/lib/ansible_test/_data/pytest/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
                 'integration': 'ansible-test',  # run ansible-test self tests
@@ -853,6 +835,18 @@ class PathMapper:
                     return {
                         'integration': cloud_target,
                     }
+
+        if path.startswith('test/lib/ansible_test/_util/controller/sanity/') or path.startswith('test/lib/ansible_test/_util/target/sanity/'):
+            return {
+                'sanity': 'all',  # test infrastructure, run all sanity checks
+                'integration': 'ansible-test',  # run ansible-test self tests
+            }
+
+        if path.startswith('test/lib/ansible_test/_util/target/pytest/'):
+            return {
+                'units': 'all',  # test infrastructure, run all unit tests
+                'integration': 'ansible-test',  # run ansible-test self tests
+            }
 
         if path.startswith('test/lib/'):
             return all_tests(self.args)  # test infrastructure, run all tests
