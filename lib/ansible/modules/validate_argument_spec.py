@@ -33,28 +33,27 @@ EXAMPLES = r'''
         argument_spec: '{{required_data}}'
   vars:
     required_data:
-        description: this is basically an inline arg spec
-        options:
-            stuff:
-                description: stuff
-                type: str
-                choices: ['who', 'knows', 'what']
-                default: what
-            but:
-                description: i guess we need one
-                type: str
-                default: ''
+        # unlike spec file, just put the options in directly
+        stuff:
+            description: stuff
+            type: str
+            choices: ['who', 'knows', 'what']
+            default: what
+        but:
+            description: i guess we need one
+            type: str
+            default: ''
    ...
 
 - name: verify vars needed for this task file are present when included, with spec from a file
   validate_argument_spec:
-        argument_spec: "{{lookup('file', 'myargspec.yml'}}"
+        argument_spec: "{{lookup('file', 'myargspec.yml')['specname']['options']}}"
    ...
 
 - name: verify vars needed for next include and not from inside it, also with params i'll only define there
   block:
     - validate_argument_spec:
-        argument_spec: "{{lookup('file', 'myargspec.yml'}}"
+        argument_spec: "{{lookup('file', 'nakedoptions.yml'}}"
         provided_arguments:
             stuff: that is not in play at this point
             but: "that i can define on the include itself, like in it's `vars:` keyword"
