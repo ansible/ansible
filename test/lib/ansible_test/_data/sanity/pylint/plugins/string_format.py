@@ -4,10 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
-
-import six
-
 import astroid
 from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
@@ -18,8 +14,6 @@ try:
 except ImportError:
     # noinspection PyUnresolvedReferences
     from pylint.checkers.strings import parse_format_method_string
-
-_PY3K = sys.version_info[:2] >= (3, 0)
 
 MSGS = {
     'E9305': ("Format string contains automatic field numbering "
@@ -66,10 +60,10 @@ class AnsibleStringFormatChecker(BaseChecker):
         if not isinstance(strnode, astroid.Const):
             return
 
-        if _PY3K and isinstance(strnode.value, six.binary_type):
+        if isinstance(strnode.value, bytes):
             self.add_message('ansible-no-format-on-bytestring', node=node)
             return
-        if not isinstance(strnode.value, six.string_types):
+        if not isinstance(strnode.value, str):
             return
 
         if node.starargs or node.kwargs:
