@@ -186,7 +186,7 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
 test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt test-constraints
 test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
-test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
+test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
 test/support/integration/plugins/module_utils/network/common/utils.py pylint:use-a-generator
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
