@@ -1,0 +1,2 @@
+minor_changes:
+  - template - Add comment attributes (``comment_start_string`` and ``comment_end_string``)

@@ -141,6 +141,26 @@
         - 'import_as_with_context_diff_result.stdout == ""'
         - "import_as_with_context_diff_result.rc == 0"
 
+# VERIFY comment_start_string and comment_end_string
+
+- name: Render a template with "comment_start_string" set to [#
+  template:
+    src: custom_comment_string.j2
+    dest: "{{output_dir}}/custom_comment_string.templated"
+    comment_start_string: "[#"
+    comment_end_string: "#]"
+  register: custom_comment_string_result
+
+- name: Get checksum of known good custom_comment_string.expected
+  stat:
+    path: "{{role_path}}/files/custom_comment_string.expected"
+  register: custom_comment_string_good
+
+- name: Verify templated custom_comment_string matches known good using checksum
+  assert:
+    that:
+        - "custom_comment_string_result.checksum == custom_comment_string_good.stat.checksum"
+
 # VERIFY trim_blocks
 
 - name: Render a template with "trim_blocks" set to False
