@@ -75,7 +75,10 @@ class PlatformFactCollector(BaseFactCollector):
         platform_facts['domain'] = '.'.join(platform_facts['fqdn'].split('.')[1:])
 
         # because every method is inconsistent across platforms, lets try hostname cli also
-        platform_facts['hostname_cli'] = self._get_hostname_cli_info(module)
+        try:
+            platform_facts['hostname_cli'] = self._get_hostname_cli_info(module)
+        except (OSError, IOError) as e:
+            platform_facts['hostname_cli'] = {'info': str(e)}
 
         arch_bits = platform.architecture()[0]
 
