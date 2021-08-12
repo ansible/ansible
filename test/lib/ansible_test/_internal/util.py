@@ -97,7 +97,13 @@ if not os.path.exists(ANSIBLE_LIB_ROOT):
     ANSIBLE_SOURCE_ROOT = ANSIBLE_ROOT
 
 ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
+ANSIBLE_TEST_UTIL_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_util')
 ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
+
+ANSIBLE_TEST_CONTROLLER_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'controller')
+ANSIBLE_TEST_TARGET_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'target')
+
+ANSIBLE_TEST_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'tools')
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -265,7 +271,7 @@ def generate_pip_command(python):
     :type python: str
     :rtype: list[str]
     """
-    return [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'quiet_pip.py')]
+    return [python, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'quiet_pip.py')]
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,

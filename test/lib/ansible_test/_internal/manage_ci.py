@@ -19,7 +19,7 @@ from .util import (
     Display,
     cmd_quote,
     display,
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from .util_common import (
@@ -276,7 +276,7 @@ class ManagePosixCI:
         """Configure remote host for testing.
         :type python_version: str
         """
-        template = ShellScriptTemplate(read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'remote.sh')))
+        template = ShellScriptTemplate(read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'remote.sh')))
         setup_sh = template.substitute(
             platform=self.core_ci.platform,
             platform_version=self.core_ci.version,
@@ -401,7 +401,7 @@ class ManagePosixCI:
 
 def get_ssh_key_setup(ssh_key):  # type: (SshKey) -> str
     """Generate and return a script to configure SSH keys on a host."""
-    template = ShellScriptTemplate(read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'ssh-keys.sh')))
+    template = ShellScriptTemplate(read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'ssh-keys.sh')))
 
     ssh_keys_sh = template.substitute(
         ssh_public_key=ssh_key.pub_contents,
