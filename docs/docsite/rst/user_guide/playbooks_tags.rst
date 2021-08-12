@@ -128,7 +128,6 @@ If you want to apply a tag to many, but not all, of the tasks in your play, use 
 .. code-block:: yaml
 
    # myrole/tasks/main.yml
-   tasks:
    - name: ntp tasks
      tags: ntp
      block:
