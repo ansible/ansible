@@ -153,5 +153,5 @@ You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. U
        Jinja2 test plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

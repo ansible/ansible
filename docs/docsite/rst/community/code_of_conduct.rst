@@ -23,7 +23,7 @@ anti-harassment policy. We expect organizers to enforce these guidelines through
 and we expect attendees, speakers, sponsors, and volunteers to help ensure a safe
 environment for our whole community. Specifically, this Code of Conduct covers
 participation in all Ansible-related forums and mailing lists, code and documentation
-contributions, public IRC channels, private correspondence, and public meetings.
+contributions, public chat (Matrix, IRC), private correspondence, and public meetings.
 
 Ansible community members are...
 
@@ -69,7 +69,7 @@ encourage our users to ask early and ask often. Rather than asking whether you c
 question (the answer is always yes!), instead, simply ask your question. You are
 encouraged to provide as many specifics as possible. Code snippets in the form of Gists or
 other paste site links are almost always needed in order to get the most helpful answers.
-Refrain from pasting multiple lines of code directly into the IRC channels - instead use
+Refrain from pasting multiple lines of code directly into the chat channels - instead use
 gist.github.com or another paste site to provide code snippets.
 
 **Helpful**
@@ -115,8 +115,7 @@ Policy violations
 =================
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by
-contacting `codeofconduct@ansible.com <mailto:codeofconduct@ansible.com>`_, to any channel
-operator in the community IRC channels, or to the local organizers of an event. Meetup
+contacting `codeofconduct@ansible.com <mailto:codeofconduct@ansible.com>`_, to anyone with administrative power in community chat (Admins or Moderators on Matrix, ops on IRC), or to the local organizers of an event. Meetup
 organizers are encouraged to prominently display points of contact for reporting unacceptable
 behavior at local events.
 

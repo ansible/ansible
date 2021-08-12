@@ -30,7 +30,7 @@ Release schedule
 .. [1] No new modules or major features accepted after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-2.1.0; ansible-3.0.0 could ship with community-crypto-2.1.1.  It would not ship with community-crypto-2.2.0.
 
 .. [2] After this date only changes blocking a release are accepted.  Accepted changes require creating a new rc and may slip the final release date.
-.. [3] Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
+.. [3] Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
 
 .. note::
@@ -49,7 +49,7 @@ Ansible 3.x.x minor releases will occur approximately every three weeks if chang
     Minor releases will stop when :ref:`Ansible-4 <ansible_4_roadmap>` is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
-For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
+For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
 
 
 ansible-base release

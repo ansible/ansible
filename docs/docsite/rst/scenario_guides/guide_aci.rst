@@ -640,7 +640,7 @@ ACI Ansible community
 ---------------------
 If you have specific issues with the ACI modules, or a feature request, or you like to contribute to the ACI project by proposing changes or documentation updates, look at the Ansible Community wiki ACI page at: https://github.com/ansible/community/wiki/Network:-ACI
 
-You will find our roadmap, an overview of open ACI issues and pull-requests, and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join! We occasionally meet online to track progress and prepare for new Ansible releases.
+You will find our roadmap, an overview of open ACI issues and pull-requests, and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join! We occasionally meet online (on the #ansible-network chat channel, using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) to track progress and prepare for new Ansible releases.
 
 
 .. seealso::
@@ -655,7 +655,5 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
        A detailed guide on how to use Ansible for automating network infrastructure.
    `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
        The Ansible Network community page, includes contact information and meeting information.
-   ``#ansible-network`` on `irc.libera.chat <https://libera.chat/>`_
-       The #ansible-network IRC chat channel on libera.chat.
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

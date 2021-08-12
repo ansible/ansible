@@ -247,5 +247,5 @@ This key contains a list of dictionaries that will be presented to the user. Key
        Browse source of core and extras modules
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        Development mailing list
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

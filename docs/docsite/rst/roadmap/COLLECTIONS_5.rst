@@ -20,9 +20,9 @@ Release schedule
 :2021-10-04: first ansible-core release candidate, stable-2.12 branch created.
 :2021-10-05: Ansible-5.0.0 alpha2.
 :2021-10-12: Last day for new collections to be submitted for inclusion in Ansible-5. Collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
-:2021-10-13: Community IRC Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
+:2021-10-13: Community Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
 :2021-10-19: Ansible-5.0.0 alpha3.
-:2021-10-20: Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
+:2021-10-20: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2021-10-25: Last day for new collections to be **reviewed and approved** for inclusion in Ansible-5.
 :2021-10-25: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-5.
 :2021-10-26: Create the ansible-build-data directory and files for Ansible-6; new collection approvals will target this.
@@ -54,4 +54,4 @@ Ansible 5.x minor releases will occur approximately every three weeks if changes
     Minor releases will stop when Ansible-6 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
-For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
+For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
