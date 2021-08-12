@@ -269,7 +269,8 @@ class ModuleUtilFinder(ast.NodeVisitor):
             path_map = (
                 ('^hacking/build_library/build_ansible/', 'build_ansible/'),
                 ('^lib/ansible/', 'ansible/'),
-                ('^test/lib/ansible_test/_data/sanity/validate-modules/', 'validate_modules/'),
+                ('^test/lib/ansible_test/_util/controller/sanity/validate-modules/', 'validate_modules/'),
+                ('^test/lib/ansible_test/_util/target/legacy_collection_loader/', 'legacy_collection_loader/'),
                 ('^test/units/', 'test/units/'),
                 ('^test/lib/ansible_test/_internal/', 'ansible_test/_internal/'),
                 ('^test/integration/targets/.*/ansible_collections/(?P<ns>[^/]*)/(?P<col>[^/]*)/', r'ansible_collections/\g<ns>/\g<col>/'),

@@ -1,1 +1,1 @@
-../test/lib/ansible_test/_data/cli/ansible_test_cli_stub.py
+../test/lib/ansible_test/_util/controller/cli/ansible_test_cli_stub.py

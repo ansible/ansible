@@ -6,7 +6,7 @@
 #
 # 1) The controller implementation resides in the "lib/ansible/utils/collection_loader/" directory.
 #    It must function on all Python versions supported on the controller.
-# 2) The ansible-test implementation resides in the "test/lib/ansible_test/_data/legacy_collection_loader/" directory.
+# 2) The ansible-test implementation resides in the "test/lib/ansible_test/_util/target/legacy_collection_loader/" directory.
 #    It must function on all Python versions supported on managed hosts which are not supported by the controller.
 
 from __future__ import (absolute_import, division, print_function)

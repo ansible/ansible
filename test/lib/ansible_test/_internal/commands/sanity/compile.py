@@ -12,7 +12,7 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanityTargets,
-    SANITY_ROOT,
+    TARGET_SANITY_ROOT,
 )
 
 from ...target import (
@@ -53,7 +53,7 @@ class CompileTest(SanityMultipleVersion):
 
         paths = [target.path for target in targets.include]
 
-        cmd = [find_python(python_version), os.path.join(SANITY_ROOT, 'compile', 'compile.py')]
+        cmd = [find_python(python_version), os.path.join(TARGET_SANITY_ROOT, 'compile', 'compile.py')]
 
         data = '\n'.join(paths)
 

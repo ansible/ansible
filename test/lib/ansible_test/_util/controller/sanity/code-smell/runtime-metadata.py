@@ -107,8 +107,7 @@ def get_collection_version():
     """Return current collection version, or None if it is not available"""
     import importlib.util
 
-    collection_detail_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                                          'collection_detail.py')
+    collection_detail_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'tools', 'collection_detail.py')
     collection_detail_spec = importlib.util.spec_from_file_location('collection_detail', collection_detail_path)
     collection_detail = importlib.util.module_from_spec(collection_detail_spec)
     sys.modules['collection_detail'] = collection_detail

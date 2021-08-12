@@ -24,6 +24,8 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_BIN_PATH,
     ANSIBLE_SOURCE_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
+    ANSIBLE_TEST_TOOLS_ROOT,
     get_ansible_version,
 )
 
@@ -97,7 +99,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         # ansible-connection only requires the injector for code coverage
         # the correct python interpreter is already selected using the sys.executable used to invoke ansible
         ansible.update(dict(
-            ANSIBLE_CONNECTION_PATH=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector', 'ansible-connection'),
+            ANSIBLE_CONNECTION_PATH=os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector', 'ansible-connection'),
         ))
 
     if isinstance(args, PosixIntegrationConfig):
@@ -244,7 +246,7 @@ def check_pyyaml(args, version, required=True, quiet=False):
         pass
 
     python = find_python(version)
-    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')],
+    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yamlcheck.py')],
                                  capture=True, always=True)
 
     result = json.loads(stdout)
@@ -284,7 +286,7 @@ def get_collection_detail(args, python):  # type: (EnvironmentConfig, str) -> Co
     collection = data_context().content.collection
     directory = os.path.join(collection.root, collection.directory)
 
-    stdout = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'collection_detail.py'), directory], capture=True, always=True)[0]
+    stdout = run_command(args, [python, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'collection_detail.py'), directory], capture=True, always=True)[0]
     result = json.loads(stdout)
     error = result.get('error')
 

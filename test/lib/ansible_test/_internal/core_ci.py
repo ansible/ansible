@@ -28,7 +28,7 @@ from .io import (
 from .util import (
     ApplicationError,
     display,
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from .util_common import (
@@ -325,7 +325,7 @@ class AnsibleCoreCI:
         display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
 
         if self.platform == 'windows':
-            winrm_config = read_text_file(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'ConfigureRemotingForAnsible.ps1'))
+            winrm_config = read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'ConfigureRemotingForAnsible.ps1'))
         else:
             winrm_config = None
 

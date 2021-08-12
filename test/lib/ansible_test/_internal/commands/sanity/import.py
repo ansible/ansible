@@ -12,7 +12,7 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
-    SANITY_ROOT,
+    TARGET_SANITY_ROOT,
 )
 
 from ...target import (
@@ -138,8 +138,8 @@ class ImportTest(SanityMultipleVersion):
             importer_path = os.path.join(virtual_environment_bin, 'importer.py')
             yaml_to_json_path = os.path.join(virtual_environment_bin, 'yaml_to_json.py')
             if not args.explain:
-                os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'importer.py')), importer_path)
-                os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'yaml_to_json.py')), yaml_to_json_path)
+                os.symlink(os.path.abspath(os.path.join(TARGET_SANITY_ROOT, 'import', 'importer.py')), importer_path)
+                os.symlink(os.path.abspath(os.path.join(TARGET_SANITY_ROOT, 'import', 'yaml_to_json.py')), yaml_to_json_path)
 
             # activate the virtual environment
             env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])

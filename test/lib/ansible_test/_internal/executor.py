@@ -26,6 +26,7 @@ from .util import (
     find_python,
     cmd_quote,
     ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_TEST_TOOLS_ROOT,
     str_to_version,
     version_to_str,
 )
@@ -99,7 +100,7 @@ def get_openssl_version(args, python, python_version):  # type: (EnvironmentConf
     if not python_version.startswith('2.'):
         # OpenSSL version checking only works on Python 3.x.
         # This should be the most accurate, since it is the Python we will be using.
-        version = json.loads(run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'sslcheck.py')], capture=True, always=True)[0])['version']
+        version = json.loads(run_command(args, [python, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'sslcheck.py')], capture=True, always=True)[0])['version']
 
         if version:
             display.info('Detected OpenSSL version %s under Python %s.' % (version_to_str(version), python_version), verbosity=1)
