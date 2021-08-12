@@ -53,5 +53,5 @@ To learn more about the ``ansible-galaxy`` command-line tool, see the :ref:`ansi
        Directories and files included in the collection skeleton
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

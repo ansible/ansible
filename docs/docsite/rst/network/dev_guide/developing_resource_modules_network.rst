@@ -718,8 +718,7 @@ For more options:
 
   ansible-test network-integration --help
 
-If you need additional help or feedback, reach out in the ``#ansible-network`` IRC channel on the
-`irc.libera.chat <https://libera.chat/>`_ IRC network.
+If you need additional help or feedback, reach out in the ``#ansible-network`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_).
 
 Unit test requirements
 -----------------------

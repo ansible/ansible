@@ -473,5 +473,5 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

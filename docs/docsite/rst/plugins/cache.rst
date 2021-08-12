@@ -135,5 +135,5 @@ Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and exa
        Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

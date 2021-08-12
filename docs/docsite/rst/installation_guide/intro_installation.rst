@@ -658,7 +658,7 @@ See the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_.
        Ansible Installation related to FAQs
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels
 
 .. [1] ``paramiko`` was included in Ansible's ``requirements.txt`` prior to 2.8.

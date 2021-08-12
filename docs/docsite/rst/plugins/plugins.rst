@@ -43,5 +43,5 @@ This section covers the various types of plugins that are included with Ansible:
        Ansible tools, description and options
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

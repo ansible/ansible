@@ -373,11 +373,12 @@ This will have an implied entry in the ``collections:`` keyword of ``my_namespac
 
 .. seealso::
 
-  :ref:`developing_collections`
-      Develop or modify a collection.
-  :ref:`collections_galaxy_meta`
+   :ref:`developing_collections`
+       Develop or modify a collection.
+   :ref:`collections_galaxy_meta`
        Understand the collections metadata structure.
-  `Mailing List <https://groups.google.com/group/ansible-devel>`_
+   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-  `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels
+

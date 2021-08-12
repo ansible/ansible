@@ -36,11 +36,11 @@ Ansible hosts module code, examples, demonstrations, and other content on GitHub
 
 
 
-IRC and Slack
+Chat channels
 =============
 
-Join us on:
+Got questions? Chat with us on:
 
-* IRC Channel - ``#ansible-network`` on `irc.libera.chat <https://libera.chat/>`_
+* the ``#ansible-network`` channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_)
 
-* `Join Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - Network & Security Automation Slack community.  Check out the #devel channel for discussions on module and plugin development.
+* `Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - Network & Security Automation Slack community.  Check out the #devel channel for discussions on module and plugin development.
