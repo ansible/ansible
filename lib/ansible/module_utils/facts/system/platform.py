@@ -41,7 +41,7 @@ class PlatformFactCollector(BaseFactCollector):
 
     def _get_hostname_cli_info(self, module):
         r = {}
-        HOSTNAMES = {'hostname': '-s', 'dnsdomainname': '-f', 'domainname': '-d', 'nisdomainname': '--nis', 'nodename': '-n', 'ypdomainname': '-y', 'ip': '-i'}
+        HOSTNAMES = {'hostname': '', 'short': '-s', 'dnsdomainname': '-f', 'domainname': '-d', 'nisdomainname': '--nis', 'nodename': '-n', 'ypdomainname': '-y', 'ip': '-i'}
         hostname_bin = module.get_bin_path('hostname')
         if hostname_bin:
             r['hostname_cli']['info'] = hostname_bin
