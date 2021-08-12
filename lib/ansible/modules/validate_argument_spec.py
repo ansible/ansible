@@ -28,6 +28,37 @@ author:
 '''
 
 EXAMPLES = r'''
+- name: verify vars needed for this task file are present when included
+  verify_argument_spec:
+        argument_spec: '{{required_data}}'
+  vars:
+    required_data:
+        description: this is basically an inline arg spec
+        options:
+            stuff
+                description: stuff
+            type: str
+            choices: ['who', 'knows', 'what']
+   ...
+
+- name: verify vars needed for this task file are present when included, with spec from a file
+  verify_argument_spec:
+        argument_spec: "{{lookup('file', 'myargspec.yml'}}"
+   ...
+
+- name: verify vars needed for next include and not from inside it, also with params i'll only define there
+  block:
+    - verify_argument_spec:
+        argument_spec: "{{lookup('file', 'myargspec.yml'}}"
+        provided_arguments:
+            stuff: that is not in play at this point
+            but: "that i can define on the include itself, like in it's `vars:` keyword"
+
+    - name: the include itself
+      vars:
+        stuff: realvalue
+        but: nobuts!
+    ...
 '''
 
 RETURN = r'''
