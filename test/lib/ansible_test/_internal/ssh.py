@@ -192,7 +192,8 @@ def run_ssh_command(
     if args.explain:
         process = SshProcess(None)
     else:
-        process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1, stdin=devnull(), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1,  # pylint: disable=consider-using-with
+                                              stdin=devnull(), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     return process
 

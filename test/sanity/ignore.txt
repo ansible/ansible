@@ -7,20 +7,20 @@ examples/scripts/my_test_facts.py shebang # example module but not in a normal m
 examples/scripts/my_test_info.py shebang # example module but not in a normal module location
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/cli/console.py pylint:blacklisted-name
+lib/ansible/cli/console.py pylint:disallowed-name
 lib/ansible/cli/scripts/ansible_cli_stub.py pylint:ansible-deprecated-version
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
-lib/ansible/executor/playbook_executor.py pylint:blacklisted-name
+lib/ansible/executor/playbook_executor.py pylint:disallowed-name
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
+lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
-lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
+lib/ansible/module_utils/compat/_selectors2.py pylint:disallowed-name
 lib/ansible/module_utils/compat/selinux.py import-2.6!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.5!skip # pass/fail depends on presence of libselinux.so
@@ -34,7 +34,7 @@ lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundle
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
-lib/ansible/module_utils/facts/network/linux.py pylint:blacklisted-name
+lib/ansible/module_utils/facts/network/linux.py pylint:disallowed-name
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
@@ -53,7 +53,7 @@ lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
 lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py replace-urlopen
-lib/ansible/module_utils/urls.py pylint:blacklisted-name
+lib/ansible/module_utils/urls.py pylint:disallowed-name
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
@@ -70,7 +70,7 @@ lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec 
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
-lib/ansible/modules/copy.py pylint:blacklisted-name
+lib/ansible/modules/copy.py pylint:disallowed-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
@@ -79,17 +79,17 @@ lib/ansible/modules/dnf.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
-lib/ansible/modules/git.py pylint:blacklisted-name
+lib/ansible/modules/git.py pylint:disallowed-name
 lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-missing-type
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
 lib/ansible/modules/hostname.py validate-modules:invalid-ansiblemodule-schema
-lib/ansible/modules/iptables.py pylint:blacklisted-name
+lib/ansible/modules/iptables.py pylint:disallowed-name
 lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/pip.py pylint:blacklisted-name
+lib/ansible/modules/pip.py pylint:disallowed-name
 lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
@@ -102,28 +102,36 @@ lib/ansible/modules/systemd.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd.py validate-modules:return-syntax-error
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/unarchive.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/uri.py pylint:blacklisted-name
+lib/ansible/modules/uri.py pylint:disallowed-name
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/yum.py pylint:blacklisted-name
+lib/ansible/modules/yum.py pylint:disallowed-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
-lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
-lib/ansible/playbook/base.py pylint:blacklisted-name
+lib/ansible/parsing/vault/__init__.py pylint:disallowed-name
+lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
+lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
+lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
+lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
+lib/ansible/plugins/lookup/random_choice.py pylint:arguments-renamed
+lib/ansible/plugins/shell/cmd.py pylint:arguments-renamed
+lib/ansible/playbook/base.py pylint:disallowed-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
-lib/ansible/playbook/helpers.py pylint:blacklisted-name
+lib/ansible/playbook/helpers.py pylint:disallowed-name
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/async_status.py pylint:ansible-deprecated-version
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
-lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
-lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
-lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
-lib/ansible/vars/hostvars.py pylint:blacklisted-name
+lib/ansible/plugins/lookup/sequence.py pylint:disallowed-name
+lib/ansible/plugins/strategy/__init__.py pylint:disallowed-name
+lib/ansible/plugins/strategy/linear.py pylint:disallowed-name
+lib/ansible/vars/hostvars.py pylint:disallowed-name
+lib/ansible/utils/collection_loader/_collection_finder.py pylint:deprecated-class
+lib/ansible/utils/collection_loader/_collection_meta.py pylint:deprecated-class
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -154,11 +162,11 @@ test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/module_utils/library/test.py future-import-boilerplate # allow testing of Python 2.x implicit relative imports
-test/integration/targets/module_utils/module_utils/bar0/foo.py pylint:blacklisted-name
-test/integration/targets/module_utils/module_utils/foo.py pylint:blacklisted-name
-test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:blacklisted-name
-test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:blacklisted-name
-test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:blacklisted-name
+test/integration/targets/module_utils/module_utils/bar0/foo.py pylint:disallowed-name
+test/integration/targets/module_utils/module_utils/foo.py pylint:disallowed-name
+test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:disallowed-name
+test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:disallowed-name
+test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:disallowed-name
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
@@ -178,8 +186,10 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
 test/lib/ansible_test/_data/requirements/integration.cloud.azure.txt test-constraints
 test/lib/ansible_test/_data/requirements/sanity.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
-test/lib/ansible_test/_data/sanity/pylint/plugins/string_format.py use-compat-six
 test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
+test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
+test/support/integration/plugins/module_utils/network/common/utils.py pylint:use-a-generator
+test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
@@ -195,15 +205,18 @@ test/support/integration/plugins/module_utils/network/common/utils.py future-imp
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
-test/support/integration/plugins/modules/lvg.py pylint:blacklisted-name
-test/support/integration/plugins/modules/timezone.py pylint:blacklisted-name
+test/support/integration/plugins/modules/lvg.py pylint:disallowed-name
+test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/utils.py pylint:use-a-generator
+test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
+test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pep8:E501
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:blacklisted-name
+test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:disallowed-name
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
@@ -215,18 +228,18 @@ test/support/windows-integration/plugins/modules/win_regedit.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_security_policy.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_shell.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_wait_for.ps1 pslint!skip
-test/units/executor/test_play_iterator.py pylint:blacklisted-name
+test/units/executor/test_play_iterator.py pylint:disallowed-name
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-version
-test/units/module_utils/basic/test_run_command.py pylint:blacklisted-name
+test/units/module_utils/basic/test_run_command.py pylint:disallowed-name
 test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
 test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
-test/units/modules/test_apt.py pylint:blacklisted-name
-test/units/parsing/vault/test_vault.py pylint:blacklisted-name
-test/units/playbook/role/test_role.py pylint:blacklisted-name
-test/units/plugins/test_plugins.py pylint:blacklisted-name
-test/units/template/test_templar.py pylint:blacklisted-name
+test/units/modules/test_apt.py pylint:disallowed-name
+test/units/parsing/vault/test_vault.py pylint:disallowed-name
+test/units/playbook/role/test_role.py pylint:disallowed-name
+test/units/plugins/test_plugins.py pylint:disallowed-name
+test/units/template/test_templar.py pylint:disallowed-name
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
 test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/__init__.py empty-init  # testing that collections don't need inits

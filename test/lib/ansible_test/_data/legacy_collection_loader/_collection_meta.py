@@ -15,7 +15,7 @@ __metaclass__ = type
 try:
     from collections.abc import Mapping   # pylint: disable=ansible-bad-import-from
 except ImportError:
-    from collections import Mapping  # pylint: disable=ansible-bad-import-from
+    from collections import Mapping  # pylint: disable=ansible-bad-import-from,deprecated-class
 
 from ansible.module_utils.common.yaml import yaml_load
 

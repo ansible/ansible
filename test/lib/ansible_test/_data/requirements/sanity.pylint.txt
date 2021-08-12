@@ -1,12 +1,10 @@
-pylint == 2.6.0
+pylint == 2.9.3
 pyyaml  # needed for collection_detail.py
 
 # dependencies
-astroid == 2.4.2
-isort == 5.7.0
-lazy-object-proxy == 1.4.3
+astroid == 2.6.6
+isort == 5.9.3
+lazy-object-proxy == 1.6.0
 mccabe == 0.6.1
-six  # not frozen due to usage outside sanity tests
 toml == 0.10.2
-typed-ast == 1.4.3
 wrapt == 1.12.1
