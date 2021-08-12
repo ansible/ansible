@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Upgrade ``pylint`` to version 2.9.3 and update its dependencies to the latest versions as well.
