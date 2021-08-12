@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
         # Options type validation
         # stings
         for s_type in ('src', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
-                       'block_end_string'):
+                       'block_end_string', 'comment_start_string', 'comment_end_string'):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], 'string')
                 if value is not None and not isinstance(value, string_types):
@@ -61,6 +61,8 @@ class ActionModule(ActionBase):
         variable_end_string = self._task.args.get('variable_end_string', None)
         block_start_string = self._task.args.get('block_start_string', None)
         block_end_string = self._task.args.get('block_end_string', None)
+        comment_start_string = self._task.args.get('comment_start_string', None)
+        comment_end_string = self._task.args.get('comment_end_string', None)
         output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
 
         # Option `lstrip_blocks' was added in Jinja2 version 2.7.
@@ -140,6 +142,8 @@ class ActionModule(ActionBase):
                                                           block_end_string=block_end_string,
                                                           variable_start_string=variable_start_string,
                                                           variable_end_string=variable_end_string,
+                                                          comment_start_string=comment_start_string,
+                                                          comment_end_string=comment_end_string,
                                                           trim_blocks=trim_blocks,
                                                           lstrip_blocks=lstrip_blocks,
                                                           available_variables=temp_vars)
@@ -158,7 +162,7 @@ class ActionModule(ActionBase):
 
             # remove 'template only' options:
             for remove in ('newline_sequence', 'block_start_string', 'block_end_string', 'variable_start_string', 'variable_end_string',
-                           'trim_blocks', 'lstrip_blocks', 'output_encoding'):
+                           'comment_start_string', 'comment_end_string', 'trim_blocks', 'lstrip_blocks', 'output_encoding'):
                 new_task.args.pop(remove, None)
 
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
