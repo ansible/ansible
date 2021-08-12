@@ -44,18 +44,18 @@ class PlatformFactCollector(BaseFactCollector):
         HOSTNAMES = {'hostname': '', 'short': '-s', 'dnsdomainname': '-f', 'domainname': '-d', 'nisdomainname': '--nis', 'nodename': '-n', 'ypdomainname': '-y', 'ip': '-i'}
         hostname_bin = module.get_bin_path('hostname')
         if hostname_bin:
-            r['hostname_cli']['info'] = hostname_bin
+            r['info'] = hostname_bin
             for name in HOSTNAMES.keys():
-                rc, out, err = module.run_command([hostname_fqcn])
-                if rc !=0 or not data:
-                    r['hostname_cli'][name] = ''
+                rc, out, err = module.run_command([hostname_bin, HOSTNAMES[name]])
+                if rc !=0 or not out:
+                    r[name] = ''
                 else:
                     data = out.splitlines()
-                    r['hostname_cli'][name]  = data[0]
+                    r[name]  = data[0]
         else:
-            r['hostname_cli']['info'] = 'No hostname CLI found'
+            r['info'] = 'No hostname CLI found'
             for name in HOSTNAMES.keys():
-                r['hostname_cli'][name] = ''
+                r[name] = ''
         return r
 
     def collect(self, module=None, collected_facts=None):
