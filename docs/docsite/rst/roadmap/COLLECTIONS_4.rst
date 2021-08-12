@@ -20,8 +20,8 @@ Release schedule
 :2021-03-30: Ansible-4.0.0 alpha3
 :2021-04-13: Last day for new collections to be submitted for inclusion in Ansible 4. Note that collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
 :2021-04-13: Ansible-4.0.0 alpha4
-:2021-04-14: Community IRC Meeting topic: list any new collection reviews which block release.  List any backwards incompatible collection releases that beta1 should try to accommodate.
-:2021-04-21: Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
+:2021-04-14: Community Meeting topic: list any new collection reviews which block release.  List any backwards incompatible collection releases that beta1 should try to accommodate.
+:2021-04-21: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2021-04-26: Last day for new collections to be **reviewed and approved** for inclusion in Ansible 4.
 :2021-04-26: Last day for collections to make backwards incompatible releases that will be accepted into Ansible 4.
 :2021-04-27: Ansible-4.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users should test for bugs).
@@ -33,7 +33,7 @@ Release schedule
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-2.1.0; ansible-3.0.0 could ship with community-crypto-2.1.1.  It would not ship with community-crypto-2.2.0.
 
 .. [2] After this date only changes blocking a release are accepted.  Accepted changes require creating a new rc and may slip the final release date.
-.. [3] Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
+.. [3] Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a Community meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
 
 .. note::
@@ -52,4 +52,4 @@ Ansible 4.x minor releases will occur approximately every three weeks if changes
     Minor releases will stop when Ansible-5 is released.  See the :ref:`Release and Maintenance Page <release_and_maintenance>` for more information.
 
 
-For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details.
+For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.

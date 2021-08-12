@@ -132,5 +132,5 @@ Ansibulbot will know how to redirect existing issues and PRs to the new repo. Th
        Guidelines for contributing to selected collections
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

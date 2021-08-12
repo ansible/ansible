@@ -79,5 +79,5 @@ You can specify multiple target names. Each target name is the name of a directo
        Guidelines for contributing to selected collections
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

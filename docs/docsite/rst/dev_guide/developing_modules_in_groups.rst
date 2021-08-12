@@ -55,8 +55,8 @@ Ansible has a thriving and knowledgeable community of module developers that is 
 In the :ref:`ansible_community_guide` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" and "Ansible Announce list"
-* ``#ansible-devel`` - We have found that communicating on the IRC channel, ``#ansible-devel`` on `libera.chat's <https://libera.chat/>`_ IRC network works best for developers so we can have an interactive dialogue.
-* IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
+* ``#ansible-devel`` - We have found that communicating on the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) works best for developers so we can have an interactive dialogue.
+* Working group and other chat channel meetings - Join the various weekly meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 Required files
 ==============
@@ -70,7 +70,7 @@ Your collection should include the following files to be usable:
 
 When you have these files ready, review the :ref:`developing_modules_checklist` again. If you are creating a new collection, you are responsible for all procedures related to your repository, including setting rules for contributions, finding reviewers, and testing and maintaining the code in your collection.
 
-If you need help or advice, consider joining the ``#ansible-devel`` IRC channel (see how in the :ref:`Where to get support <developing_in_groups_support>` section).
+If you need help or advice, consider joining the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_). For more information, see :ref:`developing_in_groups_support` and :ref:`communication`.
 
 New to git or GitHub
 ====================

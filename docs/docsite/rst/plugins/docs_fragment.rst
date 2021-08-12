@@ -31,5 +31,5 @@ Only collection developers and maintainers use docs fragments. For more informat
        An guide to creating Ansible collections
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

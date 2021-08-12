@@ -32,5 +32,5 @@ like services, packages, or files (anything really), or handle executing system 
        Configuring the right Python interpreter on target hosts
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.libera.chat <https://libera.chat/>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

@@ -20,9 +20,9 @@ Ansible practices responsible disclosure - if this is a security-related bug, em
 Bugs in ansible-core
 --------------------
 
-If you find a bug that affects multiple plugins, a plugin that remained in the ansible/ansible repo, or the overall functioning of Ansible, report it to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_. You need a free GitHub account.  Before reporting a bug, use the bug/issue search to see if the issue has already been reported. If you are not sure if something is a bug yet, you can report the behavior on the :ref:`mailing list or IRC first <communication>`.
+If you find a bug that affects multiple plugins, a plugin that remained in the ansible/ansible repo, or the overall functioning of Ansible, report it to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_. You need a free GitHub account.  Before reporting a bug, use the bug/issue search to see if the issue has already been reported. If you are not sure if something is a bug yet, you can report the behavior on the :ref:`mailing list or community chat first <communication>`.
 
-Do not open issues for "how do I do this" type questions.  These are great topics for IRC or the mailing list, where things are likely to be more of a discussion.
+Do not open issues for "how do I do this" type questions.  These are great topics for community chat channels or a mailing list, where things are likely to be more of a discussion.
 
 If you find a bug, open the issue yourself to ensure we have a record of it. Do not rely on someone else in the community to file the bug report for you. We have created an issue template, which saves time and helps us help everyone with their issues more quickly. Please fill it out as completely and as accurately as possible:
 
@@ -48,7 +48,7 @@ Many bugs only affect a single module or plugin. If you find a bug that affects 
   #. Click on the Issue Tracker link for that collection.
   #. Follow the contributor guidelines or instructions in the collection repo.
 
-If you are not sure whether a bug is in ansible-core or in a collection, you can report the behavior on the :ref:`mailing list or IRC first <communication>`.
+If you are not sure whether a bug is in ansible-core or in a collection, you can report the behavior on the :ref:`mailing list or community chat channel first <communication>`.
 
 .. _request_features:
 
