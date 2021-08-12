@@ -1,0 +1,2 @@
+minor_changes:
+  - "The ``jinja2_native`` feature now requires Jinja 3.0 version (as opposed to 2.10) as it includes important bugfixes."

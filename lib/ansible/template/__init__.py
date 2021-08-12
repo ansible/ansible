@@ -88,6 +88,10 @@ from jinja2.utils import concat as j2_concat
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
     try:
+        # Although Native Types were introduced in Jinja 2.10,
+        # we require 3.0+ as it includes important bugfixes.
+        if LooseVersion(j2_version) < LooseVersion('3.0'):
+            raise ImportError
         from jinja2.nativetypes import NativeEnvironment
         from ansible.template.native_helpers import ansible_native_concat
         from ansible.utils.native_jinja import NativeJinjaText
@@ -97,7 +101,7 @@ if C.DEFAULT_JINJA2_NATIVE:
         from jinja2.utils import concat as j2_concat
         if C.JINJA2_NATIVE_WARNING:
             display.warning(
-                'jinja2_native requires Jinja 2.10 and above. '
+                'jinja2_native requires Jinja 3.0 and above. '
                 'Version detected: %s. Falling back to default.' % j2_version
             )
 

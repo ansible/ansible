@@ -37,7 +37,7 @@
 
       - name: make sure jinja is the right version
         set_fact:
-            is_native: "{{ jinja2_version.stdout is version('2.10', '>=') }}"
+            is_native: "{{ jinja2_version.stdout is version('3.0', '>=') }}"
 
       - block:
             - import_tasks: test_casting.yml
