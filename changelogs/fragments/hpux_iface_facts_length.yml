@@ -1,0 +1,2 @@
+bugfixes:
+  - setup module should now not truncate hpux interface names.
