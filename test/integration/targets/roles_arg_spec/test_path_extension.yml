@@ -19,7 +19,7 @@
     - name: Tasks from tasks/alternate
       import_role:
           name: a
-          tasks_from: taks/alternate
+          tasks_from: tasks/alternate
 
     - name: Tasks from tasks/alternate.yml
       import_role:
