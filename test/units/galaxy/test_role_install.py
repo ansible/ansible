@@ -125,7 +125,8 @@ def test_role_download_url(galaxy_server, mock_role_download_api, monkeypatch):
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
         StringIO(u'{"results":[{"id":"123","github_user":"test_owner","github_repo": "test_role"}]}'),
-        StringIO(u'{"results":[{"name": "0.0.1","download_url":"http://localhost:8080/test_owner/test_role/0.0.1.tar.gz"},{"name": "0.0.2","download_url":"http://localhost:8080/test_owner/test_role/0.0.2.tar.gz"}]}'),
+        StringIO(u'{"results":[{"name": "0.0.1","download_url":"http://localhost:8080/test_owner/test_role/0.0.1.tar.gz"},'
+                 u'{"name": "0.0.2","download_url":"http://localhost:8080/test_owner/test_role/0.0.2.tar.gz"}]}'),
     ]
     monkeypatch.setattr(api, 'open_url', mock_api)
 
@@ -140,7 +141,8 @@ def test_role_download_url_default_version(galaxy_server, mock_role_download_api
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
         StringIO(u'{"results":[{"id":"123","github_user":"test_owner","github_repo": "test_role"}]}'),
-        StringIO(u'{"results":[{"name": "0.0.1","download_url":"http://localhost:8080/test_owner/test_role/0.0.1.tar.gz"},{"name": "0.0.2","download_url":"http://localhost:8080/test_owner/test_role/0.0.2.tar.gz"}]}'),
+        StringIO(u'{"results":[{"name": "0.0.1","download_url":"http://localhost:8080/test_owner/test_role/0.0.1.tar.gz"},'
+                 u'{"name": "0.0.2","download_url":"http://localhost:8080/test_owner/test_role/0.0.2.tar.gz"}]}'),
     ]
     monkeypatch.setattr(api, 'open_url', mock_api)
 
