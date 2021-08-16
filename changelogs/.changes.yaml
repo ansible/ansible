@@ -1905,6 +1905,11 @@ releases:
     - aws_tiny_prefix.yaml
     - v2.9.24rc1_summary.yaml
     release_date: '2021-07-13'
+  2.9.25:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.25_summary.yaml
+    release_date: '2021-08-16'
   2.9.25rc1:
     codename: Immigrant Song
     fragments:
