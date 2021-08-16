@@ -9,22 +9,22 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: ssh
-    short_description: connect via ssh client binary
+    short_description: connect via SSH client binary
     description:
-        - This connection plugin allows ansible to communicate to the target machines via normal ssh command line.
-        - Ansible does not expose a channel to allow communication between the user and the ssh process to accept
-          a password manually to decrypt an ssh key when using this connection plugin (which is the default). The
-          use of ``ssh-agent`` is highly recommended.
+        - This connection plugin allows Ansible to communicate to the target machines through normal SSH command line.
+        - Ansible does not expose a channel to allow communication between the user and the SSH process to accept
+          a password manually to decrypt an SSH key when using this connection plugin (which is the default). The
+          use of C(ssh-agent) is highly recommended.
     author: ansible (@core)
     extends_documentation_fragment:
         - connection_pipelining
     version_added: historical
     notes:
-        - Many options default to 'None' here but that only means we don't override the ssh tool's defaults and/or configuration.
+        - Many options default to C(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
           For example, if you specify the port in this plugin it will override any C(Port) entry in your C(.ssh/config).
     options:
       host:
-          description: Hostname/ip to connect to.
+          description: Hostname/IP to connect to.
           vars:
                - name: inventory_hostname
                - name: ansible_host
@@ -32,7 +32,7 @@ DOCUMENTATION = '''
                - name: delegated_vars['ansible_host']
                - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
-          description: Determines if ssh should check host keys
+          description: Determines if SSH should check host keys.
           default: True
           type: boolean
           ini:
@@ -70,7 +70,7 @@ DOCUMENTATION = '''
               - name: ansible_sshpass_prompt
           version_added: '2.10'
       ssh_args:
-          description: Arguments to pass to all ssh cli tools
+          description: Arguments to pass to all SSH CLI tools.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
           ini:
               - section: 'ssh_connection'
@@ -81,7 +81,7 @@ DOCUMENTATION = '''
               - name: ansible_ssh_args
                 version_added: '2.7'
       ssh_common_args:
-          description: Common extra args for all ssh CLI tools
+          description: Common extra args for all SSH CLI tools.
           ini:
               - section: 'ssh_connection'
                 key: 'ssh_common_args'
@@ -97,9 +97,9 @@ DOCUMENTATION = '''
       ssh_executable:
           default: ssh
           description:
-            - This defines the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in $PATH.
-            - This option is usually not required, it might be useful when access to system ssh is restricted,
-              or when using ssh wrappers to connect to remote hosts.
+            - This defines the location of the SSH binary. It defaults to C(ssh) which will use the first SSH binary available in $PATH.
+            - This option is usually not required, it might be useful when access to system SSH is restricted,
+              or when using SSH wrappers to connect to remote hosts.
           env: [{name: ANSIBLE_SSH_EXECUTABLE}]
           ini:
           - {key: ssh_executable, section: ssh_connection}
@@ -111,7 +111,7 @@ DOCUMENTATION = '''
       sftp_executable:
           default: sftp
           description:
-            - This defines the location of the sftp binary. It defaults to ``sftp`` which will use the first binary available in $PATH.
+            - This defines the location of the sftp binary. It defaults to C(sftp) which will use the first binary available in $PATH.
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
           - {key: sftp_executable, section: ssh_connection}
@@ -122,7 +122,7 @@ DOCUMENTATION = '''
       scp_executable:
           default: scp
           description:
-            - This defines the location of the scp binary. It defaults to `scp` which will use the first binary available in $PATH.
+            - This defines the location of the scp binary. It defaults to C(scp) which will use the first binary available in $PATH.
           env: [{name: ANSIBLE_SCP_EXECUTABLE}]
           ini:
           - {key: scp_executable, section: ssh_connection}
@@ -159,7 +159,7 @@ DOCUMENTATION = '''
             - name: sftp_extra_args
           default: ''
       ssh_extra_args:
-          description: Extra exclusive to the 'ssh' CLI
+          description: Extra exclusive to the SSH CLI.
           vars:
               - name: ansible_ssh_extra_args
           env:
@@ -200,7 +200,7 @@ DOCUMENTATION = '''
       remote_user:
           description:
               - User name with which to login to the remote server, normally set by the remote_user keyword.
-              - If no user is supplied, Ansible will let the ssh client binary choose the user as it normally
+              - If no user is supplied, Ansible will let the SSH client binary choose the user as it normally.
           ini:
             - section: defaults
               key: remote_user
@@ -226,7 +226,7 @@ DOCUMENTATION = '''
 
       private_key_file:
           description:
-              - Path to private key file to use for authentication
+              - Path to private key file to use for authentication.
           ini:
             - section: defaults
               key: private_key_file
@@ -241,7 +241,7 @@ DOCUMENTATION = '''
 
       control_path:
         description:
-          - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
+          - This is the location to save SSH's ControlPath sockets, it uses SSH's variable substitution.
           - Since 2.3, if null (default), ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
           - Before 2.3 it defaulted to `control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r`.
           - Be aware that this setting is ignored if `-o ControlPath` is set in ssh args.
@@ -291,9 +291,9 @@ DOCUMENTATION = '''
       scp_if_ssh:
         default: smart
         description:
-          - "Preferred method to use when transfering files over ssh"
-          - When set to smart, Ansible will try them until one succeeds or they all fail
-          - If set to True, it will force 'scp', if False it will use 'sftp'
+          - "Preferred method to use when transfering files over SSH."
+          - When set to I(smart), Ansible will try them until one succeeds or they all fail.
+          - If set to I(True), it will force 'scp', if I(False) it will use 'sftp'.
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
@@ -303,7 +303,7 @@ DOCUMENTATION = '''
       use_tty:
         version_added: '2.5'
         default: 'yes'
-        description: add -tt to ssh commands to force tty allocation
+        description: add -tt to ssh commands to force tty allocation.
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
         - {key: usetty, section: ssh_connection}
@@ -314,8 +314,8 @@ DOCUMENTATION = '''
       timeout:
         default: 10
         description:
-            - This is the default ammount of time we will wait while establishing an ssh connection
-            - It also controls how long we can wait to access reading the connection once established (select on the socket)
+            - This is the default ammount of time we will wait while establishing an SSH connection.
+            - It also controls how long we can wait to access reading the connection once established (select on the socket).
         env:
             - name: ANSIBLE_TIMEOUT
             - name: ANSIBLE_SSH_TIMEOUT
@@ -337,7 +337,7 @@ DOCUMENTATION = '''
         default: ""
         description:
           - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
-          - Requires sshpass version 1.06+, sshpass must support the -P option
+          - Requires sshpass version 1.06+, sshpass must support the -P option.
         env: [{name: ANSIBLE_PKCS11_PROVIDER}]
         ini:
           - {key: pkcs11_provider, section: ssh_connection}
