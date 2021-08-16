@@ -536,7 +536,7 @@ releases:
         ``COMMAND_WARNINGS`` configuration option is also deprecated and defaults
         to ``False``. These will be removed and their presence will become an error
         in 2.14.
-      - apt_key - the paramater ``key`` does not have any effect, has been deprecated
+      - apt_key - the parameter ``key`` does not have any effect, has been deprecated
         and will be removed in ansible-core version 2.14 (https://github.com/ansible/ansible/pull/70319).
       - psrp - Set the minimum version of ``pypsrp`` to ``0.4.0``.
       known_issues:
@@ -1885,6 +1885,17 @@ releases:
     - slurp-improve-error-handling-readability.yml
     - v2.11.3rc1_summary.yaml
     release_date: '2021-07-13'
+  2.11.4:
+    changes:
+      release_summary: '| Release Date: 2021-08-16
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - v2.11.4_summary.yaml
+    release_date: '2021-08-16'
   2.11.4rc1:
     changes:
       bugfixes:
