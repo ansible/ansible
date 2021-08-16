@@ -6,13 +6,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
 import os
 import pytest
 import tempfile
 
 from io import StringIO
 from units.compat.mock import MagicMock
-
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.galaxy import api, role, Galaxy
