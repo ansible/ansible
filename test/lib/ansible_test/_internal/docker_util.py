@@ -280,7 +280,7 @@ def docker_run(args, image, options, cmd=None, create_only=False):
         # Only when the network is not the default bridge network.
         options.extend(['--network', network])
 
-    options.extend(['--ulimit', 'nofile=%s:%s' % (MAX_NUM_OPEN_FILES, MAX_NUM_OPEN_FILES)])
+    options.extend(['--ulimit', 'nofile=%s' % MAX_NUM_OPEN_FILES])
 
     for _iteration in range(1, 3):
         try:
