@@ -867,3 +867,18 @@
           - test-package-that-provides-toaster
           - toaster
         state: absent
+
+- yum:
+    list: "{{ package1 }}"
+  register: list_out
+
+- name: check that both yum and dnf return envra
+  assert:
+    that:
+      - '"envra" in list_out["results"][0]'
+
+- name: check that dnf returns nevra for backwards compat
+  assert:
+    that:
+      - '"nevra" in list_out["results"][0]'
+  when: ansible_pkg_mgr == 'dnf'

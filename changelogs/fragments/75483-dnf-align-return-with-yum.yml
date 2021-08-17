@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - align the return value of the list argument with the ``yum`` module (https://github.com/ansible/ansible/issues/75483)

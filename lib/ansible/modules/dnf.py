@@ -425,8 +425,13 @@ class DnfModule(YumDnf):
             'release': package.release,
             'version': package.version,
             'repo': package.repoid}
-        result['nevra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(
-            **result)
+
+        # envra format for alignment with the yum module
+        result['envra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(**result)
+
+        # keep nevra key for backwards compat as it was previously
+        # defined with a value in envra format
+        result['nevra'] = result['envra']
 
         if package.installtime == 0:
             result['yumstate'] = 'available'
