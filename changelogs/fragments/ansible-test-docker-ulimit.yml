@@ -1,2 +1,2 @@
 minor_changes:
-  - ansible-test - Automatically increase the maximum number of open files in a test container from ``1024`` to ``2048``.
+  - ansible-test - Change the maximum number of open files in a test container from the default to ``2048``.
