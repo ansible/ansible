@@ -366,9 +366,9 @@ class VariableManager:
                             except AnsibleParserError:
                                 raise
                         else:
-                            # if include_delegate_to is set to False, we ignore the missing
-                            # vars file here because we're working on a delegated host, see NOTE above
-                            if include_delegate_to:
+                            # if include_delegate_to is set to False or we don't have a host, we ignore the missing
+                            # vars file here because we're working on a delegated host or require host vars, see NOTE above
+                            if include_delegate_to and host:
                                 raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                     except (UndefinedError, AnsibleUndefinedVariable):
                         if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
