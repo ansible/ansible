@@ -856,24 +856,31 @@ class Base(FieldAttributeBase):
     DEPRECATED_ATTRIBUTES = []
 
     def get_path(self):
-        ''' return the absolute path of the task with its line number '''
+        ''' return the absolute path of the playbook object and it's line number '''
 
         path = ""
-        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
+        try:
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        elif hasattr(self, '_parent') and \
-             hasattr(self._parent, '_play') and \
-             hasattr(self._parent._play, '_ds') and \
-             hasattr(self._parent._play._ds, '_data_source') and \
-             hasattr(self._parent._play._ds, '_line_number'):
-            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
+        except AttributeError:
+            try:
+                path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
+            except AttributeError:
+                pass
         return path
 
     def get_dep_chain(self):
-        if hasattr(self, '_parent') and self._parent:
-            return self._parent.get_dep_chain()
-        else:
-            return None
+
+        ret = None
+        try:
+            if self._dep_chain is None:
+                if self._parent:
+                    ret = self._parent.get_dep_chain()
+            else:
+                ret = self._dep_chain[:]
+        except AttributeError:
+            pass
+
+        return ret
 
     def get_search_path(self):
         '''
