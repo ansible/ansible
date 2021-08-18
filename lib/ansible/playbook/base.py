@@ -859,13 +859,13 @@ class Base(FieldAttributeBase):
         ''' return the absolute path of the task with its line number '''
 
         path = ""
-        if all([hasattr(self, '_ds'), hasattr(self._ds, '_data_source'), hasattr(self._ds, '_line_number')]):
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        elif all([hasattr(self, '_parent'),
-                  hasattr(self._parent, '_play'),
-                  hasattr(self._parent._play, '_ds'),
-                  hasattr(self._parent._play._ds, '_data_source'),
-                  hasattr(self._parent._play._ds, '_line_number')]):
+        elif hasattr(self, '_parent') and \
+             hasattr(self._parent, '_play') and \
+             hasattr(self._parent._play, '_ds') and \
+             hasattr(self._parent._play._ds, '_data_source') and \
+             hasattr(self._parent._play._ds, '_line_number'):
             path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
