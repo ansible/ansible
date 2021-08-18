@@ -854,3 +854,43 @@ class Base(FieldAttributeBase):
 
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []
+
+    def get_path(self):
+        ''' return the absolute path of the task with its line number '''
+
+        path = ""
+        if all([hasattr(self, '_ds'), hasattr(self._ds, '_data_source'), hasattr(self._ds, '_line_number')]):
+            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        elif all([hasattr(self, '_parent'),
+                  hasattr(self._parent, '_play'),
+                  hasattr(self._parent._play, '_ds'),
+                  hasattr(self._parent._play._ds, '_data_source'),
+                  hasattr(self._parent._play._ds, '_line_number')]):
+            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
+        return path
+
+    def get_dep_chain(self):
+        if hasattr(self, '_parent') and self._parent:
+            return self._parent.get_dep_chain()
+        else:
+            return None
+
+    def get_search_path(self):
+        '''
+        Return the list of paths you should search for files, in order.
+        This follows role/playbook dependency chain.
+        '''
+        path_stack = []
+
+        dep_chain = self.get_dep_chain()
+        # inside role: add the dependency chain from current to dependent
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain if hasattr(x, '_role_path')]))
+
+        # add path of task itself, unless it is already in the list
+        task_dir = os.path.dirname(self.get_path())
+        if task_dir not in path_stack:
+            path_stack.append(task_dir)
+
+        return path_stack
+
