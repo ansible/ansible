@@ -42,7 +42,7 @@ How to get it
 -------------
 
 {% for version in versions %}
-$ pip install ansible{% if is_ansible_base(version) %}-base{% endif %}=={{ version }} --user
+$ pip install ansible{% if is_ansible_core(version) %}-core{% endif %}=={{ version }} --user
 {% if not loop.last %}
 or
 {% endif %}
@@ -52,8 +52,8 @@ The tar.gz of the release{% if plural %}s{% endif %} can be found here:
 
 {% for version in versions %}
 * {{ pretty_version(version) }}
-{% if is_ansible_base(version) %}
-  https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{{ version }}.tar.gz
+{% if is_ansible_core(version) %}
+  https://pypi.python.org/packages/source/a/ansible-core/ansible-core-{{ version }}.tar.gz
 {% else %}
   https://pypi.python.org/packages/source/a/ansible/ansible-{{ version }}.tar.gz
 {% endif %}
@@ -130,7 +130,7 @@ them
 {% else %}
 it
 {% endif %}
-on PyPI: pip install ansible{% if is_ansible_base(version) %}-base{% endif %}=={{ version }},
+on PyPI: pip install ansible{% if is_ansible_core(version) %}-core{% endif %}=={{ version }},
 the Ansible PPA on Launchpad, or GitHub. Happy automating!
 """  # noqa for E501 (line length).
 # jinja2 is horrid about getting rid of extra newlines so we have to have a single per paragraph for
@@ -148,7 +148,7 @@ JINJA_ENV = Environment(
 
 
 async def calculate_hash_from_tarball(session, version):
-    tar_url = f'https://pypi.python.org/packages/source/a/ansible-base/ansible-base-{version}.tar.gz'
+    tar_url = f'https://pypi.python.org/packages/source/a/ansible-core/ansible-core-{version}.tar.gz'
     tar_task = asyncio.create_task(session.get(tar_url))
     tar_response = await tar_task
 
@@ -163,8 +163,8 @@ async def calculate_hash_from_tarball(session, version):
 
 
 async def parse_hash_from_file(session, version):
-    filename = f'ansible-base-{version}.tar.gz'
-    hash_url = f'https://releases.ansible.com/ansible-base/{filename}.sha'
+    filename = f'ansible-core-{version}.tar.gz'
+    hash_url = f'https://releases.ansible.com/ansible-core/{filename}.sha'
     hash_task = asyncio.create_task(session.get(hash_url))
     hash_response = await hash_task
 
@@ -181,7 +181,7 @@ async def get_hash(session, version):
     precreated_hash = await parse_hash_from_file(session, version)
 
     if calculated_hash != precreated_hash:
-        raise ValueError(f'Hash in file ansible-base-{version}.tar.gz.sha {precreated_hash} does not'
+        raise ValueError(f'Hash in file ansible-core-{version}.tar.gz.sha {precreated_hash} does not'
                          f' match hash of tarball from pypi {calculated_hash}')
 
     return calculated_hash
@@ -225,10 +225,10 @@ def next_release_date(weeks=3):
     return next_release
 
 
-def is_ansible_base(version):
+def is_ansible_core(version):
     '''
-    Determines if a version is an ansible-base version or not, by checking
-    if it is >= 2.10.0. Stops comparing when it gets to the first non-numeric
+    Determines if a version is an ansible-core version or not, by checking
+    if it is >= 2.11.0. Stops comparing when it gets to the first non-numeric
     component to allow for .dev and .beta suffixes.
     '''
     # Ignore .beta/.dev suffixes
@@ -241,19 +241,19 @@ def is_ansible_base(version):
                 ver_split.append(int(component.split('b')[0]))
             continue
         ver_split.append(int(component))
-    return tuple(ver_split) >= (2, 10, 0)
+    return tuple(ver_split) >= (2, 11, 0)
 
 
 # Currently only use with a single element list, but left general for later
 # in case we need to refer to the releases collectively.
 def release_variants(versions):
-    if all(is_ansible_base(v) for v in versions):
-        return 'ansible-base'
+    if all(is_ansible_core(v) for v in versions):
+        return 'ansible-core'
 
-    if all(not is_ansible_base(v) for v in versions):
+    if all(not is_ansible_core(v) for v in versions):
         return 'Ansible'
 
-    return 'Ansible and ansible-base'
+    return 'Ansible and ansible-core'
 
 
 def pretty_version(version):
@@ -275,7 +275,7 @@ def create_long_message(versions, name):
     template = JINJA_ENV.get_template('long')
     message = template.render(versions=versions, version_str=version_str,
                               name=name, hashes=hashes, next_release=next_release,
-                              is_ansible_base=is_ansible_base,
+                              is_ansible_core=is_ansible_core,
                               pretty_version=pretty_version)
     return message
 
@@ -287,7 +287,7 @@ def create_short_message(versions):
 
     template = JINJA_ENV.get_template('short')
     message = template.render(versions=versions, version_str=version_str,
-                              is_ansible_base=is_ansible_base,
+                              is_ansible_core=is_ansible_core,
                               pretty_version=pretty_version)
     message = ' '.join(message.split()) + '\n'
     return message
