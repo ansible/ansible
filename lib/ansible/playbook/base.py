@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import itertools
 import operator
+import os
 
 from copy import copy as shallowcopy
 from functools import partial
@@ -378,7 +379,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     validated_defaults_dict[defaults_entry] = defaults
 
                 else:
-                    action_names = []
                     if len(defaults_entry.split('.')) < 3:
                         defaults_entry = 'ansible.legacy.' + defaults_entry
 
@@ -900,4 +900,3 @@ class Base(FieldAttributeBase):
             path_stack.append(task_dir)
 
         return path_stack
-
