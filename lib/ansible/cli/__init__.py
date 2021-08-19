@@ -19,7 +19,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import with_metaclass, string_types
+from ansible.module_utils.six import with_metaclass, string_types, PY3
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
@@ -230,6 +230,14 @@ class CLI(with_metaclass(ABCMeta, object)):
         return vault_secrets
 
     @staticmethod
+    def _get_secret(prompt):
+
+        secret = getpass.getpass(prompt=prompt)
+        if secret:
+            secret = to_unsafe_text(secret)
+        return secret
+
+    @staticmethod
     def ask_passwords():
         ''' prompt for connection and become passwords if needed '''
 
@@ -241,25 +249,22 @@ class CLI(with_metaclass(ABCMeta, object)):
         become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op['become_method'].upper()
 
         try:
+            become_prompt = "%s password: " % become_prompt_method
             if op['ask_pass']:
-                sshpass = getpass.getpass(prompt="SSH password: ")
+                sshpass = CLI._get_secret("SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
-            else:
-                become_prompt = "%s password: " % become_prompt_method
+            elif op['connection_password_file']:
+                sshpass = CLI.get_password_from_file(op['connection_password_file'])
 
             if op['become_ask_pass']:
-                becomepass = getpass.getpass(prompt=become_prompt)
+                becomepass = CLI._get_secret(become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
+            elif op['become_password_file']:
+                becomepass = CLI.get_password_from_file(op['become_password_file'])
+
         except EOFError:
             pass
-
-        # we 'wrap' the passwords to prevent templating as
-        # they can contain special chars and trigger it incorrectly
-        if sshpass:
-            sshpass = to_unsafe_text(sshpass)
-        if becomepass:
-            becomepass = to_unsafe_text(becomepass)
 
         return (sshpass, becomepass)
 
@@ -492,3 +497,48 @@ class CLI(with_metaclass(ABCMeta, object)):
             raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts
+
+    @staticmethod
+    def get_password_from_file(pwd_file):
+
+        b_pwd_file = to_bytes(pwd_file)
+        secret = None
+        if b_pwd_file == b'-':
+            if PY3:
+                # ensure its read as bytes
+                secret = sys.stdin.buffer.read()
+            else:
+                secret = sys.stdin.read()
+
+        elif not os.path.exists(b_pwd_file):
+            raise AnsibleError("The password file %s was not found" % pwd_file)
+
+        elif os.path.is_executable(b_pwd_file):
+            display.vvvv(u'The password file %s is a script.' % to_text(pwd_file))
+            cmd = [b_pwd_file]
+
+            try:
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
+                                   " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
+
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise AnsibleError("The password script %s returned an error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
+            secret = stdout
+
+        else:
+            try:
+                f = open(b_pwd_file, "rb")
+                secret = f.read().strip()
+                f.close()
+            except (OSError, IOError) as e:
+                raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
+
+        secret = secret.strip(b'\r\n')
+
+        if not secret:
+            raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
+
+        return to_unsafe_text(secret)

@@ -244,8 +244,6 @@ def add_connect_options(parser):
     """Add options for commands which need to connection to other hosts"""
     connect_group = parser.add_argument_group("Connection Options", "control as whom and how to connect to hosts")
 
-    connect_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
-                               help='ask for connection password')
     connect_group.add_argument('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                                help='use this file to authenticate the connection', type=unfrack_path())
     connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
@@ -266,6 +264,14 @@ def add_connect_options(parser):
                                help="specify extra arguments to pass to ssh only (e.g. -R)")
 
     parser.add_argument_group(connect_group)
+
+    connect_password_group = parser.add_mutually_exclusive_group()
+    connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
+                                        help='ask for connection password')
+    connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=C.CONNECTION_PASSWORD_FILE, dest='connection_password_file',
+                                        help="Connection password file", type=unfrack_path(), action='store')
+
+    parser.add_argument_group(connect_password_group)
 
 
 def add_fork_options(parser):
@@ -326,7 +332,9 @@ def add_runas_options(parser):
     runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
                              help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
-    add_runas_prompt_options(parser, runas_group=runas_group)
+    parser.add_argument_group(runas_group)
+
+    add_runas_prompt_options(parser)
 
 
 def add_runas_prompt_options(parser, runas_group=None):
@@ -336,15 +344,18 @@ def add_runas_prompt_options(parser, runas_group=None):
     Note that add_runas_options() includes these options already.  Only one of the two functions
     should be used.
     """
-    if runas_group is None:
-        runas_group = parser.add_argument_group("Privilege Escalation Options",
-                                                "control how and which user you become as on target hosts")
+    if runas_group is not None:
+        parser.add_argument_group(runas_group)
 
-    runas_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
-                             default=C.DEFAULT_BECOME_ASK_PASS,
-                             help='ask for privilege escalation password')
+    runas_pass_group = parser.add_mutually_exclusive_group()
 
-    parser.add_argument_group(runas_group)
+    runas_pass_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
+                                  default=C.DEFAULT_BECOME_ASK_PASS,
+                                  help='ask for privilege escalation password')
+    runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=C.BECOME_PASSWORD_FILE, dest='become_password_file',
+                                  help="Become password file", type=unfrack_path(), action='store')
+
+    parser.add_argument_group(runas_pass_group)
 
 
 def add_runtask_options(parser):
