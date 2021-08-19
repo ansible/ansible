@@ -870,17 +870,10 @@ class Base(FieldAttributeBase):
 
     def get_dep_chain(self):
 
-        ret = None
-        try:
-            if self._dep_chain is None:
-                if self._parent:
-                    ret = self._parent.get_dep_chain()
-            else:
-                ret = self._dep_chain[:]
-        except AttributeError:
-            pass
-
-        return ret
+        if hasattr(self, '_parent') and self._parent:
+            return self._parent.get_dep_chain()
+        else:
+            return None
 
     def get_search_path(self):
         '''
