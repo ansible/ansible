@@ -1,0 +1,2 @@
+minor_changes:
+  - dnf - allow for ``download_only`` to be run without root privileges (https://github.com/ansible/ansible/issues/75530)
