@@ -1348,7 +1348,7 @@ class DnfModule(YumDnf):
         else:
             # Note: base takes a long time to run so we want to check for failure
             # before running it.
-            if not dnf.util.am_i_root():
+            if not self.download_only and not dnf.util.am_i_root():
                 self.module.fail_json(
                     msg="This command has to be run under the root user.",
                     results=[],
