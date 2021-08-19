@@ -129,12 +129,25 @@ ANY_ERRORS_FATAL:
 BECOME_ALLOW_SAME_USER:
   name: Allow becoming the same user
   default: False
-  description: This setting controls if become is skipped when remote user and become user are the same. I.E root sudo to root.
+  description:
+    - This setting controls if become is skipped when remote user and become user are the same. I.E root sudo to root.
+    - If executable, it will be run and the resulting stdout will be used as the password.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
   ini:
   - {key: become_allow_same_user, section: privilege_escalation}
   type: boolean
   yaml: {key: privilege_escalation.become_allow_same_user}
+BECOME_PASSWORD_FILE:
+  name: Become password file
+  default: ~
+  description:
+    - 'The password file to use for the become plugin. --become-password-file.'
+    - If executable, it will be run and the resulting stdout will be used as the password.
+  env: [{name: ANSIBLE_BECOME_PASSWORD_FILE}]
+  ini:
+  - {key: become_password_file, section: defaults}
+  type: path
+  version_added: '2.12'
 AGNOSTIC_BECOME_PROMPT:
   name: Display an agnostic become prompt
   default: True
@@ -335,6 +348,15 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+CONNECTION_PASSWORD_FILE:
+  name: Connection password file
+  default: ~
+  description: 'The password file to use for the connection plugin. --connection-password-file.'
+  env: [{name: ANSIBLE_CONNECTION_PASSWORD_FILE}]
+  ini:
+  - {key: connection_password_file, section: defaults}
+  type: path
+  version_added: '2.12'
 COVERAGE_REMOTE_OUTPUT:
   name: Sets the output directory and filename prefix to generate coverage run info.
   description:
@@ -1177,7 +1199,9 @@ DEFAULT_VAULT_IDENTITY_LIST:
 DEFAULT_VAULT_PASSWORD_FILE:
   name: Vault password file
   default: ~
-  description: 'The vault password file to use. Equivalent to --vault-password-file or --vault-id'
+  description:
+    - 'The vault password file to use. Equivalent to --vault-password-file or --vault-id'
+    - If executable, it will be run and the resulting stdout will be used as the password.
   env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
   ini:
   - {key: vault_password_file, section: defaults}
