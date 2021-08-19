@@ -21,18 +21,27 @@ __metaclass__ = type
 
 import difflib
 import json
+import re
+import string
 import sys
+import textwrap
 from collections import OrderedDict
 from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.six import PY3, text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
+
+import yaml
 
 global_display = Display()
 
@@ -41,6 +50,61 @@ __all__ = ["CallbackBase"]
 
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+
+
+class _AnsibleCallbackDumper(AnsibleDumper):
+    def __init__(self, lossy=False):
+        self._lossy = lossy
+
+    def __call__(self, *args, **kwargs):
+        super(_AnsibleCallbackDumper, self).__init__(*args, **kwargs)
+        return self
+
+
+def _should_use_block(value):
+    """Returns true if string should be in block format"""
+    #          NL        CR        FS        GS        RS        NEL       LS        PS
+    for c in ('\u000a', '\u000d', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029'):
+        if c in value:
+            return True
+    return False
+
+
+def _pretty_represent_str(self, data):
+    """Uses block style for multi-line strings"""
+    data = text_type(data)
+    if _should_use_block(data):
+        style = '|'
+        if self._lossy:
+            # we care more about readable than accuracy, so...
+            # ...no trailing space
+            data = data.rstrip()
+            # ...and non-printable characters
+            data = ''.join(x for x in data if x in string.printable or ord(x) >= 0xA0)
+            # ...tabs prevent blocks from expanding
+            data = data.expandtabs()
+            # ...and odd bits of whitespace
+            data = re.sub(r'[\x0b\x0c\r]', '', data)
+            # ...as does trailing space
+            data = re.sub(r' +\n', '\n', data)
+    else:
+        style = self.default_style
+
+    node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
+    if self.alias_key is not None:
+        self.represented_objects[self.alias_key] = node
+    return node
+
+
+_AnsibleCallbackDumper.add_representer(
+    AnsibleUnicode,
+    _pretty_represent_str
+)
+
+_AnsibleCallbackDumper.add_representer(
+    AnsibleUnsafeText,
+    _pretty_represent_str,
+)
 
 
 class CallbackBase(AnsiblePlugin):
@@ -108,7 +172,12 @@ class CallbackBase(AnsiblePlugin):
         return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
                 and result._result.get('_ansible_verbose_override', False) is False)
 
-    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
+    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False, serialize=True):
+        try:
+            result_format = self.get_option('result_format')
+        except KeyError:
+            # Callback does not declare result_format nor extend result_format_callback
+            result_format = 'json'
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
@@ -128,18 +197,47 @@ class CallbackBase(AnsiblePlugin):
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        try:
-            jsonified_results = json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
-        except TypeError:
-            # Python3 bug: throws an exception when keys are non-homogenous types:
-            # https://bugs.python.org/issue25457
-            # sort into an OrderedDict and then json.dumps() that instead
-            if not OrderedDict:
-                raise
-            jsonified_results = json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
-                                           cls=AnsibleJSONEncoder, indent=indent,
-                                           ensure_ascii=False, sort_keys=False)
-        return jsonified_results
+        if not serialize:
+            # Just return ``abridged_result`` without going through serialization
+            # to permit callbacks to take advantage of ``_dump_results``
+            # that want to further modify the result, or use custom serialization
+            return abridged_result
+
+        if result_format == 'json':
+            try:
+                return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+            except TypeError:
+                # Python3 bug: throws an exception when keys are non-homogenous types:
+                # https://bugs.python.org/issue25457
+                # sort into an OrderedDict and then json.dumps() that instead
+                if not OrderedDict:
+                    raise
+                return json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
+                                  cls=AnsibleJSONEncoder, indent=indent,
+                                  ensure_ascii=False, sort_keys=False)
+        elif result_format in ('yaml', 'yaml_lossy'):
+            lossy = result_format == 'yaml_lossy'
+
+            if lossy:
+                # if we already have stdout, we don't need stdout_lines
+                if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
+                    abridged_result['stdout_lines'] = '<omitted>'
+
+                # if we already have stderr, we don't need stderr_lines
+                if 'stderr' in abridged_result and 'stderr_lines' in abridged_result:
+                    abridged_result['stderr_lines'] = '<omitted>'
+
+            return '\n%s' % textwrap.indent(
+                yaml.dump(
+                    abridged_result,
+                    allow_unicode=True,
+                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    default_flow_style=False if indent else True,
+                    indent=indent,
+                    # sort_keys=sort_keys  # This requires PyYAML>=5.1
+                ),
+                ' ' * (indent or 2)
+            )
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
@@ -168,7 +266,27 @@ class CallbackBase(AnsiblePlugin):
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
 
     def _serialize_diff(self, diff):
-        return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+        try:
+            result_format = self.get_option('result_format')
+        except KeyError:
+            # Callback does not declare result_format nor extend result_format_callback
+            result_format = 'json'
+
+        if result_format == 'json':
+            return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+        elif result_format in ('yaml', 'yaml_lossy'):
+            lossy = result_format == 'yaml_lossy'
+            return '%s\n' % textwrap.indent(
+                yaml.dump(
+                    diff,
+                    allow_unicode=True,
+                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    default_flow_style=False,
+                    indent=4,
+                    # sort_keys=sort_keys  # This requires PyYAML>=5.1
+                ),
+                '    '
+            )
 
     def _get_diff(self, difflist):
 

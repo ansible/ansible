@@ -21,7 +21,7 @@ run_test() {
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
-	{ ansible-playbook -i inventory test.yml \
+	{ ansible-playbook -i inventory test.yml "${@:2}" \
 		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
 	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
@@ -30,6 +30,10 @@ run_test() {
     sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
     sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
     sed -i -e "s#${ANSIBLE_PLAYBOOK_DIR}#TEST_PATH#g" "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/^Using .*//g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/[0-9]:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0000-00-00 00:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/\S\{1,\}\/source$/...\/source/g' "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
@@ -178,6 +182,19 @@ if test "$(grep -c 'UNREACHABLE' "${BASEFILE}.unreachable.stderr")" -ne 1; then
 	echo "Test failed"
 	exit 1
 fi
+export ANSIBLE_DISPLAY_FAILED_STDERR=0
+
+export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
+run_test result_format_yaml
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json
+
+export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
+run_test result_format_yaml_verbose -v
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json
+
+export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml_lossy
+run_test result_format_yaml_lossy_verbose -v
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json
 
 ## DRY RUN tests
 #
