@@ -1,0 +1,2 @@
+bugfixes:
+  - variable manager, avoid sourcing delegated variables when no inventory hostname is present. This affects scenarios like syntax check and imports.

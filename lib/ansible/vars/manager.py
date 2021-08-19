@@ -328,6 +328,9 @@ class VariableManager:
                 for vars_file_item in vars_files:
                     # create a set of temporary vars here, which incorporate the extra
                     # and magic vars so we can properly template the vars_files entries
+                    # NOTE: this makes them depend on host vars/facts so things like
+                    #       ansible_facts['os_distribution'] can be used, ala include_vars.
+                    #       Consider DEPRECATING this in the future, since we have include_vars ...
                     temp_vars = combine_vars(all_vars, self._extra_vars)
                     temp_vars = combine_vars(temp_vars, magic_variables)
                     templar = Templar(loader=self._loader, variables=temp_vars)
@@ -363,9 +366,9 @@ class VariableManager:
                             except AnsibleParserError:
                                 raise
                         else:
-                            # if include_delegate_to is set to False, we ignore the missing
-                            # vars file here because we're working on a delegated host
-                            if include_delegate_to:
+                            # if include_delegate_to is set to False or we don't have a host, we ignore the missing
+                            # vars file here because we're working on a delegated host or require host vars, see NOTE above
+                            if include_delegate_to and host:
                                 raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                     except (UndefinedError, AnsibleUndefinedVariable):
                         if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
@@ -431,9 +434,9 @@ class VariableManager:
             # has to be copy, otherwise recursive ref
             all_vars['vars'] = all_vars.copy()
 
-        # if we have a task and we're delegating to another host, figure out the
-        # variables for that host now so we don't have to rely on hostvars later
-        if task and task.delegate_to is not None and include_delegate_to:
+        # if we have a host and task and we're delegating to another host,
+        # figure out the variables for that host now so we don't have to rely on host vars later
+        if task and host and task.delegate_to is not None and include_delegate_to:
             all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         display.debug("done with get_vars()")
@@ -443,8 +446,7 @@ class VariableManager:
         else:
             return all_vars
 
-    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to,
-                             _hosts=None, _hosts_all=None):
+    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to, _hosts=None, _hosts_all=None):
         '''
         Returns a dictionary of so-called "magic" variables in Ansible,
         which are special variables we set internally for use.
