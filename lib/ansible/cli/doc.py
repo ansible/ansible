@@ -530,12 +530,20 @@ class DocCLI(CLI, RoleMixin):
 
         data = {}
         descs = DocCLI._list_keywords()
-        for keyword in keys:
-            if keyword.startswith('with_'):
+        for key in keys:
+
+            if key.startswith('with_'):
+                # simplify loops, dont want to handle every with_<lookup> combo
                 keyword = 'loop'
+            elif key == 'async':
+                # cause async became reserved in python we had to rename internally
+                keyword = 'async_val'
+            else:
+                keyword = key
+
             try:
                 # if no desc, typeerror raised ends this block
-                kdata = {'description': descs[keyword]}
+                kdata = {'description': descs[key]}
 
                 # get playbook objects for keyword and use first to get keyword attributes
                 kdata['applies_to'] = []
@@ -574,10 +582,12 @@ class DocCLI(CLI, RoleMixin):
                     if kdata[k] is None:
                         del kdata[k]
 
-                data[keyword] = kdata
+                data[key] = kdata
 
-            except KeyError as e:
-                display.warning("Skipping Invalid keyword '%s' specified: %s" % (keyword, to_text(e)))
+            except (AttributeError, KeyError) as e:
+                display.warning("Skipping Invalid keyword '%s' specified: %s" % (key, to_text(e)))
+                if display.verbosity >= 3:
+                    display.verbose(traceback.format_exc())
 
         return data
 
@@ -669,7 +679,10 @@ class DocCLI(CLI, RoleMixin):
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
         elif plugin_type == 'keyword':
 
-            if listing:
+            if context.CLIARGS['dump']:
+                keys = DocCLI._list_keywords()
+                docs = DocCLI._get_keywords_docs(keys.keys())
+            elif listing:
                 docs = DocCLI._list_keywords()
             else:
                 docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
