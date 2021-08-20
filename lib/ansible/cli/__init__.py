@@ -175,6 +175,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                                         create_new_password,
                                         auto_prompt=auto_prompt)
 
+        last_exception = found_vault_secret = None
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
@@ -198,6 +199,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     display.warning('Error in vault password prompt (%s): %s' % (vault_id_name, exc))
                     raise
 
+                found_vault_secret = True
                 vault_secrets.append((built_vault_id, prompted_vault_secret))
 
                 # update loader with new secrets incrementally, so we can load a vault password
@@ -208,9 +210,15 @@ class CLI(with_metaclass(ABCMeta, object)):
             # assuming anything else is a password file
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
-            file_vault_secret = get_file_vault_secret(filename=vault_id_value,
-                                                      vault_id=vault_id_name,
-                                                      loader=loader)
+            try:
+                file_vault_secret = get_file_vault_secret(filename=vault_id_value,
+                                                          vault_id=vault_id_name,
+                                                          loader=loader)
+            except AnsibleError as exc:
+                display.warning('Error getting secret from vault password file (%s): %s' % (vault_id_name, to_text(exc)))
+                last_exception = exc
+                continue
+            found_vault_secret = True
 
             # an invalid password file will error globally
             try:
@@ -226,6 +234,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
+
+        # No valid vault secrets and at least one error
+        if last_exception and not found_vault_secret:
+            raise last_exception
 
         return vault_secrets
 
