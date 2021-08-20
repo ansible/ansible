@@ -23,7 +23,7 @@ import sys
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import container_to_text, to_native
-from ansible.module_utils.six import string_types, PY2
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
 
 
@@ -114,10 +114,6 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of builtins done in CleansingNodeVisitor
         result = eval(compiled, OUR_GLOBALS, dict(locals))
-        if PY2:
-            # On Python 2 u"{'key': 'value'}" is evaluated to {'key': 'value'},
-            # ensure it is converted to {u'key': u'value'}.
-            result = container_to_text(result)
 
         if include_exceptions:
             return (result, None)

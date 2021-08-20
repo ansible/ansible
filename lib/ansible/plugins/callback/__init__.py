@@ -22,25 +22,17 @@ __metaclass__ = type
 import difflib
 import json
 import sys
-
+from collections import OrderedDict
 from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_text
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
-
-if PY3:
-    # OrderedDict is needed for a backwards compat shim on Python3.x only
-    # https://github.com/ansible/ansible/pull/49512
-    from collections import OrderedDict
-else:
-    OrderedDict = None
 
 global_display = Display()
 

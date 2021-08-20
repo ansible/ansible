@@ -314,12 +314,7 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
     def lstrip(self, chars=None):
         return self.data.lstrip(chars)
 
-    try:
-        # PY3
-        maketrans = str.maketrans
-    except AttributeError:
-        # PY2
-        maketrans = string.maketrans
+    maketrans = str.maketrans
 
     def partition(self, sep):
         return self.data.partition(sep)
