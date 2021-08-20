@@ -118,6 +118,17 @@ Security: kernel-3.10.0-327.28.2.el7.x86_64 is an installed security update
 Security: kernel-3.10.0-327.22.2.el7.x86_64 is the currently running version
 """
 
+wrapped_output_multiple_empty_lines = """
+Loaded plugins: langpacks, product-id, search-disabled-repos, subscription-manager
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+
+screen.x86_64                         4.1.0-0.23.20120314git3c2946.el7_2
+                                                            rhelosp-rhel-7.2-z
+sos.noarch                            3.2-36.el7ost.2       rhelosp-9.0-puddle
+"""
+
 longname = """
 Loaded plugins: fastestmirror, priorities, rhnplugin
 This system is receiving updates from RHN Classic or Red Hat Satellite.
@@ -205,3 +216,7 @@ class TestYumUpdateCheckParse(unittest.TestCase):
             res
         )
         self._assert_expected(unwrapped_output_rhel7_expected_old_obsoletes_pkgs, obs)
+
+    def test_wrapped_output_multiple_empty_lines(self):
+        res, obs = YumModule.parse_check_update(wrapped_output_multiple_empty_lines)
+        self._assert_expected(['screen', 'sos'], res)
