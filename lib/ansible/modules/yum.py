@@ -1230,37 +1230,28 @@ class YumModule(YumDnf):
 
     @staticmethod
     def parse_check_update(check_update_output):
-        updates = {}
-        obsoletes = {}
+        # preprocess string and filter out empty lines so the regex below works
+        out = '\n'.join((l for l in check_update_output.splitlines() if l))
 
-        # remove incorrect new lines in longer columns in output from yum check-update
-        # yum line wrapping can move the repo to the next line
-        #
-        # Meant to filter out sets of lines like:
+        # Remove incorrect new lines in longer columns in output from yum check-update
+        # yum line wrapping can move the repo to the next line:
         #  some_looooooooooooooooooooooooooooooooooooong_package_name   1:1.2.3-1.el7
         #                                                                    some-repo-label
-        #
-        # But it also needs to avoid catching lines like:
-        # Loading mirror speeds from cached hostfile
-        #
-        # ceph.x86_64                               1:11.2.0-0.el7                    ceph
+        out = re.sub(r'\n\W+(.*)', r' \1', out)
 
-        # preprocess string and filter out empty lines so the regex below works
-        out = re.sub(r'\n[^\w]\W+(.*)', r' \1', check_update_output)
-
-        available_updates = out.split('\n')
-
-        # build update dictionary
-        for line in available_updates:
+        updates = {}
+        obsoletes = {}
+        for line in out.split('\n'):
             line = line.split()
-            # ignore irrelevant lines
-            # '*' in line matches lines like mirror lists:
-            #      * base: mirror.corbina.net
-            # len(line) != 3 or 6 could be junk or a continuation
-            # len(line) = 6 is package obsoletes
-            #
-            # FIXME: what is  the '.' not in line  conditional for?
-
+            """
+            Ignore irrelevant lines:
+              - '*' in line matches lines like mirror lists: "* base: mirror.corbina.net"
+              - len(line) != 3 or 6 could be strings like:
+                  "This system is not registered with an entitlement server..."
+              - len(line) = 6 is package obsoletes
+              - checking for '.' in line[0] (package name) likely ensures that it is of format:
+                  "package_name.arch" (coreutils.x86_64)
+            """
             if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
 
