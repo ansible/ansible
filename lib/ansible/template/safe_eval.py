@@ -72,6 +72,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             ast.Mult,
             ast.Num,
             ast.Name,
+            ast.Set,
             ast.Str,
             ast.Sub,
             ast.USub,
