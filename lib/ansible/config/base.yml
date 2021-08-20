@@ -1488,6 +1488,7 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     oracle: *rhelish
     redhat: *rhelish
     rhel: *rhelish
+    almalinux: *rhelish
     ubuntu:
       '14': /usr/bin/python
       '16': /usr/bin/python3
