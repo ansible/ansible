@@ -25,7 +25,6 @@ from ansible import constants as C
 from ansible.module_utils.common.text.converters import container_to_text, to_native
 from ansible.module_utils.six import string_types, PY2
 from ansible.module_utils.six.moves import builtins
-from ansible.plugins.loader import filter_loader, test_loader
 
 
 def safe_eval(expr, locals=None, include_exceptions=False):
@@ -64,6 +63,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             ast.BinOp,
             # ast.Call,
             ast.Compare,
+            ast.Constant,
             ast.Dict,
             ast.Div,
             ast.Expression,
@@ -80,47 +80,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         )
     )
 
-    # AST node types were expanded after 2.6
-    if sys.version_info[:2] >= (2, 7):
-        SAFE_NODES.update(
-            set(
-                (ast.Set,)
-            )
-        )
-
-    # And in Python 3.4 too
-    if sys.version_info[:2] >= (3, 4):
-        SAFE_NODES.update(
-            set(
-                (ast.NameConstant,)
-            )
-        )
-
-    # And in Python 3.6 too, although not encountered until Python 3.8, see https://bugs.python.org/issue32892
-    if sys.version_info[:2] >= (3, 6):
-        SAFE_NODES.update(
-            set(
-                (ast.Constant,)
-            )
-        )
-
-    filter_list = []
-    for filter_ in filter_loader.all():
-        try:
-            filter_list.extend(filter_.filters().keys())
-        except Exception:
-            # This is handled and displayed in JinjaPluginIntercept._load_ansible_plugins
-            continue
-
-    test_list = []
-    for test in test_loader.all():
-        try:
-            test_list.extend(test.tests().keys())
-        except Exception:
-            # This is handled and displayed in JinjaPluginIntercept._load_ansible_plugins
-            continue
-
-    CALL_ENABLED = C.CALLABLE_ACCEPT_LIST + filter_list + test_list
+    CALL_ENABLED = []
 
     class CleansingNodeVisitor(ast.NodeVisitor):
         def generic_visit(self, node, inside_call=False):
