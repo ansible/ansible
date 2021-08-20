@@ -132,6 +132,45 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.4.0
+========================
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_user - Issue(192043) Module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+
+Deprecated Features
+-------------------
+
+cisco.iosxr
+~~~~~~~~~~~
+
+- The iosxr_logging module has been deprecated in favor of the new iosxr_logging_global resource module and will be removed in a release after '2023-08-01'.
+
+cisco.nxos
+~~~~~~~~~~
+
+- The nxos_logging module has been deprecated in favor of the new nxos_logging_global resource module and will be removed in a release after '2023-08-01'.
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- docker_container - the new ``command_handling``'s default value, ``compatibility``, is deprecated and will change to ``correct`` in community.docker 3.0.0. A deprecation warning is emitted by the module in cases where the behavior will change. Please note that ansible-core will output a deprecation warning only once, so if it is shown for an earlier task, there could be more tasks with this warning where it is not shown (https://github.com/ansible-collections/community.docker/pull/186).
+
+junipernetworks.junos
+~~~~~~~~~~~~~~~~~~~~~
+
+- The junos_logging module has been deprecated in favor of the new junos_logging_global resource module and will be removed in a release after '2023-08-01'.
+
+vyos.vyos
+~~~~~~~~~
+
+- The vyos_logging module has been deprecated in favor of the new vyos_logging_global resource module and will be removed in a release after "2023-08-01".
+
 Porting Guide for v4.3.0
 ========================
 
@@ -613,7 +652,7 @@ Ansible-core
 ~~~~~~~~~~~~
 
 - Starting in 2.14, shell and command modules will no longer have the option to warn and suggest modules in lieu of commands. The ``warn`` parameter to these modules is now deprecated and defaults to ``False``. Similarly, the ``COMMAND_WARNINGS`` configuration option is also deprecated and defaults to ``False``. These will be removed and their presence will become an error in 2.14.
-- apt_key - the parameter ``key`` does not have any effect, has been deprecated and will be removed in ansible-core version 2.14 (https://github.com/ansible/ansible/pull/70319).
+- apt_key - the paramater ``key`` does not have any effect, has been deprecated and will be removed in ansible-core version 2.14 (https://github.com/ansible/ansible/pull/70319).
 - psrp - Set the minimum version of ``pypsrp`` to ``0.4.0``.
 
 ansible.netcommon
