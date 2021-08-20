@@ -80,7 +80,7 @@ From the log notice:
 * ``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device
 
 
-.. note: Port None ``creating new control socket for host veos01:None``
+.. note:: Port None ``creating new control socket for host veos01:None``
 
    If the log reports the port as ``None`` this means that the default port is being used.
    A future Ansible release will improve this message so that the port is always logged.
