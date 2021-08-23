@@ -703,3 +703,22 @@
       yum:
         name: dinginessentail,dinginessentail-olive,landsidescalping
         state: absent
+
+- block:
+    - yum:
+        name: dinginessentail
+        state: present
+
+    - yum:
+        list: dinginessentail*
+      register: list_out
+
+    - name: Test that there is yumstate=installed in the result
+      assert:
+        that:
+          - list_out.results | map(attribute='yumstate') is contains('installed')
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent

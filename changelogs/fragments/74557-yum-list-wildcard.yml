@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - fix ``yumstate`` return value when wildcards are used in the ``list`` argument (https://github.com/ansible/ansible/issues/74557)

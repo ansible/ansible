@@ -599,6 +599,8 @@ class YumModule(YumDnf):
                 rpmbin = self.module.get_bin_path('rpm', required=True)
 
             cmd = [rpmbin, '-q', '--qf', qf, pkgspec]
+            if '*' in pkgspec:
+                cmd.append('-a')
             if self.installroot != '/':
                 cmd.extend(['--root', self.installroot])
             # rpm localizes messages and we're screen scraping so make sure we use
