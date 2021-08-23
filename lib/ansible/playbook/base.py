@@ -856,7 +856,7 @@ class Base(FieldAttributeBase):
     DEPRECATED_ATTRIBUTES = []
 
     def get_path(self):
-        ''' return the absolute path of the playbook object and it's line number '''
+        ''' return the absolute path of the playbook object and its line number '''
 
         path = ""
         try:
