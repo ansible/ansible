@@ -180,8 +180,8 @@ def main():
         check_delegation_args(config)
         configure_timeout(config)
 
-        display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
-        display.info('MAXFD: %d' % MAXFD, verbosity=2)
+        display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=1)
+        display.info('MAXFD: %d' % MAXFD, verbosity=1)
 
         try:
             configure_pypi_proxy(config)
