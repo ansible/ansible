@@ -522,3 +522,9 @@ ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password
 ansible-playbook -v "$@" --vault-password-file vault-password test_dangling_temp.yml
 
 ansible-playbook "$@" --vault-password-file vault-password single_vault_as_string.yml
+
+# Test that only one accessible vault password is required
+touch "${MYTMPDIR}/unreadable"
+sudo chmod 000 "${MYTMPDIR}/unreadable"
+ANSIBLE_VAULT_IDENTITY_LIST="id1@./nonexistent, id2@${MYTMPDIR}/unreadable, id3@./vault-password" ansible-vault encrypt_string content
+[ "$?" -eq 0 ]

@@ -218,15 +218,15 @@ class CLI(with_metaclass(ABCMeta, object)):
                 display.warning('Error getting secret from vault password file (%s): %s' % (vault_id_name, to_text(exc)))
                 last_exception = exc
                 continue
-            found_vault_secret = True
 
-            # an invalid password file will error globally
             try:
                 file_vault_secret.load()
             except AnsibleError as exc:
                 display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, to_text(exc)))
-                raise
+                last_exception = exc
+                continue
 
+            found_vault_secret = True
             if vault_id_name:
                 vault_secrets.append((vault_id_name, file_vault_secret))
             else:
@@ -235,7 +235,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
 
-        # No valid vault secrets and at least one error
+        # An invalid or missing password file will error globally
+        # if no valid vault secret was found.
         if last_exception and not found_vault_secret:
             raise last_exception
 
