@@ -10,5 +10,25 @@
       - "'ansible_test.collection_1' in installed_collections.stdout"
       - "'ansible_test.collection_2' in installed_collections.stdout"
 
+- name: check if the files and folders in build_ignore were respected
+  stat:
+    path: "{{ galaxy_dir }}/ansible_collections/ansible_test/collection_1/{{ item }}"
+  register: result
+  loop:
+    - foo.txt
+    - foobar/baz.txt
+    - foobar/qux
+
+- assert:
+    that: result.results | map(attribute='stat') | map(attribute='exists') is not any
+
+- name: check that directory with ignored files exists and is empty
+  stat:
+    path: "{{ galaxy_dir }}/ansible_collections/ansible_test/collection_1/foobar"
+  register: result
+
+- assert:
+    that: result.stat.exists is True
+
 - include_tasks: ./empty_installed_collections.yml
   when: cleanup

@@ -12,11 +12,31 @@
     - 'ansible_test.collection_1'
     - 'ansible_test.collection_2'
 
+- name: create extra files and folders to test build_ignore
+  file:
+    path: '{{ galaxy_dir }}/development/ansible_test/collection_1/{{ item.name }}'
+    state: '{{ item.state }}'
+  loop:
+    - name: foo.txt
+      state: touch
+    - name: foobar
+      state: directory
+    - name: foobar/qux
+      state: directory
+    - name: foobar/baz.txt
+      state: touch
+
 - name: Add collection_2 as a dependency of collection_1
   lineinfile:
     path: '{{ galaxy_dir }}/development/ansible_test/collection_1/galaxy.yml'
     regexp: '^dependencies'
     line: "dependencies: {'git+file://{{ galaxy_dir }}/development/ansible_test/.git#collection_2/': '*'}"
+
+- name: Ignore a directory and files
+  lineinfile:
+    path: '{{ galaxy_dir }}/development/ansible_test/collection_1/galaxy.yml'
+    regexp: '^build_ignore'
+    line: "build_ignore: ['foo.txt', 'foobar/*']"
 
 - name: Commit the changes
   command: '{{ item }}'
