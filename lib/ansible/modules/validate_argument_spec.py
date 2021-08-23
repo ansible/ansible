@@ -38,17 +38,17 @@ EXAMPLES = r'''
             description: stuff
             type: str
             choices: ['who', 'knows', 'what']
-            default: what 
+            default: what
         but:
             description: i guess we need one
             type: str
             required: true
-   ...
+
 
 - name: verify vars needed for this task file are present when included, with spec from a spec file
   validate_argument_spec:
         argument_spec: "{{lookup('file', 'myargspec.yml')['specname']['options']}}"
-   ...
+
 
 - name: verify vars needed for next include and not from inside it, also with params i'll only define there
   block:
@@ -61,7 +61,6 @@ EXAMPLES = r'''
       vars:
         stuff: knows
         but: nobuts!
-    ...
 '''
 
 RETURN = r'''
