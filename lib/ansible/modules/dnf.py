@@ -528,7 +528,8 @@ class DnfModule(YumDnf):
         return rc
 
     def _ensure_dnf(self):
-        os.environ['LC_ALL'] = get_best_parsable_locale(self.module)
+        locale = get_best_parsable_locale(self.module)
+        os.environ['LC_ALL'] = os.environ['LC_MESSAGES'] = os.environ['LANG'] = locale
 
         global dnf
         try:
