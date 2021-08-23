@@ -147,7 +147,13 @@ class PlaybookCLI(CLI):
                         pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
                         loader.set_basedir(pb_dir)
 
-                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
+                    # show host list if we were able to template into a list
+                    try:
+                        host_list = ','.join(play.hosts)
+                    except TypeError:
+                        host_list = ''
+
+                    msg = "\n  play #%d (%s): %s" % (idx + 1, host_list, play.name)
                     mytags = set(play.tags)
                     msg += '\tTAGS: [%s]' % (','.join(mytags))
 
