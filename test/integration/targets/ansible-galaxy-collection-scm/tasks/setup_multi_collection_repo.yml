@@ -23,6 +23,8 @@
       state: directory
     - name: foobar/qux
       state: directory
+    - name: foobar/qux/.keep
+      state: touch
     - name: foobar/baz.txt
       state: touch
 

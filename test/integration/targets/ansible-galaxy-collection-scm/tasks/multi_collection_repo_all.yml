@@ -28,7 +28,7 @@
   register: result
 
 - assert:
-    that: result.stat.exists is True
+    that: result.stat.exists
 
 - include_tasks: ./empty_installed_collections.yml
   when: cleanup
