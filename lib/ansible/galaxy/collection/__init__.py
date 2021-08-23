@@ -994,7 +994,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         os.chmod(b_path, 0o0644)
 
     base_directories = []
-    for file_info in file_manifest['files']:
+    for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
         if file_info['name'] == '.':
             continue
 
@@ -1010,7 +1010,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         if os.path.isdir(src_file):
             mode = 0o0755
             base_directories.append(src_file)
-            shutil.copytree(src_file, dest_file)
+            os.mkdir(dest_file, mode)
         else:
             shutil.copyfile(src_file, dest_file)
 
