@@ -74,8 +74,6 @@ options:
     - The command is passed securely so shell features like expansion and pipes won't work.
     type: str
     version_added: '2.0'
-extends_documentation_fragment:
-- action_common_attributes
 attributes:
     action:
       support: full
@@ -93,6 +91,7 @@ seealso:
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
+- action_common_attributes
 - decrypt
 - files
 '''
