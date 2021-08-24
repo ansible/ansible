@@ -78,7 +78,7 @@ attributes:
     action:
       support: full
     async:
-      support: false
+      support: none
     safe_file_operations:
       support: full
     vault:
