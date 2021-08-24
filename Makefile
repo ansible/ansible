@@ -299,7 +299,7 @@ linkcheckdocs:
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
-	$(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
+	$(PYTHON) $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 
 docs: generate_rst
