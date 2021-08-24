@@ -713,10 +713,15 @@
         list: dinginessentail*
       register: list_out
 
+    - set_fact:
+        passed: true
+      loop: "{{ list_out.results }}"
+      when: item.yumstate == 'installed'
+
     - name: Test that there is yumstate=installed in the result
       assert:
         that:
-          - list_out.results | map(attribute='yumstate') is contains('installed')
+          - passed is defined
   always:
     - name: Clean up
       yum:
