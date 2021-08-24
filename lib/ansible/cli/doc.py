@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import datetime
 import json
 import pkgutil
 import os
@@ -23,7 +24,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
@@ -37,6 +38,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
     REJECTLIST,
+    remove_current_collection_from_versions_and_dates,
     get_docstring,
     get_versioned_doclink,
 )
@@ -327,13 +329,6 @@ class RoleMixin(object):
         return result
 
 
-def _doclink(url):
-    # assume that if it is relative, it is for docsite, ignore rest
-    if not url.startswith(("http", "..")):
-        url = get_versioned_doclink(url)
-    return url
-
-
 class DocCLI(CLI, RoleMixin):
     ''' displays information on modules installed in Ansible libraries.
         It displays a terse listing of plugins and their short descriptions,
@@ -372,6 +367,8 @@ class DocCLI(CLI, RoleMixin):
         t = cls._ITALIC.sub(r"`\1'", text)    # I(word) => `word'
         t = cls._BOLD.sub(r"*\1*", t)         # B(word) => *word*
         t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
+        t = cls._URL.sub(r"\1", t)                      # U(word) => word
+        t = cls._LINK.sub(r"\1 <\2>", t)                # L(word, url) => word <url>
         t = cls._REF.sub(r"\1", t)            # R(word, sphinx-ref) => word
         t = cls._CONST.sub(r"`\1'", t)        # C(word) => `word'
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
@@ -381,12 +378,6 @@ class DocCLI(CLI, RoleMixin):
         t = cls._RST_NOTE.sub(r"Note:", t)                 # .. note:: to note:
         t = cls._RST_ROLES.sub(r"website for `", t)        # remove :ref: and other tags
         t = cls._RST_DIRECTIVES.sub(r"", t)                # remove .. stuff:: in general
-
-        # handle docsite refs
-        # U(word) => word
-        t = re.sub(cls._URL, lambda m: r"%s" % _doclink(m.group(1)), t)
-        # L(word, url) => word <url>
-        t = re.sub(cls._LINK, lambda m: r"%s <%s>" % (m.group(1), _doclink(m.group(2))), t)
 
         return t
 
