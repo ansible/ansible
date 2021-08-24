@@ -333,7 +333,8 @@ class DocCLI(CLI, RoleMixin):
         and it can create a short "snippet" which can be pasted into a playbook.  '''
 
     # default ignore list for detailed views
-    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection', 'attributes')
+    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection' )
+    JSON_IGNORE = ('attributes',)
 
     # Warning: If you add more elements here, you also need to add it to the docsite build (in the
     # ansible-community/antsibull repo)
@@ -686,6 +687,12 @@ class DocCLI(CLI, RoleMixin):
                 docs = self._get_plugins_docs(plugin_type, loader)
 
         if do_json:
+            for entry in docs.keys():
+                for forbid in DocCLI.JSON_IGNORE:
+                    try:
+                        del docs[entry]['doc'][forbid]
+                    except KeyError:
+                        pass
             jdump(docs)
         else:
             text = []
