@@ -31,7 +31,7 @@ options:
       - This boolean converts the variable into an actual 'fact' which will also be added to the fact cache, if fact caching is enabled.
       - Normally this module creates 'host level variables' and has much higher precedence, this option changes the nature and precedence
         (by 7 steps) of the variable created.
-        U(user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable)
+        U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable)
       - "This actually creates 2 copies of the variable, a normal 'set_fact' host variable with high precedence and
         a lower 'ansible_fact' one that is available for persistance via the facts cache plugin.
         This creates a possibly confusing interaction with C(meta: clear_facts) as it will remove the 'ansible_fact' but not the host variable."
