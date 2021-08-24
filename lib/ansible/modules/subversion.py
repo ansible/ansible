@@ -93,7 +93,7 @@ options:
     type: bool
   validate_certs:
     description:
-      - If C(no), passes the C(--trust-server-cert) flag to svn.
+      - If C(no), passes the C(--trust-server-cert-failures=unknown-ca,cn-mismatch,other) flag to svn.
       - If C(yes), does not pass the flag.
     default: "no"
     version_added: "2.11"
@@ -163,7 +163,7 @@ class Subversion(object):
             '--no-auth-cache',
         ]
         if not self.validate_certs:
-            bits.append('--trust-server-cert')
+            bits.append('--trust-server-cert-failures=unknown-ca,cn-mismatch,other')
         stdin_data = None
         if self.username:
             bits.extend(["--username", self.username])
