@@ -188,6 +188,14 @@ options:
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
+    - action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
      - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 seealso:

@@ -34,8 +34,17 @@ options:
       - |
         Supplying a file name via free-form C(- include_tasks: file.yml) of a file to be included is the equivalent
         of specifying an argument of I(file).
-notes:
-  - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+    - action_core.include
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
 seealso:
 - module: ansible.builtin.import_playbook
 - module: ansible.builtin.import_role

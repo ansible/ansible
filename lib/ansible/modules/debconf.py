@@ -16,6 +16,16 @@ description:
      - Configure a .deb package using debconf-set-selections.
      - Or just query existing selections.
 version_added: "1.6"
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        support: full
+        platforms: debian
 notes:
     - This module requires the command line debconf tools.
     - A number of questions have to be answered (depending on the package).
@@ -23,7 +33,6 @@ notes:
       installed to see questions/settings available.
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
     - It is highly recommended to add I(no_log=True) to task while handling sensitive information using this module.
-    - Supports C(check_mode).
 requirements:
 - debconf
 - debconf-utils

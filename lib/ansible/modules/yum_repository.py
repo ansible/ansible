@@ -356,8 +356,15 @@ options:
     type: str
 
 extends_documentation_fragment:
-  - files
-
+    - action_common_attributes
+    - files
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: rhel
 notes:
   - All comments will be removed if modifying an existing repo file.
   - Section order is preserved in an existing repo file.
