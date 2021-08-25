@@ -1049,9 +1049,13 @@ class User(object):
         return info
 
     def set_password_expire(self):
-        shadow_info = spwd.getspnam(self)
-        min_needs_change = self.password_expire_min is not None and self.password_expire_min != shadow_info.sp_min
-        max_needs_change = self.password_expire_max is not None and self.password_expire_max != shadow_info.sp_max
+        min_needs_change = self.password_expire_min is not None
+        max_needs_change = self.password_expire_max is not None
+
+        if HAVE_SPWD:
+            shadow_info = spwd.getspnam(self.name)
+            min_needs_change &= self.password_expire_min != shadow_info.sp_min
+            max_needs_change &= self.password_expire_max != shadow_info.sp_max
 
         if not (min_needs_change or max_needs_change):
             return (None, '', '')  # target state already reached
@@ -1059,9 +1063,9 @@ class User(object):
         command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
         if min_needs_change:
-            cmd.extend(["-m", min])
+            cmd.extend(["-m", self.password_expire_min])
         if max_needs_change:
-            cmd.extend(["-M", max])
+            cmd.extend(["-M", self.password_expire_max])
         cmd.append(self.name)
 
         return self.execute_command(cmd)
