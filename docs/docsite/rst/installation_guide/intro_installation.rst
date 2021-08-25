@@ -288,13 +288,42 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 Installing Ansible on Debian
 ----------------------------
 
-Debian users may use the same source as the Ubuntu PPA.
+Debian users may use the same source as the Ubuntu PPA (using the following table).
 
-Add the following line to ``/etc/apt/sources.list``:
+.. list-table::
+  :header-rows: 1
+
+  * - Debian
+    - 
+    - Ubuntu
+  * - Debian 11 (Bullseye)
+    - ->
+    - Ubuntu 20.04 (Focal)
+  * - Debian 10 (Buster)
+    - ->
+    - Ubuntu 18.04 (Bionic)
+  * - Debian 9 (Stretch)
+    - ->
+    - Ubuntu 16.04 (Xenial)
+  * - Debian 8 (Jessie)
+    - ->
+    - Ubuntu 14.04 (Trusty)
+    
+.. note::
+
+    As of Ansible 4.0.0, new releases will only be generated for Ubuntu 18.04 (Bionic) or later releases.
+
+Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d/ansible.list``:
 
 .. code-block:: bash
 
-    deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main
+    deb http://ppa.launchpad.net/ansible/ansible/ubuntu MATCHING_UBUNTU_CODENAME_HERE main
+    
+Example for Debian 11 (Bullseye)
+
+.. code-block:: bash
+
+    deb http://ppa.launchpad.net/ansible/ansible/ubuntu focal main
 
 Then run these commands:
 
@@ -303,8 +332,6 @@ Then run these commands:
     $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
     $ sudo apt update
     $ sudo apt install ansible
-
-.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
 Installing Ansible on Gentoo with portage
 -----------------------------------------
