@@ -1,2 +1,2 @@
 minor_changes:
-  - subversion - Now ``validate_certs`` option append ``--trust-server-cert-failures=unknown-ca,cn-mismatch,other`` instead of ``--trust-server-cert``
+  - subversion - Now ``validate_certs`` option append ``--trust-server-cert-failures=unknown-ca,cn-mismatch,other`` for svn 1.9 or later, use ``--trust-server-cert`` for older versions.
