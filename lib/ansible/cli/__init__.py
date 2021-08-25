@@ -215,7 +215,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                                                           vault_id=vault_id_name,
                                                           loader=loader)
             except AnsibleError as exc:
-                display.warning('Error getting secret from vault password file (%s): %s' % (vault_id_name, to_text(exc)))
+                display.warning('Error getting vault password file (%s): %s' % (vault_id_name, to_text(exc)))
                 last_exception = exc
                 continue
 
