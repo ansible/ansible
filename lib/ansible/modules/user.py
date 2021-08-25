@@ -1048,27 +1048,23 @@ class User(object):
             info[1] = self.user_password()[0]
         return info
 
-    def set_password_expire_max(self):
-        command_name = 'chage'
-        cmd = [self.module.get_bin_path(command_name, True)]
-        cmd.append('-M')
-        cmd.append(self.password_expire_max)
-        cmd.append(self.name)
-        if self.password_expire_max == spwd.getspnam(self.name).sp_max:
-            return (None, '', '')
-        else:
-            return self.execute_command(cmd)
+    def set_password_expire(self):
+        shadow_info = spwd.getspnam(self)
+        min_needs_change = self.password_expire_min is not None and self.password_expire_min != shadow_info.sp_min
+        max_needs_change = self.password_expire_max is not None and self.password_expire_max != shadow_info.sp_max
 
-    def set_password_expire_min(self):
+        if not (min_needs_change or max_needs_change):
+            return (None, '', '')  # target state already reached
+
         command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
-        cmd.append('-m')
-        cmd.append(self.password_expire_min)
+        if min_needs_change:
+            cmd.extend(["-m", min])
+        if max_needs_change:
+            cmd.extend(["-M", max])
         cmd.append(self.name)
-        if self.password_expire_min == spwd.getspnam(self.name).sp_min:
-            return (None, '', '')
-        else:
-            return self.execute_command(cmd)
+
+        return self.execute_command(cmd)
 
     def user_password(self):
         passwd = ''
@@ -3205,20 +3201,14 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 
-        def _handle_set_password_expire_return(command_return):
-            (rc, out, err) = command_return
-            if rc is None:
-                pass  # target state reached, nothing to do
+        (rc, out, err) = user.set_password_expire()
+        if rc is None:
+            pass  # target state reached, nothing to do
+        else:
+            if rc != 0:
+                module.fail_json(name=user.name, msg=err, rc=rc)
             else:
-                if rc != 0:
-                    module.fail_json(name=user.name, msg=err, rc=rc)
-                else:
-                    result['changed'] = True
-
-        if user.password_expire_max is not None:
-            _handle_set_password_expire_return(user.set_password_expire_max())
-        if user.password_expire_min is not None:
-            _handle_set_password_expire_return(user.set_password_expire_min())
+                result['changed'] = True
 
     module.exit_json(**result)
 
