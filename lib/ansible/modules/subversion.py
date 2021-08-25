@@ -93,7 +93,8 @@ options:
     type: bool
   validate_certs:
     description:
-      - If C(no), passes the C(--trust-server-cert-failures=unknown-ca,cn-mismatch,othert) flag for svn 1.9 and later, for older version pass C(--trust-server-cert) flag.
+      - If C(no), passes the C(--trust-server-cert-failures=unknown-ca,cn-mismatch,othert) flag for svn 1.9 and later, 
+        for older version pass C(--trust-server-cert) flag.
       - If C(yes), does not pass the flag.
     default: "no"
     version_added: "2.11"
