@@ -311,7 +311,7 @@ Debian users may use the same source as the Ubuntu PPA (using the following tabl
     
 .. note::
 
-    As of Ansible 4.0.0, new releases will only be generated for >= Ubuntu 18.04 (Bionic).
+    As of Ansible 4.0.0, new releases will only be generated for Ubuntu 18.04 (Bionic) or later releases.
 
 Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d/ansible.list``:
 
