@@ -93,7 +93,7 @@ options:
     type: bool
   validate_certs:
     description:
-      - If C(no), passes the C(--trust-server-cert-failures=unknown-ca,cn-mismatch,other) flag to svn.
+      - If C(no), passes the C(--trust-server-cert-failures=unknown-ca,cn-mismatch,othert) flag for svn 1.9 and later, for older version pass C(--trust-server-cert) flag.
       - If C(yes), does not pass the flag.
     default: "no"
     version_added: "2.11"
@@ -155,6 +155,10 @@ class Subversion(object):
         rc, version, err = self.module.run_command([self.svn_path, '--version', '--quiet'], check_rc=True)
         return LooseVersion(version) >= LooseVersion('1.10.0')
 
+    def has_trust_server_cert_failures(self):
+        rc, version, err = self.module.run_command([self.svn_path, '--version', '--quiet'], check_rc=True)
+        return LooseVersion(version) >= LooseVersion('1.9.0')
+
     def _exec(self, args, check_rc=True):
         '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
         bits = [
@@ -163,7 +167,10 @@ class Subversion(object):
             '--no-auth-cache',
         ]
         if not self.validate_certs:
-            bits.append('--trust-server-cert-failures=unknown-ca,cn-mismatch,other')
+            if self.has_trust_server_cert_failures():
+                bits.append('--trust-server-cert-failures=unknown-ca,cn-mismatch,other')
+            else:
+                bits.append('--trust-server-cert')
         stdin_data = None
         if self.username:
             bits.extend(["--username", self.username])
