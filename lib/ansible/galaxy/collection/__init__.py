@@ -1001,9 +1001,6 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         src_file = os.path.join(b_collection_path, to_bytes(file_info['name'], errors='surrogate_or_strict'))
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
-        if any(src_file.startswith(directory) for directory in base_directories):
-            continue
-
         existing_is_exec = os.stat(src_file).st_mode & stat.S_IXUSR
         mode = 0o0755 if existing_is_exec else 0o0644
 
