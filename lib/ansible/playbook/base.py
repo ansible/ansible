@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import itertools
 import operator
+import os
 
 from copy import copy as shallowcopy
 from functools import partial
@@ -378,7 +379,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     validated_defaults_dict[defaults_entry] = defaults
 
                 else:
-                    action_names = []
                     if len(defaults_entry.split('.')) < 3:
                         defaults_entry = 'ansible.legacy.' + defaults_entry
 
@@ -854,3 +854,42 @@ class Base(FieldAttributeBase):
 
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []
+
+    def get_path(self):
+        ''' return the absolute path of the playbook object and its line number '''
+
+        path = ""
+        try:
+            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        except AttributeError:
+            try:
+                path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
+            except AttributeError:
+                pass
+        return path
+
+    def get_dep_chain(self):
+
+        if hasattr(self, '_parent') and self._parent:
+            return self._parent.get_dep_chain()
+        else:
+            return None
+
+    def get_search_path(self):
+        '''
+        Return the list of paths you should search for files, in order.
+        This follows role/playbook dependency chain.
+        '''
+        path_stack = []
+
+        dep_chain = self.get_dep_chain()
+        # inside role: add the dependency chain from current to dependent
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain if hasattr(x, '_role_path')]))
+
+        # add path of task itself, unless it is already in the list
+        task_dir = os.path.dirname(self.get_path())
+        if task_dir not in path_stack:
+            path_stack.append(task_dir)
+
+        return path_stack
