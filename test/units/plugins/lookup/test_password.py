@@ -521,3 +521,48 @@ class TestLookupModuleWithPasslib(BaseTestLookupModule):
             results = self.password_lookup.run([u'/path/to/somewhere chars=anything encrypt=pbkdf2_sha256'], None)
         for result in results:
             self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')
+
+
+@pytest.mark.skipif(passlib is None, reason='passlib must be installed to run these tests')
+class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
+    def setUp(self):
+        super(TestLookupModuleWithPasslibWrappedAlgo, self).setUp()
+        self.os_path_exists = password.os.path.exists
+
+    def tearDown(self):
+        super(TestLookupModuleWithPasslibWrappedAlgo, self).tearDown()
+        password.os.path.exists = self.os_path_exists
+
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_encrypt_wrapped_crypt_algo(self, mock_write_file):
+
+        password.os.path.exists = self.password_lookup._loader.path_exists
+        with patch.object(builtins, 'open', mock_open(read_data=self.password_lookup._loader._get_file_contents('/path/to/somewhere')[0])) as m:
+            results = self.password_lookup.run([u'/path/to/somewhere encrypt=ldap_sha256_crypt'], None)
+
+            wrapper = getattr(passlib.hash, 'ldap_sha256_crypt')
+
+            self.assertEqual(len(results), 1)
+            result = results[0]
+            self.assertIsInstance(result, text_type)
+
+            expected_password_length = 76
+            self.assertEqual(len(result), expected_password_length)
+
+            # result should have 5 parts split by '$'
+            str_parts = result.split('$')
+            self.assertEqual(len(str_parts), 5)
+
+            # verify the string and passlib agree on the number of rounds
+            self.assertEqual(str_parts[2], "rounds=%s" % wrapper.default_rounds)
+
+            # verify it used the right algo type
+            self.assertEqual(str_parts[0], '{CRYPT}')
+
+            # verify it used the right algo type
+            self.assertTrue(wrapper.verify(self.password_lookup._loader._get_file_contents('/path/to/somewhere')[0], result))
+
+            # verify a password with a non default rounds value
+            # generated with: echo test | mkpasswd -s --rounds 660000 -m sha-256 --salt testansiblepass.
+            hashpw = '{CRYPT}$5$rounds=660000$testansiblepass.$KlRSdA3iFXoPI.dEwh7AixiXW3EtCkLrlQvlYA2sluD'
+            self.assertTrue(wrapper.verify('test', hashpw))

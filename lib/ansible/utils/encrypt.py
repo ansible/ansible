@@ -23,7 +23,7 @@ HAS_CRYPT = PASSLIB_AVAILABLE = False
 try:
     import passlib
     import passlib.hash
-    from passlib.utils.handlers import HasRawSalt
+    from passlib.utils.handlers import HasRawSalt, PrefixWrapper
     try:
         from passlib.utils.binary import bcrypt64
     except ImportError:
@@ -194,7 +194,7 @@ class PasslibHash(BaseHash):
     def _clean_salt(self, salt):
         if not salt:
             return None
-        elif issubclass(self.crypt_algo, HasRawSalt):
+        elif issubclass(self.crypt_algo.wrapped if isinstance(self.crypt_algo, PrefixWrapper) else self.crypt_algo, HasRawSalt):
             ret = to_bytes(salt, encoding='ascii', errors='strict')
         else:
             ret = to_text(salt, encoding='ascii', errors='strict')
