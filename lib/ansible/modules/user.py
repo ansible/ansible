@@ -821,7 +821,7 @@ class User(object):
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
-                cmd.append(self.group)
+                cmd.append(ginfo[2])
 
         if self.groups is not None:
             # get a list of all groups for the user, including the primary
