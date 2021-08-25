@@ -333,7 +333,7 @@ class DocCLI(CLI, RoleMixin):
         and it can create a short "snippet" which can be pasted into a playbook.  '''
 
     # default ignore list for detailed views
-    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
+    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection', 'attributes')
     JSON_IGNORE = ('attributes',)
 
     # Warning: If you add more elements here, you also need to add it to the docsite build (in the
