@@ -355,7 +355,10 @@ class VariableManager:
                                     "a list of string types after template expansion" % vars_file
                                 )
                             try:
-                                data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
+                                play_search_stack = play.get_search_path()
+                                found_file = real_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
+                                decrypted_file = self._loader.get_real_file(found_file)
+                                data = preprocess_vars(self._loader.load_from_file(decrypted_file, unsafe=True))
                                 if data is not None:
                                     for item in data:
                                         all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)

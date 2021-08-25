@@ -411,7 +411,7 @@ class DataLoader:
         Removes all temporary files that DataLoader has created
         NOTE: not thread safe, forks also need special handling see __init__ for details.
         """
-        for f in self._tempfiles:
+        for f in list(self._tempfiles):
             try:
                 self.cleanup_tmp_file(f)
             except Exception as e:

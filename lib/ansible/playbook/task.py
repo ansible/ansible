@@ -103,16 +103,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         super(Task, self).__init__()
 
-    def get_path(self):
-        ''' return the absolute path of the task with its line number '''
-
-        path = ""
-        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
-            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
-            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
-        return path
-
     def get_name(self, include_role_fqcn=True):
         ''' return the name of the task '''
 
@@ -492,31 +482,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             pass
 
         return value
-
-    def get_dep_chain(self):
-        if self._parent:
-            return self._parent.get_dep_chain()
-        else:
-            return None
-
-    def get_search_path(self):
-        '''
-        Return the list of paths you should search for files, in order.
-        This follows role/playbook dependency chain.
-        '''
-        path_stack = []
-
-        dep_chain = self.get_dep_chain()
-        # inside role: add the dependency chain from current to dependent
-        if dep_chain:
-            path_stack.extend(reversed([x._role_path for x in dep_chain]))
-
-        # add path of task itself, unless it is already in the list
-        task_dir = os.path.dirname(self.get_path())
-        if task_dir not in path_stack:
-            path_stack.append(task_dir)
-
-        return path_stack
 
     def all_parents_static(self):
         if self._parent:
