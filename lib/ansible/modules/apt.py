@@ -175,6 +175,8 @@ extends_documentation_fragment:
 attributes:
     check_mode:
         support: full
+    diff_mode:
+        support: full
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
    - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
