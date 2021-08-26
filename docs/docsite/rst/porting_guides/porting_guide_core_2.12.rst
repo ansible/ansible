@@ -21,13 +21,14 @@ Playbook
 
 * Templating - it is no longer allowed to perform arithmetic and concatenation operations outside of the jinja template. The following statement will need to be rewritten to produce ``[1, 2]``:
 
- .. code-block:: yaml
-     - name: Prior to 2.12
-       debug:
-         msg: '[1] + {{ [2] }}'
-     - name: 2.12 and forward
-       debug:
-         msg: '{{ [1] + [2] }}'
+.. code-block:: yaml
+
+    - name: Prior to 2.12
+      debug:
+        msg: '[1] + {{ [2] }}'
+    - name: 2.12 and forward
+      debug:
+        msg: '{{ [1] + [2] }}'
 
 
 Python Interpreter Discovery
