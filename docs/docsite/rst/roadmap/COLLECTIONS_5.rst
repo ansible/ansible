@@ -26,7 +26,7 @@ Release schedule
 :2021-11-02: Ansible-5.0.0 alpha3.
 :2021-11-08: Ansible-core-2.12 released.
 :2021-11-08: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-5.
-:2021-11-09: Create the ansible-build-data directory and files for Ansible-6; new collection approvals will target this.
+:2021-11-09: Create the ansible-build-data directory and files for Ansible-6. New collection approvals will target this.
 :2021-11-09: Ansible-5.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
 :2021-11-16: Ansible-5.0.0 beta2.
 :2021-11-23: Ansible-5.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
