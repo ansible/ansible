@@ -58,7 +58,6 @@ from ansible.module_utils.common._collections_compat import Iterator, Sequence, 
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
-from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -874,18 +873,24 @@ class Templar:
                 disable_lookups=disable_lookups,
             )
 
-            if not self.jinja2_native:
-                unsafe = hasattr(result, '__UNSAFE__')
-                if convert_data and not self._no_type_regex.match(variable):
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                            result.startswith("[") or result in ("True", "False"):
-                        eval_results = safe_eval(result, include_exceptions=True)
-                        if eval_results[1] is None:
-                            result = eval_results[0]
-                            if unsafe:
-                                result = wrap_var(result)
-                        # FIXME: if the safe_eval raised an error, should we do something with it?
+            if not self.jinja2_native and convert_data and not self._no_type_regex.match(variable):
+                # if this looks like a dictionary, list or bool, convert it to such
+                do_eval = (
+                    (
+                        result.startswith(('{', '[')) and
+                        not result.startswith(self.environment.variable_start_string)
+                    ) or
+                    result in ('True', 'False')
+                )
+                if do_eval:
+                    unsafe = hasattr(result, '__UNSAFE__')
+                    try:
+                        result = ast.literal_eval(result)
+                    except (ValueError, SyntaxError, MemoryError):
+                        pass
+                    else:
+                        if unsafe:
+                            result = wrap_var(result)
 
             # we only cache in the case where we have a single variable
             # name, to make sure we're not putting things which may otherwise
