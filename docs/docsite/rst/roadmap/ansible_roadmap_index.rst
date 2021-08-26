@@ -24,6 +24,7 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
    :caption: Ansible Release Roadmaps
 
    COLLECTIONS_4
+   COLLECTIONS_5
    COLLECTIONS_3_0
    COLLECTIONS_2_10
    old_roadmap_index
