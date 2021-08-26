@@ -1,0 +1,2 @@
+breaking_changes:
+ - Templating - it is no longer allowed to perform arithmetic and concatenation operations outside of the jinja template (https://github.com/ansible/ansible/pull/75574)
