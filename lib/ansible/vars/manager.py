@@ -440,7 +440,7 @@ class VariableManager:
         # if we have a host and task and we're delegating to another host,
         # figure out the variables for that host now so we don't have to rely on host vars later
         if task and host and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'], all_vars['ansible_delegated_host'] = self._get_delegated_vars(play, task, all_vars)
 
         display.debug("done with get_vars()")
         if C.DEFAULT_DEBUG:
@@ -641,7 +641,6 @@ class VariableManager:
                 include_hostvars=True,
             )
             delegated_host_vars[delegated_host_name]['inventory_hostname'] = vars_copy.get('inventory_hostname')
-            delegated_host_vars[delegated_host_name]['ansible_delegated_host'] = delegated_host_name
 
         _ansible_loop_cache = None
         if has_loop and cache_items:
@@ -651,7 +650,7 @@ class VariableManager:
             # which may reprocess the loop
             _ansible_loop_cache = items
 
-        return delegated_host_vars, _ansible_loop_cache
+        return delegated_host_vars, _ansible_loop_cache, delegated_host_name
 
     def clear_facts(self, hostname):
         '''
