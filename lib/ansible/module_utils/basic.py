@@ -350,7 +350,7 @@ def heuristic_log_sanitize(data, no_log_values=None):
                 if begin == 0:
                     # Searched the whole string so there's no password
                     # here.  Return the remaining data
-                    output.insert(0, data[0:begin])
+                    output.insert(0, data[0:prev_begin])
                     break
                 # Search for a different beginning of the password field.
                 sep_search_end = begin

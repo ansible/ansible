@@ -1,0 +1,3 @@
+bugfixes:
+- >
+  ``heuristic_log_sanitize`` - Return the full string if there is no password (https://github.com/ansible/ansible/issues/75542)
