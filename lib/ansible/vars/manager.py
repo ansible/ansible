@@ -641,6 +641,7 @@ class VariableManager:
                 include_hostvars=True,
             )
             delegated_host_vars[delegated_host_name]['inventory_hostname'] = vars_copy.get('inventory_hostname')
+            delegated_host_vars[delegated_host_name]['ansible_delegated_host'] = delegated_host_name
 
         _ansible_loop_cache = None
         if has_loop and cache_items:

@@ -1,0 +1,2 @@
+minor_changes:
+  - add ansible_delegated_host to reflect the 'inventory_hostname' of the host you delegate to.
