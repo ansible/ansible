@@ -440,7 +440,8 @@ class VariableManager:
         # if we have a host and task and we're delegating to another host,
         # figure out the variables for that host now so we don't have to rely on host vars later
         if task and host and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'], all_vars['ansible_delegated_host'] = self._get_delegated_vars(play, task, all_vars)
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'], all_vars['ansible_delegated_host'] = \
+                self._get_delegated_vars(play, task, all_vars)
 
         display.debug("done with get_vars()")
         if C.DEFAULT_DEBUG:
