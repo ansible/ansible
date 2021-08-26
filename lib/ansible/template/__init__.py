@@ -51,7 +51,7 @@ from ansible.errors import (
     AnsiblePluginRemovedError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import iteritems, string_types, text_type
+from ansible.module_utils.six import iteritems, string_types, text_type, PY2
 from ansible.module_utils.six.moves import range
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Iterator, Sequence, Mapping, MappingView, MutableMapping
@@ -119,7 +119,10 @@ class Json2Python(ast.NodeTransformer):
     def visit_Name(self, node):
         if node.id not in _JSON_MAP:
             return node
-        return ast.Constant(value=_JSON_MAP[node.id])
+        if PY2:
+            return ast.Name(id=to_text(_JSON_MAP[node.id]))
+        else:
+            return ast.Constant(value=_JSON_MAP[node.id])
 
 
 def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
