@@ -435,8 +435,8 @@ def extract(environment, item, container, morekeys=None):
 def do_groupby(environment, value, attribute):
     """Overridden groupby filter for jinja2, to address an issue with
     jinja2>=2.9.0,<2.9.5 where a namedtuple was returned which
-    has repr that prevents ansible.template.safe_eval.safe_eval from being
-    able to parse and eval the data.
+    has repr that prevents literal_eval from being able to parse and eval
+    the data.
 
     jinja2<2.9.0,>=2.9.5 is not affected, as <2.9.0 uses a tuple, and
     >=2.9.5 uses a standard tuple repr on the namedtuple.
