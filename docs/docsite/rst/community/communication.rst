@@ -39,10 +39,12 @@ For real-time interactions, conversations in the Ansible community happen over t
 Ansible community on Matrix
 ---------------------------
 
-The Ansible community maintains its own Matrix homeserver at ``ansible.im``. To join the community using Matrix, you need two things:
+To join the community using Matrix, you need two things:
 
-* a Matrix account (from matrix.org or any other Matrix homeserver)
+* a Matrix account (from `Matrix.org <https://app.element.io>`_ or any other Matrix homeserver)
 * a `Matrix client <https://matrix.org/clients/>`_ (we recommend `Element Webchat <https://app.element.io>`_)
+
+The Ansible community maintains its own Matrix homeserver at ``ansible.im``, however public registration is currently unavailable. 
 
 Matrix chat supports:
 
@@ -53,6 +55,8 @@ Matrix chat supports:
 * bridging to IRC
 * no line limits
 * images
+
+The room links in the list below will take you directly to the relevant rooms.
 
 Ansible community on IRC
 ------------------------
@@ -67,7 +71,7 @@ IRC chat supports:
 * simple text interface
 * bridging from Matrix
 
-Our IRC channels may require you to register your IRC nickname. If you receive an error when you connect, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions. To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client::
+Our IRC channels may require you to register your IRC nickname. If you receive an error when you connect or when posting a message, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions. To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client::
 
    /msg alis LIST #ansible* -min 5
 
@@ -76,10 +80,13 @@ as described in the `libera.chat docs <https://libera.chat/guides/findingchannel
 General channels
 ----------------
 
-- ``#ansible`` - For general use questions and support.
-- ``#ansible-devel`` - For discussions on developer topics and code related to features or bugs.
-- ``#ansible-community`` - For discussions on community and collections related topics.
-- ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
+The clickable links will take you directly to the relevant Matrix room in your browser; room/channel information is also given for use in other clients:
+
+- `General usage and support questions <https://matrix.to:/#/#users:ansible.im>`_ - ``Matrix: #users:ansible.im | IRC: #ansible``
+- `Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.im>`_ - ``Matrix: #devel:ansible.im | IRC: #ansible-devel``
+- `Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.im>`_ - ``Matrix: #community:ansible.im | IRC: #ansible-community``
+- `For public community meetings <https://matrix.to/#/#meeting:ansible.im>`_ - ``Matrix: #meeting:ansible.im | IRC: #ansible-meeting``
+   - We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 .. _working_group_list:
 
