@@ -17,7 +17,7 @@
           - matching_files.matched == 1
     - name: read the cached inventory
       set_fact:
-        contents: "{{ lookup('file', matching_files.files.0.path) | from_json }}"
+        contents: "{{ lookup('file', matching_files.files.0.path) }}"
 
     - name: extract all the host names
       set_fact:

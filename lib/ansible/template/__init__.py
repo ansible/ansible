@@ -108,6 +108,20 @@ JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_
 RANGE_TYPE = type(range(0))
 
 
+_JSON_MAP = {
+    "true": True,
+    "false": False,
+    "null": None,
+}
+
+
+class Json2Python(ast.NodeTransformer):
+    def visit_Name(self, node):
+        if node.id not in _JSON_MAP:
+            return node
+        return ast.Constant(value=_JSON_MAP[node.id])
+
+
 def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
 
     if fullpath is None:
@@ -885,7 +899,14 @@ class Templar:
                 if do_eval:
                     unsafe = hasattr(result, '__UNSAFE__')
                     try:
-                        result = ast.literal_eval(result)
+                        # FIXME move into ansible_literal_eval and use in ansible_native_concat?
+                        result = ast.literal_eval(
+                            ast.fix_missing_locations(
+                                Json2Python().visit(
+                                    ast.parse(result, mode='eval')
+                                )
+                            )
+                        )
                     except (ValueError, SyntaxError, MemoryError):
                         pass
                     else:
