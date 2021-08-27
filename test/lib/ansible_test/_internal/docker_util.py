@@ -45,7 +45,7 @@ DOCKER_COMMANDS = [
 
 # Max number of open files in a docker container.
 # Passed with --ulimit option to the docker run command.
-MAX_NUM_OPEN_FILES = 2048
+MAX_NUM_OPEN_FILES = 10240
 
 
 class DockerCommand:
