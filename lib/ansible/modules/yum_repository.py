@@ -542,6 +542,7 @@ class YumRepo(object):
 
             # Set the value only if it was defined (default is None)
             if value is not None and key in self.allowed_params:
+              if key == "async" and self.basic.platform.version < 8:
                 self.repofile.set(self.section, key, value)
 
     def save(self):
