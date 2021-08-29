@@ -432,6 +432,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common import sys_info
 
 
 class YumRepo(object):
@@ -542,7 +543,10 @@ class YumRepo(object):
 
             # Set the value only if it was defined (default is None)
             if value is not None and key in self.allowed_params:
-              if key == "async" and self.basic.platform.version < 8:
+              
+              # Apply async param if the redhat version is less than 8 only
+              # https://github.com/ansible/ansible/issues/75364
+              if key == "async" and sys_info.get_distribution_version < 8:
                 self.repofile.set(self.section, key, value)
 
     def save(self):
