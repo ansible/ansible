@@ -36,7 +36,10 @@ You should return errors encountered during plugin execution by raising ``Ansibl
     except Exception as e:
         raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
+Since Ansible evaluates variables only when they are needed, filter and test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
+
 Check the different `AnsibleError objects <https://github.com/ansible/ansible/blob/devel/lib/ansible/errors/__init__.py>`_ and see which one applies best to your situation.
+Check the section on the specific plugin type you're developing for type-specific error handling details.
 
 String encoding
 ===============
@@ -306,6 +309,17 @@ Filter plugins manipulate data. They are a feature of Jinja2 and are also availa
 
 Filter plugins do not use the standard configuration and documentation system described above.
 
+Since Ansible evaluates variables only when they are needed, filter plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
+
+.. code-block:: python
+
+   try:
+       cause_an_exception(with_undefined_variable)
+   except jinja2.exceptions.UndefinedError as e:
+       raise AnsibleUndefinedVariable("Something happened, this was the original exception: %s" % to_native(e))
+   except Exception as e:
+       raise AnsibleFilterError("Something happened, this was the original exception: %s" % to_native(e))
+
 For example filter plugins, see the source code for the `filter plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_.
 
 .. _developing_inventory_plugins:
@@ -432,6 +446,17 @@ Test plugins
 Test plugins verify data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the ``template`` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a ``core.py``. These are specially useful in conjunction with some filter plugins like ``map`` and ``select``; they are also available for conditional directives like ``when:``.
 
 Test plugins do not use the standard configuration and documentation system described above.
+
+Since Ansible evaluates variables only when they are needed, test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
+
+.. code-block:: python
+
+   try:
+       cause_an_exception(with_undefined_variable)
+   except jinja2.exceptions.UndefinedError as e:
+       raise AnsibleUndefinedVariable("Something happened, this was the original exception: %s" % to_native(e))
+   except Exception as e:
+       raise AnsibleFilterError("Something happened, this was the original exception: %s" % to_native(e))
 
 For example test plugins, see the source code for the `test plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/test>`_.
 
