@@ -1,0 +1,2 @@
+bugfixes:
+  - rekey_on_member - handle undefined positional arguments better.

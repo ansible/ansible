@@ -301,6 +301,18 @@
       - rekey_on_member_exc5_res is failed
       - '"is not unique, cannot correctly turn into dict" in rekey_on_member_exc5_res.msg'
 
+- name: test undefined positional args for rekey_on_member are properly handled
+  vars:
+    all_vars: "{{ hostvars[inventory_hostname] }}"
+    test_var: "{{ all_vars.foo }}"
+  block:
+    - include_vars:
+        file: defined_later.yml
+    - assert:
+        that: "test_var == 'test'"
+    - assert:
+        that: "rekeyed == {'value': {'test': 'value'}}"
+
 # TODO: For some reason, the coverage tool isn't accounting for the last test
 # so add another "last test" to fake it...
 - assert:

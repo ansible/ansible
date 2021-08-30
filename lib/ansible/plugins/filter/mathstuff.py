@@ -210,6 +210,9 @@ def rekey_on_member(data, key, duplicates='error'):
 
     new_obj = {}
 
+    # Ensure the positional args are defined - raise jinja2.exceptions.UndefinedError if not
+    bool(data) and bool(key)
+
     if isinstance(data, Mapping):
         iterate_over = data.values()
     elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
