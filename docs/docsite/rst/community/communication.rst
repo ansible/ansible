@@ -109,7 +109,6 @@ Many of our community `Working Groups <https://github.com/ansible/community/wiki
 - `Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - Matrix: `#galaxy:ansible.im <https://matrix.to:/#/#galaxy:ansible.im>`_ | IRC: ``#ansible-galaxy``
 - `JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - Matrix: `#jboss:ansible.im <https://matrix.to:/#/#jboss:ansible.im>`_ | IRC: ``#ansible-jboss``
 - `Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - Matrix: `#kubernetes:ansible.im <https://matrix.to:/#/#kubernetes:ansible.im>`_ | IRC: ``#ansible-kubernetes``
-- `Lightbulb Training <https://github.com/ansible/lightbulb>`_ (Ansible training) - Matrix: `#lightbulb:ansible.im <https://matrix.to:/#/#lightbulb:ansible.im>`_ | IRC: ``#ansible-lightbulb``
 - `Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - Matrix: `#linode:ansible.im <https://matrix.to:/#/#linode:ansible.im>`_ | IRC: ``#ansible-linode``
 - `Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ (`testing platform for Ansible playbooks and roles <https://molecule.readthedocs.io>`_) - Matrix: `#molecule:ansible.im <https://matrix.to:/#/#molecule:ansible.im>`_ | IRC: ``#ansible-molecule``
 - `Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - Matrix: `#network:ansible.im <https://matrix.to:/#/#network:ansible.im>`_ | IRC: ``#ansible-network``
