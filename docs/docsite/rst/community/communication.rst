@@ -123,9 +123,9 @@ Want to `form a new Working Group <https://github.com/ansible/community/blob/mas
 Regional and Language-specific channels
 ---------------------------------------
 
-- Spanish speaking Ansible community - Matrix: `#espanol:ansible.im <https://matrix.to:/#/#espanol:ansible.im>`_ | IRC: ``#ansible-es``
-- French speaking Ansible community - Matrix: `#francais:ansible.im <https://matrix.to:/#/#francais:ansible.im>`_ | IRC: ``#ansible-fr``
-- Zurich/Swiss Ansible community - Matrix: `#suisse:ansible.im <https://matrix.to:/#/#suisse:ansible.im>`_ | IRC: ``#ansible-zh``
+- Comunidad Ansible en español - Matrix: `#espanol:ansible.im <https://matrix.to:/#/#espanol:ansible.im>`_ | IRC: ``#ansible-es``
+- Communauté française d'Ansible - Matrix: `#francais:ansible.im <https://matrix.to:/#/#francais:ansible.im>`_ | IRC: ``#ansible-fr``
+- Communauté suisse d'Ansible - Matrix: `#suisse:ansible.im <https://matrix.to:/#/#suisse:ansible.im>`_ | IRC: ``#ansible-zh``
 - European Ansible Community - Matrix: `#europe:ansible.im <https://matrix.to:/#/#europe:ansible.im>`_ | IRC: ``#ansible-eu``
 
 Meetings on chat
