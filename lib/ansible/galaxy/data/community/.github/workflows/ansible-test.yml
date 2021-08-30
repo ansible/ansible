@@ -1,0 +1,130 @@
+# README FIRST
+# 1. If you don't have unit tests, remove that section.
+# 2. If your collection depends on other collections ensure they are installed,
+#    see "Install collection dependencies".
+# 3. If you need help please ask in #ansible-community on the Libera.chat IRC
+#    network.
+
+name: CI
+on:
+  # Run CI against all pushes (direct commits, also merged PRs), Pull Requests
+  push:
+  pull_request:
+  # Run CI once per day (at 06:00 UTC)
+  # This ensures that even if there haven't been commits that we are still
+  # testing against latest version of ansible-test for each ansible-core
+  # version
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+
+###
+# Sanity tests (REQUIRED)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_sanity.html
+
+  sanity:
+    name: Sanity (Ⓐ${{ matrix.ansible }})
+    strategy:
+      matrix:
+        ansible:
+          # It's important that Sanity is tested against all stable-X.Y branches
+          # Testing against `devel` may fail as new tests are added.
+        # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.10
+          - stable-2.11
+          - devel
+    runs-on: ubuntu-latest
+    steps:
+      # Run `ansible-test sanity` inside of Docker.
+      # The docker container has all the pinned dependencies that are
+      # required and all python versions Ansible supports.
+      - name: Perform sanity testing
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: sanity
+
+###
+# Unit tests (OPTIONAL)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_units.html
+
+  units:
+    runs-on: ubuntu-latest
+    name: Units (Ⓐ${{ matrix.ansible }})
+    strategy:
+      # As soon as the first unit test fails, cancel the others to free up the CI queue
+      fail-fast: true
+      matrix:
+        ansible:
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.10
+          - stable-2.11
+          - devel
+
+    steps:
+      - name: >-
+          Perform unit testing against
+          Ansible version ${{ matrix.ansible }}
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: units
+          # OPTIONAL If your unit tests require Python libraries
+          # or modules from other collections, install them like this
+          test-deps: >-
+            ansible.netcommon
+            ansible.utils
+
+###
+# Integration tests (RECOMMENDED)
+#
+# https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html
+
+
+# If the application you are testing is available as a docker container and you want to test
+# multiple versions see the following for an example:
+# https://github.com/ansible-collections/community.zabbix/tree/master/.github/workflows
+
+  integration:
+    runs-on: ubuntu-latest
+    name: I (Ⓐ${{ matrix.ansible }}+py${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible:
+          # - stable-2.9 # Only if your collection supports Ansible 2.9
+          - stable-2.10
+          - stable-2.11
+          - devel
+        python:
+          - 2.6
+          - 2.7
+          - 3.5
+          - 3.6
+          - 3.7
+          - 3.8
+          - 3.9
+        exclude:
+          # Because ansible-test doesn't support python3.9 for Ansible 2.9
+          - ansible: stable-2.9
+            python: 3.9
+
+    steps:
+      - name: >-
+          Perform integration testing against
+          Ansible version ${{ matrix.ansible }}
+          under Python ${{ matrix.python }}
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          # OPTIONAL command to run before invoking `ansible-test integration`
+          # pre-test-cmd:
+          python-version: 3.9
+          target-python-version: ${{ matrix.python }}
+          testing-type: integration
+          # OPTIONAL If your integration tests require Python libraries
+          # or modules from other collections, install them like this
+          test-deps: ansible.netcommon
