@@ -343,19 +343,16 @@ from ansible.module_utils.six import PY2, text_type
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
-try:
-    import dnf
-    import dnf.cli
-    import dnf.const
-    import dnf.exceptions
-    import dnf.subject
-    import dnf.util
-    HAS_DNF = True
-except ImportError:
-    HAS_DNF = False
+
+# NOTE dnf Python bindings import is postponed, see DnfModule._ensure_dnf(),
+# because we need AnsibleModule object to use get_best_parsable_locale()
+# to set proper locale before importing dnf to be able to scrape
+# the output in some cases (FIXME?).
+dnf = None
 
 
 class DnfModule(YumDnf):
@@ -531,6 +528,21 @@ class DnfModule(YumDnf):
         return rc
 
     def _ensure_dnf(self):
+        locale = get_best_parsable_locale(self.module)
+        os.environ['LC_ALL'] = os.environ['LC_MESSAGES'] = os.environ['LANG'] = locale
+
+        global dnf
+        try:
+            import dnf
+            import dnf.cli
+            import dnf.const
+            import dnf.exceptions
+            import dnf.subject
+            import dnf.util
+            HAS_DNF = True
+        except ImportError:
+            HAS_DNF = False
+
         if HAS_DNF:
             return
 
@@ -1297,10 +1309,6 @@ class DnfModule(YumDnf):
             else:
                 failure_response['msg'] = "Unknown Error occurred: {0}".format(to_native(e))
                 self.module.fail_json(**failure_response)
-
-    @staticmethod
-    def has_dnf():
-        return HAS_DNF
 
     def run(self):
         """The main function."""

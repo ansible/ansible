@@ -816,3 +816,21 @@
         that:
           - nonexisting is success
           - nonexisting.msg == 'Nothing to do'
+
+# running on RHEL which is --remote where .mo language files are present
+# for dnf as opposed to in --docker
+- when: ansible_distribution == 'RedHat'
+  block:
+    - dnf:
+        name: langpacks-ja
+        state: present
+
+    - dnf:
+        name: nginx-mod*
+        state: absent
+      environment:
+        LANG: ja_JP.UTF-8
+  always:
+    - dnf:
+        name: langpacks-ja
+        state: absent
