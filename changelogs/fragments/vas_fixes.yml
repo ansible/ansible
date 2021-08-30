@@ -1,0 +1,2 @@
+bugfixes:
+  - validate_argument_spec, correct variable precedence and merge method and add missing examples
