@@ -9,6 +9,7 @@ from ansible.plugins.action import ActionBase
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import AnsibleValidationErrorMultiple
+from ansible.utils.vars import combine_vars
 
 
 class ActionModule(ActionBase):
@@ -77,10 +78,8 @@ class ActionModule(ActionBase):
             raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
 
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
-        provided_arguments.update(args_from_vars)
-
         validator = ArgumentSpecValidator(argument_spec_data)
-        validation_result = validator.validate(provided_arguments)
+        validation_result = validator.validate(combine_vars(args_from_vars, provided_arguments))
 
         if validation_result.error_messages:
             result['failed'] = True
