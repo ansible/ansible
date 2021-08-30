@@ -40,8 +40,21 @@ options:
     type: bool
     default: no
     version_added: "2.8"
-notes:
-     - This module is also supported for Windows targets.
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    connection:
+        support: none
+    delegation:
+        support: none
+    proprietary:
+        support: full
+    windows:
+        support: full
 seealso:
 - module: ansible.builtin.debug
 - module: ansible.builtin.fail

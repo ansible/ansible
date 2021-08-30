@@ -17,10 +17,14 @@ module: apt_repository
 short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
 notes:
     - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
-    - Supports C(check_mode).
 options:
     repo:
         description:
