@@ -19,6 +19,11 @@ version_added: "1.0"
 short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it.
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
 notes:
     - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
       This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.
@@ -27,7 +32,6 @@ notes:
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's update_cache option).
-    - Supports C(check_mode).
 requirements:
     - gpg
 options:
