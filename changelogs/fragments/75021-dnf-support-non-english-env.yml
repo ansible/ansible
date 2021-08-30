@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - support non-english environments (https://github.com/ansible/ansible/issues/75021)
