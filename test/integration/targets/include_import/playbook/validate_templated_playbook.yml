@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - debug: msg="In imported playbook"

@@ -1,0 +1,47 @@
+- name: test templating import_playbook with extra vars
+  import_playbook: "{{ pb }}"
+
+- name: test templating import_playbook with vars
+  import_playbook: "{{ test_var }}"
+  vars:
+    test_var: validate_templated_playbook.yml
+
+- name: test templating import_tasks
+  hosts: localhost
+  gather_facts: no
+  vars:
+    play_var: validate_templated_tasks.yml
+  tasks:
+    - name: test templating import_tasks with play vars
+      import_tasks: "{{ play_var }}"
+
+    - name: test templating import_tasks with task vars
+      import_tasks: "{{ task_var }}"
+      vars:
+        task_var: validate_templated_tasks.yml
+
+    - name: test templating import_tasks with extra vars
+      import_tasks: "{{ tasks }}"
+
+- name: test templating import_role from_files
+  hosts: localhost
+  gather_facts: no
+  vars:
+    play_var: templated.yml
+  tasks:
+    - name: test templating import_role tasks_from with play vars
+      import_role:
+        name: role1
+        tasks_from: "{{ play_var }}"
+
+    - name: test templating import_role tasks_from with task vars
+      import_role:
+        name: role1
+        tasks_from: "{{ task_var }}"
+      vars:
+        task_var: templated.yml
+
+    - name: test templating import_role tasks_from with extra vars
+      import_role:
+        name: role1
+        tasks_from: "{{ tasks_from }}"

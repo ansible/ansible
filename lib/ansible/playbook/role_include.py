@@ -29,6 +29,7 @@ from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
 from ansible.module_utils.six import string_types
+from ansible.template import Templar
 
 __all__ = ['IncludeRole']
 
@@ -79,8 +80,15 @@ class IncludeRole(TaskInclude):
         ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
         ri.vars.update(self.vars)
 
+        if variable_manager is not None:
+            available_variables = variable_manager.get_vars(play=myplay, task=self)
+        else:
+            available_variables = {}
+        templar = Templar(loader=loader, variables=available_variables)
+        from_files = templar.template(self._from_files)
+
         # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files,
+        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
                                 from_include=True, validate=self.rolespec_validate)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
