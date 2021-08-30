@@ -29,8 +29,15 @@ options:
     type: str
     choices: [ cleanup, status ]
     default: status
-notes:
-- This module is also supported for Windows targets.
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    windows:
+        support: full
 seealso:
 - ref: playbooks_async
   description: Detailed information on how to use asynchronous actions and polling.

@@ -29,14 +29,31 @@ options:
     - The groups to add the hostname to.
     type: list
     aliases: [ group, groupname ]
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: full
+    check_mode:
+        support: full
+    connection:
+        support: none
+    delegation:
+        support: none
+    proprietary:
+        support: full
+    windows:
+        support: full
 notes:
-- This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
-  to iterate use a C(loop) construct. If you need to dynamically add all hosts targeted by a playbook for
-  later use, the C(group_by) module is potentially a better choice.
 - The alias C(host) of the parameter C(name) is only available on Ansible 2.4 and newer.
 - Since Ansible 2.4, the C(inventory_dir) variable is now set to C(None) instead of the 'global inventory source',
   because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
-- Windows targets are supported by this module.
 - Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
 - The hosts added will not bypass the ``--limit`` from the command line, so both of those need to be in agreement to make them available as play targets.
   They are still available from hostvars and for delegation as a normal part of the inventory.

@@ -141,6 +141,8 @@ attributes:
     support: full
   diff_mode:
     support: full
+  safe_file_operations:
+      support: full
   vault:
     support: full
     version_added: '2.2'
