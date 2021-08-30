@@ -59,6 +59,7 @@ class MultiGalaxyAPIProxy:
         )
         result = set()
         last_err = None
+        successful_api = False
         for api in api_lookup_order:
             try:
                 for version in api.get_collection_versions(requirement.namespace, requirement.name):
@@ -67,18 +68,20 @@ class MultiGalaxyAPIProxy:
                 last_err = api_err
             except Exception as err:
                 display.warning(
-                    "Skipping Galaxy server %s. "
+                    "Skipping Galaxy server {server!s}. "
                     "Got an unexpected error when getting "
-                    "available versions of collection %s.%s: %s"
-                    % (
-                        api.api_server,
-                        requirement.namespace,
-                        requirement.name,
-                        to_text(err),
+                    "available versions of collection {fqcn!s}: {err!s}".
+                    format(
+                        server=api.api_server,
+                        fqcn=requirement.fqcn,
+                        err=to_text(err),
                     )
                 )
+                last_err = err
+            else:
+                successful_api = True
 
-        if last_err and not result:
+        if last_err and not successful_api:
             raise last_err
 
         return result
