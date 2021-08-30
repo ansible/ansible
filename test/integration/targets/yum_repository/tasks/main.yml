@@ -122,6 +122,23 @@
           - "'module_hotfixes = 0' in repo_file_contents"
       vars:
         repo_file_contents: "{{ slurp.content | b64decode }}"
+      when:
+        - "ansible_os_family == 'RedHat'"
+        - ansible_distribution_major_version is version('7', '<=')
+    
+    - name: check that options are correctly getting written to the repo file for RedHat > 8
+      assert:
+        that:
+          - "'name = New description' in repo_file_contents"
+          - "'enablegroups = 0' in repo_file_contents"
+          - "'ip_resolve = 4' in repo_file_contents"
+          - "'keepalive = 0' in repo_file_contents"
+          - "'module_hotfixes = 0' in repo_file_contents"
+      vars:
+        repo_file_contents: "{{ slurp.content | b64decode }}"
+      when:
+        - "ansible_os_family == 'RedHat'"
+        - ansible_distribution_major_version is version('8', '>=')
 
     - name: check new config doesn't change (Idempotant)
       yum_repository:

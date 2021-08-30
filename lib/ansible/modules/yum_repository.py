@@ -6,8 +6,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
-from ansible.module_utils.facts.system import distribution
 __metaclass__ = type
 
 
@@ -431,10 +429,13 @@ state:
 
 import os
 
+from ansible.module_utils.facts.system import distribution
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import get_distribution_version
+
+
 class YumRepo(object):
     # Class global variables
     module = None
