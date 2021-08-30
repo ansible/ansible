@@ -1,0 +1,2 @@
+minor_changes:
+  - import_role - Template tasks_from, vars_from, defaults_from, and handlers_from with --extra-vars (https://github.com/ansible/ansible/issues/69097).

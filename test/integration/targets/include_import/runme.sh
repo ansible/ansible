@@ -128,3 +128,10 @@ ansible-playbook test_include_loop.yml "$@"
 ansible-playbook test_include_loop_fqcn.yml "$@"
 
 ansible-playbook include_role_omit/playbook.yml "$@"
+
+# Test templating import_playbook, import_tasks, and import_role files
+ansible-playbook playbook/test_templated_filenames.yml -e "pb=validate_templated_playbook.yml tasks=validate_templated_tasks.yml tasks_from=templated.yml" "$@" | tee out.txt
+cat out.txt
+test "$(grep out.txt -ce 'In imported playbook')" = 2
+test "$(grep out.txt -ce 'In imported tasks')" = 3
+test "$(grep out.txt -ce 'In imported role')" = 3

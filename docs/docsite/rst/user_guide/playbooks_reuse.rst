@@ -33,6 +33,17 @@ You can incorporate multiple playbooks into a main playbook. However, you can on
 
 Importing incorporates playbooks in other playbooks statically. Ansible runs the plays and tasks in each imported playbook in the order they are listed, just as if they had been defined directly in the main playbook.
 
+You can select which playbook you want to import at runtime by defining your imported playbook filename with a variable, then passing the variable with either ``--extra-vars`` or the ``vars`` keyword. For example:
+
+.. code-block:: yaml
+
+   - import_playbook: "/path/to/{{ import_from_extra_var }}"
+   - import_playbook: "{{ import_from_vars }}"
+     vars:
+       import_from_vars: /path/to/one_playbook.yml
+
+If you run this playbook with ``ansible-playbook my_playbook -e import_from_extra_var=other_playbook.yml``, Ansible imports both one_playbook.yml and other_playbook.yml.
+
 Re-using files and roles
 ========================
 
@@ -60,12 +71,16 @@ Including roles, tasks, or variables adds them to a playbook dynamically. Ansibl
 
 The primary advantage of using ``include_*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
 
+The filenames for included roles, tasks, and vars are templated before inclusion.
+
 You can pass variables into includes. See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
 
 Imports: static re-use
 ----------------------
 
 Importing roles, tasks, or playbooks adds them to a playbook statically. Ansible pre-processes imported files and roles before it runs any tasks in a playbook, so imported content is never affected by other tasks within the top-level playbook.
+
+The filenames for imported roles and tasks support templating, but the variables must be available when Ansible is pre-processing the imports. This can be done with the ``vars`` keyword or by using ``--extra-vars``.
 
 You can pass variables to imports. You must pass variables if you want to run an imported file more than once in a playbook. For example:
 
