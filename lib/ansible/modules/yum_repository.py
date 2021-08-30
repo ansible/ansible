@@ -6,6 +6,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
+from ansible.module_utils.facts.system import distribution
 __metaclass__ = type
 
 
@@ -432,9 +434,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common import sys_info
-
-
+from ansible.module_utils.basic import get_distribution_version
 class YumRepo(object):
     # Class global variables
     module = None
@@ -516,6 +516,9 @@ class YumRepo(object):
             self.repofile.read(self.params['dest'])
 
     def add(self):
+
+        # Get distriubtion version
+        distribution_version = get_distribution_version()
         # Remove already existing repo and create a new one
         if self.repofile.has_section(self.section):
             self.repofile.remove_section(self.section)
@@ -543,10 +546,10 @@ class YumRepo(object):
 
             # Set the value only if it was defined (default is None)
             if value is not None and key in self.allowed_params:
-              
-              # Apply async param if the redhat version is less than 8 only
-              # https://github.com/ansible/ansible/issues/75364
-              if key == "async" and sys_info.get_distribution_version < 8:
+                # Apply async param if the redhat version is less than 8 only
+                # https://github.com/ansible/ansible/issues/75364
+                if key == "async" and float(distribution_version) >= 8:
+                    continue
                 self.repofile.set(self.section, key, value)
 
     def save(self):
