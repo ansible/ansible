@@ -1,0 +1,2 @@
+minor_changes:
+- paramiko_ssh - add support for the paramiko gss_auth option to allow Kerberos GSS-API Authentication (https://github.com/ansible/ansible/issues/71201)

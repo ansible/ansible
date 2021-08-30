@@ -61,6 +61,16 @@ DOCUMENTATION = """
         ini:
           - {key: host_key_auto_add, section: paramiko_connection}
         type: boolean
+      gss_auth:
+        default: False
+        description: enable GSS-API Authentication
+        env:
+            - name: ANSIBLE_PARAMIKO_GSS_AUTH
+        ini:
+        - section: paramiko_connection
+          key: gss_auth
+          version_added: '2.11'
+        type: boolean
       look_for_keys:
         default: True
         description: 'TODO: write it'
@@ -341,6 +351,10 @@ class Connection(ConnectionBase):
             # paramiko 2.2 introduced auth_timeout parameter
             if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
                 ssh_connect_kwargs['auth_timeout'] = self._play_context.timeout
+
+            # paramiko 1.15.0 introduced gss_auth parameter
+            if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
+                ssh_connect_kwargs['gss_auth'] = self.get_option('gss_auth')
 
             ssh.connect(
                 self._play_context.remote_addr.lower(),
