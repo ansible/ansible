@@ -68,10 +68,10 @@ If you configure Ansible to ignore undefined variables, you may want to define s
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
-A convenient way of requiring a variable to be overridden is to use the ``fail`` filter. This is useful in a role's defaults::
+A convenient way of requiring a variable to be overridden is to give it an undefined value using the ``Undef`` keyword. This can be useful in a role's defaults::
 
     galaxy_url: "https://galaxy.ansible.com"
-    galaxy_api_key: {{ "You must specify your Galaxy API key" | fail }}
+    galaxy_api_key: {{ Undef(hint="You must specify your Galaxy API key") }}
 
 Defining different values for true/false/null (ternary)
 =======================================================

@@ -299,14 +299,6 @@ def mandatory(a, msg=None):
     return a
 
 
-def fail(msg=None):
-    from jinja2.runtime import Undefined
-
-    if msg is None or isinstance(msg, Undefined) or msg == '':
-        msg = "Mandatory variable has not been overridden"
-    return AnsibleUndefined(msg)
-
-
 def combine(*terms, **kwargs):
     recursive = kwargs.pop('recursive', False)
     list_merge = kwargs.pop('list_merge', 'replace')
@@ -646,7 +638,6 @@ class FilterModule(object):
 
             # undefined
             'mandatory': mandatory,
-            'fail': fail,
 
             # comment-style decoration
             'comment': comment,
