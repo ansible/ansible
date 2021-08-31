@@ -40,6 +40,46 @@ class MultiGalaxyAPIProxy:
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
 
+    def _get_collection_versions_with_api_order(self, requirement, api_lookup_order):
+        # type: (Candidate, Iterable[GalaxyAPI]) -> Iterable[Tuple[GalaxyAPI, str]]
+        """Helper for get_collection_versions. Yield api, version pairs for all APIs and reraise the last error if no valid API was found."""
+        found_api = last_error = None
+
+        for api in api_lookup_order:
+            versions, error = self._get_collection_versions_with_api(requirement, api)
+
+            if error is None:
+                found_api = api
+                for version in versions:
+                    yield api, version
+            else:
+                last_error = error
+
+        if found_api is None and last_error is not None:
+            raise last_error
+
+    def _get_collection_versions_with_api(self, requirement, api):
+        # type: (Candidate, GalaxyAPI) -> Tuple[Optional[list], Optional[Exception]]
+        """Helper for _get_collection_versions_with_api_order. Get all versions (or the error) when querying the API for a collection."""
+        result = error = None
+        try:
+            result = api.get_collection_versions(requirement.namespace, requirement.name)
+        except GalaxyError as api_err:
+            error = api_err
+        except Exception as unknown_err:
+            display.warning(
+                "Skipping Galaxy server {server!s}. "
+                "Got an unexpected error when getting "
+                "available versions of collection {fqcn!s}: {err!s}".
+                format(
+                    server=api.api_server,
+                    fqcn=requirement.fqcn,
+                    err=to_text(unknown_err),
+                )
+            )
+            error = unknown_err
+        return result, error
+
     def get_collection_versions(self, requirement):
         # type: (Requirement) -> Iterable[Tuple[str, GalaxyAPI]]
         """Get a set of unique versions for FQCN on Galaxy servers."""
@@ -57,32 +97,10 @@ class MultiGalaxyAPIProxy:
             if isinstance(requirement.src, GalaxyAPI)
             else self._apis
         )
-        result = set()
-        last_err = None
-        successful_api = False
-        for api in api_lookup_order:
-            try:
-                for version in api.get_collection_versions(requirement.namespace, requirement.name):
-                    result.add((version, api))
-            except GalaxyError as api_err:
-                last_err = api_err
-            except Exception as err:
-                display.warning(
-                    "Skipping Galaxy server {server!s}. "
-                    "Got an unexpected error when getting "
-                    "available versions of collection {fqcn!s}: {err!s}".
-                    format(
-                        server=api.api_server,
-                        fqcn=requirement.fqcn,
-                        err=to_text(err),
-                    )
-                )
-                last_err = err
-            else:
-                successful_api = True
 
-        if last_err and not successful_api:
-            raise last_err
+        result = set()
+        for api, version in self._get_collection_versions_with_api_order(requirement, api_lookup_order):
+            result.add((version, api))
 
         return result
 
