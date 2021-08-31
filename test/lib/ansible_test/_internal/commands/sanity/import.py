@@ -151,7 +151,7 @@ class ImportTest(SanityMultipleVersion):
             if data_context().content.collection:
                 env.update(
                     SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
-                    SANITY_EXTERNAL_PYTHON=python,
+                    SANITY_EXTERNAL_PYTHON=python.path,
                 )
 
             virtualenv_python = VirtualPythonConfig(

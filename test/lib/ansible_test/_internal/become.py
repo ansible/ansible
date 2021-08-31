@@ -20,7 +20,7 @@ class Su(Become):
         become = ['su', '-l', 'root']
 
         if command:
-            become.extend(['-c', shlex.quote(' '.join(shlex.quote(c) for c in command))])
+            become.extend(['-c', ' '.join(shlex.quote(c) for c in command)])
 
         return become
 

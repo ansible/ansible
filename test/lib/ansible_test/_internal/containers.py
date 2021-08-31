@@ -474,6 +474,9 @@ def create_support_container_context(
 
         for context_name, context in source.items():
             for container_name, container in context.items():
+                if '-controller-' in container_name:
+                    continue  # hack to avoid exposing the controller container to the controller
+
                 for port, access_port in container.port_map():
                     container_map[(container.host_ip, access_port)] = (context_name, container_name, port)
 

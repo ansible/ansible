@@ -96,7 +96,7 @@ def add_environments(
                 for heading, content in documentation_state.sections.items()]
 
     if not get_ci_provider().supports_core_ci_auth():
-        sections.append('Remote provisioning options have been disabled since no Ansible Core CI API key was found.')
+        sections.append('Remote provisioning options have been hidden since no Ansible Core CI API key was found.')
 
     parser.formatter_class = argparse.RawDescriptionHelpFormatter
     parser.epilog = '\n\n'.join(sections)
@@ -189,20 +189,21 @@ def add_composite_environment_options(
             help='configuration for the target',
         ).completer = completer.completer
 
-        if get_ci_provider().supports_core_ci_auth():
-            group.add_argument(
-                '--target-windows',
-                metavar='OPT',
-                action=register_action_type(WindowsSshTargetAction),
-                help='configuration for the target',
-            ).completer = completer.completer
+        suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
 
-            group.add_argument(
-                '--target-network',
-                metavar='OPT',
-                action=register_action_type(NetworkSshTargetAction),
-                help='configuration for the target',
-            ).completer = completer.completer
+        group.add_argument(
+            '--target-windows',
+            metavar='OPT',
+            action=WindowsSshTargetAction if suppress else register_action_type(WindowsSshTargetAction),
+            help=suppress or 'configuration for the target',
+        ).completer = completer.completer
+
+        group.add_argument(
+            '--target-network',
+            metavar='OPT',
+            action=NetworkSshTargetAction if suppress else register_action_type(NetworkSshTargetAction),
+            help=suppress or 'configuration for the target',
+        ).completer = completer.completer
     else:
         if target_mode.multiple_pythons:
             target_option = '--target-python'
@@ -456,7 +457,7 @@ def add_global_remote(
         controller_mode,  # type: ControllerMode
 ):  # type: (...) -> None
     """Add global options for remote instances."""
-    if controller_mode != ControllerMode.DELEGATED or not get_ci_provider().supports_core_ci_auth():
+    if controller_mode != ControllerMode.DELEGATED:
         parser.set_defaults(
             remote_stage=None,
             remote_endpoint=None,
@@ -465,17 +466,19 @@ def add_global_remote(
 
         return
 
+    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
+
     parser.add_argument(
         '--remote-stage',
         metavar='STAGE',
         default='prod',
-        help='remote stage to use: prod, dev',
+        help=suppress or 'remote stage to use: prod, dev',
     ).completer = complete_remote_stage
 
     parser.add_argument(
         '--remote-endpoint',
         metavar='EP',
-        help='remote provisioning endpoint to use',
+        help=suppress or 'remote provisioning endpoint to use',
     )
 
     parser.add_argument(
@@ -484,7 +487,7 @@ def add_global_remote(
         default=TerminateMode.NEVER,
         type=TerminateMode,
         action=EnumAction,
-        help='terminate the remote instance: %(choices)s (default: %(default)s)',
+        help=suppress or 'terminate the remote instance: %(choices)s (default: %(default)s)',
     )
 
 
@@ -494,14 +497,6 @@ def add_environment_remote(
         target_mode,  # type: TargetMode
 ):  # type: (...) -> None
     """Add environment arguments for running in ansible-core-ci provisioned remote virtual machines."""
-    if not get_ci_provider().supports_core_ci_auth():
-        exclusive_parser.set_defaults(
-            remote=None,
-            remote_provider=None,
-        )
-
-        return
-
     if target_mode == TargetMode.POSIX_INTEGRATION:
         remote_platforms = get_remote_platform_choices()
     elif target_mode == TargetMode.SHELL:
@@ -509,17 +504,19 @@ def add_environment_remote(
     else:
         remote_platforms = get_remote_platform_choices(True)
 
+    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
+
     exclusive_parser.add_argument(
         '--remote',
         metavar='NAME',
-        help='run from a remote instance',
+        help=suppress or 'run from a remote instance',
     ).completer = functools.partial(complete_choices, remote_platforms)
 
     environments_parser.add_argument(
         '--remote-provider',
         metavar='PR',
         choices=REMOTE_PROVIDERS,
-        help='remote provider to use: %(choices)s',
+        help=suppress or 'remote provider to use: %(choices)s',
     )
 
 

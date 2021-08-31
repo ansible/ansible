@@ -218,10 +218,10 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
         """Apply default settings."""
         super().apply_defaults(context, defaults)
 
-        self.provider = self.provider or defaults.provider
+        if self.provider == 'default':
+            self.provider = None
 
-        if self.provider in (None, 'default'):
-            self.provider = 'aws'
+        self.provider = self.provider or defaults.provider or 'aws'
 
     @property
     def is_managed(self):  # type: () -> bool
@@ -359,7 +359,6 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
         """Return the default settings."""
         return filter_completion(WINDOWS_COMPLETION).get(self.name) or WindowsRemoteCompletionConfig(
             name=self.name,
-            provider='default',
         )
 
 
@@ -383,7 +382,6 @@ class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
         """Return the default settings."""
         return filter_completion(NETWORK_COMPLETION).get(self.name) or NetworkRemoteCompletionConfig(
             name=self.name,
-            provider='default',
         )
 
     def apply_defaults(self, context, defaults):  # type: (HostContext, NetworkRemoteCompletionConfig) -> None

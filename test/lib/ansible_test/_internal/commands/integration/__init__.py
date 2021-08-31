@@ -844,13 +844,13 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
 
         raise ApplicationError(message)
 
-    unknown_targets = sorted(target.name for target in targets if target.actual_type == IntegrationTargetType.UNKNOWN)
+    invalid_targets = sorted(target.name for target in targets if target.actual_type not in (IntegrationTargetType.CONTROLLER, IntegrationTargetType.TARGET))
 
-    if unknown_targets:
+    if invalid_targets:
         if data_context().content.is_ansible:
-            display.warning(f'Unable to determine context for the following test targets: {", ".join(unknown_targets)}')
+            display.warning(f'Unable to determine context for the following test targets: {", ".join(invalid_targets)}')
         else:
-            display.warning(f'Unable to determine context for the following test targets, they will be run on the target host: {", ".join(unknown_targets)}')
+            display.warning(f'Unable to determine context for the following test targets, they will be run on the target host: {", ".join(invalid_targets)}')
 
     exclude = set()  # type: t.Set[str]
 

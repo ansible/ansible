@@ -212,15 +212,16 @@ def command_sanity(args):
                         display.info(f'Running sanity test "{test.name}"')
 
                 if test_needed and not result:
-                    target_profile = target_profiles[version]
-
                     if isinstance(test, SanityMultipleVersion):
-                        # multi-version sanity tests handle their own requirements (if any)
-                        result = test.test(args, sanity_targets, target_profile.python)
+                        # multi-version sanity tests handle their own requirements (if any) and use the target python
+                        test_profile = target_profiles[version]
+                        result = test.test(args, sanity_targets, test_profile.python)
                         options = ' --python %s' % version
                     elif isinstance(test, SanitySingleVersion):
-                        install_command_requirements(args, target_profile.python, context=test.name, enable_pyyaml_check=True, skip_coverage=True)  # sanity
-                        result = test.test(args, sanity_targets, target_profile.python)
+                        # single version sanity tests use the controller python
+                        test_profile = host_state.controller_profile
+                        install_command_requirements(args, test_profile.python, context=test.name, enable_pyyaml_check=True, skip_coverage=True)  # sanity
+                        result = test.test(args, sanity_targets, test_profile.python)
                     elif isinstance(test, SanityVersionNeutral):
                         # version neutral sanity tests handle their own requirements (if any)
                         result = test.test(args, sanity_targets)
