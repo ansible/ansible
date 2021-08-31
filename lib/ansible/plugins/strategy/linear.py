@@ -263,16 +263,16 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
-                    task.action = templar.template(task.action)
+                    task_action = templar.template(task.action)
 
                     try:
-                        action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
+                        action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
                         action = None
 
-                    if task.action in C._ACTION_META:
+                    if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
