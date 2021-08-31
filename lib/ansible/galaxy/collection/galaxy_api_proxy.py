@@ -97,12 +97,12 @@ class MultiGalaxyAPIProxy:
             if isinstance(requirement.src, GalaxyAPI)
             else self._apis
         )
-
-        result = set()
-        for api, version in self._get_collection_versions_with_api_order(requirement, api_lookup_order):
-            result.add((version, api))
-
-        return result
+        return set(
+            (version, api)
+            for api, version in self._get_collection_versions_with_api_order(
+                requirement, api_lookup_order
+            )
+        )
 
     def get_collection_version_metadata(self, collection_candidate):
         # type: (Candidate) -> CollectionVersionMetadata
