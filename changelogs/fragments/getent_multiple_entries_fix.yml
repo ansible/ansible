@@ -1,0 +1,2 @@
+bugfixes:
+  - getent, fix return data for when there are multiple results for the same key

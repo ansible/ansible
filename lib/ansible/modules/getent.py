@@ -140,7 +140,21 @@ def main():
     if rc == 0:
         for line in out.splitlines():
             record = line.split(split)
-            results[dbtree][record[0]] = record[1:]
+
+            # more than one result for same key
+            if record[0] in results[dbtree]:
+
+                # ensure we store in a list
+                if not isinstance(results[dbtree][record[0]], list):
+                    results[dbtree][record[0]] = [results[dbtree][record[0]]]
+                # append or extend as needed
+                if isinstance(record[1:], list):
+                    results[dbtree][record[0]].extend(record[1:])
+                else:
+                    results[dbtree][record[0]].append(record[1:])
+            else:
+                # new key/value, just assign
+                results[dbtree][record[0]] = record[1:]
 
         module.exit_json(ansible_facts=results)
 
