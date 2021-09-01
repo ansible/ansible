@@ -1,0 +1,26 @@
+- hosts: testhost,testhost2
+  gather_facts: no
+  tasks:
+    - set_fact:
+        module_to_run: 'debug'
+      when: inventory_hostname == 'testhost'
+
+    - set_fact:
+        module_to_run: 'ping'
+      when: inventory_hostname == 'testhost2'
+
+    - action:
+        module: '{{ module_to_run }}'
+      register: out
+
+    - assert:
+        that:
+          - "'msg' in out"
+          - "'ping' not in out"
+      when: inventory_hostname == 'testhost'
+
+    - assert:
+        that:
+          - "'ping' in out"
+          - "'msg' not in out"
+      when: inventory_hostname == 'testhost2'
