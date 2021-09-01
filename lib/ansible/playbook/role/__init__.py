@@ -295,7 +295,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 # Note: _load_role_yaml() takes care of rebuilding the path.
                 argument_specs = self._load_role_yaml('meta', main='argument_specs')
                 try:
-                    return argument_specs.get('argument_specs', {})
+                    return argument_specs.get('argument_specs') or {}
                 except AttributeError:
                     return {}
 
