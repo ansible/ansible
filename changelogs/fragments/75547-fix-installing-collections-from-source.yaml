@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - Fix a bug with build_ignore when installing collections from source (https://github.com/ansible/ansible/issues/75528).

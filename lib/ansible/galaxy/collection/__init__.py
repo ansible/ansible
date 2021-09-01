@@ -994,15 +994,12 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         os.chmod(b_path, 0o0644)
 
     base_directories = []
-    for file_info in file_manifest['files']:
+    for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
         if file_info['name'] == '.':
             continue
 
         src_file = os.path.join(b_collection_path, to_bytes(file_info['name'], errors='surrogate_or_strict'))
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
-
-        if any(src_file.startswith(directory) for directory in base_directories):
-            continue
 
         existing_is_exec = os.stat(src_file).st_mode & stat.S_IXUSR
         mode = 0o0755 if existing_is_exec else 0o0644
@@ -1010,7 +1007,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         if os.path.isdir(src_file):
             mode = 0o0755
             base_directories.append(src_file)
-            shutil.copytree(src_file, dest_file)
+            os.mkdir(dest_file, mode)
         else:
             shutil.copyfile(src_file, dest_file)
 
