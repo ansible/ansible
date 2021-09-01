@@ -25,9 +25,21 @@
         "ERROR! 'file' type is not supported. The format namespace.name is expected." in verify.stderr
 
 - name: install the collection from the server
-  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_api_fallback }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+
+- name: verify the collection against the first valid server
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -vvv {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+  register: verify
+
+- assert:
+    that:
+      - verify is success
+      - >-
+        "Found API version '{{ test_api_fallback_versions }}' with Galaxy server {{ test_api_fallback }}" in verify.stdout
 
 - name: verify the installed collection against the server
   command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
