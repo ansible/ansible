@@ -1,0 +1,2 @@
+bugfixes:
+  - Since ansible/2.11 doc site was removed, the current relative messages point to a 404 url, this fixes it by chainging the target to ansible-core/2.11
