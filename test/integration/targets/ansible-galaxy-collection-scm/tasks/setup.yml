@@ -15,5 +15,5 @@
     path: '{{ item }}'
     state: directory
   loop:
-    - '{{ galaxy_dir }}/ansible_collections'
-    - '{{ galaxy_dir }}/development/ansible_test'
+    - '{{ install_path }}'
+    - '{{ test_repo_path }}'
