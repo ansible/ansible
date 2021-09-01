@@ -1,5 +1,5 @@
 - name: test installing one collection that has a SCM dep with --no-deps
-  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/ --no-deps'
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/ --no-deps'
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'
@@ -14,7 +14,7 @@
   include_tasks: ./empty_installed_collections.yml
 
 - name: test installing one collection that has a SCM dep
-  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/'
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#/collection_1/'
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'
