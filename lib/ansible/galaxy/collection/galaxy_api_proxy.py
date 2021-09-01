@@ -124,10 +124,20 @@ class MultiGalaxyAPIProxy:
             except GalaxyError as api_err:
                 last_err = api_err
             except Exception as unknown_err:
-                # Occurs for `verify`, since `get_collection_versions` is not called first in that case.
-                # Since `install` and `download` try all APIs before failing, do the same here.
+                # `verify` doesn't use `get_collection_versions` since the version is already known.
+                # Do the same as `install` and `download` by trying all APIs before failing.
                 # Warn for debugging purposes, since the Galaxy server may be unexpectedly down.
                 last_err = unknown_err
+                display.warning(
+                    "Skipping Galaxy server {server!s}. "
+                    "Got an unexpected error when getting "
+                    "available versions of collection {fqcn!s}: {err!s}".
+                    format(
+                        server=api.api_server,
+                        fqcn=collection_candidate.fqcn,
+                        err=to_text(unknown_err),
+                    )
+                )
             else:
                 self._concrete_art_mgr.save_collection_source(
                     collection_candidate,
