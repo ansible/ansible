@@ -197,6 +197,7 @@ def doc_schema(module_name, version_added=True):
         'todo': Any(None, list_string_types, *string_types),
         'options': Any(None, *list_dict_option_schema),
         'extends_documentation_fragment': Any(list_string_types, *string_types)
+        'attributes': object,
     }
 
     if version_added:
