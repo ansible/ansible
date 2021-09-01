@@ -21,6 +21,7 @@ from ...target import (
 from ...host_configs import (
     ControllerConfig,
     DockerConfig,
+    FallbackReason,
     HostConfig,
     NetworkInventoryConfig,
     NetworkRemoteConfig,
@@ -92,12 +93,15 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
     def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
-        if self.controller and self.args.host_settings.controller_fallback_used:
-            skipped = [target.name for target in targets]
+        if self.controller and self.args.host_settings.controller_fallback and targets:
+            affected_targets = [target.name for target in targets]
+            reason = self.args.host_settings.controller_fallback.reason
 
-            if skipped:
-                exclude.update(skipped)
-                display.warning(f'Excluding {self.host_type} tests since a fallback controller is in use: {", ".join(skipped)}')
+            if reason == FallbackReason.ENVIRONMENT:
+                exclude.update(affected_targets)
+                display.warning(f'Excluding {self.host_type} tests since a fallback controller is in use: {", ".join(affected_targets)}')
+            elif reason == FallbackReason.PYTHON:
+                display.warning(f'Some {self.host_type} tests may be redundant since a fallback python is in use: {", ".join(affected_targets)}')
 
         if not self.allow_destructive and not self.config.is_managed:
             override_destructive = set(target for target in self.include_targets if target.startswith('destructive/'))

@@ -34,6 +34,8 @@ from ..host_configs import (
     ControllerConfig,
     ControllerHostConfig,
     DockerConfig,
+    FallbackDetail,
+    FallbackReason,
     HostConfig,
     HostContext,
     HostSettings,
@@ -203,18 +205,18 @@ def convert_legacy_args(
         if used_new_options:
             raise OptionsConflictError(used_old_options, used_new_options)
 
-        controller, targets, controller_fallback_message = get_legacy_host_config(mode, old_options)
+        controller, targets, controller_fallback = get_legacy_host_config(mode, old_options)
 
-        if controller_fallback_message:
+        if controller_fallback:
             if mode.one_host:
-                display.info(controller_fallback_message, verbosity=1)
+                display.info(controller_fallback.message, verbosity=1)
             else:
-                display.warning(controller_fallback_message)
+                display.warning(controller_fallback.message)
 
         used_default_pythons = mode in (TargetMode.SANITY, TargetMode.UNITS) and not native_python(old_options)
     else:
         controller = args.controller or OriginConfig()
-        controller_fallback_message = None
+        controller_fallback = None
 
         if mode == TargetMode.NO_TARGETS:
             targets = []
@@ -243,7 +245,7 @@ def convert_legacy_args(
         targets=targets,
         skipped_python_versions=skipped_python_versions,
         filtered_args=filtered_args,
-        controller_fallback_used=bool(controller_fallback_message),
+        controller_fallback=controller_fallback,
     )
 
     return host_settings
@@ -276,7 +278,7 @@ def native_python(options):  # type: (LegacyHostOptions) -> t.Optional[NativePyt
 def get_legacy_host_config(
         mode,  # type: TargetMode
         options,  # type: LegacyHostOptions
-):  # type: (...) -> t.Tuple[HostConfig, t.List[HostConfig], t.Optional[str]]
+):  # type: (...) -> t.Tuple[HostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
     """
     Returns controller and target host configs derived from the provided legacy host options.
     The goal is to match the original behavior, by using non-split testing whenever possible.
@@ -287,13 +289,13 @@ def get_legacy_host_config(
     docker_fallback = 'default'
     remote_fallback = get_fallback_remote_controller()
 
-    controller_fallback = None  # type: t.Optional[t.Tuple[str, str]]
+    controller_fallback = None  # type: t.Optional[t.Tuple[str, str, FallbackReason]]
 
     if options.venv:
         if controller_python(options.python) or not options.python:
             controller = OriginConfig(python=VirtualPythonConfig(version=options.python or 'default', system_site_packages=options.venv_system_site_packages))
         else:
-            controller_fallback = f'origin:python={venv_fallback}', f'--venv --python {options.python}'
+            controller_fallback = f'origin:python={venv_fallback}', f'--venv --python {options.python}', FallbackReason.PYTHON
             controller = OriginConfig(python=VirtualPythonConfig(version='default', system_site_packages=options.venv_system_site_packages))
 
         if mode in (TargetMode.SANITY, TargetMode.UNITS):
@@ -321,11 +323,11 @@ def get_legacy_host_config(
                                               privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)
                     targets = controller_targets(mode, options, controller)
                 else:
-                    controller_fallback = f'docker:{options.docker}', f'--docker {options.docker} --python {options.python}'
+                    controller_fallback = f'docker:{options.docker}', f'--docker {options.docker} --python {options.python}', FallbackReason.PYTHON
                     controller = DockerConfig(image=options.docker)
                     targets = controller_targets(mode, options, controller)
             else:
-                controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker}'
+                controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker}', FallbackReason.ENVIRONMENT
                 controller = DockerConfig(image=docker_fallback)
                 targets = [DockerConfig(image=options.docker, python=native_python(options),
                                         privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)]
@@ -338,13 +340,13 @@ def get_legacy_host_config(
                                           privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)
                 targets = controller_targets(mode, options, controller)
             else:
-                controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker} --python {options.python}'
+                controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker} --python {options.python}', FallbackReason.PYTHON
                 controller = DockerConfig(image=docker_fallback)
                 targets = [DockerConfig(image=options.docker, python=native_python(options),
                                         privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)]
     elif options.remote:
         remote_config = filter_completion(REMOTE_COMPLETION).get(options.remote)
-        context = None
+        context, reason = None, None
 
         if remote_config:
             if options.python and options.python not in remote_config.supported_pythons:
@@ -355,11 +357,11 @@ def get_legacy_host_config(
                     controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)
                     targets = controller_targets(mode, options, controller)
                 else:
-                    controller_fallback = f'remote:{options.remote}', f'--remote {options.remote} --python {options.python}'
+                    controller_fallback = f'remote:{options.remote}', f'--remote {options.remote} --python {options.python}', FallbackReason.PYTHON
                     controller = PosixRemoteConfig(name=options.remote, provider=options.remote_provider)
                     targets = controller_targets(mode, options, controller)
             else:
-                context = f'--remote {options.remote}'
+                context, reason = f'--remote {options.remote}', FallbackReason.ENVIRONMENT
                 controller = None
                 targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)]
         elif mode == TargetMode.SHELL and options.remote.startswith('windows/'):
@@ -376,16 +378,16 @@ def get_legacy_host_config(
                 controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)
                 targets = controller_targets(mode, options, controller)
             else:
-                context = f'--remote {options.remote} --python {options.python}'
+                context, reason = f'--remote {options.remote} --python {options.python}', FallbackReason.PYTHON
                 controller = None
                 targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)]
 
         if not controller:
             if docker_available():
-                controller_fallback = f'docker:{docker_fallback}', context
+                controller_fallback = f'docker:{docker_fallback}', context, reason
                 controller = DockerConfig(image=docker_fallback)
             else:
-                controller_fallback = f'remote:{remote_fallback}', context
+                controller_fallback = f'remote:{remote_fallback}', context, reason
                 controller = PosixRemoteConfig(name=remote_fallback)
     else:  # local/unspecified
         # There are several changes in behavior from the legacy implementation when using no delegation (or the `--local` option).
@@ -400,19 +402,22 @@ def get_legacy_host_config(
             controller = OriginConfig(python=native_python(options))
             targets = controller_targets(mode, options, controller)
         else:
-            controller_fallback = 'origin:python=default', f'--python {options.python}'
+            controller_fallback = 'origin:python=default', f'--python {options.python}', FallbackReason.PYTHON
             controller = OriginConfig()
             targets = controller_targets(mode, options, controller)
 
     if controller_fallback:
-        controller_option, context = controller_fallback
+        controller_option, context, reason = controller_fallback
 
         if mode.no_fallback:
             raise ControllerNotSupportedError(context)
 
-        controller_fallback_message = f'Using `--controller {controller_option}` since `{context}` does not support the controller.'
+        fallback_detail = FallbackDetail(
+            reason=reason,
+            message=f'Using `--controller {controller_option}` since `{context}` does not support the controller.',
+        )
     else:
-        controller_fallback_message = None
+        fallback_detail = None
 
     if mode.one_host and any(not isinstance(target, ControllerConfig) for target in targets):
         raise ControllerNotSupportedError(controller_fallback[1])
@@ -422,7 +427,7 @@ def get_legacy_host_config(
     else:
         targets = handle_non_posix_targets(mode, options, targets)
 
-    return controller, targets, controller_fallback_message
+    return controller, targets, fallback_detail
 
 
 def handle_non_posix_targets(

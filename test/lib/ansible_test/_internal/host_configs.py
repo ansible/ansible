@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+import enum
 import os
 import pickle
 import sys
@@ -448,6 +449,19 @@ class ControllerConfig(PosixConfig):
         return self.controller.have_root
 
 
+class FallbackReason(enum.Enum):
+    """Reason fallback was peformed."""
+    ENVIRONMENT = enum.auto()
+    PYTHON = enum.auto()
+
+
+@dataclasses.dataclass(frozen=True)
+class FallbackDetail:
+    """Details about controller fallback behavior."""
+    reason: FallbackReason
+    message: str
+
+
 @dataclasses.dataclass(frozen=True)
 class HostSettings:
     """Host settings for the controller and targets."""
@@ -455,7 +469,7 @@ class HostSettings:
     targets: t.List[HostConfig]
     skipped_python_versions: t.List[str]
     filtered_args: t.List[str]
-    controller_fallback_used: bool
+    controller_fallback: t.Optional[FallbackDetail]
 
     def serialize(self, path):  # type: (str) -> None
         """Serialize the host settings to the given path."""
