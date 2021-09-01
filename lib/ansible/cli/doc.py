@@ -71,6 +71,7 @@ class DocCLI(CLI):
 
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
+    JSON_IGNORE = ('attributes',)
 
     # Warning: If you add more elements here, you also need to add it to the docsite build (in the
     # ansible-community/antsibull repo)
@@ -262,8 +263,13 @@ class DocCLI(CLI):
                 plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
 
             if do_json:
+                for entry in plugin_docs.keys():
+                    for forbid in DocCLI.JSON_IGNORE:
+                        try:
+                            del plugin_docs[entry]['doc'][forbid]
+                        except (KeyError, TypeError):
+                            pass
                 jdump(plugin_docs)
-
             else:
                 # Some changes to how plain text docs are formatted
                 text = []
@@ -278,7 +284,6 @@ class DocCLI(CLI):
 
                 if text:
                     DocCLI.pager(''.join(text))
-
         return 0
 
     @staticmethod

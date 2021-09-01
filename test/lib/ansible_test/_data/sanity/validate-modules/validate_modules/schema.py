@@ -448,6 +448,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         'options': Any(None, *list_dict_option_schema(for_collection)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
+        'attributes': object,
     }
 
     if for_collection:
