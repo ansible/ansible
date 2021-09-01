@@ -376,7 +376,7 @@ class Connection(ConnectionBase):
         if not self.runspace:
             connection = WSMan(**self._psrp_conn_kwargs)
 
-            # create our psuedo host to capture the exit code and host output
+            # create our pseudo host to capture the exit code and host output
             host_ui = PSHostUserInterface()
             self.host = PSHost(None, None, False, "Ansible PSRP Host", None,
                                host_ui, None)
