@@ -385,30 +385,27 @@ class Service(object):
 
         self.changed = None
         entry = '%s="%s"\n' % (self.rcconf_key, self.rcconf_value)
-        RCFILE = open(self.rcconf_file, "r")
-        new_rc_conf = []
+        with open(self.rcconf_file, "r") as RCFILE:
+            new_rc_conf = []
 
-        # Build a list containing the possibly modified file.
-        for rcline in RCFILE:
-            # Parse line removing whitespaces, quotes, etc.
-            rcarray = shlex.split(rcline, comments=True)
-            if len(rcarray) >= 1 and '=' in rcarray[0]:
-                (key, value) = rcarray[0].split("=", 1)
-                if key == self.rcconf_key:
-                    if value.upper() == self.rcconf_value:
-                        # Since the proper entry already exists we can stop iterating.
-                        self.changed = False
-                        break
-                    else:
-                        # We found the key but the value is wrong, replace with new entry.
-                        rcline = entry
-                        self.changed = True
+            # Build a list containing the possibly modified file.
+            for rcline in RCFILE:
+                # Parse line removing whitespaces, quotes, etc.
+                rcarray = shlex.split(rcline, comments=True)
+                if len(rcarray) >= 1 and '=' in rcarray[0]:
+                    (key, value) = rcarray[0].split("=", 1)
+                    if key == self.rcconf_key:
+                        if value.upper() == self.rcconf_value:
+                            # Since the proper entry already exists we can stop iterating.
+                            self.changed = False
+                            break
+                        else:
+                            # We found the key but the value is wrong, replace with new entry.
+                            rcline = entry
+                            self.changed = True
 
-            # Add line to the list.
-            new_rc_conf.append(rcline.strip() + '\n')
-
-        # We are done with reading the current rc.conf, close it.
-        RCFILE.close()
+                # Add line to the list.
+                new_rc_conf.append(rcline.strip() + '\n')
 
         # If we did not see any trace of our entry we need to add it.
         if self.changed is None:
