@@ -132,6 +132,41 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.5.0
+========================
+
+Major Changes
+-------------
+
+hetzner.hcloud
+~~~~~~~~~~~~~~
+
+- Introduction of placement groups
+
+ovirt.ovirt
+~~~~~~~~~~~
+
+- remove_stale_lun - Add role for removing stale LUN (https://bugzilla.redhat.com/1966873).
+
+Deprecated Features
+-------------------
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- network_cli - The paramiko_ssh setting ``look_for_keys`` was set automatically based on the values of the ``password`` and ``private_key_file`` options passed to network_cli. This option can now be set explicitly, and the automatic setting of ``look_for_keys`` will be removed after 2024-01-01  (https://github.com/ansible-collections/ansible.netcommon/pull/271).
+
+cisco.ios
+~~~~~~~~~
+
+- Deprecated ios_bgp in favor of ios_bgp_global and ios_bgp_address_family.
+- Remove testing with provider for ansible-test integration jobs. This helps prepare us to move to network-ee integration tests.
+
+junipernetworks.junos
+~~~~~~~~~~~~~~~~~~~~~
+
+- Deprecated router_id from ospfv3 resource module.
+
 Porting Guide for v4.4.0
 ========================
 
@@ -325,18 +360,18 @@ community.general
 inspur.sm
 ~~~~~~~~~
 
-- add_ad_group - This feature will be removed in inspur.sm.add_ad_group 2.2.0. replaced with inspur.sm.ad_group.
-- add_ldap_group - This feature will be removed in inspur.sm.add_ldap_group 2.2.0. replaced with inspur.sm.ldap_group.
-- add_user - This feature will be removed in inspur.sm.add_user 2.2.0. replaced with inspur.sm.user.
-- add_user_group - This feature will be removed in inspur.sm.add_user_group 2.2.0. replaced with inspur.sm.user_group.
-- del_ad_group - This feature will be removed in inspur.sm.del_ad_group 2.2.0. replaced with inspur.sm.ad_group.
-- del_ldap_group - This feature will be removed in inspur.sm.del_ldap_group 2.2.0. replaced with inspur.sm.ldap_group.
-- del_user - This feature will be removed in inspur.sm.del_user 2.2.0. replaced with inspur.sm.user.
-- del_user_group - This feature will be removed in inspur.sm.del_user_group 2.2.0. replaced with inspur.sm.user_group.
-- edit_ad_group - This feature will be removed in inspur.sm.edit_ad_group 2.2.0. replaced with inspur.sm.ad_group.
-- edit_ldap_group - This feature will be removed in inspur.sm.edit_ldap_group 2.2.0. replaced with inspur.sm.ldap_group.
-- edit_user - This feature will be removed in inspur.sm.edit_user 2.2.0. replaced with inspur.sm.user.
-- edit_user_group - This feature will be removed in inspur.sm.edit_user_group 2.2.0. replaced with inspur.sm.user_group.
+- add_ad_group - This feature will be removed in inspur.sm.add_ad_group 3.0.0. replaced with inspur.sm.ad_group.
+- add_ldap_group - This feature will be removed in inspur.sm.add_ldap_group 3.0.0. replaced with inspur.sm.ldap_group.
+- add_user - This feature will be removed in inspur.sm.add_user 3.0.0. replaced with inspur.sm.user.
+- add_user_group - This feature will be removed in inspur.sm.add_user_group 3.0.0. replaced with inspur.sm.user_group.
+- del_ad_group - This feature will be removed in inspur.sm.del_ad_group 3.0.0. replaced with inspur.sm.ad_group.
+- del_ldap_group - This feature will be removed in inspur.sm.del_ldap_group 3.0.0. replaced with inspur.sm.ldap_group.
+- del_user - This feature will be removed in inspur.sm.del_user 3.0.0. replaced with inspur.sm.user.
+- del_user_group - This feature will be removed in inspur.sm.del_user_group 3.0.0. replaced with inspur.sm.user_group.
+- edit_ad_group - This feature will be removed in inspur.sm.edit_ad_group 3.0.0. replaced with inspur.sm.ad_group.
+- edit_ldap_group - This feature will be removed in inspur.sm.edit_ldap_group 3.0.0. replaced with inspur.sm.ldap_group.
+- edit_user - This feature will be removed in inspur.sm.edit_user 3.0.0. replaced with inspur.sm.user.
+- edit_user_group - This feature will be removed in inspur.sm.edit_user_group 3.0.0. replaced with inspur.sm.user_group.
 
 Porting Guide for v4.0.0
 ========================
@@ -652,7 +687,7 @@ Ansible-core
 ~~~~~~~~~~~~
 
 - Starting in 2.14, shell and command modules will no longer have the option to warn and suggest modules in lieu of commands. The ``warn`` parameter to these modules is now deprecated and defaults to ``False``. Similarly, the ``COMMAND_WARNINGS`` configuration option is also deprecated and defaults to ``False``. These will be removed and their presence will become an error in 2.14.
-- apt_key - the paramater ``key`` does not have any effect, has been deprecated and will be removed in ansible-core version 2.14 (https://github.com/ansible/ansible/pull/70319).
+- apt_key - the parameter ``key`` does not have any effect, has been deprecated and will be removed in ansible-core version 2.14 (https://github.com/ansible/ansible/pull/70319).
 - psrp - Set the minimum version of ``pypsrp`` to ``0.4.0``.
 
 ansible.netcommon
