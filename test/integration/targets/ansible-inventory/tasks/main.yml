@@ -83,10 +83,7 @@
         - '"ERROR! Could not match supplied host pattern, ignoring: invalid" in result.stderr'
 
 - name: Install toml package
-  pip:
-    name:
-      - toml
-    state: present
+  command: "{{ ansible_python_interpreter }} -m pip.__main__ install toml --disable-pip-version-check"
 
 - name: "test option: --toml with valid group name"
   command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
