@@ -47,6 +47,9 @@ def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     first = target_hosts[0]
 
     if isinstance(first, WindowsInventoryProfile):
+        if args.explain:
+            return
+
         try:
             shutil.copyfile(first.config.path, path)
         except shutil.SameFileError:
@@ -79,6 +82,9 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     first = target_hosts[0]
 
     if isinstance(first, NetworkInventoryProfile):
+        if args.explain:
+            return
+
         try:
             shutil.copyfile(first.config.path, path)
         except shutil.SameFileError:
