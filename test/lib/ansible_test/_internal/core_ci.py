@@ -27,6 +27,7 @@ from .util import (
     ApplicationError,
     display,
     ANSIBLE_TEST_TARGET_ROOT,
+    mutex,
 )
 
 from .util_common import (
@@ -409,6 +410,7 @@ class SshKey:
     KEY_NAME = 'id_%s' % KEY_TYPE
     PUB_NAME = '%s.pub' % KEY_NAME
 
+    @mutex
     def __init__(self, args):
         """
         :type args: EnvironmentConfig
