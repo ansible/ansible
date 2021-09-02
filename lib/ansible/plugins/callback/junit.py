@@ -217,7 +217,7 @@ class CallbackModule(CallbackBase):
             junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
 
         if host_data.status == 'included':
-            return TestCase(name=name, classname=junit_classname, time=duration, system_out=host_data.result)
+            return TestCase(name=name, classname=junit_classname, time=duration, system_out=str(host_data.result))
 
         res = host_data.result._result
         rc = res.get('rc', 0)
