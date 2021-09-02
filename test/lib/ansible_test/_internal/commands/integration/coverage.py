@@ -41,6 +41,7 @@ from ...util import (
 
 from ...util_common import (
     ResultType,
+    run_command,
 )
 
 from ...coverage_util import (
@@ -136,7 +137,8 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     def get_profiles(self):  # type: () -> t.List[HostProfile]
         """Return a list of profiles relevant for this handler."""
         profiles = super().get_profiles()
-        profiles = [profile for profile in profiles if not isinstance(profile, ControllerProfile)]
+        profiles = [profile for profile in profiles if not isinstance(profile, ControllerProfile) or
+                    profile.python.path != self.host_state.controller_profile.python.path]
 
         return profiles
 
@@ -144,6 +146,11 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     def is_active(self):  # type: () -> bool
         """True if the handler should be used, otherwise False."""
         return True
+
+    @property
+    def target_profile(self):  # type: () -> t.Optional[PosixProfile]
+        """The POSIX target profile, if it uses a different Python interpreter than the controller, otherwise None."""
+        return t.cast(PosixProfile, self.profiles[0]) if self.profiles else None
 
     def setup(self):  # type: () -> None
         """Perform setup for code coverage."""
@@ -170,10 +177,16 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
     def setup_target(self):
         """Perform setup for code coverage on the target."""
-        if not self.profiles:
+        if not self.target_profile:
             return
 
-        self.run_playbook('posix_coverage_setup.yml', self.get_playbook_variables())
+        if isinstance(self.target_profile, ControllerProfile):
+            pip_command = self.get_target_coverage_install_command()
+
+            if pip_command:
+                run_command(self.args, pip_command, capture=True)
+        else:
+            self.run_playbook('posix_coverage_setup.yml', self.get_playbook_variables())
 
     def teardown_controller(self):  # type: () -> None
         """Perform teardown for code coverage on the controller."""
@@ -187,10 +200,13 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
     def teardown_target(self):  # type: () -> None
         """Perform teardown for code coverage on the target."""
-        if not self.profiles:
+        if not self.target_profile:
             return
 
-        profile = t.cast(SshTargetHostProfile, self.profiles[0])
+        if isinstance(self.target_profile, ControllerProfile):
+            return
+
+        profile = t.cast(SshTargetHostProfile, self.target_profile)
         platform = get_coverage_platform(profile.config)
         con = profile.get_controller_target_connections()[0]
 
@@ -239,14 +255,24 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         """Create inventory."""
         create_posix_inventory(self.args, self.inventory_path, self.host_state.target_profiles)
 
-    def get_playbook_variables(self):  # type: () -> t.Dict[str, str]
-        """Return a dictionary of variables for setup and teardown of POSIX coverage."""
-        profile = t.cast(PosixProfile, self.profiles[0])
-
-        if self.args.requirements or profile.config.is_managed:
-            pip_command = f'{profile.python.path} -m pip.__main__ install coverage=={COVERAGE_RECOMMENDED_VERSION} --disable-pip-version-check --quiet'
+    def get_target_coverage_install_command(self):  # type: () -> t.Optional[t.List[str]]
+        """Return the pip command needed to install coverage for the target, or None if it should not be installed."""
+        if self.args.requirements or self.target_profile.config.is_managed:
+            pip_command = [
+                self.target_profile.python.path,
+                '-m', 'pip.__main__',
+                'install', f'coverage=={COVERAGE_RECOMMENDED_VERSION}',
+                '--disable-pip-version-check',
+                '--quiet',
+            ]
         else:
             pip_command = None
+
+        return pip_command
+
+    def get_playbook_variables(self):  # type: () -> t.Dict[str, str]
+        """Return a dictionary of variables for setup and teardown of POSIX coverage."""
+        pip_command = self.get_target_coverage_install_command()
 
         return dict(
             common_temp_dir=self.common_temp_path,
@@ -256,7 +282,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
             mode_directory=f'{MODE_DIRECTORY:04o}',
             mode_directory_write=f'{MODE_DIRECTORY_WRITE:04o}',
             mode_file=f'{MODE_FILE:04o}',
-            pip_command=pip_command,
+            pip_command=' '.join(pip_command),
         )
 
 
