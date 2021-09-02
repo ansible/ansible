@@ -739,6 +739,9 @@ def forward_ssh_ports(
         return
 
     if not ssh_connections:
+        if args.explain:
+            return
+
         raise Exception('The %s host was not pre-configured for container access and SSH forwarding is not available.' % host_type)
 
     redirects = []  # type: t.List[t.Tuple[int, str, int]]
