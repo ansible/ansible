@@ -216,12 +216,8 @@ def write_text_test_results(category, name, content):  # type: (ResultType, str,
     write_text_file(path, content, create_directories=True)
 
 
-def get_python_path(args, interpreter):
-    """
-    :type args: TestConfig
-    :type interpreter: str
-    :rtype: str
-    """
+def get_python_path(interpreter):  # type: (str) -> str
+    """Return the path to a directory which contains a `python` executable that runs the specified interpreter."""
     python_path = PYTHON_PATHS.get(interpreter)
 
     if python_path:
@@ -231,9 +227,6 @@ def get_python_path(args, interpreter):
     suffix = '-ansible'
 
     root_temp_dir = '/tmp'
-
-    if args.explain:
-        return os.path.join(root_temp_dir, ''.join((prefix, 'temp', suffix)))
 
     python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
     injected_interpreter = os.path.join(python_path, 'python')
@@ -306,6 +299,7 @@ def intercept_python(
         capture=False,  # type: bool
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
+        always=False,  # type: bool
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run a command while intercepting invocations of Python to control the version used."""
     env = env.copy()
@@ -316,7 +310,7 @@ def intercept_python(
     if isinstance(python, VirtualPythonConfig):
         python_path = os.path.dirname(python.path)
     else:
-        python_path = get_python_path(args, python.path)
+        python_path = get_python_path(python.path)
 
     inject_path = python_path + os.path.pathsep + inject_path
 
@@ -324,7 +318,7 @@ def intercept_python(
     env['ANSIBLE_TEST_PYTHON_VERSION'] = python.version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = python.path
 
-    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
+    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,

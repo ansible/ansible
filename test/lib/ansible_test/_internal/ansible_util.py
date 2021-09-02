@@ -52,7 +52,7 @@ def parse_inventory(args, inventory_path):  # type: (EnvironmentConfig, str) -> 
     """Return a dict parsed from the given inventory file."""
     cmd = ['ansible-inventory', '-i', inventory_path, '--list']
     env = ansible_environment(args)
-    inventory = json.loads(intercept_python(args, args.controller_python, cmd, env, capture=True)[0])
+    inventory = json.loads(intercept_python(args, args.controller_python, cmd, env, capture=True, always=True)[0])
     return inventory
 
 
