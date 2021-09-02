@@ -332,8 +332,8 @@ def root_ssh(ssh):  # type: (SshConnection) -> SshConnectionDetail
 
     if ssh.become:
         settings.update(
-               user='root',
-           )
+            user='root',
+        )
 
     return SshConnectionDetail(**settings)
 
