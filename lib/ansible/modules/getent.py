@@ -57,20 +57,20 @@ EXAMPLES = '''
     database: passwd
     key: root
 - debug:
-    var: getent_passwd
+    var: ansible_facts.getent_passwd
 
 - name: Get all groups
   getent:
     database: group
     split: ':'
 - debug:
-    var: getent_group
+    var: ansible_facts.getent_group
 
 - name: Get all hosts, split by tab
   getent:
     database: hosts
 - debug:
-    var: getent_hosts
+    var: ansible_facts.getent_hosts
 
 - name: Get http service info, no error if missing
   getent:
@@ -78,7 +78,7 @@ EXAMPLES = '''
     key: http
     fail_key: False
 - debug:
-    var: getent_services
+    var: ansible_facts.getent_services
 
 - name: Get user password hash (requires sudo/root)
   getent:
@@ -86,7 +86,7 @@ EXAMPLES = '''
     key: www-data
     split: ':'
 - debug:
-    var: getent_shadow
+    var: ansible_facts.getent_shadow
 
 '''
 import traceback
