@@ -404,6 +404,8 @@ def _get_pip(module, env=None, executable=None):
             candidate_pip_basenames = (executable,)
     elif executable is None and env is None and _have_pip_module():
         # If no executable or virtualenv were specified, use the pip module for the current Python interpreter if available.
+        # Use of `__main__` is required to support Python 2.6 since support for executing packages with `runpy` was added in Python 2.7.
+        # Without it Python 2.6 gives the following error: pip is a package and cannot be directly executed
         pip = [sys.executable, '-m', 'pip.__main__']
 
     if pip is None:
