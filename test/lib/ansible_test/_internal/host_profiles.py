@@ -240,7 +240,7 @@ class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
     """Base class for remote instance profiles."""
     @property
-    def core_ci_state(self):  # type: () -> t.Dict[str, str]
+    def core_ci_state(self):  # type: () -> t.Optional[t.Dict[str, str]]
         """The saved Ansible Core CI state."""
         return self.state.get('core_ci')
 
@@ -271,9 +271,9 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
         """Cache the given AnsibleCoreCI instance."""
         self.cache['core_ci'] = value
 
-    def get_instance(self):  # type: () -> AnsibleCoreCI
+    def get_instance(self):  # type: () -> t.Optional[AnsibleCoreCI]
         """Return the current AnsibleCoreCI instance, loading it if not already loaded."""
-        if not self.core_ci:
+        if not self.core_ci and self.core_ci_state:
             self.core_ci = self.create_core_ci(load=False)
             self.core_ci.load(self.core_ci_state)
 
@@ -281,7 +281,12 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
     def delete_instance(self):
         """Delete the AnsibleCoreCI VM instance."""
-        self.get_instance().stop()
+        core_ci = self.get_instance()
+
+        if not core_ci:
+            return  # instance has not been provisioned
+
+        core_ci.stop()
 
     def wait_for_instance(self):  # type: () -> AnsibleCoreCI
         """Wait for an AnsibleCoreCI VM instance to become ready."""
