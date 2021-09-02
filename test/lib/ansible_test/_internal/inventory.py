@@ -140,18 +140,26 @@ def create_posix_inventory(args, path, target_hosts):  # type: (EnvironmentConfi
 
         ssh = connections[0]
 
+        testhost = dict(
+            ansible_connection='ssh',
+            ansible_pipelining='yes',
+            ansible_python_interpreter=ssh.settings.python_interpreter,
+            ansible_host=ssh.settings.host,
+            ansible_port=str(ssh.settings.port),
+            ansible_user=ssh.settings.user,
+            ansible_ssh_private_key=ssh.settings.identity_file,
+        )
+
+        if ssh.become:
+            testhost.update(
+                ansible_become='yes',
+                ansible_become_method=ssh.become.method,
+            )
+
         inventory = Inventory(
             host_groups=dict(
                 testgroup=dict(
-                    testhost=dict(
-                        ansible_connection='ssh',
-                        ansible_pipelining='yes',
-                        ansible_python_interpreter=ssh.settings.python_interpreter,
-                        ansible_host=ssh.settings.host,
-                        ansible_port=str(ssh.settings.port),
-                        ansible_user=ssh.settings.user,
-                        ansible_ssh_private_key=ssh.settings.identity_file,
-                    ),
+                    testhost=testhost,
                 ),
             ),
         )

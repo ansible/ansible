@@ -8,6 +8,11 @@ import typing as t
 
 class Become(metaclass=abc.ABCMeta):
     """Base class for become implementations."""
+    @property
+    @abc.abstractmethod
+    def method(self):  # type: () -> str
+        """The name of the Ansible become plugin that is equivalent to this."""
+
     @abc.abstractmethod
     def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
         """Return the given command, if any, with privilege escalation."""
@@ -15,6 +20,11 @@ class Become(metaclass=abc.ABCMeta):
 
 class Su(Become):
     """Become using 'su'."""
+    @property
+    def method(self):  # type: () -> str
+        """The name of the Ansible become plugin that is equivalent to this."""
+        return 'su'
+
     def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
         """Return the given command, if any, with privilege escalation."""
         become = ['su', '-l', 'root']
@@ -27,6 +37,11 @@ class Su(Become):
 
 class Sudo(Become):
     """Become using 'sudo'."""
+    @property
+    def method(self):  # type: () -> str
+        """The name of the Ansible become plugin that is equivalent to this."""
+        return 'sudo'
+
     def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
         """Return the given command, if any, with privilege escalation."""
         become = ['sudo', '-in']
