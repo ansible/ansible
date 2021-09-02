@@ -731,7 +731,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
 
             for idx, sub_parameters in enumerate(elements):
                 if not isinstance(sub_parameters, dict):
-                    errors.append(SubParameterTypeError("value of '%s' is a sub-parameter and must be of type dict or list of dicts" % param))
+                    errors.append(SubParameterTypeError("value of '%s' must be of type dict or list of dicts" % param))
                     continue
 
                 # Set prefix for warning messages
