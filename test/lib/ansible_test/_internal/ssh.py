@@ -1,6 +1,7 @@
 """High level functions for working with SSH."""
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import random
@@ -27,24 +28,19 @@ from .config import (
 )
 
 
+@dataclasses.dataclass
 class SshConnectionDetail:
     """Information needed to establish an SSH connection to a host."""
-    def __init__(self,
-                 name,  # type: str
-                 host,  # type: str
-                 port,  # type: t.Optional[int]
-                 user,  # type: str
-                 identity_file,  # type: str
-                 python_interpreter=None,  # type: t.Optional[str]
-                 shell_type=None,  # type: t.Optional[str]
-                 ):  # type: (...) -> None
-        self.name = sanitize_host_name(name)
-        self.host = host
-        self.port = port
-        self.user = user
-        self.identity_file = identity_file
-        self.python_interpreter = python_interpreter
-        self.shell_type = shell_type
+    name: str
+    host: str
+    port: t.Optional[int]
+    user: str
+    identity_file: str
+    python_interpreter: t.Optional[str] = None
+    shell_type: t.Optional[str] = None
+
+    def __post_init__(self):
+        self.name = sanitize_host_name(self.name)
 
 
 class SshProcess:

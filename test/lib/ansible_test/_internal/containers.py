@@ -76,6 +76,10 @@ from .host_configs import (
     WindowsInventoryConfig,
 )
 
+from .connections import (
+    SshConnection,
+)
+
 # information about support containers provisioned by the current ansible-test instance
 support_containers = {}  # type: t.Dict[str, ContainerDescriptor]
 support_containers_mutex = threading.Lock()
@@ -320,6 +324,18 @@ class ContainerDatabase:
 def local_ssh(args, python):  # type: (EnvironmentConfig, PythonConfig) -> SshConnectionDetail
     """Return SSH connection details for localhost, connecting as root to the default SSH port."""
     return SshConnectionDetail('localhost', 'localhost', None, 'root', SshKey(args).key, python.path)
+
+
+def root_ssh(ssh):  # type: (SshConnection) -> SshConnectionDetail
+    """Return the SSH connection details from the given SSH connection. If become was specified, the user will be changed to `root`."""
+    settings = ssh.settings.__dict__.copy()
+
+    if ssh.become:
+        settings.update(
+               user='root',
+           )
+
+    return SshConnectionDetail(**settings)
 
 
 def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
