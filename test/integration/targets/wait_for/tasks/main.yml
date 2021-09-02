@@ -175,3 +175,15 @@
       - waitfor is successful
       - waitfor is not changed
       - "waitfor.port == {{ http_port }}"
+
+- name: test wait_for with delay
+  wait_for:
+    timeout: 2
+    delay: 2
+  register: waitfor
+
+- name: verify test wait_for with delay
+  assert:
+    that:
+      - waitfor is successful
+      - waitfor.elapsed >= 4

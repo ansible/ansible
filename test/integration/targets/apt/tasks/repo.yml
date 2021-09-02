@@ -274,14 +274,35 @@
      diff: yes
      register: apt_result
 
-   - debug:
-      var: apt_result
-
    - name: Check the content of diff.prepared
      assert:
        that:
          - apt_result is success
          - "'The following NEW packages will be installed:\n  foo' in apt_result.diff.prepared"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+- block:
+  - name: Install foo package version 1.0.0 with force=yes, implies allow_unauthenticated=yes
+    apt:
+      name: foo=1.0.0
+      force: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
   always:
     - name: Clean up
       apt:
